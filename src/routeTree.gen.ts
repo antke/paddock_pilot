@@ -10,11 +10,23 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RssDotxmlRouteImport } from './routes/rss[.]xml'
+import { Route as ConvexTestRouteImport } from './routes/convex-test'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as IndexRouteImport } from './routes/index'
 
 const RssDotxmlRoute = RssDotxmlRouteImport.update({
   id: '/rss.xml',
   path: '/rss.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConvexTestRoute = ConvexTestRouteImport.update({
+  id: '/convex-test',
+  path: '/convex-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -25,27 +37,35 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/blog': typeof BlogRoute
+  '/convex-test': typeof ConvexTestRoute
   '/rss.xml': typeof RssDotxmlRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/blog': typeof BlogRoute
+  '/convex-test': typeof ConvexTestRoute
   '/rss.xml': typeof RssDotxmlRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/blog': typeof BlogRoute
+  '/convex-test': typeof ConvexTestRoute
   '/rss.xml': typeof RssDotxmlRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/rss.xml'
+  fullPaths: '/' | '/blog' | '/convex-test' | '/rss.xml'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/rss.xml'
-  id: '__root__' | '/' | '/rss.xml'
+  to: '/' | '/blog' | '/convex-test' | '/rss.xml'
+  id: '__root__' | '/' | '/blog' | '/convex-test' | '/rss.xml'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BlogRoute: typeof BlogRoute
+  ConvexTestRoute: typeof ConvexTestRoute
   RssDotxmlRoute: typeof RssDotxmlRoute
 }
 
@@ -56,6 +76,20 @@ declare module '@tanstack/react-router' {
       path: '/rss.xml'
       fullPath: '/rss.xml'
       preLoaderRoute: typeof RssDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/convex-test': {
+      id: '/convex-test'
+      path: '/convex-test'
+      fullPath: '/convex-test'
+      preLoaderRoute: typeof ConvexTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -70,6 +104,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BlogRoute: BlogRoute,
+  ConvexTestRoute: ConvexTestRoute,
   RssDotxmlRoute: RssDotxmlRoute,
 }
 export const routeTree = rootRouteImport
