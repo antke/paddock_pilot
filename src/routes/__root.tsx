@@ -45,24 +45,26 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>
-      <body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-[rgba(79,184,178,0.24)]">
+      <body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-primary/20">
         <ClerkProvider>
           <ConvexProvider>
             <PostHogProvider>
               <Header />
               {children}
               <Footer />
-              <TanStackDevtools
-                config={{
-                  position: 'bottom-right',
-                }}
-                plugins={[
-                  {
-                    name: 'Tanstack Router',
-                    render: <TanStackRouterDevtoolsPanel />,
-                  },
-                ]}
-              />
+              {import.meta.env.DEV ? (
+                <TanStackDevtools
+                  config={{
+                    position: 'bottom-right',
+                  }}
+                  plugins={[
+                    {
+                      name: 'TanStack Router',
+                      render: <TanStackRouterDevtoolsPanel />,
+                    },
+                  ]}
+                />
+              ) : null}
             </PostHogProvider>
           </ConvexProvider>
         </ClerkProvider>
