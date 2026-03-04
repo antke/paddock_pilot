@@ -43,7 +43,6 @@ A SaaS stable manager for horse owners to track horses, events, and stable opera
 - `name`: string
 - `age`: number
 - `breed`: string (optional)
-- `createdAt`: number
 
 #### `events`
 
@@ -60,7 +59,6 @@ A SaaS stable manager for horse owners to track horses, events, and stable opera
   - `interval`: number (every X days/weeks/months)
   - `endDate`: number (optional)
   - `daysOfWeek`: number[] (optional, for weekly: [0,1,2,3,4,5,6])
-- `createdAt`: number
 
 ## User Roles & Permissions
 

@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as events from "../events.js";
 import type * as horses from "../horses.js";
 import type * as stableMembers from "../stableMembers.js";
 import type * as stables from "../stables.js";
@@ -19,6 +20,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  events: typeof events;
   horses: typeof horses;
   stableMembers: typeof stableMembers;
   stables: typeof stables;
