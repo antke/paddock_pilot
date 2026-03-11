@@ -8,12 +8,12 @@ import {
 export default function HeaderUser() {
   return (
     <>
-      <SignedIn>
-        <UserButton />
-      </SignedIn>
       <SignedOut>
         <SignInButton />
       </SignedOut>
+      <SignedIn>
+        <UserButton />
+      </SignedIn>
     </>
   )
 }

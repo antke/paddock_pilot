@@ -1,13 +1,10 @@
+import { TanStackDevtools } from '@tanstack/react-devtools'
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
 import Footer from '../components/Footer'
 import Header from '../components/Header'
 
-import ClerkProvider from '../integrations/clerk/provider'
-
-import ConvexProvider from '../integrations/convex/provider'
-
+import ConvexProviderWithClerk from '../integrations/clerk/provider'
 import PostHogProvider from '../integrations/posthog/provider'
 
 import appCss from '../styles.css?url'
@@ -45,29 +42,28 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>
+
       <body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-primary/20">
-        <ClerkProvider>
-          <ConvexProvider>
-            <PostHogProvider>
-              <Header />
-              {children}
-              <Footer />
-              {import.meta.env.DEV ? (
-                <TanStackDevtools
-                  config={{
-                    position: 'bottom-right',
-                  }}
-                  plugins={[
-                    {
-                      name: 'TanStack Router',
-                      render: <TanStackRouterDevtoolsPanel />,
-                    },
-                  ]}
-                />
-              ) : null}
-            </PostHogProvider>
-          </ConvexProvider>
-        </ClerkProvider>
+        <ConvexProviderWithClerk>
+          <PostHogProvider>
+            <Header />
+            {children}
+            <Footer />
+            {import.meta.env.DEV ? (
+              <TanStackDevtools
+                config={{
+                  position: 'bottom-right',
+                }}
+                plugins={[
+                  {
+                    name: 'TanStack Router',
+                    render: <TanStackRouterDevtoolsPanel />,
+                  },
+                ]}
+              />
+            ) : null}
+          </PostHogProvider>
+        </ConvexProviderWithClerk>
         <Scripts />
       </body>
     </html>

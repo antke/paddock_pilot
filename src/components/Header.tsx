@@ -14,6 +14,10 @@ export default function Header() {
         </Link>
 
         <div className="flex items-center gap-2">
+          <Link to="/stables">Stables</Link>
+        </div>
+
+        <div className="flex items-center gap-2">
           <ClerkHeader />
 
           <ThemeToggle />

@@ -15,6 +15,21 @@ export const dayOfWeekNumber = v.union(
 )
 
 /**
+ * USERS
+ */
+
+export const userFields = {
+  clerkId: v.string(),
+  firstName: v.string(),
+  lastName: v.string(),
+  photoUrl: v.string(),
+}
+
+const userSchema = defineTable({ ...userFields }).index('by_clerk_id', [
+  'clerkId',
+])
+
+/**
  * STABLES
  */
 export const stableFields = {
@@ -109,6 +124,7 @@ const eventsSchema = defineTable({ ...eventFields })
   .index('by_status', ['status'])
 
 export default defineSchema({
+  users: userSchema,
   stables: stablesSchema,
   stableMembers: stableMembersSchema,
   horses: horsesSchema,

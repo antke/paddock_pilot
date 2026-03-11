@@ -11,6 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RssDotxmlRouteImport } from './routes/rss[.]xml'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StablesIndexRouteImport } from './routes/stables/index'
+import { Route as StablesCreateRouteImport } from './routes/stables/create'
+import { Route as StablesStableIdRouteImport } from './routes/stables/$stableId'
+import { Route as StablesStableIdEditRouteImport } from './routes/stables/$stableId.edit'
 
 const RssDotxmlRoute = RssDotxmlRouteImport.update({
   id: '/rss.xml',
@@ -22,31 +26,85 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StablesIndexRoute = StablesIndexRouteImport.update({
+  id: '/stables/',
+  path: '/stables/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StablesCreateRoute = StablesCreateRouteImport.update({
+  id: '/stables/create',
+  path: '/stables/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StablesStableIdRoute = StablesStableIdRouteImport.update({
+  id: '/stables/$stableId',
+  path: '/stables/$stableId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StablesStableIdEditRoute = StablesStableIdEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => StablesStableIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/rss.xml': typeof RssDotxmlRoute
+  '/stables/$stableId': typeof StablesStableIdRouteWithChildren
+  '/stables/create': typeof StablesCreateRoute
+  '/stables/': typeof StablesIndexRoute
+  '/stables/$stableId/edit': typeof StablesStableIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/rss.xml': typeof RssDotxmlRoute
+  '/stables/$stableId': typeof StablesStableIdRouteWithChildren
+  '/stables/create': typeof StablesCreateRoute
+  '/stables': typeof StablesIndexRoute
+  '/stables/$stableId/edit': typeof StablesStableIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/rss.xml': typeof RssDotxmlRoute
+  '/stables/$stableId': typeof StablesStableIdRouteWithChildren
+  '/stables/create': typeof StablesCreateRoute
+  '/stables/': typeof StablesIndexRoute
+  '/stables/$stableId/edit': typeof StablesStableIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/rss.xml'
+  fullPaths:
+    | '/'
+    | '/rss.xml'
+    | '/stables/$stableId'
+    | '/stables/create'
+    | '/stables/'
+    | '/stables/$stableId/edit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/rss.xml'
-  id: '__root__' | '/' | '/rss.xml'
+  to:
+    | '/'
+    | '/rss.xml'
+    | '/stables/$stableId'
+    | '/stables/create'
+    | '/stables'
+    | '/stables/$stableId/edit'
+  id:
+    | '__root__'
+    | '/'
+    | '/rss.xml'
+    | '/stables/$stableId'
+    | '/stables/create'
+    | '/stables/'
+    | '/stables/$stableId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RssDotxmlRoute: typeof RssDotxmlRoute
+  StablesStableIdRoute: typeof StablesStableIdRouteWithChildren
+  StablesCreateRoute: typeof StablesCreateRoute
+  StablesIndexRoute: typeof StablesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +123,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/stables/': {
+      id: '/stables/'
+      path: '/stables'
+      fullPath: '/stables/'
+      preLoaderRoute: typeof StablesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stables/create': {
+      id: '/stables/create'
+      path: '/stables/create'
+      fullPath: '/stables/create'
+      preLoaderRoute: typeof StablesCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stables/$stableId': {
+      id: '/stables/$stableId'
+      path: '/stables/$stableId'
+      fullPath: '/stables/$stableId'
+      preLoaderRoute: typeof StablesStableIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stables/$stableId/edit': {
+      id: '/stables/$stableId/edit'
+      path: '/edit'
+      fullPath: '/stables/$stableId/edit'
+      preLoaderRoute: typeof StablesStableIdEditRouteImport
+      parentRoute: typeof StablesStableIdRoute
+    }
   }
 }
+
+interface StablesStableIdRouteChildren {
+  StablesStableIdEditRoute: typeof StablesStableIdEditRoute
+}
+
+const StablesStableIdRouteChildren: StablesStableIdRouteChildren = {
+  StablesStableIdEditRoute: StablesStableIdEditRoute,
+}
+
+const StablesStableIdRouteWithChildren = StablesStableIdRoute._addFileChildren(
+  StablesStableIdRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RssDotxmlRoute: RssDotxmlRoute,
+  StablesStableIdRoute: StablesStableIdRouteWithChildren,
+  StablesCreateRoute: StablesCreateRoute,
+  StablesIndexRoute: StablesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
