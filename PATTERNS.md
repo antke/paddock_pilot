@@ -13,11 +13,11 @@ Quick reference for common patterns while building.
 // - Use for: auth, shared data, route guards
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: async ({ context }) => {
-    const user = await context.clerk.user;
-    if (!user) throw redirect({ to: '/login' });
-    return { user }; // Available in all child routes via context
+    const user = await context.clerk.user
+    if (!user) throw redirect({ to: '/login' })
+    return { user } // Available in all child routes via context
   },
-});
+})
 
 // loader: Parallel, route-specific data
 // - Runs AFTER all beforeLoad complete
@@ -25,23 +25,23 @@ export const Route = createFileRoute('/_authenticated')({
 // - Use for: fetching data for this route only
 export const Route = createFileRoute('/posts')({
   loader: async ({ context }) => {
-    const posts = await context.convex.query.posts.list();
-    return { posts };
+    const posts = await context.convex.query.posts.list()
+    return { posts }
   },
-});
+})
 ```
 
 ### Accessing Data in Components
 
 ```tsx
 // From loader
-const { posts } = Route.useLoaderData();
+const { posts } = Route.useLoaderData()
 
 // From beforeLoad (via context)
-const { user } = Route.useRouteContext();
+const { user } = Route.useRouteContext()
 
 // Search params
-const { page, filter } = Route.useSearch();
+const { page, filter } = Route.useSearch()
 ```
 
 ## Protected Routes
@@ -53,43 +53,43 @@ const { page, filter } = Route.useSearch();
 // Underscore prefix = layout route (no URL segment)
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: async ({ context }) => {
-    const { userId } = await context.clerk.session;
-    if (!userId) throw redirect({ to: '/login' });
-    return { userId };
+    const { userId } = await context.clerk.session
+    if (!userId) throw redirect({ to: '/login' })
+    return { userId }
   },
   component: AuthenticatedLayout,
-});
+})
 
 // routes/_authenticated/dashboard.tsx
 // Automatically inherits auth check from parent
 export const Route = createFileRoute('/_authenticated/dashboard')({
   component: Dashboard,
-});
+})
 ```
 
 ## Search Params with Zod
 
 ```tsx
-import { z } from 'zod';
+import { z } from 'zod'
 
 const searchSchema = z.object({
   page: z.number().optional().default(1),
   filter: z.string().optional(),
   sort: z.enum(['asc', 'desc']).optional(),
-});
+})
 
 export const Route = createFileRoute('/posts')({
   validateSearch: searchSchema,
   component: PostsPage,
-});
+})
 
 function PostsPage() {
   // Fully typed!
-  const { page, filter, sort } = Route.useSearch();
+  const { page, filter, sort } = Route.useSearch()
 
   // Navigate with search params
-  const navigate = useNavigate();
-  navigate({ to: '/posts', search: { page: 2, filter: 'draft' } });
+  const navigate = useNavigate()
+  navigate({ to: '/posts', search: { page: 2, filter: 'draft' } })
 }
 ```
 
@@ -102,22 +102,22 @@ export const Route = createFileRoute('/horses/$horseId')({
   loader: async ({ context, params }) => {
     const horse = await context.convex.query.horses.get({
       id: params.horseId,
-    });
-    return { horse };
+    })
+    return { horse }
   },
-});
+})
 ```
 
 ### In Component (with TanStack Query)
 
 ```tsx
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query'
 
 function HorseList() {
   const { data: horses } = useQuery({
     queryKey: ['horses'],
     queryFn: () => convex.query.horses.list(),
-  });
+  })
 }
 ```
 
@@ -152,29 +152,29 @@ export const Route = createFileRoute('/path')({
   validateSearch: schema, // 4th
   errorComponent: ErrorPage, // 5th
   pendingComponent: Loading, // 6th
-});
+})
 ```
 
 ## Navigation
 
 ```tsx
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router'
 
 // Declarative
-<Link to="/posts/$postId" params={{ postId: 123 }}>
+;<Link to="/posts/$postId" params={{ postId: 123 }}>
   View Post
-</Link>;
+</Link>
 
 // Imperative
-const navigate = useNavigate();
+const navigate = useNavigate()
 navigate({
   to: '/posts/$postId',
   params: { postId: 123 },
   search: { filter: 'published' },
-});
+})
 
 // Redirect in loader/beforeLoad
-throw redirect({ to: '/login' });
+throw redirect({ to: '/login' })
 ```
 
 ## Error Handling
@@ -183,14 +183,14 @@ throw redirect({ to: '/login' });
 export const Route = createFileRoute('/posts')({
   loader: async () => {
     // Errors automatically caught by error boundary
-    const posts = await fetchPosts();
-    return { posts };
+    const posts = await fetchPosts()
+    return { posts }
   },
   errorComponent: ({ error }) => (
     <div>Error loading posts: {error.message}</div>
   ),
   pendingComponent: () => <div>Loading...</div>,
-});
+})
 ```
 
 ## Context Pattern
@@ -203,17 +203,17 @@ export const Route = createRootRoute({
       convex: convexClient,
       clerk: clerkClient,
       // Add other services here
-    };
+    }
   },
-});
+})
 
 // Access in any child route
 export const Route = createFileRoute('/any-route')({
   beforeLoad: async ({ context }) => {
-    const { convex, clerk } = context;
+    const { convex, clerk } = context
     // ...
   },
-});
+})
 ```
 
 ## Best Practices

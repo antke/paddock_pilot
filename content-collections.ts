@@ -1,8 +1,8 @@
-import { defineCollection, defineConfig } from '@content-collections/core';
-import { compileMarkdown } from '@content-collections/markdown';
-import { compileMDX } from '@content-collections/mdx';
-import remarkGfm from 'remark-gfm';
-import { z } from 'zod';
+import { defineCollection, defineConfig } from '@content-collections/core'
+import { compileMarkdown } from '@content-collections/markdown'
+import { compileMDX } from '@content-collections/mdx'
+import remarkGfm from 'remark-gfm'
+import { z } from 'zod'
 
 const blog = defineCollection({
   name: 'blog',
@@ -16,7 +16,7 @@ const blog = defineCollection({
     heroImage: z.string().optional(),
   }),
   transform: async (document, context) => {
-    const isMdx = document._meta.filePath.endsWith('.mdx');
+    const isMdx = document._meta.filePath.endsWith('.mdx')
 
     return {
       ...document,
@@ -28,10 +28,10 @@ const blog = defineCollection({
             remarkPlugins: [remarkGfm],
           })
         : null,
-    };
+    }
   },
-});
+})
 
 export default defineConfig({
   collections: [blog],
-});
+})

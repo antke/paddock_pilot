@@ -1,5 +1,5 @@
 export default function Footer() {
-  const year = new Date().getFullYear();
+  const year = new Date().getFullYear()
 
   return (
     <footer className="mt-16 border-t border-[var(--line)] px-4 py-8 text-[var(--sea-ink-soft)]">
@@ -9,5 +9,5 @@ export default function Footer() {
         </p>
       </div>
     </footer>
-  );
+  )
 }

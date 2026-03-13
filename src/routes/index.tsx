@@ -1,15 +1,15 @@
-import { Show } from '@clerk/tanstack-react-start';
-import { createFileRoute } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
-import { api } from '../../convex/_generated/api';
+import { Show } from '@clerk/tanstack-react-start'
+import { createFileRoute } from '@tanstack/react-router'
+import { useQuery } from 'convex/react'
+import { api } from '../../convex/_generated/api'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
-});
+})
 
 function HomePage() {
-  const identity = useQuery(api.users.getCurrentIdentity);
-  console.log(identity);
+  const identity = useQuery(api.users.getCurrentIdentity)
+  console.log(identity)
 
   return (
     <main className="page-wrap px-4 py-16">
@@ -25,5 +25,5 @@ function HomePage() {
         </h2>
       </Show>
     </main>
-  );
+  )
 }

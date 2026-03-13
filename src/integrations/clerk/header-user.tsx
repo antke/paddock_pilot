@@ -1,4 +1,4 @@
-import { Show, SignInButton, UserButton } from '@clerk/tanstack-react-start';
+import { Show, SignInButton, UserButton } from '@clerk/tanstack-react-start'
 
 export default function HeaderUser() {
   return (
@@ -10,5 +10,5 @@ export default function HeaderUser() {
         <UserButton />
       </Show>
     </>
-  );
+  )
 }

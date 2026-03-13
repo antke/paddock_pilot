@@ -1,6 +1,6 @@
 //  @ts-check
 
-import { tanstackConfig } from '@tanstack/eslint-config';
+import { tanstackConfig } from '@tanstack/eslint-config'
 
 export default [
   ...tanstackConfig,
@@ -8,7 +8,7 @@ export default [
     rules: {
       'import/no-cycle': 'off',
       'import/order': 'off',
-      'sort-imports': 'off',
+      'sort-imports': 'on',
       '@typescript-eslint/array-type': 'off',
       '@typescript-eslint/require-await': 'off',
       'pnpm/json-enforce-catalog': 'off',
@@ -22,4 +22,4 @@ export default [
       'convex/_generated/**',
     ],
   },
-];
+]
