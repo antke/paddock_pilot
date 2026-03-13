@@ -9,6 +9,7 @@
  */
 
 import type * as horses from "../horses.js";
+import type * as libs_auth from "../libs/auth.js";
 import type * as stableMembers from "../stableMembers.js";
 import type * as stables from "../stables.js";
 import type * as users from "../users.js";
@@ -21,6 +22,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   horses: typeof horses;
+  "libs/auth": typeof libs_auth;
   stableMembers: typeof stableMembers;
   stables: typeof stables;
   users: typeof users;

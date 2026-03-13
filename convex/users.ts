@@ -1,11 +1,10 @@
-import { query } from './_generated/server'
+import { query } from './_generated/server';
 
 export const getCurrentIdentity = query({
   args: {},
   handler: async (ctx) => {
-    const userData = await ctx.auth.getUserIdentity()
+    const userData = await ctx.auth.getUserIdentity();
 
-    debugger
-    return userData
+    return userData;
   },
-})
+});

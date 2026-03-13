@@ -1,19 +1,14 @@
-import {
-  SignedIn,
-  SignInButton,
-  SignedOut,
-  UserButton,
-} from '@clerk/clerk-react'
+import { Show, SignInButton, UserButton } from '@clerk/tanstack-react-start';
 
 export default function HeaderUser() {
   return (
     <>
-      <SignedOut>
+      <Show when="signed-out">
         <SignInButton />
-      </SignedOut>
-      <SignedIn>
+      </Show>
+      <Show when="signed-in">
         <UserButton />
-      </SignedIn>
+      </Show>
     </>
-  )
+  );
 }
