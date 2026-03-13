@@ -21,8 +21,11 @@ export const dayOfWeekNumber = v.union(
 export const userFields = {
   clerkId: v.string(),
   firstName: v.string(),
-  lastName: v.string(),
-  photoUrl: v.string(),
+  lastName: v.optional(v.string()),
+  email: v.string(),
+  photoUrl: v.optional(v.string()),
+  createdAt: v.number(),
+  updatedAt: v.number(),
 }
 
 const userSchema = defineTable({ ...userFields }).index('by_clerk_id', [

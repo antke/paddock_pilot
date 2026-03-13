@@ -1,15 +1,20 @@
 import { Show } from '@clerk/tanstack-react-start'
+import { convexQuery } from '@convex-dev/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery } from 'convex/react'
 import { api } from '../../convex/_generated/api'
+import { Suspense } from 'react'
 
 export const Route = createFileRoute('/')({
-  component: HomePage,
+  component: () => (
+    <Suspense fallback={null}>
+      <HomePage />
+    </Suspense>
+  ),
 })
 
 function HomePage() {
-  const identity = useQuery(api.users.getCurrentIdentity)
-  console.log(identity)
+  const { data: user } = useSuspenseQuery(convexQuery(api.users.getCurrentUser))
 
   return (
     <main className="page-wrap px-4 py-16">
@@ -18,11 +23,11 @@ function HomePage() {
       </Show>
 
       <Show when="signed-in">
-        <h3>Welcome back {identity?.name}</h3>
-        <h2>
-          to musi byc zrobione lepiej i ladowac sie w pre-flight, ustawiac
-          suspense
-        </h2>
+        <h3>
+          Welcome back {user?.firstName} {user?.lastName}
+          <br />
+          fix weird behaviour on refresh - indicator of a race condition?
+        </h3>
       </Show>
     </main>
   )
