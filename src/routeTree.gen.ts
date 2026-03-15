@@ -11,12 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RssDotxmlRouteImport } from './routes/rss[.]xml'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as StablesIndexRouteImport } from './routes/stables/index'
-import { Route as StablesCreateRouteImport } from './routes/stables/create'
 import { Route as StablesLayoutRouteImport } from './routes/stables/_layout'
-import { Route as StablesStableIdRouteImport } from './routes/stables/$stableId'
 import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
-import { Route as StablesStableIdEditRouteImport } from './routes/stables/$stableId.edit'
+import { Route as StablesLayoutIndexRouteImport } from './routes/stables/_layout/index'
+import { Route as StablesLayoutCreateRouteImport } from './routes/stables/_layout/create'
+import { Route as StablesLayoutStableIdRouteImport } from './routes/stables/_layout/$stableId'
+import { Route as StablesLayoutStableIdEditRouteImport } from './routes/stables/_layout/$stableId.edit'
 
 const RssDotxmlRoute = RssDotxmlRouteImport.update({
   id: '/rss.xml',
@@ -28,24 +28,9 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StablesIndexRoute = StablesIndexRouteImport.update({
-  id: '/stables/',
-  path: '/stables/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StablesCreateRoute = StablesCreateRouteImport.update({
-  id: '/stables/create',
-  path: '/stables/create',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const StablesLayoutRoute = StablesLayoutRouteImport.update({
   id: '/stables/_layout',
   path: '/stables',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StablesStableIdRoute = StablesStableIdRouteImport.update({
-  id: '/stables/$stableId',
-  path: '/stables/$stableId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignInSplatRoute = SignInSplatRouteImport.update({
@@ -53,41 +38,57 @@ const SignInSplatRoute = SignInSplatRouteImport.update({
   path: '/sign-in/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StablesStableIdEditRoute = StablesStableIdEditRouteImport.update({
-  id: '/edit',
-  path: '/edit',
-  getParentRoute: () => StablesStableIdRoute,
+const StablesLayoutIndexRoute = StablesLayoutIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StablesLayoutRoute,
 } as any)
+const StablesLayoutCreateRoute = StablesLayoutCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => StablesLayoutRoute,
+} as any)
+const StablesLayoutStableIdRoute = StablesLayoutStableIdRouteImport.update({
+  id: '/$stableId',
+  path: '/$stableId',
+  getParentRoute: () => StablesLayoutRoute,
+} as any)
+const StablesLayoutStableIdEditRoute =
+  StablesLayoutStableIdEditRouteImport.update({
+    id: '/edit',
+    path: '/edit',
+    getParentRoute: () => StablesLayoutStableIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/rss.xml': typeof RssDotxmlRoute
   '/sign-in/$': typeof SignInSplatRoute
-  '/stables/$stableId': typeof StablesStableIdRouteWithChildren
-  '/stables': typeof StablesLayoutRoute
-  '/stables/create': typeof StablesCreateRoute
-  '/stables/': typeof StablesIndexRoute
-  '/stables/$stableId/edit': typeof StablesStableIdEditRoute
+  '/stables': typeof StablesLayoutRouteWithChildren
+  '/stables/$stableId': typeof StablesLayoutStableIdRouteWithChildren
+  '/stables/create': typeof StablesLayoutCreateRoute
+  '/stables/': typeof StablesLayoutIndexRoute
+  '/stables/$stableId/edit': typeof StablesLayoutStableIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/rss.xml': typeof RssDotxmlRoute
   '/sign-in/$': typeof SignInSplatRoute
-  '/stables/$stableId': typeof StablesStableIdRouteWithChildren
-  '/stables': typeof StablesIndexRoute
-  '/stables/create': typeof StablesCreateRoute
-  '/stables/$stableId/edit': typeof StablesStableIdEditRoute
+  '/stables/$stableId': typeof StablesLayoutStableIdRouteWithChildren
+  '/stables/create': typeof StablesLayoutCreateRoute
+  '/stables': typeof StablesLayoutIndexRoute
+  '/stables/$stableId/edit': typeof StablesLayoutStableIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/rss.xml': typeof RssDotxmlRoute
   '/sign-in/$': typeof SignInSplatRoute
-  '/stables/$stableId': typeof StablesStableIdRouteWithChildren
-  '/stables/_layout': typeof StablesLayoutRoute
-  '/stables/create': typeof StablesCreateRoute
-  '/stables/': typeof StablesIndexRoute
-  '/stables/$stableId/edit': typeof StablesStableIdEditRoute
+  '/stables/_layout': typeof StablesLayoutRouteWithChildren
+  '/stables/_layout/$stableId': typeof StablesLayoutStableIdRouteWithChildren
+  '/stables/_layout/create': typeof StablesLayoutCreateRoute
+  '/stables/_layout/': typeof StablesLayoutIndexRoute
+  '/stables/_layout/$stableId/edit': typeof StablesLayoutStableIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -95,8 +96,8 @@ export interface FileRouteTypes {
     | '/'
     | '/rss.xml'
     | '/sign-in/$'
-    | '/stables/$stableId'
     | '/stables'
+    | '/stables/$stableId'
     | '/stables/create'
     | '/stables/'
     | '/stables/$stableId/edit'
@@ -106,29 +107,26 @@ export interface FileRouteTypes {
     | '/rss.xml'
     | '/sign-in/$'
     | '/stables/$stableId'
-    | '/stables'
     | '/stables/create'
+    | '/stables'
     | '/stables/$stableId/edit'
   id:
     | '__root__'
     | '/'
     | '/rss.xml'
     | '/sign-in/$'
-    | '/stables/$stableId'
     | '/stables/_layout'
-    | '/stables/create'
-    | '/stables/'
-    | '/stables/$stableId/edit'
+    | '/stables/_layout/$stableId'
+    | '/stables/_layout/create'
+    | '/stables/_layout/'
+    | '/stables/_layout/$stableId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RssDotxmlRoute: typeof RssDotxmlRoute
   SignInSplatRoute: typeof SignInSplatRoute
-  StablesStableIdRoute: typeof StablesStableIdRouteWithChildren
-  StablesLayoutRoute: typeof StablesLayoutRoute
-  StablesCreateRoute: typeof StablesCreateRoute
-  StablesIndexRoute: typeof StablesIndexRoute
+  StablesLayoutRoute: typeof StablesLayoutRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -147,32 +145,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/stables/': {
-      id: '/stables/'
-      path: '/stables'
-      fullPath: '/stables/'
-      preLoaderRoute: typeof StablesIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/stables/create': {
-      id: '/stables/create'
-      path: '/stables/create'
-      fullPath: '/stables/create'
-      preLoaderRoute: typeof StablesCreateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/stables/_layout': {
       id: '/stables/_layout'
       path: '/stables'
       fullPath: '/stables'
       preLoaderRoute: typeof StablesLayoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/stables/$stableId': {
-      id: '/stables/$stableId'
-      path: '/stables/$stableId'
-      fullPath: '/stables/$stableId'
-      preLoaderRoute: typeof StablesStableIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sign-in/$': {
@@ -182,36 +159,71 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignInSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/stables/$stableId/edit': {
-      id: '/stables/$stableId/edit'
+    '/stables/_layout/': {
+      id: '/stables/_layout/'
+      path: '/'
+      fullPath: '/stables/'
+      preLoaderRoute: typeof StablesLayoutIndexRouteImport
+      parentRoute: typeof StablesLayoutRoute
+    }
+    '/stables/_layout/create': {
+      id: '/stables/_layout/create'
+      path: '/create'
+      fullPath: '/stables/create'
+      preLoaderRoute: typeof StablesLayoutCreateRouteImport
+      parentRoute: typeof StablesLayoutRoute
+    }
+    '/stables/_layout/$stableId': {
+      id: '/stables/_layout/$stableId'
+      path: '/$stableId'
+      fullPath: '/stables/$stableId'
+      preLoaderRoute: typeof StablesLayoutStableIdRouteImport
+      parentRoute: typeof StablesLayoutRoute
+    }
+    '/stables/_layout/$stableId/edit': {
+      id: '/stables/_layout/$stableId/edit'
       path: '/edit'
       fullPath: '/stables/$stableId/edit'
-      preLoaderRoute: typeof StablesStableIdEditRouteImport
-      parentRoute: typeof StablesStableIdRoute
+      preLoaderRoute: typeof StablesLayoutStableIdEditRouteImport
+      parentRoute: typeof StablesLayoutStableIdRoute
     }
   }
 }
 
-interface StablesStableIdRouteChildren {
-  StablesStableIdEditRoute: typeof StablesStableIdEditRoute
+interface StablesLayoutStableIdRouteChildren {
+  StablesLayoutStableIdEditRoute: typeof StablesLayoutStableIdEditRoute
 }
 
-const StablesStableIdRouteChildren: StablesStableIdRouteChildren = {
-  StablesStableIdEditRoute: StablesStableIdEditRoute,
+const StablesLayoutStableIdRouteChildren: StablesLayoutStableIdRouteChildren = {
+  StablesLayoutStableIdEditRoute: StablesLayoutStableIdEditRoute,
 }
 
-const StablesStableIdRouteWithChildren = StablesStableIdRoute._addFileChildren(
-  StablesStableIdRouteChildren,
+const StablesLayoutStableIdRouteWithChildren =
+  StablesLayoutStableIdRoute._addFileChildren(
+    StablesLayoutStableIdRouteChildren,
+  )
+
+interface StablesLayoutRouteChildren {
+  StablesLayoutStableIdRoute: typeof StablesLayoutStableIdRouteWithChildren
+  StablesLayoutCreateRoute: typeof StablesLayoutCreateRoute
+  StablesLayoutIndexRoute: typeof StablesLayoutIndexRoute
+}
+
+const StablesLayoutRouteChildren: StablesLayoutRouteChildren = {
+  StablesLayoutStableIdRoute: StablesLayoutStableIdRouteWithChildren,
+  StablesLayoutCreateRoute: StablesLayoutCreateRoute,
+  StablesLayoutIndexRoute: StablesLayoutIndexRoute,
+}
+
+const StablesLayoutRouteWithChildren = StablesLayoutRoute._addFileChildren(
+  StablesLayoutRouteChildren,
 )
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RssDotxmlRoute: RssDotxmlRoute,
   SignInSplatRoute: SignInSplatRoute,
-  StablesStableIdRoute: StablesStableIdRouteWithChildren,
-  StablesLayoutRoute: StablesLayoutRoute,
-  StablesCreateRoute: StablesCreateRoute,
-  StablesIndexRoute: StablesIndexRoute,
+  StablesLayoutRoute: StablesLayoutRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

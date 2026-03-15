@@ -10,7 +10,6 @@ import Footer from '../components/Footer'
 import Header from '../components/Header'
 
 import ConvexProviderWithClerk from '../integrations/clerk/provider'
-import PostHogProvider from '../integrations/posthog/provider'
 
 import appCss from '../styles.css?url'
 
@@ -42,6 +41,7 @@ export const Route = createRootRoute({
       },
     ],
   }),
+  ssr: false,
   shellComponent: RootDocument,
   component: RootComponent,
 })
@@ -56,26 +56,24 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
       <body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-primary/20">
         <ConvexProviderWithClerk>
-          <PostHogProvider>
-            <Header />
+          <Header />
 
-            {children}
+          {children}
 
-            <Footer />
-            {import.meta.env.DEV ? (
-              <TanStackDevtools
-                config={{
-                  position: 'bottom-right',
-                }}
-                plugins={[
-                  {
-                    name: 'TanStack Router',
-                    render: <TanStackRouterDevtoolsPanel />,
-                  },
-                ]}
-              />
-            ) : null}
-          </PostHogProvider>
+          <Footer />
+          {import.meta.env.DEV ? (
+            <TanStackDevtools
+              config={{
+                position: 'bottom-right',
+              }}
+              plugins={[
+                {
+                  name: 'TanStack Router',
+                  render: <TanStackRouterDevtoolsPanel />,
+                },
+              ]}
+            />
+          ) : null}
         </ConvexProviderWithClerk>
         <Scripts />
       </body>

@@ -1,9 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/stables/$stableId/edit')({
+export const Route = createFileRoute('/stables/_layout/create')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  return <div>Hello "/stables/$stableId/edit"!</div>
+  return <div>Hello "/stables/create"!</div>
 }

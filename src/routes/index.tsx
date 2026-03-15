@@ -7,7 +7,7 @@ import { Suspense } from 'react'
 
 export const Route = createFileRoute('/')({
   component: () => (
-    <Suspense fallback={null}>
+    <Suspense fallback={<div>Loading...</div>}>
       <HomePage />
     </Suspense>
   ),

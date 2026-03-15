@@ -14,6 +14,14 @@ export const list = query({
   },
 })
 
+export const get = query({
+  args: { id: v.id('stables') },
+  handler: async (ctx, args) => {
+    await requireAuth(ctx)
+    return await ctx.db.get(args.id)
+  },
+})
+
 export const add = mutation({
   args: { ...stableFields },
   handler: async (ctx, args) => {

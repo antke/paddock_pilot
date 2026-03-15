@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import ClerkHeader from '../integrations/clerk/header-user.tsx'
 import ThemeToggle from './ThemeToggle'
+import { Show } from '@clerk/tanstack-react-start'
 
 export default function Header() {
   return (
@@ -13,9 +14,11 @@ export default function Header() {
           PaddockPilot
         </Link>
 
-        <div className="flex items-center gap-2">
-          <Link to="/stables">Stables</Link>
-        </div>
+        <Show when="signed-in">
+          <div className="flex items-center gap-2">
+            <Link to="/stables">Stables</Link>
+          </div>
+        </Show>
 
         <div className="flex items-center gap-2">
           <ClerkHeader />
