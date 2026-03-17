@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { stableFields } from './schema'
-import { getCurrentUser, requireAuth } from './libs/auth'
+import { getUserFromIdentity, requireAuth } from './libs/auth'
 import { Id } from './_generated/dataModel'
 
 export const list = query({
@@ -28,7 +28,7 @@ export const add = mutation({
   handler: async (ctx, args) => {
     await requireAuth(ctx)
 
-    const user = await getCurrentUser(ctx)
+    const user = await getUserFromIdentity(ctx)
     if (!user) throw new ConvexError('User not found')
 
     return await ctx.db.insert('stables', {
