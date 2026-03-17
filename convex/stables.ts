@@ -1,7 +1,8 @@
-import { v } from 'convex/values'
+import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { stableFields } from './schema'
-import { requireAuth } from './libs/auth'
+import { getCurrentUser, requireAuth } from './libs/auth'
+import { Id } from './_generated/dataModel'
 
 export const list = query({
   args: {},
@@ -25,13 +26,16 @@ export const get = query({
 export const add = mutation({
   args: { ...stableFields },
   handler: async (ctx, args) => {
-    const identity = await requireAuth(ctx)
+    await requireAuth(ctx)
+
+    const user = await getCurrentUser(ctx)
+    if (!user) throw new ConvexError('User not found')
 
     return await ctx.db.insert('stables', {
       name: args.name,
       location: args.location,
       description: args.description,
-      ownerId: identity.subject,
+      ownerId: user._id,
     })
   },
 })
@@ -40,5 +44,17 @@ export const remove = mutation({
   args: { id: v.id('stables') },
   handler: async (ctx, args) => {
     return await ctx.db.delete(args.id)
+  },
+})
+
+export const getWithOwner = query({
+  args: { id: v.id('stables') },
+  handler: async (ctx, args) => {
+    const stable = await ctx.db.get(args.id)
+    if (!stable) return null
+
+    const owner = await ctx.db.get(stable.ownerId as Id<'users'>)
+
+    return { stable, owner }
   },
 })

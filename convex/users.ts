@@ -1,6 +1,8 @@
 import { v } from 'convex/values'
 import { internalMutation, query } from './_generated/server'
+import { getUserFromIdentity } from './libs/auth'
 
+// identity is served from auth layer
 export const getCurrentIdentity = query({
   args: {},
   handler: async (ctx) => {
@@ -13,13 +15,14 @@ export const getCurrentIdentity = query({
 export const getCurrentUser = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) return null
+    return getUserFromIdentity(ctx)
+  },
+})
 
-    return ctx.db
-      .query('users')
-      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
-      .unique()
+export const get = query({
+  args: { id: v.id('users') },
+  handler: async (ctx, args) => {
+    return ctx.db.get(args.id)
   },
 })
 

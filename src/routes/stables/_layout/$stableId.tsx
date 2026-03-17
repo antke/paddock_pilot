@@ -10,13 +10,17 @@ export const Route = createFileRoute('/stables/_layout/$stableId')({
 
 function RouteComponent() {
   const { stableId } = Route.useParams()
-  const { data: stable } = useSuspenseQuery(
-    convexQuery(api.stables.get, { id: stableId as Id<'stables'> }),
+
+  const { data } = useSuspenseQuery(
+    convexQuery(api.stables.getWithOwner, { id: stableId as Id<'stables'> }),
   )
+  const stable = data?.stable
+  const owner = data?.owner
 
   return (
     <div>
       <p>{stable?.name}</p>
+      <p>{owner?.firstName}</p>
     </div>
   )
 }

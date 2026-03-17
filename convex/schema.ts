@@ -39,7 +39,7 @@ export const stableFields = {
   name: v.string(),
   location: v.string(),
   description: v.optional(v.string()),
-  ownerId: v.string(), // Clerk user ID
+  ownerId: v.id('users'),
 }
 
 const stablesSchema = defineTable({ ...stableFields }).index('by_owner_id', [
@@ -51,7 +51,7 @@ const stablesSchema = defineTable({ ...stableFields }).index('by_owner_id', [
  */
 export const stableMembersFields = {
   stableId: v.id('stables'),
-  userId: v.string(), // Clerk user ID
+  userId: v.id('users'),
   role: v.union(v.literal('owner'), v.literal('member'), v.literal('guest')),
 }
 
@@ -64,7 +64,7 @@ const stableMembersSchema = defineTable({ ...stableMembersFields })
  */
 export const horsesFields = {
   stableId: v.id('stables'),
-  ownerId: v.string(), // Clerk user ID
+  ownerId: v.id('users'),
   name: v.string(),
   age: v.number(),
   breed: v.optional(v.string()),
