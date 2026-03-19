@@ -1,5 +1,5 @@
 import { ConvexError } from 'convex/values'
-import { MutationCtx, QueryCtx } from '../_generated/server'
+import type { MutationCtx, QueryCtx } from '../_generated/server'
 
 export const requireAuth = async (ctx: MutationCtx | QueryCtx) => {
   const identity = await ctx.auth.getUserIdentity()

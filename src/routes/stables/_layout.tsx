@@ -22,8 +22,6 @@ export const Route = createFileRoute('/stables/_layout')({
     }
     return { userId }
   },
-  pendingComponent: () => {
-    ;<Spinner />
-  },
+  pendingComponent: () => <Spinner />,
   component: () => <Outlet />,
 })

@@ -4,45 +4,63 @@ import {
   type StableFormSchema,
 } from '#/components/forms/stable/stableFormSchema'
 import { Button } from '#/components/ui/button'
+import { convexQuery } from '@convex-dev/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
+import type { Doc, Id } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
-export const Route = createFileRoute('/stables/_layout/create')({
+export const Route = createFileRoute('/stables/_layout/$stableId_/edit')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const addStable = useMutation(api.stables.add)
+  const { stableId } = Route.useParams()
+
+  const { data: stable } = useSuspenseQuery(
+    convexQuery(api.stables.get, { id: stableId as Id<'stables'> }),
+  )
+
+  if (!stable) return <div>Stable not found</div>
+
+  return <EditStableForm key={stable._id} stable={stable} />
+}
+
+type EditStableFormProps = {
+  stable: Doc<'stables'>
+}
+
+function EditStableForm({ stable }: EditStableFormProps) {
   const nav = useNavigate()
+  const updateStable = useMutation(api.stables.update)
 
   const form = useForm<StableFormSchema>({
     resolver: zodResolver(stableFormSchema),
     mode: 'onTouched',
     defaultValues: {
-      name: '',
-      location: '',
-      description: '',
+      name: stable.name,
+      location: stable.location,
+      description: stable.description ?? '',
     },
   })
 
   const onSubmit = async (data: StableFormSchema) => {
     try {
-      const newStableId = await addStable({
-        name: data.name,
-        location: data.location,
-        description: data.description,
+      await updateStable({
+        ...data,
+        id: stable._id,
       })
 
-      toast.success('Stable created', {
-        description: <p>{data.name} is ready.</p>,
+      toast.success('Stable updated', {
+        description: <p>{data.name} has been updated.</p>,
         position: 'top-right',
       })
 
-      nav({ to: '/stables/$stableId', params: { stableId: newStableId } })
+      nav({ to: '/stables/$stableId', params: { stableId: stable._id } })
     } catch (err) {
       toast.error('Oops! Something went wrong.', {
         description: <p>Please try again.</p>,
@@ -71,7 +89,7 @@ function RouteComponent() {
             </Button>
 
             <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? 'Creating...' : 'Create Stable'}
+              {form.formState.isSubmitting ? 'Saving...' : 'Update Stable'}
             </Button>
           </div>
         </div>

@@ -1,6 +1,7 @@
+import { buttonVariants } from '#/components/ui/button'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 
@@ -18,11 +19,23 @@ function RouteComponent() {
   const owner = data?.owner
 
   return (
-    <div>
-      <p>name: {stable?.name}</p>
-      <p>owner: {owner?.firstName}</p>
-      {stable?.description && <p>description: {stable?.description}</p>}
-      <p>address: {stable?.location}</p>
-    </div>
+    <>
+      <div>
+        <Link
+          to="/stables/$stableId/edit"
+          params={{ stableId }}
+          className={buttonVariants({ variant: 'outline' })}
+        >
+          Edit
+        </Link>
+      </div>
+
+      <div>
+        <p>name: {stable?.name}</p>
+        <p>owner: {owner?.firstName}</p>
+        {stable?.description && <p>description: {stable?.description}</p>}
+        <p>address: {stable?.location}</p>
+      </div>
+    </>
   )
 }

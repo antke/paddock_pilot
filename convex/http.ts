@@ -1,7 +1,7 @@
 import { httpRouter } from 'convex/server'
+import type { WebhookEvent } from '@clerk/backend'
 import { httpAction } from './_generated/server'
 import { internal } from './_generated/api'
-import { WebhookEvent } from '@clerk/backend'
 import { verifyWebhook } from '@clerk/backend/webhooks'
 
 const http = httpRouter()
