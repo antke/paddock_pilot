@@ -3,6 +3,7 @@ import { mutation, query } from './_generated/server'
 import { stableFields } from './schema'
 import { getUserFromIdentity, requireAuth } from './libs/auth'
 import { Id } from './_generated/dataModel'
+import { omit } from 'lodash'
 
 export const list = query({
   args: {},
@@ -24,7 +25,7 @@ export const get = query({
 })
 
 export const add = mutation({
-  args: { ...stableFields },
+  args: { ...omit(stableFields, 'ownerId') },
   handler: async (ctx, args) => {
     await requireAuth(ctx)
 

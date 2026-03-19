@@ -19,8 +19,10 @@ function RouteComponent() {
 
   return (
     <div>
-      <p>{stable?.name}</p>
-      <p>{owner?.firstName}</p>
+      <p>name: {stable?.name}</p>
+      <p>owner: {owner?.firstName}</p>
+      {stable?.description && <p>description: {stable?.description}</p>}
+      <p>address: {stable?.location}</p>
     </div>
   )
 }
