@@ -14,7 +14,7 @@ import { useMutation } from 'convex/react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
-export const Route = createFileRoute('/stables/_layout/$stableId_/edit')({
+export const Route = createFileRoute('/stables/_layout/$stableId/edit')({
   component: RouteComponent,
 })
 

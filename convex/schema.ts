@@ -110,6 +110,8 @@ export const eventRecurrenceSetup = v.object({
 
 export const eventFields = {
   horseIds: v.array(v.id('horses')),
+  organiser: v.id('users'),
+  stableId: v.id('stables'),
   type: eventType,
   tags: v.array(v.string()), // TODO: TBC IF THIS SHOULD BE A LITERAL, MAYBE SUB GROUPS?
   title: v.string(),
@@ -123,6 +125,8 @@ export const eventFields = {
 const eventsSchema = defineTable({ ...eventFields })
   .index('by_date', ['date'])
   .index('by_status', ['status'])
+  .index('by_stable_id', ['stableId'])
+  .index('by_organiser', ['organiser'])
 
 export const eventHorsesFields = {
   eventId: v.id('events'),

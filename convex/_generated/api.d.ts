@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as events from "../events.js";
 import type * as horses from "../horses.js";
 import type * as http from "../http.js";
 import type * as libs_auth from "../libs/auth.js";
@@ -22,6 +23,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  events: typeof events;
   horses: typeof horses;
   http: typeof http;
   "libs/auth": typeof libs_auth;

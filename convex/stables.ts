@@ -6,11 +6,11 @@ import { getUserFromIdentity, requireAuth } from './libs/auth'
 import type { Id } from './_generated/dataModel'
 import { omit } from 'lodash'
 
-function validateStableInput(args: {
+const validateStableInput = (args: {
   name: string
   location: string
   description?: string
-}) {
+}) => {
   const result = stableInputSchema.safeParse(args)
 
   if (!result.success) {
