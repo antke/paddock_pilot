@@ -1,5 +1,6 @@
 import { HorseList } from '#/components/horses/HorseList'
 import { buttonVariants } from '#/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
@@ -21,7 +22,7 @@ function RouteComponent() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex gap-4 align-middle justify-center">
+      <div className="flex flex-wrap gap-4">
         <Link
           to="/stables/$stableId/edit"
           params={{ stableId }}
@@ -47,18 +48,23 @@ function RouteComponent() {
         </Link>
       </div>
 
-      <div>
-        <p>name: {stable?.name}</p>
-        <p>owner: {owner?.firstName}</p>
-        {stable?.description && <p>description: {stable?.description}</p>}
-        <p>address: {stable?.location}</p>
-      </div>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>{stable?.name}</CardTitle>
+        </CardHeader>
 
-      <div>
-        <p>Horses in the stable </p>
+        <CardContent className="grid gap-2 text-sm">
+          <p>owner: {owner?.firstName}</p>
+          {stable?.description && <p>description: {stable?.description}</p>}
+          <p>address: {stable?.location}</p>
+        </CardContent>
+      </Card>
+
+      <section className="grid gap-4">
+        <h2 className="font-semibold">Horses in the stable</h2>
 
         <HorseList stableId={stableId} />
-      </div>
+      </section>
     </div>
   )
 }

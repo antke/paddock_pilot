@@ -8,6 +8,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import Footer from '../components/Footer'
 import Header from '../components/Header'
+import { PageLayout } from '#/components/layout/PageLayout'
 
 import ConvexProviderWithClerk from '../integrations/clerk/provider'
 
@@ -59,7 +60,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <ConvexProviderWithClerk>
           <Header />
 
-          {children}
+          <PageLayout>{children}</PageLayout>
 
           <Toaster />
           <Footer />

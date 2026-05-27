@@ -11,6 +11,13 @@ import type { Id } from 'convex/_generated/dataModel'
 import { toast } from 'sonner'
 import { HorseFormFields } from '#/components/forms/horse/HorseFormFields'
 import { Button } from '#/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '#/components/ui/card'
 
 export const Route = createFileRoute(
   '/stables/_layout/$stableId/horses/create',
@@ -60,30 +67,34 @@ function RouteComponent() {
   }
 
   return (
-    <div className="max-w-md p-4">
-      <form id="horse-form" onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="flex flex-col gap-4">
+    <form id="horse-form" onSubmit={form.handleSubmit(onSubmit)}>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Add horse</CardTitle>
+        </CardHeader>
+
+        <CardContent className="flex flex-col gap-4">
           <HorseFormFields
             control={form.control}
             disabled={form.formState.isSubmitting}
           />
+        </CardContent>
 
-          <div className="flex gap-4 w-full align-middle justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={form.formState.isSubmitting}
-              onClick={() => form.reset()}
-            >
-              Reset
-            </Button>
+        <CardFooter className="gap-4 justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={form.formState.isSubmitting}
+            onClick={() => form.reset()}
+          >
+            Reset
+          </Button>
 
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? 'Adding...' : 'Add Horse'}
-            </Button>
-          </div>
-        </div>
-      </form>
-    </div>
+          <Button type="submit" disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? 'Adding...' : 'Add Horse'}
+          </Button>
+        </CardFooter>
+      </Card>
+    </form>
   )
 }

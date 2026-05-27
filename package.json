@@ -1,6 +1,7 @@
 {
   "name": "paddock_pilot",
   "private": true,
+  "packageManager": "pnpm@11.0.8",
   "type": "module",
   "imports": {
     "#/*": "./src/*"

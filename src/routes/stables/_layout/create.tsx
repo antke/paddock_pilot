@@ -4,6 +4,13 @@ import {
   type StableFormSchema,
 } from '#/components/forms/stable/stableFormSchema'
 import { Button } from '#/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '#/components/ui/card'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
@@ -52,30 +59,34 @@ function RouteComponent() {
   }
 
   return (
-    <div className="max-w-md p-4">
-      <form id="stable-form" onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="flex flex-col gap-4">
+    <form id="stable-form" onSubmit={form.handleSubmit(onSubmit)}>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Create stable</CardTitle>
+        </CardHeader>
+
+        <CardContent className="flex flex-col gap-4">
           <StableFormFields
             control={form.control}
             disabled={form.formState.isSubmitting}
           />
+        </CardContent>
 
-          <div className="flex gap-4 w-full align-middle justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={form.formState.isSubmitting}
-              onClick={() => form.reset()}
-            >
-              Reset
-            </Button>
+        <CardFooter className="gap-4 justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={form.formState.isSubmitting}
+            onClick={() => form.reset()}
+          >
+            Reset
+          </Button>
 
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? 'Creating...' : 'Create Stable'}
-            </Button>
-          </div>
-        </div>
-      </form>
-    </div>
+          <Button type="submit" disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? 'Creating...' : 'Create Stable'}
+          </Button>
+        </CardFooter>
+      </Card>
+    </form>
   )
 }

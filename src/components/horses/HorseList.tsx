@@ -26,9 +26,9 @@ export function HorseList({ stableId }: Props) {
   }
 
   return (
-    <div className="grid gap-4 p-4">
+    <div className="grid gap-4">
       {horses.map((horse) => (
-        <Item key={horse._id} variant={'outline'} className="max-w-md">
+        <Item key={horse._id} variant={'outline'}>
           <ItemTitle>{horse.name}</ItemTitle>
           <ItemContent>age: {horse.age}</ItemContent>
           {horse.breed && <ItemContent>{horse.breed}</ItemContent>}

@@ -23,9 +23,9 @@ function RouteComponent() {
   }
 
   return (
-    <div className="grid gap-4 p-4">
+    <div className="grid gap-4">
       {stables.map((stable) => (
-        <Item key={stable._id} variant={'outline'} className="max-w-md">
+        <Item key={stable._id} variant={'outline'}>
           <ItemTitle>{stable.name}</ItemTitle>
           <ItemContent>{stable.location}</ItemContent>
           <ItemActions>

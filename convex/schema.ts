@@ -78,55 +78,44 @@ const horsesSchema = defineTable({ ...horsesFields })
  * EVENTS
  */
 export const eventType = v.union(
-  v.literal('medical'),
+  v.literal('vet'),
   v.literal('training'),
-  v.literal('maintenance'),
-  v.literal('competition'),
+  v.literal('dentist'),
+  v.literal('hoof_trimming'),
+  v.literal('massage'),
   v.literal('other'),
-)
-
-export const eventState = v.union(
-  v.literal('scheduled'),
-  v.literal('completed'),
-  v.literal('cancelled'),
 )
 
 export const recurrenceEndRule = v.object({
   type: v.union(v.literal('never'), v.literal('on_date')),
-  date: v.optional(v.number()),
+  date: v.optional(v.string()),
 })
 
 export const eventRecurrenceSetup = v.object({
-  pattern: v.union(
-    v.literal('daily'),
-    v.literal('weekly'),
-    v.literal('monthly'),
-    v.literal('yearly'),
-  ),
-  interval: v.number(), // every X days
+  frequency: v.union(v.literal('weekly'), v.literal('monthly')),
+  interval: v.number(),
   daysOfWeek: v.optional(v.array(dayOfWeekNumber)),
-  end: recurrenceEndRule,
+  end: v.optional(recurrenceEndRule),
 })
 
 export const eventFields = {
   horseIds: v.array(v.id('horses')),
-  organiser: v.id('users'),
+  createdBy: v.id('users'),
   stableId: v.id('stables'),
   type: eventType,
-  tags: v.array(v.string()), // TODO: TBC IF THIS SHOULD BE A LITERAL, MAYBE SUB GROUPS?
   title: v.string(),
   description: v.optional(v.string()),
-  date: v.number(),
-  time: v.optional(v.string()), // TODO: HOW TO HANDLE TIMES?
-  status: eventState,
+  location: v.optional(v.string()),
+  date: v.string(),
+  time: v.string(),
   recurrence: v.optional(eventRecurrenceSetup),
 }
 
 const eventsSchema = defineTable({ ...eventFields })
-  .index('by_date', ['date'])
-  .index('by_status', ['status'])
   .index('by_stable_id', ['stableId'])
-  .index('by_organiser', ['organiser'])
+  .index('by_stable_id_date', ['stableId', 'date'])
+  .index('by_created_by', ['createdBy'])
+  .index('by_type', ['type'])
 
 export const eventHorsesFields = {
   eventId: v.id('events'),

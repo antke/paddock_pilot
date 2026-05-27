@@ -2,7 +2,7 @@ import { createFileRoute, redirect } from '@tanstack/react-router'
 import { Outlet } from '@tanstack/react-router'
 import { auth } from '@clerk/tanstack-react-start/server'
 import { createServerFn } from '@tanstack/react-start'
-import { Spinner } from '#/components/ui/spinner'
+import { RoutePending } from '#/components/layout/RoutePending'
 
 const fetchClerkAuth = createServerFn({ method: 'GET' }).handler(async () => {
   const { userId } = await auth()
@@ -22,6 +22,6 @@ export const Route = createFileRoute('/stables/_layout')({
     }
     return { userId }
   },
-  pendingComponent: () => <Spinner />,
+  pendingComponent: RoutePending,
   component: () => <Outlet />,
 })
