@@ -9,7 +9,16 @@ export const eventTypes = [
   'other',
 ] as const
 
-export const recurrenceFrequencies = ['weekly', 'monthly'] as const
+export const recurrenceFrequencies = ['daily', 'weekly', 'monthly'] as const
+
+export const recurrenceMonthlyModes = ['dayOfMonth', 'weekdayPattern'] as const
+
+export const recurrenceOrdinals = [1, 2, 3, 4, 'last'] as const
+
+export const recurrenceMissingDateStrategies = [
+  'lastDayOfMonth',
+  'skip',
+] as const
 
 export const daysOfWeek = [0, 1, 2, 3, 4, 5, 6] as const
 
@@ -79,7 +88,28 @@ export const eventDayOfWeekSchema = z.union([
 export const recurrenceEndSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('never') }),
   z.object({ type: z.literal('on_date'), date: eventDateSchema }),
+  z.object({
+    type: z.literal('after_occurrences'),
+    count: z
+      .number()
+      .int('Occurrence count must be a whole number.')
+      .min(1, 'Occurrence count must be at least 1.'),
+  }),
 ])
+
+export const recurrenceMonthlyModeSchema = z.enum(recurrenceMonthlyModes)
+
+export const recurrenceOrdinalSchema = z.union([
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+  z.literal('last'),
+])
+
+export const recurrenceMissingDateStrategySchema = z.enum(
+  recurrenceMissingDateStrategies,
+)
 
 export const eventRecurrenceSchema = z
   .object({
@@ -89,6 +119,16 @@ export const eventRecurrenceSchema = z
       .int('Interval must be a whole number.')
       .min(1, 'Interval must be at least 1.'),
     daysOfWeek: z.array(eventDayOfWeekSchema).optional(),
+    monthlyMode: recurrenceMonthlyModeSchema.optional(),
+    dayOfMonth: z
+      .number()
+      .int('Day of month must be a whole number.')
+      .min(1, 'Day of month must be at least 1.')
+      .max(31, 'Day of month cannot be greater than 31.')
+      .optional(),
+    ordinal: recurrenceOrdinalSchema.optional(),
+    weekday: eventDayOfWeekSchema.optional(),
+    missingDateStrategy: recurrenceMissingDateStrategySchema.optional(),
     end: recurrenceEndSchema.optional(),
   })
   .superRefine((recurrence, ctx) => {
@@ -101,6 +141,57 @@ export const eventRecurrenceSchema = z
         message: 'Select at least one day for weekly recurrence.',
         path: ['daysOfWeek'],
       })
+    }
+
+    if (recurrence.frequency !== 'monthly') return
+
+    if (!recurrence.monthlyMode) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Choose how this monthly event repeats.',
+        path: ['monthlyMode'],
+      })
+      return
+    }
+
+    if (recurrence.monthlyMode === 'dayOfMonth') {
+      if (!recurrence.dayOfMonth) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Choose a day of the month.',
+          path: ['dayOfMonth'],
+        })
+      }
+
+      if (
+        recurrence.dayOfMonth &&
+        recurrence.dayOfMonth >= 29 &&
+        !recurrence.missingDateStrategy
+      ) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Choose what happens when a month does not have this date.',
+          path: ['missingDateStrategy'],
+        })
+      }
+    }
+
+    if (recurrence.monthlyMode === 'weekdayPattern') {
+      if (!recurrence.ordinal) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Choose which week of the month.',
+          path: ['ordinal'],
+        })
+      }
+
+      if (recurrence.weekday === undefined) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Choose a weekday.',
+          path: ['weekday'],
+        })
+      }
     }
   })
 
@@ -135,6 +226,11 @@ export const eventFormSchema = eventInputSchema
 
 export type EventType = (typeof eventTypes)[number]
 export type RecurrenceFrequency = (typeof recurrenceFrequencies)[number]
+export type RecurrenceMonthlyMode = (typeof recurrenceMonthlyModes)[number]
+export type RecurrenceOrdinal = (typeof recurrenceOrdinals)[number]
+export type RecurrenceMissingDateStrategy =
+  (typeof recurrenceMissingDateStrategies)[number]
 export type DayOfWeek = (typeof daysOfWeek)[number]
 export type EventInput = z.infer<typeof eventInputSchema>
+export type EventFormInput = z.input<typeof eventFormSchema>
 export type EventFormSchema = z.infer<typeof eventFormSchema>

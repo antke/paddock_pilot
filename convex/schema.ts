@@ -87,14 +87,40 @@ export const eventType = v.union(
 )
 
 export const recurrenceEndRule = v.object({
-  type: v.union(v.literal('never'), v.literal('on_date')),
+  type: v.union(
+    v.literal('never'),
+    v.literal('on_date'),
+    v.literal('after_occurrences'),
+  ),
   date: v.optional(v.string()),
+  count: v.optional(v.number()),
 })
 
 export const eventRecurrenceSetup = v.object({
-  frequency: v.union(v.literal('weekly'), v.literal('monthly')),
+  frequency: v.union(
+    v.literal('daily'),
+    v.literal('weekly'),
+    v.literal('monthly'),
+  ),
   interval: v.number(),
   daysOfWeek: v.optional(v.array(dayOfWeekNumber)),
+  monthlyMode: v.optional(
+    v.union(v.literal('dayOfMonth'), v.literal('weekdayPattern')),
+  ),
+  dayOfMonth: v.optional(v.number()),
+  ordinal: v.optional(
+    v.union(
+      v.literal(1),
+      v.literal(2),
+      v.literal(3),
+      v.literal(4),
+      v.literal('last'),
+    ),
+  ),
+  weekday: v.optional(dayOfWeekNumber),
+  missingDateStrategy: v.optional(
+    v.union(v.literal('lastDayOfMonth'), v.literal('skip')),
+  ),
   end: v.optional(recurrenceEndRule),
 })
 

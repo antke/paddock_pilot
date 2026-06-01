@@ -9,6 +9,7 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import Footer from '../components/Footer'
 import Header from '../components/Header'
 import { PageLayout } from '#/components/layout/PageLayout'
+import { TooltipProvider } from '#/components/ui/tooltip'
 
 import ConvexProviderWithClerk from '../integrations/clerk/provider'
 
@@ -58,26 +59,28 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
       <body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-primary/20">
         <ConvexProviderWithClerk>
-          <Header />
+          <TooltipProvider>
+            <Header />
 
-          <PageLayout>{children}</PageLayout>
+            <PageLayout>{children}</PageLayout>
 
-          <Toaster />
-          <Footer />
+            <Toaster />
+            <Footer />
 
-          {import.meta.env.DEV ? (
-            <TanStackDevtools
-              config={{
-                position: 'bottom-right',
-              }}
-              plugins={[
-                {
-                  name: 'TanStack Router',
-                  render: <TanStackRouterDevtoolsPanel />,
-                },
-              ]}
-            />
-          ) : null}
+            {import.meta.env.DEV ? (
+              <TanStackDevtools
+                config={{
+                  position: 'bottom-right',
+                }}
+                plugins={[
+                  {
+                    name: 'TanStack Router',
+                    render: <TanStackRouterDevtoolsPanel />,
+                  },
+                ]}
+              />
+            ) : null}
+          </TooltipProvider>
         </ConvexProviderWithClerk>
         <Scripts />
       </body>
