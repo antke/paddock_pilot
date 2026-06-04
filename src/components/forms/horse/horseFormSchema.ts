@@ -1,6 +1,8 @@
-import {
-  horseFormSchema,
-  type HorseFormSchema,
-} from 'shared/horses/horseSchema'
+import { horseFormSchema as horseBaseFormSchema } from 'shared/horses/horseSchema'
+import z from 'zod'
 
-export { horseFormSchema, type HorseFormSchema }
+export const horseFormSchema = horseBaseFormSchema.extend({
+  profileImage: z.custom<FileList>().optional(),
+})
+
+export type HorseFormSchema = z.infer<typeof horseFormSchema>

@@ -8,12 +8,17 @@
  * @module
  */
 
+import type * as emails from "../emails.js";
 import type * as events from "../events.js";
 import type * as horses from "../horses.js";
 import type * as http from "../http.js";
 import type * as libs_auth from "../libs/auth.js";
+import type * as libs_entitlements from "../libs/entitlements.js";
+import type * as libs_stablePermissions from "../libs/stablePermissions.js";
+import type * as stableInvitations from "../stableInvitations.js";
 import type * as stableMembers from "../stableMembers.js";
 import type * as stables from "../stables.js";
+import type * as userSubscriptions from "../userSubscriptions.js";
 import type * as users from "../users.js";
 
 import type {
@@ -23,12 +28,17 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  emails: typeof emails;
   events: typeof events;
   horses: typeof horses;
   http: typeof http;
   "libs/auth": typeof libs_auth;
+  "libs/entitlements": typeof libs_entitlements;
+  "libs/stablePermissions": typeof libs_stablePermissions;
+  stableInvitations: typeof stableInvitations;
   stableMembers: typeof stableMembers;
   stables: typeof stables;
+  userSubscriptions: typeof userSubscriptions;
   users: typeof users;
 }>;
 

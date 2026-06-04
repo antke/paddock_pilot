@@ -1,5 +1,7 @@
 import { Checkbox } from '#/components/ui/checkbox'
 import { FormHelpTooltip } from '#/components/forms/FormHelpTooltip'
+import { HorseCard } from '#/components/horses/HorseCard'
+import { cn } from '#/lib/utils'
 import {
   Field,
   FieldDescription,
@@ -38,6 +40,9 @@ import type { EventFormInput, EventFormSchema } from './eventFormSchema'
 type HorseOption = {
   _id: Id<'horses'>
   name: string
+  ownerName?: string
+  breed?: string
+  profileImageUrl?: string | null
 }
 
 type Props = {
@@ -627,12 +632,17 @@ export function EventFormFields({
                 const checked = field.value.includes(horseId)
 
                 return (
-                  <Field key={horseId} orientation="horizontal">
+                  <Field
+                    key={horseId}
+                    orientation="horizontal"
+                    className="items-start"
+                  >
                     <Checkbox
                       id={horseId}
                       checked={checked}
                       disabled={disabled}
                       aria-invalid={fieldState.invalid}
+                      className="mt-4"
                       onCheckedChange={(isChecked) => {
                         field.onChange(
                           isChecked
@@ -641,7 +651,15 @@ export function EventFormFields({
                         )
                       }}
                     />
-                    <FieldLabel htmlFor={horseId}>{horse.name}</FieldLabel>
+                    <FieldLabel htmlFor={horseId} className="w-full">
+                      <HorseCard
+                        horse={horse}
+                        className={cn(
+                          'w-full cursor-pointer',
+                          checked && 'border-primary bg-primary/5',
+                        )}
+                      />
+                    </FieldLabel>
                   </Field>
                 )
               })}

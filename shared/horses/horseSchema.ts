@@ -16,16 +16,29 @@ export const horseBreedSchema = z
   .trim()
   .max(100, 'Breed name cannot be longer than 100 characters')
 
+export const horseOwnerNameSchema = z
+  .string()
+  .trim()
+  .min(1, 'Owner name must have minimum 1 character.')
+  .max(100, 'Owner name cannot be longer than 100 characters.')
+
+export const horseProfileImageIdSchema = z.string().trim()
+
 export const horseFormSchema = z.object({
   name: horseNameSchema,
+  ownerName: horseOwnerNameSchema,
   age: horseAgeSchema,
   breed: horseBreedSchema,
 })
 
 export const horseInputSchema = z.object({
   name: horseNameSchema,
+  ownerName: horseOwnerNameSchema,
   age: horseAgeSchema,
   breed: horseBreedSchema.optional().transform((val) => val || undefined),
+  profileImageId: horseProfileImageIdSchema
+    .optional()
+    .transform((val) => val || undefined),
 })
 
 export type HorseFormSchema = z.infer<typeof horseFormSchema>

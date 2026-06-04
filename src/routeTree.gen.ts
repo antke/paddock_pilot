@@ -10,13 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RssDotxmlRouteImport } from './routes/rss[.]xml'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StablesLayoutRouteImport } from './routes/stables/_layout'
+import { Route as SignUpSplatRouteImport } from './routes/sign-up.$'
 import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
+import { Route as InvitationsTokenRouteImport } from './routes/invitations/$token'
 import { Route as StablesLayoutIndexRouteImport } from './routes/stables/_layout/index'
 import { Route as StablesLayoutCreateRouteImport } from './routes/stables/_layout/create'
 import { Route as StablesLayoutStableIdRouteImport } from './routes/stables/_layout/$stableId'
 import { Route as StablesLayoutStableIdIndexRouteImport } from './routes/stables/_layout/$stableId/index'
+import { Route as StablesLayoutStableIdSettingsRouteImport } from './routes/stables/_layout/$stableId/settings'
 import { Route as StablesLayoutStableIdHorsesRouteImport } from './routes/stables/_layout/$stableId/horses'
 import { Route as StablesLayoutStableIdEventsRouteImport } from './routes/stables/_layout/$stableId/events'
 import { Route as StablesLayoutStableIdEditRouteImport } from './routes/stables/_layout/$stableId/edit'
@@ -25,6 +29,7 @@ import { Route as StablesLayoutStableIdEventsIndexRouteImport } from './routes/s
 import { Route as StablesLayoutStableIdHorsesCreateRouteImport } from './routes/stables/_layout/$stableId/horses/create'
 import { Route as StablesLayoutStableIdHorsesHorseIdRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId'
 import { Route as StablesLayoutStableIdEventsCreateRouteImport } from './routes/stables/_layout/$stableId/events/create'
+import { Route as StablesLayoutStableIdEventsCalendarRouteImport } from './routes/stables/_layout/$stableId/events/calendar'
 import { Route as StablesLayoutStableIdEventsEventIdRouteImport } from './routes/stables/_layout/$stableId/events/$eventId'
 import { Route as StablesLayoutStableIdHorsesHorseIdEditRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/edit'
 import { Route as StablesLayoutStableIdEventsEventIdEditRouteImport } from './routes/stables/_layout/$stableId/events/$eventId/edit'
@@ -32,6 +37,11 @@ import { Route as StablesLayoutStableIdEventsEventIdEditRouteImport } from './ro
 const RssDotxmlRoute = RssDotxmlRouteImport.update({
   id: '/rss.xml',
   path: '/rss.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -44,9 +54,19 @@ const StablesLayoutRoute = StablesLayoutRouteImport.update({
   path: '/stables',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignUpSplatRoute = SignUpSplatRouteImport.update({
+  id: '/sign-up/$',
+  path: '/sign-up/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignInSplatRoute = SignInSplatRouteImport.update({
   id: '/sign-in/$',
   path: '/sign-in/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvitationsTokenRoute = InvitationsTokenRouteImport.update({
+  id: '/invitations/$token',
+  path: '/invitations/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StablesLayoutIndexRoute = StablesLayoutIndexRouteImport.update({
@@ -68,6 +88,12 @@ const StablesLayoutStableIdIndexRoute =
   StablesLayoutStableIdIndexRouteImport.update({
     id: '/',
     path: '/',
+    getParentRoute: () => StablesLayoutStableIdRoute,
+  } as any)
+const StablesLayoutStableIdSettingsRoute =
+  StablesLayoutStableIdSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
     getParentRoute: () => StablesLayoutStableIdRoute,
   } as any)
 const StablesLayoutStableIdHorsesRoute =
@@ -118,6 +144,12 @@ const StablesLayoutStableIdEventsCreateRoute =
     path: '/create',
     getParentRoute: () => StablesLayoutStableIdEventsRoute,
   } as any)
+const StablesLayoutStableIdEventsCalendarRoute =
+  StablesLayoutStableIdEventsCalendarRouteImport.update({
+    id: '/calendar',
+    path: '/calendar',
+    getParentRoute: () => StablesLayoutStableIdEventsRoute,
+  } as any)
 const StablesLayoutStableIdEventsEventIdRoute =
   StablesLayoutStableIdEventsEventIdRouteImport.update({
     id: '/$eventId',
@@ -139,8 +171,11 @@ const StablesLayoutStableIdEventsEventIdEditRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/pricing': typeof PricingRoute
   '/rss.xml': typeof RssDotxmlRoute
+  '/invitations/$token': typeof InvitationsTokenRoute
   '/sign-in/$': typeof SignInSplatRoute
+  '/sign-up/$': typeof SignUpSplatRoute
   '/stables': typeof StablesLayoutRouteWithChildren
   '/stables/$stableId': typeof StablesLayoutStableIdRouteWithChildren
   '/stables/create': typeof StablesLayoutCreateRoute
@@ -148,8 +183,10 @@ export interface FileRoutesByFullPath {
   '/stables/$stableId/edit': typeof StablesLayoutStableIdEditRoute
   '/stables/$stableId/events': typeof StablesLayoutStableIdEventsRouteWithChildren
   '/stables/$stableId/horses': typeof StablesLayoutStableIdHorsesRouteWithChildren
+  '/stables/$stableId/settings': typeof StablesLayoutStableIdSettingsRoute
   '/stables/$stableId/': typeof StablesLayoutStableIdIndexRoute
   '/stables/$stableId/events/$eventId': typeof StablesLayoutStableIdEventsEventIdRouteWithChildren
+  '/stables/$stableId/events/calendar': typeof StablesLayoutStableIdEventsCalendarRoute
   '/stables/$stableId/events/create': typeof StablesLayoutStableIdEventsCreateRoute
   '/stables/$stableId/horses/$horseId': typeof StablesLayoutStableIdHorsesHorseIdRouteWithChildren
   '/stables/$stableId/horses/create': typeof StablesLayoutStableIdHorsesCreateRoute
@@ -160,13 +197,18 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/pricing': typeof PricingRoute
   '/rss.xml': typeof RssDotxmlRoute
+  '/invitations/$token': typeof InvitationsTokenRoute
   '/sign-in/$': typeof SignInSplatRoute
+  '/sign-up/$': typeof SignUpSplatRoute
   '/stables/create': typeof StablesLayoutCreateRoute
   '/stables': typeof StablesLayoutIndexRoute
   '/stables/$stableId/edit': typeof StablesLayoutStableIdEditRoute
+  '/stables/$stableId/settings': typeof StablesLayoutStableIdSettingsRoute
   '/stables/$stableId': typeof StablesLayoutStableIdIndexRoute
   '/stables/$stableId/events/$eventId': typeof StablesLayoutStableIdEventsEventIdRouteWithChildren
+  '/stables/$stableId/events/calendar': typeof StablesLayoutStableIdEventsCalendarRoute
   '/stables/$stableId/events/create': typeof StablesLayoutStableIdEventsCreateRoute
   '/stables/$stableId/horses/$horseId': typeof StablesLayoutStableIdHorsesHorseIdRouteWithChildren
   '/stables/$stableId/horses/create': typeof StablesLayoutStableIdHorsesCreateRoute
@@ -178,8 +220,11 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/pricing': typeof PricingRoute
   '/rss.xml': typeof RssDotxmlRoute
+  '/invitations/$token': typeof InvitationsTokenRoute
   '/sign-in/$': typeof SignInSplatRoute
+  '/sign-up/$': typeof SignUpSplatRoute
   '/stables/_layout': typeof StablesLayoutRouteWithChildren
   '/stables/_layout/$stableId': typeof StablesLayoutStableIdRouteWithChildren
   '/stables/_layout/create': typeof StablesLayoutCreateRoute
@@ -187,8 +232,10 @@ export interface FileRoutesById {
   '/stables/_layout/$stableId/edit': typeof StablesLayoutStableIdEditRoute
   '/stables/_layout/$stableId/events': typeof StablesLayoutStableIdEventsRouteWithChildren
   '/stables/_layout/$stableId/horses': typeof StablesLayoutStableIdHorsesRouteWithChildren
+  '/stables/_layout/$stableId/settings': typeof StablesLayoutStableIdSettingsRoute
   '/stables/_layout/$stableId/': typeof StablesLayoutStableIdIndexRoute
   '/stables/_layout/$stableId/events/$eventId': typeof StablesLayoutStableIdEventsEventIdRouteWithChildren
+  '/stables/_layout/$stableId/events/calendar': typeof StablesLayoutStableIdEventsCalendarRoute
   '/stables/_layout/$stableId/events/create': typeof StablesLayoutStableIdEventsCreateRoute
   '/stables/_layout/$stableId/horses/$horseId': typeof StablesLayoutStableIdHorsesHorseIdRouteWithChildren
   '/stables/_layout/$stableId/horses/create': typeof StablesLayoutStableIdHorsesCreateRoute
@@ -201,8 +248,11 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/pricing'
     | '/rss.xml'
+    | '/invitations/$token'
     | '/sign-in/$'
+    | '/sign-up/$'
     | '/stables'
     | '/stables/$stableId'
     | '/stables/create'
@@ -210,8 +260,10 @@ export interface FileRouteTypes {
     | '/stables/$stableId/edit'
     | '/stables/$stableId/events'
     | '/stables/$stableId/horses'
+    | '/stables/$stableId/settings'
     | '/stables/$stableId/'
     | '/stables/$stableId/events/$eventId'
+    | '/stables/$stableId/events/calendar'
     | '/stables/$stableId/events/create'
     | '/stables/$stableId/horses/$horseId'
     | '/stables/$stableId/horses/create'
@@ -222,13 +274,18 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/pricing'
     | '/rss.xml'
+    | '/invitations/$token'
     | '/sign-in/$'
+    | '/sign-up/$'
     | '/stables/create'
     | '/stables'
     | '/stables/$stableId/edit'
+    | '/stables/$stableId/settings'
     | '/stables/$stableId'
     | '/stables/$stableId/events/$eventId'
+    | '/stables/$stableId/events/calendar'
     | '/stables/$stableId/events/create'
     | '/stables/$stableId/horses/$horseId'
     | '/stables/$stableId/horses/create'
@@ -239,8 +296,11 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/pricing'
     | '/rss.xml'
+    | '/invitations/$token'
     | '/sign-in/$'
+    | '/sign-up/$'
     | '/stables/_layout'
     | '/stables/_layout/$stableId'
     | '/stables/_layout/create'
@@ -248,8 +308,10 @@ export interface FileRouteTypes {
     | '/stables/_layout/$stableId/edit'
     | '/stables/_layout/$stableId/events'
     | '/stables/_layout/$stableId/horses'
+    | '/stables/_layout/$stableId/settings'
     | '/stables/_layout/$stableId/'
     | '/stables/_layout/$stableId/events/$eventId'
+    | '/stables/_layout/$stableId/events/calendar'
     | '/stables/_layout/$stableId/events/create'
     | '/stables/_layout/$stableId/horses/$horseId'
     | '/stables/_layout/$stableId/horses/create'
@@ -261,8 +323,11 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PricingRoute: typeof PricingRoute
   RssDotxmlRoute: typeof RssDotxmlRoute
+  InvitationsTokenRoute: typeof InvitationsTokenRoute
   SignInSplatRoute: typeof SignInSplatRoute
+  SignUpSplatRoute: typeof SignUpSplatRoute
   StablesLayoutRoute: typeof StablesLayoutRouteWithChildren
 }
 
@@ -273,6 +338,13 @@ declare module '@tanstack/react-router' {
       path: '/rss.xml'
       fullPath: '/rss.xml'
       preLoaderRoute: typeof RssDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -289,11 +361,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StablesLayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sign-up/$': {
+      id: '/sign-up/$'
+      path: '/sign-up/$'
+      fullPath: '/sign-up/$'
+      preLoaderRoute: typeof SignUpSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sign-in/$': {
       id: '/sign-in/$'
       path: '/sign-in/$'
       fullPath: '/sign-in/$'
       preLoaderRoute: typeof SignInSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invitations/$token': {
+      id: '/invitations/$token'
+      path: '/invitations/$token'
+      fullPath: '/invitations/$token'
+      preLoaderRoute: typeof InvitationsTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stables/_layout/': {
@@ -322,6 +408,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/stables/$stableId/'
       preLoaderRoute: typeof StablesLayoutStableIdIndexRouteImport
+      parentRoute: typeof StablesLayoutStableIdRoute
+    }
+    '/stables/_layout/$stableId/settings': {
+      id: '/stables/_layout/$stableId/settings'
+      path: '/settings'
+      fullPath: '/stables/$stableId/settings'
+      preLoaderRoute: typeof StablesLayoutStableIdSettingsRouteImport
       parentRoute: typeof StablesLayoutStableIdRoute
     }
     '/stables/_layout/$stableId/horses': {
@@ -380,6 +473,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StablesLayoutStableIdEventsCreateRouteImport
       parentRoute: typeof StablesLayoutStableIdEventsRoute
     }
+    '/stables/_layout/$stableId/events/calendar': {
+      id: '/stables/_layout/$stableId/events/calendar'
+      path: '/calendar'
+      fullPath: '/stables/$stableId/events/calendar'
+      preLoaderRoute: typeof StablesLayoutStableIdEventsCalendarRouteImport
+      parentRoute: typeof StablesLayoutStableIdEventsRoute
+    }
     '/stables/_layout/$stableId/events/$eventId': {
       id: '/stables/_layout/$stableId/events/$eventId'
       path: '/$eventId'
@@ -421,6 +521,7 @@ const StablesLayoutStableIdEventsEventIdRouteWithChildren =
 
 interface StablesLayoutStableIdEventsRouteChildren {
   StablesLayoutStableIdEventsEventIdRoute: typeof StablesLayoutStableIdEventsEventIdRouteWithChildren
+  StablesLayoutStableIdEventsCalendarRoute: typeof StablesLayoutStableIdEventsCalendarRoute
   StablesLayoutStableIdEventsCreateRoute: typeof StablesLayoutStableIdEventsCreateRoute
   StablesLayoutStableIdEventsIndexRoute: typeof StablesLayoutStableIdEventsIndexRoute
 }
@@ -429,6 +530,8 @@ const StablesLayoutStableIdEventsRouteChildren: StablesLayoutStableIdEventsRoute
   {
     StablesLayoutStableIdEventsEventIdRoute:
       StablesLayoutStableIdEventsEventIdRouteWithChildren,
+    StablesLayoutStableIdEventsCalendarRoute:
+      StablesLayoutStableIdEventsCalendarRoute,
     StablesLayoutStableIdEventsCreateRoute:
       StablesLayoutStableIdEventsCreateRoute,
     StablesLayoutStableIdEventsIndexRoute:
@@ -480,6 +583,7 @@ interface StablesLayoutStableIdRouteChildren {
   StablesLayoutStableIdEditRoute: typeof StablesLayoutStableIdEditRoute
   StablesLayoutStableIdEventsRoute: typeof StablesLayoutStableIdEventsRouteWithChildren
   StablesLayoutStableIdHorsesRoute: typeof StablesLayoutStableIdHorsesRouteWithChildren
+  StablesLayoutStableIdSettingsRoute: typeof StablesLayoutStableIdSettingsRoute
   StablesLayoutStableIdIndexRoute: typeof StablesLayoutStableIdIndexRoute
 }
 
@@ -489,6 +593,7 @@ const StablesLayoutStableIdRouteChildren: StablesLayoutStableIdRouteChildren = {
     StablesLayoutStableIdEventsRouteWithChildren,
   StablesLayoutStableIdHorsesRoute:
     StablesLayoutStableIdHorsesRouteWithChildren,
+  StablesLayoutStableIdSettingsRoute: StablesLayoutStableIdSettingsRoute,
   StablesLayoutStableIdIndexRoute: StablesLayoutStableIdIndexRoute,
 }
 
@@ -515,8 +620,11 @@ const StablesLayoutRouteWithChildren = StablesLayoutRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PricingRoute: PricingRoute,
   RssDotxmlRoute: RssDotxmlRoute,
+  InvitationsTokenRoute: InvitationsTokenRoute,
   SignInSplatRoute: SignInSplatRoute,
+  SignUpSplatRoute: SignUpSplatRoute,
   StablesLayoutRoute: StablesLayoutRouteWithChildren,
 }
 export const routeTree = rootRouteImport

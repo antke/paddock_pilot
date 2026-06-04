@@ -1,5 +1,5 @@
 import { Button } from '#/components/ui/button'
-import { Item, ItemActions, ItemContent, ItemTitle } from '#/components/ui/item'
+import { HorseCard } from './HorseCard'
 import { convexQuery } from '@convex-dev/react-query'
 import { ArrowRightIcon } from '@phosphor-icons/react'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -28,11 +28,10 @@ export function HorseList({ stableId }: Props) {
   return (
     <div className="grid gap-4">
       {horses.map((horse) => (
-        <Item key={horse._id} variant={'outline'}>
-          <ItemTitle>{horse.name}</ItemTitle>
-          <ItemContent>age: {horse.age}</ItemContent>
-          {horse.breed && <ItemContent>{horse.breed}</ItemContent>}
-          <ItemActions>
+        <HorseCard
+          key={horse._id}
+          horse={horse}
+          action={
             <Link
               to="/stables/$stableId/horses/$horseId"
               params={{ stableId, horseId: horse._id }}
@@ -41,8 +40,8 @@ export function HorseList({ stableId }: Props) {
                 <ArrowRightIcon />
               </Button>
             </Link>
-          </ItemActions>
-        </Item>
+          }
+        />
       ))}
     </div>
   )

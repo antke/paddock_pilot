@@ -28,9 +28,9 @@ export const userFields = {
   updatedAt: v.number(),
 }
 
-const userSchema = defineTable({ ...userFields }).index('by_clerk_id', [
-  'clerkId',
-])
+const userSchema = defineTable({ ...userFields })
+  .index('by_clerk_id', ['clerkId'])
+  .index('by_email', ['email'])
 
 /**
  * STABLES
@@ -58,6 +58,70 @@ export const stableMembersFields = {
 const stableMembersSchema = defineTable({ ...stableMembersFields })
   .index('by_stable_id', ['stableId'])
   .index('by_user_id', ['userId'])
+  .index('by_stable_id_user_id', ['stableId', 'userId'])
+
+/**
+ * STABLE INVITATIONS
+ */
+export const stableInvitationRole = v.union(v.literal('member'), v.literal('guest'))
+
+export const stableInvitationStatus = v.union(
+  v.literal('pending'),
+  v.literal('accepted_pending_subscription'),
+  v.literal('accepted'),
+  v.literal('revoked'),
+  v.literal('expired'),
+)
+
+export const stableInvitationsFields = {
+  stableId: v.id('stables'),
+  email: v.string(),
+  role: stableInvitationRole,
+  status: stableInvitationStatus,
+  token: v.string(),
+  invitedBy: v.id('users'),
+  acceptedBy: v.optional(v.id('users')),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+  expiresAt: v.number(),
+  acceptedAt: v.optional(v.number()),
+}
+
+const stableInvitationsSchema = defineTable({ ...stableInvitationsFields })
+  .index('by_stable_id', ['stableId'])
+  .index('by_email_status', ['email', 'status'])
+  .index('by_token', ['token'])
+  .index('by_accepted_by_status', ['acceptedBy', 'status'])
+
+/**
+ * USER SUBSCRIPTIONS
+ */
+export const userSubscriptionPlan = v.union(
+  v.literal('free'),
+  v.literal('personal_plus'),
+  v.literal('personal_pro'),
+)
+
+export const userSubscriptionStatus = v.union(
+  v.literal('active'),
+  v.literal('past_due'),
+  v.literal('canceled'),
+  v.literal('incomplete'),
+)
+
+export const userSubscriptionsFields = {
+  userId: v.id('users'),
+  clerkSubscriptionId: v.optional(v.string()),
+  plan: userSubscriptionPlan,
+  status: userSubscriptionStatus,
+  currentPeriodEnd: v.optional(v.number()),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+}
+
+const userSubscriptionsSchema = defineTable({ ...userSubscriptionsFields })
+  .index('by_user_id', ['userId'])
+  .index('by_user_id_plan', ['userId', 'plan'])
 
 /**
  * HORSES
@@ -66,8 +130,10 @@ export const horsesFields = {
   stableId: v.id('stables'),
   ownerId: v.id('users'),
   name: v.string(),
+  ownerName: v.optional(v.string()),
   age: v.number(),
   breed: v.optional(v.string()),
+  profileImageId: v.optional(v.id('_storage')),
 }
 
 const horsesSchema = defineTable({ ...horsesFields })
@@ -146,17 +212,34 @@ const eventsSchema = defineTable({ ...eventFields })
 export const eventHorsesFields = {
   eventId: v.id('events'),
   horseId: v.id('horses'),
+  status: v.optional(
+    v.union(
+      v.literal('confirmed'),
+      v.literal('invited'),
+      v.literal('declined'),
+    ),
+  ),
+  invitedBy: v.optional(v.id('users')),
+  approvedBy: v.optional(v.id('users')),
+  invitedAt: v.optional(v.number()),
+  approvedAt: v.optional(v.number()),
+  declinedAt: v.optional(v.number()),
+  createdAt: v.optional(v.number()),
+  updatedAt: v.optional(v.number()),
 }
 
 const eventHorsesSchema = defineTable({ ...eventHorsesFields })
   .index('by_event_id', ['eventId'])
   .index('by_horse_id', ['horseId'])
   .index('by_horse_id_event_id', ['horseId', 'eventId'])
+  .index('by_event_id_status', ['eventId', 'status'])
 
 export default defineSchema({
   users: userSchema,
   stables: stablesSchema,
   stableMembers: stableMembersSchema,
+  stableInvitations: stableInvitationsSchema,
+  userSubscriptions: userSubscriptionsSchema,
   horses: horsesSchema,
   events: eventsSchema,
   eventsHorses: eventHorsesSchema,

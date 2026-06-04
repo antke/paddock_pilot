@@ -1,6 +1,7 @@
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import {
   HeadContent,
+  Link,
   Outlet,
   Scripts,
   createRootRoute,
@@ -9,6 +10,14 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import Footer from '../components/Footer'
 import Header from '../components/Header'
 import { PageLayout } from '#/components/layout/PageLayout'
+import { buttonVariants } from '#/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '#/components/ui/card'
 import { TooltipProvider } from '#/components/ui/tooltip'
 
 import ConvexProviderWithClerk from '../integrations/clerk/provider'
@@ -47,7 +56,26 @@ export const Route = createRootRoute({
   ssr: false,
   shellComponent: RootDocument,
   component: RootComponent,
+  notFoundComponent: NotFoundPage,
 })
+
+function NotFoundPage() {
+  return (
+    <Card className="mx-auto max-w-xl">
+      <CardHeader>
+        <CardTitle>Page not found</CardTitle>
+        <CardDescription>
+          The page you are looking for does not exist or has moved.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Link to="/" className={buttonVariants()}>
+          Go home
+        </Link>
+      </CardContent>
+    </Card>
+  )
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
