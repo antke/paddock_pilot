@@ -18,6 +18,15 @@ const validateStableInput = (args: {
   name: string
   location: string
   description?: string
+  contactName?: string
+  contactPhone?: string
+  emergencyPhone?: string
+  addressLine1?: string
+  addressLine2?: string
+  postcode?: string
+  country?: string
+  yardRules?: string
+  openingHours?: string
 }) => {
   const result = stableInputSchema.safeParse(args)
 

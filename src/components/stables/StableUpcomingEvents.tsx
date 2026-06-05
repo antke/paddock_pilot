@@ -14,11 +14,8 @@ import {
   formatRecurrence,
 } from '#/components/events/eventDisplay'
 import { Link } from '@tanstack/react-router'
-import {
-  getUpcomingEvents,
-  getDateBadgeParts,
-  type StableDashboardEvent,
-} from './stableDashboardDates'
+import { getUpcomingEvents, getDateBadgeParts } from './stableDashboardDates'
+import type { StableDashboardEvent } from './stableDashboardDates'
 
 type StableUpcomingEventsProps = {
   stableId: string

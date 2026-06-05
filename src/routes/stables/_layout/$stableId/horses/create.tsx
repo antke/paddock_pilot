@@ -1,10 +1,8 @@
 import { useMutation } from 'convex/react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
-import {
-  horseFormSchema,
-  type HorseFormSchema,
-} from '#/components/forms/horse/horseFormSchema'
+import { horseFormSchema } from '#/components/forms/horse/horseFormSchema'
+import type { HorseFormSchema } from '#/components/forms/horse/horseFormSchema'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import type { Id } from 'convex/_generated/dataModel'
@@ -41,6 +39,27 @@ function RouteComponent() {
       name: '',
       ownerName: '',
       breed: '',
+      color: '',
+      height: '',
+      dateOfBirth: '',
+      passportNumber: '',
+      microchipNumber: '',
+      insuranceProvider: '',
+      insurancePolicyNumber: '',
+      sire: '',
+      dam: '',
+      discipline: '',
+      dewormingNotes: '',
+      allergies: [],
+      emergencyNotes: '',
+      vetName: '',
+      vetPhone: '',
+      farrierName: '',
+      farrierPhone: '',
+      nutritionNotes: '',
+      nutritionRecommended: [],
+      nutritionAvoid: [],
+      feedingRoutine: '',
     },
   })
 
@@ -71,6 +90,29 @@ function RouteComponent() {
         ownerName: data.ownerName,
         age: data.age,
         breed: data.breed,
+        sex: data.sex,
+        color: data.color,
+        height: data.height,
+        dateOfBirth: data.dateOfBirth || undefined,
+        passportNumber: data.passportNumber,
+        microchipNumber: data.microchipNumber,
+        insuranceProvider: data.insuranceProvider,
+        insurancePolicyNumber: data.insurancePolicyNumber,
+        sire: data.sire,
+        dam: data.dam,
+        discipline: data.discipline,
+        shoeingStatus: data.shoeingStatus,
+        dewormingNotes: data.dewormingNotes,
+        allergies: data.allergies,
+        emergencyNotes: data.emergencyNotes,
+        vetName: data.vetName,
+        vetPhone: data.vetPhone,
+        farrierName: data.farrierName,
+        farrierPhone: data.farrierPhone,
+        nutritionNotes: data.nutritionNotes,
+        nutritionRecommended: data.nutritionRecommended,
+        nutritionAvoid: data.nutritionAvoid,
+        feedingRoutine: data.feedingRoutine,
         profileImageId,
         stableId: stableId as Id<'stables'>,
       })

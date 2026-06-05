@@ -1,8 +1,6 @@
 import { StableFormFields } from '#/components/forms/stable/StableFormFields'
-import {
-  stableFormSchema,
-  type StableFormSchema,
-} from '#/components/forms/stable/stableFormSchema'
+import { stableFormSchema } from '#/components/forms/stable/stableFormSchema'
+import type { StableFormSchema } from '#/components/forms/stable/stableFormSchema'
 import { Button } from '#/components/ui/button'
 import {
   Card,
@@ -33,6 +31,15 @@ function RouteComponent() {
       name: '',
       location: '',
       description: '',
+      contactName: '',
+      contactPhone: '',
+      emergencyPhone: '',
+      addressLine1: '',
+      addressLine2: '',
+      postcode: '',
+      country: '',
+      yardRules: '',
+      openingHours: '',
     },
   })
 
@@ -42,6 +49,15 @@ function RouteComponent() {
         name: data.name,
         location: data.location,
         description: data.description,
+        contactName: data.contactName,
+        contactPhone: data.contactPhone,
+        emergencyPhone: data.emergencyPhone,
+        addressLine1: data.addressLine1,
+        addressLine2: data.addressLine2,
+        postcode: data.postcode,
+        country: data.country,
+        yardRules: data.yardRules,
+        openingHours: data.openingHours,
       })
 
       toast.success('Stable created', {

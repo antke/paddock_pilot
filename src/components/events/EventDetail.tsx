@@ -10,11 +10,14 @@ import { buttonVariants } from '#/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
 import { Link } from '@tanstack/react-router'
 import type { Doc } from 'convex/_generated/dataModel'
+import { eventStatusLabels  } from 'shared/events/eventSchema'
+import type {EventStatus} from 'shared/events/eventSchema';
 import {
   formatEventDate,
   formatEventType,
   formatRecurrence,
 } from './eventDisplay'
+import { EventHorseServiceDetailsCard } from './EventHorseServiceDetailsCard'
 
 type EventDetailProps = {
   stableId: string
@@ -24,6 +27,7 @@ type EventDetailProps = {
 
 export function EventDetail({ stableId, event, horses }: EventDetailProps) {
   const recurrenceSummary = formatRecurrence(event.recurrence)
+  const eventStatus: EventStatus = event.status ?? 'planned'
 
   return (
     <div className="grid gap-6">
@@ -56,6 +60,9 @@ export function EventDetail({ stableId, event, horses }: EventDetailProps) {
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-semibold">{event.title}</h1>
             <Badge variant="outline">{formatEventType(event.type)}</Badge>
+            <Badge variant={eventStatus === 'planned' ? 'secondary' : 'outline'}>
+              {eventStatusLabels[eventStatus]}
+            </Badge>
             {recurrenceSummary && <Badge variant="secondary">Recurring</Badge>}
           </div>
 
@@ -83,8 +90,27 @@ export function EventDetail({ stableId, event, horses }: EventDetailProps) {
             <DetailItem label="Date" value={formatEventDate(event.date)} />
             <DetailItem label="Time" value={event.time} />
             <DetailItem label="Type" value={formatEventType(event.type)} />
+            <DetailItem
+              label="Status"
+              value={eventStatusLabels[eventStatus]}
+            />
             {event.location && (
               <DetailItem label="Location" value={event.location} />
+            )}
+            {event.providerName && (
+              <DetailItem label="Provider" value={event.providerName} />
+            )}
+            {event.providerPhone && (
+              <DetailItem label="Provider phone" value={event.providerPhone} />
+            )}
+            {event.totalCost !== undefined && (
+              <DetailItem label="Total cost" value={formatCost(event.totalCost)} />
+            )}
+            {event.costPerHorse !== undefined && (
+              <DetailItem
+                label="Cost per horse"
+                value={formatCost(event.costPerHorse)}
+              />
             )}
           </div>
 
@@ -96,6 +122,13 @@ export function EventDetail({ stableId, event, horses }: EventDetailProps) {
             <div className="grid gap-1">
               <span className="text-muted-foreground">Description</span>
               <p>{event.description}</p>
+            </div>
+          )}
+
+          {event.notesAfterCompletion && (
+            <div className="grid gap-1">
+              <span className="text-muted-foreground">Completion notes</span>
+              <p className="whitespace-pre-line">{event.notesAfterCompletion}</p>
             </div>
           )}
         </CardContent>
@@ -118,6 +151,8 @@ export function EventDetail({ stableId, event, horses }: EventDetailProps) {
           ))}
         </CardContent>
       </Card>
+
+      <EventHorseServiceDetailsCard stableId={stableId} eventId={event._id} />
     </div>
   )
 }
@@ -129,4 +164,11 @@ function DetailItem({ label, value }: { label: string; value: string }) {
       <span>{value}</span>
     </div>
   )
+}
+
+function formatCost(value: number) {
+  return new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency: 'GBP',
+  }).format(value)
 }

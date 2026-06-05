@@ -1,12 +1,8 @@
 import { ConvexError, v } from 'convex/values'
 import { internal } from './_generated/api'
 import type { Id } from './_generated/dataModel'
-import {
-  internalMutation,
-  mutation,
-  query,
-  type MutationCtx,
-} from './_generated/server'
+import { internalMutation, mutation, query } from './_generated/server'
+import type { MutationCtx } from './_generated/server'
 import { hasPersonalPlus } from './libs/entitlements'
 import {
   assertCanManageMembers,
@@ -81,7 +77,9 @@ export const create = mutation({
       .first()
 
     if (existingInvitation) {
-      throw new ConvexError('There is already a pending invitation for this email')
+      throw new ConvexError(
+        'There is already a pending invitation for this email',
+      )
     }
 
     const invitationId = await ctx.db.insert('stableInvitations', {

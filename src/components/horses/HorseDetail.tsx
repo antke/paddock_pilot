@@ -10,6 +10,13 @@ import { buttonVariants } from '#/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
 import { Link } from '@tanstack/react-router'
 import type { Doc } from 'convex/_generated/dataModel'
+import { HorseDocumentsCard } from '../documents/HorseDocumentsCard'
+import { HorseCareRemindersCard } from '../reminders/HorseCareRemindersCard'
+import { HorseHealthIssuesCard } from './HorseHealthIssuesCard'
+import { HorseMedicationRecordsCard } from './HorseMedicationRecordsCard'
+import { HorseNutritionCard } from './HorseNutritionCard'
+import { HorseNutritionLogsCard } from './HorseNutritionLogsCard'
+import { HorseWeightRecordsCard } from './HorseWeightRecordsCard'
 
 type HorseDetailHorse = Doc<'horses'> & {
   profileImageUrl?: string | null
@@ -20,6 +27,18 @@ type HorseDetailProps = {
   horse: HorseDetailHorse
   events: Array<Doc<'events'>>
 }
+
+const sexLabels = {
+  mare: 'Mare',
+  gelding: 'Gelding',
+  stallion: 'Stallion',
+} satisfies Record<NonNullable<Doc<'horses'>['sex']>, string>
+
+const shoeingStatusLabels = {
+  barefoot: 'Barefoot',
+  front_shoes: 'Front shoes',
+  full_set: 'Full set',
+} satisfies Record<NonNullable<Doc<'horses'>['shoeingStatus']>, string>
 
 export function HorseDetail({ stableId, horse, events }: HorseDetailProps) {
   return (
@@ -69,13 +88,29 @@ export function HorseDetail({ stableId, horse, events }: HorseDetailProps) {
           </div>
         </div>
 
-        <Link
-          to="/stables/$stableId/horses/$horseId/edit"
-          params={{ stableId, horseId: horse._id }}
-          className={buttonVariants({ variant: 'outline' })}
-        >
-          Edit horse
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            to="/stables/$stableId/horses/$horseId/care-summary"
+            params={{ stableId, horseId: horse._id }}
+            className={buttonVariants({ variant: 'outline' })}
+          >
+            Care summary
+          </Link>
+          <Link
+            to="/stables/$stableId/horses/$horseId/timeline"
+            params={{ stableId, horseId: horse._id }}
+            className={buttonVariants({ variant: 'outline' })}
+          >
+            Timeline
+          </Link>
+          <Link
+            to="/stables/$stableId/horses/$horseId/edit"
+            params={{ stableId, horseId: horse._id }}
+            className={buttonVariants({ variant: 'outline' })}
+          >
+            Edit horse
+          </Link>
+        </div>
       </header>
 
       <Card>
@@ -86,8 +121,116 @@ export function HorseDetail({ stableId, horse, events }: HorseDetailProps) {
         <CardContent className="grid gap-3 text-sm sm:grid-cols-2">
           <DetailItem label="Age" value={`${horse.age}`} />
           {horse.breed && <DetailItem label="Breed" value={horse.breed} />}
+          {horse.sex && <DetailItem label="Sex" value={sexLabels[horse.sex]} />}
+          {horse.color && <DetailItem label="Color" value={horse.color} />}
+          {horse.height && <DetailItem label="Height" value={horse.height} />}
+          {horse.discipline && (
+            <DetailItem label="Discipline" value={horse.discipline} />
+          )}
+          {horse.dateOfBirth && (
+            <DetailItem label="Date of birth" value={horse.dateOfBirth} />
+          )}
+          {horse.passportNumber && (
+            <DetailItem label="Passport number" value={horse.passportNumber} />
+          )}
+          {horse.microchipNumber && (
+            <DetailItem label="Microchip" value={horse.microchipNumber} />
+          )}
+          {horse.insuranceProvider && (
+            <DetailItem label="Insurance" value={horse.insuranceProvider} />
+          )}
+          {horse.insurancePolicyNumber && (
+            <DetailItem
+              label="Insurance policy"
+              value={horse.insurancePolicyNumber}
+            />
+          )}
         </CardContent>
       </Card>
+
+      {(horse.sire ||
+        horse.dam ||
+        horse.shoeingStatus ||
+        horse.dewormingNotes ||
+        horse.allergies?.length) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Additional profile</CardTitle>
+          </CardHeader>
+
+          <CardContent className="grid gap-3 text-sm sm:grid-cols-2">
+            {horse.sire && <DetailItem label="Sire" value={horse.sire} />}
+            {horse.dam && <DetailItem label="Dam" value={horse.dam} />}
+            {horse.shoeingStatus && (
+              <DetailItem
+                label="Shoeing status"
+                value={shoeingStatusLabels[horse.shoeingStatus]}
+              />
+            )}
+            {horse.allergies?.length ? (
+              <div className="grid gap-1 sm:col-span-2">
+                <span className="text-muted-foreground">Allergies</span>
+                <ul className="list-disc space-y-1 pl-5">
+                  {horse.allergies.map((allergy) => (
+                    <li key={allergy}>{allergy}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {horse.dewormingNotes && (
+              <div className="grid gap-1 sm:col-span-2">
+                <span className="text-muted-foreground">Deworming notes</span>
+                <p className="whitespace-pre-wrap">{horse.dewormingNotes}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {(horse.vetName ||
+        horse.vetPhone ||
+        horse.farrierName ||
+        horse.farrierPhone ||
+        horse.emergencyNotes) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Care contacts</CardTitle>
+          </CardHeader>
+
+          <CardContent className="grid gap-3 text-sm sm:grid-cols-2">
+            {horse.vetName && <DetailItem label="Vet" value={horse.vetName} />}
+            {horse.vetPhone && (
+              <DetailItem label="Vet phone" value={horse.vetPhone} />
+            )}
+            {horse.farrierName && (
+              <DetailItem label="Farrier" value={horse.farrierName} />
+            )}
+            {horse.farrierPhone && (
+              <DetailItem label="Farrier phone" value={horse.farrierPhone} />
+            )}
+            {horse.emergencyNotes && (
+              <div className="grid gap-1 sm:col-span-2">
+                <span className="text-muted-foreground">Emergency notes</span>
+                <p className="whitespace-pre-wrap">{horse.emergencyNotes}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <HorseMedicationRecordsCard horse={horse} />
+
+      <HorseCareRemindersCard horse={horse} />
+
+      <HorseDocumentsCard horse={horse} />
+
+      <HorseNutritionCard horse={horse} />
+
+      <HorseNutritionLogsCard horse={horse} />
+
+      <HorseWeightRecordsCard horse={horse} />
+
+      <HorseHealthIssuesCard horse={horse} />
 
       <section className="grid gap-4">
         <div className="flex flex-wrap items-center justify-between gap-4">

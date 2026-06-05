@@ -1,5 +1,4 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { Outlet } from '@tanstack/react-router'
+import { createFileRoute, redirect, Outlet  } from '@tanstack/react-router'
 import { auth } from '@clerk/tanstack-react-start/server'
 import { createServerFn } from '@tanstack/react-start'
 import { RoutePending } from '#/components/layout/RoutePending'

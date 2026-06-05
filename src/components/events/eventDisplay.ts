@@ -1,9 +1,6 @@
 import type { Doc } from 'convex/_generated/dataModel'
-import {
-  dayOfWeekLabels,
-  eventTypeLabels,
-  type RecurrenceOrdinal,
-} from 'shared/events/eventSchema'
+import { dayOfWeekLabels, eventTypeLabels } from 'shared/events/eventSchema'
+import type { RecurrenceOrdinal } from 'shared/events/eventSchema'
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   month: 'short',

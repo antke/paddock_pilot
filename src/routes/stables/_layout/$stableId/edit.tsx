@@ -1,8 +1,6 @@
 import { StableFormFields } from '#/components/forms/stable/StableFormFields'
-import {
-  stableFormSchema,
-  type StableFormSchema,
-} from '#/components/forms/stable/stableFormSchema'
+import { stableFormSchema } from '#/components/forms/stable/stableFormSchema'
+import type { StableFormSchema } from '#/components/forms/stable/stableFormSchema'
 import { Button } from '#/components/ui/button'
 import {
   Card,
@@ -52,6 +50,15 @@ function EditStableForm({ stable }: EditStableFormProps) {
       name: stable.name,
       location: stable.location,
       description: stable.description ?? '',
+      contactName: stable.contactName ?? '',
+      contactPhone: stable.contactPhone ?? '',
+      emergencyPhone: stable.emergencyPhone ?? '',
+      addressLine1: stable.addressLine1 ?? '',
+      addressLine2: stable.addressLine2 ?? '',
+      postcode: stable.postcode ?? '',
+      country: stable.country ?? '',
+      yardRules: stable.yardRules ?? '',
+      openingHours: stable.openingHours ?? '',
     },
   })
 

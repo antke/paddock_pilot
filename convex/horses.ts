@@ -17,6 +17,29 @@ const validateHorseInput = (args: {
   ownerName?: string
   age: number
   breed?: string
+  sex?: 'mare' | 'gelding' | 'stallion'
+  color?: string
+  height?: string
+  dateOfBirth?: string
+  passportNumber?: string
+  microchipNumber?: string
+  insuranceProvider?: string
+  insurancePolicyNumber?: string
+  sire?: string
+  dam?: string
+  discipline?: string
+  shoeingStatus?: 'barefoot' | 'front_shoes' | 'full_set'
+  dewormingNotes?: string
+  allergies?: Array<string>
+  emergencyNotes?: string
+  vetName?: string
+  vetPhone?: string
+  farrierName?: string
+  farrierPhone?: string
+  nutritionNotes?: string
+  nutritionRecommended?: Array<string>
+  nutritionAvoid?: Array<string>
+  feedingRoutine?: string
   profileImageId?: Id<'_storage'>
 }) => {
   const result = horseInputSchema.safeParse(args)

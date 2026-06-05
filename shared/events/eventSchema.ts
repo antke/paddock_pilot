@@ -9,6 +9,8 @@ export const eventTypes = [
   'other',
 ] as const
 
+export const eventStatuses = ['planned', 'completed', 'cancelled'] as const
+
 export const recurrenceFrequencies = ['daily', 'weekly', 'monthly'] as const
 
 export const recurrenceMonthlyModes = ['dayOfMonth', 'weekdayPattern'] as const
@@ -30,6 +32,12 @@ export const eventTypeLabels = {
   massage: 'Massage',
   other: 'Other',
 } satisfies Record<EventType, string>
+
+export const eventStatusLabels = {
+  planned: 'Planned',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+} satisfies Record<EventStatus, string>
 
 export const dayOfWeekLabels = {
   0: 'Sunday',
@@ -66,6 +74,28 @@ export const eventLocationSchema = z
   .string()
   .trim()
   .max(200, 'Location cannot be longer than 200 characters.')
+
+export const eventProviderNameSchema = z
+  .string()
+  .trim()
+  .max(100, 'Provider name cannot be longer than 100 characters.')
+
+export const eventProviderPhoneSchema = z
+  .string()
+  .trim()
+  .max(50, 'Provider phone cannot be longer than 50 characters.')
+
+export const eventNotesAfterCompletionSchema = z
+  .string()
+  .trim()
+  .max(1000, 'Completion notes cannot be longer than 1000 characters.')
+
+export const eventCostSchema = z
+  .union([z.number(), z.nan(), z.undefined()])
+  .transform((val) => (val === undefined || Number.isNaN(val) ? undefined : val))
+  .pipe(z.number().min(0, 'Cost cannot be negative.').max(100000, 'Cost is too high.').optional())
+
+export const eventStatusSchema = z.enum(eventStatuses)
 
 export const eventHorseIdsSchema = z
   .array(z.string().min(1))
@@ -207,6 +237,12 @@ export const eventInputSchema = z.object({
   title: eventTitleSchema,
   description: optionalText(eventDescriptionSchema),
   location: optionalText(eventLocationSchema),
+  providerName: optionalText(eventProviderNameSchema),
+  providerPhone: optionalText(eventProviderPhoneSchema),
+  totalCost: eventCostSchema,
+  costPerHorse: eventCostSchema,
+  status: eventStatusSchema.optional(),
+  notesAfterCompletion: optionalText(eventNotesAfterCompletionSchema),
   recurrence: eventRecurrenceSchema.optional(),
 })
 
@@ -225,6 +261,7 @@ export const eventFormSchema = eventInputSchema
   })
 
 export type EventType = (typeof eventTypes)[number]
+export type EventStatus = (typeof eventStatuses)[number]
 export type RecurrenceFrequency = (typeof recurrenceFrequencies)[number]
 export type RecurrenceMonthlyMode = (typeof recurrenceMonthlyModes)[number]
 export type RecurrenceOrdinal = (typeof recurrenceOrdinals)[number]

@@ -18,8 +18,8 @@ import {
   groupEventsByDate,
   startOfMonth,
   weekdayLabels,
-  type StableDashboardEvent,
 } from './stableDashboardDates'
+import type { StableDashboardEvent } from './stableDashboardDates'
 
 type StableEventsCalendarProps = {
   events: Array<StableDashboardEvent>

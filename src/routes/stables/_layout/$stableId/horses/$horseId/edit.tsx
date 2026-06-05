@@ -1,8 +1,6 @@
 import { HorseFormFields } from '#/components/forms/horse/HorseFormFields'
-import {
-  horseFormSchema,
-  type HorseFormSchema,
-} from '#/components/forms/horse/horseFormSchema'
+import { horseFormSchema } from '#/components/forms/horse/horseFormSchema'
+import type { HorseFormSchema } from '#/components/forms/horse/horseFormSchema'
 import { Button } from '#/components/ui/button'
 import {
   Card,
@@ -58,6 +56,29 @@ function EditHorseForm({ horse }: EditHorseFormProps) {
       ownerName: horse.ownerName ?? '',
       age: horse.age,
       breed: horse.breed ?? '',
+      sex: horse.sex,
+      color: horse.color ?? '',
+      height: horse.height ?? '',
+      dateOfBirth: horse.dateOfBirth ?? '',
+      passportNumber: horse.passportNumber ?? '',
+      microchipNumber: horse.microchipNumber ?? '',
+      insuranceProvider: horse.insuranceProvider ?? '',
+      insurancePolicyNumber: horse.insurancePolicyNumber ?? '',
+      sire: horse.sire ?? '',
+      dam: horse.dam ?? '',
+      discipline: horse.discipline ?? '',
+      shoeingStatus: horse.shoeingStatus,
+      dewormingNotes: horse.dewormingNotes ?? '',
+      allergies: horse.allergies ?? [],
+      emergencyNotes: horse.emergencyNotes ?? '',
+      vetName: horse.vetName ?? '',
+      vetPhone: horse.vetPhone ?? '',
+      farrierName: horse.farrierName ?? '',
+      farrierPhone: horse.farrierPhone ?? '',
+      nutritionNotes: horse.nutritionNotes ?? '',
+      nutritionRecommended: horse.nutritionRecommended ?? [],
+      nutritionAvoid: horse.nutritionAvoid ?? [],
+      feedingRoutine: horse.feedingRoutine ?? '',
     },
   })
 
@@ -90,6 +111,29 @@ function EditHorseForm({ horse }: EditHorseFormProps) {
         ownerName: data.ownerName,
         age: data.age,
         breed: data.breed,
+        sex: data.sex,
+        color: data.color,
+        height: data.height,
+        dateOfBirth: data.dateOfBirth || undefined,
+        passportNumber: data.passportNumber,
+        microchipNumber: data.microchipNumber,
+        insuranceProvider: data.insuranceProvider,
+        insurancePolicyNumber: data.insurancePolicyNumber,
+        sire: data.sire,
+        dam: data.dam,
+        discipline: data.discipline,
+        shoeingStatus: data.shoeingStatus,
+        dewormingNotes: data.dewormingNotes,
+        allergies: data.allergies,
+        emergencyNotes: data.emergencyNotes,
+        vetName: data.vetName,
+        vetPhone: data.vetPhone,
+        farrierName: data.farrierName,
+        farrierPhone: data.farrierPhone,
+        nutritionNotes: data.nutritionNotes,
+        nutritionRecommended: data.nutritionRecommended,
+        nutritionAvoid: data.nutritionAvoid,
+        feedingRoutine: data.feedingRoutine,
         profileImageId,
       })
 

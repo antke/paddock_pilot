@@ -16,6 +16,7 @@ import { useMutation } from 'convex/react'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { DashboardCareOverview } from './DashboardCareOverview'
 
 type AppDashboardProps = {
   user: Doc<'users'> | null
@@ -66,6 +67,8 @@ export function AppDashboard({ user, stables, events }: AppDashboardProps) {
         />
         <SummaryCard title="All events" value={`${events.length}`} />
       </div>
+
+      <DashboardCareOverview />
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(22rem,0.8fr)]">
         <Card>

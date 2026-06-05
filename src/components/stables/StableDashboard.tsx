@@ -1,4 +1,5 @@
 import { StableEventsCalendar } from '#/components/stables/StableEventsCalendar'
+import { StableDashboardAlerts } from '#/components/stables/StableDashboardAlerts'
 import { StableHorseCards } from '#/components/stables/StableHorseCards'
 import { StableUpcomingEventsCard } from '#/components/stables/StableUpcomingEvents'
 import { buttonVariants } from '#/components/ui/button'
@@ -31,6 +32,19 @@ export function StableDashboard({
 }: StableDashboardProps) {
   const upcomingEventCount = getUpcomingEvents(events, new Date()).length
   const currentMonthEventCount = getCurrentMonthEventCount(events)
+  const hasOperationalDetails = Boolean(
+    stable.contactName ||
+      stable.contactPhone ||
+      stable.emergencyPhone ||
+      stable.openingHours ||
+      stable.yardRules,
+  )
+  const postalAddress = [
+    stable.addressLine1,
+    stable.addressLine2,
+    stable.postcode,
+    stable.country,
+  ].filter(Boolean)
 
   return (
     <div className="grid gap-8">
@@ -91,6 +105,27 @@ export function StableDashboard({
           >
             Calendar
           </Link>
+          <Link
+            to="/stables/$stableId/reminders"
+            params={{ stableId: stable._id }}
+            className={buttonVariants({ variant: 'outline' })}
+          >
+            Reminders
+          </Link>
+          <Link
+            to="/stables/$stableId/documents"
+            params={{ stableId: stable._id }}
+            className={buttonVariants({ variant: 'outline' })}
+          >
+            Documents
+          </Link>
+          <Link
+            to="/stables/$stableId/analysis"
+            params={{ stableId: stable._id }}
+            className={buttonVariants({ variant: 'outline' })}
+          >
+            Analysis
+          </Link>
         </div>
       </header>
 
@@ -103,6 +138,8 @@ export function StableDashboard({
         />
       </div>
 
+      <StableDashboardAlerts stableId={stable._id} />
+
       <Card>
         <CardHeader>
           <CardTitle>Stable summary</CardTitle>
@@ -111,6 +148,24 @@ export function StableDashboard({
         <CardContent className="grid gap-2 text-sm sm:grid-cols-2">
           <DetailItem label="Owner" value={owner?.firstName ?? 'Unknown'} />
           <DetailItem label="Address" value={stable.location} />
+          {postalAddress.length > 0 && (
+            <LongDetailItem label="Postal address" value={postalAddress.join('\n')} />
+          )}
+          {stable.contactName && (
+            <DetailItem label="Contact" value={stable.contactName} />
+          )}
+          {stable.contactPhone && (
+            <DetailItem label="Contact phone" value={stable.contactPhone} />
+          )}
+          {stable.emergencyPhone && (
+            <DetailItem label="Emergency phone" value={stable.emergencyPhone} />
+          )}
+          {hasOperationalDetails && stable.openingHours && (
+            <LongDetailItem label="Opening hours" value={stable.openingHours} />
+          )}
+          {hasOperationalDetails && stable.yardRules && (
+            <LongDetailItem label="Yard rules" value={stable.yardRules} />
+          )}
         </CardContent>
       </Card>
 
@@ -160,6 +215,15 @@ function DetailItem({ label, value }: { label: string; value: string }) {
     <div className="grid gap-1">
       <span className="text-muted-foreground">{label}</span>
       <span>{value}</span>
+    </div>
+  )
+}
+
+function LongDetailItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid gap-1 sm:col-span-2">
+      <span className="text-muted-foreground">{label}</span>
+      <p className="whitespace-pre-line">{value}</p>
     </div>
   )
 }

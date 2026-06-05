@@ -1,4 +1,5 @@
 import { ConvexError, v } from 'convex/values'
+import { stableMemberDetailsInputSchema } from '../shared/stables/stableMemberSchema'
 import { mutation, query } from './_generated/server'
 import { stableMembersFields } from './schema'
 import {
@@ -6,6 +7,22 @@ import {
   assertCanViewStable,
   getCurrentUser,
 } from './libs/stablePermissions'
+
+const validateMemberDetailsInput = (args: {
+  displayNameOverride?: string
+  phone?: string
+  emergencyContact?: string
+}) => {
+  const result = stableMemberDetailsInputSchema.safeParse(args)
+
+  if (!result.success) {
+    throw new ConvexError(
+      result.error.issues[0]?.message ?? 'Invalid member details',
+    )
+  }
+
+  return result.data
+}
 
 export const listByStable = query({
   args: { stableId: v.id('stables') },
@@ -121,5 +138,24 @@ export const remove = mutation({
     }
 
     await ctx.db.delete(args.id)
+  },
+})
+
+export const updateDetails = mutation({
+  args: {
+    id: v.id('stableMembers'),
+    displayNameOverride: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    emergencyContact: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const membership = await ctx.db.get(args.id)
+    if (!membership) throw new ConvexError('Stable member not found')
+
+    await assertCanManageMembers(ctx, membership.stableId)
+
+    const memberDetailsInput = validateMemberDetailsInput(args)
+
+    await ctx.db.patch(args.id, memberDetailsInput)
   },
 })

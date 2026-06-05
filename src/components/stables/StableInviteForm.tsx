@@ -3,14 +3,15 @@ import { Input } from '#/components/ui/input'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
-import { type FormEvent, useState } from 'react'
+import { useState } from 'react'
+import type { FormEvent } from 'react'
 import { toast } from 'sonner'
 import {
   stableInvitationRoleLabels,
   stableInvitationRoles,
   stableInvitationSchema,
-  type StableInvitationRole,
 } from 'shared/stableInvitations/invitationSchema'
+import type { StableInvitationRole } from 'shared/stableInvitations/invitationSchema'
 
 type StableInviteFormProps = {
   stableId: Id<'stables'>
@@ -58,7 +59,10 @@ export function StableInviteForm({ stableId }: StableInviteFormProps) {
   }
 
   return (
-    <form className="grid gap-3 sm:grid-cols-[1fr_auto_auto]" onSubmit={onSubmit}>
+    <form
+      className="grid gap-3 sm:grid-cols-[1fr_auto_auto]"
+      onSubmit={onSubmit}
+    >
       <Input
         type="email"
         placeholder="member@example.com"
@@ -70,7 +74,9 @@ export function StableInviteForm({ stableId }: StableInviteFormProps) {
         className="h-9 border border-input bg-background px-3 text-sm"
         value={role}
         disabled={isSubmitting}
-        onChange={(event) => setRole(event.target.value as StableInvitationRole)}
+        onChange={(event) =>
+          setRole(event.target.value as StableInvitationRole)
+        }
       >
         {stableInvitationRoles.map((roleOption) => (
           <option key={roleOption} value={roleOption}>

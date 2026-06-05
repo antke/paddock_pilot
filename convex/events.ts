@@ -3,7 +3,8 @@ import { omit } from 'lodash'
 import { eventInputSchema } from '../shared/events/eventSchema'
 import { internal } from './_generated/api'
 import type { Doc, Id } from './_generated/dataModel'
-import { mutation, query, type MutationCtx } from './_generated/server'
+import { mutation, query  } from './_generated/server'
+import type {MutationCtx} from './_generated/server';
 import {
   assertCanViewStable,
   getCurrentUser,
@@ -19,6 +20,12 @@ const validateEventInput = (args: {
   title: string
   description?: string
   location?: string
+  providerName?: string
+  providerPhone?: string
+  totalCost?: number
+  costPerHorse?: number
+  status?: Doc<'events'>['status']
+  notesAfterCompletion?: string
   recurrence?: Doc<'events'>['recurrence']
 }) => {
   const result = eventInputSchema.safeParse(args)
@@ -272,6 +279,12 @@ export const add = mutation({
       title: eventInput.title,
       description: eventInput.description,
       location: eventInput.location,
+      providerName: eventInput.providerName,
+      providerPhone: eventInput.providerPhone,
+      totalCost: eventInput.totalCost,
+      costPerHorse: eventInput.costPerHorse,
+      status: eventInput.status,
+      notesAfterCompletion: eventInput.notesAfterCompletion,
       recurrence: eventInput.recurrence,
     })
 
@@ -404,6 +417,12 @@ export const update = mutation({
       title: eventInput.title,
       description: eventInput.description,
       location: eventInput.location,
+      providerName: eventInput.providerName,
+      providerPhone: eventInput.providerPhone,
+      totalCost: eventInput.totalCost,
+      costPerHorse: eventInput.costPerHorse,
+      status: eventInput.status,
+      notesAfterCompletion: eventInput.notesAfterCompletion,
       recurrence: eventInput.recurrence,
     })
     await syncConfirmedHorseIds(ctx, id)

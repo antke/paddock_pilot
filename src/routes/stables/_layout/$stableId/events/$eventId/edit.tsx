@@ -1,8 +1,8 @@
 import { EventFormFields } from '#/components/forms/event/EventFormFields'
-import {
-  eventFormSchema,
-  type EventFormInput,
-  type EventFormSchema,
+import { eventFormSchema } from '#/components/forms/event/eventFormSchema'
+import type {
+  EventFormInput,
+  EventFormSchema,
 } from '#/components/forms/event/eventFormSchema'
 import { Button } from '#/components/ui/button'
 import {
@@ -37,6 +37,11 @@ function RouteComponent() {
   const { data: horses } = useSuspenseQuery(
     convexQuery(api.horses.list, { stableId: stableId as Id<'stables'> }),
   )
+  const { data: providerData } = useSuspenseQuery(
+    convexQuery(api.stableProviders.listForStable, {
+      stableId: stableId as Id<'stables'>,
+    }),
+  )
 
   if (!eventWithHorses || eventWithHorses.event.stableId !== stableId) {
     return <div>Event not found</div>
@@ -48,6 +53,7 @@ function RouteComponent() {
       event={eventWithHorses.event}
       eventHorses={eventWithHorses.eventHorses}
       horses={horses}
+      providers={providerData.providers}
     />
   )
 }
@@ -60,9 +66,15 @@ type EditEventFormProps = {
       profileImageUrl?: string | null
     }
   >
+  providers: Array<Doc<'stableProviders'>>
 }
 
-function EditEventForm({ event, eventHorses, horses }: EditEventFormProps) {
+function EditEventForm({
+  event,
+  eventHorses,
+  horses,
+  providers,
+}: EditEventFormProps) {
   const nav = useNavigate()
   const updateEvent = useMutation(api.events.update)
   const selectedHorseIds = eventHorses
@@ -81,6 +93,12 @@ function EditEventForm({ event, eventHorses, horses }: EditEventFormProps) {
       title: event.title,
       description: event.description ?? '',
       location: event.location ?? '',
+      providerName: event.providerName ?? '',
+      providerPhone: event.providerPhone ?? '',
+      totalCost: event.totalCost,
+      costPerHorse: event.costPerHorse,
+      status: event.status ?? 'planned',
+      notesAfterCompletion: event.notesAfterCompletion ?? '',
       recurring: Boolean(event.recurrence),
       recurrence: event.recurrence,
     },
@@ -98,6 +116,12 @@ function EditEventForm({ event, eventHorses, horses }: EditEventFormProps) {
         title: data.title,
         description: data.description,
         location: data.location,
+        providerName: data.providerName,
+        providerPhone: data.providerPhone,
+        totalCost: data.totalCost,
+        costPerHorse: data.costPerHorse,
+        status: data.status,
+        notesAfterCompletion: data.notesAfterCompletion,
         recurrence: data.recurring ? data.recurrence : undefined,
       })
 
@@ -130,6 +154,7 @@ function EditEventForm({ event, eventHorses, horses }: EditEventFormProps) {
             control={form.control}
             setValue={form.setValue}
             horses={horses}
+            providers={providers}
             disabled={form.formState.isSubmitting}
           />
         </CardContent>

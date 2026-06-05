@@ -12,6 +12,8 @@ function PricingPage() {
         <h1 className="text-3xl font-semibold">Choose your plan</h1>
         <p className="text-sm text-muted-foreground">
           Personal Plus unlocks stable member access and horse management.
+          Personal Pro adds the premium Analysis Centre, printable care summaries,
+          and document storage.
         </p>
       </div>
       <PricingTable />

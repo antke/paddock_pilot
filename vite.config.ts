@@ -9,16 +9,24 @@ import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { nitro } from 'nitro/vite'
 
-const config = defineConfig({
-  plugins: [
-    devtools(),
-    nitro({ rollupConfig: { external: [/^@sentry\//] } }),
-    contentCollections(),
-    tsconfigPaths({ projects: ['./tsconfig.json'] }),
-    tailwindcss(),
-    tanstackStart(),
-    viteReact(),
-  ],
-})
+const appPlugins = [
+  devtools(),
+  nitro({ rollupConfig: { external: [/^@sentry\//] } }),
+  contentCollections(),
+  tsconfigPaths({ projects: ['./tsconfig.json'] }),
+  tailwindcss(),
+  tanstackStart(),
+  viteReact(),
+]
+
+const testPlugins = [
+  tsconfigPaths({ projects: ['./tsconfig.json'] }),
+  tailwindcss(),
+  viteReact(),
+]
+
+const config = defineConfig(({ mode }) => ({
+  plugins: mode === 'test' ? testPlugins : appPlugins,
+}))
 
 export default config

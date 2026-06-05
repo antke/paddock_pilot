@@ -1,6 +1,7 @@
 import { Checkbox } from '#/components/ui/checkbox'
 import { FormHelpTooltip } from '#/components/forms/FormHelpTooltip'
 import { HorseCard } from '#/components/horses/HorseCard'
+import { Button } from '#/components/ui/button'
 import { cn } from '#/lib/utils'
 import {
   Field,
@@ -18,23 +19,25 @@ import { Textarea } from '#/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group'
 import type { Id } from 'convex/_generated/dataModel'
 import { useEffect, useState } from 'react'
-import {
-  Controller,
-  type Control,
-  type UseFormSetValue,
-  useWatch,
-} from 'react-hook-form'
+import { Controller, useWatch } from 'react-hook-form'
+import type { Control, UseFormSetValue } from 'react-hook-form'
 import {
   dayOfWeekLabels,
+  eventStatusLabels,
+  eventStatuses,
   eventTypeLabels,
   eventTypes,
   recurrenceFrequencies,
   recurrenceOrdinals,
-  type DayOfWeek,
-  type EventType,
-  type RecurrenceFrequency,
-  type RecurrenceOrdinal,
 } from 'shared/events/eventSchema'
+import type {
+  DayOfWeek,
+  EventStatus,
+  EventType,
+  RecurrenceFrequency,
+  RecurrenceOrdinal,
+} from 'shared/events/eventSchema'
+import { stableProviderTypeLabels } from 'shared/stables/stableProviderSchema'
 import type { EventFormInput, EventFormSchema } from './eventFormSchema'
 
 type HorseOption = {
@@ -45,10 +48,18 @@ type HorseOption = {
   profileImageUrl?: string | null
 }
 
+type ProviderOption = {
+  _id: Id<'stableProviders'>
+  type: 'vet' | 'farrier' | 'dentist' | 'physio' | 'saddler' | 'other'
+  name: string
+  phone?: string
+}
+
 type Props = {
   control: Control<EventFormInput, unknown, EventFormSchema>
   setValue: UseFormSetValue<EventFormInput>
   horses: Array<HorseOption>
+  providers?: Array<ProviderOption>
   disabled?: boolean
 }
 
@@ -111,6 +122,7 @@ const recurrenceDefaults = {
 }
 
 const asEventType = (value: string) => value as EventType
+const asEventStatus = (value: string) => value as EventStatus
 const asRecurrenceFrequency = (value: string) => value as RecurrenceFrequency
 const asDayOfWeek = (value: string) => Number(value) as DayOfWeek
 const asRecurrenceOrdinal = (value: string) =>
@@ -421,6 +433,7 @@ export function EventFormFields({
   control,
   setValue,
   horses,
+  providers = [],
   disabled = false,
 }: Props) {
   const eventDate = useWatch({ control, name: 'date' })
@@ -432,6 +445,17 @@ export function EventFormFields({
     useState<SimpleRecurrencePreset>('weekly')
   const simplePresetUsesDays =
     simplePreset === 'weekly' || simplePreset === 'biweekly'
+
+  const applyProvider = (provider: ProviderOption) => {
+    setValue('providerName', provider.name, {
+      shouldDirty: true,
+      shouldValidate: true,
+    })
+    setValue('providerPhone', provider.phone ?? '', {
+      shouldDirty: true,
+      shouldValidate: true,
+    })
+  }
 
   const applySimplePreset = (
     preset: SimpleRecurrencePreset,
@@ -529,6 +553,36 @@ export function EventFormFields({
         )}
       />
 
+      <Controller
+        name="status"
+        control={control}
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel>Status</FieldLabel>
+
+            <ToggleGroup
+              value={[field.value ?? 'planned']}
+              onValueChange={(values) => {
+                const nextValue = values.at(-1)
+                if (nextValue) field.onChange(asEventStatus(nextValue))
+              }}
+              variant="outline"
+              className="flex-wrap"
+              disabled={disabled}
+              aria-invalid={fieldState.invalid}
+            >
+              {eventStatuses.map((status) => (
+                <ToggleGroupItem key={status} value={status}>
+                  {eventStatusLabels[status]}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
+        )}
+      />
+
       <div className="grid gap-4 md:grid-cols-2">
         <Controller
           name="date"
@@ -571,6 +625,26 @@ export function EventFormFields({
         />
       </div>
 
+      {providers.length > 0 && (
+        <div className="grid gap-2 rounded-lg border p-3">
+          <p className="text-sm font-medium">Saved providers</p>
+          <div className="flex flex-wrap gap-2">
+            {providers.map((provider) => (
+              <Button
+                key={provider._id}
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={disabled}
+                onClick={() => applyProvider(provider)}
+              >
+                {provider.name} · {stableProviderTypeLabels[provider.type]}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <Controller
         name="location"
         control={control}
@@ -594,6 +668,122 @@ export function EventFormFields({
         )}
       />
 
+      <div className="grid gap-4 md:grid-cols-2">
+        <Controller
+          name="providerName"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={field.name}>Provider name</FieldLabel>
+
+              <Input
+                {...field}
+                id={field.name}
+                value={field.value ?? ''}
+                type="text"
+                disabled={disabled}
+                aria-invalid={fieldState.invalid}
+                placeholder="Vet, farrier, dentist, trainer"
+                autoComplete="off"
+              />
+
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
+
+        <Controller
+          name="providerPhone"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={field.name}>Provider phone</FieldLabel>
+
+              <Input
+                {...field}
+                id={field.name}
+                value={field.value ?? ''}
+                type="tel"
+                disabled={disabled}
+                aria-invalid={fieldState.invalid}
+                placeholder="Provider contact number"
+                autoComplete="off"
+              />
+
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Controller
+          name="totalCost"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={field.name}>Total cost</FieldLabel>
+
+              <Input
+                id={field.name}
+                name={field.name}
+                value={field.value ?? ''}
+                type="number"
+                min="0"
+                step="0.01"
+                disabled={disabled}
+                aria-invalid={fieldState.invalid}
+                placeholder="Optional shared visit total"
+                autoComplete="off"
+                onBlur={field.onBlur}
+                onChange={(event) => {
+                  field.onChange(
+                    event.target.value === ''
+                      ? undefined
+                      : event.target.valueAsNumber,
+                  )
+                }}
+              />
+
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
+
+        <Controller
+          name="costPerHorse"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={field.name}>Cost per horse</FieldLabel>
+
+              <Input
+                id={field.name}
+                name={field.name}
+                value={field.value ?? ''}
+                type="number"
+                min="0"
+                step="0.01"
+                disabled={disabled}
+                aria-invalid={fieldState.invalid}
+                placeholder="Optional split amount"
+                autoComplete="off"
+                onBlur={field.onBlur}
+                onChange={(event) => {
+                  field.onChange(
+                    event.target.value === ''
+                      ? undefined
+                      : event.target.valueAsNumber,
+                  )
+                }}
+              />
+
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
+      </div>
+
       <Controller
         name="description"
         control={control}
@@ -608,6 +798,28 @@ export function EventFormFields({
               disabled={disabled}
               aria-invalid={fieldState.invalid}
               placeholder="Notes for this event"
+              autoComplete="off"
+            />
+
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
+        )}
+      />
+
+      <Controller
+        name="notesAfterCompletion"
+        control={control}
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor={field.name}>Notes after completion</FieldLabel>
+
+            <Textarea
+              {...field}
+              id={field.name}
+              value={field.value ?? ''}
+              disabled={disabled}
+              aria-invalid={fieldState.invalid}
+              placeholder="What was done, follow-up instructions, or next steps"
               autoComplete="off"
             />
 

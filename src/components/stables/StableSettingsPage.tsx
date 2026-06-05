@@ -17,6 +17,8 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { StableInvitationsList } from './StableInvitationsList'
 import { StableInviteForm } from './StableInviteForm'
+import { StableMemberDetailsForm } from './StableMemberDetailsForm'
+import { StableProvidersCard } from './StableProvidersCard'
 
 type StableSettingsData = {
   stable: Doc<'stables'>
@@ -41,6 +43,12 @@ const roleLabels = {
 
 export function StableSettingsPage({ settings }: StableSettingsPageProps) {
   const { stable, owner, members } = settings
+  const postalAddress = [
+    stable.addressLine1,
+    stable.addressLine2,
+    stable.postcode,
+    stable.country,
+  ].filter(Boolean)
 
   return (
     <div className="grid gap-6">
@@ -65,6 +73,7 @@ export function StableSettingsPage({ settings }: StableSettingsPageProps) {
         <TabsList className="w-fit">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="members">Members</TabsTrigger>
+          <TabsTrigger value="providers">Providers</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -85,10 +94,40 @@ export function StableSettingsPage({ settings }: StableSettingsPageProps) {
             <CardContent className="grid gap-4 text-sm sm:grid-cols-2">
               <DetailItem label="Location" value={stable.location} />
               <DetailItem label="Owner" value={formatUserName(owner)} />
+              {postalAddress.length > 0 && (
+                <div className="grid gap-1 sm:col-span-2">
+                  <span className="text-muted-foreground">Postal address</span>
+                  <p className="whitespace-pre-line">{postalAddress.join('\n')}</p>
+                </div>
+              )}
+              {stable.contactName && (
+                <DetailItem label="Contact" value={stable.contactName} />
+              )}
+              {stable.contactPhone && (
+                <DetailItem label="Contact phone" value={stable.contactPhone} />
+              )}
+              {stable.emergencyPhone && (
+                <DetailItem
+                  label="Emergency phone"
+                  value={stable.emergencyPhone}
+                />
+              )}
               {stable.description && (
                 <div className="grid gap-1 sm:col-span-2">
                   <span className="text-muted-foreground">Description</span>
                   <span>{stable.description}</span>
+                </div>
+              )}
+              {stable.openingHours && (
+                <div className="grid gap-1 sm:col-span-2">
+                  <span className="text-muted-foreground">Opening hours</span>
+                  <p className="whitespace-pre-line">{stable.openingHours}</p>
+                </div>
+              )}
+              {stable.yardRules && (
+                <div className="grid gap-1 sm:col-span-2">
+                  <span className="text-muted-foreground">Yard rules</span>
+                  <p className="whitespace-pre-line">{stable.yardRules}</p>
                 </div>
               )}
             </CardContent>
@@ -102,6 +141,10 @@ export function StableSettingsPage({ settings }: StableSettingsPageProps) {
             members={members}
             invitations={settings.invitations}
           />
+        </TabsContent>
+
+        <TabsContent value="providers">
+          <StableProvidersCard stableId={stable._id} />
         </TabsContent>
       </Tabs>
     </div>
@@ -121,6 +164,7 @@ function StableMembersCard({
 }) {
   const removeMember = useMutation(api.stableMembers.remove)
   const [removingMemberId, setRemovingMemberId] = useState<string>()
+  const [editingMemberId, setEditingMemberId] = useState<string>()
 
   const onRemoveMember = async (member: Doc<'stableMembers'>) => {
     try {
@@ -165,7 +209,7 @@ function StableMembersCard({
                 <div className="grid gap-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium">
-                      {formatUserName(member.user)}
+                      {formatMemberName(member)}
                     </span>
                     <Badge
                       variant={member.role === 'owner' ? 'default' : 'secondary'}
@@ -176,21 +220,49 @@ function StableMembersCard({
                   <span className="text-sm text-muted-foreground">
                     {member.user?.email ?? 'No email available'}
                   </span>
+                  {member.membership?.phone && (
+                    <span className="text-sm text-muted-foreground">
+                      {member.membership.phone}
+                    </span>
+                  )}
+                  {member.membership?.emergencyContact && (
+                    <span className="text-sm text-muted-foreground">
+                      Emergency: {member.membership.emergencyContact}
+                    </span>
+                  )}
                 </div>
 
                 {member.membership && member.role !== 'owner' && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={removingMemberId === member.membership._id}
-                    onClick={() => onRemoveMember(member.membership)}
-                  >
-                    {removingMemberId === member.membership._id
-                      ? 'Removing...'
-                      : 'Remove'}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setEditingMemberId(member.membership._id)}
+                    >
+                      Edit details
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={removingMemberId === member.membership._id}
+                      onClick={() => onRemoveMember(member.membership)}
+                    >
+                      {removingMemberId === member.membership._id
+                        ? 'Removing...'
+                        : 'Remove'}
+                    </Button>
+                  </div>
                 )}
               </div>
+              {member.membership && editingMemberId === member.membership._id && (
+                <div className="mt-4 rounded-lg border p-4">
+                  <StableMemberDetailsForm
+                    member={member.membership}
+                    onCancel={() => setEditingMemberId(undefined)}
+                    onSaved={() => setEditingMemberId(undefined)}
+                  />
+                </div>
+              )}
               {index < members.length - 1 && <Separator className="mt-4" />}
             </div>
           ))}
@@ -220,4 +292,8 @@ function formatUserName(user: Doc<'users'> | null) {
   if (!user) return 'Unknown'
 
   return [user.firstName, user.lastName].filter(Boolean).join(' ')
+}
+
+function formatMemberName(member: StableSettingsData['members'][number]) {
+  return member.membership?.displayNameOverride || formatUserName(member.user)
 }
