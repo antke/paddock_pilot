@@ -1,26 +1,30 @@
-import { createFileRoute, redirect, Outlet  } from '@tanstack/react-router'
-import { auth } from '@clerk/tanstack-react-start/server'
-import { createServerFn } from '@tanstack/react-start'
+import { ClerkLoaded, ClerkLoading, Show } from '@clerk/tanstack-react-start'
+import { createFileRoute, Navigate, Outlet, useLocation } from '@tanstack/react-router'
 import { RoutePending } from '#/components/layout/RoutePending'
 
-const fetchClerkAuth = createServerFn({ method: 'GET' }).handler(async () => {
-  const { userId } = await auth()
-  return { userId }
+export const Route = createFileRoute('/stables/_layout')({
+  pendingComponent: RoutePending,
+  component: StableLayout,
 })
 
-export const Route = createFileRoute('/stables/_layout')({
-  beforeLoad: async ({ location }) => {
-    const { userId } = await fetchClerkAuth()
-    if (!userId) {
-      throw redirect({
-        to: '/',
-        search: {
-          redirect: location.href,
-        },
-      })
-    }
-    return { userId }
-  },
-  pendingComponent: RoutePending,
-  component: () => <Outlet />,
-})
+function StableLayout() {
+  const location = useLocation()
+
+  return (
+    <>
+      <ClerkLoading>
+        <RoutePending />
+      </ClerkLoading>
+
+      <ClerkLoaded>
+        <Show when="signed-out">
+          <Navigate to="/" search={{ redirect: location.href }} />
+        </Show>
+
+        <Show when="signed-in">
+          <Outlet />
+        </Show>
+      </ClerkLoaded>
+    </>
+  )
+}

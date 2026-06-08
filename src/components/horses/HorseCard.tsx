@@ -1,4 +1,3 @@
-import { Card } from '#/components/ui/card'
 import { cn } from '#/lib/utils'
 import type { ReactNode } from 'react'
 
@@ -17,13 +16,13 @@ type HorseCardProps = {
 
 export function HorseCard({ horse, action, className }: HorseCardProps) {
   return (
-    <Card
+    <article
       className={cn(
-        'grid grid-cols-4 items-center gap-4 p-4 transition-colors',
+        'app-row app-row-hover grid grid-cols-4 items-center gap-4 p-4',
         className,
       )}
     >
-      <div className="col-span-1 aspect-square overflow-hidden border bg-muted">
+      <div className="col-span-1 aspect-square overflow-hidden rounded-row border border-border-subtle bg-muted">
         {horse.profileImageUrl ? (
           <img
             src={horse.profileImageUrl}
@@ -58,6 +57,6 @@ export function HorseCard({ horse, action, className }: HorseCardProps) {
           )}
         </dl>
       </div>
-    </Card>
+    </article>
   )
 }

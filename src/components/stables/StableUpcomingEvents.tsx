@@ -1,12 +1,5 @@
 import { Badge } from '#/components/ui/badge'
 import { buttonVariants } from '#/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import {
   formatEventDate,
@@ -48,45 +41,46 @@ export function StableUpcomingEvents({
         const dateBadge = getDateBadgeParts(event.date)
 
         return (
-          <Card key={event._id} className="py-4">
-            <CardContent className="flex flex-wrap items-center gap-4">
-              <div className="grid min-w-20 justify-items-center border px-3 py-2 text-center">
-                <span className="text-xs text-muted-foreground">
-                  {dateBadge.month}
-                </span>
-                <span className="text-lg font-semibold">{dateBadge.day}</span>
-              </div>
+          <div
+            key={event._id}
+            className="app-row app-row-hover flex flex-wrap items-center gap-4 p-4"
+          >
+            <div className="grid min-w-20 justify-items-center border-r border-border-subtle pr-4 text-center">
+              <span className="text-xs font-medium text-muted-foreground">
+                {dateBadge.month}
+              </span>
+              <span className="text-lg font-semibold">{dateBadge.day}</span>
+            </div>
 
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="font-medium">{event.title}</h3>
-                  <Badge variant="outline">{formatEventType(event.type)}</Badge>
-                  {recurrenceSummary && (
-                    <Badge variant="secondary">Recurring</Badge>
-                  )}
-                </div>
-
-                <p className="text-sm text-muted-foreground">
-                  {event.time}
-                  {event.location ? ` · ${event.location}` : ''}
-                </p>
-
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-medium">{event.title}</h3>
+                <Badge variant="outline">{formatEventType(event.type)}</Badge>
                 {recurrenceSummary && (
-                  <p className="text-xs text-muted-foreground">
-                    {recurrenceSummary}
-                  </p>
+                  <Badge variant="secondary">Recurring</Badge>
                 )}
               </div>
 
-              <Link
-                to="/stables/$stableId/events/$eventId"
-                params={{ stableId, eventId: event._id }}
-                className={buttonVariants({ variant: 'outline', size: 'sm' })}
-              >
-                View
-              </Link>
-            </CardContent>
-          </Card>
+              <p className="text-sm text-muted-foreground">
+                {event.time}
+                {event.location ? ` · ${event.location}` : ''}
+              </p>
+
+              {recurrenceSummary && (
+                <p className="text-xs text-muted-foreground">
+                  {recurrenceSummary}
+                </p>
+              )}
+            </div>
+
+            <Link
+              to="/stables/$stableId/events/$eventId"
+              params={{ stableId, eventId: event._id }}
+              className={buttonVariants({ variant: 'outline', size: 'sm' })}
+            >
+              View
+            </Link>
+          </div>
         )
       })}
     </div>
@@ -99,18 +93,16 @@ export function StableUpcomingEventsCard({
   limit,
 }: StableUpcomingEventsProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Next upcoming events</CardTitle>
-        <CardDescription>The next 5 scheduled items.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <StableUpcomingEvents
-          stableId={stableId}
-          events={events}
-          limit={limit}
-        />
-      </CardContent>
-    </Card>
+    <section className="grid content-start gap-4">
+      <div>
+        <h3 className="text-lg font-semibold tracking-tight">
+          Next upcoming events
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          The next 5 scheduled items.
+        </p>
+      </div>
+      <StableUpcomingEvents stableId={stableId} events={events} limit={limit} />
+    </section>
   )
 }

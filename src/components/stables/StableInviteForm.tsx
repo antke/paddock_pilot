@@ -1,5 +1,6 @@
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
+import { Select } from '#/components/ui/select'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
@@ -70,8 +71,7 @@ export function StableInviteForm({ stableId }: StableInviteFormProps) {
         disabled={isSubmitting}
         onChange={(event) => setEmail(event.target.value)}
       />
-      <select
-        className="h-9 border border-input bg-background px-3 text-sm"
+      <Select
         value={role}
         disabled={isSubmitting}
         onChange={(event) =>
@@ -83,7 +83,7 @@ export function StableInviteForm({ stableId }: StableInviteFormProps) {
             {stableInvitationRoleLabels[roleOption]}
           </option>
         ))}
-      </select>
+      </Select>
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? 'Inviting...' : 'Invite'}
       </Button>

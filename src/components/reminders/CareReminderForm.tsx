@@ -1,6 +1,7 @@
 import { Button } from '#/components/ui/button'
 import { Field, FieldError, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
+import { Select } from '#/components/ui/select'
 import { Textarea } from '#/components/ui/textarea'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
@@ -9,10 +10,9 @@ import {
   careReminderCategoryLabels,
   careReminderFormSchema,
   careReminderPriorities,
-  careReminderPriorityLabels
-  
+  careReminderPriorityLabels,
 } from 'shared/reminders/careReminderSchema'
-import type {CareReminderFormSchema} from 'shared/reminders/careReminderSchema';
+import type { CareReminderFormSchema } from 'shared/reminders/careReminderSchema'
 
 export type CareReminderSubmitData = Omit<CareReminderFormSchema, 'horseId'> & {
   horseId?: string
@@ -73,18 +73,14 @@ export function CareReminderForm({
       {!fixedHorseId && horseOptions.length > 0 && (
         <Field data-invalid={!!errors.horseId}>
           <FieldLabel htmlFor="horseId">Horse</FieldLabel>
-          <select
-            id="horseId"
-            className="h-9 rounded-md border bg-background px-3 text-sm"
-            {...register('horseId')}
-          >
+          <Select id="horseId" {...register('horseId')}>
             <option value="">Stable-wide reminder</option>
             {horseOptions.map((horse) => (
               <option key={horse.id} value={horse.id}>
                 {horse.name}
               </option>
             ))}
-          </select>
+          </Select>
           <FieldError errors={[errors.horseId]} />
         </Field>
       )}
@@ -110,33 +106,25 @@ export function CareReminderForm({
       <div className="grid gap-4 md:grid-cols-2">
         <Field data-invalid={!!errors.category}>
           <FieldLabel htmlFor="category">Category</FieldLabel>
-          <select
-            id="category"
-            className="h-9 rounded-md border bg-background px-3 text-sm"
-            {...register('category')}
-          >
+          <Select id="category" {...register('category')}>
             {careReminderCategories.map((category) => (
               <option key={category} value={category}>
                 {careReminderCategoryLabels[category]}
               </option>
             ))}
-          </select>
+          </Select>
           <FieldError errors={[errors.category]} />
         </Field>
 
         <Field data-invalid={!!errors.priority}>
           <FieldLabel htmlFor="priority">Priority</FieldLabel>
-          <select
-            id="priority"
-            className="h-9 rounded-md border bg-background px-3 text-sm"
-            {...register('priority')}
-          >
+          <Select id="priority" {...register('priority')}>
             {careReminderPriorities.map((priority) => (
               <option key={priority} value={priority}>
                 {careReminderPriorityLabels[priority]}
               </option>
             ))}
-          </select>
+          </Select>
           <FieldError errors={[errors.priority]} />
         </Field>
       </div>

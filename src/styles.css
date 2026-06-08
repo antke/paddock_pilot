@@ -2,7 +2,6 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 @import 'tw-animate-css';
-@import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 @import '@fontsource-variable/geist-mono';
 
@@ -16,29 +15,29 @@
 }
 
 :root {
-  --card: oklch(1 0 0);
+  --card: oklch(1 0.002 88);
   --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
+  --popover: oklch(0.995 0.004 88);
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.6 0.1 185);
   --primary-foreground: oklch(0.98 0.01 181);
-  --secondary: oklch(0.967 0.001 286.375);
+  --secondary: oklch(0.968 0.01 88);
   --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
+  --muted: oklch(0.965 0.008 88);
+  --muted-foreground: oklch(0.42 0.016 75);
+  --accent: oklch(0.958 0.014 82);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.58 0.22 27);
   --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: oklch(0.835 0.022 82);
+  --input: oklch(0.835 0.022 82);
+  --ring: oklch(0.62 0.11 185);
   --chart-1: oklch(0.85 0.13 181);
   --chart-2: oklch(0.78 0.13 182);
   --chart-3: oklch(0.7 0.12 183);
   --chart-4: oklch(0.6 0.1 185);
   --chart-5: oklch(0.51 0.09 186);
-  --radius: 0;
+  --radius: 0.75rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.6 0.1 185);
@@ -54,30 +53,34 @@
   --header-bg: color-mix(in oklab, var(--background) 88%, white 12%);
   --chip-bg: color-mix(in oklab, var(--card) 85%, white 15%);
   --chip-line: color-mix(in oklab, var(--border) 75%, transparent);
-  --background: oklch(1 0 0);
+  --surface: oklch(0.978 0.006 88);
+  --surface-muted: oklch(0.948 0.012 88);
+  --surface-elevated: oklch(1 0 0);
+  --border-subtle: color-mix(in oklab, var(--border) 86%, transparent);
+  --background: oklch(0.974 0.006 88);
   --foreground: oklch(0.145 0 0);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: oklch(0.225 0.012 190);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: oklch(0.285 0.012 190);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
+  --popover: oklch(0.285 0.012 190);
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.7 0.12 183);
   --primary-foreground: oklch(0.28 0.04 193);
-  --secondary: oklch(0.274 0.006 286.033);
+  --secondary: oklch(0.34 0.01 190);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.371 0 0);
+  --muted: oklch(0.355 0.012 190);
+  --muted-foreground: oklch(0.78 0.006 190);
+  --accent: oklch(0.395 0.018 186);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --border: oklch(1 0 0 / 18%);
+  --input: oklch(1 0 0 / 24%);
+  --ring: oklch(0.68 0.09 185);
   --chart-1: oklch(0.85 0.13 181);
   --chart-2: oklch(0.78 0.13 182);
   --chart-3: oklch(0.7 0.12 183);
@@ -98,6 +101,10 @@
   --header-bg: color-mix(in oklab, var(--background) 82%, black 18%);
   --chip-bg: color-mix(in oklab, var(--card) 80%, black 20%);
   --chip-line: color-mix(in oklab, var(--border) 70%, transparent);
+  --surface: oklch(0.255 0.014 190);
+  --surface-muted: oklch(0.315 0.014 190);
+  --surface-elevated: oklch(0.34 0.014 190);
+  --border-subtle: color-mix(in oklab, var(--border) 82%, transparent);
 }
 
 @theme inline {
@@ -121,15 +128,25 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-border-subtle: var(--border-subtle);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --radius-control: calc(var(--radius) - 2px);
+  --radius-row: var(--radius);
+  --radius-panel: calc(var(--radius) + 4px);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --shadow-control: 0 1px 2px color-mix(in oklab, black 7%, transparent);
+  --shadow-surface: 0 1px 3px color-mix(in oklab, black 8%, transparent);
+  --shadow-panel: 0 12px 32px color-mix(in oklab, black 8%, transparent);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -142,6 +159,44 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+}
+
+@utility app-control {
+  height: 2.5rem;
+  border-radius: var(--radius-control);
+  @apply w-full min-w-0 border border-input bg-card px-3 text-sm shadow-control transition-colors outline-none placeholder:text-muted-foreground/80 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 dark:bg-surface-elevated dark:disabled:bg-input/80;
+}
+
+@utility app-control-focus {
+  @apply focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25;
+}
+
+@utility app-control-invalid {
+  @apply aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40;
+}
+
+@utility app-panel {
+  border-radius: var(--radius-panel);
+  @apply border border-border-subtle bg-card shadow-none dark:bg-card;
+}
+
+@utility app-panel-strong {
+  border-radius: var(--radius-panel);
+  @apply border border-border-subtle bg-card/95 shadow-surface shadow-black/5 dark:shadow-black/20;
+}
+
+@utility app-row {
+  border-radius: var(--radius-row);
+  @apply border border-border-subtle bg-card shadow-control transition-colors duration-100 dark:bg-surface-elevated;
+}
+
+@utility app-row-hover {
+  @apply hover:border-primary/35 hover:bg-muted;
+}
+
+@utility app-segmented {
+  border-radius: var(--radius-panel);
+  @apply bg-muted/80 p-1 text-muted-foreground;
 }
 
 html,
@@ -172,6 +227,12 @@ a {
   }
   body {
     @apply font-sans bg-background text-foreground;
+    background-image: linear-gradient(
+      180deg,
+      var(--background),
+      var(--surface)
+    );
+    background-attachment: fixed;
   }
   html {
     @apply font-sans;

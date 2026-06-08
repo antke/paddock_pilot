@@ -35,7 +35,7 @@ export function AppDashboard({ user, stables, events }: AppDashboardProps) {
 
   return (
     <div className="grid gap-8">
-      <header className="flex flex-wrap items-start justify-between gap-4">
+      <header className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
         <div className="grid gap-2">
           <p className="text-sm text-muted-foreground">Welcome back</p>
           <h1 className="text-3xl font-semibold">
@@ -46,7 +46,7 @@ export function AppDashboard({ user, stables, events }: AppDashboardProps) {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 lg:justify-end">
           <Link
             to="/stables/create"
             className={buttonVariants({ variant: 'outline' })}
@@ -59,7 +59,7 @@ export function AppDashboard({ user, stables, events }: AppDashboardProps) {
         </div>
       </header>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 border-y border-border-subtle py-5 md:grid-cols-3">
         <SummaryCard title="Stables" value={`${stables.length}`} />
         <SummaryCard
           title="Upcoming events"
@@ -70,15 +70,17 @@ export function AppDashboard({ user, stables, events }: AppDashboardProps) {
 
       <DashboardCareOverview />
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(22rem,0.8fr)]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Your stables</CardTitle>
-            <CardDescription>
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <section className="grid min-w-0 content-start gap-4">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">
+              Your stables
+            </h2>
+            <p className="text-sm text-muted-foreground">
               Open a stable or create your first one.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3">
+            </p>
+          </div>
+          <div className="grid gap-3">
             {stables.length === 0 ? (
               <EmptyState
                 title="No stables yet"
@@ -95,7 +97,7 @@ export function AppDashboard({ user, stables, events }: AppDashboardProps) {
                   key={stable._id}
                   to="/stables/$stableId"
                   params={{ stableId: stable._id }}
-                  className="grid gap-1 border p-4 transition-colors hover:bg-muted/50"
+                  className="app-row app-row-hover grid gap-1 p-4"
                 >
                   <span className="font-medium">{stable.name}</span>
                   <span className="text-sm text-muted-foreground">
@@ -104,15 +106,19 @@ export function AppDashboard({ user, stables, events }: AppDashboardProps) {
                 </Link>
               ))
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Upcoming events</CardTitle>
-            <CardDescription>Your next scheduled stable work.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3">
+        <section className="grid min-w-0 content-start gap-4">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">
+              Upcoming events
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Your next scheduled stable work.
+            </p>
+          </div>
+          <div className="grid gap-3">
             {upcomingEvents.length === 0 ? (
               <EmptyState
                 title="Nothing scheduled"
@@ -124,7 +130,7 @@ export function AppDashboard({ user, stables, events }: AppDashboardProps) {
                   key={event._id}
                   to="/stables/$stableId/events/$eventId"
                   params={{ stableId: event.stableId, eventId: event._id }}
-                  className="grid gap-1 border p-4 transition-colors hover:bg-muted/50"
+                  className="app-row app-row-hover grid gap-1 p-4"
                 >
                   <span className="font-medium">{event.title}</span>
                   <span className="text-sm text-muted-foreground">
@@ -134,8 +140,8 @@ export function AppDashboard({ user, stables, events }: AppDashboardProps) {
                 </Link>
               ))
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       </div>
 
       <PendingHorseInvitations />
@@ -227,12 +233,10 @@ function PendingHorseInvitations() {
 
 function SummaryCard({ title, value }: { title: string; value: string }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardDescription>{title}</CardDescription>
-        <CardTitle className="text-3xl">{value}</CardTitle>
-      </CardHeader>
-    </Card>
+    <div className="grid gap-1 md:border-l md:border-border-subtle md:pl-5 first:md:border-l-0 first:md:pl-0">
+      <p className="text-sm font-medium text-muted-foreground">{title}</p>
+      <p className="text-3xl font-semibold tracking-tight">{value}</p>
+    </div>
   )
 }
 
@@ -246,7 +250,7 @@ function EmptyState({
   action?: ReactNode
 }) {
   return (
-    <div className="grid gap-3 border border-dashed p-6 text-center">
+    <div className="grid gap-3 rounded-row border border-dashed border-border-subtle p-6 text-center">
       <div className="grid gap-1">
         <p className="font-medium">{title}</p>
         <p className="text-sm text-muted-foreground">{description}</p>

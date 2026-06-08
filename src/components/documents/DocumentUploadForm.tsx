@@ -1,6 +1,7 @@
 import { Button } from '#/components/ui/button'
 import { Field, FieldError, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
+import { Select } from '#/components/ui/select'
 import { Textarea } from '#/components/ui/textarea'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Id } from 'convex/_generated/dataModel'
@@ -9,10 +10,9 @@ import { Controller, useForm } from 'react-hook-form'
 import {
   stableDocumentFormSchema,
   stableDocumentTypeLabels,
-  stableDocumentTypes
-  
+  stableDocumentTypes,
 } from 'shared/stables/stableDocumentSchema'
-import type {StableDocumentFormSchema} from 'shared/stables/stableDocumentSchema';
+import type { StableDocumentFormSchema } from 'shared/stables/stableDocumentSchema'
 
 export type DocumentUploadValues = StableDocumentFormSchema & {
   horseId?: string
@@ -77,10 +77,9 @@ export function DocumentUploadForm({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={field.name}>Horse</FieldLabel>
-              <select
+              <Select
                 {...field}
                 id={field.name}
-                className="h-9 rounded-md border bg-background px-3 text-sm"
                 disabled={form.formState.isSubmitting}
               >
                 <option value="">Stable-wide document</option>
@@ -89,7 +88,7 @@ export function DocumentUploadForm({
                     {horse.name}
                   </option>
                 ))}
-              </select>
+              </Select>
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
@@ -103,10 +102,9 @@ export function DocumentUploadForm({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={field.name}>Type</FieldLabel>
-              <select
+              <Select
                 {...field}
                 id={field.name}
-                className="h-9 rounded-md border bg-background px-3 text-sm"
                 disabled={form.formState.isSubmitting}
               >
                 {stableDocumentTypes.map((type) => (
@@ -114,7 +112,7 @@ export function DocumentUploadForm({
                     {stableDocumentTypeLabels[type]}
                   </option>
                 ))}
-              </select>
+              </Select>
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
@@ -123,7 +121,10 @@ export function DocumentUploadForm({
         <Controller
           name="file"
           control={form.control}
-          render={({ field: { value: _value, onChange, ...field }, fieldState }) => (
+          render={({
+            field: { value: _value, onChange, ...field },
+            fieldState,
+          }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={field.name}>File</FieldLabel>
               <Input

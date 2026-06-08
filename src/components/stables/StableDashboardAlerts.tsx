@@ -1,12 +1,5 @@
 import { formatEventDate } from '#/components/events/eventDisplay'
 import { Badge } from '#/components/ui/badge'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
@@ -24,7 +17,9 @@ type StableDashboardAlertsProps = {
   stableId: string
 }
 
-export function StableDashboardAlerts({ stableId }: StableDashboardAlertsProps) {
+export function StableDashboardAlerts({
+  stableId,
+}: StableDashboardAlertsProps) {
   const { data: alerts } = useSuspenseQuery(
     convexQuery(api.stableDashboardAlerts.getForStable, {
       stableId: stableId as Id<'stables'>,
@@ -33,20 +28,23 @@ export function StableDashboardAlerts({ stableId }: StableDashboardAlertsProps) 
   const hasAlerts = Object.values(alerts.summary).some((count) => count > 0)
 
   return (
-    <Card>
-      <CardHeader>
+    <section className="grid gap-4">
+      <div>
         <div className="flex flex-wrap items-center gap-2">
-          <CardTitle>Care alerts</CardTitle>
+          <h2 className="text-xl font-semibold tracking-tight">Care alerts</h2>
           {hasAlerts && <Badge variant="secondary">Actionable</Badge>}
         </div>
-        <CardDescription>
-          Quick checks for urgent care, missing details, follow-ups, and upcoming
-          service coordination.
-        </CardDescription>
-      </CardHeader>
+        <p className="text-sm text-muted-foreground">
+          Quick checks for urgent care, missing details, follow-ups, and
+          upcoming service coordination.
+        </p>
+      </div>
 
-      <CardContent className="grid gap-4 xl:grid-cols-3">
-        <AlertSection title="Needs attention" count={alerts.summary.highSeverityIssueCount}>
+      <div className="grid items-start gap-x-8 gap-y-5 lg:grid-cols-2 2xl:grid-cols-4">
+        <AlertSection
+          title="Needs attention"
+          count={alerts.summary.highSeverityIssueCount}
+        >
           {alerts.highSeverityIssues.length === 0 ? (
             <EmptyAlert>No high-severity active health issues.</EmptyAlert>
           ) : (
@@ -65,7 +63,10 @@ export function StableDashboardAlerts({ stableId }: StableDashboardAlertsProps) 
           )}
         </AlertSection>
 
-        <AlertSection title="Due reminders" count={alerts.summary.dueReminderCount}>
+        <AlertSection
+          title="Due reminders"
+          count={alerts.summary.dueReminderCount}
+        >
           {alerts.dueReminders.length === 0 ? (
             <EmptyAlert>No reminders due in the next 7 days.</EmptyAlert>
           ) : (
@@ -79,7 +80,8 @@ export function StableDashboardAlerts({ stableId }: StableDashboardAlertsProps) 
                   {reminder.title}
                 </Link>
                 <p className="text-sm text-muted-foreground">
-                  {reminder.overdue ? 'Overdue' : 'Due'} {formatEventDate(reminder.dueDate)} ·{' '}
+                  {reminder.overdue ? 'Overdue' : 'Due'}{' '}
+                  {formatEventDate(reminder.dueDate)} ·{' '}
                   {careReminderCategoryLabels[reminder.category]}
                   {reminder.horseName ? ` · ${reminder.horseName}` : ''}
                 </p>
@@ -88,7 +90,10 @@ export function StableDashboardAlerts({ stableId }: StableDashboardAlertsProps) 
           )}
         </AlertSection>
 
-        <AlertSection title="Upcoming care" count={alerts.summary.upcomingEventCount}>
+        <AlertSection
+          title="Upcoming care"
+          count={alerts.summary.upcomingEventCount}
+        >
           {alerts.upcomingEvents.length === 0 ? (
             <EmptyAlert>No planned events in the next 30 days.</EmptyAlert>
           ) : (
@@ -102,17 +107,22 @@ export function StableDashboardAlerts({ stableId }: StableDashboardAlertsProps) 
                   {event.title}
                 </Link>
                 <p className="text-sm text-muted-foreground">
-                  {formatEventDate(event.date)} · {eventTypeLabels[event.type]} ·{' '}
-                  {event.horseCount} horse{event.horseCount === 1 ? '' : 's'}
+                  {formatEventDate(event.date)} · {eventTypeLabels[event.type]}{' '}
+                  · {event.horseCount} horse{event.horseCount === 1 ? '' : 's'}
                 </p>
               </AlertItem>
             ))
           )}
         </AlertSection>
 
-        <AlertSection title="Profile gaps" count={alerts.summary.profileGapCount}>
+        <AlertSection
+          title="Profile gaps"
+          count={alerts.summary.profileGapCount}
+        >
           {alerts.profileGaps.length === 0 ? (
-            <EmptyAlert>Important horse profile details are filled in.</EmptyAlert>
+            <EmptyAlert>
+              Important horse profile details are filled in.
+            </EmptyAlert>
           ) : (
             alerts.profileGaps.slice(0, 4).map((horse) => (
               <AlertItem key={horse.horseId}>
@@ -132,7 +142,10 @@ export function StableDashboardAlerts({ stableId }: StableDashboardAlertsProps) 
           )}
         </AlertSection>
 
-        <AlertSection title="Event follow-ups" count={alerts.summary.completionNoteGapCount}>
+        <AlertSection
+          title="Event follow-ups"
+          count={alerts.summary.completionNoteGapCount}
+        >
           {alerts.completionNoteGaps.length === 0 ? (
             <EmptyAlert>Completed events have aftercare notes.</EmptyAlert>
           ) : (
@@ -153,9 +166,14 @@ export function StableDashboardAlerts({ stableId }: StableDashboardAlertsProps) 
           )}
         </AlertSection>
 
-        <AlertSection title="Horse outcomes" count={alerts.summary.serviceOutcomeGapCount}>
+        <AlertSection
+          title="Horse outcomes"
+          count={alerts.summary.serviceOutcomeGapCount}
+        >
           {alerts.serviceOutcomeGaps.length === 0 ? (
-            <EmptyAlert>Completed shared visits have per-horse outcomes.</EmptyAlert>
+            <EmptyAlert>
+              Completed shared visits have per-horse outcomes.
+            </EmptyAlert>
           ) : (
             alerts.serviceOutcomeGaps.slice(0, 4).map((row) => (
               <AlertItem key={row.id}>
@@ -174,7 +192,10 @@ export function StableDashboardAlerts({ stableId }: StableDashboardAlertsProps) 
           )}
         </AlertSection>
 
-        <AlertSection title="Provider details" count={alerts.summary.providerGapCount}>
+        <AlertSection
+          title="Provider details"
+          count={alerts.summary.providerGapCount}
+        >
           {alerts.providerGaps.length === 0 ? (
             <EmptyAlert>Event provider details are filled in.</EmptyAlert>
           ) : (
@@ -202,9 +223,14 @@ export function StableDashboardAlerts({ stableId }: StableDashboardAlertsProps) 
           )}
         </AlertSection>
 
-        <AlertSection title="Pending invites" count={alerts.summary.pendingInvitationCount}>
+        <AlertSection
+          title="Pending invites"
+          count={alerts.summary.pendingInvitationCount}
+        >
           {alerts.summary.pendingInvitationCount === 0 ? (
-            <EmptyAlert>No pending stable or horse event invitations.</EmptyAlert>
+            <EmptyAlert>
+              No pending stable or horse event invitations.
+            </EmptyAlert>
           ) : (
             <div className="grid gap-3">
               {alerts.pendingStableInvitations.slice(0, 2).map((invitation) => (
@@ -238,8 +264,8 @@ export function StableDashboardAlerts({ stableId }: StableDashboardAlertsProps) 
             </div>
           )}
         </AlertSection>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   )
 }
 
@@ -253,7 +279,7 @@ function AlertSection({
   children: React.ReactNode
 }) {
   return (
-    <div className="grid gap-3 rounded-lg border p-4">
+    <div className="grid gap-3 border-t border-border-subtle pt-4">
       <div className="flex items-center justify-between gap-2">
         <h3 className="font-medium">{title}</h3>
         <Badge variant={count > 0 ? 'default' : 'secondary'}>{count}</Badge>
