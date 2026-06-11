@@ -8,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from '#/components/ui/card'
-import { Separator } from '#/components/ui/separator'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { api } from 'convex/_generated/api'
@@ -16,11 +15,8 @@ import type { Doc, Id } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import {
-  stableProviderTypeLabels
-  
-} from 'shared/stables/stableProviderSchema'
-import type {StableProviderFormSchema} from 'shared/stables/stableProviderSchema';
+import { stableProviderTypeLabels } from 'shared/stables/stableProviderSchema'
+import type { StableProviderFormSchema } from 'shared/stables/stableProviderSchema'
 
 type StableProvidersCardProps = {
   stableId: Id<'stables'>
@@ -93,8 +89,8 @@ export function StableProvidersCard({ stableId }: StableProvidersCardProps) {
       <CardHeader>
         <CardTitle>Provider directory</CardTitle>
         <CardDescription>
-          Keep vets, farriers, dentists, physios, saddlers, and other care contacts
-          ready for event planning.
+          Keep vets, farriers, dentists, physios, saddlers, and other care
+          contacts ready for event planning.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-6">
@@ -104,26 +100,24 @@ export function StableProvidersCard({ stableId }: StableProvidersCardProps) {
           </div>
         )}
 
-        <div className="grid gap-4">
+        <div className="grid gap-2">
           {data.providers.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No providers saved yet.
             </p>
           ) : (
-            data.providers.map((provider, index) => (
-              <div key={provider._id} className="grid gap-4">
-                <ProviderRow
-                  provider={provider}
-                  canManage={data.canManage}
-                  isEditing={editingProviderId === provider._id}
-                  isRemoving={removingProviderId === provider._id}
-                  onEdit={() => setEditingProviderId(provider._id)}
-                  onCancel={() => setEditingProviderId(undefined)}
-                  onSubmit={(values) => onUpdateProvider(provider, values)}
-                  onRemove={() => onRemoveProvider(provider)}
-                />
-                {index < data.providers.length - 1 && <Separator />}
-              </div>
+            data.providers.map((provider) => (
+              <ProviderRow
+                key={provider._id}
+                provider={provider}
+                canManage={data.canManage}
+                isEditing={editingProviderId === provider._id}
+                isRemoving={removingProviderId === provider._id}
+                onEdit={() => setEditingProviderId(provider._id)}
+                onCancel={() => setEditingProviderId(undefined)}
+                onSubmit={(values) => onUpdateProvider(provider, values)}
+                onRemove={() => onRemoveProvider(provider)}
+              />
             ))
           )}
         </div>
@@ -164,11 +158,15 @@ function ProviderRow({
   }
 
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="group/open grid cursor-pointer gap-3 border border-transparent px-3 py-3 transition-colors hover:rounded-row hover:border-primary/15 hover:bg-primary/5">
       <div className="grid gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="font-medium">{provider.name}</h3>
-          <Badge variant="outline">{stableProviderTypeLabels[provider.type]}</Badge>
+          <h3 className="text-sm font-semibold underline-offset-4 transition-colors group-hover/open:text-primary group-hover/open:underline">
+            {provider.name}
+          </h3>
+          <Badge variant="outline">
+            {stableProviderTypeLabels[provider.type]}
+          </Badge>
         </div>
         {(provider.phone || provider.email) && (
           <p className="text-sm text-muted-foreground">
@@ -181,13 +179,21 @@ function ProviderRow({
       </div>
 
       {canManage && (
-        <div className="flex gap-2">
-          <Button type="button" variant="outline" onClick={onEdit}>
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="shadow-none"
+            onClick={onEdit}
+          >
             Edit
           </Button>
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
+            size="sm"
+            className="shadow-none"
             disabled={isRemoving}
             onClick={() => void onRemove()}
           >

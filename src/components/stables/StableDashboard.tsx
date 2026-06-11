@@ -48,81 +48,21 @@ export function StableDashboard({
           {stable.description && <p>{stable.description}</p>}
         </div>
 
-        <div className="grid justify-start gap-3 lg:justify-items-end">
-          <div className="flex flex-wrap gap-2 lg:justify-end">
-            <Link
-              to="/stables/$stableId/horses/create"
-              params={{ stableId: stable._id }}
-              className={buttonVariants({ variant: 'outline' })}
-            >
-              Add horse
-            </Link>
-            <Link
-              to="/stables/$stableId/events/create"
-              params={{ stableId: stable._id }}
-              className={buttonVariants()}
-            >
-              Add event
-            </Link>
-          </div>
-          <nav className="flex max-w-3xl flex-wrap gap-2 lg:justify-end">
-            <Link
-              to="/stables/$stableId/edit"
-              params={{ stableId: stable._id }}
-              className={buttonVariants({ variant: 'outline', size: 'sm' })}
-            >
-              Edit
-            </Link>
-            <Link
-              to="/stables/$stableId/settings"
-              params={{ stableId: stable._id }}
-              className={buttonVariants({ variant: 'outline', size: 'sm' })}
-            >
-              Settings
-            </Link>
-            <Link
-              to="/stables/$stableId/horses"
-              params={{ stableId: stable._id }}
-              className={buttonVariants({ variant: 'outline', size: 'sm' })}
-            >
-              Horses
-            </Link>
-            <Link
-              to="/stables/$stableId/events"
-              params={{ stableId: stable._id }}
-              className={buttonVariants({ variant: 'outline', size: 'sm' })}
-            >
-              Events
-            </Link>
-            <Link
-              to="/stables/$stableId/events/calendar"
-              params={{ stableId: stable._id }}
-              className={buttonVariants({ variant: 'outline', size: 'sm' })}
-            >
-              Calendar
-            </Link>
-            <Link
-              to="/stables/$stableId/reminders"
-              params={{ stableId: stable._id }}
-              className={buttonVariants({ variant: 'outline', size: 'sm' })}
-            >
-              Reminders
-            </Link>
-            <Link
-              to="/stables/$stableId/documents"
-              params={{ stableId: stable._id }}
-              className={buttonVariants({ variant: 'outline', size: 'sm' })}
-            >
-              Documents
-            </Link>
-            <Link
-              to="/stables/$stableId/analysis"
-              params={{ stableId: stable._id }}
-              className={buttonVariants({ variant: 'outline', size: 'sm' })}
-            >
-              Analysis
-            </Link>
-          </nav>
+        <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
+          <Link
+            to="/stables/$stableId/horses/create"
+            params={{ stableId: stable._id }}
+            className={buttonVariants({ variant: 'outline' })}
+          >
+            Add horse
+          </Link>
+          <Link
+            to="/stables/$stableId/events/create"
+            params={{ stableId: stable._id }}
+            className={buttonVariants()}
+          >
+            Add event
+          </Link>
         </div>
       </header>
 

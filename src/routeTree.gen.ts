@@ -9,13 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as StyleLabRouteImport } from './routes/style-lab'
 import { Route as RssDotxmlRouteImport } from './routes/rss[.]xml'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as DashboardLabRouteImport } from './routes/dashboard-lab'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardLabIndexRouteImport } from './routes/dashboard-lab/index'
 import { Route as StablesLayoutRouteImport } from './routes/stables/_layout'
 import { Route as SignUpSplatRouteImport } from './routes/sign-up.$'
 import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
 import { Route as InvitationsTokenRouteImport } from './routes/invitations/$token'
+import { Route as DashboardLabVersionRouteImport } from './routes/dashboard-lab/$version'
 import { Route as StablesLayoutIndexRouteImport } from './routes/stables/_layout/index'
 import { Route as StablesLayoutCreateRouteImport } from './routes/stables/_layout/create'
 import { Route as StablesLayoutStableIdRouteImport } from './routes/stables/_layout/$stableId'
@@ -39,6 +43,11 @@ import { Route as StablesLayoutStableIdHorsesHorseIdEditRouteImport } from './ro
 import { Route as StablesLayoutStableIdHorsesHorseIdCareSummaryRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/care-summary'
 import { Route as StablesLayoutStableIdEventsEventIdEditRouteImport } from './routes/stables/_layout/$stableId/events/$eventId/edit'
 
+const StyleLabRoute = StyleLabRouteImport.update({
+  id: '/style-lab',
+  path: '/style-lab',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RssDotxmlRoute = RssDotxmlRouteImport.update({
   id: '/rss.xml',
   path: '/rss.xml',
@@ -49,10 +58,20 @@ const PricingRoute = PricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardLabRoute = DashboardLabRouteImport.update({
+  id: '/dashboard-lab',
+  path: '/dashboard-lab',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardLabIndexRoute = DashboardLabIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardLabRoute,
 } as any)
 const StablesLayoutRoute = StablesLayoutRouteImport.update({
   id: '/stables/_layout',
@@ -73,6 +92,11 @@ const InvitationsTokenRoute = InvitationsTokenRouteImport.update({
   id: '/invitations/$token',
   path: '/invitations/$token',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardLabVersionRoute = DashboardLabVersionRouteImport.update({
+  id: '/$version',
+  path: '/$version',
+  getParentRoute: () => DashboardLabRoute,
 } as any)
 const StablesLayoutIndexRoute = StablesLayoutIndexRouteImport.update({
   id: '/',
@@ -206,12 +230,16 @@ const StablesLayoutStableIdEventsEventIdEditRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard-lab': typeof DashboardLabRouteWithChildren
   '/pricing': typeof PricingRoute
   '/rss.xml': typeof RssDotxmlRoute
+  '/style-lab': typeof StyleLabRoute
+  '/dashboard-lab/$version': typeof DashboardLabVersionRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/stables': typeof StablesLayoutRouteWithChildren
+  '/dashboard-lab/': typeof DashboardLabIndexRoute
   '/stables/$stableId': typeof StablesLayoutStableIdRouteWithChildren
   '/stables/create': typeof StablesLayoutCreateRoute
   '/stables/': typeof StablesLayoutIndexRoute
@@ -239,9 +267,12 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/pricing': typeof PricingRoute
   '/rss.xml': typeof RssDotxmlRoute
+  '/style-lab': typeof StyleLabRoute
+  '/dashboard-lab/$version': typeof DashboardLabVersionRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
+  '/dashboard-lab': typeof DashboardLabIndexRoute
   '/stables/create': typeof StablesLayoutCreateRoute
   '/stables': typeof StablesLayoutIndexRoute
   '/stables/$stableId/analysis': typeof StablesLayoutStableIdAnalysisRoute
@@ -265,12 +296,16 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dashboard-lab': typeof DashboardLabRouteWithChildren
   '/pricing': typeof PricingRoute
   '/rss.xml': typeof RssDotxmlRoute
+  '/style-lab': typeof StyleLabRoute
+  '/dashboard-lab/$version': typeof DashboardLabVersionRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/stables/_layout': typeof StablesLayoutRouteWithChildren
+  '/dashboard-lab/': typeof DashboardLabIndexRoute
   '/stables/_layout/$stableId': typeof StablesLayoutStableIdRouteWithChildren
   '/stables/_layout/create': typeof StablesLayoutCreateRoute
   '/stables/_layout/': typeof StablesLayoutIndexRoute
@@ -298,12 +333,16 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/dashboard-lab'
     | '/pricing'
     | '/rss.xml'
+    | '/style-lab'
+    | '/dashboard-lab/$version'
     | '/invitations/$token'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/stables'
+    | '/dashboard-lab/'
     | '/stables/$stableId'
     | '/stables/create'
     | '/stables/'
@@ -331,9 +370,12 @@ export interface FileRouteTypes {
     | '/'
     | '/pricing'
     | '/rss.xml'
+    | '/style-lab'
+    | '/dashboard-lab/$version'
     | '/invitations/$token'
     | '/sign-in/$'
     | '/sign-up/$'
+    | '/dashboard-lab'
     | '/stables/create'
     | '/stables'
     | '/stables/$stableId/analysis'
@@ -356,12 +398,16 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/dashboard-lab'
     | '/pricing'
     | '/rss.xml'
+    | '/style-lab'
+    | '/dashboard-lab/$version'
     | '/invitations/$token'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/stables/_layout'
+    | '/dashboard-lab/'
     | '/stables/_layout/$stableId'
     | '/stables/_layout/create'
     | '/stables/_layout/'
@@ -388,8 +434,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DashboardLabRoute: typeof DashboardLabRouteWithChildren
   PricingRoute: typeof PricingRoute
   RssDotxmlRoute: typeof RssDotxmlRoute
+  StyleLabRoute: typeof StyleLabRoute
   InvitationsTokenRoute: typeof InvitationsTokenRoute
   SignInSplatRoute: typeof SignInSplatRoute
   SignUpSplatRoute: typeof SignUpSplatRoute
@@ -398,6 +446,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/style-lab': {
+      id: '/style-lab'
+      path: '/style-lab'
+      fullPath: '/style-lab'
+      preLoaderRoute: typeof StyleLabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/rss.xml': {
       id: '/rss.xml'
       path: '/rss.xml'
@@ -412,12 +467,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard-lab': {
+      id: '/dashboard-lab'
+      path: '/dashboard-lab'
+      fullPath: '/dashboard-lab'
+      preLoaderRoute: typeof DashboardLabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/dashboard-lab/': {
+      id: '/dashboard-lab/'
+      path: '/'
+      fullPath: '/dashboard-lab/'
+      preLoaderRoute: typeof DashboardLabIndexRouteImport
+      parentRoute: typeof DashboardLabRoute
     }
     '/stables/_layout': {
       id: '/stables/_layout'
@@ -446,6 +515,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/invitations/$token'
       preLoaderRoute: typeof InvitationsTokenRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/dashboard-lab/$version': {
+      id: '/dashboard-lab/$version'
+      path: '/$version'
+      fullPath: '/dashboard-lab/$version'
+      preLoaderRoute: typeof DashboardLabVersionRouteImport
+      parentRoute: typeof DashboardLabRoute
     }
     '/stables/_layout/': {
       id: '/stables/_layout/'
@@ -604,6 +680,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface DashboardLabRouteChildren {
+  DashboardLabVersionRoute: typeof DashboardLabVersionRoute
+  DashboardLabIndexRoute: typeof DashboardLabIndexRoute
+}
+
+const DashboardLabRouteChildren: DashboardLabRouteChildren = {
+  DashboardLabVersionRoute: DashboardLabVersionRoute,
+  DashboardLabIndexRoute: DashboardLabIndexRoute,
+}
+
+const DashboardLabRouteWithChildren = DashboardLabRoute._addFileChildren(
+  DashboardLabRouteChildren,
+)
+
 interface StablesLayoutStableIdEventsEventIdRouteChildren {
   StablesLayoutStableIdEventsEventIdEditRoute: typeof StablesLayoutStableIdEventsEventIdEditRoute
 }
@@ -732,8 +822,10 @@ const StablesLayoutRouteWithChildren = StablesLayoutRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DashboardLabRoute: DashboardLabRouteWithChildren,
   PricingRoute: PricingRoute,
   RssDotxmlRoute: RssDotxmlRoute,
+  StyleLabRoute: StyleLabRoute,
   InvitationsTokenRoute: InvitationsTokenRoute,
   SignInSplatRoute: SignInSplatRoute,
   SignUpSplatRoute: SignUpSplatRoute,

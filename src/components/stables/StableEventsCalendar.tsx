@@ -38,6 +38,10 @@ export function StableEventsCalendar({ events }: StableEventsCalendarProps) {
     { length: visibleMonth.getDay() },
     (_, index) => index,
   )
+  const trailingDays = Array.from(
+    { length: (7 - ((leadingDays.length + monthDays.length) % 7)) % 7 },
+    (_, index) => index,
+  )
 
   return (
     <Card className="bg-card/80 shadow-none">
@@ -139,6 +143,13 @@ export function StableEventsCalendar({ events }: StableEventsCalendarProps) {
                 </div>
               )
             })}
+
+            {trailingDays.map((day) => (
+              <div
+                key={`trailing-empty-${day}`}
+                className="min-h-28 border-r border-b border-border-subtle bg-muted/25 last:border-r-0"
+              />
+            ))}
           </div>
         </div>
       </CardContent>

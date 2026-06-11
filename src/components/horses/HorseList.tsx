@@ -26,7 +26,7 @@ export function HorseList({ stableId }: Props) {
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-2">
       {horses.map((horse) => (
         <HorseCard
           key={horse._id}
@@ -36,7 +36,7 @@ export function HorseList({ stableId }: Props) {
               to="/stables/$stableId/horses/$horseId"
               params={{ stableId, horseId: horse._id }}
             >
-              <Button variant={'outline'}>
+              <Button variant="ghost" size="icon-sm" className="shadow-none">
                 <ArrowRightIcon />
               </Button>
             </Link>

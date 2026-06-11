@@ -9,11 +9,8 @@ import {
 } from '#/components/ui/card'
 import type { Doc, Id } from 'convex/_generated/dataModel'
 import { stableDocumentTypeLabels } from 'shared/stables/stableDocumentSchema'
-import {
-  DocumentUploadForm
-  
-} from './DocumentUploadForm'
-import type {DocumentUploadValues} from './DocumentUploadForm';
+import { DocumentUploadForm } from './DocumentUploadForm'
+import type { DocumentUploadValues } from './DocumentUploadForm'
 
 export type DocumentListItem = {
   document: Doc<'stableDocuments'>
@@ -75,9 +72,13 @@ export function DocumentsCard({
         {documents.length === 0 ? (
           <p className="text-sm text-muted-foreground">{emptyMessage}</p>
         ) : (
-          <div className="grid gap-3">
+          <div className="grid gap-2">
             {documents.map((item) => (
-              <DocumentRow key={item.document._id} item={item} onRemove={onRemove} />
+              <DocumentRow
+                key={item.document._id}
+                item={item}
+                onRemove={onRemove}
+              />
             ))}
           </div>
         )}
@@ -96,41 +97,26 @@ function DocumentRow({
   const { document } = item
 
   return (
-    <div className="grid gap-3 rounded-lg border p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="grid gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-medium">{document.fileName}</span>
-            <Badge variant="outline">{stableDocumentTypeLabels[document.type]}</Badge>
-            {item.horseName && <Badge variant="secondary">{item.horseName}</Badge>}
-          </div>
-          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-            {document.contentType && <span>{document.contentType}</span>}
-            {document.size !== undefined && <span>{formatFileSize(document.size)}</span>}
-            {item.eventTitle && <span>Linked to {item.eventTitle}</span>}
-          </div>
+    <div className="group/open grid cursor-pointer gap-3 border border-transparent px-3 py-3 transition-colors hover:rounded-row hover:border-primary/15 hover:bg-primary/5">
+      <div className="grid gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-semibold underline-offset-4 transition-colors group-hover/open:text-primary group-hover/open:underline">
+            {document.fileName}
+          </span>
+          <Badge variant="outline">
+            {stableDocumentTypeLabels[document.type]}
+          </Badge>
+          {item.horseName && (
+            <Badge variant="secondary">{item.horseName}</Badge>
+          )}
+          {!item.fileUrl && <Badge variant="secondary">Metadata only</Badge>}
         </div>
-
-        <div className="flex flex-wrap gap-2">
-          {item.fileUrl ? (
-            <Button asChild type="button" variant="outline" size="sm">
-              <a href={item.fileUrl} target="_blank" rel="noreferrer">
-                Open
-              </a>
-            </Button>
-          ) : (
-            <Badge variant="secondary">Metadata only</Badge>
+        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+          {document.contentType && <span>{document.contentType}</span>}
+          {document.size !== undefined && (
+            <span>{formatFileSize(document.size)}</span>
           )}
-          {item.canManage && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onRemove(document._id)}
-            >
-              Remove
-            </Button>
-          )}
+          {item.eventTitle && <span>Linked to {item.eventTitle}</span>}
         </div>
       </div>
 
@@ -139,6 +125,33 @@ function DocumentRow({
           {document.notes}
         </p>
       )}
+
+      <div className="flex flex-wrap justify-end gap-2">
+        {item.fileUrl && (
+          <Button
+            asChild
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="shadow-none"
+          >
+            <a href={item.fileUrl} target="_blank" rel="noreferrer">
+              Open
+            </a>
+          </Button>
+        )}
+        {item.canManage && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="shadow-none"
+            onClick={() => onRemove(document._id)}
+          >
+            Remove
+          </Button>
+        )}
+      </div>
     </div>
   )
 }

@@ -13,8 +13,8 @@ import {
   careReminderPriorityLabels,
   careReminderStatusLabels,
 } from 'shared/reminders/careReminderSchema'
-import { CareReminderForm  } from './CareReminderForm'
-import type {CareReminderSubmitData} from './CareReminderForm';
+import { CareReminderForm } from './CareReminderForm'
+import type { CareReminderSubmitData } from './CareReminderForm'
 
 export type CareReminderListItem = {
   reminder: Doc<'careReminders'>
@@ -84,7 +84,7 @@ export function CareRemindersCard({
           />
         )}
 
-        <div className="grid gap-4">
+        <div className="grid gap-2">
           {reminders.length === 0 ? (
             <p className="text-sm text-muted-foreground">{emptyMessage}</p>
           ) : (
@@ -119,69 +119,72 @@ function ReminderRow({
   const overdue = isOverdue(reminder)
 
   return (
-    <div className="grid gap-3 rounded-lg border p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="grid gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-medium">{reminder.title}</h3>
-            <Badge variant={overdue ? 'destructive' : 'secondary'}>
-              {overdue ? 'Overdue' : careReminderStatusLabels[reminder.status]}
-            </Badge>
+    <div className="group/open grid cursor-pointer gap-3 border border-transparent px-3 py-3 transition-colors hover:rounded-row hover:border-primary/15 hover:bg-primary/5">
+      <div className="grid gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="text-sm font-semibold underline-offset-4 transition-colors group-hover/open:text-primary group-hover/open:underline">
+            {reminder.title}
+          </h3>
+          <Badge variant={overdue ? 'destructive' : 'secondary'}>
+            {overdue ? 'Overdue' : careReminderStatusLabels[reminder.status]}
+          </Badge>
+          <Badge variant="outline">
+            {careReminderCategoryLabels[reminder.category]}
+          </Badge>
+          {reminder.priority && (
             <Badge variant="outline">
-              {careReminderCategoryLabels[reminder.category]}
+              {careReminderPriorityLabels[reminder.priority]} priority
             </Badge>
-            {reminder.priority && (
-              <Badge variant="outline">
-                {careReminderPriorityLabels[reminder.priority]} priority
-              </Badge>
-            )}
-          </div>
-
-          <p className="text-sm text-muted-foreground">
-            Due {formatDueDate(reminder.dueDate)}
-            {item.horseName ? ` · ${item.horseName}` : ''}
-          </p>
-
-          {reminder.description && (
-            <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-              {reminder.description}
-            </p>
           )}
         </div>
 
-        {item.canManage && (
-          <div className="flex flex-wrap gap-2">
-            {reminder.status === 'pending' && (
-              <>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onComplete(reminder)}
-                >
-                  Complete
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onDismiss(reminder)}
-                >
-                  Dismiss
-                </Button>
-              </>
-            )}
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => onRemove(reminder)}
-            >
-              Remove
-            </Button>
-          </div>
+        <p className="text-sm text-muted-foreground">
+          Due {formatDueDate(reminder.dueDate)}
+          {item.horseName ? ` · ${item.horseName}` : ''}
+        </p>
+
+        {reminder.description && (
+          <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+            {reminder.description}
+          </p>
         )}
       </div>
+
+      {item.canManage && (
+        <div className="flex flex-wrap justify-end gap-2">
+          {reminder.status === 'pending' && (
+            <>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="shadow-none"
+                onClick={() => onComplete(reminder)}
+              >
+                Complete
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="shadow-none"
+                onClick={() => onDismiss(reminder)}
+              >
+                Dismiss
+              </Button>
+            </>
+          )}
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="shadow-none"
+            onClick={() => onRemove(reminder)}
+          >
+            Remove
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

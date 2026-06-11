@@ -37,22 +37,13 @@ function RouteComponent() {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Link
-            to="/stables/$stableId/events"
-            params={{ stableId }}
-            className={buttonVariants({ variant: 'outline' })}
-          >
-            List view
-          </Link>
-          <Link
-            to="/stables/$stableId/events/create"
-            params={{ stableId }}
-            className={buttonVariants({ variant: 'outline' })}
-          >
-            Add event
-          </Link>
-        </div>
+        <Link
+          to="/stables/$stableId/events/create"
+          params={{ stableId }}
+          className={buttonVariants()}
+        >
+          Add event
+        </Link>
       </header>
 
       <Card>

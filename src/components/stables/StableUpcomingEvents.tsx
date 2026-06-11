@@ -35,7 +35,7 @@ export function StableUpcomingEvents({
   }
 
   return (
-    <div className="grid gap-3">
+    <div className="overflow-hidden border-y border-border-subtle">
       {upcomingEvents.map((event) => {
         const recurrenceSummary = formatRecurrence(event.recurrence)
         const dateBadge = getDateBadgeParts(event.date)
@@ -43,7 +43,7 @@ export function StableUpcomingEvents({
         return (
           <div
             key={event._id}
-            className="app-row app-row-hover flex flex-wrap items-center gap-4 p-4"
+            className="flex flex-wrap items-center gap-4 border-b border-border-subtle px-3 py-3 transition-colors last:border-b-0 hover:bg-muted/45"
           >
             <div className="grid min-w-20 justify-items-center border-r border-border-subtle pr-4 text-center">
               <span className="text-xs font-medium text-muted-foreground">

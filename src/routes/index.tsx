@@ -37,9 +37,8 @@ function HomePage() {
 }
 
 function SignedInWelcome() {
-  const { data: user } = useSuspenseQuery(convexQuery(api.users.getCurrentUser))
   const { data: stables } = useSuspenseQuery(convexQuery(api.stables.list))
   const { data: events } = useSuspenseQuery(convexQuery(api.events.list))
 
-  return <AppDashboard user={user} stables={stables} events={events} />
+  return <AppDashboard stables={stables} events={events} />
 }

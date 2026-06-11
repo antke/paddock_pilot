@@ -18,11 +18,11 @@ export function HorseCard({ horse, action, className }: HorseCardProps) {
   return (
     <article
       className={cn(
-        'app-row app-row-hover grid grid-cols-4 items-center gap-4 p-4',
+        'group/horse flex cursor-pointer items-center gap-3 border border-transparent px-3 py-3 transition-colors hover:rounded-row hover:border-primary/15 hover:bg-primary/5',
         className,
       )}
     >
-      <div className="col-span-1 aspect-square overflow-hidden rounded-row border border-border-subtle bg-muted">
+      <div className="size-12 shrink-0 overflow-hidden rounded-md border border-border-subtle bg-card sm:size-14">
         {horse.profileImageUrl ? (
           <img
             src={horse.profileImageUrl}
@@ -36,27 +36,28 @@ export function HorseCard({ horse, action, className }: HorseCardProps) {
         )}
       </div>
 
-      <div className="col-span-3 grid gap-2">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="line-clamp-1 font-semibold">{horse.name}</h3>
-          {action}
-        </div>
-
-        <dl className="grid gap-1 text-xs text-muted-foreground">
+      <div className="min-w-0 flex-1">
+        <h3 className="line-clamp-1 text-sm font-semibold text-foreground">
+          {horse.name}
+        </h3>
+        <dl className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
           {horse.ownerName && (
-            <div className="flex gap-1">
-              <dt>Owner:</dt>
-              <dd>{horse.ownerName}</dd>
-            </div>
+            <HorseMeta label="Owner" value={horse.ownerName} />
           )}
-          {horse.breed && (
-            <div className="flex gap-1">
-              <dt>Breed:</dt>
-              <dd>{horse.breed}</dd>
-            </div>
-          )}
+          {horse.breed && <HorseMeta label="Breed" value={horse.breed} />}
         </dl>
       </div>
+
+      {action && <div className="shrink-0 opacity-85">{action}</div>}
     </article>
+  )
+}
+
+function HorseMeta({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex gap-1">
+      <dt>{label}:</dt>
+      <dd className="text-foreground/80">{value}</dd>
+    </div>
   )
 }

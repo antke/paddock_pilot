@@ -1,6 +1,7 @@
 import type { Doc, Id } from './_generated/dataModel'
-import { query  } from './_generated/server'
-import type {QueryCtx} from './_generated/server';
+import { query } from './_generated/server'
+import type { QueryCtx } from './_generated/server'
+import { v } from 'convex/values'
 import { getCurrentUser } from './libs/stablePermissions'
 
 const upcomingWindowDays = 14
@@ -63,12 +64,15 @@ const incrementHorseMetric = (
 }
 
 export const getForCurrentUser = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { stableId: v.optional(v.id('stables')) },
+  handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx)
     const today = todayKey()
     const upcomingEnd = addDaysKey(today, upcomingWindowDays)
-    const stables = await getAccessibleStables(ctx, user._id)
+    const accessibleStables = await getAccessibleStables(ctx, user._id)
+    const stables = args.stableId
+      ? accessibleStables.filter((stable) => stable._id === args.stableId)
+      : accessibleStables
 
     const stableRows = await Promise.all(
       stables.map(async (stable) => {

@@ -8,7 +8,15 @@ import {
 } from '#/components/ui/breadcrumb'
 import { buttonVariants } from '#/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
-import { Link } from '@tanstack/react-router'
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from '#/components/ui/navigation-menu'
+import { Link, useLocation } from '@tanstack/react-router'
 import type { Doc } from 'convex/_generated/dataModel'
 import { HorseDocumentsCard } from '../documents/HorseDocumentsCard'
 import { HorseCareRemindersCard } from '../reminders/HorseCareRemindersCard'
@@ -41,6 +49,17 @@ const shoeingStatusLabels = {
 } satisfies Record<NonNullable<Doc<'horses'>['shoeingStatus']>, string>
 
 export function HorseDetail({ stableId, horse, events }: HorseDetailProps) {
+  const { pathname } = useLocation()
+  const horseBasePath = `/stables/${stableId}/horses/${horse._id}`
+  const pathAfterHorse = pathname.slice(horseBasePath.length)
+  const activeHorseSection = pathAfterHorse.startsWith('/care-summary')
+    ? 'care-summary'
+    : pathAfterHorse.startsWith('/timeline')
+      ? 'timeline'
+      : pathAfterHorse.startsWith('/edit')
+        ? 'edit'
+        : 'profile'
+
   return (
     <div className="grid gap-6">
       <Breadcrumb>
@@ -88,29 +107,69 @@ export function HorseDetail({ stableId, horse, events }: HorseDetailProps) {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Link
-            to="/stables/$stableId/horses/$horseId/care-summary"
-            params={{ stableId, horseId: horse._id }}
-            className={buttonVariants({ variant: 'outline' })}
-          >
-            Care summary
-          </Link>
-          <Link
-            to="/stables/$stableId/horses/$horseId/timeline"
-            params={{ stableId, horseId: horse._id }}
-            className={buttonVariants({ variant: 'outline' })}
-          >
-            Timeline
-          </Link>
-          <Link
-            to="/stables/$stableId/horses/$horseId/edit"
-            params={{ stableId, horseId: horse._id }}
-            className={buttonVariants({ variant: 'outline' })}
-          >
-            Edit horse
-          </Link>
-        </div>
+        <NavigationMenu className="justify-start lg:justify-end">
+          <NavigationMenuList>
+            <NavigationMenuItem>
+              <NavigationMenuTrigger data-active>
+                Horse
+              </NavigationMenuTrigger>
+              <NavigationMenuContent>
+                <div className="grid w-56 gap-1">
+                  <NavigationMenuLink
+                    render={
+                      <Link
+                        to="/stables/$stableId/horses/$horseId"
+                        params={{ stableId, horseId: horse._id }}
+                      />
+                    }
+                    data-active={activeHorseSection === 'profile' || undefined}
+                    closeOnClick
+                  >
+                    Profile
+                  </NavigationMenuLink>
+                  <NavigationMenuLink
+                    render={
+                      <Link
+                        to="/stables/$stableId/horses/$horseId/care-summary"
+                        params={{ stableId, horseId: horse._id }}
+                      />
+                    }
+                    data-active={
+                      activeHorseSection === 'care-summary' || undefined
+                    }
+                    closeOnClick
+                  >
+                    Care summary
+                  </NavigationMenuLink>
+                  <NavigationMenuLink
+                    render={
+                      <Link
+                        to="/stables/$stableId/horses/$horseId/timeline"
+                        params={{ stableId, horseId: horse._id }}
+                      />
+                    }
+                    data-active={activeHorseSection === 'timeline' || undefined}
+                    closeOnClick
+                  >
+                    Timeline
+                  </NavigationMenuLink>
+                  <NavigationMenuLink
+                    render={
+                      <Link
+                        to="/stables/$stableId/horses/$horseId/edit"
+                        params={{ stableId, horseId: horse._id }}
+                      />
+                    }
+                    data-active={activeHorseSection === 'edit' || undefined}
+                    closeOnClick
+                  >
+                    Edit details
+                  </NavigationMenuLink>
+                </div>
+              </NavigationMenuContent>
+            </NavigationMenuItem>
+          </NavigationMenuList>
+        </NavigationMenu>
       </header>
 
       <Card>

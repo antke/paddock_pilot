@@ -23,7 +23,7 @@ export function StableHorseCards({ stableId, horses }: StableHorseCardsProps) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-2">
       {horses.map((horse) => (
         <HorseCard
           key={horse._id}
@@ -33,7 +33,7 @@ export function StableHorseCards({ stableId, horses }: StableHorseCardsProps) {
               to="/stables/$stableId/horses/$horseId"
               params={{ stableId, horseId: horse._id }}
             >
-              <Button variant="outline" size="icon-sm">
+              <Button variant="ghost" size="icon-sm" className="shadow-none">
                 <ArrowRightIcon />
               </Button>
             </Link>
