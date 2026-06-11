@@ -6,12 +6,11 @@ type PrototypeProps = {
   onActiveStableChange: (stableId: DashboardLabData['stable']['_id']) => void
 }
 
-export function StableCommandCenter({ data, onActiveStableChange }: PrototypeProps) {
+export function StableCommandCenter({
+  data,
+  onActiveStableChange,
+}: PrototypeProps) {
   return (
-    <BarnBoardGrid
-      data={data}
-      onActiveStableChange={onActiveStableChange}
-      simplification="full"
-    />
+    <BarnBoardGrid data={data} onActiveStableChange={onActiveStableChange} />
   )
 }

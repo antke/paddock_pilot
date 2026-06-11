@@ -18,7 +18,10 @@ function ScrollableList({
   className,
 }: ScrollableListProps) {
   const viewportRef = useRef<HTMLDivElement>(null)
-  const [scrollState, setScrollState] = useState({ canScrollUp: false, canScrollDown: false })
+  const [scrollState, setScrollState] = useState({
+    canScrollUp: false,
+    canScrollDown: false,
+  })
   const shouldConstrain = itemCount > visibleItemLimit
 
   const updateScrollState = useCallback(() => {
@@ -33,7 +36,8 @@ function ScrollableList({
 
     const nextState = {
       canScrollUp: viewport.scrollTop > 1,
-      canScrollDown: viewport.scrollTop + viewport.clientHeight < viewport.scrollHeight - 1,
+      canScrollDown:
+        viewport.scrollTop + viewport.clientHeight < viewport.scrollHeight - 1,
     }
 
     setScrollState((current) => {
@@ -53,11 +57,21 @@ function ScrollableList({
   }, [children, updateScrollState])
 
   return (
-    <div className={cn('relative', shouldConstrain && 'overflow-hidden rounded-row')}>
+    <div
+      className={cn(
+        'relative',
+        shouldConstrain && 'overflow-hidden rounded-row',
+      )}
+    >
       <div
         ref={viewportRef}
         onScroll={updateScrollState}
-        className={cn('grid gap-2', shouldConstrain && 'overflow-y-auto pr-2', className)}
+        className={cn(
+          'grid gap-2',
+          shouldConstrain &&
+            'overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+          className,
+        )}
         style={
           shouldConstrain
             ? { maxHeight: `${visibleItemLimit * estimatedItemHeightRem}rem` }

@@ -5,7 +5,6 @@ import { buttonVariants } from '#/components/ui/button'
 import { ClerkLoaded, ClerkLoading, Show } from '@clerk/tanstack-react-start'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { Suspense } from 'react'
-import type { DashboardLabVersion } from '#/components/dashboard-lab/dashboardLabTypes'
 
 export const Route = createFileRoute('/dashboard-lab/$version')({
   component: () => (
@@ -15,14 +14,7 @@ export const Route = createFileRoute('/dashboard-lab/$version')({
   ),
 })
 
-const validVersions = new Set(['1', '2', '3', '4'])
-
 function DashboardLabRoute() {
-  const { version } = Route.useParams()
-  const labVersion: DashboardLabVersion = validVersions.has(version)
-    ? (version as DashboardLabVersion)
-    : '1'
-
   return (
     <>
       <ClerkLoading>
@@ -31,7 +23,7 @@ function DashboardLabRoute() {
 
       <ClerkLoaded>
         <Show when="signed-in">
-          <DashboardLabPage version={labVersion} />
+          <DashboardLabPage />
         </Show>
         <Show when="signed-out">
           <SignedOutDashboardLab />
@@ -46,8 +38,12 @@ function SignedOutDashboardLab() {
     <Alert>
       <AlertTitle>Sign in to try the dashboard lab</AlertTitle>
       <AlertDescription className="grid gap-4">
-        <span>The dashboard concepts use your active stable data.</span>
-        <Link to="/sign-in/$" params={{ _splat: '' }} className={buttonVariants()}>
+        <span>The dashboard lab uses your active stable data.</span>
+        <Link
+          to="/sign-in/$"
+          params={{ _splat: '' }}
+          className={buttonVariants()}
+        >
           Sign in
         </Link>
       </AlertDescription>

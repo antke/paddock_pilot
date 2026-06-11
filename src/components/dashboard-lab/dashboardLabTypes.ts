@@ -2,18 +2,22 @@ import type { Doc } from 'convex/_generated/dataModel'
 import type { FunctionReturnType } from 'convex/server'
 import type { api } from 'convex/_generated/api'
 
-export type DashboardLabVersion = '1' | '2' | '3' | '4'
+export type DashboardLabChrome = 'cards' | 'soft' | 'lines' | 'open' | 'bare'
 
 export type DashboardLabStable = Doc<'stables'>
 export type DashboardLabEvent = Doc<'events'>
 export type DashboardLabOverview = FunctionReturnType<
   typeof api.userCareOverview.getForCurrentUser
 >
-export type DashboardLabHorse = FunctionReturnType<typeof api.horses.list>[number]
+export type DashboardLabHorse = FunctionReturnType<
+  typeof api.horses.list
+>[number]
 
 export type DashboardLabReminder = DashboardLabOverview['dueReminders'][number]
-export type DashboardLabUpcomingEvent = DashboardLabOverview['upcomingEvents'][number]
-export type DashboardLabAttentionHorse = DashboardLabOverview['attentionHorses'][number]
+export type DashboardLabUpcomingEvent =
+  DashboardLabOverview['upcomingEvents'][number]
+export type DashboardLabAttentionHorse =
+  DashboardLabOverview['attentionHorses'][number]
 
 export type DashboardLabData = {
   stable: DashboardLabStable

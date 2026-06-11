@@ -2,18 +2,27 @@ import { Badge } from '#/components/ui/badge'
 import { Link } from '@tanstack/react-router'
 import { eventTypeLabels } from 'shared/events/eventSchema'
 import { careReminderCategoryLabels } from 'shared/reminders/careReminderSchema'
-import type { DashboardLabData } from '../dashboardLabTypes'
-import { DashboardItemCardContent, dashboardItemCardClassName } from './DashboardItemCard'
+import type { DashboardLabChrome, DashboardLabData } from '../dashboardLabTypes'
+import {
+  DashboardItemCardContent,
+  dashboardItemCardClassName,
+} from './DashboardItemCard'
+import {
+  dashboardEmptyClassName,
+  dashboardSectionClassName,
+} from './dashboardChrome'
 import { ScrollableList } from '#/components/ui/scrollable-list'
 
 type PriorityQueueCardProps = {
   data: DashboardLabData
   visibleItemLimit?: number
+  chrome?: DashboardLabChrome
 }
 
 export function PriorityQueueCard({
   data,
   visibleItemLimit = 5,
+  chrome = 'cards',
 }: PriorityQueueCardProps) {
   const rows = [
     ...data.dueReminders.map((reminder) => ({
@@ -37,29 +46,38 @@ export function PriorityQueueCard({
   ]
 
   return (
-    <section className="rounded-panel border border-border-subtle bg-card/80 p-5 shadow-control">
+    <section className={dashboardSectionClassName(chrome)}>
       <div className="mb-4">
         <h2 className="text-lg font-semibold tracking-tight">Priority queue</h2>
       </div>
       {rows.length === 0 ? (
-        <p className="rounded-row border border-dashed border-border-subtle p-4 text-sm text-muted-foreground">
+        <p className={dashboardEmptyClassName(chrome)}>
           Nothing urgent for this stable.
         </p>
       ) : (
-        <ScrollableList itemCount={rows.length} visibleItemLimit={visibleItemLimit}>
+        <ScrollableList
+          itemCount={rows.length}
+          visibleItemLimit={visibleItemLimit}
+        >
           {rows.map((row) => (
             <Link
               key={`${row.tone}-${row.id}`}
               to={row.to}
               params={row.params}
-              className={dashboardItemCardClassName({ density: 'compact', interactive: true })}
+              className={dashboardItemCardClassName({
+                density: 'compact',
+                interactive: true,
+                chrome,
+              })}
             >
               <DashboardItemCardContent
                 title={row.title}
                 meta={row.meta}
                 density="compact"
                 badges={
-                  <Badge variant={row.tone === 'urgent' ? 'destructive' : 'outline'}>
+                  <Badge
+                    variant={row.tone === 'urgent' ? 'destructive' : 'outline'}
+                  >
                     {row.tag}
                   </Badge>
                 }

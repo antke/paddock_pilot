@@ -1,18 +1,24 @@
 import { AppDashboardNavigation } from '#/components/dashboard/AppDashboardNavigation'
 import { buttonVariants } from '#/components/ui/button'
 import { Link } from '@tanstack/react-router'
-import type { DashboardLabData } from '../dashboardLabTypes'
+import type { DashboardLabChrome, DashboardLabData } from '../dashboardLabTypes'
+import { dashboardHeroClassName } from './dashboardChrome'
 
 type ActiveStableHeroProps = {
   data: DashboardLabData
   onActiveStableChange: (stableId: DashboardLabData['stable']['_id']) => void
+  chrome?: DashboardLabChrome
 }
 
-export function ActiveStableHero({ data, onActiveStableChange }: ActiveStableHeroProps) {
+export function ActiveStableHero({
+  data,
+  onActiveStableChange,
+  chrome = 'cards',
+}: ActiveStableHeroProps) {
   const { stable, overview } = data
 
   return (
-    <section className="overflow-hidden rounded-panel border border-primary/15 bg-[linear-gradient(135deg,hsl(var(--primary)/0.12),hsl(var(--card)),hsl(var(--muted)/0.55))] p-5 shadow-control md:p-7">
+    <section className={dashboardHeroClassName(chrome)}>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
         <div className="grid max-w-3xl gap-3">
           <div className="grid gap-2">

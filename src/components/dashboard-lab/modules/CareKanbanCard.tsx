@@ -1,16 +1,25 @@
 import { Badge } from '#/components/ui/badge'
-import type { DashboardLabData } from '../dashboardLabTypes'
-import { DashboardItemCardContent, dashboardItemCardClassName } from './DashboardItemCard'
+import type { DashboardLabChrome, DashboardLabData } from '../dashboardLabTypes'
+import {
+  DashboardItemCardContent,
+  dashboardItemCardClassName,
+} from './DashboardItemCard'
+import {
+  dashboardInlinePanelClassName,
+  dashboardSectionClassName,
+} from './dashboardChrome'
 import { ScrollableList } from '#/components/ui/scrollable-list'
 
 type CareKanbanCardProps = {
   data: DashboardLabData
   visibleItemLimit?: number
+  chrome?: DashboardLabChrome
 }
 
 export function CareKanbanCard({
   data,
   visibleItemLimit = 5,
+  chrome = 'cards',
 }: CareKanbanCardProps) {
   const lanes = [
     {
@@ -34,13 +43,16 @@ export function CareKanbanCard({
   ]
 
   return (
-    <section className="rounded-panel border border-border-subtle bg-card/80 p-5 shadow-control">
+    <section className={dashboardSectionClassName(chrome)}>
       <div className="mb-4">
         <h2 className="text-lg font-semibold tracking-tight">Care board</h2>
       </div>
       <div className="grid gap-3 lg:grid-cols-3">
         {lanes.map((lane) => (
-          <div key={lane.title} className="rounded-row border border-border-subtle bg-muted/30 p-3">
+          <div
+            key={lane.title}
+            className={dashboardInlinePanelClassName(chrome)}
+          >
             <div className="mb-3 flex items-center justify-between gap-2">
               <h3 className="text-sm font-semibold">{lane.title}</h3>
               <Badge variant="outline">{lane.count}</Badge>
@@ -56,7 +68,10 @@ export function CareKanbanCard({
                 {lane.items.map((item) => (
                   <div
                     key={getItemKey(item)}
-                    className={dashboardItemCardClassName({ density: 'compact' })}
+                    className={dashboardItemCardClassName({
+                      density: 'compact',
+                      chrome,
+                    })}
                   >
                     <DashboardItemCardContent
                       title={getItemTitle(item)}
@@ -74,7 +89,8 @@ export function CareKanbanCard({
   )
 }
 
-type CareKanbanItem = DashboardLabData['dueReminders'][number]
+type CareKanbanItem =
+  | DashboardLabData['dueReminders'][number]
   | DashboardLabData['upcomingEvents'][number]
   | DashboardLabData['attentionHorses'][number]
 
