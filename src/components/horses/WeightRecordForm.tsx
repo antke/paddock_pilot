@@ -1,17 +1,18 @@
 import { Button } from '#/components/ui/button'
+import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
 import { Field, FieldError, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Textarea } from '#/components/ui/textarea'
-import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
 import {
   weightRecordFormSchema,
-  weightUnits
-  
-  
+  weightUnits,
 } from 'shared/horses/weightRecordSchema'
-import type {WeightRecordFormSchema, WeightUnit} from 'shared/horses/weightRecordSchema';
+import type {
+  WeightRecordFormSchema,
+  WeightUnit,
+} from 'shared/horses/weightRecordSchema'
 
 type WeightRecordFormProps = {
   disabled?: boolean
@@ -22,6 +23,11 @@ const weightUnitLabels = {
   kg: 'kg',
   lb: 'lb',
 } satisfies Record<WeightUnit, string>
+
+const weightUnitOptions = weightUnits.map((unit) => ({
+  value: unit,
+  label: weightUnitLabels[unit],
+}))
 
 const todayDateKey = () => new Date().toISOString().slice(0, 10)
 
@@ -51,8 +57,11 @@ export function WeightRecordForm({
   }
 
   return (
-    <form className="grid gap-4" onSubmit={form.handleSubmit(submitWeightRecord)}>
-      <div className="grid gap-4 sm:grid-cols-3">
+    <form
+      className="grid gap-5"
+      onSubmit={form.handleSubmit(submitWeightRecord)}
+    >
+      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_9rem]">
         <Controller
           name="weight"
           control={form.control}
@@ -71,7 +80,9 @@ export function WeightRecordForm({
                 onBlur={field.onBlur}
                 onChange={(event) =>
                   field.onChange(
-                    event.target.value === '' ? undefined : Number(event.target.value),
+                    event.target.value === ''
+                      ? undefined
+                      : Number(event.target.value),
                   )
                 }
               />
@@ -86,44 +97,36 @@ export function WeightRecordForm({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel>Unit</FieldLabel>
-              <ToggleGroup
-                type="single"
+              <ChoiceButtonGroup
                 value={field.value}
-                onValueChange={(value) => value && field.onChange(asWeightUnit(value))}
-                variant="outline"
-                className="justify-start"
+                options={weightUnitOptions}
                 disabled={disabled || form.formState.isSubmitting}
                 aria-invalid={fieldState.invalid}
-              >
-                {weightUnits.map((unit) => (
-                  <ToggleGroupItem key={unit} value={unit}>
-                    {weightUnitLabels[unit]}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-
-        <Controller
-          name="measuredDate"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Measured date</FieldLabel>
-              <Input
-                {...field}
-                id={field.name}
-                type="date"
-                disabled={disabled || form.formState.isSubmitting}
-                aria-invalid={fieldState.invalid}
+                onValueChange={(value) => field.onChange(asWeightUnit(value))}
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
       </div>
+
+      <Controller
+        name="measuredDate"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor={field.name}>Measured date</FieldLabel>
+            <Input
+              {...field}
+              id={field.name}
+              type="date"
+              disabled={disabled || form.formState.isSubmitting}
+              aria-invalid={fieldState.invalid}
+            />
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
+        )}
+      />
 
       <Controller
         name="bodyConditionScore"
@@ -144,7 +147,9 @@ export function WeightRecordForm({
               onBlur={field.onBlur}
               onChange={(event) =>
                 field.onChange(
-                  event.target.value === '' ? undefined : Number(event.target.value),
+                  event.target.value === ''
+                    ? undefined
+                    : Number(event.target.value),
                 )
               }
             />
@@ -173,7 +178,10 @@ export function WeightRecordForm({
       />
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={disabled || form.formState.isSubmitting}>
+        <Button
+          type="submit"
+          disabled={disabled || form.formState.isSubmitting}
+        >
           {form.formState.isSubmitting ? 'Adding...' : 'Add weight record'}
         </Button>
       </div>

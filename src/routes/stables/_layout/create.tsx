@@ -76,9 +76,11 @@ function RouteComponent() {
 
   return (
     <form id="stable-form" onSubmit={form.handleSubmit(onSubmit)}>
-      <Card className="w-full">
+      <Card className="w-full bg-card/80">
         <CardHeader>
-          <CardTitle>Create stable</CardTitle>
+          <CardTitle className="text-xl tracking-tight">
+            Create stable
+          </CardTitle>
         </CardHeader>
 
         <CardContent className="flex flex-col gap-4">
@@ -88,7 +90,7 @@ function RouteComponent() {
           />
         </CardContent>
 
-        <CardFooter className="gap-4 justify-end">
+        <CardFooter className="justify-end gap-4">
           <Button
             type="button"
             variant="outline"

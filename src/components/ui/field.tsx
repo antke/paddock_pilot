@@ -12,6 +12,7 @@ function FieldSet({ className, ...props }: React.ComponentProps<'fieldset'>) {
       data-slot="field-set"
       className={cn(
         'flex flex-col gap-4 has-[>[data-slot=checkbox-group]]:gap-3 has-[>[data-slot=radio-group]]:gap-3',
+        '[&>[data-slot=field-legend]]:pl-2',
         className,
       )}
       {...props}
@@ -55,7 +56,8 @@ const fieldVariants = cva(
   {
     variants: {
       orientation: {
-        vertical: 'flex-col *:w-full [&>.sr-only]:w-auto',
+        vertical:
+          'flex-col *:w-full [&>.sr-only]:w-auto [&>[data-slot=field-label]]:pl-2',
         horizontal:
           'flex-row items-center has-[>[data-slot=field-content]]:items-start *:data-[slot=field-label]:flex-auto has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px',
         responsive:

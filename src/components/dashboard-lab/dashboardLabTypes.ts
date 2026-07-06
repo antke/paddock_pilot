@@ -1,8 +1,9 @@
 import type { Doc } from 'convex/_generated/dataModel'
 import type { FunctionReturnType } from 'convex/server'
 import type { api } from 'convex/_generated/api'
+import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
 
-export type DashboardLabChrome = 'cards' | 'soft' | 'lines' | 'open' | 'bare'
+export type DashboardLabChrome = DashboardChrome
 
 export type DashboardLabStable = Doc<'stables'>
 export type DashboardLabEvent = Doc<'events'>

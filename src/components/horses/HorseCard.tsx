@@ -1,3 +1,5 @@
+import { dashboardItemCardClassName } from '#/components/dashboard/DashboardItemCard'
+import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
 import { cn } from '#/lib/utils'
 import type { ReactNode } from 'react'
 
@@ -11,14 +13,16 @@ type HorseCardHorse = {
 type HorseCardProps = {
   horse: HorseCardHorse
   action?: ReactNode
+  chrome?: DashboardChrome
   className?: string
 }
 
-export function HorseCard({ horse, action, className }: HorseCardProps) {
+export function HorseCard({ horse, action, chrome, className }: HorseCardProps) {
   return (
     <article
       className={cn(
-        'group/horse flex cursor-pointer items-center gap-3 border border-transparent px-3 py-3 transition-colors hover:rounded-row hover:border-primary/15 hover:bg-primary/5',
+        dashboardItemCardClassName({ interactive: true, chrome }),
+        'flex items-center gap-3',
         className,
       )}
     >
@@ -37,7 +41,7 @@ export function HorseCard({ horse, action, className }: HorseCardProps) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <h3 className="line-clamp-1 text-sm font-semibold text-foreground">
+        <h3 className="line-clamp-1 text-sm font-semibold text-foreground underline-offset-4 group-hover/dashboard-item:underline">
           {horse.name}
         </h3>
         <dl className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">

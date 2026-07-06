@@ -1,3 +1,4 @@
+import { dashboardHeroClassName } from '#/components/dashboard/dashboardChrome'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
 import { Button, buttonVariants } from '#/components/ui/button'
@@ -52,7 +53,9 @@ export function HorseCareSummaryPage({
     return (
       <Alert>
         <AlertTitle>Horse not found</AlertTitle>
-        <AlertDescription>This care summary is no longer available.</AlertDescription>
+        <AlertDescription>
+          This care summary is no longer available.
+        </AlertDescription>
       </Alert>
     )
   }
@@ -96,30 +99,34 @@ export function HorseCareSummaryPage({
 
   return (
     <div className="grid gap-6 print:block print:text-black">
-      <header className="flex flex-wrap items-start justify-between gap-4 print:block">
-        <div className="grid gap-2">
-          <div className="flex flex-wrap items-center gap-2 print:block">
-            <h1 className="text-3xl font-semibold">{horse.name} care summary</h1>
-            <Badge variant="outline" className="print:hidden">
-              Personal Pro
-            </Badge>
+      <header className={dashboardHeroClassName('cards')}>
+        <div className="flex flex-wrap items-start justify-between gap-4 print:block">
+          <div className="grid gap-2">
+            <div className="flex flex-wrap items-center gap-2 print:block">
+              <h1 className="text-3xl font-semibold">
+                {horse.name} care summary
+              </h1>
+              <Badge variant="outline" className="print:hidden">
+                Personal Pro
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground print:text-black">
+              {stable.name} · Generated {formatTimestamp(Date.now())}
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground print:text-black">
-            {stable.name} · Generated {formatTimestamp(Date.now())}
-          </p>
-        </div>
 
-        <div className="flex flex-wrap gap-2 print:hidden">
-          <Button type="button" onClick={() => window.print()}>
-            Print summary
-          </Button>
-          <Link
-            to="/stables/$stableId/horses/$horseId"
-            params={{ stableId, horseId }}
-            className={buttonVariants({ variant: 'outline' })}
-          >
-            Back to horse
-          </Link>
+          <div className="flex flex-wrap gap-2 print:hidden">
+            <Button type="button" onClick={() => window.print()}>
+              Print summary
+            </Button>
+            <Link
+              to="/stables/$stableId/horses/$horseId"
+              params={{ stableId, horseId }}
+              className={buttonVariants({ variant: 'outline' })}
+            >
+              Back to horse
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -129,14 +136,20 @@ export function HorseCareSummaryPage({
           <DetailItem label="Owner" value={horse.ownerName} />
           <DetailItem label="Age" value={`${horse.age}`} />
           <DetailItem label="Breed" value={horse.breed} />
-          <DetailItem label="Sex" value={horse.sex ? sexLabels[horse.sex] : undefined} />
+          <DetailItem
+            label="Sex"
+            value={horse.sex ? sexLabels[horse.sex] : undefined}
+          />
           <DetailItem label="Color" value={horse.color} />
           <DetailItem label="Height" value={horse.height} />
           <DetailItem label="Discipline" value={horse.discipline} />
           <DetailItem label="Date of birth" value={horse.dateOfBirth} />
           <DetailItem label="Passport number" value={horse.passportNumber} />
           <DetailItem label="Microchip number" value={horse.microchipNumber} />
-          <DetailItem label="Insurance provider" value={horse.insuranceProvider} />
+          <DetailItem
+            label="Insurance provider"
+            value={horse.insuranceProvider}
+          />
           <DetailItem
             label="Insurance policy"
             value={horse.insurancePolicyNumber}
@@ -161,11 +174,20 @@ export function HorseCareSummaryPage({
           <DetailItem label="Farrier" value={horse.farrierName} />
           <DetailItem label="Farrier phone" value={horse.farrierPhone} />
           <DetailItem label="Stable contact" value={stable.contactName} />
-          <DetailItem label="Stable contact phone" value={stable.contactPhone} />
-          <DetailItem label="Stable emergency phone" value={stable.emergencyPhone} />
+          <DetailItem
+            label="Stable contact phone"
+            value={stable.contactPhone}
+          />
+          <DetailItem
+            label="Stable emergency phone"
+            value={stable.emergencyPhone}
+          />
         </DetailGrid>
         {stableAddress.length > 0 && (
-          <LongText label="Stable postal address" value={stableAddress.join('\n')} />
+          <LongText
+            label="Stable postal address"
+            value={stableAddress.join('\n')}
+          />
         )}
         {horse.emergencyNotes && (
           <LongText label="Emergency notes" value={horse.emergencyNotes} />
@@ -187,7 +209,9 @@ export function HorseCareSummaryPage({
           records={summary.activeHealthIssues.map((issue) => ({
             id: issue._id,
             title: issue.title,
-            meta: [issue.severity, formatTimestamp(issue.notedAt)].filter(Boolean).join(' · '),
+            meta: [issue.severity, formatTimestamp(issue.notedAt)]
+              .filter(Boolean)
+              .join(' · '),
             body: issue.description,
           }))}
         />
@@ -197,7 +221,11 @@ export function HorseCareSummaryPage({
           records={summary.activeMedicationRecords.map((record) => ({
             id: record._id,
             title: record.medicationName,
-            meta: [record.dosage, record.frequency, `Started ${record.startDate}`]
+            meta: [
+              record.dosage,
+              record.frequency,
+              `Started ${record.startDate}`,
+            ]
               .filter(Boolean)
               .join(' · '),
             body: [record.reason, record.notes].filter(Boolean).join('\n'),
@@ -280,7 +308,9 @@ export function HorseCareSummaryPage({
             meta: [
               stableDocumentTypeLabels[document.type],
               document.contentType,
-              document.size !== undefined ? formatFileSize(document.size) : undefined,
+              document.size !== undefined
+                ? formatFileSize(document.size)
+                : undefined,
             ]
               .filter(Boolean)
               .join(' · '),
@@ -292,9 +322,15 @@ export function HorseCareSummaryPage({
   )
 }
 
-function SummarySection({ title, children }: { title: string; children: ReactNode }) {
+function SummarySection({
+  title,
+  children,
+}: {
+  title: string
+  children: ReactNode
+}) {
   return (
-    <Card className="print:break-inside-avoid print:border-black/30 print:shadow-none">
+    <Card className="bg-card/80 print:break-inside-avoid print:border-black/30 print:shadow-none">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
@@ -352,13 +388,18 @@ function RecordList({
   records: Array<{ id: string; title: string; meta?: string; body?: string }>
 }) {
   if (records.length === 0) {
-    return <p className="text-muted-foreground print:text-black/70">{emptyLabel}</p>
+    return (
+      <p className="text-muted-foreground print:text-black/70">{emptyLabel}</p>
+    )
   }
 
   return (
     <div className="grid gap-3">
       {records.map((record) => (
-        <div key={record.id} className="grid gap-1 rounded-lg border p-3 print:border-black/30">
+        <div
+          key={record.id}
+          className="grid gap-1 rounded-row bg-background/55 p-5 print:border print:border-black/30"
+        >
           <h3 className="font-medium">{record.title}</h3>
           {record.meta && (
             <p className="text-xs text-muted-foreground print:text-black/70">

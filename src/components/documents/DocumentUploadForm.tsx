@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import type { Id } from 'convex/_generated/dataModel'
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
+import type { Control } from 'react-hook-form'
 import {
   stableDocumentFormSchema,
   stableDocumentTypeLabels,
@@ -45,6 +46,7 @@ export function DocumentUploadForm({
     },
   })
   const selectedFile = form.watch('file')?.item(0)
+  const showHorseSelect = !fixedHorseId && horseOptions.length > 0
 
   useEffect(() => {
     if (!selectedFile || form.getValues('fileName')) return
@@ -69,77 +71,7 @@ export function DocumentUploadForm({
   }
 
   return (
-    <form className="grid gap-4" onSubmit={form.handleSubmit(submit)}>
-      {!fixedHorseId && horseOptions.length > 0 && (
-        <Controller
-          name="horseId"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Horse</FieldLabel>
-              <Select
-                {...field}
-                id={field.name}
-                disabled={form.formState.isSubmitting}
-              >
-                <option value="">Stable-wide document</option>
-                {horseOptions.map((horse) => (
-                  <option key={horse._id} value={horse._id}>
-                    {horse.name}
-                  </option>
-                ))}
-              </Select>
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-      )}
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Controller
-          name="type"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Type</FieldLabel>
-              <Select
-                {...field}
-                id={field.name}
-                disabled={form.formState.isSubmitting}
-              >
-                {stableDocumentTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {stableDocumentTypeLabels[type]}
-                  </option>
-                ))}
-              </Select>
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-
-        <Controller
-          name="file"
-          control={form.control}
-          render={({
-            field: { value: _value, onChange, ...field },
-            fieldState,
-          }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>File</FieldLabel>
-              <Input
-                {...field}
-                id={field.name}
-                type="file"
-                disabled={form.formState.isSubmitting}
-                onChange={(event) => onChange(event.target.files)}
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-      </div>
-
+    <form className="grid gap-5" onSubmit={form.handleSubmit(submit)}>
       <Controller
         name="fileName"
         control={form.control}
@@ -158,6 +90,59 @@ export function DocumentUploadForm({
         )}
       />
 
+      {showHorseSelect ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          <Controller
+            name="horseId"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>Horse</FieldLabel>
+                <Select
+                  {...field}
+                  id={field.name}
+                  disabled={form.formState.isSubmitting}
+                >
+                  <option value="">Stable-wide document</option>
+                  {horseOptions.map((horse) => (
+                    <option key={horse._id} value={horse._id}>
+                      {horse.name}
+                    </option>
+                  ))}
+                </Select>
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+
+          <DocumentTypeField
+            control={form.control}
+            disabled={form.formState.isSubmitting}
+          />
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          <DocumentTypeField
+            control={form.control}
+            disabled={form.formState.isSubmitting}
+          />
+
+          <DocumentFileField
+            control={form.control}
+            disabled={form.formState.isSubmitting}
+          />
+        </div>
+      )}
+
+      {showHorseSelect && (
+        <DocumentFileField
+          control={form.control}
+          disabled={form.formState.isSubmitting}
+        />
+      )}
+
       <Controller
         name="notes"
         control={form.control}
@@ -175,9 +160,70 @@ export function DocumentUploadForm({
         )}
       />
 
-      <Button type="submit" disabled={form.formState.isSubmitting}>
-        {form.formState.isSubmitting ? 'Saving...' : 'Add document'}
-      </Button>
+      <div className="flex justify-end">
+        <Button type="submit" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? 'Saving...' : 'Add document'}
+        </Button>
+      </div>
     </form>
+  )
+}
+
+function DocumentTypeField({
+  control,
+  disabled,
+}: {
+  control: Control<StableDocumentFormSchema>
+  disabled: boolean
+}) {
+  return (
+    <Controller
+      name="type"
+      control={control}
+      render={({ field, fieldState }) => (
+        <Field data-invalid={fieldState.invalid}>
+          <FieldLabel htmlFor={field.name}>Type</FieldLabel>
+          <Select {...field} id={field.name} disabled={disabled}>
+            {stableDocumentTypes.map((type) => (
+              <option key={type} value={type}>
+                {stableDocumentTypeLabels[type]}
+              </option>
+            ))}
+          </Select>
+          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+        </Field>
+      )}
+    />
+  )
+}
+
+function DocumentFileField({
+  control,
+  disabled,
+}: {
+  control: Control<StableDocumentFormSchema>
+  disabled: boolean
+}) {
+  return (
+    <Controller
+      name="file"
+      control={control}
+      render={({
+        field: { value: _value, onChange, ...field },
+        fieldState,
+      }) => (
+        <Field data-invalid={fieldState.invalid}>
+          <FieldLabel htmlFor={field.name}>File</FieldLabel>
+          <Input
+            {...field}
+            id={field.name}
+            type="file"
+            disabled={disabled}
+            onChange={(event) => onChange(event.target.files)}
+          />
+          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+        </Field>
+      )}
+    />
   )
 }

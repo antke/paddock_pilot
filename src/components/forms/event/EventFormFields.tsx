@@ -2,6 +2,7 @@ import { Checkbox } from '#/components/ui/checkbox'
 import { FormHelpTooltip } from '#/components/forms/FormHelpTooltip'
 import { HorseCard } from '#/components/horses/HorseCard'
 import { Button } from '#/components/ui/button'
+import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
 import { cn } from '#/lib/utils'
 import {
   Field,
@@ -135,6 +136,16 @@ const datePreviewFormatter = new Intl.DateTimeFormat(undefined, {
   month: 'short',
   day: 'numeric',
 })
+
+const eventTypeOptions = eventTypes.map((eventType) => ({
+  value: eventType,
+  label: eventTypeLabels[eventType],
+})) satisfies Array<{ value: EventType; label: string }>
+
+const eventStatusOptions = eventStatuses.map((status) => ({
+  value: status,
+  label: eventStatusLabels[status],
+})) satisfies Array<{ value: EventStatus; label: string }>
 
 const pluralize = (word: string, count: number) =>
   count === 1 ? word : `${word}s`
@@ -372,9 +383,37 @@ const formatList = (items: Array<string>) => {
   return `${items.slice(0, -1).join(', ')}, and ${items.at(-1)}`
 }
 
+const getEventSpanDayCount = (
+  eventDate: string | undefined,
+  endDate: string | undefined,
+) => {
+  const startDate = toEventDate(eventDate)
+  const finishDate = toEventDate(endDate)
+
+  if (!startDate || !finishDate || finishDate <= startDate) return 1
+
+  return (
+    Math.round(
+      (finishDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000),
+    ) + 1
+  )
+}
+
+const getEventDurationPreview = (
+  eventDate: string | undefined,
+  endDate: string | undefined,
+) => {
+  if (!endDate || endDate <= (eventDate ?? '')) return undefined
+
+  const dayCount = getEventSpanDayCount(eventDate, endDate)
+
+  return `spans ${dayCount} ${pluralize('day', dayCount)}`
+}
+
 const getRecurrencePreview = (
   recurrence: EventFormInput['recurrence'] | undefined,
   eventDate: string | undefined,
+  endDate: string | undefined,
 ) => {
   if (!recurrence) return undefined
 
@@ -420,6 +459,9 @@ const getRecurrencePreview = (
     )}`
   }
 
+  const durationPreview = getEventDurationPreview(eventDate, endDate)
+  if (durationPreview) preview += ` · ${durationPreview}`
+
   const nextDates = getNextRecurrenceDates(recurrence, eventDate).map((date) =>
     datePreviewFormatter.format(date),
   )
@@ -437,8 +479,9 @@ export function EventFormFields({
   disabled = false,
 }: Props) {
   const eventDate = useWatch({ control, name: 'date' })
+  const endDate = useWatch({ control, name: 'endDate' })
   const recurrence = useWatch({ control, name: 'recurrence' })
-  const recurrencePreview = getRecurrencePreview(recurrence, eventDate)
+  const recurrencePreview = getRecurrencePreview(recurrence, eventDate, endDate)
   const [recurrenceEditorMode, setRecurrenceEditorMode] =
     useState<RecurrenceEditorMode>('simple')
   const [simplePreset, setSimplePreset] =
@@ -530,23 +573,15 @@ export function EventFormFields({
           <Field data-invalid={fieldState.invalid}>
             <FieldLabel>Type</FieldLabel>
 
-            <ToggleGroup
-              value={[field.value]}
-              onValueChange={(values) => {
-                const nextValue = values.at(-1)
-                if (nextValue) field.onChange(asEventType(nextValue))
-              }}
-              variant="outline"
-              className="flex-wrap"
+            <ChoiceButtonGroup
+              value={field.value}
+              options={eventTypeOptions}
+              onValueChange={(nextValue) =>
+                field.onChange(asEventType(nextValue))
+              }
               disabled={disabled}
               aria-invalid={fieldState.invalid}
-            >
-              {eventTypes.map((eventType) => (
-                <ToggleGroupItem key={eventType} value={eventType}>
-                  {eventTypeLabels[eventType]}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
+            />
 
             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
           </Field>
@@ -560,30 +595,22 @@ export function EventFormFields({
           <Field data-invalid={fieldState.invalid}>
             <FieldLabel>Status</FieldLabel>
 
-            <ToggleGroup
-              value={[field.value ?? 'planned']}
-              onValueChange={(values) => {
-                const nextValue = values.at(-1)
-                if (nextValue) field.onChange(asEventStatus(nextValue))
-              }}
-              variant="outline"
-              className="flex-wrap"
+            <ChoiceButtonGroup
+              value={field.value ?? 'planned'}
+              options={eventStatusOptions}
+              onValueChange={(nextValue) =>
+                field.onChange(asEventStatus(nextValue))
+              }
               disabled={disabled}
               aria-invalid={fieldState.invalid}
-            >
-              {eventStatuses.map((status) => (
-                <ToggleGroupItem key={status} value={status}>
-                  {eventStatusLabels[status]}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
+            />
 
             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
           </Field>
         )}
       />
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <Controller
           name="date"
           control={control}
@@ -599,6 +626,28 @@ export function EventFormFields({
                 aria-invalid={fieldState.invalid}
               />
 
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
+
+        <Controller
+          name="endDate"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={field.name}>End date</FieldLabel>
+
+              <Input
+                {...field}
+                id={field.name}
+                value={field.value ?? ''}
+                type="date"
+                disabled={disabled}
+                aria-invalid={fieldState.invalid}
+              />
+
+              <FieldDescription>Leave blank for a one-day event.</FieldDescription>
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
@@ -626,7 +675,7 @@ export function EventFormFields({
       </div>
 
       {providers.length > 0 && (
-        <div className="grid gap-2 rounded-lg border p-3">
+        <div className="grid gap-2 rounded-row bg-muted/30 p-5">
           <p className="text-sm font-medium">Saved providers</p>
           <div className="flex flex-wrap gap-2">
             {providers.map((provider) => (

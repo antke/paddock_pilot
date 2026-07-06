@@ -38,14 +38,14 @@ export function ActiveStableHero({
             <Link
               to="/stables/$stableId/horses/create"
               params={{ stableId: stable._id }}
-              className={buttonVariants({ variant: 'outline' })}
+              className={buttonVariants({ variant: 'secondary' })}
             >
               Add horse
             </Link>
             <Link
               to="/stables/$stableId/events/create"
               params={{ stableId: stable._id }}
-              className={buttonVariants()}
+              className={buttonVariants({ variant: 'secondary' })}
             >
               Add event
             </Link>

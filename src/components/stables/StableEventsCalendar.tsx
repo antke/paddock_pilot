@@ -183,7 +183,7 @@ function CalendarEventChip({ event }: { event: StableDashboardEvent }) {
         <Popover.Positioner side="top" align="start" sideOffset={8}>
           <Popover.Popup
             initialFocus={false}
-            className="app-panel-strong z-50 grid w-72 origin-(--transform-origin) gap-3 p-4 text-sm text-popover-foreground outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
+            className="app-panel-strong z-50 grid w-72 origin-(--transform-origin) gap-3 p-5 text-sm text-popover-foreground outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
           >
             <div className="grid gap-1">
               <p className="font-semibold tracking-tight">{event.title}</p>

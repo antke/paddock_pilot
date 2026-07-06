@@ -177,12 +177,12 @@
 
 @utility app-panel {
   border-radius: var(--radius-panel);
-  @apply border border-border-subtle bg-card shadow-none dark:bg-card;
+  @apply bg-card shadow-none dark:bg-card;
 }
 
 @utility app-panel-strong {
   border-radius: var(--radius-panel);
-  @apply border border-border-subtle bg-card/95 shadow-surface shadow-black/5 dark:shadow-black/20;
+  @apply bg-card/95 shadow-surface shadow-black/5 dark:shadow-black/20;
 }
 
 @utility app-row {
@@ -197,6 +197,22 @@
 @utility app-segmented {
   border-radius: var(--radius-panel);
   @apply bg-muted/80 p-1 text-muted-foreground;
+}
+
+@utility app-height-collapse {
+  @apply grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none;
+}
+
+@utility app-height-collapse-open {
+  @apply grid-rows-[1fr] opacity-100;
+}
+
+@utility app-height-collapse-closed {
+  @apply grid-rows-[0fr] opacity-0;
+}
+
+@utility app-height-collapse-inner {
+  @apply min-h-0 overflow-hidden;
 }
 
 html,

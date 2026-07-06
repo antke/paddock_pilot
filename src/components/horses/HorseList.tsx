@@ -1,3 +1,5 @@
+import { dashboardEmptyClassName } from '#/components/dashboard/dashboardChrome'
+import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
 import { Button } from '#/components/ui/button'
 import { HorseCard } from './HorseCard'
 import { convexQuery } from '@convex-dev/react-query'
@@ -10,27 +12,29 @@ import { isEmpty } from 'lodash'
 
 type Props = {
   stableId: string
+  chrome?: DashboardChrome
 }
 
-export function HorseList({ stableId }: Props) {
+export function HorseList({ stableId, chrome = 'cards' }: Props) {
   const { data: horses } = useSuspenseQuery(
     convexQuery(api.horses.list, { stableId: stableId as Id<'stables'> }),
   )
 
   if (isEmpty(horses)) {
     return (
-      <div>
+      <div className={dashboardEmptyClassName(chrome)}>
         <p>No horses added yet.</p>
       </div>
     )
   }
 
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-3">
       {horses.map((horse) => (
         <HorseCard
           key={horse._id}
           horse={horse}
+          chrome={chrome}
           action={
             <Link
               to="/stables/$stableId/horses/$horseId"

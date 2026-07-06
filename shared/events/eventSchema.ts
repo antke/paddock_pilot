@@ -53,6 +53,11 @@ export const eventDateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a valid date.')
 
+export const eventOptionalDateSchema = z
+  .union([eventDateSchema, z.literal('')])
+  .optional()
+  .transform((val) => val || undefined)
+
 export const eventTimeSchema = z
   .string()
   .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use a valid time.')
@@ -228,10 +233,11 @@ export const eventRecurrenceSchema = z
 const optionalText = <TSchema extends z.ZodString>(schema: TSchema) =>
   schema.optional().transform((val) => val || undefined)
 
-export const eventInputSchema = z.object({
+const eventInputFieldsSchema = z.object({
   stableId: z.string().min(1),
   horseIds: eventHorseIdsSchema,
   date: eventDateSchema,
+  endDate: eventOptionalDateSchema,
   time: eventTimeSchema,
   type: eventTypeSchema,
   title: eventTitleSchema,
@@ -246,11 +252,30 @@ export const eventInputSchema = z.object({
   recurrence: eventRecurrenceSchema.optional(),
 })
 
-export const eventFormSchema = eventInputSchema
+function validateEventDateRange(
+  event: z.infer<typeof eventInputFieldsSchema>,
+  ctx: z.RefinementCtx,
+) {
+  if (event.endDate && event.endDate < event.date) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'End date cannot be before the start date.',
+      path: ['endDate'],
+    })
+  }
+}
+
+export const eventInputSchema = eventInputFieldsSchema.superRefine(
+  validateEventDateRange,
+)
+
+export const eventFormSchema = eventInputFieldsSchema
   .extend({
     recurring: z.boolean(),
   })
   .superRefine((event, ctx) => {
+    validateEventDateRange(event, ctx)
+
     if (event.recurring && !event.recurrence) {
       ctx.addIssue({
         code: 'custom',
@@ -268,6 +293,7 @@ export type RecurrenceOrdinal = (typeof recurrenceOrdinals)[number]
 export type RecurrenceMissingDateStrategy =
   (typeof recurrenceMissingDateStrategies)[number]
 export type DayOfWeek = (typeof daysOfWeek)[number]
+export type EventRecurrence = z.infer<typeof eventRecurrenceSchema>
 export type EventInput = z.infer<typeof eventInputSchema>
 export type EventFormInput = z.input<typeof eventFormSchema>
 export type EventFormSchema = z.infer<typeof eventFormSchema>

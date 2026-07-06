@@ -1,3 +1,4 @@
+import { dashboardEmptyClassName } from '#/components/dashboard/dashboardChrome'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import {
@@ -19,7 +20,9 @@ import type { EventHorseDetailsFormSchema } from 'shared/events/eventHorseDetail
 import { toast } from 'sonner'
 import { EventHorseServiceDetailsForm } from './EventHorseServiceDetailsForm'
 
-type EventHorseDetails = FunctionReturnType<typeof api.eventHorseDetails.listForEvent>
+type EventHorseDetails = FunctionReturnType<
+  typeof api.eventHorseDetails.listForEvent
+>
 type EventHorseDetailRow = EventHorseDetails['rows'][number]
 
 type EventHorseServiceDetailsCardProps = {
@@ -60,7 +63,7 @@ export function EventHorseServiceDetailsCard({
   if (!data.event) return null
 
   return (
-    <Card>
+    <Card className="bg-card/80">
       <CardHeader>
         <CardTitle>Horse service notes</CardTitle>
         <CardDescription>
@@ -71,7 +74,7 @@ export function EventHorseServiceDetailsCard({
 
       <CardContent className="grid gap-4">
         {data.rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
+          <p className={dashboardEmptyClassName('cards')}>
             No horses are attached to this event.
           </p>
         ) : (
@@ -110,8 +113,8 @@ function EventHorseServiceRow({
   const { eventHorse, horse, canManage } = row
   const hasDetails = Boolean(
     eventHorse.requestedServiceNotes ||
-      eventHorse.completionNotes ||
-      eventHorse.costShare !== undefined,
+    eventHorse.completionNotes ||
+    eventHorse.costShare !== undefined,
   )
   const defaultValues = {
     requestedServiceNotes: eventHorse.requestedServiceNotes ?? '',
@@ -120,7 +123,7 @@ function EventHorseServiceRow({
   }
 
   return (
-    <div className="grid gap-4 rounded-lg border p-4">
+    <div className="grid gap-4 rounded-row bg-background/55 p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="grid gap-1">
           {horse ? (
@@ -158,7 +161,10 @@ function EventHorseServiceRow({
       ) : hasDetails ? (
         <div className="grid gap-3 text-sm">
           {eventHorse.requestedServiceNotes && (
-            <DetailBlock title="Requested service" value={eventHorse.requestedServiceNotes} />
+            <DetailBlock
+              title="Requested service"
+              value={eventHorse.requestedServiceNotes}
+            />
           )}
           {eventHorse.completionNotes && (
             <DetailBlock title="Outcome" value={eventHorse.completionNotes} />

@@ -7,6 +7,7 @@ type ScrollableListProps = {
   itemCount: number
   visibleItemLimit?: number
   estimatedItemHeightRem?: number
+  fillParent?: boolean
   className?: string
 }
 
@@ -15,6 +16,7 @@ function ScrollableList({
   itemCount,
   visibleItemLimit = 5,
   estimatedItemHeightRem = 4.25,
+  fillParent = false,
   className,
 }: ScrollableListProps) {
   const viewportRef = useRef<HTMLDivElement>(null)
@@ -59,7 +61,8 @@ function ScrollableList({
   return (
     <div
       className={cn(
-        'relative',
+        'relative min-h-0',
+        fillParent && shouldConstrain && 'h-full',
         shouldConstrain && 'overflow-hidden rounded-row',
       )}
     >
@@ -68,12 +71,13 @@ function ScrollableList({
         onScroll={updateScrollState}
         className={cn(
           'grid gap-2',
+          fillParent && shouldConstrain && 'h-full min-h-0',
           shouldConstrain &&
             'overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
           className,
         )}
         style={
-          shouldConstrain
+          shouldConstrain && !fillParent
             ? { maxHeight: `${visibleItemLimit * estimatedItemHeightRem}rem` }
             : undefined
         }

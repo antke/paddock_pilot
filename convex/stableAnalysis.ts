@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import type { Doc } from './_generated/dataModel'
+import type { Doc, Id } from './_generated/dataModel'
 import { query } from './_generated/server'
 import { hasPersonalPro } from './libs/entitlements'
 import { assertCanViewStable } from './libs/stablePermissions'
@@ -67,8 +67,149 @@ const countEventsByType = (events: Array<Doc<'events'>>) => {
 
 const sortByDateDesc = (a: string, b: string) => b.localeCompare(a)
 
+type StableTimelineSignalKind =
+  | 'health'
+  | 'medication'
+  | 'nutrition'
+  | 'weight'
+  | 'reminder'
+
+type StableTimelineSignal = {
+  id: string
+  kind: StableTimelineSignalKind
+  date: string
+  title: string
+  horseId?: Id<'horses'>
+  horseName?: string
+  detail?: string
+  status?: string
+  severity?: Doc<'horseHealthIssues'>['severity']
+  priority?: Doc<'careReminders'>['priority']
+  urgent: boolean
+}
+
+const joinDetails = (details: Array<string | undefined>) => {
+  return details.filter((detail): detail is string => Boolean(detail)).join(' · ')
+}
+
+const compareStableTimelineSignals = (
+  a: StableTimelineSignal,
+  b: StableTimelineSignal,
+) => {
+  const dateSort = a.date.localeCompare(b.date)
+
+  if (dateSort !== 0) return dateSort
+
+  return a.title.localeCompare(b.title)
+}
+
 const isConfirmedEventHorse = (row: Doc<'eventsHorses'>) => {
   return row.status === undefined || row.status === 'confirmed'
+}
+
+const getStableTimelineSignals = ({
+  horses,
+  healthIssues,
+  medicationRecords,
+  nutritionLogs,
+  weightRecords,
+  careReminders,
+  today,
+}: {
+  horses: Array<Doc<'horses'>>
+  healthIssues: Array<Doc<'horseHealthIssues'>>
+  medicationRecords: Array<Doc<'horseMedicationRecords'>>
+  nutritionLogs: Array<Doc<'horseNutritionLogs'>>
+  weightRecords: Array<Doc<'horseWeightRecords'>>
+  careReminders: Array<Doc<'careReminders'>>
+  today: string
+}): Array<StableTimelineSignal> => {
+  const horsesById = new Map(horses.map((horse) => [horse._id, horse]))
+
+  return [
+    ...healthIssues.map((issue): StableTimelineSignal => {
+      const horse = horsesById.get(issue.horseId)
+      const severity = issue.severity ?? 'medium'
+
+      return {
+        id: issue._id,
+        kind: 'health',
+        date: dateKey(new Date(issue.notedAt)),
+        title: issue.title,
+        horseId: issue.horseId,
+        horseName: horse?.name,
+        detail: joinDetails([`${severity} severity`, issue.status]),
+        status: issue.status,
+        severity,
+        urgent: issue.status === 'active' && severity === 'high',
+      }
+    }),
+    ...medicationRecords.map((record): StableTimelineSignal => {
+      const horse = horsesById.get(record.horseId)
+
+      return {
+        id: record._id,
+        kind: 'medication',
+        date: record.startDate,
+        title: record.medicationName,
+        horseId: record.horseId,
+        horseName: horse?.name,
+        detail: joinDetails([record.status, record.dosage, record.frequency]),
+        status: record.status,
+        urgent: false,
+      }
+    }),
+    ...nutritionLogs.map((log): StableTimelineSignal => {
+      const horse = horsesById.get(log.horseId)
+
+      return {
+        id: log._id,
+        kind: 'nutrition',
+        date: dateKey(new Date(log.changedAt)),
+        title: log.summary,
+        horseId: log.horseId,
+        horseName: horse?.name,
+        detail: 'Nutrition change',
+        urgent: false,
+      }
+    }),
+    ...weightRecords.map((record): StableTimelineSignal => {
+      const horse = horsesById.get(record.horseId)
+      const bodyCondition = record.bodyConditionScore !== undefined
+        ? `BCS ${record.bodyConditionScore}`
+        : undefined
+
+      return {
+        id: record._id,
+        kind: 'weight',
+        date: dateKey(new Date(record.measuredAt)),
+        title: `${record.weight} ${record.unit}`,
+        horseId: record.horseId,
+        horseName: horse?.name,
+        detail: joinDetails(['Weight record', bodyCondition]),
+        urgent: false,
+      }
+    }),
+    ...careReminders.map((reminder): StableTimelineSignal => {
+      const horse = reminder.horseId ? horsesById.get(reminder.horseId) : undefined
+      const priority = reminder.priority ?? 'medium'
+
+      return {
+        id: reminder._id,
+        kind: 'reminder',
+        date: reminder.dueDate,
+        title: reminder.title,
+        horseId: reminder.horseId,
+        horseName: horse?.name,
+        detail: joinDetails([`${priority} priority`, reminder.status]),
+        status: reminder.status,
+        priority,
+        urgent:
+          reminder.status === 'pending' &&
+          (priority === 'high' || reminder.dueDate < today),
+      }
+    }),
+  ].sort(compareStableTimelineSignals)
 }
 
 const getWeightTrends = (
@@ -480,6 +621,15 @@ export const getForStable = query({
     const pendingReminders = careReminders.filter(
       (reminder) => reminder.status === 'pending',
     )
+    const timelineSignals = getStableTimelineSignals({
+      horses,
+      healthIssues,
+      medicationRecords,
+      nutritionLogs,
+      weightRecords,
+      careReminders,
+      today,
+    })
     const overdueReminders = pendingReminders.filter(
       (reminder) => reminder.dueDate < today,
     )
@@ -519,6 +669,7 @@ export const getForStable = query({
         pendingReminderCount: pendingReminders.length,
         overdueReminderCount: overdueReminders.length,
       },
+      timelineSignals,
       eventTypeCounts: countEventsByType(events),
       reminderCategoryCounts: countRemindersByCategory(pendingReminders),
       upcomingReminders: upcomingReminders.map((reminder) => ({

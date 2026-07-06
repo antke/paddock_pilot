@@ -1,4 +1,8 @@
 import { formatEventDate } from '#/components/events/eventDisplay'
+import {
+  dashboardEmptyClassName,
+  dashboardHeroClassName,
+} from '#/components/dashboard/dashboardChrome'
 import { Badge } from '#/components/ui/badge'
 import { buttonVariants } from '#/components/ui/button'
 import {
@@ -46,7 +50,12 @@ const medicationStatusLabels = {
 const formatTimestamp = (timestamp: number) =>
   dateTimeFormatter.format(new Date(timestamp))
 
-export function HorseTimelinePage({ stableId, horseId }: HorseTimelinePageProps) {
+const timelineEntryClassName = 'grid gap-2 rounded-row bg-background/55 p-5'
+
+export function HorseTimelinePage({
+  stableId,
+  horseId,
+}: HorseTimelinePageProps) {
   const { data: timeline } = useSuspenseQuery(
     convexQuery(api.horseTimeline.listForHorse, {
       horseId: horseId as Id<'horses'>,
@@ -55,41 +64,46 @@ export function HorseTimelinePage({ stableId, horseId }: HorseTimelinePageProps)
 
   return (
     <div className="grid gap-6">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="grid gap-2">
-          <h1 className="text-3xl font-semibold">Horse timeline</h1>
-          <p className="text-sm text-muted-foreground">
-            {timeline.horse
-              ? `Care history for ${timeline.horse.name}.`
-              : 'Care history for this horse.'}
-          </p>
-        </div>
+      <header className={dashboardHeroClassName('cards')}>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="grid gap-2">
+            <h1 className="text-3xl font-semibold">Horse timeline</h1>
+            <p className="text-sm text-muted-foreground">
+              {timeline.horse
+                ? `Care history for ${timeline.horse.name}.`
+                : 'Care history for this horse.'}
+            </p>
+          </div>
 
-        <Link
-          to="/stables/$stableId/horses/$horseId"
-          params={{ stableId, horseId }}
-          className={buttonVariants({ variant: 'outline' })}
-        >
-          Back to horse
-        </Link>
+          <Link
+            to="/stables/$stableId/horses/$horseId"
+            params={{ stableId, horseId }}
+            className={buttonVariants({ variant: 'outline' })}
+          >
+            Back to horse
+          </Link>
+        </div>
       </header>
 
-      <Card>
+      <Card className="bg-card/80">
         <CardHeader>
           <CardTitle>Care timeline</CardTitle>
           <CardDescription>
-            Events, health issues, medication, nutrition changes, and weight records in
-            one chronological view.
+            Events, health issues, medication, nutrition changes, and weight
+            records in one chronological view.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           {timeline.entries.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
+            <p className={dashboardEmptyClassName('cards')}>
               No timeline entries are available for this horse yet.
             </p>
           ) : (
             timeline.entries.map((entry) => (
-              <TimelineEntryCard key={`${entry.kind}-${entry.id}`} entry={entry} />
+              <TimelineEntryCard
+                key={`${entry.kind}-${entry.id}`}
+                entry={entry}
+              />
             ))
           )}
         </CardContent>
@@ -124,7 +138,7 @@ function EventTimelineEntry({
   entry: Extract<TimelineEntry, { kind: 'event' }>
 }) {
   return (
-    <div className="grid gap-2 rounded-lg border p-4">
+    <div className={timelineEntryClassName}>
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="secondary">Event</Badge>
         <Badge variant="outline">{eventTypeLabels[entry.eventType]}</Badge>
@@ -148,13 +162,21 @@ function EventTimelineEntry({
         </p>
       )}
       {entry.requestedServiceNotes && (
-        <TimelineNote title="Requested for this horse" value={entry.requestedServiceNotes} />
+        <TimelineNote
+          title="Requested for this horse"
+          value={entry.requestedServiceNotes}
+        />
       )}
       {entry.horseCompletionNotes && (
-        <TimelineNote title="Horse outcome" value={entry.horseCompletionNotes} />
+        <TimelineNote
+          title="Horse outcome"
+          value={entry.horseCompletionNotes}
+        />
       )}
       {entry.costShare !== undefined && (
-        <p className="text-sm text-muted-foreground">Cost share: {entry.costShare}</p>
+        <p className="text-sm text-muted-foreground">
+          Cost share: {entry.costShare}
+        </p>
       )}
     </div>
   )
@@ -175,19 +197,25 @@ function HealthIssueTimelineEntry({
   entry: Extract<TimelineEntry, { kind: 'healthIssue' }>
 }) {
   return (
-    <div className="grid gap-2 rounded-lg border p-4">
+    <div className={timelineEntryClassName}>
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant={entry.status === 'active' ? 'destructive' : 'secondary'}>
+        <Badge
+          variant={entry.status === 'active' ? 'destructive' : 'secondary'}
+        >
           Health issue
         </Badge>
-        {entry.severity && <Badge variant="outline">{severityLabels[entry.severity]}</Badge>}
+        {entry.severity && (
+          <Badge variant="outline">{severityLabels[entry.severity]}</Badge>
+        )}
         <Badge variant="outline">{entry.status}</Badge>
       </div>
       <div className="grid gap-1">
         <h2 className="font-medium">{entry.title}</h2>
         <p className="text-sm text-muted-foreground">
           Noted {formatTimestamp(entry.occurredAt)}
-          {entry.resolvedAt ? ` · Resolved ${formatTimestamp(entry.resolvedAt)}` : ''}
+          {entry.resolvedAt
+            ? ` · Resolved ${formatTimestamp(entry.resolvedAt)}`
+            : ''}
         </p>
       </div>
       {entry.description && (
@@ -205,7 +233,7 @@ function WeightTimelineEntry({
   entry: Extract<TimelineEntry, { kind: 'weightRecord' }>
 }) {
   return (
-    <div className="grid gap-2 rounded-lg border p-4">
+    <div className={timelineEntryClassName}>
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="secondary">Weight</Badge>
         {entry.bodyConditionScore !== undefined && (
@@ -235,7 +263,7 @@ function MedicationTimelineEntry({
   entry: Extract<TimelineEntry, { kind: 'medicationRecord' }>
 }) {
   return (
-    <div className="grid gap-2 rounded-lg border p-4">
+    <div className={timelineEntryClassName}>
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant={entry.status === 'active' ? 'default' : 'secondary'}>
           Medication
@@ -257,7 +285,9 @@ function MedicationTimelineEntry({
           {entry.reason}
         </p>
       )}
-      {entry.notes && <p className="whitespace-pre-wrap text-sm">{entry.notes}</p>}
+      {entry.notes && (
+        <p className="whitespace-pre-wrap text-sm">{entry.notes}</p>
+      )}
     </div>
   )
 }
@@ -268,7 +298,7 @@ function NutritionTimelineEntry({
   entry: Extract<TimelineEntry, { kind: 'nutritionLog' }>
 }) {
   return (
-    <div className="grid gap-2 rounded-lg border p-4">
+    <div className={timelineEntryClassName}>
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="secondary">Nutrition change</Badge>
         <Badge variant="outline">{formatTimestamp(entry.occurredAt)}</Badge>
@@ -286,10 +316,15 @@ function NutritionTimelineEntry({
           {entry.feedingRoutineSnapshot}
         </p>
       )}
-      {Boolean(entry.recommendedSnapshot?.length || entry.avoidSnapshot?.length) && (
+      {Boolean(
+        entry.recommendedSnapshot?.length || entry.avoidSnapshot?.length,
+      ) && (
         <div className="grid gap-2 text-sm sm:grid-cols-2">
           {Boolean(entry.recommendedSnapshot?.length) && (
-            <TimelineList title="Recommended" items={entry.recommendedSnapshot ?? []} />
+            <TimelineList
+              title="Recommended"
+              items={entry.recommendedSnapshot ?? []}
+            />
           )}
           {Boolean(entry.avoidSnapshot?.length) && (
             <TimelineList title="Avoid" items={entry.avoidSnapshot ?? []} />
@@ -300,7 +335,13 @@ function NutritionTimelineEntry({
   )
 }
 
-function TimelineList({ title, items }: { title: string; items: Array<string> }) {
+function TimelineList({
+  title,
+  items,
+}: {
+  title: string
+  items: Array<string>
+}) {
   return (
     <div className="grid gap-1">
       <span className="text-muted-foreground">{title}</span>

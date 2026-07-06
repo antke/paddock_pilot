@@ -1,3 +1,5 @@
+import { dashboardHeroClassName } from '#/components/dashboard/dashboardChrome'
+import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { Badge } from '#/components/ui/badge'
 import { Button, buttonVariants } from '#/components/ui/button'
 import {
@@ -52,21 +54,23 @@ export function StableSettingsPage({ settings }: StableSettingsPageProps) {
 
   return (
     <div className="grid gap-6">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="grid gap-2">
-          <h1 className="text-3xl font-semibold">Stable settings</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage {stable.name} details and people.
-          </p>
-        </div>
+      <header className={dashboardHeroClassName('cards')}>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="grid gap-2">
+            <h1 className="text-3xl font-semibold">Stable settings</h1>
+            <p className="text-sm text-muted-foreground">
+              Manage {stable.name} details and people.
+            </p>
+          </div>
 
-        <Link
-          to="/stables/$stableId"
-          params={{ stableId: stable._id }}
-          className={buttonVariants({ variant: 'outline' })}
-        >
-          Back to stable
-        </Link>
+          <Link
+            to="/stables/$stableId"
+            params={{ stableId: stable._id }}
+            className={buttonVariants({ variant: 'outline' })}
+          >
+            Back to stable
+          </Link>
+        </div>
       </header>
 
       <Tabs defaultValue="overview" className="grid gap-4">
@@ -77,7 +81,7 @@ export function StableSettingsPage({ settings }: StableSettingsPageProps) {
         </TabsList>
 
         <TabsContent value="overview">
-          <Card>
+          <Card className="bg-card/80">
             <CardHeader className="flex flex-row items-start justify-between gap-4">
               <div className="grid gap-1">
                 <CardTitle>{stable.name}</CardTitle>
@@ -97,7 +101,9 @@ export function StableSettingsPage({ settings }: StableSettingsPageProps) {
               {postalAddress.length > 0 && (
                 <div className="grid gap-1 sm:col-span-2">
                   <span className="text-muted-foreground">Postal address</span>
-                  <p className="whitespace-pre-line">{postalAddress.join('\n')}</p>
+                  <p className="whitespace-pre-line">
+                    {postalAddress.join('\n')}
+                  </p>
                 </div>
               )}
               {stable.contactName && (
@@ -165,6 +171,22 @@ function StableMembersCard({
   const removeMember = useMutation(api.stableMembers.remove)
   const [removingMemberId, setRemovingMemberId] = useState<string>()
   const [editingMemberId, setEditingMemberId] = useState<string>()
+  const [isInviteOpen, setIsInviteOpen] = useState(false)
+
+  const inviteDialog = (
+    <CreateRecordDialog
+      open={isInviteOpen}
+      onOpenChange={setIsInviteOpen}
+      triggerLabel="Invite member"
+      title="Invite member"
+      description="Invite someone to help manage this stable."
+    >
+      <StableInviteForm
+        stableId={stableId}
+        onCreated={() => setIsInviteOpen(false)}
+      />
+    </CreateRecordDialog>
+  )
 
   const onRemoveMember = async (member: Doc<'stableMembers'>) => {
     try {
@@ -186,21 +208,19 @@ function StableMembersCard({
   }
 
   return (
-    <Card>
+    <Card className="bg-card/80">
       <CardHeader>
-        <CardTitle>Members</CardTitle>
-        <CardDescription>
-          Review who can access this stable and invite new members.
-        </CardDescription>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="grid gap-1.5">
+            <CardTitle className="text-2xl leading-tight">Members</CardTitle>
+            <CardDescription className="text-base leading-6">
+              Review who can access this stable and invite new members.
+            </CardDescription>
+          </div>
+          {inviteDialog}
+        </div>
       </CardHeader>
       <CardContent className="grid gap-6">
-        <div className="grid gap-3">
-          <h3 className="text-sm font-medium">Invite member</h3>
-          <StableInviteForm stableId={stableId} />
-        </div>
-
-        <Separator />
-
         <div className="grid gap-4">
           <h3 className="text-sm font-medium">Current members</h3>
           {members.map((member, index) => (
@@ -212,7 +232,9 @@ function StableMembersCard({
                       {formatMemberName(member)}
                     </span>
                     <Badge
-                      variant={member.role === 'owner' ? 'default' : 'secondary'}
+                      variant={
+                        member.role === 'owner' ? 'default' : 'secondary'
+                      }
                     >
                       {roleLabels[member.role]}
                     </Badge>
@@ -254,15 +276,16 @@ function StableMembersCard({
                   </div>
                 )}
               </div>
-              {member.membership && editingMemberId === member.membership._id && (
-                <div className="mt-4 rounded-lg border p-4">
-                  <StableMemberDetailsForm
-                    member={member.membership}
-                    onCancel={() => setEditingMemberId(undefined)}
-                    onSaved={() => setEditingMemberId(undefined)}
-                  />
-                </div>
-              )}
+              {member.membership &&
+                editingMemberId === member.membership._id && (
+                  <div className="mt-4 rounded-row bg-muted/30 p-5">
+                    <StableMemberDetailsForm
+                      member={member.membership}
+                      onCancel={() => setEditingMemberId(undefined)}
+                      onSaved={() => setEditingMemberId(undefined)}
+                    />
+                  </div>
+                )}
               {index < members.length - 1 && <Separator className="mt-4" />}
             </div>
           ))}

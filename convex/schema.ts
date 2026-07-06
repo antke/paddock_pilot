@@ -416,6 +416,7 @@ export const eventFields = {
   status: v.optional(eventStatus),
   notesAfterCompletion: v.optional(v.string()),
   date: v.string(),
+  endDate: v.optional(v.string()),
   time: v.string(),
   recurrence: v.optional(eventRecurrenceSetup),
 }
@@ -500,7 +501,21 @@ export const careRemindersFields = {
 const careRemindersSchema = defineTable({ ...careRemindersFields })
   .index('by_stable_id_due_date', ['stableId', 'dueDate'])
   .index('by_stable_id_status_due_date', ['stableId', 'status', 'dueDate'])
+  .index('by_stable_id_category_due_date', [
+    'stableId',
+    'category',
+    'dueDate',
+  ])
+  .index('by_stable_id_horse_id_due_date', [
+    'stableId',
+    'horseId',
+    'dueDate',
+  ])
   .index('by_horse_id_due_date', ['horseId', 'dueDate'])
+  .searchIndex('search_title', {
+    searchField: 'title',
+    filterFields: ['stableId', 'status', 'category'],
+  })
 
 export default defineSchema({
   users: userSchema,

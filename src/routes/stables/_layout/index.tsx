@@ -1,4 +1,8 @@
-import { Item, ItemActions, ItemContent, ItemTitle } from '#/components/ui/item'
+import {
+  DashboardItemCardContent,
+  dashboardItemCardClassName,
+} from '#/components/dashboard/DashboardItemCard'
+import { dashboardEmptyClassName } from '#/components/dashboard/dashboardChrome'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
@@ -16,26 +20,28 @@ function RouteComponent() {
 
   if (isEmpty(stables)) {
     return (
-      <div>
+      <div className={dashboardEmptyClassName('cards')}>
         <p>No stables added yet.</p>
       </div>
     )
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-3">
       {stables.map((stable) => (
-        <Item key={stable._id} variant={'outline'}>
-          <ItemTitle>{stable.name}</ItemTitle>
-          <ItemContent>{stable.location}</ItemContent>
-          <ItemActions>
-            <Link to="/stables/$stableId" params={{ stableId: stable._id }}>
-              <Button variant={'outline'}>
-                <ArrowRightIcon />
-              </Button>
-            </Link>
-          </ItemActions>
-        </Item>
+        <div key={stable._id} className={dashboardItemCardClassName()}>
+          <DashboardItemCardContent
+            title={stable.name}
+            meta={stable.location}
+            badges={
+              <Link to="/stables/$stableId" params={{ stableId: stable._id }}>
+                <Button variant={'outline'}>
+                  <ArrowRightIcon />
+                </Button>
+              </Link>
+            }
+          />
+        </div>
       ))}
     </div>
   )

@@ -28,12 +28,11 @@ const dashboardDateFormatter = new Intl.DateTimeFormat('en-GB', {
 
 const careRowClassName = (tone: CareTone) =>
   cn(
-    'group/open grid gap-2 rounded-row border border-transparent border-l-4 bg-transparent py-3 pl-4 pr-3 transition-colors hover:border-primary/15 hover:bg-primary/5',
-    tone === 'due' && 'border-l-amber-400 hover:border-l-amber-400',
-    tone === 'planned' && 'border-l-primary/45 hover:border-l-primary/45',
-    tone === 'attention' &&
-      'border-l-destructive/45 hover:border-l-destructive/45',
-    tone === 'stable' && 'border-l-muted-foreground/30 hover:border-l-primary/35',
+    'group/open grid gap-2 rounded-row border-l-4 bg-transparent p-5 transition-colors hover:bg-primary/5',
+    tone === 'due' && 'border-l-amber-400',
+    tone === 'planned' && 'border-l-primary/45',
+    tone === 'attention' && 'border-l-destructive/45',
+    tone === 'stable' && 'border-l-muted-foreground/30',
   )
 
 type DashboardCareOverviewProps = {
@@ -259,7 +258,7 @@ function AttentionHorseCard({ horses }: { horses: AttentionHorseItem[] }) {
 
 function EmptyState({ children }: { children: string }) {
   return (
-    <p className="rounded-row border border-dashed border-border-subtle p-4 text-sm text-muted-foreground">
+    <p className="rounded-row border border-dashed border-border-subtle p-5 text-sm text-muted-foreground">
       {children}
     </p>
   )

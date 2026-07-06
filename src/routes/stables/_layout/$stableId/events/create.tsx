@@ -49,6 +49,7 @@ function RouteComponent() {
       stableId,
       horseIds: [],
       date: '',
+      endDate: '',
       time: '',
       type: 'training',
       title: '',
@@ -70,6 +71,7 @@ function RouteComponent() {
         stableId: stableId as Id<'stables'>,
         horseIds: data.horseIds as Array<Id<'horses'>>,
         date: data.date,
+        endDate: data.endDate,
         time: data.time,
         type: data.type,
         title: data.title,
@@ -103,9 +105,9 @@ function RouteComponent() {
 
   return (
     <form id="event-form" onSubmit={form.handleSubmit(onSubmit)}>
-      <Card className="w-full">
+      <Card className="w-full bg-card/80">
         <CardHeader>
-          <CardTitle>Add event</CardTitle>
+          <CardTitle className="text-xl tracking-tight">Add event</CardTitle>
         </CardHeader>
 
         <CardContent className="flex flex-col gap-4">
@@ -118,7 +120,7 @@ function RouteComponent() {
           />
         </CardContent>
 
-        <CardFooter className="gap-4 justify-end">
+        <CardFooter className="justify-end gap-4">
           <Button
             type="button"
             variant="outline"

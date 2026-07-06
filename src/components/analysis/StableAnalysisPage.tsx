@@ -1,3 +1,7 @@
+import {
+  dashboardHeroClassName,
+  dashboardEmptyClassName,
+} from '#/components/dashboard/dashboardChrome'
 import { Badge } from '#/components/ui/badge'
 import { buttonVariants } from '#/components/ui/button'
 import {
@@ -43,7 +47,9 @@ export function StableAnalysisPage({ stableId }: StableAnalysisPageProps) {
   )
 
   if (!analysis.hasAccess) {
-    return <LockedAnalysis stableName={analysis.stable.name} stableId={stableId} />
+    return (
+      <LockedAnalysis stableName={analysis.stable.name} stableId={stableId} />
+    )
   }
 
   return <UnlockedAnalysisPage analysis={analysis} stableId={stableId} />
@@ -197,10 +203,13 @@ function HorseOutcomeListCard({
       </CardHeader>
       <CardContent className="grid gap-3">
         {outcomes.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{emptyLabel}</p>
+          <p className={dashboardEmptyClassName('cards')}>{emptyLabel}</p>
         ) : (
           outcomes.map((outcome) => (
-            <div key={outcome.id} className="grid gap-1 border p-3">
+            <div
+              key={outcome.id}
+              className="grid gap-1 rounded-row bg-background/55 p-5"
+            >
               <span className="font-medium">{outcome.eventTitle}</span>
               <p className="text-sm text-muted-foreground">
                 {outcome.horseName} · {formatEventDate(outcome.eventDate)}
@@ -231,10 +240,15 @@ function ReminderInsightCard({
       <CardContent className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,0.6fr)]">
         <div className="grid gap-3">
           {upcomingReminders.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No upcoming pending reminders.</p>
+            <p className={dashboardEmptyClassName('cards')}>
+              No upcoming pending reminders.
+            </p>
           ) : (
             upcomingReminders.map((reminder) => (
-              <div key={reminder.id} className="grid gap-1 border p-3">
+              <div
+                key={reminder.id}
+                className="grid gap-1 rounded-row bg-background/55 p-5"
+              >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-medium">{reminder.title}</span>
                   <Badge variant="outline">
@@ -256,10 +270,15 @@ function ReminderInsightCard({
         </div>
         <div className="grid content-start gap-3">
           {categoryCounts.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No reminder categories yet.</p>
+            <p className={dashboardEmptyClassName('cards')}>
+              No reminder categories yet.
+            </p>
           ) : (
             categoryCounts.map((item) => (
-              <div key={item.category} className="flex items-center justify-between gap-4">
+              <div
+                key={item.category}
+                className="flex items-center justify-between gap-4"
+              >
                 <span>{careReminderCategoryLabels[item.category]}</span>
                 <Badge variant="secondary">{item.count}</Badge>
               </div>
@@ -276,14 +295,21 @@ function WeightTrendCard({ trends }: { trends: Array<WeightTrendItem> }) {
     <Card>
       <CardHeader>
         <CardTitle>Weight and body condition trends</CardTitle>
-        <CardDescription>Latest measurements compared with the previous matching unit.</CardDescription>
+        <CardDescription>
+          Latest measurements compared with the previous matching unit.
+        </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3">
         {trends.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No weight records yet.</p>
+          <p className={dashboardEmptyClassName('cards')}>
+            No weight records yet.
+          </p>
         ) : (
           trends.map((trend) => (
-            <div key={trend.horseId} className="grid gap-2 border p-3">
+            <div
+              key={trend.horseId}
+              className="grid gap-2 rounded-row bg-background/55 p-5"
+            >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-medium">{trend.horseName}</span>
                 <Badge variant="outline">
@@ -295,7 +321,8 @@ function WeightTrendCard({ trends }: { trends: Array<WeightTrendItem> }) {
               </p>
               {trend.weightChange !== undefined && (
                 <p className="text-sm">
-                  Weight change: {formatSignedNumber(trend.weightChange)} {trend.unit}
+                  Weight change: {formatSignedNumber(trend.weightChange)}{' '}
+                  {trend.unit}
                 </p>
               )}
               {trend.latestBodyConditionScore !== undefined && (
@@ -319,14 +346,21 @@ function CareCadenceCard({ items }: { items: Array<CareCadenceItem> }) {
     <Card>
       <CardHeader>
         <CardTitle>Care cadence</CardTitle>
-        <CardDescription>Simple cadence checks by horse and service type.</CardDescription>
+        <CardDescription>
+          Simple cadence checks by horse and service type.
+        </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3">
         {items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No care cadence data yet.</p>
+          <p className={dashboardEmptyClassName('cards')}>
+            No care cadence data yet.
+          </p>
         ) : (
           items.map((item) => (
-            <div key={`${item.horseId}-${item.type}`} className="grid gap-2 border p-3">
+            <div
+              key={`${item.horseId}-${item.type}`}
+              className="grid gap-2 rounded-row bg-background/55 p-5"
+            >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-medium">{item.horseName}</span>
                 <Badge variant={item.overdue ? 'destructive' : 'outline'}>
@@ -337,10 +371,14 @@ function CareCadenceCard({ items }: { items: Array<CareCadenceItem> }) {
                 Expected about every {item.expectedDays} days.
               </p>
               {item.daysSinceLast !== undefined && (
-                <p className="text-sm">Last completed {item.daysSinceLast} days ago.</p>
+                <p className="text-sm">
+                  Last completed {item.daysSinceLast} days ago.
+                </p>
               )}
               {item.daysUntilNext !== undefined && (
-                <p className="text-sm">Next planned in {item.daysUntilNext} days.</p>
+                <p className="text-sm">
+                  Next planned in {item.daysUntilNext} days.
+                </p>
               )}
             </div>
           ))
@@ -359,17 +397,26 @@ function HealthIssueFrequencyCard({
     <Card>
       <CardHeader>
         <CardTitle>Health issue frequency</CardTitle>
-        <CardDescription>Horses with the most recorded health notes.</CardDescription>
+        <CardDescription>
+          Horses with the most recorded health notes.
+        </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3">
         {items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No health issues recorded yet.</p>
+          <p className={dashboardEmptyClassName('cards')}>
+            No health issues recorded yet.
+          </p>
         ) : (
           items.map((item) => (
-            <div key={item.horseId} className="grid gap-2 border p-3">
+            <div
+              key={item.horseId}
+              className="grid gap-2 rounded-row bg-background/55 p-5"
+            >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-medium">{item.horseName}</span>
-                <Badge variant={item.activeCount > 0 ? 'destructive' : 'outline'}>
+                <Badge
+                  variant={item.activeCount > 0 ? 'destructive' : 'outline'}
+                >
                   {item.totalCount} total
                 </Badge>
               </div>
@@ -387,7 +434,11 @@ function HealthIssueFrequencyCard({
   )
 }
 
-function NutritionSignalCard({ signals }: { signals: Array<NutritionSignalItem> }) {
+function NutritionSignalCard({
+  signals,
+}: {
+  signals: Array<NutritionSignalItem>
+}) {
   return (
     <Card>
       <CardHeader>
@@ -403,10 +454,15 @@ function NutritionSignalCard({ signals }: { signals: Array<NutritionSignalItem> 
           </p>
         ) : (
           signals.map((signal) => (
-            <div key={signal.id} className="grid gap-2 border p-3">
+            <div
+              key={signal.id}
+              className="grid gap-2 rounded-row bg-background/55 p-5"
+            >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-medium">{signal.horseName}</span>
-                <Badge variant="outline">{formatTimestampDate(signal.changedAt)}</Badge>
+                <Badge variant="outline">
+                  {formatTimestampDate(signal.changedAt)}
+                </Badge>
               </div>
               <p className="text-sm">{signal.summary}</p>
               <p className="text-sm text-muted-foreground">
@@ -432,7 +488,9 @@ function CompletionCoverageCard({
     <Card>
       <CardHeader>
         <CardTitle>Completion-note coverage</CardTitle>
-        <CardDescription>How consistently completed care is documented.</CardDescription>
+        <CardDescription>
+          How consistently completed care is documented.
+        </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3">
         <CoverageRow
@@ -460,12 +518,14 @@ function CoverageRow({
   detail: string
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border p-3">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-row bg-background/55 p-5">
       <div className="grid gap-1">
         <span className="font-medium">{label}</span>
         <span className="text-sm text-muted-foreground">{detail}</span>
       </div>
-      <Badge variant={percent < 75 ? 'destructive' : 'secondary'}>{percent}%</Badge>
+      <Badge variant={percent < 75 ? 'destructive' : 'secondary'}>
+        {percent}%
+      </Badge>
     </div>
   )
 }
@@ -492,24 +552,26 @@ function AnalysisHeader({
   stableId: string
 }) {
   return (
-    <header className="flex flex-wrap items-start justify-between gap-4">
-      <div className="grid gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-3xl font-semibold">Analysis Centre</h1>
-          <Badge variant="secondary">Personal Pro</Badge>
+    <header className={dashboardHeroClassName('cards')}>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="grid gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-3xl font-semibold">Analysis Centre</h1>
+            <Badge variant="secondary">Personal Pro</Badge>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Premium care overview for {stableName}.
+          </p>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Premium care overview for {stableName}.
-        </p>
-      </div>
 
-      <Link
-        to="/stables/$stableId"
-        params={{ stableId }}
-        className={buttonVariants({ variant: 'outline' })}
-      >
-        Back to stable
-      </Link>
+        <Link
+          to="/stables/$stableId"
+          params={{ stableId }}
+          className={buttonVariants({ variant: 'outline' })}
+        >
+          Back to stable
+        </Link>
+      </div>
     </header>
   )
 }
@@ -547,12 +609,15 @@ function HorseAttentionCard({ horses }: { horses: Array<HorseAttentionItem> }) {
       </CardHeader>
       <CardContent className="grid gap-3">
         {horses.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
+          <p className={dashboardEmptyClassName('cards')}>
             No active health issues or profile gaps found.
           </p>
         ) : (
           horses.map((horse) => (
-            <div key={horse.horseId} className="grid gap-2 border p-3">
+            <div
+              key={horse.horseId}
+              className="grid gap-2 rounded-row bg-background/55 p-5"
+            >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-medium">{horse.horseName}</span>
                 {horse.activeIssueCount > 0 && (
@@ -593,10 +658,15 @@ function EventMixCard({
       </CardHeader>
       <CardContent className="grid gap-3">
         {eventTypeCounts.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No events recorded yet.</p>
+          <p className={dashboardEmptyClassName('cards')}>
+            No events recorded yet.
+          </p>
         ) : (
           eventTypeCounts.map((item) => (
-            <div key={item.type} className="flex items-center justify-between gap-4">
+            <div
+              key={item.type}
+              className="flex items-center justify-between gap-4"
+            >
               <span>{eventTypeLabels[item.type]}</span>
               <Badge variant="outline">{item.count}</Badge>
             </div>
@@ -626,10 +696,13 @@ function EventListCard({
       </CardHeader>
       <CardContent className="grid gap-3">
         {events.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{emptyLabel}</p>
+          <p className={dashboardEmptyClassName('cards')}>{emptyLabel}</p>
         ) : (
           events.map((event) => (
-            <div key={event._id} className="grid gap-1 border p-3">
+            <div
+              key={event._id}
+              className="grid gap-1 rounded-row bg-background/55 p-5"
+            >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-medium">{event.title}</span>
                 <Badge variant="outline">{eventTypeLabels[event.type]}</Badge>

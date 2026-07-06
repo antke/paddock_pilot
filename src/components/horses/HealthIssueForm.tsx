@@ -1,16 +1,15 @@
 import { Button } from '#/components/ui/button'
+import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
 import { Field, FieldError, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Textarea } from '#/components/ui/textarea'
-import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
-import {
-  healthIssueFormSchema
-  
-  
+import { healthIssueFormSchema } from 'shared/horses/healthIssueSchema'
+import type {
+  HealthIssueFormSchema,
+  HealthIssueSeverity,
 } from 'shared/horses/healthIssueSchema'
-import type {HealthIssueFormSchema, HealthIssueSeverity} from 'shared/horses/healthIssueSchema';
 
 type HealthIssueFormProps = {
   disabled?: boolean
@@ -23,11 +22,21 @@ const severityLabels = {
   high: 'High',
 } satisfies Record<HealthIssueSeverity, string>
 
-const severityOptions = Object.keys(severityLabels) as Array<HealthIssueSeverity>
+const severityOptions = Object.keys(
+  severityLabels,
+) as Array<HealthIssueSeverity>
 
 const asSeverity = (value: string) => value as HealthIssueSeverity
 
-export function HealthIssueForm({ disabled = false, onSubmit }: HealthIssueFormProps) {
+const severityChoiceOptions = severityOptions.map((severity) => ({
+  value: severity,
+  label: severityLabels[severity],
+})) satisfies Array<{ value: HealthIssueSeverity; label: string }>
+
+export function HealthIssueForm({
+  disabled = false,
+  onSubmit,
+}: HealthIssueFormProps) {
   const form = useForm<HealthIssueFormSchema>({
     resolver: zodResolver(healthIssueFormSchema),
     mode: 'onTouched',
@@ -43,7 +52,7 @@ export function HealthIssueForm({ disabled = false, onSubmit }: HealthIssueFormP
   }
 
   return (
-    <form className="grid gap-4" onSubmit={form.handleSubmit(submitIssue)}>
+    <form className="grid gap-5" onSubmit={form.handleSubmit(submitIssue)}>
       <Controller
         name="title"
         control={form.control}
@@ -88,27 +97,25 @@ export function HealthIssueForm({ disabled = false, onSubmit }: HealthIssueFormP
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
             <FieldLabel>Severity</FieldLabel>
-            <ToggleGroup
-              value={field.value ? [field.value] : []}
-              onValueChange={(values) => field.onChange(values.at(-1) ? asSeverity(values.at(-1)!) : undefined)}
-              variant="outline"
-              className="flex-wrap justify-start"
+            <ChoiceButtonGroup
+              value={field.value}
+              options={severityChoiceOptions}
+              onValueChange={(nextValue) =>
+                field.onChange(asSeverity(nextValue))
+              }
               disabled={disabled || form.formState.isSubmitting}
               aria-invalid={fieldState.invalid}
-            >
-              {severityOptions.map((severity) => (
-                <ToggleGroupItem key={severity} value={severity}>
-                  {severityLabels[severity]}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
+            />
             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
           </Field>
         )}
       />
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={disabled || form.formState.isSubmitting}>
+        <Button
+          type="submit"
+          disabled={disabled || form.formState.isSubmitting}
+        >
           {form.formState.isSubmitting ? 'Adding...' : 'Add issue'}
         </Button>
       </div>

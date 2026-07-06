@@ -1,17 +1,18 @@
 import { Button } from '#/components/ui/button'
+import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
 import { Field, FieldError, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Textarea } from '#/components/ui/textarea'
-import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
 import {
   medicationRecordFormSchema,
-  medicationRecordStatuses
-  
-  
+  medicationRecordStatuses,
 } from 'shared/horses/medicationRecordSchema'
-import type {MedicationRecordFormSchema, MedicationRecordStatus} from 'shared/horses/medicationRecordSchema';
+import type {
+  MedicationRecordFormSchema,
+  MedicationRecordStatus,
+} from 'shared/horses/medicationRecordSchema'
 
 type MedicationRecordFormProps = {
   disabled?: boolean
@@ -22,6 +23,11 @@ const medicationStatusLabels = {
   active: 'Active',
   completed: 'Completed',
 } satisfies Record<MedicationRecordStatus, string>
+
+const medicationStatusOptions = medicationRecordStatuses.map((status) => ({
+  value: status,
+  label: medicationStatusLabels[status],
+}))
 
 const todayDateKey = () => new Date().toISOString().slice(0, 10)
 
@@ -61,27 +67,30 @@ export function MedicationRecordForm({
   }
 
   return (
-    <form className="grid gap-4" onSubmit={form.handleSubmit(submitMedicationRecord)}>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Controller
-          name="medicationName"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Medication</FieldLabel>
-              <Input
-                {...field}
-                id={field.name}
-                disabled={disabled || form.formState.isSubmitting}
-                aria-invalid={fieldState.invalid}
-                placeholder="Bute, antibiotics, supplement course..."
-                autoComplete="off"
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
+    <form
+      className="grid gap-5"
+      onSubmit={form.handleSubmit(submitMedicationRecord)}
+    >
+      <Controller
+        name="medicationName"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor={field.name}>Medication</FieldLabel>
+            <Input
+              {...field}
+              id={field.name}
+              disabled={disabled || form.formState.isSubmitting}
+              aria-invalid={fieldState.invalid}
+              placeholder="Bute, antibiotics, supplement course..."
+              autoComplete="off"
+            />
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
+        )}
+      />
 
+      <div className="grid gap-4 sm:grid-cols-2">
         <Controller
           name="dosage"
           control={form.control}
@@ -100,9 +109,7 @@ export function MedicationRecordForm({
             </Field>
           )}
         />
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
         <Controller
           name="frequency"
           control={form.control}
@@ -121,7 +128,9 @@ export function MedicationRecordForm({
             </Field>
           )}
         />
+      </div>
 
+      <div className="grid gap-4 sm:grid-cols-2">
         <Controller
           name="startDate"
           control={form.control}
@@ -167,21 +176,15 @@ export function MedicationRecordForm({
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
             <FieldLabel>Status</FieldLabel>
-            <ToggleGroup
-              type="single"
+            <ChoiceButtonGroup
               value={field.value}
-              onValueChange={(value) => value && field.onChange(asMedicationStatus(value))}
-              variant="outline"
-              className="justify-start"
+              options={medicationStatusOptions}
               disabled={disabled || form.formState.isSubmitting}
               aria-invalid={fieldState.invalid}
-            >
-              {medicationRecordStatuses.map((status) => (
-                <ToggleGroupItem key={status} value={status}>
-                  {medicationStatusLabels[status]}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
+              onValueChange={(value) =>
+                field.onChange(asMedicationStatus(value))
+              }
+            />
             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
           </Field>
         )}
@@ -245,7 +248,10 @@ export function MedicationRecordForm({
       />
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={disabled || form.formState.isSubmitting}>
+        <Button
+          type="submit"
+          disabled={disabled || form.formState.isSubmitting}
+        >
           {form.formState.isSubmitting ? 'Adding...' : 'Add medication'}
         </Button>
       </div>

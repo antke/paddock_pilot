@@ -20,6 +20,12 @@ export function formatEventDate(date: string) {
   return dateFormatter.format(new Date(`${date}T00:00:00`))
 }
 
+export function formatEventDateRange(date: string, endDate?: string) {
+  if (!endDate || endDate <= date) return formatEventDate(date)
+
+  return `${formatEventDate(date)} – ${formatEventDate(endDate)}`
+}
+
 export function formatEventType(type: Doc<'events'>['type']) {
   return eventTypeLabels[type]
 }

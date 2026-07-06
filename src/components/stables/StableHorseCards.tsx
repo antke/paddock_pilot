@@ -1,5 +1,5 @@
+import { dashboardEmptyClassName } from '#/components/dashboard/dashboardChrome'
 import { HorseCard } from '#/components/horses/HorseCard'
-import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
 import { ArrowRightIcon } from '@phosphor-icons/react'
 import { Link } from '@tanstack/react-router'
@@ -13,17 +13,15 @@ type StableHorseCardsProps = {
 export function StableHorseCards({ stableId, horses }: StableHorseCardsProps) {
   if (horses.length === 0) {
     return (
-      <Alert>
-        <AlertTitle>No horses added yet.</AlertTitle>
-        <AlertDescription>
-          Add a horse to start building this stable roster.
-        </AlertDescription>
-      </Alert>
+      <div className={dashboardEmptyClassName('cards')}>
+        <p className="font-medium text-foreground">No horses added yet.</p>
+        <p>Add a horse to start building this stable roster.</p>
+      </div>
     )
   }
 
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-3">
       {horses.map((horse) => (
         <HorseCard
           key={horse._id}

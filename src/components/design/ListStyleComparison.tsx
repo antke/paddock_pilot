@@ -674,7 +674,7 @@ function ManagementRightActionsRow(
   return (
     <div
       className={cn(
-        'group/open grid cursor-pointer gap-3 border border-transparent px-3 py-3 transition-colors hover:rounded-row hover:border-primary/15 hover:bg-primary/5',
+        'group/open grid gap-3 border border-transparent px-3 py-3 transition-colors hover:rounded-row hover:border-primary/15 hover:bg-primary/5',
         highlighted &&
           'rounded-row border-primary/20 bg-primary/8 ring-1 ring-primary/15',
       )}
@@ -727,7 +727,7 @@ function EventCalmAgendaRow(record: EventRecord, highlighted: boolean) {
   return (
     <div
       className={cn(
-        'group/open flex cursor-pointer items-center gap-3 border border-transparent px-3 py-3 transition-colors hover:rounded-row hover:border-primary/15 hover:bg-primary/5',
+        'group/open flex items-center gap-3 border border-transparent px-3 py-3 transition-colors hover:rounded-row hover:border-primary/15 hover:bg-primary/5',
         highlighted &&
           'rounded-row border-primary/20 bg-primary/8 ring-1 ring-primary/15',
       )}
@@ -776,7 +776,7 @@ function CareOverviewPocketRow(
   return (
     <div
       className={cn(
-        'group/open grid cursor-pointer gap-2 rounded-row border border-border-subtle border-l-4 bg-transparent py-3 pl-4 pr-3 transition-colors hover:border-primary/15 hover:bg-primary/5',
+        'group/open grid gap-2 rounded-row border border-border-subtle border-l-4 bg-transparent py-3 pl-4 pr-3 transition-colors hover:border-primary/15 hover:bg-primary/5',
         highlighted && 'border-primary/20 bg-primary/5 ring-1 ring-primary/10',
         record.tone === 'due' && 'border-l-amber-400',
         record.tone === 'planned' && 'border-l-primary/45',
@@ -792,7 +792,7 @@ function CareOverviewRailRow(record: CareOverviewRecord, highlighted: boolean) {
   return (
     <div
       className={cn(
-        'group/open grid cursor-pointer gap-2 rounded-row border border-transparent border-l-4 bg-transparent py-3 pl-4 pr-3 transition-colors hover:border-primary/15 hover:bg-primary/5',
+        'group/open grid gap-2 rounded-row border border-transparent border-l-4 bg-transparent py-3 pl-4 pr-3 transition-colors hover:border-primary/15 hover:bg-primary/5',
         highlighted && 'border-primary/15 bg-primary/5 ring-1 ring-primary/10',
         record.tone === 'due' && 'border-l-4 border-l-amber-400',
         record.tone === 'planned' && 'border-l-4 border-l-primary/45',

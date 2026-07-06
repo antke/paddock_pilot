@@ -16,9 +16,10 @@ import type { StableInvitationRole } from 'shared/stableInvitations/invitationSc
 
 type StableInviteFormProps = {
   stableId: Id<'stables'>
+  onCreated?: () => void
 }
 
-export function StableInviteForm({ stableId }: StableInviteFormProps) {
+export function StableInviteForm({ stableId, onCreated }: StableInviteFormProps) {
   const createInvitation = useMutation(api.stableInvitations.create)
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<StableInvitationRole>('member')
@@ -45,6 +46,7 @@ export function StableInviteForm({ stableId }: StableInviteFormProps) {
       })
       setEmail('')
       setRole('member')
+      onCreated?.()
       toast.success('Invitation sent', {
         description: <p>{result.data.email} has been invited.</p>,
         position: 'top-right',
@@ -61,7 +63,7 @@ export function StableInviteForm({ stableId }: StableInviteFormProps) {
 
   return (
     <form
-      className="grid gap-3 sm:grid-cols-[1fr_auto_auto]"
+      className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_12rem_auto]"
       onSubmit={onSubmit}
     >
       <Input

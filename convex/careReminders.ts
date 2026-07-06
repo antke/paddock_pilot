@@ -1,8 +1,15 @@
 import { ConvexError, v } from 'convex/values'
+import { paginationOptsValidator } from 'convex/server'
+import type { PaginationResult } from 'convex/server'
 import { careReminderInputSchema } from '../shared/reminders/careReminderSchema'
 import type { Doc, Id } from './_generated/dataModel'
 import { mutation, query   } from './_generated/server'
 import type {MutationCtx, QueryCtx} from './_generated/server';
+import {
+  careReminderCategory as reminderCategoryValidator,
+  careReminderPriority as reminderPriorityValidator,
+  careReminderStatus as reminderStatusValidator,
+} from './schema'
 import {
   assertCanViewStable,
   getCurrentUser
@@ -10,25 +17,8 @@ import {
 } from './libs/stablePermissions'
 import type {StableRole} from './libs/stablePermissions';
 
-const reminderCategoryValidator = v.union(
-  v.literal('vet'),
-  v.literal('farrier'),
-  v.literal('dentist'),
-  v.literal('medication'),
-  v.literal('nutrition'),
-  v.literal('weight'),
-  v.literal('deworming'),
-  v.literal('admin'),
-  v.literal('other'),
-)
-
-const reminderPriorityValidator = v.union(
-  v.literal('low'),
-  v.literal('medium'),
-  v.literal('high'),
-)
-
-const reminderStatusValidator = v.union(
+const reminderStateFilterValidator = v.union(
+  v.literal('overdue'),
   v.literal('pending'),
   v.literal('completed'),
   v.literal('dismissed'),
@@ -57,6 +47,7 @@ const validateReminderInput = (args: {
 }
 
 const todayTimestamp = () => Date.now()
+const todayDateKey = () => new Date().toISOString().slice(0, 10)
 
 const canManageStableReminder = (role: StableRole | undefined) => {
   return role === 'owner' || role === 'member'
@@ -120,6 +111,43 @@ const byReminderSort = (a: Doc<'careReminders'>, b: Doc<'careReminders'>) => {
   return b.createdAt - a.createdAt
 }
 
+const mapStableReminderListItems = async (
+  ctx: QueryCtx,
+  access: { role: StableRole | undefined; userId: Id<'users'> },
+  reminders: Array<Doc<'careReminders'>>,
+): Promise<Array<StableReminderListItem>> => {
+  const horses = await Promise.all(
+    reminders.map((reminder) =>
+      reminder.horseId ? ctx.db.get(reminder.horseId) : Promise.resolve(null),
+    ),
+  )
+
+  return reminders.map((reminder, index) => {
+    const horse = horses[index]
+
+    return {
+      reminder,
+      horseName: horse?.name,
+      canManage: canManageReminder(access, reminder, horse),
+    }
+  })
+}
+
+type StableReminderListItem = {
+  reminder: Doc<'careReminders'>
+  horseName?: string
+  canManage: boolean
+}
+
+const mapStableReminderPage = async (
+  ctx: QueryCtx,
+  access: { role: StableRole | undefined; userId: Id<'users'> },
+  page: PaginationResult<Doc<'careReminders'>>,
+): Promise<PaginationResult<StableReminderListItem>> => ({
+  ...page,
+  page: await mapStableReminderListItems(ctx, access, page.page),
+})
+
 export const listForStable = query({
   args: { stableId: v.id('stables') },
   handler: async (ctx, args) => {
@@ -128,24 +156,177 @@ export const listForStable = query({
       .query('careReminders')
       .withIndex('by_stable_id_due_date', (q) => q.eq('stableId', args.stableId))
       .collect()
-    const horses = await Promise.all(
-      reminders.map((reminder) =>
-        reminder.horseId ? ctx.db.get(reminder.horseId) : Promise.resolve(null),
-      ),
-    )
 
     return {
       canManageStableReminders: canManageStableReminder(access.role),
-      reminders: reminders.sort(byReminderSort).map((reminder) => {
-        const horse = horses.find((item) => item?._id === reminder.horseId)
-
-        return {
-          reminder,
-          horseName: horse?.name,
-          canManage: canManageReminder(access, reminder, horse),
-        }
-      }),
+      reminders: await mapStableReminderListItems(
+        ctx,
+        access,
+        reminders.sort(byReminderSort),
+      ),
     }
+  },
+})
+
+export const getStableReminderPermissions = query({
+  args: { stableId: v.id('stables') },
+  handler: async (ctx, args) => {
+    const access = await assertCanViewStable(ctx, args.stableId)
+
+    return {
+      canManageStableReminders: canManageStableReminder(access.role),
+    }
+  },
+})
+
+export const listForStablePaginated = query({
+  args: {
+    stableId: v.id('stables'),
+    searchQuery: v.optional(v.string()),
+    horseId: v.optional(v.id('horses')),
+    stableWideOnly: v.optional(v.boolean()),
+    state: v.optional(reminderStateFilterValidator),
+    category: v.optional(reminderCategoryValidator),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    const access = await assertCanViewStable(ctx, args.stableId)
+    const searchQuery = args.searchQuery?.trim()
+
+    if (searchQuery) {
+      let remindersQuery = ctx.db
+        .query('careReminders')
+        .withSearchIndex('search_title', (q) =>
+          q.search('title', searchQuery).eq('stableId', args.stableId),
+        )
+
+      if (args.stableWideOnly) {
+        remindersQuery = remindersQuery.filter((q) =>
+          q.eq(q.field('horseId'), undefined),
+        )
+      } else if (args.horseId) {
+        remindersQuery = remindersQuery.filter((q) =>
+          q.eq(q.field('horseId'), args.horseId),
+        )
+      }
+
+      if (args.state === 'overdue') {
+        const today = todayDateKey()
+        remindersQuery = remindersQuery.filter((q) =>
+          q.and(
+            q.eq(q.field('status'), 'pending'),
+            q.lt(q.field('dueDate'), today),
+          ),
+        )
+      } else if (args.state) {
+        remindersQuery = remindersQuery.filter((q) =>
+          q.eq(q.field('status'), args.state),
+        )
+      }
+
+      if (args.category) {
+        remindersQuery = remindersQuery.filter((q) =>
+          q.eq(q.field('category'), args.category),
+        )
+      }
+
+      const page = await remindersQuery.paginate(args.paginationOpts)
+
+      return mapStableReminderPage(ctx, access, page)
+    }
+
+    if (args.stableWideOnly || args.horseId) {
+      const horseId = args.stableWideOnly ? undefined : args.horseId
+      let remindersQuery = ctx.db
+        .query('careReminders')
+        .withIndex('by_stable_id_horse_id_due_date', (q) =>
+          q.eq('stableId', args.stableId).eq('horseId', horseId),
+        )
+
+      if (args.state === 'overdue') {
+        const today = todayDateKey()
+        remindersQuery = remindersQuery.filter((q) =>
+          q.and(
+            q.eq(q.field('status'), 'pending'),
+            q.lt(q.field('dueDate'), today),
+          ),
+        )
+      } else if (args.state) {
+        remindersQuery = remindersQuery.filter((q) =>
+          q.eq(q.field('status'), args.state),
+        )
+      }
+
+      if (args.category) {
+        remindersQuery = remindersQuery.filter((q) =>
+          q.eq(q.field('category'), args.category),
+        )
+      }
+
+      const page = await remindersQuery.paginate(args.paginationOpts)
+
+      return mapStableReminderPage(ctx, access, page)
+    }
+
+    if (args.state === 'overdue') {
+      const today = todayDateKey()
+      let remindersQuery = ctx.db
+        .query('careReminders')
+        .withIndex('by_stable_id_status_due_date', (q) =>
+          q
+            .eq('stableId', args.stableId)
+            .eq('status', 'pending')
+            .lt('dueDate', today),
+        )
+
+      if (args.category) {
+        remindersQuery = remindersQuery.filter((q) =>
+          q.eq(q.field('category'), args.category),
+        )
+      }
+
+      const page = await remindersQuery.paginate(args.paginationOpts)
+
+      return mapStableReminderPage(ctx, access, page)
+    }
+
+    if (args.state) {
+      const status = args.state
+      let remindersQuery = ctx.db
+        .query('careReminders')
+        .withIndex('by_stable_id_status_due_date', (q) =>
+          q.eq('stableId', args.stableId).eq('status', status),
+        )
+
+      if (args.category) {
+        remindersQuery = remindersQuery.filter((q) =>
+          q.eq(q.field('category'), args.category),
+        )
+      }
+
+      const page = await remindersQuery.paginate(args.paginationOpts)
+
+      return mapStableReminderPage(ctx, access, page)
+    }
+
+    if (args.category) {
+      const category = args.category
+      const page = await ctx.db
+        .query('careReminders')
+        .withIndex('by_stable_id_category_due_date', (q) =>
+          q.eq('stableId', args.stableId).eq('category', category),
+        )
+        .paginate(args.paginationOpts)
+
+      return mapStableReminderPage(ctx, access, page)
+    }
+
+    const page = await ctx.db
+      .query('careReminders')
+      .withIndex('by_stable_id_due_date', (q) => q.eq('stableId', args.stableId))
+      .paginate(args.paginationOpts)
+
+    return mapStableReminderPage(ctx, access, page)
   },
 })
 
@@ -207,6 +388,69 @@ export const add = mutation({
       createdAt: now,
       updatedAt: now,
     })
+  },
+})
+
+export const addForHorses = mutation({
+  args: {
+    stableId: v.id('stables'),
+    horseIds: v.array(v.id('horses')),
+    title: v.string(),
+    description: v.optional(v.string()),
+    category: reminderCategoryValidator,
+    dueDate: v.string(),
+    priority: v.optional(reminderPriorityValidator),
+    status: v.optional(reminderStatusValidator),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx)
+    const access = await assertCanViewStable(ctx, args.stableId, user._id)
+
+    if (!canManageStableReminder(access.role)) {
+      throw new ConvexError('Not authorized to manage these reminders')
+    }
+
+    if (args.horseIds.length === 0) {
+      throw new ConvexError('Select at least one horse')
+    }
+
+    const input = validateReminderInput({
+      stableId: args.stableId,
+      title: args.title,
+      description: args.description,
+      category: args.category,
+      dueDate: args.dueDate,
+      priority: args.priority,
+      status: args.status,
+    })
+    const horseIds = [...new Set(args.horseIds)]
+    const horses = await Promise.all(
+      horseIds.map((horseId) => ctx.db.get(horseId)),
+    )
+
+    if (horses.some((horse) => !horse || horse.stableId !== args.stableId)) {
+      throw new ConvexError('Horse does not belong to this stable')
+    }
+
+    const now = todayTimestamp()
+    return await Promise.all(
+      horseIds.map((horseId) =>
+        ctx.db.insert('careReminders', {
+          stableId: args.stableId,
+          horseId,
+          title: input.title,
+          description: input.description,
+          category: input.category,
+          dueDate: input.dueDate,
+          priority: input.priority,
+          status: input.status,
+          completedAt: input.status === 'completed' ? now : undefined,
+          createdBy: user._id,
+          createdAt: now,
+          updatedAt: now,
+        }),
+      ),
+    )
   },
 })
 

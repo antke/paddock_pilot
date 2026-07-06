@@ -88,6 +88,7 @@ function EditEventForm({
       stableId: event.stableId,
       horseIds: selectedHorseIds.length > 0 ? selectedHorseIds : event.horseIds,
       date: event.date,
+      endDate: event.endDate ?? '',
       time: event.time,
       type: event.type,
       title: event.title,
@@ -111,6 +112,7 @@ function EditEventForm({
         stableId: event.stableId,
         horseIds: data.horseIds as Array<Id<'horses'>>,
         date: data.date,
+        endDate: data.endDate,
         time: data.time,
         type: data.type,
         title: data.title,
@@ -144,9 +146,9 @@ function EditEventForm({
 
   return (
     <form id="event-form" onSubmit={form.handleSubmit(onSubmit)}>
-      <Card className="w-full">
+      <Card className="w-full bg-card/80">
         <CardHeader>
-          <CardTitle>Edit event</CardTitle>
+          <CardTitle className="text-xl tracking-tight">Edit event</CardTitle>
         </CardHeader>
 
         <CardContent className="flex flex-col gap-4">
@@ -159,7 +161,7 @@ function EditEventForm({
           />
         </CardContent>
 
-        <CardFooter className="gap-4 justify-end">
+        <CardFooter className="justify-end gap-4">
           <Button
             type="button"
             variant="outline"

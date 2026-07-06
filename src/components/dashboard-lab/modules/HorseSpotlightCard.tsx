@@ -6,7 +6,7 @@ export function HorseSpotlightCard({ data }: { data: DashboardLabData }) {
   const horse = data.attentionHorses[0]
 
   return (
-    <section className="rounded-panel border border-border-subtle bg-card/80 p-5 shadow-control">
+    <section className="rounded-panel bg-card/80 p-5 shadow-control">
       <div className="mb-4">
         <h2 className="text-lg font-semibold tracking-tight">Horse spotlight</h2>
         <p className="text-sm text-muted-foreground">A single animal anchor for the stable</p>
@@ -15,7 +15,7 @@ export function HorseSpotlightCard({ data }: { data: DashboardLabData }) {
         <Link
           to="/stables/$stableId/horses/$horseId"
           params={{ stableId: horse.stableId, horseId: horse.horseId }}
-          className="group/horse grid gap-4 rounded-row border border-primary/15 bg-primary/8 p-4 transition-colors hover:border-primary/35 focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:outline-none"
+          className="group/horse grid gap-4 rounded-row bg-primary/8 p-5 transition-colors hover:bg-primary/12 focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:outline-none"
         >
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -33,7 +33,7 @@ export function HorseSpotlightCard({ data }: { data: DashboardLabData }) {
           </div>
         </Link>
       ) : (
-        <p className="rounded-row border border-dashed border-border-subtle p-4 text-sm text-muted-foreground">
+        <p className="rounded-row bg-muted/35 p-5 text-sm text-muted-foreground">
           No horse needs extra attention right now.
         </p>
       )}
@@ -43,7 +43,7 @@ export function HorseSpotlightCard({ data }: { data: DashboardLabData }) {
 
 function SpotlightNumber({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-md bg-card/80 p-3 shadow-control">
+    <div className="rounded-md bg-card/80 p-5 shadow-control">
       <p className="text-xl font-semibold">{value}</p>
       <p className="text-[0.68rem] font-medium uppercase tracking-wide text-muted-foreground">
         {label}

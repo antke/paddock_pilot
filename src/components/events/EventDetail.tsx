@@ -1,4 +1,8 @@
 import {
+  dashboardHeroClassName,
+  dashboardSectionClassName,
+} from '#/components/dashboard/dashboardChrome'
+import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbList,
@@ -10,10 +14,10 @@ import { buttonVariants } from '#/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
 import { Link } from '@tanstack/react-router'
 import type { Doc } from 'convex/_generated/dataModel'
-import { eventStatusLabels  } from 'shared/events/eventSchema'
-import type {EventStatus} from 'shared/events/eventSchema';
+import { eventStatusLabels } from 'shared/events/eventSchema'
+import type { EventStatus } from 'shared/events/eventSchema'
 import {
-  formatEventDate,
+  formatEventDateRange,
   formatEventType,
   formatRecurrence,
 } from './eventDisplay'
@@ -55,45 +59,51 @@ export function EventDetail({ stableId, event, horses }: EventDetailProps) {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="grid gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-semibold">{event.title}</h1>
-            <Badge variant="outline">{formatEventType(event.type)}</Badge>
-            <Badge variant={eventStatus === 'planned' ? 'secondary' : 'outline'}>
-              {eventStatusLabels[eventStatus]}
-            </Badge>
-            {recurrenceSummary && <Badge variant="secondary">Recurring</Badge>}
+      <header className={dashboardHeroClassName('cards')}>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="grid gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-semibold">{event.title}</h1>
+              <Badge variant="outline">{formatEventType(event.type)}</Badge>
+              <Badge
+                variant={eventStatus === 'planned' ? 'secondary' : 'outline'}
+              >
+                {eventStatusLabels[eventStatus]}
+              </Badge>
+              {recurrenceSummary && (
+                <Badge variant="secondary">Recurring</Badge>
+              )}
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              {formatEventDateRange(event.date, event.endDate)} at {event.time}
+            </p>
           </div>
 
-          <p className="text-sm text-muted-foreground">
-            {formatEventDate(event.date)} at {event.time}
-          </p>
+          <Link
+            to="/stables/$stableId/events/$eventId/edit"
+            params={{ stableId, eventId: event._id }}
+            className={buttonVariants({ variant: 'outline' })}
+          >
+            Edit event
+          </Link>
         </div>
-
-        <Link
-          to="/stables/$stableId/events/$eventId/edit"
-          params={{ stableId, eventId: event._id }}
-          className={buttonVariants({ variant: 'outline' })}
-        >
-          Edit event
-        </Link>
       </header>
 
-      <Card>
+      <Card className="bg-card/80">
         <CardHeader>
           <CardTitle>Details</CardTitle>
         </CardHeader>
 
         <CardContent className="grid gap-4 text-sm">
           <div className="grid gap-3 sm:grid-cols-2">
-            <DetailItem label="Date" value={formatEventDate(event.date)} />
+            <DetailItem
+              label="Date"
+              value={formatEventDateRange(event.date, event.endDate)}
+            />
             <DetailItem label="Time" value={event.time} />
             <DetailItem label="Type" value={formatEventType(event.type)} />
-            <DetailItem
-              label="Status"
-              value={eventStatusLabels[eventStatus]}
-            />
+            <DetailItem label="Status" value={eventStatusLabels[eventStatus]} />
             {event.location && (
               <DetailItem label="Location" value={event.location} />
             )}
@@ -104,7 +114,10 @@ export function EventDetail({ stableId, event, horses }: EventDetailProps) {
               <DetailItem label="Provider phone" value={event.providerPhone} />
             )}
             {event.totalCost !== undefined && (
-              <DetailItem label="Total cost" value={formatCost(event.totalCost)} />
+              <DetailItem
+                label="Total cost"
+                value={formatCost(event.totalCost)}
+              />
             )}
             {event.costPerHorse !== undefined && (
               <DetailItem
@@ -128,18 +141,22 @@ export function EventDetail({ stableId, event, horses }: EventDetailProps) {
           {event.notesAfterCompletion && (
             <div className="grid gap-1">
               <span className="text-muted-foreground">Completion notes</span>
-              <p className="whitespace-pre-line">{event.notesAfterCompletion}</p>
+              <p className="whitespace-pre-line">
+                {event.notesAfterCompletion}
+              </p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Horses</CardTitle>
-        </CardHeader>
-
-        <CardContent className="flex flex-wrap gap-2">
+      <section className={dashboardSectionClassName('cards')}>
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight">Horses</h2>
+          <p className="text-sm text-muted-foreground">
+            Horses linked to this event.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
           {horses.map((horse) => (
             <Link
               key={horse._id}
@@ -149,8 +166,8 @@ export function EventDetail({ stableId, event, horses }: EventDetailProps) {
               <Badge variant="outline">{horse.name}</Badge>
             </Link>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       <EventHorseServiceDetailsCard stableId={stableId} eventId={event._id} />
     </div>

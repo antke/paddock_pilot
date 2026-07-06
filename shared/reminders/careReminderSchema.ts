@@ -20,6 +20,8 @@ export const careReminderStatuses = [
   'dismissed',
 ] as const
 
+export const careReminderFormTargetTypes = ['stable', 'horses'] as const
+
 export const careReminderCategoryLabels = {
   vet: 'Vet',
   farrier: 'Farrier',
@@ -47,6 +49,9 @@ export const careReminderStatusLabels = {
 export const careReminderCategorySchema = z.enum(careReminderCategories)
 export const careReminderPrioritySchema = z.enum(careReminderPriorities)
 export const careReminderStatusSchema = z.enum(careReminderStatuses)
+export const careReminderFormTargetTypeSchema = z.enum(
+  careReminderFormTargetTypes,
+)
 
 export const careReminderTitleSchema = z
   .string()
@@ -85,15 +90,26 @@ export const careReminderInputSchema = z.object({
 })
 
 export const careReminderFormSchema = z.object({
-  horseId: z.string(),
+  targetType: careReminderFormTargetTypeSchema,
+  horseIds: z.array(z.string()),
   title: careReminderTitleSchema,
   description: careReminderDescriptionSchema,
   category: careReminderCategorySchema,
   dueDate: careReminderDueDateSchema,
   priority: careReminderPrioritySchema.optional(),
+}).superRefine((value, context) => {
+  if (value.targetType === 'horses' && value.horseIds.length === 0) {
+    context.addIssue({
+      code: 'custom',
+      path: ['horseIds'],
+      message: 'Select at least one horse.',
+    })
+  }
 })
 
 export type CareReminderCategory = (typeof careReminderCategories)[number]
 export type CareReminderPriority = (typeof careReminderPriorities)[number]
 export type CareReminderStatus = (typeof careReminderStatuses)[number]
+export type CareReminderFormTargetType =
+  (typeof careReminderFormTargetTypes)[number]
 export type CareReminderFormSchema = z.infer<typeof careReminderFormSchema>

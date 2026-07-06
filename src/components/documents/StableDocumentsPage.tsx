@@ -1,3 +1,4 @@
+import { dashboardHeroClassName } from '#/components/dashboard/dashboardChrome'
 import { buttonVariants } from '#/components/ui/button'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -6,8 +7,8 @@ import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 import { toast } from 'sonner'
-import { DocumentsCard  } from './DocumentsCard'
-import type {DocumentListItem} from './DocumentsCard';
+import { DocumentsCard } from './DocumentsCard'
+import type { DocumentListItem } from './DocumentsCard'
 import type { DocumentUploadValues } from './DocumentUploadForm'
 
 type StableDocumentsPageProps = {
@@ -60,8 +61,9 @@ export function StableDocumentsPage({ stableId }: StableDocumentsPageProps) {
         notes: values.notes,
       })
       toast.success('Document added', { position: 'top-right' })
-    } catch {
+    } catch (err) {
       toast.error('Could not add document', { position: 'top-right' })
+      throw err
     }
   }
 
@@ -76,21 +78,26 @@ export function StableDocumentsPage({ stableId }: StableDocumentsPageProps) {
 
   return (
     <div className="grid gap-6">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="grid gap-2">
-          <p className="text-sm text-muted-foreground">{stable?.name ?? 'Stable'}</p>
-          <h1 className="text-2xl font-semibold">Documents</h1>
-          <p className="text-sm text-muted-foreground">
-            Keep passport scans, proof of vaccination, insurance paperwork, and care reports close to the stable record.
-          </p>
+      <header className={dashboardHeroClassName('cards')}>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="grid gap-2">
+            <p className="text-sm text-muted-foreground">
+              {stable?.name ?? 'Stable'}
+            </p>
+            <h1 className="text-2xl font-semibold">Documents</h1>
+            <p className="text-sm text-muted-foreground">
+              Keep passport scans, proof of vaccination, insurance paperwork,
+              and care reports close to the stable record.
+            </p>
+          </div>
+          <Link
+            to="/stables/$stableId"
+            params={{ stableId }}
+            className={buttonVariants({ variant: 'outline' })}
+          >
+            Back to stable
+          </Link>
         </div>
-        <Link
-          to="/stables/$stableId"
-          params={{ stableId }}
-          className={buttonVariants({ variant: 'outline' })}
-        >
-          Back to stable
-        </Link>
       </header>
 
       <DocumentsCard
@@ -100,6 +107,7 @@ export function StableDocumentsPage({ stableId }: StableDocumentsPageProps) {
         canAddDocument={data.canManageStableDocuments}
         horseOptions={horses}
         emptyMessage="No documents have been added yet."
+        chrome="soft"
         onAdd={onAdd}
         onRemove={onRemove}
       />

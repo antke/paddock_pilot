@@ -5,11 +5,8 @@ import { Textarea } from '#/components/ui/textarea'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Doc } from 'convex/_generated/dataModel'
 import { Controller, useForm } from 'react-hook-form'
-import {
-  nutritionLogFormSchema
-  
-} from 'shared/horses/nutritionLogSchema'
-import type {NutritionLogFormSchema} from 'shared/horses/nutritionLogSchema';
+import { nutritionLogFormSchema } from 'shared/horses/nutritionLogSchema'
+import type { NutritionLogFormSchema } from 'shared/horses/nutritionLogSchema'
 
 type NutritionLogFormProps = {
   disabled?: boolean
@@ -19,7 +16,8 @@ type NutritionLogFormProps = {
 
 const todayDateKey = () => new Date().toISOString().slice(0, 10)
 
-const toTextareaValue = (items: Array<string> | undefined) => items?.join('\n') ?? ''
+const toTextareaValue = (items: Array<string> | undefined) =>
+  items?.join('\n') ?? ''
 
 const toStringList = (value: string) =>
   value
@@ -53,7 +51,10 @@ export function NutritionLogForm({
   }
 
   return (
-    <form className="grid gap-4" onSubmit={form.handleSubmit(submitNutritionLog)}>
+    <form
+      className="grid gap-5"
+      onSubmit={form.handleSubmit(submitNutritionLog)}
+    >
       <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_12rem]">
         <Controller
           name="summary"
@@ -98,7 +99,9 @@ export function NutritionLogForm({
         control={form.control}
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>Feeding routine snapshot</FieldLabel>
+            <FieldLabel htmlFor={field.name}>
+              Feeding routine snapshot
+            </FieldLabel>
             <Textarea
               {...field}
               id={field.name}
@@ -118,7 +121,9 @@ export function NutritionLogForm({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Recommended after change</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                Recommended after change
+              </FieldLabel>
               <Textarea
                 id={field.name}
                 name={field.name}
@@ -128,7 +133,9 @@ export function NutritionLogForm({
                 placeholder="One item per line"
                 autoComplete="off"
                 onBlur={field.onBlur}
-                onChange={(event) => field.onChange(toStringList(event.target.value))}
+                onChange={(event) =>
+                  field.onChange(toStringList(event.target.value))
+                }
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
@@ -140,7 +147,9 @@ export function NutritionLogForm({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Avoid after change</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                Avoid after change
+              </FieldLabel>
               <Textarea
                 id={field.name}
                 name={field.name}
@@ -150,7 +159,9 @@ export function NutritionLogForm({
                 placeholder="One item per line"
                 autoComplete="off"
                 onBlur={field.onBlur}
-                onChange={(event) => field.onChange(toStringList(event.target.value))}
+                onChange={(event) =>
+                  field.onChange(toStringList(event.target.value))
+                }
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
@@ -163,7 +174,9 @@ export function NutritionLogForm({
         control={form.control}
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>Notes</FieldLabel>
+            <FieldLabel htmlFor={field.name}>
+              Notes
+            </FieldLabel>
             <Textarea
               {...field}
               id={field.name}
@@ -178,7 +191,10 @@ export function NutritionLogForm({
       />
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={disabled || form.formState.isSubmitting}>
+        <Button
+          type="submit"
+          disabled={disabled || form.formState.isSubmitting}
+        >
           {form.formState.isSubmitting ? 'Adding...' : 'Add nutrition log'}
         </Button>
       </div>

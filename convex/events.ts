@@ -26,6 +26,7 @@ const validateEventInput = (args: {
   costPerHorse?: number
   status?: Doc<'events'>['status']
   notesAfterCompletion?: string
+  endDate?: string
   recurrence?: Doc<'events'>['recurrence']
 }) => {
   const result = eventInputSchema.safeParse(args)
@@ -274,6 +275,7 @@ export const add = mutation({
       horseIds: confirmedHorses.map((horse) => horse._id),
       createdBy: user._id,
       date: eventInput.date,
+      endDate: eventInput.endDate,
       time: eventInput.time,
       type: eventInput.type,
       title: eventInput.title,
@@ -412,6 +414,7 @@ export const update = mutation({
     await ctx.db.patch(id, {
       stableId: args.stableId,
       date: eventInput.date,
+      endDate: eventInput.endDate,
       time: eventInput.time,
       type: eventInput.type,
       title: eventInput.title,

@@ -1,11 +1,15 @@
+import { ListFilterBar } from '#/components/list-filtering/ListFilterBar'
+import { useListFiltering } from '#/components/list-filtering/useListFiltering'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { api } from 'convex/_generated/api'
 import type { Doc, Id } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
+import { useMemo } from 'react'
 import { toast } from 'sonner'
-import { DocumentsCard  } from './DocumentsCard'
-import type {DocumentListItem} from './DocumentsCard';
+import { createDocumentListFilterConfig } from './documentListFilters'
+import { DocumentsCard } from './DocumentsCard'
+import type { DocumentListItem } from './DocumentsCard'
 import type { DocumentUploadValues } from './DocumentUploadForm'
 
 type HorseDocumentsCardProps = {
@@ -19,6 +23,24 @@ export function HorseDocumentsCard({ horse }: HorseDocumentsCardProps) {
   const generateUploadUrl = useMutation(api.stableDocuments.generateUploadUrl)
   const addDocument = useMutation(api.stableDocuments.add)
   const removeDocument = useMutation(api.stableDocuments.remove)
+  const documents = data.documents as Array<DocumentListItem>
+  const filterConfig = useMemo(createDocumentListFilterConfig, [])
+  const filtering = useListFiltering({
+    items: documents,
+    config: filterConfig,
+  })
+  const listToolbar =
+    documents.length > 0 ? (
+      <ListFilterBar
+        config={filterConfig}
+        query={filtering.query}
+        onQueryChange={filtering.setQuery}
+        selectedFacets={filtering.selectedFacets}
+        onFacetChange={filtering.setFacetValue}
+        onReset={filtering.resetFilters}
+        isFiltering={filtering.isFiltering}
+      />
+    ) : undefined
 
   const uploadFile = async (file: File) => {
     const uploadUrl = await generateUploadUrl()
@@ -52,8 +74,9 @@ export function HorseDocumentsCard({ horse }: HorseDocumentsCardProps) {
         notes: values.notes,
       })
       toast.success('Document added', { position: 'top-right' })
-    } catch {
+    } catch (err) {
       toast.error('Could not add document', { position: 'top-right' })
+      throw err
     }
   }
 
@@ -70,10 +93,16 @@ export function HorseDocumentsCard({ horse }: HorseDocumentsCardProps) {
     <DocumentsCard
       title="Documents"
       description="Passport scans, vaccination proof, insurance paperwork, vet reports, farrier notes, and dental records for this horse."
-      documents={data.documents as Array<DocumentListItem>}
+      documents={filtering.items}
       canAddDocument={data.canManage}
       fixedHorseId={horse._id}
-      emptyMessage="No documents have been added for this horse yet."
+      emptyMessage={
+        filtering.isFiltering
+          ? 'No documents match these filters.'
+          : 'No documents have been added for this horse yet.'
+      }
+      listToolbar={listToolbar}
+      chrome="soft"
       onAdd={onAdd}
       onRemove={onRemove}
     />

@@ -2,6 +2,10 @@ import { StableEventsCalendar } from '#/components/stables/StableEventsCalendar'
 import { StableDashboardAlerts } from '#/components/stables/StableDashboardAlerts'
 import { StableHorseCards } from '#/components/stables/StableHorseCards'
 import { StableUpcomingEventsCard } from '#/components/stables/StableUpcomingEvents'
+import {
+  dashboardHeroClassName,
+  dashboardSectionClassName,
+} from '#/components/dashboard/dashboardChrome'
 import { buttonVariants } from '#/components/ui/button'
 import { Link } from '@tanstack/react-router'
 import type { Doc } from 'convex/_generated/dataModel'
@@ -41,28 +45,32 @@ export function StableDashboard({
 
   return (
     <div className="grid gap-8">
-      <header className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
-        <div className="grid max-w-3xl gap-2">
-          <h1 className="text-3xl font-semibold">{stable.name}</h1>
-          <p className="text-sm text-muted-foreground">{stable.location}</p>
-          {stable.description && <p>{stable.description}</p>}
-        </div>
+      <header className={dashboardHeroClassName('cards')}>
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+          <div className="grid max-w-3xl gap-2">
+            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+              {stable.name}
+            </h1>
+            <p className="text-sm text-muted-foreground">{stable.location}</p>
+            {stable.description && <p>{stable.description}</p>}
+          </div>
 
-        <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
-          <Link
-            to="/stables/$stableId/horses/create"
-            params={{ stableId: stable._id }}
-            className={buttonVariants({ variant: 'outline' })}
-          >
-            Add horse
-          </Link>
-          <Link
-            to="/stables/$stableId/events/create"
-            params={{ stableId: stable._id }}
-            className={buttonVariants()}
-          >
-            Add event
-          </Link>
+          <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
+            <Link
+              to="/stables/$stableId/horses/create"
+              params={{ stableId: stable._id }}
+              className={buttonVariants({ variant: 'secondary' })}
+            >
+              Add horse
+            </Link>
+            <Link
+              to="/stables/$stableId/events/create"
+              params={{ stableId: stable._id }}
+              className={buttonVariants({ variant: 'secondary' })}
+            >
+              Add event
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -77,7 +85,7 @@ export function StableDashboard({
 
       <StableDashboardAlerts stableId={stable._id} />
 
-      <section className="grid gap-4">
+      <section className={dashboardSectionClassName('cards')}>
         <div>
           <h2 className="text-xl font-semibold tracking-tight">
             Stable summary
@@ -113,10 +121,10 @@ export function StableDashboard({
         </div>
       </section>
 
-      <section className="grid gap-4">
+      <section className={dashboardSectionClassName('cards')}>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold">Horses</h2>
+            <h2 className="text-xl font-semibold tracking-tight">Horses</h2>
             <p className="text-sm text-muted-foreground">
               All horse profiles in this stable.
             </p>
@@ -126,9 +134,9 @@ export function StableDashboard({
         <StableHorseCards stableId={stable._id} horses={horses} />
       </section>
 
-      <section className="grid gap-4">
+      <section className={dashboardSectionClassName('cards')}>
         <div>
-          <h2 className="text-xl font-semibold">Schedule</h2>
+          <h2 className="text-xl font-semibold tracking-tight">Schedule</h2>
           <p className="text-sm text-muted-foreground">
             Browse the month and jump into the next scheduled events.
           </p>

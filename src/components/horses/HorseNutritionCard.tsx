@@ -19,7 +19,7 @@ export function HorseNutritionCard({ horse }: HorseNutritionCardProps) {
   if (!hasNutrition) return null
 
   return (
-    <Card>
+    <Card className="bg-card/80">
       <CardHeader>
         <CardTitle>Nutrition</CardTitle>
       </CardHeader>
@@ -33,7 +33,8 @@ export function HorseNutritionCard({ horse }: HorseNutritionCardProps) {
           <TextBlock label="Nutrition notes" value={horse.nutritionNotes} />
         )}
 
-        {(hasItems(horse.nutritionRecommended) || hasItems(horse.nutritionAvoid)) && (
+        {(hasItems(horse.nutritionRecommended) ||
+          hasItems(horse.nutritionAvoid)) && (
           <div className="grid gap-4 md:grid-cols-2">
             <NutritionList
               title="Recommended"
@@ -76,7 +77,7 @@ function NutritionList({
   const iconClassName = tone === 'positive' ? 'text-green-600' : 'text-red-600'
 
   return (
-    <div className="grid gap-2 rounded-lg border p-4">
+    <div className="grid gap-2 rounded-row bg-background/55 p-5">
       <h3 className="font-medium">{title}</h3>
       <ul className="grid gap-2">
         {items.map((item) => (

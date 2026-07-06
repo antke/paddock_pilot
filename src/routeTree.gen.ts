@@ -12,12 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as StyleLabRouteImport } from './routes/style-lab'
 import { Route as RssDotxmlRouteImport } from './routes/rss[.]xml'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PageLabRouteImport } from './routes/page-lab'
 import { Route as DashboardLabRouteImport } from './routes/dashboard-lab'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PageLabIndexRouteImport } from './routes/page-lab/index'
 import { Route as DashboardLabIndexRouteImport } from './routes/dashboard-lab/index'
 import { Route as StablesLayoutRouteImport } from './routes/stables/_layout'
 import { Route as SignUpSplatRouteImport } from './routes/sign-up.$'
 import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
+import { Route as PageLabPageRouteImport } from './routes/page-lab/$page'
 import { Route as InvitationsTokenRouteImport } from './routes/invitations/$token'
 import { Route as DashboardLabVersionRouteImport } from './routes/dashboard-lab/$version'
 import { Route as StablesLayoutIndexRouteImport } from './routes/stables/_layout/index'
@@ -38,9 +41,16 @@ import { Route as StablesLayoutStableIdHorsesHorseIdRouteImport } from './routes
 import { Route as StablesLayoutStableIdEventsCreateRouteImport } from './routes/stables/_layout/$stableId/events/create'
 import { Route as StablesLayoutStableIdEventsCalendarRouteImport } from './routes/stables/_layout/$stableId/events/calendar'
 import { Route as StablesLayoutStableIdEventsEventIdRouteImport } from './routes/stables/_layout/$stableId/events/$eventId'
+import { Route as StablesLayoutStableIdHorsesHorseIdIndexRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/index'
 import { Route as StablesLayoutStableIdHorsesHorseIdTimelineRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/timeline'
+import { Route as StablesLayoutStableIdHorsesHorseIdProfileRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/profile'
+import { Route as StablesLayoutStableIdHorsesHorseIdNutritionRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/nutrition'
+import { Route as StablesLayoutStableIdHorsesHorseIdHealthRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/health'
 import { Route as StablesLayoutStableIdHorsesHorseIdEditRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/edit'
+import { Route as StablesLayoutStableIdHorsesHorseIdDocumentsRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/documents'
 import { Route as StablesLayoutStableIdHorsesHorseIdCareSummaryRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/care-summary'
+import { Route as StablesLayoutStableIdHorsesHorseIdCareRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/care'
+import { Route as StablesLayoutStableIdHorsesHorseIdActivityRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/activity'
 import { Route as StablesLayoutStableIdEventsEventIdEditRouteImport } from './routes/stables/_layout/$stableId/events/$eventId/edit'
 
 const StyleLabRoute = StyleLabRouteImport.update({
@@ -58,6 +68,11 @@ const PricingRoute = PricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PageLabRoute = PageLabRouteImport.update({
+  id: '/page-lab',
+  path: '/page-lab',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardLabRoute = DashboardLabRouteImport.update({
   id: '/dashboard-lab',
   path: '/dashboard-lab',
@@ -67,6 +82,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PageLabIndexRoute = PageLabIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PageLabRoute,
 } as any)
 const DashboardLabIndexRoute = DashboardLabIndexRouteImport.update({
   id: '/',
@@ -87,6 +107,11 @@ const SignInSplatRoute = SignInSplatRouteImport.update({
   id: '/sign-in/$',
   path: '/sign-in/$',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PageLabPageRoute = PageLabPageRouteImport.update({
+  id: '/$page',
+  path: '/$page',
+  getParentRoute: () => PageLabRoute,
 } as any)
 const InvitationsTokenRoute = InvitationsTokenRouteImport.update({
   id: '/invitations/$token',
@@ -203,10 +228,34 @@ const StablesLayoutStableIdEventsEventIdRoute =
     path: '/$eventId',
     getParentRoute: () => StablesLayoutStableIdEventsRoute,
   } as any)
+const StablesLayoutStableIdHorsesHorseIdIndexRoute =
+  StablesLayoutStableIdHorsesHorseIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
+  } as any)
 const StablesLayoutStableIdHorsesHorseIdTimelineRoute =
   StablesLayoutStableIdHorsesHorseIdTimelineRouteImport.update({
     id: '/timeline',
     path: '/timeline',
+    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
+  } as any)
+const StablesLayoutStableIdHorsesHorseIdProfileRoute =
+  StablesLayoutStableIdHorsesHorseIdProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
+  } as any)
+const StablesLayoutStableIdHorsesHorseIdNutritionRoute =
+  StablesLayoutStableIdHorsesHorseIdNutritionRouteImport.update({
+    id: '/nutrition',
+    path: '/nutrition',
+    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
+  } as any)
+const StablesLayoutStableIdHorsesHorseIdHealthRoute =
+  StablesLayoutStableIdHorsesHorseIdHealthRouteImport.update({
+    id: '/health',
+    path: '/health',
     getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
   } as any)
 const StablesLayoutStableIdHorsesHorseIdEditRoute =
@@ -215,10 +264,28 @@ const StablesLayoutStableIdHorsesHorseIdEditRoute =
     path: '/edit',
     getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
   } as any)
+const StablesLayoutStableIdHorsesHorseIdDocumentsRoute =
+  StablesLayoutStableIdHorsesHorseIdDocumentsRouteImport.update({
+    id: '/documents',
+    path: '/documents',
+    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
+  } as any)
 const StablesLayoutStableIdHorsesHorseIdCareSummaryRoute =
   StablesLayoutStableIdHorsesHorseIdCareSummaryRouteImport.update({
     id: '/care-summary',
     path: '/care-summary',
+    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
+  } as any)
+const StablesLayoutStableIdHorsesHorseIdCareRoute =
+  StablesLayoutStableIdHorsesHorseIdCareRouteImport.update({
+    id: '/care',
+    path: '/care',
+    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
+  } as any)
+const StablesLayoutStableIdHorsesHorseIdActivityRoute =
+  StablesLayoutStableIdHorsesHorseIdActivityRouteImport.update({
+    id: '/activity',
+    path: '/activity',
     getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
   } as any)
 const StablesLayoutStableIdEventsEventIdEditRoute =
@@ -231,15 +298,18 @@ const StablesLayoutStableIdEventsEventIdEditRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard-lab': typeof DashboardLabRouteWithChildren
+  '/page-lab': typeof PageLabRouteWithChildren
   '/pricing': typeof PricingRoute
   '/rss.xml': typeof RssDotxmlRoute
   '/style-lab': typeof StyleLabRoute
   '/dashboard-lab/$version': typeof DashboardLabVersionRoute
   '/invitations/$token': typeof InvitationsTokenRoute
+  '/page-lab/$page': typeof PageLabPageRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/stables': typeof StablesLayoutRouteWithChildren
   '/dashboard-lab/': typeof DashboardLabIndexRoute
+  '/page-lab/': typeof PageLabIndexRoute
   '/stables/$stableId': typeof StablesLayoutStableIdRouteWithChildren
   '/stables/create': typeof StablesLayoutCreateRoute
   '/stables/': typeof StablesLayoutIndexRoute
@@ -259,9 +329,16 @@ export interface FileRoutesByFullPath {
   '/stables/$stableId/events/': typeof StablesLayoutStableIdEventsIndexRoute
   '/stables/$stableId/horses/': typeof StablesLayoutStableIdHorsesIndexRoute
   '/stables/$stableId/events/$eventId/edit': typeof StablesLayoutStableIdEventsEventIdEditRoute
+  '/stables/$stableId/horses/$horseId/activity': typeof StablesLayoutStableIdHorsesHorseIdActivityRoute
+  '/stables/$stableId/horses/$horseId/care': typeof StablesLayoutStableIdHorsesHorseIdCareRoute
   '/stables/$stableId/horses/$horseId/care-summary': typeof StablesLayoutStableIdHorsesHorseIdCareSummaryRoute
+  '/stables/$stableId/horses/$horseId/documents': typeof StablesLayoutStableIdHorsesHorseIdDocumentsRoute
   '/stables/$stableId/horses/$horseId/edit': typeof StablesLayoutStableIdHorsesHorseIdEditRoute
+  '/stables/$stableId/horses/$horseId/health': typeof StablesLayoutStableIdHorsesHorseIdHealthRoute
+  '/stables/$stableId/horses/$horseId/nutrition': typeof StablesLayoutStableIdHorsesHorseIdNutritionRoute
+  '/stables/$stableId/horses/$horseId/profile': typeof StablesLayoutStableIdHorsesHorseIdProfileRoute
   '/stables/$stableId/horses/$horseId/timeline': typeof StablesLayoutStableIdHorsesHorseIdTimelineRoute
+  '/stables/$stableId/horses/$horseId/': typeof StablesLayoutStableIdHorsesHorseIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -270,9 +347,11 @@ export interface FileRoutesByTo {
   '/style-lab': typeof StyleLabRoute
   '/dashboard-lab/$version': typeof DashboardLabVersionRoute
   '/invitations/$token': typeof InvitationsTokenRoute
+  '/page-lab/$page': typeof PageLabPageRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/dashboard-lab': typeof DashboardLabIndexRoute
+  '/page-lab': typeof PageLabIndexRoute
   '/stables/create': typeof StablesLayoutCreateRoute
   '/stables': typeof StablesLayoutIndexRoute
   '/stables/$stableId/analysis': typeof StablesLayoutStableIdAnalysisRoute
@@ -284,28 +363,37 @@ export interface FileRoutesByTo {
   '/stables/$stableId/events/$eventId': typeof StablesLayoutStableIdEventsEventIdRouteWithChildren
   '/stables/$stableId/events/calendar': typeof StablesLayoutStableIdEventsCalendarRoute
   '/stables/$stableId/events/create': typeof StablesLayoutStableIdEventsCreateRoute
-  '/stables/$stableId/horses/$horseId': typeof StablesLayoutStableIdHorsesHorseIdRouteWithChildren
   '/stables/$stableId/horses/create': typeof StablesLayoutStableIdHorsesCreateRoute
   '/stables/$stableId/events': typeof StablesLayoutStableIdEventsIndexRoute
   '/stables/$stableId/horses': typeof StablesLayoutStableIdHorsesIndexRoute
   '/stables/$stableId/events/$eventId/edit': typeof StablesLayoutStableIdEventsEventIdEditRoute
+  '/stables/$stableId/horses/$horseId/activity': typeof StablesLayoutStableIdHorsesHorseIdActivityRoute
+  '/stables/$stableId/horses/$horseId/care': typeof StablesLayoutStableIdHorsesHorseIdCareRoute
   '/stables/$stableId/horses/$horseId/care-summary': typeof StablesLayoutStableIdHorsesHorseIdCareSummaryRoute
+  '/stables/$stableId/horses/$horseId/documents': typeof StablesLayoutStableIdHorsesHorseIdDocumentsRoute
   '/stables/$stableId/horses/$horseId/edit': typeof StablesLayoutStableIdHorsesHorseIdEditRoute
+  '/stables/$stableId/horses/$horseId/health': typeof StablesLayoutStableIdHorsesHorseIdHealthRoute
+  '/stables/$stableId/horses/$horseId/nutrition': typeof StablesLayoutStableIdHorsesHorseIdNutritionRoute
+  '/stables/$stableId/horses/$horseId/profile': typeof StablesLayoutStableIdHorsesHorseIdProfileRoute
   '/stables/$stableId/horses/$horseId/timeline': typeof StablesLayoutStableIdHorsesHorseIdTimelineRoute
+  '/stables/$stableId/horses/$horseId': typeof StablesLayoutStableIdHorsesHorseIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard-lab': typeof DashboardLabRouteWithChildren
+  '/page-lab': typeof PageLabRouteWithChildren
   '/pricing': typeof PricingRoute
   '/rss.xml': typeof RssDotxmlRoute
   '/style-lab': typeof StyleLabRoute
   '/dashboard-lab/$version': typeof DashboardLabVersionRoute
   '/invitations/$token': typeof InvitationsTokenRoute
+  '/page-lab/$page': typeof PageLabPageRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/stables/_layout': typeof StablesLayoutRouteWithChildren
   '/dashboard-lab/': typeof DashboardLabIndexRoute
+  '/page-lab/': typeof PageLabIndexRoute
   '/stables/_layout/$stableId': typeof StablesLayoutStableIdRouteWithChildren
   '/stables/_layout/create': typeof StablesLayoutCreateRoute
   '/stables/_layout/': typeof StablesLayoutIndexRoute
@@ -325,24 +413,34 @@ export interface FileRoutesById {
   '/stables/_layout/$stableId/events/': typeof StablesLayoutStableIdEventsIndexRoute
   '/stables/_layout/$stableId/horses/': typeof StablesLayoutStableIdHorsesIndexRoute
   '/stables/_layout/$stableId/events/$eventId/edit': typeof StablesLayoutStableIdEventsEventIdEditRoute
+  '/stables/_layout/$stableId/horses/$horseId/activity': typeof StablesLayoutStableIdHorsesHorseIdActivityRoute
+  '/stables/_layout/$stableId/horses/$horseId/care': typeof StablesLayoutStableIdHorsesHorseIdCareRoute
   '/stables/_layout/$stableId/horses/$horseId/care-summary': typeof StablesLayoutStableIdHorsesHorseIdCareSummaryRoute
+  '/stables/_layout/$stableId/horses/$horseId/documents': typeof StablesLayoutStableIdHorsesHorseIdDocumentsRoute
   '/stables/_layout/$stableId/horses/$horseId/edit': typeof StablesLayoutStableIdHorsesHorseIdEditRoute
+  '/stables/_layout/$stableId/horses/$horseId/health': typeof StablesLayoutStableIdHorsesHorseIdHealthRoute
+  '/stables/_layout/$stableId/horses/$horseId/nutrition': typeof StablesLayoutStableIdHorsesHorseIdNutritionRoute
+  '/stables/_layout/$stableId/horses/$horseId/profile': typeof StablesLayoutStableIdHorsesHorseIdProfileRoute
   '/stables/_layout/$stableId/horses/$horseId/timeline': typeof StablesLayoutStableIdHorsesHorseIdTimelineRoute
+  '/stables/_layout/$stableId/horses/$horseId/': typeof StablesLayoutStableIdHorsesHorseIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/dashboard-lab'
+    | '/page-lab'
     | '/pricing'
     | '/rss.xml'
     | '/style-lab'
     | '/dashboard-lab/$version'
     | '/invitations/$token'
+    | '/page-lab/$page'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/stables'
     | '/dashboard-lab/'
+    | '/page-lab/'
     | '/stables/$stableId'
     | '/stables/create'
     | '/stables/'
@@ -362,9 +460,16 @@ export interface FileRouteTypes {
     | '/stables/$stableId/events/'
     | '/stables/$stableId/horses/'
     | '/stables/$stableId/events/$eventId/edit'
+    | '/stables/$stableId/horses/$horseId/activity'
+    | '/stables/$stableId/horses/$horseId/care'
     | '/stables/$stableId/horses/$horseId/care-summary'
+    | '/stables/$stableId/horses/$horseId/documents'
     | '/stables/$stableId/horses/$horseId/edit'
+    | '/stables/$stableId/horses/$horseId/health'
+    | '/stables/$stableId/horses/$horseId/nutrition'
+    | '/stables/$stableId/horses/$horseId/profile'
     | '/stables/$stableId/horses/$horseId/timeline'
+    | '/stables/$stableId/horses/$horseId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -373,9 +478,11 @@ export interface FileRouteTypes {
     | '/style-lab'
     | '/dashboard-lab/$version'
     | '/invitations/$token'
+    | '/page-lab/$page'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/dashboard-lab'
+    | '/page-lab'
     | '/stables/create'
     | '/stables'
     | '/stables/$stableId/analysis'
@@ -387,27 +494,36 @@ export interface FileRouteTypes {
     | '/stables/$stableId/events/$eventId'
     | '/stables/$stableId/events/calendar'
     | '/stables/$stableId/events/create'
-    | '/stables/$stableId/horses/$horseId'
     | '/stables/$stableId/horses/create'
     | '/stables/$stableId/events'
     | '/stables/$stableId/horses'
     | '/stables/$stableId/events/$eventId/edit'
+    | '/stables/$stableId/horses/$horseId/activity'
+    | '/stables/$stableId/horses/$horseId/care'
     | '/stables/$stableId/horses/$horseId/care-summary'
+    | '/stables/$stableId/horses/$horseId/documents'
     | '/stables/$stableId/horses/$horseId/edit'
+    | '/stables/$stableId/horses/$horseId/health'
+    | '/stables/$stableId/horses/$horseId/nutrition'
+    | '/stables/$stableId/horses/$horseId/profile'
     | '/stables/$stableId/horses/$horseId/timeline'
+    | '/stables/$stableId/horses/$horseId'
   id:
     | '__root__'
     | '/'
     | '/dashboard-lab'
+    | '/page-lab'
     | '/pricing'
     | '/rss.xml'
     | '/style-lab'
     | '/dashboard-lab/$version'
     | '/invitations/$token'
+    | '/page-lab/$page'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/stables/_layout'
     | '/dashboard-lab/'
+    | '/page-lab/'
     | '/stables/_layout/$stableId'
     | '/stables/_layout/create'
     | '/stables/_layout/'
@@ -427,14 +543,22 @@ export interface FileRouteTypes {
     | '/stables/_layout/$stableId/events/'
     | '/stables/_layout/$stableId/horses/'
     | '/stables/_layout/$stableId/events/$eventId/edit'
+    | '/stables/_layout/$stableId/horses/$horseId/activity'
+    | '/stables/_layout/$stableId/horses/$horseId/care'
     | '/stables/_layout/$stableId/horses/$horseId/care-summary'
+    | '/stables/_layout/$stableId/horses/$horseId/documents'
     | '/stables/_layout/$stableId/horses/$horseId/edit'
+    | '/stables/_layout/$stableId/horses/$horseId/health'
+    | '/stables/_layout/$stableId/horses/$horseId/nutrition'
+    | '/stables/_layout/$stableId/horses/$horseId/profile'
     | '/stables/_layout/$stableId/horses/$horseId/timeline'
+    | '/stables/_layout/$stableId/horses/$horseId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardLabRoute: typeof DashboardLabRouteWithChildren
+  PageLabRoute: typeof PageLabRouteWithChildren
   PricingRoute: typeof PricingRoute
   RssDotxmlRoute: typeof RssDotxmlRoute
   StyleLabRoute: typeof StyleLabRoute
@@ -467,6 +591,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/page-lab': {
+      id: '/page-lab'
+      path: '/page-lab'
+      fullPath: '/page-lab'
+      preLoaderRoute: typeof PageLabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard-lab': {
       id: '/dashboard-lab'
       path: '/dashboard-lab'
@@ -480,6 +611,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/page-lab/': {
+      id: '/page-lab/'
+      path: '/'
+      fullPath: '/page-lab/'
+      preLoaderRoute: typeof PageLabIndexRouteImport
+      parentRoute: typeof PageLabRoute
     }
     '/dashboard-lab/': {
       id: '/dashboard-lab/'
@@ -508,6 +646,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/sign-in/$'
       preLoaderRoute: typeof SignInSplatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/page-lab/$page': {
+      id: '/page-lab/$page'
+      path: '/$page'
+      fullPath: '/page-lab/$page'
+      preLoaderRoute: typeof PageLabPageRouteImport
+      parentRoute: typeof PageLabRoute
     }
     '/invitations/$token': {
       id: '/invitations/$token'
@@ -649,11 +794,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StablesLayoutStableIdEventsEventIdRouteImport
       parentRoute: typeof StablesLayoutStableIdEventsRoute
     }
+    '/stables/_layout/$stableId/horses/$horseId/': {
+      id: '/stables/_layout/$stableId/horses/$horseId/'
+      path: '/'
+      fullPath: '/stables/$stableId/horses/$horseId/'
+      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdIndexRouteImport
+      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
+    }
     '/stables/_layout/$stableId/horses/$horseId/timeline': {
       id: '/stables/_layout/$stableId/horses/$horseId/timeline'
       path: '/timeline'
       fullPath: '/stables/$stableId/horses/$horseId/timeline'
       preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdTimelineRouteImport
+      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
+    }
+    '/stables/_layout/$stableId/horses/$horseId/profile': {
+      id: '/stables/_layout/$stableId/horses/$horseId/profile'
+      path: '/profile'
+      fullPath: '/stables/$stableId/horses/$horseId/profile'
+      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdProfileRouteImport
+      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
+    }
+    '/stables/_layout/$stableId/horses/$horseId/nutrition': {
+      id: '/stables/_layout/$stableId/horses/$horseId/nutrition'
+      path: '/nutrition'
+      fullPath: '/stables/$stableId/horses/$horseId/nutrition'
+      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdNutritionRouteImport
+      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
+    }
+    '/stables/_layout/$stableId/horses/$horseId/health': {
+      id: '/stables/_layout/$stableId/horses/$horseId/health'
+      path: '/health'
+      fullPath: '/stables/$stableId/horses/$horseId/health'
+      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdHealthRouteImport
       parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
     }
     '/stables/_layout/$stableId/horses/$horseId/edit': {
@@ -663,11 +836,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdEditRouteImport
       parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
     }
+    '/stables/_layout/$stableId/horses/$horseId/documents': {
+      id: '/stables/_layout/$stableId/horses/$horseId/documents'
+      path: '/documents'
+      fullPath: '/stables/$stableId/horses/$horseId/documents'
+      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdDocumentsRouteImport
+      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
+    }
     '/stables/_layout/$stableId/horses/$horseId/care-summary': {
       id: '/stables/_layout/$stableId/horses/$horseId/care-summary'
       path: '/care-summary'
       fullPath: '/stables/$stableId/horses/$horseId/care-summary'
       preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdCareSummaryRouteImport
+      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
+    }
+    '/stables/_layout/$stableId/horses/$horseId/care': {
+      id: '/stables/_layout/$stableId/horses/$horseId/care'
+      path: '/care'
+      fullPath: '/stables/$stableId/horses/$horseId/care'
+      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdCareRouteImport
+      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
+    }
+    '/stables/_layout/$stableId/horses/$horseId/activity': {
+      id: '/stables/_layout/$stableId/horses/$horseId/activity'
+      path: '/activity'
+      fullPath: '/stables/$stableId/horses/$horseId/activity'
+      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdActivityRouteImport
       parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
     }
     '/stables/_layout/$stableId/events/$eventId/edit': {
@@ -693,6 +887,19 @@ const DashboardLabRouteChildren: DashboardLabRouteChildren = {
 const DashboardLabRouteWithChildren = DashboardLabRoute._addFileChildren(
   DashboardLabRouteChildren,
 )
+
+interface PageLabRouteChildren {
+  PageLabPageRoute: typeof PageLabPageRoute
+  PageLabIndexRoute: typeof PageLabIndexRoute
+}
+
+const PageLabRouteChildren: PageLabRouteChildren = {
+  PageLabPageRoute: PageLabPageRoute,
+  PageLabIndexRoute: PageLabIndexRoute,
+}
+
+const PageLabRouteWithChildren =
+  PageLabRoute._addFileChildren(PageLabRouteChildren)
 
 interface StablesLayoutStableIdEventsEventIdRouteChildren {
   StablesLayoutStableIdEventsEventIdEditRoute: typeof StablesLayoutStableIdEventsEventIdEditRoute
@@ -734,19 +941,40 @@ const StablesLayoutStableIdEventsRouteWithChildren =
   )
 
 interface StablesLayoutStableIdHorsesHorseIdRouteChildren {
+  StablesLayoutStableIdHorsesHorseIdActivityRoute: typeof StablesLayoutStableIdHorsesHorseIdActivityRoute
+  StablesLayoutStableIdHorsesHorseIdCareRoute: typeof StablesLayoutStableIdHorsesHorseIdCareRoute
   StablesLayoutStableIdHorsesHorseIdCareSummaryRoute: typeof StablesLayoutStableIdHorsesHorseIdCareSummaryRoute
+  StablesLayoutStableIdHorsesHorseIdDocumentsRoute: typeof StablesLayoutStableIdHorsesHorseIdDocumentsRoute
   StablesLayoutStableIdHorsesHorseIdEditRoute: typeof StablesLayoutStableIdHorsesHorseIdEditRoute
+  StablesLayoutStableIdHorsesHorseIdHealthRoute: typeof StablesLayoutStableIdHorsesHorseIdHealthRoute
+  StablesLayoutStableIdHorsesHorseIdNutritionRoute: typeof StablesLayoutStableIdHorsesHorseIdNutritionRoute
+  StablesLayoutStableIdHorsesHorseIdProfileRoute: typeof StablesLayoutStableIdHorsesHorseIdProfileRoute
   StablesLayoutStableIdHorsesHorseIdTimelineRoute: typeof StablesLayoutStableIdHorsesHorseIdTimelineRoute
+  StablesLayoutStableIdHorsesHorseIdIndexRoute: typeof StablesLayoutStableIdHorsesHorseIdIndexRoute
 }
 
 const StablesLayoutStableIdHorsesHorseIdRouteChildren: StablesLayoutStableIdHorsesHorseIdRouteChildren =
   {
+    StablesLayoutStableIdHorsesHorseIdActivityRoute:
+      StablesLayoutStableIdHorsesHorseIdActivityRoute,
+    StablesLayoutStableIdHorsesHorseIdCareRoute:
+      StablesLayoutStableIdHorsesHorseIdCareRoute,
     StablesLayoutStableIdHorsesHorseIdCareSummaryRoute:
       StablesLayoutStableIdHorsesHorseIdCareSummaryRoute,
+    StablesLayoutStableIdHorsesHorseIdDocumentsRoute:
+      StablesLayoutStableIdHorsesHorseIdDocumentsRoute,
     StablesLayoutStableIdHorsesHorseIdEditRoute:
       StablesLayoutStableIdHorsesHorseIdEditRoute,
+    StablesLayoutStableIdHorsesHorseIdHealthRoute:
+      StablesLayoutStableIdHorsesHorseIdHealthRoute,
+    StablesLayoutStableIdHorsesHorseIdNutritionRoute:
+      StablesLayoutStableIdHorsesHorseIdNutritionRoute,
+    StablesLayoutStableIdHorsesHorseIdProfileRoute:
+      StablesLayoutStableIdHorsesHorseIdProfileRoute,
     StablesLayoutStableIdHorsesHorseIdTimelineRoute:
       StablesLayoutStableIdHorsesHorseIdTimelineRoute,
+    StablesLayoutStableIdHorsesHorseIdIndexRoute:
+      StablesLayoutStableIdHorsesHorseIdIndexRoute,
   }
 
 const StablesLayoutStableIdHorsesHorseIdRouteWithChildren =
@@ -823,6 +1051,7 @@ const StablesLayoutRouteWithChildren = StablesLayoutRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardLabRoute: DashboardLabRouteWithChildren,
+  PageLabRoute: PageLabRouteWithChildren,
   PricingRoute: PricingRoute,
   RssDotxmlRoute: RssDotxmlRoute,
   StyleLabRoute: StyleLabRoute,

@@ -24,6 +24,7 @@ type SeedEventInput = {
   type: 'vet' | 'training' | 'dentist' | 'hoof_trimming' | 'massage' | 'other'
   status: 'planned' | 'completed' | 'cancelled'
   dateOffsetDays: number
+  endDateOffsetDays?: number
   time: string
   horseIndexes: Array<number>
   description?: string
@@ -53,6 +54,31 @@ type SeedEventInput = {
       | { type: 'on_date'; date: string }
       | { type: 'after_occurrences'; count: number }
   }
+}
+
+type NonEmptyReadonlyArray<T> = readonly [T, ...T[]]
+
+const pickSeedValue = <TValues extends NonEmptyReadonlyArray<unknown>>(
+  values: TValues,
+  index: number,
+): TValues[number] => {
+  const value = values[index % values.length]
+
+  if (value === undefined) {
+    throw new ConvexError('Seed values must include at least one option')
+  }
+
+  return value
+}
+
+const getSeedHorseId = (horseIds: Array<Id<'horses'>>, index: number) => {
+  const horseId = horseIds[index % horseIds.length]
+
+  if (!horseId) {
+    throw new ConvexError('Seed horses must be created before dependent rows')
+  }
+
+  return horseId
 }
 
 const toDateKey = (offsetDays: number) => {
@@ -113,6 +139,23 @@ const upsertDemoUser = async (
     createdAt: now,
     updatedAt: now,
   })
+}
+
+const getSeedOwner = async (ctx: MutationCtx, ownerEmail?: string) => {
+  if (!ownerEmail) return await getCurrentUser(ctx)
+
+  const owner = await ctx.db
+    .query('users')
+    .withIndex('by_email', (q) => q.eq('email', ownerEmail))
+    .unique()
+
+  if (!owner) {
+    throw new ConvexError(
+      `Seed owner user not found for ${ownerEmail}. Sign in once first, then rerun the seed with that email.`,
+    )
+  }
+
+  return owner
 }
 
 const resetStableRows = async (ctx: MutationCtx, stableId: Id<'stables'>) => {
@@ -378,6 +421,30 @@ const seedProviders = async (
       phone: '+44 7700 900101',
       notes: 'On-yard contact for lessons and monthly tape checks.',
     },
+    ...[
+      ['vet', 'South Ridge Equine Clinic', '+44 7700 901001', 'afterhours@southridge.example.test'],
+      ['farrier', 'Hannah Vale Farriery', '+44 7700 901002', undefined],
+      ['dentist', 'Cedar Dental Services', '+44 7700 901003', 'cedar.dental@example.test'],
+      ['physio', 'Larkspur Equine Therapy', '+44 7700 901004', undefined],
+      ['saddler', 'Fells Saddle Fitting', '+44 7700 901005', 'fitters@fells.example.test'],
+      ['other', 'Arena Maintenance Team', '+44 7700 901006', undefined],
+      ['vet', 'Dr Niamh Patel', '+44 7700 901007', 'niamh.patel@example.test'],
+      ['farrier', 'Oak Lane Hoof Care', '+44 7700 901008', undefined],
+      ['dentist', 'Riverbend Equine Dental', '+44 7700 901009', undefined],
+      ['physio', 'Heather Moor Bodywork', '+44 7700 901010', 'heather.moor@example.test'],
+      ['saddler', 'North Tack Workshop', '+44 7700 901011', undefined],
+      ['other', 'Hay Supplier Desk', '+44 7700 901012', 'orders@haydesk.example.test'],
+      ['vet', 'Mobile Vaccination Cover', '+44 7700 901013', undefined],
+      ['farrier', 'Emergency Farrier Cover', '+44 7700 901014', undefined],
+      ['other', 'Transport Coordinator', '+44 7700 901015', 'transport@example.test'],
+    ].map(([type, name, phone, email], index) => ({
+      stableId,
+      type: type as 'vet' | 'farrier' | 'dentist' | 'physio' | 'saddler' | 'other',
+      name,
+      phone,
+      email,
+      notes: `Generated demo provider ${index + 1} for provider list and filtering checks.`,
+    })),
   ]
   const now = Date.now()
 
@@ -477,6 +544,51 @@ const seedHorses = async (
       nutritionRecommended: [],
       nutritionAvoid: [],
     },
+    ...[
+      ['Willow Moon', 'Mara Yard Manager', 7, 'Connemara', 'mare', 'Dun', '14.1hh', 'Working hunter'],
+      ['Atlas Grove', 'Demo Owner', 11, 'Warmblood', 'gelding', 'Dark bay', '16.3hh', 'Dressage'],
+      ['Misty Vale', 'Ellis Member', 18, 'Arab cross', 'mare', 'Grey', '15.0hh', 'Hacking'],
+      ['Redbrook Echo', 'Gina Guest', 6, 'Irish Draught', 'gelding', 'Chestnut', '16.2hh', 'All-rounder'],
+      ['Sable Finch', 'Demo Owner', 10, 'Thoroughbred', 'mare', 'Black', '15.2hh', 'Retraining'],
+      ['Harbour Light', 'Ellis Member', 13, 'Cob', 'gelding', 'Piebald', '14.3hh', 'Leisure riding'],
+      ['Fern Hollow', 'Mara Yard Manager', 8, 'New Forest', 'mare', 'Bay', '13.2hh', 'Pony club'],
+      ['Bramble King', 'Demo Owner', 16, 'Highland', 'gelding', 'Mouse dun', '14.0hh', 'Trail riding'],
+      ['Quartz River', 'Ellis Member', 4, 'Sport Horse', 'stallion', 'Bay', '15.3hh', 'Youngstock'],
+      ['Meadow Lark', 'Gina Guest', 12, 'Welsh Section D', 'mare', 'Palomino', '14.2hh', 'Showing'],
+      ['Oak Dancer', 'Demo Owner', 15, 'Hanoverian', 'gelding', 'Bay', '17.0hh', 'Dressage'],
+      ['Clover Drift', 'Ellis Member', 9, 'Appaloosa', 'mare', 'Spotted', '15.1hh', 'Western groundwork'],
+      ['Silver Kite', 'Mara Yard Manager', 20, 'Irish Cob', 'gelding', 'Grey', '15.0hh', 'Light hacking'],
+      ['Foxglove Bay', 'Demo Owner', 6, 'Exmoor', 'mare', 'Bay', '12.3hh', 'Companion and in-hand'],
+      ['Rookwood Storm', 'Gina Guest', 17, 'Friesian cross', 'gelding', 'Black', '16.0hh', 'Schoolmaster'],
+      ['Pearl Orchard', 'Ellis Member', 8, 'Andalusian', 'mare', 'Grey', '15.2hh', 'Classical schooling'],
+      ['Thistle Run', 'Demo Owner', 5, 'Native cross', 'gelding', 'Roan', '14.0hh', 'Fitness building'],
+    ].map(([name, ownerName, age, breed, sex, color, height, discipline], index) => ({
+      name,
+      ownerName,
+      age,
+      breed,
+      sex: sex as 'mare' | 'gelding' | 'stallion',
+      color,
+      height,
+      dateOfBirth: `${2006 + (index % 15)}-${String((index % 12) + 1).padStart(2, '0')}-15`,
+      passportNumber: `GBR-DEMO-${String(index + 4).padStart(3, '0')}`,
+      microchipNumber: `9851410000000${String(index + 4).padStart(2, '0')}`,
+      insuranceProvider: index % 4 === 0 ? undefined : 'Demo Equine Cover',
+      insurancePolicyNumber: index % 4 === 0 ? undefined : `DEMO-POL-${String(index + 4).padStart(3, '0')}`,
+      discipline,
+      shoeingStatus: pickSeedValue(['barefoot', 'front_shoes', 'full_set'] as const, index),
+      dewormingNotes: 'Generated seed profile: keep worm count and vaccine history visible for list checks.',
+      allergies: index % 5 === 0 ? ['Dust sensitivity'] : [],
+      emergencyNotes: index % 3 === 0 ? 'Prefers quiet handling for clipping and injections.' : undefined,
+      vetName: 'Dr Priya Shah',
+      vetPhone: '+44 7700 900401',
+      farrierName: 'Tom Carter',
+      farrierPhone: '+44 7700 900402',
+      feedingRoutine: 'Forage-first demo ration with balancer adjusted to workload.',
+      nutritionNotes: index % 4 === 0 ? undefined : 'Use generated nutrition notes to test profile coverage and filtering.',
+      nutritionRecommended: ['Forage', 'Balancer'],
+      nutritionAvoid: index % 6 === 0 ? ['Rich spring grass'] : [],
+    })),
   ].map((horse) => parseSeed(horseInputSchema.safeParse(horse), 'Horse seed'))
 
   return await Promise.all(
@@ -526,12 +638,30 @@ const seedDocuments = async (
     },
     {
       stableId,
+      horseId: undefined,
       type: 'other' as const,
       fileName: 'Demo yard emergency plan.pdf',
       contentType: 'application/pdf',
       size: 128_000,
       notes: 'Stable-wide metadata placeholder for document directory testing.',
     },
+    ...Array.from({ length: 20 }, (_, index) => {
+      const type = pickSeedValue(
+        ['passport', 'vaccination', 'insurance', 'vet_report', 'farrier', 'dental', 'other'] as const,
+        index,
+      )
+      const horseId = index % 5 === 0 ? undefined : getSeedHorseId(horseIds, index)
+
+      return {
+        stableId,
+        horseId,
+        type,
+        fileName: `${horseId ? 'Horse' : 'Stable'} demo ${type.replace('_', ' ')} document ${index + 1}.pdf`,
+        contentType: 'application/pdf',
+        size: 140_000 + index * 12_500,
+        notes: `Generated document ${index + 1} for document list density, category filters, and stable-wide/horse-linked rows.`,
+      }
+    }),
   ]
   const now = Date.now()
 
@@ -592,6 +722,32 @@ const seedHealthIssues = async (
       status: 'active' as const,
       notedAt: toTimestamp(-1),
     },
+    ...Array.from({ length: 20 }, (_, index) => {
+      const status = index % 3 === 0 ? 'resolved' as const : 'active' as const
+      const notedOffset = -120 + index * 6
+
+      return {
+        horseId: getSeedHorseId(horseIds, index),
+        title: pickSeedValue(
+          [
+            'Minor girth rub watch',
+            'Seasonal cough check',
+            'Hind stiffness note',
+            'Small field scrape',
+            'Appetite dip monitor',
+            'Tendon fill observation',
+            'Eye watering check',
+            'Saddle pressure mark',
+          ] as const,
+          index,
+        ),
+        description: `Generated health issue ${index + 1} for severity, active/resolved, and horse care list testing.`,
+        severity: pickSeedValue(['low', 'medium', 'high'] as const, index),
+        status,
+        notedAt: toTimestamp(notedOffset),
+        resolvedAt: status === 'resolved' ? toTimestamp(notedOffset + 3) : undefined,
+      }
+    }),
   ]
 
   await Promise.all(
@@ -669,6 +825,14 @@ const seedWeightRecords = async (
       measuredAt: toTimestamp(-3),
       notes: 'First record for sparse profile horse.',
     },
+    ...Array.from({ length: 20 }, (_, index) => ({
+      horseId: getSeedHorseId(horseIds, index),
+      weight: 430 + ((index * 17) % 170),
+      unit: 'kg' as const,
+      measuredAt: toTimestamp(-220 + index * 11),
+      bodyConditionScore: 4 + (index % 5) * 0.5,
+      notes: `Generated tape record ${index + 1} for trend charts and dense weight history lists.`,
+    })),
   ]
 
   await Promise.all(
@@ -732,6 +896,35 @@ const seedMedicationRecords = async (
       notes: 'Review after dentist visit; not a replacement for veterinary advice.',
       status: 'active' as const,
     },
+    ...Array.from({ length: 20 }, (_, index) => {
+      const status = index % 4 === 0 ? 'active' as const : 'completed' as const
+      const startOffset = -160 + index * 7
+
+      return {
+        horseId: getSeedHorseId(horseIds, index),
+        medicationName: pickSeedValue(
+          [
+            'Electrolyte support',
+            'Joint supplement',
+            'Probiotic paste',
+            'Eye ointment',
+            'Cough syrup',
+            'Skin cream',
+            'Gastric support',
+            'Hoof supplement',
+          ] as const,
+          index,
+        ),
+        dosage: pickSeedValue(['1 scoop', '2 measures', 'Small strip', 'As label', '5 ml'] as const, index),
+        frequency: pickSeedValue(['Once daily', 'Twice daily', 'After hard work', 'With evening feed'] as const, index),
+        startDate: toDateKey(startOffset),
+        endDate: status === 'completed' ? toDateKey(startOffset + 5) : undefined,
+        prescribedBy: index % 3 === 0 ? 'Dr Priya Shah' : undefined,
+        reason: `Generated medication record ${index + 1} for active/completed medication list coverage.`,
+        notes: index % 2 === 0 ? 'Seed note: confirm administration in feed chart.' : undefined,
+        status,
+      }
+    }),
   ]
 
   await Promise.all(
@@ -795,6 +988,30 @@ const seedNutritionLogs = async (
       recommendedSnapshot: ['Soft soaked fibre', 'Ad-lib forage'],
       avoidSnapshot: ['Hard coarse mix'],
     },
+    ...Array.from({ length: 20 }, (_, index) => ({
+      horseId: getSeedHorseId(horseIds, index),
+      changedAt: toTimestamp(-200 + index * 9),
+      summary: pickSeedValue(
+        [
+          'Adjusted hay ration',
+          'Added electrolyte support',
+          'Reduced hard feed',
+          'Started soaked fibre',
+          'Updated turnout grazing plan',
+          'Added balancer note',
+          'Changed supplement timing',
+          'Reviewed senior feed',
+        ] as const,
+        index,
+      ),
+      feedingRoutineSnapshot: `Generated feeding snapshot ${index + 1}: forage-first baseline with workload-based concentrate adjustment.`,
+      recommendedSnapshot: [
+        pickSeedValue(['Forage', 'Balancer', 'Soaked fibre', 'Electrolytes'] as const, index),
+        pickSeedValue(['Salt lick', 'Joint support', 'Senior cubes', 'Low starch mix'] as const, index + 1),
+      ],
+      avoidSnapshot: index % 4 === 0 ? ['Rich spring grass'] : [],
+      notes: `Generated nutrition log ${index + 1} for chronological nutrition history lists.`,
+    })),
   ]
 
   await Promise.all(
@@ -826,7 +1043,116 @@ const seedEvents = async (
   ownerId: Id<'users'>,
   horseIds: Array<Id<'horses'>>,
 ) => {
+  const horseCount = horseIds.length
   const eventInputs: Array<SeedEventInput> = [
+    {
+      title: 'Three-day away show',
+      type: 'training',
+      status: 'planned',
+      dateOffsetDays: 10,
+      endDateOffsetDays: 12,
+      time: '07:00',
+      horseIndexes: [0, 1],
+      description:
+        'Regional show weekend with travel, stabling, warm-up, and competition days.',
+      location: 'South Downs Showground',
+      providerName: 'Mara Yard Manager',
+      providerPhone: '+44 7700 900101',
+      totalCost: 420,
+      costPerHorse: 210,
+      perHorseDetails: [
+        {
+          horseIndex: 0,
+          requestedServiceNotes: 'Pack low-sugar feed and keep turnout boots available.',
+          costShare: 210,
+        },
+        {
+          horseIndex: 1,
+          requestedServiceNotes: 'Confirm overnight stabling and senior feed portions.',
+          costShare: 210,
+        },
+      ],
+    },
+    {
+      title: 'Owner holiday cover',
+      type: 'other',
+      status: 'planned',
+      dateOffsetDays: 18,
+      endDateOffsetDays: 24,
+      time: '08:00',
+      horseIndexes: [0, 1, 2],
+      description:
+        'Full yard cover while owner is away: daily checks, feeds, turnout, and notes.',
+      location: 'Main yard',
+      providerName: 'Mara Yard Manager',
+      providerPhone: '+44 7700 900101',
+      perHorseDetails: [
+        {
+          horseIndex: 0,
+          requestedServiceNotes: 'Monitor near fore warmth during daily checks.',
+        },
+        {
+          horseIndex: 1,
+          requestedServiceNotes: 'Keep senior supplement routine unchanged.',
+        },
+        {
+          horseIndex: 2,
+          requestedServiceNotes: 'Record any handling or settling notes.',
+        },
+      ],
+    },
+    {
+      title: 'Residential fitness camp',
+      type: 'training',
+      status: 'planned',
+      dateOffsetDays: 31,
+      endDateOffsetDays: 35,
+      time: '09:00',
+      horseIndexes: [0],
+      description:
+        'Five-day conditioning block to test long event spans across several timeline columns.',
+      location: 'Hilltop Training Centre',
+      providerName: 'North Downs Equine Fitness',
+      providerPhone: '+44 7700 900701',
+      totalCost: 350,
+      costPerHorse: 350,
+      perHorseDetails: [
+        {
+          horseIndex: 0,
+          requestedServiceNotes:
+            'Keep sessions low intensity if near fore heat returns after travel.',
+          costShare: 350,
+        },
+      ],
+    },
+    {
+      title: 'Post-show recovery plan',
+      type: 'massage',
+      status: 'planned',
+      dateOffsetDays: 13,
+      endDateOffsetDays: 15,
+      time: '10:30',
+      horseIndexes: [0, 1],
+      description:
+        'Three-day recovery window after the away show with stretching and light bodywork.',
+      location: 'Treatment area',
+      providerName: 'North Downs Equine Physio',
+      providerPhone: '+44 7700 900601',
+      totalCost: 120,
+      costPerHorse: 60,
+      perHorseDetails: [
+        {
+          horseIndex: 0,
+          requestedServiceNotes: 'Focus over back and shoulder after travel.',
+          costShare: 60,
+        },
+        {
+          horseIndex: 1,
+          requestedServiceNotes: 'Gentle senior mobility check only.',
+          costShare: 60,
+        },
+      ],
+    },
     {
       title: 'Vaccination visit',
       type: 'vet',
@@ -970,6 +1296,119 @@ const seedEvents = async (
         end: { type: 'never' },
       },
     },
+    ...Array.from({ length: 20 }, (_, index): SeedEventInput => {
+      const status = pickSeedValue(['completed', 'planned', 'cancelled'] as const, index)
+      const type = pickSeedValue(
+        ['vet', 'training', 'dentist', 'hoof_trimming', 'massage', 'other'] as const,
+        index,
+      )
+      const horseIndexes = index % 4 === 0
+        ? [index % horseCount, (index + 3) % horseCount]
+        : [index % horseCount]
+
+      return {
+        title: pickSeedValue(
+          [
+            'Lameness review',
+            'Flatwork schooling',
+            'Dental assessment',
+            'Routine hoof balance',
+            'Back and shoulder release',
+            'Body condition audit',
+            'Vaccination booster',
+            'Arena confidence session',
+          ] as const,
+          index,
+        ),
+        type,
+        status,
+        dateOffsetDays: -220 + index * 18,
+        time: pickSeedValue(['08:15', '09:30', '10:45', '12:00', '14:15', '16:30'] as const, index),
+        horseIndexes,
+        description: `Generated one-off event ${index + 1} for dense event list, timeline, and status filtering checks.`,
+        location: pickSeedValue(['Main barn', 'Outdoor arena', 'Farrier bay', 'Wash bay', 'South paddock'] as const, index),
+        providerName: index % 6 === 0
+          ? undefined
+          : pickSeedValue(['Dr Priya Shah', 'Tom Carter', 'Oak Equine Dental', 'Mara Yard Manager'] as const, index),
+        providerPhone: index % 6 === 0 ? undefined : '+44 7700 900401',
+        totalCost: status === 'cancelled' ? undefined : 35 + index * 4,
+        costPerHorse: status === 'cancelled' ? undefined : 35 + index * 2,
+        notesAfterCompletion: status === 'completed'
+          ? `Generated completion note ${index + 1} for analysis documentation coverage.`
+          : undefined,
+        perHorseDetails: horseIndexes.map((horseIndex) => ({
+          horseIndex,
+          requestedServiceNotes: `Generated request note for event ${index + 1}.`,
+          completionNotes: status === 'completed'
+            ? `Generated per-horse completion note for event ${index + 1}.`
+            : undefined,
+          costShare: status === 'cancelled' ? undefined : 30 + index,
+        })),
+      }
+    }),
+    ...Array.from({ length: 20 }, (_, index): SeedEventInput => {
+      const frequency = pickSeedValue(['weekly', 'monthly', 'daily'] as const, index)
+      const recurrence: SeedEventInput['recurrence'] = frequency === 'weekly'
+        ? {
+            frequency,
+            interval: (index % 3) + 1,
+            daysOfWeek: [pickSeedValue([0, 1, 2, 3, 4, 5, 6] as const, index)],
+            end: { type: 'after_occurrences', count: 6 + (index % 6) },
+          }
+        : frequency === 'monthly'
+          ? {
+              frequency,
+              interval: (index % 2) + 1,
+              monthlyMode: index % 2 === 0 ? 'dayOfMonth' : 'weekdayPattern',
+              dayOfMonth: index % 2 === 0 ? 5 + (index % 20) : undefined,
+              ordinal: index % 2 === 0 ? undefined : pickSeedValue([1, 2, 3, 4, 'last'] as const, index),
+              weekday: index % 2 === 0 ? undefined : pickSeedValue([0, 1, 2, 3, 4, 5, 6] as const, index + 2),
+              end: index % 5 === 0 ? { type: 'never' } : { type: 'after_occurrences', count: 8 },
+            }
+          : {
+              frequency,
+              interval: 1 + (index % 2),
+              end: { type: 'after_occurrences', count: 5 + (index % 5) },
+            }
+      const horseIndexes = [index % horseCount, (index + 5) % horseCount]
+
+      return {
+        title: pickSeedValue(
+          [
+            'Recurring polework block',
+            'Recurring hoof care round',
+            'Recurring weight tape clinic',
+            'Recurring physio review',
+            'Recurring dentist rota',
+            'Recurring turnout check',
+            'Recurring medication audit',
+            'Recurring fitness session',
+          ] as const,
+          index,
+        ),
+        type: pickSeedValue(['training', 'hoof_trimming', 'other', 'massage', 'dentist', 'vet'] as const, index),
+        status: index % 5 === 0 ? 'completed' : 'planned',
+        dateOffsetDays: -90 + index * 7,
+        time: pickSeedValue(['07:45', '09:00', '11:30', '13:45', '15:30'] as const, index),
+        horseIndexes,
+        description: `Generated recurring event ${index + 1} for recurrence list and timeline interaction checks.`,
+        location: pickSeedValue(['Main yard', 'Indoor school', 'Farrier bay', 'Treatment area'] as const, index),
+        providerName: pickSeedValue(['Mara Yard Manager', 'Tom Carter', 'North Downs Equine Physio', 'Dr Priya Shah'] as const, index),
+        providerPhone: '+44 7700 900101',
+        totalCost: 45 + index * 3,
+        costPerHorse: 25 + index,
+        notesAfterCompletion: index % 5 === 0
+          ? `Generated recurring completion note ${index + 1}.`
+          : undefined,
+        recurrence,
+        perHorseDetails: horseIndexes.map((horseIndex) => ({
+          horseIndex,
+          requestedServiceNotes: `Generated recurring request note ${index + 1}.`,
+          completionNotes: index % 5 === 0 ? `Recurring event ${index + 1} completed cleanly.` : undefined,
+          costShare: 20 + index,
+        })),
+      }
+    }),
   ]
 
   for (const event of eventInputs) {
@@ -979,6 +1418,9 @@ const seedEvents = async (
         stableId,
         horseIds: selectedHorseIds,
         date: toDateKey(event.dateOffsetDays),
+        endDate: event.endDateOffsetDays === undefined
+          ? undefined
+          : toDateKey(event.endDateOffsetDays),
         time: event.time,
         type: event.type,
         title: event.title,
@@ -1106,6 +1548,39 @@ const seedCareReminders = async (
       priority: 'low' as const,
       status: 'completed' as const,
     },
+    ...Array.from({ length: 20 }, (_, index) => {
+      const category = pickSeedValue(
+        ['vet', 'farrier', 'dentist', 'medication', 'nutrition', 'weight', 'deworming', 'admin', 'other'] as const,
+        index,
+      )
+      const status = pickSeedValue(['pending', 'completed', 'dismissed'] as const, index)
+      const horseId = category === 'admin' || index % 7 === 0
+        ? undefined
+        : getSeedHorseId(horseIds, index)
+
+      return {
+        stableId,
+        horseId,
+        title: pickSeedValue(
+          [
+            'Generated vet callback',
+            'Generated farrier booking',
+            'Generated dental reminder',
+            'Generated medication review',
+            'Generated nutrition update',
+            'Generated weight tape task',
+            'Generated worm count task',
+            'Generated admin review',
+          ] as const,
+          index,
+        ),
+        description: `Generated reminder ${index + 1} for reminder list density, category filters, priorities, and overdue states.`,
+        category,
+        dueDate: toDateKey(-18 + index * 4),
+        priority: pickSeedValue(['low', 'medium', 'high'] as const, index),
+        status,
+      }
+    }),
   ]
   const now = Date.now()
 
@@ -1165,7 +1640,7 @@ const upsertPersonalProForUser = async (
  * Dev-only demo seed.
  *
  * Usage after setting Convex env `DEV_SEED_ENABLED=true`:
- * pnpm convex run devSeed:seedDemoStable '{"confirm":"seed-demo-data"}'
+ * pnpm convex run devSeed:seedDemoStable '{"confirm":"seed-demo-data","ownerEmail":"you@example.com"}'
  *
  * Keep this checklist updated when adding user-visible data fields:
  * - stable operational fields
@@ -1183,13 +1658,16 @@ const upsertPersonalProForUser = async (
  * - Personal Pro analysis inputs
  */
 export const seedDemoStable = mutation({
-  args: { confirm: v.literal(confirmSeed) },
-  handler: async (ctx) => {
+  args: {
+    confirm: v.literal(confirmSeed),
+    ownerEmail: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
     if (process.env.DEV_SEED_ENABLED !== 'true') {
       throw new ConvexError('Set DEV_SEED_ENABLED=true before running dev seed')
     }
 
-    const user = await getCurrentUser(ctx)
+    const user = await getSeedOwner(ctx, args.ownerEmail)
     const stableId = await upsertDemoStable(ctx, user._id)
 
     await Promise.all([

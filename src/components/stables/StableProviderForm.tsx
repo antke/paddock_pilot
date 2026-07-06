@@ -50,7 +50,7 @@ export function StableProviderForm({
   }
 
   return (
-    <form className="grid gap-4" onSubmit={form.handleSubmit(submit)}>
+    <form className="grid gap-5" onSubmit={form.handleSubmit(submit)}>
       <Field data-invalid={Boolean(form.formState.errors.type)}>
         <FieldLabel>Provider type</FieldLabel>
         <ToggleGroup

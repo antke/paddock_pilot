@@ -25,8 +25,18 @@ const testPlugins = [
   viteReact(),
 ]
 
+const echartsOptimizedDependencies = [
+  'echarts/core',
+  'echarts/charts',
+  'echarts/components',
+  'echarts/renderers',
+]
+
 const config = defineConfig(({ mode }) => ({
   plugins: mode === 'test' ? testPlugins : appPlugins,
+  optimizeDeps: {
+    include: echartsOptimizedDependencies,
+  },
 }))
 
 export default config

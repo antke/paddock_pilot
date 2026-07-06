@@ -1,4 +1,6 @@
 import { StableProviderForm } from '#/components/stables/StableProviderForm'
+import { dashboardItemCardClassName } from '#/components/dashboard/DashboardItemCard'
+import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import {
@@ -29,6 +31,7 @@ export function StableProvidersCard({ stableId }: StableProvidersCardProps) {
   const addProvider = useMutation(api.stableProviders.add)
   const updateProvider = useMutation(api.stableProviders.update)
   const removeProvider = useMutation(api.stableProviders.remove)
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editingProviderId, setEditingProviderId] = useState<string>()
   const [removingProviderId, setRemovingProviderId] = useState<string>()
 
@@ -44,8 +47,26 @@ export function StableProvidersCard({ stableId }: StableProvidersCardProps) {
         description: <p>Please try again.</p>,
         position: 'top-right',
       })
+      throw err
     }
   }
+
+  const onAddProviderFromDialog = async (values: StableProviderFormSchema) => {
+    await onAddProvider(values)
+    setIsCreateOpen(false)
+  }
+
+  const createDialog = data.canManage ? (
+    <CreateRecordDialog
+      open={isCreateOpen}
+      onOpenChange={setIsCreateOpen}
+      triggerLabel="Add provider"
+      title="Add provider"
+      description="Add a care contact to the stable provider directory."
+    >
+      <StableProviderForm onSubmit={onAddProviderFromDialog} />
+    </CreateRecordDialog>
+  ) : null
 
   const onUpdateProvider = async (
     provider: Doc<'stableProviders'>,
@@ -85,21 +106,22 @@ export function StableProvidersCard({ stableId }: StableProvidersCardProps) {
   }
 
   return (
-    <Card>
+    <Card className="bg-card/80">
       <CardHeader>
-        <CardTitle>Provider directory</CardTitle>
-        <CardDescription>
-          Keep vets, farriers, dentists, physios, saddlers, and other care
-          contacts ready for event planning.
-        </CardDescription>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="grid gap-1.5">
+            <CardTitle className="text-2xl leading-tight">
+              Provider directory
+            </CardTitle>
+            <CardDescription className="text-base leading-6">
+              Keep vets, farriers, dentists, physios, saddlers, and other care
+              contacts ready for event planning.
+            </CardDescription>
+          </div>
+          {createDialog}
+        </div>
       </CardHeader>
       <CardContent className="grid gap-6">
-        {data.canManage && (
-          <div className="rounded-lg border p-4">
-            <StableProviderForm onSubmit={onAddProvider} />
-          </div>
-        )}
-
         <div className="grid gap-2">
           {data.providers.length === 0 ? (
             <p className="text-sm text-muted-foreground">
@@ -147,7 +169,7 @@ function ProviderRow({
 }) {
   if (isEditing) {
     return (
-      <div className="rounded-lg border p-4">
+      <div className="rounded-row bg-muted/30 p-5">
         <StableProviderForm
           provider={provider}
           onSubmit={onSubmit}
@@ -158,7 +180,12 @@ function ProviderRow({
   }
 
   return (
-    <div className="group/open grid cursor-pointer gap-3 border border-transparent px-3 py-3 transition-colors hover:rounded-row hover:border-primary/15 hover:bg-primary/5">
+    <div
+      className={dashboardItemCardClassName({
+        interactive: true,
+        className: 'grid gap-3',
+      })}
+    >
       <div className="grid gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-sm font-semibold underline-offset-4 transition-colors group-hover/open:text-primary group-hover/open:underline">
