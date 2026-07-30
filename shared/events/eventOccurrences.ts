@@ -278,7 +278,7 @@ function getWeekStartKey(dateKey: string) {
 }
 
 function getDayOfWeek(dateKey: string) {
-  return new Date(getDateKeyTime(dateKey)).getUTCDay()
+  return new Date(getDateKeyTime(dateKey)).getUTCDay() as DayOfWeek
 }
 
 function getDaysInMonth(year: number, monthIndex: number) {

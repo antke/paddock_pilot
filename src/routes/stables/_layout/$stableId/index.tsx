@@ -1,5 +1,5 @@
 import { StableDashboard } from '#/components/stables/StableDashboard'
-import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
+import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
@@ -13,39 +13,25 @@ export const Route = createFileRoute('/stables/_layout/$stableId/')({
 function RouteComponent() {
   const { stableId } = Route.useParams()
 
-  const { data } = useSuspenseQuery(
-    convexQuery(api.stables.getWithOwner, { id: stableId as Id<'stables'> }),
+  const { data: stable } = useSuspenseQuery(
+    convexQuery(api.stables.get, { id: stableId as Id<'stables'> }),
   )
 
-  if (!data?.stable) {
-    return (
-      <Alert>
-        <AlertTitle>Stable not found</AlertTitle>
-        <AlertDescription>
-          This stable does not exist or is no longer available.
-        </AlertDescription>
-      </Alert>
-    )
+  if (!stable) {
+    return <RouteEntityNotFoundAlert entity="stable" />
   }
 
-  return (
-    <StableDashboardData
-      stableId={stableId}
-      stable={data.stable}
-      owner={data.owner}
-    />
-  )
+  return <StableDashboardData stableId={stableId} stable={stable} />
 }
 
 function StableDashboardData({
   stableId,
   stable,
-  owner,
 }: {
   stableId: string
   stable: Doc<'stables'>
-  owner: Doc<'users'> | null
 }) {
+  const { data: stables } = useSuspenseQuery(convexQuery(api.stables.list))
   const { data: horses } = useSuspenseQuery(
     convexQuery(api.horses.list, { stableId: stableId as Id<'stables'> }),
   )
@@ -54,13 +40,19 @@ function StableDashboardData({
       stableId: stableId as Id<'stables'>,
     }),
   )
+  const { data: overview } = useSuspenseQuery(
+    convexQuery(api.userCareOverview.getForCurrentUser, {
+      stableId: stable._id,
+    }),
+  )
 
   return (
     <StableDashboard
       stable={stable}
-      owner={owner}
+      stables={stables}
       horses={horses}
       events={events}
+      overview={overview}
     />
   )
 }

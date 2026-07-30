@@ -1,14 +1,12 @@
 import { StableFormFields } from '#/components/forms/stable/StableFormFields'
 import { stableFormSchema } from '#/components/forms/stable/stableFormSchema'
 import type { StableFormSchema } from '#/components/forms/stable/stableFormSchema'
-import { Button } from '#/components/ui/button'
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
+  RouteFormActions,
+  RouteFormCard,
+} from '#/components/forms/RouteFormCard'
+import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
+import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { convexQuery } from '@convex-dev/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -17,7 +15,6 @@ import { api } from 'convex/_generated/api'
 import type { Doc, Id } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 import { useForm } from 'react-hook-form'
-import { toast } from 'sonner'
 
 export const Route = createFileRoute('/stables/_layout/$stableId/edit')({
   component: RouteComponent,
@@ -30,7 +27,9 @@ function RouteComponent() {
     convexQuery(api.stables.get, { id: stableId as Id<'stables'> }),
   )
 
-  if (!stable) return <div>Stable not found</div>
+  if (!stable) {
+    return <RouteEntityNotFoundAlert entity="stable" />
+  }
 
   return <EditStableForm key={stable._id} stable={stable} />
 }
@@ -69,49 +68,35 @@ function EditStableForm({ stable }: EditStableFormProps) {
         id: stable._id,
       })
 
-      toast.success('Stable updated', {
+      showAppSuccessToast({
+        title: 'Stable updated',
         description: <p>{data.name} has been updated.</p>,
-        position: 'top-right',
       })
 
       nav({ to: '/stables/$stableId', params: { stableId: stable._id } })
     } catch (err) {
-      toast.error('Oops! Something went wrong.', {
-        description: <p>Please try again.</p>,
-        position: 'top-right',
-      })
+      showAppErrorToast()
     }
   }
 
   return (
-    <form id="stable-form" onSubmit={form.handleSubmit(onSubmit)}>
-      <Card className="w-full bg-card/80">
-        <CardHeader>
-          <CardTitle className="text-xl tracking-tight">Edit stable</CardTitle>
-        </CardHeader>
-
-        <CardContent className="flex flex-col gap-4">
-          <StableFormFields
-            control={form.control}
-            disabled={form.formState.isSubmitting}
-          />
-        </CardContent>
-
-        <CardFooter className="justify-end gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={form.formState.isSubmitting}
-            onClick={() => form.reset()}
-          >
-            Reset
-          </Button>
-
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? 'Saving...' : 'Update Stable'}
-          </Button>
-        </CardFooter>
-      </Card>
-    </form>
+    <RouteFormCard
+      formId="stable-form"
+      title="Edit stable"
+      onSubmit={form.handleSubmit(onSubmit)}
+      actions={
+        <RouteFormActions
+          isSubmitting={form.formState.isSubmitting}
+          onReset={() => form.reset()}
+          submitLabel="Update Stable"
+          submittingLabel="Saving..."
+        />
+      }
+    >
+      <StableFormFields
+        control={form.control}
+        disabled={form.formState.isSubmitting}
+      />
+    </RouteFormCard>
   )
 }

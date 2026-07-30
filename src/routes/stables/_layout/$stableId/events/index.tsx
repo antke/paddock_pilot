@@ -1,7 +1,9 @@
 import { EventList } from '#/components/events/EventList'
-import { dashboardSectionClassName } from '#/components/dashboard/dashboardChrome'
-import { buttonVariants } from '#/components/ui/button'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { DashboardPage } from '#/components/dashboard/DashboardPage'
+import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
+import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
+import { ButtonLink } from '#/components/ui/button'
+import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/stables/_layout/$stableId/events/')({
   component: RouteComponent,
@@ -11,27 +13,23 @@ function RouteComponent() {
   const { stableId } = Route.useParams()
 
   return (
-    <div className="grid gap-6">
-      <section className={dashboardSectionClassName('soft', 'grid gap-6')}>
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="grid gap-2">
-            <h1 className="text-3xl font-semibold tracking-tight">Events</h1>
-            <p className="text-base leading-6 text-muted-foreground">
-              Scheduled work and appointments for this stable.
-            </p>
-          </div>
-
-          <Link
+    <DashboardPage>
+      <DashboardPageHeader
+        title="Events"
+        actions={
+          <ButtonLink
             to="/stables/$stableId/events/create"
             params={{ stableId }}
-            className={buttonVariants({ variant: 'secondary' })}
+            variant="secondary"
           >
             Add event
-          </Link>
-        </header>
+          </ButtonLink>
+        }
+      />
 
-        <EventList stableId={stableId} />
-      </section>
-    </div>
+      <DashboardSectionCard contentGap="comfortable">
+        <EventList stableId={stableId} chrome="soft" />
+      </DashboardSectionCard>
+    </DashboardPage>
   )
 }

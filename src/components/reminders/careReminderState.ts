@@ -1,7 +1,17 @@
+import { getTodayDateKey } from '#/lib/dateDisplay'
+import type { DashboardItemAccent } from '#/components/dashboard/DashboardItemCard'
 import type { Doc } from 'convex/_generated/dataModel'
 
-const getTodayKey = () => new Date().toISOString().slice(0, 10)
-
 export function isCareReminderOverdue(reminder: Doc<'careReminders'>) {
-  return reminder.status === 'pending' && reminder.dueDate < getTodayKey()
+  return reminder.status === 'pending' && reminder.dueDate < getTodayDateKey()
+}
+
+export function getCareReminderRecordAccent(
+  reminder: Doc<'careReminders'>,
+): DashboardItemAccent {
+  if (isCareReminderOverdue(reminder)) return 'danger'
+  if (reminder.status === 'dismissed') return 'muted'
+  if (reminder.status === 'completed') return 'primary'
+  if (reminder.dueDate === getTodayDateKey()) return 'warning'
+  return 'primary'
 }

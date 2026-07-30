@@ -1,25 +1,30 @@
 import { WeightRecordForm } from '#/components/horses/WeightRecordForm'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
-import { ListFilterBar } from '#/components/list-filtering/ListFilterBar'
+import { FilteredDashboardItemList } from '#/components/list-filtering/FilteredDashboardItemList'
 import { useListFiltering } from '#/components/list-filtering/useListFiltering'
 import {
-  dashboardEmptyClassName,
-  dashboardSectionClassName,
-} from '#/components/dashboard/dashboardChrome'
+  DetailGrid,
+  DetailMetricBlock,
+} from '#/components/dashboard/DetailBlocks'
+import { DashboardInlinePanel } from '#/components/dashboard/DashboardInlinePanel'
+import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import {
-  dashboardItemActionButtonsClassName,
-  dashboardItemActionColumnClassName,
-  dashboardItemActionGridClassName,
-  dashboardItemCardClassName,
+  DashboardItemRecordCard,
+  DashboardItemRecordContent,
 } from '#/components/dashboard/DashboardItemCard'
 import { Button } from '#/components/ui/button'
+import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
+import { TextLabel } from '#/components/ui/text-label'
+import {
+  dateKeyToTimestamp,
+  formatMediumTimestampDate,
+} from '#/lib/dateDisplay'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 import { useCallback, useMemo, useState } from 'react'
-import { toast } from 'sonner'
 import type { WeightRecordFormSchema } from 'shared/horses/weightRecordSchema'
 import { createHorseWeightRecordListFilterConfig } from './horseDetailListFilters'
 import type { HorseDetailCreateActionChange } from './useHorseDetailCreateAction'
@@ -29,18 +34,6 @@ type HorseWeightRecordsCardProps = {
   horse: Doc<'horses'>
   onCreateActionChange?: HorseDetailCreateActionChange
 }
-
-const dateFormatter = new Intl.DateTimeFormat(undefined, {
-  month: 'short',
-  day: 'numeric',
-  year: 'numeric',
-})
-
-const formatMeasuredAt = (timestamp: number) =>
-  dateFormatter.format(new Date(timestamp))
-
-const measuredDateToTimestamp = (date: string) =>
-  new Date(`${date}T00:00:00`).getTime()
 
 export function HorseWeightRecordsCard({
   horse,
@@ -63,43 +56,31 @@ export function HorseWeightRecordsCard({
     items: records,
     config: filterConfig,
   })
-  const listToolbar =
-    records.length > 0 ? (
-      <ListFilterBar
-        config={filterConfig}
-        query={filtering.query}
-        onQueryChange={filtering.setQuery}
-        selectedFacets={filtering.selectedFacets}
-        onFacetChange={filtering.setFacetValue}
-        onReset={filtering.resetFilters}
-        isFiltering={filtering.isFiltering}
-      />
-    ) : undefined
 
-  const onAddWeightRecord = useCallback(async (data: WeightRecordFormSchema) => {
-    try {
-      await addWeightRecord({
-        horseId: horse._id,
-        weight: data.weight,
-        unit: data.unit,
-        measuredAt: measuredDateToTimestamp(data.measuredDate),
-        bodyConditionScore: data.bodyConditionScore,
-        notes: data.notes,
-      })
+  const onAddWeightRecord = useCallback(
+    async (data: WeightRecordFormSchema) => {
+      try {
+        await addWeightRecord({
+          horseId: horse._id,
+          weight: data.weight,
+          unit: data.unit,
+          measuredAt: dateKeyToTimestamp(data.measuredDate),
+          bodyConditionScore: data.bodyConditionScore,
+          notes: data.notes,
+        })
 
-      toast.success('Weight record added', {
-        description: <p>{horse.name}'s weight history was updated.</p>,
-        position: 'top-right',
-      })
-      setIsCreateOpen(false)
-    } catch (err) {
-      toast.error('Oops! Something went wrong.', {
-        description: <p>Please try again.</p>,
-        position: 'top-right',
-      })
-      throw err
-    }
-  }, [addWeightRecord, horse._id, horse.name])
+        showAppSuccessToast({
+          title: 'Weight record added',
+          description: <p>{horse.name}'s weight history was updated.</p>,
+        })
+        setIsCreateOpen(false)
+      } catch (err) {
+        showAppErrorToast()
+        throw err
+      }
+    },
+    [addWeightRecord, horse._id, horse.name],
+  )
 
   const createDialog = useMemo(
     () =>
@@ -124,47 +105,38 @@ export function HorseWeightRecordsCard({
     try {
       setPendingRecordId(record._id)
       await removeWeightRecord({ id: record._id })
-      toast.success('Weight record removed', {
+      showAppSuccessToast({
+        title: 'Weight record removed',
         description: (
           <p>
-            The record from {formatMeasuredAt(record.measuredAt)} was removed.
+            The record from {formatMediumTimestampDate(record.measuredAt)} was
+            removed.
           </p>
         ),
-        position: 'top-right',
       })
     } catch (err) {
-      toast.error('Oops! Something went wrong.', {
-        description: <p>Please try again.</p>,
-        position: 'top-right',
-      })
+      showAppErrorToast()
     } finally {
       setPendingRecordId(undefined)
     }
   }
 
   const recordList = (
-    <div className="grid gap-4">
-      {listToolbar}
-      {records.length === 0 ? (
-        <div className={dashboardEmptyClassName('soft')}>
-          <p>No weight records have been added for this horse yet.</p>
-        </div>
-      ) : filtering.items.length === 0 ? (
-        <div className={dashboardEmptyClassName('soft')}>
-          <p>No weight records match these filters.</p>
-        </div>
-      ) : (
-        filtering.items.map((record) => (
-          <WeightRecordRow
-            key={record._id}
-            record={record}
-            canManage={canManage}
-            pending={pendingRecordId === record._id}
-            onRemove={onRemoveWeightRecord}
-          />
-        ))
+    <FilteredDashboardItemList
+      config={filterConfig}
+      filtering={filtering}
+      emptyMessage="No weight records have been added for this horse yet."
+      filteredEmptyMessage="No weight records match these filters."
+      renderItem={(record) => (
+        <WeightRecordRow
+          key={record._id}
+          record={record}
+          canManage={canManage}
+          pending={pendingRecordId === record._id}
+          onRemove={onRemoveWeightRecord}
+        />
       )}
-    </div>
+    />
   )
 
   const content = (
@@ -177,25 +149,21 @@ export function HorseWeightRecordsCard({
 
   if (onCreateActionChange) return content
 
-  return (
-    <section className={dashboardSectionClassName('soft', 'grid gap-6')}>
-      {content}
-    </section>
-  )
+  return <DashboardSection chrome="cards">{content}</DashboardSection>
 }
 
 function LatestWeightRecord({ record }: { record: Doc<'horseWeightRecords'> }) {
   return (
-    <div className="grid gap-3 rounded-row bg-background/55 p-5 text-sm">
-      <span className="text-muted-foreground">Latest record</span>
-      <div className="grid gap-3 sm:grid-cols-3">
+    <DashboardInlinePanel stack="default" textSize="sm">
+      <TextLabel as="div">Latest record</TextLabel>
+      <DetailGrid columns={3}>
         <LatestWeightMetric
           label="Weight"
           value={`${record.weight} ${record.unit}`}
         />
         <LatestWeightMetric
           label="Measured"
-          value={formatMeasuredAt(record.measuredAt)}
+          value={formatMediumTimestampDate(record.measuredAt)}
         />
         {record.bodyConditionScore !== undefined && (
           <LatestWeightMetric
@@ -203,8 +171,8 @@ function LatestWeightRecord({ record }: { record: Doc<'horseWeightRecords'> }) {
             value={`${record.bodyConditionScore}/9`}
           />
         )}
-      </div>
-    </div>
+      </DetailGrid>
+    </DashboardInlinePanel>
   )
 }
 
@@ -216,12 +184,12 @@ function LatestWeightMetric({
   value: string
 }) {
   return (
-    <div className="grid gap-1 rounded-row bg-card/70 p-5">
-      <span className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-        {label}
-      </span>
-      <span className="text-base font-semibold tracking-tight">{value}</span>
-    </div>
+    <DetailMetricBlock
+      label={label}
+      value={value}
+      labelProps={{ tracking: 'tight', weight: 'medium' }}
+      size="compact"
+    />
   )
 }
 
@@ -237,46 +205,37 @@ function WeightRecordRow({
   onRemove: (record: Doc<'horseWeightRecords'>) => Promise<void>
 }) {
   return (
-    <div
-      className={dashboardItemCardClassName({
-        interactive: true,
-        chrome: 'soft',
-        className: dashboardItemActionGridClassName,
-      })}
+    <DashboardItemRecordCard
+      chrome="cards"
+      actionsPlacement="footer"
+      actionsClassName="ml-auto"
+      actions={
+        canManage ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={pending}
+            onClick={() => onRemove(record)}
+          >
+            Remove
+          </Button>
+        ) : undefined
+      }
     >
-      <div className="grid min-w-0 gap-3">
-        <span className="font-medium">
-          {record.weight} {record.unit}
-        </span>
-        <p className="text-sm text-muted-foreground">
-          Measured {formatMeasuredAt(record.measuredAt)}
-          {record.bodyConditionScore !== undefined
-            ? ` · BCS ${record.bodyConditionScore}/9`
-            : ''}
-        </p>
-        {record.notes && (
-          <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-            {record.notes}
-          </p>
-        )}
-      </div>
-
-      {canManage && (
-        <div className={dashboardItemActionColumnClassName}>
-          <div className={dashboardItemActionButtonsClassName}>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="shadow-none"
-              disabled={pending}
-              onClick={() => onRemove(record)}
-            >
-              Remove
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
+      <DashboardItemRecordContent
+        title={`${record.weight} ${record.unit}`}
+        titleSize="dense"
+        meta={
+          <>
+            <span>Measured {formatMediumTimestampDate(record.measuredAt)}</span>
+            {record.bodyConditionScore !== undefined && (
+              <span>BCS {record.bodyConditionScore}/9</span>
+            )}
+          </>
+        }
+        description={record.notes}
+      />
+    </DashboardItemRecordCard>
   )
 }

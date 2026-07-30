@@ -8,13 +8,22 @@ import type { DocumentListItem } from './DocumentsCard'
 
 const stableId = 'stable-1' as Id<'stables'>
 const userId = 'user-1' as Id<'users'>
+const juniperId = 'horse-juniper' as Id<'horses'>
+const mapleId = 'horse-maple' as Id<'horses'>
 
 describe('document list filters', () => {
   it('filters documents by type and file state', () => {
     const config = createDocumentListFilterConfig()
     const documents = [
-      createDocumentItem({ type: 'passport', fileUrl: 'https://example.com/passport.pdf' }),
-      createDocumentItem({ fileName: 'Insurance note', type: 'insurance', fileUrl: null }),
+      createDocumentItem({
+        type: 'passport',
+        fileUrl: 'https://example.com/passport.pdf',
+      }),
+      createDocumentItem({
+        fileName: 'Insurance note',
+        type: 'insurance',
+        fileUrl: null,
+      }),
     ]
 
     expect(
@@ -36,7 +45,10 @@ describe('document list filters', () => {
   it('searches document names, notes, and linked labels', () => {
     const config = createDocumentListFilterConfig()
     const documents = [
-      createDocumentItem({ fileName: 'Vaccination proof', notes: 'Spring booster' }),
+      createDocumentItem({
+        fileName: 'Vaccination proof',
+        notes: 'Spring booster',
+      }),
       createDocumentItem({ fileName: 'Farrier invoice', horseName: 'Juniper' }),
     ]
 
@@ -55,6 +67,28 @@ describe('document list filters', () => {
       }).map((item) => item.document.fileName),
     ).toEqual(['Farrier invoice'])
   })
+
+  it('adds a horse facet for stable-level document lists', () => {
+    const config = createDocumentListFilterConfig({
+      horseOptions: [
+        { _id: juniperId, name: 'Juniper' },
+        { _id: mapleId, name: 'Maple' },
+      ],
+    })
+    const documents = [
+      createDocumentItem({ fileName: 'Juniper passport', horseId: juniperId }),
+      createDocumentItem({ fileName: 'Maple passport', horseId: mapleId }),
+      createDocumentItem({ fileName: 'Stable insurance' }),
+    ]
+
+    expect(
+      filterListItems({
+        items: documents,
+        config,
+        state: { query: '', facets: { horse: mapleId } },
+      }).map((item) => item.document.fileName),
+    ).toEqual(['Maple passport'])
+  })
 })
 
 function createDocumentItem({
@@ -63,7 +97,10 @@ function createDocumentItem({
   eventTitle,
   ...documentOverrides
 }: Partial<Doc<'stableDocuments'>> &
-  Pick<Partial<DocumentListItem>, 'fileUrl' | 'horseName' | 'eventTitle'>): DocumentListItem {
+  Pick<
+    Partial<DocumentListItem>,
+    'fileUrl' | 'horseName' | 'eventTitle'
+  >): DocumentListItem {
   return {
     document: {
       _id: 'document-1' as Id<'stableDocuments'>,

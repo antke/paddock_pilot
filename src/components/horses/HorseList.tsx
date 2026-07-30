@@ -1,52 +1,46 @@
-import { dashboardEmptyClassName } from '#/components/dashboard/dashboardChrome'
-import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
-import { Button } from '#/components/ui/button'
-import { HorseCard } from './HorseCard'
+import { FilteredDashboardItemList } from '#/components/list-filtering/FilteredDashboardItemList'
+import { useListFiltering } from '#/components/list-filtering/useListFiltering'
+import { HorseCardLink } from './HorseCard'
+import { createHorseListFilterConfig } from './horseListFilters'
+import { NoHorsesPrompt } from './NoHorsesPrompt'
 import { convexQuery } from '@convex-dev/react-query'
-import { ArrowRightIcon } from '@phosphor-icons/react'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { isEmpty } from 'lodash'
+import { useMemo } from 'react'
 
 type Props = {
   stableId: string
-  chrome?: DashboardChrome
 }
 
-export function HorseList({ stableId, chrome = 'cards' }: Props) {
+export function HorseList({ stableId }: Props) {
   const { data: horses } = useSuspenseQuery(
     convexQuery(api.horses.list, { stableId: stableId as Id<'stables'> }),
   )
+  const filterConfig = useMemo(createHorseListFilterConfig, [])
+  const filtering = useListFiltering({ items: horses, config: filterConfig })
 
   if (isEmpty(horses)) {
-    return (
-      <div className={dashboardEmptyClassName(chrome)}>
-        <p>No horses added yet.</p>
-      </div>
-    )
+    return <NoHorsesPrompt stableId={stableId} />
   }
 
   return (
-    <div className="grid gap-3">
-      {horses.map((horse) => (
-        <HorseCard
+    <FilteredDashboardItemList
+      config={filterConfig}
+      filtering={filtering}
+      gap="comfortable"
+      emptyMessage="No horses have been added yet."
+      filteredEmptyMessage="No horses match these filters."
+      stickyFilters
+      renderItem={(horse) => (
+        <HorseCardLink
           key={horse._id}
           horse={horse}
-          chrome={chrome}
-          action={
-            <Link
-              to="/stables/$stableId/horses/$horseId"
-              params={{ stableId, horseId: horse._id }}
-            >
-              <Button variant="ghost" size="icon-sm" className="shadow-none">
-                <ArrowRightIcon />
-              </Button>
-            </Link>
-          }
+          stableId={stableId}
+          horseId={horse._id}
         />
-      ))}
-    </div>
+      )}
+    />
   )
 }

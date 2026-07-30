@@ -24,7 +24,11 @@ const optionalText = (schema: z.ZodString) =>
     .transform((value) => (value ? value : undefined))
 
 export const stableProviderTypeSchema = z.enum(stableProviderTypes)
-const providerNameSchema = z.string().trim().min(1, 'Provider name is required.').max(100)
+const providerNameSchema = z
+  .string()
+  .trim()
+  .min(1, 'Provider name is required.')
+  .max(100)
 const providerShortTextSchema = z.string().trim().max(100)
 const providerNotesSchema = z.string().trim().max(1000)
 
@@ -33,7 +37,9 @@ export const stableProviderInputSchema = z.object({
   type: stableProviderTypeSchema,
   name: providerNameSchema,
   phone: optionalText(providerShortTextSchema),
-  email: optionalText(providerShortTextSchema.email('Enter a valid email address.')),
+  email: optionalText(
+    providerShortTextSchema.email('Enter a valid email address.'),
+  ),
   notes: optionalText(providerNotesSchema),
 })
 

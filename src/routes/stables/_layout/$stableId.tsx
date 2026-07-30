@@ -1,4 +1,5 @@
-import { StableFeatureNavigation } from '#/components/stables/StableFeatureNavigation'
+import { DashboardPage } from '#/components/dashboard/DashboardPage'
+import { StableBreadcrumbs } from '#/components/layout/StableBreadcrumbs'
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/stables/_layout/$stableId')({
@@ -9,9 +10,9 @@ function RouteComponent() {
   const { stableId } = Route.useParams()
 
   return (
-    <div className="grid gap-6">
-      <StableFeatureNavigation stableId={stableId} />
+    <DashboardPage>
+      <StableBreadcrumbs stableId={stableId} />
       <Outlet />
-    </div>
+    </DashboardPage>
   )
 }

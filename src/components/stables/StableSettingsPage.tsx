@@ -1,24 +1,30 @@
-import { dashboardHeroClassName } from '#/components/dashboard/dashboardChrome'
-import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
-import { Badge } from '#/components/ui/badge'
-import { Button, buttonVariants } from '#/components/ui/button'
+import { DetailDisplayField } from '#/components/dashboard/DetailBlocks'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
-import { Separator } from '#/components/ui/separator'
+  DashboardItemCardContent,
+  DashboardItemList,
+  DashboardItemRecordCard,
+  DashboardItemRecordFooter,
+} from '#/components/dashboard/DashboardItemCard'
+import { DashboardPage } from '#/components/dashboard/DashboardPage'
+import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
+import {
+  DashboardSectionCard,
+  DashboardSectionDivider,
+  DashboardSubsection,
+} from '#/components/dashboard/DashboardSectionCard'
+import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
+import { Button, ButtonLink } from '#/components/ui/button'
+import { FieldPanel } from '#/components/ui/field'
+import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
-import { Link } from '@tanstack/react-router'
+import { formatLineText } from '#/lib/textDisplay'
 import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 import { useState } from 'react'
-import { toast } from 'sonner'
 import { StableInvitationsList } from './StableInvitationsList'
 import { StableInviteForm } from './StableInviteForm'
+import { StableMemberRoleBadge } from './StableBadges'
 import { StableMemberDetailsForm } from './StableMemberDetailsForm'
 import { StableProvidersCard } from './StableProvidersCard'
 
@@ -37,12 +43,6 @@ type StableSettingsPageProps = {
   settings: StableSettingsData
 }
 
-const roleLabels = {
-  owner: 'Owner',
-  member: 'Member',
-  guest: 'Guest',
-} satisfies Record<Doc<'stableMembers'>['role'], string>
-
 export function StableSettingsPage({ settings }: StableSettingsPageProps) {
   const { stable, owner, members } = settings
   const postalAddress = [
@@ -53,91 +53,99 @@ export function StableSettingsPage({ settings }: StableSettingsPageProps) {
   ].filter(Boolean)
 
   return (
-    <div className="grid gap-6">
-      <header className={dashboardHeroClassName('cards')}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="grid gap-2">
-            <h1 className="text-3xl font-semibold">Stable settings</h1>
-            <p className="text-sm text-muted-foreground">
-              Manage {stable.name} details and people.
-            </p>
-          </div>
+    <DashboardPage>
+      <DashboardPageHeader title="Stable settings" />
 
-          <Link
-            to="/stables/$stableId"
-            params={{ stableId: stable._id }}
-            className={buttonVariants({ variant: 'outline' })}
-          >
-            Back to stable
-          </Link>
-        </div>
-      </header>
-
-      <Tabs defaultValue="overview" className="grid gap-4">
-        <TabsList className="w-fit">
+      <Tabs defaultValue="overview">
+        <TabsList variant="section">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="members">Members</TabsTrigger>
           <TabsTrigger value="providers">Providers</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
-          <Card className="bg-card/80">
-            <CardHeader className="flex flex-row items-start justify-between gap-4">
-              <div className="grid gap-1">
-                <CardTitle>{stable.name}</CardTitle>
-                <CardDescription>Stable profile and ownership.</CardDescription>
-              </div>
-              <Link
+          <DashboardSectionCard
+            title={stable.name}
+            actions={
+              <ButtonLink
                 to="/stables/$stableId/edit"
                 params={{ stableId: stable._id }}
-                className={buttonVariants({ variant: 'outline' })}
+                variant="outline"
               >
                 Edit stable
-              </Link>
-            </CardHeader>
-            <CardContent className="grid gap-4 text-sm sm:grid-cols-2">
-              <DetailItem label="Location" value={stable.location} />
-              <DetailItem label="Owner" value={formatUserName(owner)} />
-              {postalAddress.length > 0 && (
-                <div className="grid gap-1 sm:col-span-2">
-                  <span className="text-muted-foreground">Postal address</span>
-                  <p className="whitespace-pre-line">
-                    {postalAddress.join('\n')}
-                  </p>
-                </div>
-              )}
-              {stable.contactName && (
-                <DetailItem label="Contact" value={stable.contactName} />
-              )}
-              {stable.contactPhone && (
-                <DetailItem label="Contact phone" value={stable.contactPhone} />
-              )}
-              {stable.emergencyPhone && (
-                <DetailItem
-                  label="Emergency phone"
-                  value={stable.emergencyPhone}
-                />
-              )}
-              {stable.description && (
-                <div className="grid gap-1 sm:col-span-2">
-                  <span className="text-muted-foreground">Description</span>
-                  <span>{stable.description}</span>
-                </div>
-              )}
-              {stable.openingHours && (
-                <div className="grid gap-1 sm:col-span-2">
-                  <span className="text-muted-foreground">Opening hours</span>
-                  <p className="whitespace-pre-line">{stable.openingHours}</p>
-                </div>
-              )}
-              {stable.yardRules && (
-                <div className="grid gap-1 sm:col-span-2">
-                  <span className="text-muted-foreground">Yard rules</span>
-                  <p className="whitespace-pre-line">{stable.yardRules}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </ButtonLink>
+            }
+            contentLayout="twoColumn"
+            contentTextSize="sm"
+          >
+            <DetailDisplayField
+              label="Location"
+              value={stable.location}
+              valueWeight="normal"
+            />
+            <DetailDisplayField
+              label="Owner"
+              value={formatUserName(owner)}
+              valueWeight="normal"
+            />
+            {postalAddress.length > 0 && (
+              <DetailDisplayField
+                label="Postal address"
+                span="sm2"
+                value={formatLineText(postalAddress)}
+                valueWeight="normal"
+                multiline
+              />
+            )}
+            {stable.contactName && (
+              <DetailDisplayField
+                label="Contact"
+                value={stable.contactName}
+                valueWeight="normal"
+              />
+            )}
+            {stable.contactPhone && (
+              <DetailDisplayField
+                label="Contact phone"
+                value={stable.contactPhone}
+                valueWeight="normal"
+              />
+            )}
+            {stable.emergencyPhone && (
+              <DetailDisplayField
+                label="Emergency phone"
+                value={stable.emergencyPhone}
+                valueWeight="normal"
+              />
+            )}
+            {stable.description && (
+              <DetailDisplayField
+                label="Description"
+                span="sm2"
+                value={stable.description}
+                valueWeight="normal"
+                multiline
+              />
+            )}
+            {stable.openingHours && (
+              <DetailDisplayField
+                label="Opening hours"
+                span="sm2"
+                value={stable.openingHours}
+                valueWeight="normal"
+                multiline
+              />
+            )}
+            {stable.yardRules && (
+              <DetailDisplayField
+                label="Yard rules"
+                span="sm2"
+                value={stable.yardRules}
+                valueWeight="normal"
+                multiline
+              />
+            )}
+          </DashboardSectionCard>
         </TabsContent>
 
         <TabsContent value="members">
@@ -153,7 +161,7 @@ export function StableSettingsPage({ settings }: StableSettingsPageProps) {
           <StableProvidersCard stableId={stable._id} />
         </TabsContent>
       </Tabs>
-    </div>
+    </DashboardPage>
   )
 }
 
@@ -193,121 +201,107 @@ function StableMembersCard({
       setRemovingMemberId(member._id)
       await removeMember({ id: member._id })
 
-      toast.success('Member removed', {
+      showAppSuccessToast({
+        title: 'Member removed',
         description: <p>The member no longer has access to {stableName}.</p>,
-        position: 'top-right',
       })
     } catch (err) {
-      toast.error('Oops! Something went wrong.', {
-        description: <p>Please try again.</p>,
-        position: 'top-right',
-      })
+      showAppErrorToast()
     } finally {
       setRemovingMemberId(undefined)
     }
   }
 
   return (
-    <Card className="bg-card/80">
-      <CardHeader>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="grid gap-1.5">
-            <CardTitle className="text-2xl leading-tight">Members</CardTitle>
-            <CardDescription className="text-base leading-6">
-              Review who can access this stable and invite new members.
-            </CardDescription>
-          </div>
-          {inviteDialog}
-        </div>
-      </CardHeader>
-      <CardContent className="grid gap-6">
-        <div className="grid gap-4">
-          <h3 className="text-sm font-medium">Current members</h3>
-          {members.map((member, index) => (
-            <div key={member.membership?._id ?? 'owner'}>
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="grid gap-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium">
-                      {formatMemberName(member)}
-                    </span>
-                    <Badge
-                      variant={
-                        member.role === 'owner' ? 'default' : 'secondary'
-                      }
-                    >
-                      {roleLabels[member.role]}
-                    </Badge>
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    {member.user?.email ?? 'No email available'}
-                  </span>
-                  {member.membership?.phone && (
-                    <span className="text-sm text-muted-foreground">
-                      {member.membership.phone}
-                    </span>
-                  )}
-                  {member.membership?.emergencyContact && (
-                    <span className="text-sm text-muted-foreground">
-                      Emergency: {member.membership.emergencyContact}
-                    </span>
-                  )}
-                </div>
+    <DashboardSectionCard
+      title="Members"
+      description="Review who can access this stable and invite new members."
+      actions={inviteDialog}
+      contentGap="loose"
+    >
+      <DashboardSubsection title="Current members" gap="compact">
+        <DashboardItemList gap="flush">
+          {members.map((member) => {
+            const membership = member.membership
+            const editableMembership =
+              membership && member.role !== 'owner' ? membership : null
 
-                {member.membership && member.role !== 'owner' && (
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setEditingMemberId(member.membership._id)}
-                    >
-                      Edit details
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={removingMemberId === member.membership._id}
-                      onClick={() => onRemoveMember(member.membership)}
-                    >
-                      {removingMemberId === member.membership._id
-                        ? 'Removing...'
-                        : 'Remove'}
-                    </Button>
-                  </div>
-                )}
-              </div>
-              {member.membership &&
-                editingMemberId === member.membership._id && (
-                  <div className="mt-4 rounded-row bg-muted/30 p-5">
-                    <StableMemberDetailsForm
-                      member={member.membership}
-                      onCancel={() => setEditingMemberId(undefined)}
-                      onSaved={() => setEditingMemberId(undefined)}
-                    />
-                  </div>
-                )}
-              {index < members.length - 1 && <Separator className="mt-4" />}
-            </div>
-          ))}
-        </div>
+            return (
+              <DashboardItemRecordCard
+                key={membership?._id ?? 'owner'}
+                chrome="soft"
+                density="compact"
+                actions={
+                  <>
+                    <StableMemberRoleBadge role={member.role} />
+                    {editableMembership && (
+                      <>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setEditingMemberId(editableMembership._id)
+                          }
+                        >
+                          Edit details
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={removingMemberId === editableMembership._id}
+                          onClick={() => onRemoveMember(editableMembership)}
+                        >
+                          {removingMemberId === editableMembership._id
+                            ? 'Removing...'
+                            : 'Remove'}
+                        </Button>
+                      </>
+                    )}
+                  </>
+                }
+                actionsClassName="grid w-full grid-cols-[5rem_auto_auto] items-center justify-start gap-2 sm:w-[19rem] sm:grid-cols-[5rem_7rem_5rem]"
+                footer={
+                  membership && editingMemberId === membership._id ? (
+                    <DashboardItemRecordFooter>
+                      <FieldPanel>
+                        <StableMemberDetailsForm
+                          member={membership}
+                          onCancel={() => setEditingMemberId(undefined)}
+                          onSaved={() => setEditingMemberId(undefined)}
+                        />
+                      </FieldPanel>
+                    </DashboardItemRecordFooter>
+                  ) : undefined
+                }
+              >
+                <DashboardItemCardContent
+                  title={formatMemberName(member)}
+                  titleSize="sm"
+                  meta={
+                    <>
+                      <span>{member.user?.email ?? 'No email available'}</span>
+                      {membership?.phone && <span>{membership.phone}</span>}
+                      {membership?.emergencyContact && (
+                        <span>Emergency: {membership.emergencyContact}</span>
+                      )}
+                    </>
+                  }
+                  metaSeparator="dot"
+                />
+              </DashboardItemRecordCard>
+            )
+          })}
+        </DashboardItemList>
+      </DashboardSubsection>
 
-        <Separator />
+      <DashboardSectionDivider />
 
-        <div className="grid gap-4">
-          <h3 className="text-sm font-medium">Invitations</h3>
-          <StableInvitationsList invitations={invitations} />
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-function DetailItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="grid gap-1">
-      <span className="text-muted-foreground">{label}</span>
-      <span>{value}</span>
-    </div>
+      <DashboardSubsection title="Invitations">
+        <StableInvitationsList invitations={invitations} />
+      </DashboardSubsection>
+    </DashboardSectionCard>
   )
 }
 

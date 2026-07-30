@@ -1,13 +1,13 @@
 import {
   DashboardItemCardContent,
-  dashboardItemCardClassName,
+  DashboardItemList,
+  DashboardItemLinkCard,
 } from '#/components/dashboard/DashboardItemCard'
-import {
-  dashboardEmptyClassName,
-  dashboardSectionClassName,
-} from '#/components/dashboard/dashboardChrome'
-import { buttonVariants } from '#/components/ui/button'
-import { Link } from '@tanstack/react-router'
+import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
+import { DashboardPage } from '#/components/dashboard/DashboardPage'
+import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
+import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
+import { ButtonLink } from '#/components/ui/button'
 import type { Doc } from 'convex/_generated/dataModel'
 import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
 
@@ -38,61 +38,48 @@ export function StablesListPageLab({
 
   if (stableSummaries.length === 0) {
     return (
-      <div className={dashboardEmptyClassName('cards')}>
-        <p>No stables added yet.</p>
-      </div>
+      <DashboardEmptyState chrome="cards">
+        No stables added yet.
+      </DashboardEmptyState>
     )
   }
 
   return (
-    <div className="grid gap-6">
-      <section className={dashboardSectionClassName('soft', 'grid gap-5')}>
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h2 className="text-xl font-semibold tracking-tight">All stables</h2>
-          <Link to="/stables/create" className={buttonVariants()}>
-            Create stable
-          </Link>
-        </div>
+    <DashboardPage>
+      <DashboardPageHeader
+        title="All stables"
+        actions={<ButtonLink to="/stables/create">Create stable</ButtonLink>}
+      />
 
-        <div className="grid gap-3">
+      <DashboardSectionCard contentGap="comfortable">
+        <DashboardItemList gap="flush">
           {stableSummaries.map(({ stable, eventCount, nextEvent }) => (
-            <article
+            <DashboardItemLinkCard
               key={stable._id}
-              className={dashboardItemCardClassName({
-                interactive: true,
-                chrome: 'soft',
-                className:
-                  'grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center',
-              })}
+              to="/stables/$stableId"
+              params={{ stableId: stable._id }}
+              chrome="soft"
+              className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
             >
               <DashboardItemCardContent
                 title={stable.name}
+                metaSeparator="dot"
                 meta={
                   <>
                     <span>{stable.location}</span>
-                    <span>·</span>
                     <span>{eventCount} events</span>
-                    {nextEvent && (
-                      <>
-                        <span>·</span>
-                        <span>Next: {nextEvent.title}</span>
-                      </>
-                    )}
+                    {nextEvent && <span>Next: {nextEvent.title}</span>}
                   </>
                 }
               />
 
-              <Link
-                to="/stables/$stableId"
-                params={{ stableId: stable._id }}
-                className="text-sm font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
-              >
-                Open
-              </Link>
-            </article>
+              <span className="text-sm font-semibold text-primary transition-colors group-hover/dashboard-item:text-foreground">
+                Open stable
+              </span>
+            </DashboardItemLinkCard>
           ))}
-        </div>
-      </section>
-    </div>
+        </DashboardItemList>
+      </DashboardSectionCard>
+    </DashboardPage>
   )
 }

@@ -1,20 +1,37 @@
 import { Popover } from '@base-ui/react/popover'
-import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
-import { cn } from '#/lib/utils'
-import { Link } from '@tanstack/react-router'
+  CalendarDayCell,
+  CalendarDayEventList,
+  CalendarDayHeader,
+  CalendarDayNumber,
+  CalendarEventChipLink,
+  CalendarEventChipMeta,
+  CalendarEventChipTitle,
+  CalendarEventPopover,
+  CalendarEventPopoverDescription,
+  CalendarEventPopoverHeader,
+  CalendarEventPopoverText,
+  CalendarEventPopoverTitle,
+  CalendarGrid,
+  CalendarMutedPill,
+  CalendarShell,
+  CalendarWeekdayCell,
+  CalendarWeekdayRow,
+} from '#/components/events/EventCalendar'
+import {
+  EventStatusBadge,
+  EventTypeBadge,
+} from '#/components/events/EventBadges'
+import { formatEventDateTime } from '#/components/events/eventDisplay'
+import { DashboardBadgeList } from '#/components/dashboard/DashboardBadgeList'
+import { DashboardCountBadge } from '#/components/dashboard/DashboardBadges'
+import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
+import { Button, ButtonLink } from '#/components/ui/button'
+import { getTodayDateKey } from '#/lib/dateDisplay'
+import { ArrowRightIcon } from '@phosphor-icons/react'
 import { useMemo, useState } from 'react'
-import { eventStatusLabels, eventTypeLabels } from 'shared/events/eventSchema'
 import {
   addMonths,
-  formatDateKey,
   formatMonthLabel,
   getMonthDays,
   groupEventsByDate,
@@ -31,7 +48,7 @@ export function StableEventsCalendar({ events }: StableEventsCalendarProps) {
   const [visibleMonth, setVisibleMonth] = useState(() =>
     startOfMonth(new Date()),
   )
-  const todayKey = formatDateKey(new Date())
+  const todayKey = getTodayDateKey()
   const monthDays = useMemo(() => getMonthDays(visibleMonth), [visibleMonth])
   const eventsByDate = useMemo(() => groupEventsByDate(events), [events])
   const leadingDays = Array.from(
@@ -44,14 +61,11 @@ export function StableEventsCalendar({ events }: StableEventsCalendarProps) {
   )
 
   return (
-    <Card className="bg-card/80 shadow-none">
-      <CardHeader className="grid gap-4 sm:flex sm:flex-row sm:items-start sm:justify-between">
-        <div className="grid gap-1.5">
-          <CardTitle>Stable calendar</CardTitle>
-          <CardDescription>{formatMonthLabel(visibleMonth)}</CardDescription>
-        </div>
-
-        <div className="flex flex-wrap gap-2 sm:justify-end">
+    <DashboardSectionCard
+      title={formatMonthLabel(visibleMonth)}
+      contentLayout="block"
+      actions={
+        <>
           <Button
             type="button"
             variant="outline"
@@ -76,84 +90,62 @@ export function StableEventsCalendar({ events }: StableEventsCalendarProps) {
           >
             Next
           </Button>
-        </div>
-      </CardHeader>
+        </>
+      }
+    >
+      <CalendarShell>
+        <CalendarWeekdayRow>
+          {weekdayLabels.map((weekday) => (
+            <CalendarWeekdayCell key={weekday}>{weekday}</CalendarWeekdayCell>
+          ))}
+        </CalendarWeekdayRow>
 
-      <CardContent>
-        <div className="overflow-hidden rounded-panel border border-border-subtle bg-card text-xs">
-          <div className="grid grid-cols-7 border-b border-border-subtle bg-muted/50">
-            {weekdayLabels.map((weekday) => (
-              <div
-                key={weekday}
-                className="border-r border-border-subtle p-2 text-center font-semibold text-muted-foreground last:border-r-0"
-              >
-                {weekday}
-              </div>
-            ))}
-          </div>
+        <CalendarGrid>
+          {leadingDays.map((day) => (
+            <CalendarDayCell key={`empty-${day}`} muted />
+          ))}
 
-          <div className="grid grid-cols-7">
-            {leadingDays.map((day) => (
-              <div
-                key={`empty-${day}`}
-                className="min-h-28 border-r border-b border-border-subtle bg-muted/25 last:border-r-0"
-              />
-            ))}
+          {monthDays.map(({ date, key }) => {
+            const dateEvents = eventsByDate.get(key) ?? []
+            const visibleEvents = dateEvents.slice(0, 2)
+            const hiddenEventCount = dateEvents.length - visibleEvents.length
 
-            {monthDays.map(({ date, key }) => {
-              const dateEvents = eventsByDate.get(key) ?? []
-              const visibleEvents = dateEvents.slice(0, 2)
-              const hiddenEventCount = dateEvents.length - visibleEvents.length
+            return (
+              <CalendarDayCell key={key} isToday={key === todayKey}>
+                <CalendarDayHeader>
+                  <CalendarDayNumber isToday={key === todayKey}>
+                    {date.getDate()}
+                  </CalendarDayNumber>
 
-              return (
-                <div
-                  key={key}
-                  className={cn(
-                    'min-h-28 border-r border-b border-border-subtle p-2.5 last:border-r-0',
-                    key === todayKey &&
-                      'bg-primary/5 ring-1 ring-inset ring-primary/20',
+                  {dateEvents.length > 0 && (
+                    <DashboardCountBadge
+                      count={dateEvents.length}
+                      variant="secondary"
+                    />
                   )}
-                >
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <span
-                      className={cn(
-                        'font-medium',
-                        key === todayKey && 'text-primary',
-                      )}
-                    >
-                      {date.getDate()}
-                    </span>
+                </CalendarDayHeader>
 
-                    {dateEvents.length > 0 && (
-                      <Badge variant="secondary">{dateEvents.length}</Badge>
-                    )}
-                  </div>
+                <CalendarDayEventList>
+                  {visibleEvents.map((event) => (
+                    <CalendarEventChip key={event._id} event={event} />
+                  ))}
 
-                  <div className="grid gap-1">
-                    {visibleEvents.map((event) => (
-                      <CalendarEventChip key={event._id} event={event} />
-                    ))}
+                  {hiddenEventCount > 0 && (
+                    <CalendarMutedPill>
+                      +{hiddenEventCount} more
+                    </CalendarMutedPill>
+                  )}
+                </CalendarDayEventList>
+              </CalendarDayCell>
+            )
+          })}
 
-                    {hiddenEventCount > 0 && (
-                      <p className="rounded-md bg-muted/70 px-2 py-1 text-[0.7rem] font-medium text-muted-foreground">
-                        +{hiddenEventCount} more
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-
-            {trailingDays.map((day) => (
-              <div
-                key={`trailing-empty-${day}`}
-                className="min-h-28 border-r border-b border-border-subtle bg-muted/25 last:border-r-0"
-              />
-            ))}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+          {trailingDays.map((day) => (
+            <CalendarDayCell key={`trailing-empty-${day}`} muted />
+          ))}
+        </CalendarGrid>
+      </CalendarShell>
+    </DashboardSectionCard>
   )
 }
 
@@ -166,56 +158,54 @@ function CalendarEventChip({ event }: { event: StableDashboardEvent }) {
         delay={120}
         closeDelay={120}
         render={
-          <Link
+          <CalendarEventChipLink
             to="/stables/$stableId/events/$eventId"
             params={{ stableId: event.stableId, eventId: event._id }}
-            className="group/event grid gap-0.5 rounded-md border border-primary/15 bg-primary/8 px-2 py-1.5 text-left text-[0.72rem] text-foreground transition-colors hover:border-primary/35 hover:bg-primary/12 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:outline-none"
           />
         }
       >
-        <span className="truncate font-semibold leading-tight">
-          {event.title}
-        </span>
-        <span className="truncate text-muted-foreground">{event.time}</span>
+        <CalendarEventChipTitle>{event.title}</CalendarEventChipTitle>
+        <CalendarEventChipMeta>{event.time}</CalendarEventChipMeta>
       </Popover.Trigger>
 
       <Popover.Portal>
         <Popover.Positioner side="top" align="start" sideOffset={8}>
-          <Popover.Popup
-            initialFocus={false}
-            className="app-panel-strong z-50 grid w-72 origin-(--transform-origin) gap-3 p-5 text-sm text-popover-foreground outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
-          >
-            <div className="grid gap-1">
-              <p className="font-semibold tracking-tight">{event.title}</p>
-              <p className="text-muted-foreground">
-                {event.date} at {event.time}
-              </p>
-            </div>
+          <Popover.Popup initialFocus={false} render={<CalendarEventPopover />}>
+            <CalendarEventPopoverHeader>
+              <CalendarEventPopoverTitle>
+                {event.title}
+              </CalendarEventPopoverTitle>
+              <CalendarEventPopoverText>
+                {formatEventDateTime(event.date, event.time, event.endDate)}
+              </CalendarEventPopoverText>
+            </CalendarEventPopoverHeader>
 
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">{eventTypeLabels[event.type]}</Badge>
-              <Badge variant="outline">{eventStatusLabels[event.status]}</Badge>
-            </div>
+            <DashboardBadgeList>
+              <EventTypeBadge type={event.type} />
+              <EventStatusBadge status={event.status ?? 'planned'} />
+            </DashboardBadgeList>
 
             {event.location && (
-              <p className="text-muted-foreground">
+              <CalendarEventPopoverText>
                 Location: {event.location}
-              </p>
+              </CalendarEventPopoverText>
             )}
 
             {event.description && (
-              <p className="line-clamp-3 text-muted-foreground">
+              <CalendarEventPopoverDescription>
                 {event.description}
-              </p>
+              </CalendarEventPopoverDescription>
             )}
 
-            <Link
+            <ButtonLink
               to="/stables/$stableId/events/$eventId"
               params={{ stableId: event.stableId, eventId: event._id }}
-              className="text-xs font-semibold text-primary underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:outline-none"
+              variant="secondary"
+              size="xs"
             >
-              Open event →
-            </Link>
+              Open event
+              <ArrowRightIcon data-icon="inline-end" weight="bold" />
+            </ButtonLink>
           </Popover.Popup>
         </Popover.Positioner>
       </Popover.Portal>

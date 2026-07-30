@@ -1,4 +1,7 @@
-import { ListFilterBar } from '#/components/list-filtering/ListFilterBar'
+import {
+  getListFilterEmptyMessage,
+  ListFilterControls,
+} from '#/components/list-filtering/ListFilterControls'
 import { useListFiltering } from '#/components/list-filtering/useListFiltering'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -6,9 +9,9 @@ import { api } from 'convex/_generated/api'
 import type { Doc, Id } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 import { useMemo } from 'react'
-import { toast } from 'sonner'
+import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { createDocumentListFilterConfig } from './documentListFilters'
-import { DocumentsCard } from './DocumentsCard'
+import { DocumentsCard, DocumentUploadDialog } from './DocumentsCard'
 import type { DocumentListItem } from './DocumentsCard'
 import type { DocumentUploadValues } from './DocumentUploadForm'
 
@@ -29,18 +32,6 @@ export function HorseDocumentsCard({ horse }: HorseDocumentsCardProps) {
     items: documents,
     config: filterConfig,
   })
-  const listToolbar =
-    documents.length > 0 ? (
-      <ListFilterBar
-        config={filterConfig}
-        query={filtering.query}
-        onQueryChange={filtering.setQuery}
-        selectedFacets={filtering.selectedFacets}
-        onFacetChange={filtering.setFacetValue}
-        onReset={filtering.resetFilters}
-        isFiltering={filtering.isFiltering}
-      />
-    ) : undefined
 
   const uploadFile = async (file: File) => {
     const uploadUrl = await generateUploadUrl()
@@ -73,9 +64,9 @@ export function HorseDocumentsCard({ horse }: HorseDocumentsCardProps) {
         size: file.size,
         notes: values.notes,
       })
-      toast.success('Document added', { position: 'top-right' })
+      showAppSuccessToast({ title: 'Document added' })
     } catch (err) {
-      toast.error('Could not add document', { position: 'top-right' })
+      showAppErrorToast({ title: 'Could not add document' })
       throw err
     }
   }
@@ -83,9 +74,9 @@ export function HorseDocumentsCard({ horse }: HorseDocumentsCardProps) {
   const onRemove = async (id: Id<'stableDocuments'>) => {
     try {
       await removeDocument({ id })
-      toast.success('Document removed', { position: 'top-right' })
+      showAppSuccessToast({ title: 'Document removed' })
     } catch {
-      toast.error('Could not remove document', { position: 'top-right' })
+      showAppErrorToast({ title: 'Could not remove document' })
     }
   }
 
@@ -93,17 +84,28 @@ export function HorseDocumentsCard({ horse }: HorseDocumentsCardProps) {
     <DocumentsCard
       title="Documents"
       description="Passport scans, vaccination proof, insurance paperwork, vet reports, farrier notes, and dental records for this horse."
-      documents={filtering.items}
-      canAddDocument={data.canManage}
-      fixedHorseId={horse._id}
-      emptyMessage={
-        filtering.isFiltering
-          ? 'No documents match these filters.'
-          : 'No documents have been added for this horse yet.'
+      actions={
+        <DocumentUploadDialog
+          canAddDocument={data.canManage}
+          fixedHorseId={horse._id}
+          onAdd={onAdd}
+        />
       }
-      listToolbar={listToolbar}
-      chrome="soft"
-      onAdd={onAdd}
+      documents={filtering.items}
+      emptyMessage={getListFilterEmptyMessage({
+        filtering,
+        emptyMessage: 'No documents have been added for this horse yet.',
+        filteredEmptyMessage: 'No documents match these filters.',
+      })}
+      listToolbar={
+        <ListFilterControls
+          config={filterConfig}
+          filtering={filtering}
+          hideWhenEmpty
+        />
+      }
+      chrome="cards"
+      rowChrome="soft"
       onRemove={onRemove}
     />
   )

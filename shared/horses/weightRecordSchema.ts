@@ -48,4 +48,5 @@ export const weightRecordFormSchema = z.object({
 })
 
 export type WeightRecordFormSchema = z.infer<typeof weightRecordFormSchema>
+export type WeightRecordFormInput = z.input<typeof weightRecordFormSchema>
 export type WeightUnit = (typeof weightUnits)[number]

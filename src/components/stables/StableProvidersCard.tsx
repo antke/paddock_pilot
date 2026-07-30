@@ -1,24 +1,24 @@
 import { StableProviderForm } from '#/components/stables/StableProviderForm'
-import { dashboardItemCardClassName } from '#/components/dashboard/DashboardItemCard'
-import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
-import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
+import { DashboardBadgeList } from '#/components/dashboard/DashboardBadgeList'
+import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
+  DashboardItemList,
+  DashboardItemRecordCard,
+  DashboardItemRecordContent,
+} from '#/components/dashboard/DashboardItemCard'
+import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
+import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
+import { Button } from '#/components/ui/button'
+import { FieldPanel } from '#/components/ui/field'
+import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { api } from 'convex/_generated/api'
 import type { Doc, Id } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 import { useState } from 'react'
-import { toast } from 'sonner'
-import { stableProviderTypeLabels } from 'shared/stables/stableProviderSchema'
 import type { StableProviderFormSchema } from 'shared/stables/stableProviderSchema'
+import { StableProviderTypeBadge } from './StableBadges'
 
 type StableProvidersCardProps = {
   stableId: Id<'stables'>
@@ -38,15 +38,12 @@ export function StableProvidersCard({ stableId }: StableProvidersCardProps) {
   const onAddProvider = async (values: StableProviderFormSchema) => {
     try {
       await addProvider({ stableId, ...values })
-      toast.success('Provider saved', {
+      showAppSuccessToast({
+        title: 'Provider saved',
         description: <p>{values.name} was added to the directory.</p>,
-        position: 'top-right',
       })
     } catch (err) {
-      toast.error('Oops! Something went wrong.', {
-        description: <p>Please try again.</p>,
-        position: 'top-right',
-      })
+      showAppErrorToast()
       throw err
     }
   }
@@ -75,15 +72,12 @@ export function StableProvidersCard({ stableId }: StableProvidersCardProps) {
     try {
       await updateProvider({ id: provider._id, ...values })
       setEditingProviderId(undefined)
-      toast.success('Provider updated', {
+      showAppSuccessToast({
+        title: 'Provider updated',
         description: <p>{values.name} is up to date.</p>,
-        position: 'top-right',
       })
     } catch (err) {
-      toast.error('Oops! Something went wrong.', {
-        description: <p>Please try again.</p>,
-        position: 'top-right',
-      })
+      showAppErrorToast()
     }
   }
 
@@ -91,60 +85,46 @@ export function StableProvidersCard({ stableId }: StableProvidersCardProps) {
     try {
       setRemovingProviderId(provider._id)
       await removeProvider({ id: provider._id })
-      toast.success('Provider removed', {
+      showAppSuccessToast({
+        title: 'Provider removed',
         description: <p>{provider.name} was removed from the directory.</p>,
-        position: 'top-right',
       })
     } catch (err) {
-      toast.error('Oops! Something went wrong.', {
-        description: <p>Please try again.</p>,
-        position: 'top-right',
-      })
+      showAppErrorToast()
     } finally {
       setRemovingProviderId(undefined)
     }
   }
 
   return (
-    <Card className="bg-card/80">
-      <CardHeader>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="grid gap-1.5">
-            <CardTitle className="text-2xl leading-tight">
-              Provider directory
-            </CardTitle>
-            <CardDescription className="text-base leading-6">
-              Keep vets, farriers, dentists, physios, saddlers, and other care
-              contacts ready for event planning.
-            </CardDescription>
-          </div>
-          {createDialog}
-        </div>
-      </CardHeader>
-      <CardContent className="grid gap-6">
-        <div className="grid gap-2">
-          {data.providers.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No providers saved yet.
-            </p>
-          ) : (
-            data.providers.map((provider) => (
-              <ProviderRow
-                key={provider._id}
-                provider={provider}
-                canManage={data.canManage}
-                isEditing={editingProviderId === provider._id}
-                isRemoving={removingProviderId === provider._id}
-                onEdit={() => setEditingProviderId(provider._id)}
-                onCancel={() => setEditingProviderId(undefined)}
-                onSubmit={(values) => onUpdateProvider(provider, values)}
-                onRemove={() => onRemoveProvider(provider)}
-              />
-            ))
-          )}
-        </div>
-      </CardContent>
-    </Card>
+    <DashboardSectionCard
+      title="Provider directory"
+      description="Keep vets, farriers, dentists, physios, saddlers, and other care contacts ready for event planning."
+      actions={createDialog}
+      contentGap="loose"
+    >
+      <DashboardItemList gap="compact">
+        {data.providers.length === 0 ? (
+          <DashboardEmptyState chrome="cards">
+            No providers saved yet.
+          </DashboardEmptyState>
+        ) : (
+          data.providers.map((provider) => (
+            <ProviderRow
+              key={provider._id}
+              provider={provider}
+              canManage={data.canManage}
+              isEditing={editingProviderId === provider._id}
+              isRemoving={removingProviderId === provider._id}
+              onEdit={() => setEditingProviderId(provider._id)}
+              onCancel={() => setEditingProviderId(undefined)}
+              onSubmit={(values) => onUpdateProvider(provider, values)}
+              onRemove={() => onRemoveProvider(provider)}
+            />
+          ))
+        )}
+      </DashboardItemList>
+    </DashboardSectionCard>
   )
 }
 
@@ -169,65 +149,55 @@ function ProviderRow({
 }) {
   if (isEditing) {
     return (
-      <div className="rounded-row bg-muted/30 p-5">
+      <FieldPanel>
         <StableProviderForm
           provider={provider}
           onSubmit={onSubmit}
           onCancel={onCancel}
         />
-      </div>
+      </FieldPanel>
     )
   }
 
   return (
-    <div
-      className={dashboardItemCardClassName({
-        interactive: true,
-        className: 'grid gap-3',
-      })}
+    <DashboardItemRecordCard
+      chrome="soft"
+      actions={
+        canManage ? (
+          <>
+            <Button type="button" variant="ghost" size="sm" onClick={onEdit}>
+              Edit
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={isRemoving}
+              onClick={() => void onRemove()}
+            >
+              {isRemoving ? 'Removing...' : 'Remove'}
+            </Button>
+          </>
+        ) : undefined
+      }
     >
-      <div className="grid gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-sm font-semibold underline-offset-4 transition-colors group-hover/open:text-primary group-hover/open:underline">
-            {provider.name}
-          </h3>
-          <Badge variant="outline">
-            {stableProviderTypeLabels[provider.type]}
-          </Badge>
-        </div>
-        {(provider.phone || provider.email) && (
-          <p className="text-sm text-muted-foreground">
-            {[provider.phone, provider.email].filter(Boolean).join(' · ')}
-          </p>
-        )}
-        {provider.notes && (
-          <p className="whitespace-pre-wrap text-sm">{provider.notes}</p>
-        )}
-      </div>
-
-      {canManage && (
-        <div className="flex flex-wrap justify-end gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="shadow-none"
-            onClick={onEdit}
-          >
-            Edit
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="shadow-none"
-            disabled={isRemoving}
-            onClick={() => void onRemove()}
-          >
-            {isRemoving ? 'Removing...' : 'Remove'}
-          </Button>
-        </div>
-      )}
-    </div>
+      <DashboardItemRecordContent
+        title={provider.name}
+        titleTone="open"
+        meta={
+          <>
+            {provider.phone && <span>{provider.phone}</span>}
+            {provider.email && <span>{provider.email}</span>}
+          </>
+        }
+        metaSeparator="dot"
+        titleBadges={
+          <DashboardBadgeList>
+            <StableProviderTypeBadge type={provider.type} />
+          </DashboardBadgeList>
+        }
+        description={provider.notes}
+      />
+    </DashboardItemRecordCard>
   )
 }

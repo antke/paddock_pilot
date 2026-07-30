@@ -1,16 +1,16 @@
 import type { ReactNode } from 'react'
 
-import { Button } from '#/components/ui/button'
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '#/components/ui/dialog'
-import { cn } from '#/lib/utils'
-import { PlusIcon } from '@phosphor-icons/react'
+import {
+  RecordDialogContent,
+  RecordDialogDesktopTrigger,
+  RecordDialogFloatingTrigger,
+} from './RecordDialog'
 
 type CreateRecordDialogProps = {
   open: boolean
@@ -32,47 +32,18 @@ export function CreateRecordDialog({
   className,
 }: CreateRecordDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <div className="hidden justify-end sm:flex">
-        <DialogTrigger render={<Button type="button" variant="secondary" />}>
-          {triggerLabel}
-        </DialogTrigger>
-      </div>
+    <Dialog data-slot="create-record-dialog" open={open} onOpenChange={onOpenChange}>
+      <RecordDialogDesktopTrigger>{triggerLabel}</RecordDialogDesktopTrigger>
+      <RecordDialogFloatingTrigger label={triggerLabel} />
 
-      <DialogTrigger
-        render={
-          <Button
-            type="button"
-            variant="secondary"
-            size="icon-lg"
-            className="fixed right-5 bottom-5 z-40 size-14 rounded-full shadow-control sm:hidden"
-            aria-label={triggerLabel}
-          />
-        }
-      >
-        <PlusIcon className="size-6" weight="bold" aria-hidden={true} />
-        <span className="sr-only">{triggerLabel}</span>
-      </DialogTrigger>
-
-      <DialogContent
-        className={cn(
-          'max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-panel p-6 sm:max-w-2xl md:p-7',
-          className,
-        )}
-      >
+      <RecordDialogContent className={className}>
         <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold leading-tight tracking-tight">
-            {title}
-          </DialogTitle>
-          {description && (
-            <DialogDescription className="text-base leading-6">
-              {description}
-            </DialogDescription>
-          )}
+          <DialogTitle>{title}</DialogTitle>
+          {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
 
         {children}
-      </DialogContent>
+      </RecordDialogContent>
     </Dialog>
   )
 }

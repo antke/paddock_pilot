@@ -1,13 +1,19 @@
-import { ListFilterBar } from '#/components/list-filtering/ListFilterBar'
+import {
+  getListFilterEmptyMessage,
+  ListFilterControls,
+} from '#/components/list-filtering/ListFilterControls'
 import { useListFiltering } from '#/components/list-filtering/useListFiltering'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
+import {
+  showAppErrorToast,
+  showAppSuccessToast,
+} from '#/components/ui/sonner'
 import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 import { useCallback, useMemo } from 'react'
 import type { ReactNode } from 'react'
-import { toast } from 'sonner'
 import { CareRemindersCard } from './CareRemindersCard'
 import type { CareReminderListItem } from './CareRemindersCard'
 import type { CareReminderSubmitData } from './CareReminderForm'
@@ -41,48 +47,36 @@ export function HorseCareRemindersCard({
     items: reminders,
     config: filterConfig,
   })
-  const listToolbar =
-    reminders.length > 0 ? (
-      <ListFilterBar
-        config={filterConfig}
-        query={filtering.query}
-        onQueryChange={filtering.setQuery}
-        selectedFacets={filtering.selectedFacets}
-        onFacetChange={filtering.setFacetValue}
-        onReset={filtering.resetFilters}
-        isFiltering={filtering.isFiltering}
-      />
-    ) : undefined
 
-  const onAdd = useCallback(async (values: CareReminderSubmitData) => {
-    try {
-      await addReminder({
-        stableId: horse.stableId,
-        horseId: horse._id,
-        title: values.title,
-        description: values.description,
-        category: values.category,
-        dueDate: values.dueDate,
-        priority: values.priority,
-        status: 'pending',
-      })
+  const onAdd = useCallback(
+    async (values: CareReminderSubmitData) => {
+      try {
+        await addReminder({
+          stableId: horse.stableId,
+          horseId: horse._id,
+          title: values.title,
+          description: values.description,
+          category: values.category,
+          dueDate: values.dueDate,
+          priority: values.priority,
+          status: 'pending',
+        })
 
-      toast.success('Reminder added', {
-        description: (
-          <p>
-            {values.title} is now linked to {horse.name}.
-          </p>
-        ),
-        position: 'top-right',
-      })
-    } catch (err) {
-      toast.error('Oops! Something went wrong.', {
-        description: <p>Please try again.</p>,
-        position: 'top-right',
-      })
-      throw err
-    }
-  }, [addReminder, horse._id, horse.name, horse.stableId])
+        showAppSuccessToast({
+          title: 'Reminder added',
+          description: (
+            <p>
+              {values.title} is now linked to {horse.name}.
+            </p>
+          ),
+        })
+      } catch (err) {
+        showAppErrorToast()
+        throw err
+      }
+    },
+    [addReminder, horse._id, horse.name, horse.stableId],
+  )
 
   return (
     <CareRemindersCard
@@ -91,17 +85,23 @@ export function HorseCareRemindersCard({
       reminders={filtering.items}
       canAddReminder={data.canManage}
       fixedHorseId={horse._id}
-      emptyMessage={
-        filtering.isFiltering
-          ? 'No reminders match these filters.'
-          : 'No reminders have been added for this horse yet.'
+      emptyMessage={getListFilterEmptyMessage({
+        filtering,
+        emptyMessage: 'No reminders have been added for this horse yet.',
+        filteredEmptyMessage: 'No reminders match these filters.',
+      })}
+      listToolbar={
+        <ListFilterControls
+          config={filterConfig}
+          filtering={filtering}
+          hideWhenEmpty
+        />
       }
-      listToolbar={listToolbar}
       onAdd={onAdd}
       onComplete={(reminder) => completeWithToast(completeReminder, reminder)}
       onDismiss={(reminder) => dismissWithToast(dismissReminder, reminder)}
       onRemove={(reminder) => removeWithToast(removeReminder, reminder)}
-      chrome="soft"
+      chrome="cards"
       showHeader={false}
       onCreateActionChange={onCreateActionChange}
     />
@@ -116,15 +116,12 @@ const completeWithToast = async (
 ) => {
   try {
     await completeReminder({ id: reminder._id })
-    toast.success('Reminder completed', {
+    showAppSuccessToast({
+      title: 'Reminder completed',
       description: <p>{reminder.title} was marked as complete.</p>,
-      position: 'top-right',
     })
   } catch (err) {
-    toast.error('Oops! Something went wrong.', {
-      description: <p>Please try again.</p>,
-      position: 'top-right',
-    })
+    showAppErrorToast()
   }
 }
 
@@ -136,15 +133,12 @@ const dismissWithToast = async (
 ) => {
   try {
     await dismissReminder({ id: reminder._id })
-    toast.success('Reminder dismissed', {
+    showAppSuccessToast({
+      title: 'Reminder dismissed',
       description: <p>{reminder.title} was dismissed.</p>,
-      position: 'top-right',
     })
   } catch (err) {
-    toast.error('Oops! Something went wrong.', {
-      description: <p>Please try again.</p>,
-      position: 'top-right',
-    })
+    showAppErrorToast()
   }
 }
 
@@ -156,14 +150,11 @@ const removeWithToast = async (
 ) => {
   try {
     await removeReminder({ id: reminder._id })
-    toast.success('Reminder removed', {
+    showAppSuccessToast({
+      title: 'Reminder removed',
       description: <p>{reminder.title} was removed.</p>,
-      position: 'top-right',
     })
   } catch (err) {
-    toast.error('Oops! Something went wrong.', {
-      description: <p>Please try again.</p>,
-      position: 'top-right',
-    })
+    showAppErrorToast()
   }
 }

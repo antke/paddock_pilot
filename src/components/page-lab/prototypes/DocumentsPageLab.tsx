@@ -1,9 +1,14 @@
-import { ListFilterBar } from '#/components/list-filtering/ListFilterBar'
+import { ListFilterControls } from '#/components/list-filtering/ListFilterControls'
 import { useListFiltering } from '#/components/list-filtering/useListFiltering'
 import { createDocumentListFilterConfig } from '#/components/documents/documentListFilters'
-import { DocumentsCard } from '#/components/documents/DocumentsCard'
+import {
+  DocumentsCard,
+  DocumentUploadDialog,
+} from '#/components/documents/DocumentsCard'
 import type { DocumentListItem } from '#/components/documents/DocumentsCard'
 import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
+import { DashboardPage } from '#/components/dashboard/DashboardPage'
+import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import type { Doc, Id } from 'convex/_generated/dataModel'
 import { useMemo } from 'react'
 
@@ -27,38 +32,42 @@ type LabDocumentInput = {
 export function DocumentsPageLab({ data }: { data: DashboardLabData }) {
   const horseOptions = getLabHorseOptions(data)
   const documents = createLabDocuments(data, horseOptions)
-  const filterConfig = useMemo(createDocumentListFilterConfig, [])
+  const filterConfig = useMemo(
+    () => createDocumentListFilterConfig({ horseOptions }),
+    [horseOptions],
+  )
   const filtering = useListFiltering({ items: documents, config: filterConfig })
   const listToolbar =
     documents.length > 0 ? (
-      <ListFilterBar
-        config={filterConfig}
-        query={filtering.query}
-        onQueryChange={filtering.setQuery}
-        selectedFacets={filtering.selectedFacets}
-        onFacetChange={filtering.setFacetValue}
-        onReset={filtering.resetFilters}
-        isFiltering={filtering.isFiltering}
-      />
+      <ListFilterControls config={filterConfig} filtering={filtering} sticky />
     ) : undefined
 
   return (
-    <DocumentsCard
-      title="Documents"
-      description="Stable files, horse paperwork, care reports, insurance records, and event paperwork in the current list style."
-      documents={filtering.items}
-      canAddDocument
-      horseOptions={horseOptions}
-      emptyMessage={
-        filtering.isFiltering
-          ? 'No documents match these filters.'
-          : 'No fixture documents are available.'
-      }
-      listToolbar={listToolbar}
-      chrome="soft"
-      onAdd={async () => undefined}
-      onRemove={async () => undefined}
-    />
+    <DashboardPage>
+      <DashboardPageHeader
+        title="Documents"
+        actions={
+          <DocumentUploadDialog
+            canAddDocument
+            horseOptions={horseOptions}
+            onAdd={async () => undefined}
+          />
+        }
+      />
+
+      <DocumentsCard
+        documents={filtering.items}
+        emptyMessage={
+          filtering.isFiltering
+            ? 'No documents match these filters.'
+            : 'No fixture documents are available.'
+        }
+        listToolbar={listToolbar}
+        chrome="cards"
+        rowChrome="soft"
+        onRemove={async () => undefined}
+      />
+    </DashboardPage>
   )
 }
 
@@ -94,7 +103,8 @@ function createLabDocuments(
       fileName: 'Spring vaccination certificate.pdf',
       contentType: 'application/pdf',
       size: 820_000,
-      notes: 'Annual boosters complete. Attach to competition entries as needed.',
+      notes:
+        'Annual boosters complete. Attach to competition entries as needed.',
       horse: primaryHorse,
       event: nextEvent,
       fileUrl: '#document-vaccination',
@@ -103,7 +113,8 @@ function createLabDocuments(
       id: 'insurance-summary',
       type: 'insurance',
       fileName: `${data.stable.name} insurance summary`,
-      notes: 'Metadata-only reminder to upload the renewed cover note before the policy review.',
+      notes:
+        'Metadata-only reminder to upload the renewed cover note before the policy review.',
     },
     {
       id: 'farrier-note',
@@ -111,14 +122,20 @@ function createLabDocuments(
       fileName: `${secondaryHorse?.name ?? primaryHorse.name} shoeing notes.txt`,
       contentType: 'text/plain',
       size: 24_000,
-      notes: 'Shoeing notes from the latest reset, including next-cycle recommendations.',
+      notes:
+        'Shoeing notes from the latest reset, including next-cycle recommendations.',
       horse: secondaryHorse ?? primaryHorse,
       fileUrl: '#document-farrier',
     },
   ]
 
   return inputs.map((input, index) => ({
-    document: createLabDocument(data, input, createdBy, createdAt - index * 86_400_000),
+    document: createLabDocument(
+      data,
+      input,
+      createdBy,
+      createdAt - index * 86_400_000,
+    ),
     horseName: input.horse?.name,
     eventTitle: input.event?.title,
     fileUrl: input.fileUrl,

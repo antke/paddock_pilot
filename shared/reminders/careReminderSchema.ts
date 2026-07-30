@@ -89,23 +89,25 @@ export const careReminderInputSchema = z.object({
   status: careReminderStatusSchema.default('pending'),
 })
 
-export const careReminderFormSchema = z.object({
-  targetType: careReminderFormTargetTypeSchema,
-  horseIds: z.array(z.string()),
-  title: careReminderTitleSchema,
-  description: careReminderDescriptionSchema,
-  category: careReminderCategorySchema,
-  dueDate: careReminderDueDateSchema,
-  priority: careReminderPrioritySchema.optional(),
-}).superRefine((value, context) => {
-  if (value.targetType === 'horses' && value.horseIds.length === 0) {
-    context.addIssue({
-      code: 'custom',
-      path: ['horseIds'],
-      message: 'Select at least one horse.',
-    })
-  }
-})
+export const careReminderFormSchema = z
+  .object({
+    targetType: careReminderFormTargetTypeSchema,
+    horseIds: z.array(z.string()),
+    title: careReminderTitleSchema,
+    description: careReminderDescriptionSchema,
+    category: careReminderCategorySchema,
+    dueDate: careReminderDueDateSchema,
+    priority: careReminderPrioritySchema.optional(),
+  })
+  .superRefine((value, context) => {
+    if (value.targetType === 'horses' && value.horseIds.length === 0) {
+      context.addIssue({
+        code: 'custom',
+        path: ['horseIds'],
+        message: 'Select at least one horse.',
+      })
+    }
+  })
 
 export type CareReminderCategory = (typeof careReminderCategories)[number]
 export type CareReminderPriority = (typeof careReminderPriorities)[number]

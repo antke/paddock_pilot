@@ -1,7 +1,7 @@
 import { AppDashboard } from '#/components/dashboard/AppDashboard'
 import { PublicLandingPage } from '#/components/landing/PublicLandingPage'
+import { AuthStateSwitch } from '#/components/layout/AuthStateSwitch'
 import { RoutePending } from '#/components/layout/RoutePending'
-import { ClerkLoaded, ClerkLoading, Show } from '@clerk/tanstack-react-start'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
@@ -18,21 +18,10 @@ export const Route = createFileRoute('/')({
 
 function HomePage() {
   return (
-    <>
-      <ClerkLoading>
-        <RoutePending />
-      </ClerkLoading>
-
-      <ClerkLoaded>
-        <Show when="signed-out">
-          <PublicLandingPage />
-        </Show>
-
-        <Show when="signed-in">
-          <SignedInWelcome />
-        </Show>
-      </ClerkLoaded>
-    </>
+    <AuthStateSwitch
+      signedOut={<PublicLandingPage />}
+      signedIn={<SignedInWelcome />}
+    />
   )
 }
 

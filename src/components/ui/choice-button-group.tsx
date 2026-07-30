@@ -27,7 +27,9 @@ export function ChoiceButtonGroup<TValue extends string>({
 }: ChoiceButtonGroupProps<TValue>) {
   return (
     <ToggleGroup
+      data-slot="choice-button-group"
       value={value ? [value] : []}
+      variant="outline"
       onValueChange={(values) => {
         const nextValue = values.at(-1)
         const option = options.find((item) => item.value === nextValue)
@@ -44,7 +46,7 @@ export function ChoiceButtonGroup<TValue extends string>({
         <ToggleGroupItem
           key={option.value}
           value={option.value}
-          className="!rounded-row border border-border-subtle bg-background/55 px-4 text-muted-foreground shadow-none hover:border-primary/25 hover:bg-primary/5 data-[state=on]:border-primary/20 data-[state=on]:bg-card data-[state=on]:text-foreground data-[state=on]:shadow-control"
+          className="px-4"
         >
           {option.label}
         </ToggleGroupItem>

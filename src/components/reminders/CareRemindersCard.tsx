@@ -1,40 +1,31 @@
-import {
-  dashboardEmptyClassName,
-  dashboardSectionClassName,
-} from '#/components/dashboard/dashboardChrome'
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
+import { DashboardActions } from '#/components/dashboard/DashboardActions'
+import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
+import { DashboardLoadingState } from '#/components/dashboard/DashboardLoadingState'
+import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import {
-  dashboardItemCardClassName,
-  dashboardItemStateBadgesClassName,
+  DashboardItemList,
+  DashboardItemRecordCard,
+  DashboardItemRecordContent,
 } from '#/components/dashboard/DashboardItemCard'
-import { Badge } from '#/components/ui/badge'
+import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { Button } from '#/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
+import { formatMediumDateKey } from '#/lib/dateDisplay'
 import type { Doc } from 'convex/_generated/dataModel'
-import { CheckIcon, ClockIcon, WarningIcon, XIcon } from '@phosphor-icons/react'
-import type { Icon } from '@phosphor-icons/react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { ElementType, ReactNode } from 'react'
 import {
-  careReminderCategoryLabels,
-  careReminderPriorityLabels,
-  careReminderStatusLabels,
-} from 'shared/reminders/careReminderSchema'
-import type {
-  CareReminderPriority,
-  CareReminderStatus,
-} from 'shared/reminders/careReminderSchema'
-import { cn } from '#/lib/utils'
+  CareReminderCategoryBadge,
+  CareReminderPriorityBadge,
+  CareReminderStatusBadge,
+} from './CareReminderBadges'
 import { CareReminderForm } from './CareReminderForm'
 import type { CareReminderSubmitData } from './CareReminderForm'
-import { isCareReminderOverdue } from './careReminderState'
+import {
+  getCareReminderRecordAccent,
+  isCareReminderOverdue,
+} from './careReminderState'
 
 export type CareReminderListItem = {
   reminder: Doc<'careReminders'>
@@ -48,13 +39,14 @@ type HorseOption = {
 }
 
 type CareRemindersCardProps = {
-  title: string
+  title?: string
+  as?: ElementType
   description?: string
   reminders: Array<CareReminderListItem>
   canAddReminder: boolean
   horseOptions?: Array<HorseOption>
   fixedHorseId?: string
-  emptyMessage: string
+  emptyMessage: ReactNode
   onAdd: (data: CareReminderSubmitData) => Promise<void>
   onComplete: (reminder: Doc<'careReminders'>) => Promise<void>
   onDismiss: (reminder: Doc<'careReminders'>) => Promise<void>
@@ -62,42 +54,16 @@ type CareRemindersCardProps = {
   chrome?: DashboardChrome
   showHeader?: boolean
   headerAction?: ReactNode
+  isLoading?: boolean
   listToolbar?: ReactNode
   listFooter?: ReactNode
+  loadingLabel?: ReactNode
   onCreateActionChange?: (action: ReactNode | null) => void
 }
 
-const dateFormatter = new Intl.DateTimeFormat('en-GB', {
-  day: 'numeric',
-  month: 'short',
-  year: 'numeric',
-})
-
-const formatDueDate = (date: string) => dateFormatter.format(new Date(date))
-
-const priorityBadgeClassName = {
-  low: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
-  medium:
-    'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300',
-  high: 'border-destructive/30 bg-destructive/10 text-destructive',
-} satisfies Record<CareReminderPriority, string>
-
-const statusBadgeClassName = {
-  pending: 'border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300',
-  completed:
-    'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
-  dismissed:
-    'border-muted-foreground/25 bg-muted/50 text-muted-foreground dark:bg-muted/30',
-} satisfies Record<CareReminderStatus, string>
-
-const statusIcon = {
-  pending: ClockIcon,
-  completed: CheckIcon,
-  dismissed: XIcon,
-} satisfies Record<CareReminderStatus, Icon>
-
 export function CareRemindersCard({
   title,
+  as,
   description,
   reminders,
   canAddReminder,
@@ -111,16 +77,21 @@ export function CareRemindersCard({
   chrome = 'cards',
   showHeader = true,
   headerAction,
+  isLoading = false,
   listToolbar,
   listFooter,
+  loadingLabel = 'Loading reminders...',
   onCreateActionChange,
 }: CareRemindersCardProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
 
-  const onAddFromDialog = useCallback(async (data: CareReminderSubmitData) => {
-    await onAdd(data)
-    setIsCreateOpen(false)
-  }, [onAdd])
+  const onAddFromDialog = useCallback(
+    async (data: CareReminderSubmitData) => {
+      await onAdd(data)
+      setIsCreateOpen(false)
+    },
+    [onAdd],
+  )
 
   const form = useMemo(
     () =>
@@ -162,18 +133,22 @@ export function CareRemindersCard({
 
   const headerActions =
     headerAction || inlineCreateDialog ? (
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <DashboardActions>
         {headerAction}
         {showHeader && inlineCreateDialog}
-      </div>
+      </DashboardActions>
     ) : null
 
   const reminderList = (
-    <div className="grid gap-3">
+    <DashboardItemList>
       {!showHeader && inlineCreateDialog}
       {listToolbar}
-      {reminders.length === 0 ? (
-        <p className={dashboardEmptyClassName(chrome)}>{emptyMessage}</p>
+      {isLoading ? (
+        <DashboardLoadingState label={loadingLabel} />
+      ) : reminders.length === 0 ? (
+        <DashboardEmptyState chrome={chrome}>
+          {emptyMessage}
+        </DashboardEmptyState>
       ) : (
         reminders.map((item) => (
           <ReminderRow
@@ -187,54 +162,37 @@ export function CareRemindersCard({
         ))
       )}
       {listFooter}
-    </div>
+    </DashboardItemList>
   )
 
   const content = reminderList
 
+  if (!showHeader) return content
+
   if (chrome === 'soft') {
-    if (!showHeader) return reminderList
-
     return (
-      <section
-        className={dashboardSectionClassName(
-          'soft',
-          'grid gap-6',
-        )}
+      <DashboardSection
+        chrome="soft"
+        as={as}
+        title={title}
+        description={description}
+        actions={headerActions}
       >
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="grid gap-1.5">
-            <h2 className="text-2xl font-semibold leading-tight tracking-tight">
-              {title}
-            </h2>
-            {description && (
-              <p className="text-base leading-6 text-muted-foreground">
-                {description}
-              </p>
-            )}
-          </div>
-          {headerActions && <div className="sm:shrink-0">{headerActions}</div>}
-        </header>
-
         {reminderList}
-      </section>
+      </DashboardSection>
     )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="grid gap-1.5">
-            <CardTitle className="text-2xl">{title}</CardTitle>
-            {description && <CardDescription>{description}</CardDescription>}
-          </div>
-          {headerActions && <div className="sm:shrink-0">{headerActions}</div>}
-        </div>
-      </CardHeader>
-
-      <CardContent className="grid gap-6">{content}</CardContent>
-    </Card>
+    <DashboardSectionCard
+      as={as}
+      title={title}
+      description={description}
+      actions={headerActions}
+      contentGap="loose"
+    >
+      {content}
+    </DashboardSectionCard>
   )
 }
 
@@ -255,115 +213,65 @@ function ReminderRow({
   const overdue = isCareReminderOverdue(reminder)
 
   return (
-    <div
-      className={dashboardItemCardClassName({
-        interactive: true,
-        chrome,
-        className: 'grid gap-4 p-5',
-      })}
-    >
-      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
-        <div className="grid min-w-0 gap-3">
-          <div className="grid gap-2">
-            <h3 className="text-lg font-semibold leading-snug tracking-[-0.01em] underline-offset-4 transition-colors group-hover/dashboard-item:text-primary group-hover/dashboard-item:underline">
-              {reminder.title}
-            </h3>
-            <Badge
-              variant="outline"
-              className="min-h-5 w-fit px-2 text-[10px] font-medium leading-none text-muted-foreground shadow-none"
-            >
-              {careReminderCategoryLabels[reminder.category]}
-            </Badge>
-          </div>
-
-          <p className="text-sm text-muted-foreground">
-            Due {formatDueDate(reminder.dueDate)}
-            {item.horseName ? ` · ${item.horseName}` : ''}
-          </p>
-
-          {reminder.description && (
-            <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-              {reminder.description}
-            </p>
-          )}
-        </div>
-
-        <div className={dashboardItemStateBadgesClassName}>
+    <DashboardItemRecordCard
+      accent={getCareReminderRecordAccent(reminder)}
+      chrome={chrome}
+      actionsPlacement="footer"
+      actionsClassName="ml-auto"
+      actionBadges={
+        <>
           {reminder.priority && (
-            <Badge
-              variant="outline"
-              className={cn(
-                'min-h-5 px-2 text-[10px] font-medium leading-none shadow-none',
-                priorityBadgeClassName[reminder.priority],
-              )}
+            <CareReminderPriorityBadge priority={reminder.priority} />
+          )}
+          <CareReminderStatusBadge status={reminder.status} overdue={overdue} />
+        </>
+      }
+      actions={
+        item.canManage ? (
+          <>
+            {reminder.status === 'pending' && (
+              <>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => onComplete(reminder)}
+                >
+                  Complete
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => onDismiss(reminder)}
+                >
+                  Dismiss
+                </Button>
+              </>
+            )}
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => onRemove(reminder)}
             >
-              {careReminderPriorityLabels[reminder.priority]}
-            </Badge>
-          )}
-          <ReminderStatusBadge status={reminder.status} overdue={overdue} />
-        </div>
-      </div>
-
-      {item.canManage && (
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {reminder.status === 'pending' && (
-            <>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                className="shadow-none"
-                onClick={() => onComplete(reminder)}
-              >
-                Complete
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                className="shadow-none"
-                onClick={() => onDismiss(reminder)}
-              >
-                Dismiss
-              </Button>
-            </>
-          )}
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            className="shadow-none"
-            onClick={() => onRemove(reminder)}
-          >
-            Remove
-          </Button>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function ReminderStatusBadge({
-  status,
-  overdue,
-}: {
-  status: CareReminderStatus
-  overdue: boolean
-}) {
-  const StatusIcon = overdue ? WarningIcon : statusIcon[status]
-
-  return (
-    <Badge
-      variant="outline"
-      className={cn(
-        'min-h-5 gap-1 px-2 text-[10px] font-medium leading-none shadow-none',
-        overdue
-          ? 'border-destructive/30 bg-destructive/10 text-destructive'
-          : statusBadgeClassName[status],
-      )}
+              Remove
+            </Button>
+          </>
+        ) : undefined
+      }
     >
-      <StatusIcon className="size-3" weight="bold" />
-      {overdue ? 'Overdue' : careReminderStatusLabels[status]}
-    </Badge>
+      <DashboardItemRecordContent
+        title={reminder.title}
+        titleBadges={<CareReminderCategoryBadge category={reminder.category} />}
+        meta={
+          <>
+            <span>Due {formatMediumDateKey(reminder.dueDate)}</span>
+            {item.horseName && <span>{item.horseName}</span>}
+          </>
+        }
+        description={reminder.description}
+      />
+    </DashboardItemRecordCard>
   )
 }

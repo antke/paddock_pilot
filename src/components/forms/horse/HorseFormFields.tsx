@@ -1,61 +1,166 @@
-import { FormHelpTooltip } from '#/components/forms/FormHelpTooltip'
+import { FileUploadField } from '#/components/forms/FileUploadField'
+import { FormSection } from '#/components/forms/FormLayout'
+import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
 import {
   Field,
   FieldError,
+  FieldGrid,
   FieldGroup,
   FieldLabel,
-  FieldLegend,
-  FieldSet,
+  FieldLabelRow,
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
-import { RadioGroup, RadioGroupItem } from '#/components/ui/radio-group'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
 import { Textarea } from '#/components/ui/textarea'
-import { Controller  } from 'react-hook-form'
-import type {Control} from 'react-hook-form';
+import { formatMetaText } from '#/lib/textDisplay'
+import { calculateHorseAge, getTodayDateKey } from 'shared/horses/horseAge'
+import type { ReactNode } from 'react'
+import { Controller, useFormState, useWatch } from 'react-hook-form'
+import type { Control } from 'react-hook-form'
+import { HorseBreedAutocomplete } from './HorseBreedAutocomplete'
 import { HorseStringListField } from './HorseStringListField'
-import type { HorseFormSchema } from './horseFormSchema'
+import type { HorseFormInput, HorseFormSchema } from './horseFormSchema'
 
 type Props = {
-  control: Control<HorseFormSchema>
+  control: Control<HorseFormInput, unknown, HorseFormSchema>
   disabled?: boolean
 }
 
+type HorseSexChoice = NonNullable<HorseFormSchema['sex']> | 'unspecified'
+
 const sexOptions = [
-  { value: '', label: 'Not specified' },
+  { value: 'unspecified', label: 'Not specified' },
   { value: 'mare', label: 'Mare' },
   { value: 'gelding', label: 'Gelding' },
   { value: 'stallion', label: 'Stallion' },
-] satisfies Array<{ value: HorseFormSchema['sex'] | ''; label: string }>
+] satisfies Array<{ value: HorseSexChoice; label: string }>
 
-const toOptionalSex = (value: string) =>
-  value === '' ? undefined : (value as HorseFormSchema['sex'])
+const toOptionalSex = (value: HorseSexChoice) =>
+  value === 'unspecified' ? undefined : value
+
+type ShoeingStatusChoice =
+  | NonNullable<HorseFormSchema['shoeingStatus']>
+  | 'unspecified'
 
 const shoeingOptions = [
-  { value: '', label: 'Not specified' },
+  { value: 'unspecified', label: 'Not specified' },
   { value: 'barefoot', label: 'Barefoot' },
   { value: 'front_shoes', label: 'Front shoes' },
   { value: 'full_set', label: 'Full set' },
-] satisfies Array<{ value: HorseFormSchema['shoeingStatus'] | ''; label: string }>
+] satisfies Array<{
+  value: ShoeingStatusChoice
+  label: string
+}>
 
-const toOptionalShoeingStatus = (value: string) =>
-  value === '' ? undefined : (value as HorseFormSchema['shoeingStatus'])
+const toOptionalShoeingStatus = (value: ShoeingStatusChoice) =>
+  value === 'unspecified' ? undefined : value
+
+const shoeingStatusLabels = {
+  barefoot: 'Barefoot',
+  front_shoes: 'Front shoes',
+  full_set: 'Full set',
+} satisfies Record<NonNullable<HorseFormSchema['shoeingStatus']>, string>
 
 export function HorseFormFields({ control, disabled = false }: Props) {
+  const horseName = useWatch({ control, name: 'name' })
+  const ownerName = useWatch({ control, name: 'ownerName' })
+  const dateOfBirth = useWatch({ control, name: 'dateOfBirth' })
+  const breed = useWatch({ control, name: 'breed' })
+  const passportNumber = useWatch({ control, name: 'passportNumber' })
+  const microchipNumber = useWatch({ control, name: 'microchipNumber' })
+  const vetName = useWatch({ control, name: 'vetName' })
+  const farrierName = useWatch({ control, name: 'farrierName' })
+  const discipline = useWatch({ control, name: 'discipline' })
+  const shoeingStatus = useWatch({ control, name: 'shoeingStatus' })
+  const allergies = useWatch({ control, name: 'allergies' })
+  const feedingRoutine = useWatch({ control, name: 'feedingRoutine' })
+  const nutritionNotes = useWatch({ control, name: 'nutritionNotes' })
+  const nutritionRecommended = useWatch({
+    control,
+    name: 'nutritionRecommended',
+  })
+  const nutritionAvoid = useWatch({ control, name: 'nutritionAvoid' })
+  const { errors, submitCount } = useFormState({ control })
+  const calculatedAge = calculateHorseAge(dateOfBirth)
+
+  const detailsSummary = formatMetaText([
+    horseName || 'Unnamed horse',
+    ownerName,
+    calculatedAge !== undefined && calculatedAge >= 0
+      ? `${calculatedAge} ${calculatedAge === 1 ? 'year' : 'years'}`
+      : undefined,
+  ])
+  const careSummary =
+    formatMetaText([
+      passportNumber ? 'Passport added' : undefined,
+      microchipNumber ? 'Microchip added' : undefined,
+      vetName,
+      farrierName,
+    ]) || 'Optional'
+  const profileSummary =
+    formatMetaText([
+      breed,
+      discipline,
+      shoeingStatus ? shoeingStatusLabels[shoeingStatus] : undefined,
+      allergies?.length
+        ? `${allergies.length} ${allergies.length === 1 ? 'allergy' : 'allergies'}`
+        : undefined,
+    ]) || 'Optional'
+  const nutritionSummary =
+    feedingRoutine ||
+    nutritionNotes ||
+    nutritionRecommended?.length ||
+    nutritionAvoid?.length
+      ? 'Nutrition details added'
+      : 'Optional'
+  const detailsInvalid = Boolean(
+    errors.name ||
+    errors.ownerName ||
+    errors.dateOfBirth ||
+    errors.sex ||
+    errors.profileImage,
+  )
+  const careInvalid = Boolean(
+    errors.passportNumber ||
+    errors.microchipNumber ||
+    errors.insuranceProvider ||
+    errors.insurancePolicyNumber ||
+    errors.vetName ||
+    errors.vetPhone ||
+    errors.farrierName ||
+    errors.farrierPhone ||
+    errors.emergencyNotes,
+  )
+  const profileInvalid = Boolean(
+    errors.sire ||
+    errors.dam ||
+    errors.breed ||
+    errors.color ||
+    errors.height ||
+    errors.discipline ||
+    errors.shoeingStatus ||
+    errors.dewormingNotes ||
+    errors.allergies,
+  )
+  const nutritionInvalid = Boolean(
+    errors.feedingRoutine ||
+    errors.nutritionNotes ||
+    errors.nutritionRecommended ||
+    errors.nutritionAvoid,
+  )
+
   return (
-    <Tabs defaultValue="basics">
-      <TabsList>
-        <TabsTrigger value="basics">Basics</TabsTrigger>
-        <TabsTrigger value="care">Care details</TabsTrigger>
-        <TabsTrigger value="profile">More details</TabsTrigger>
-        <TabsTrigger value="nutrition">Nutrition</TabsTrigger>
-      </TabsList>
-
-      <TabsContent keepMounted value="basics" className="flex flex-col gap-4">
-        <FieldSet>
-          <FieldLegend>Horse information</FieldLegend>
-
-          <FieldGroup>
+    <>
+      <FormSection
+        defaultOpen
+        description="Add the horse's identifying details and profile image."
+        invalid={detailsInvalid}
+        number={1}
+        summary={detailsSummary}
+        title="Horse details"
+        validationAttempt={submitCount}
+      >
+        <FieldGroup gap="compact">
+          <FieldGrid>
             <Controller
               name="name"
               control={control}
@@ -80,62 +185,38 @@ export function HorseFormFields({ control, disabled = false }: Props) {
               )}
             />
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <Controller
-                name="age"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>Horse age</FieldLabel>
-
-                    <Input
-                      {...field}
-                      id={field.name}
-                      type="number"
-                      min={1}
-                      max={100}
-                      disabled={disabled}
-                      aria-invalid={fieldState.invalid}
-                      autoComplete="off"
-                      onChange={(e) => {
-                        const val = e.target.value
-                        field.onChange(
-                          val === '' ? undefined : e.target.valueAsNumber,
-                        )
-                      }}
-                    />
-
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-
-              <Controller
-                name="dateOfBirth"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
+            <Controller
+              name="dateOfBirth"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabelRow className="justify-between gap-3">
                     <FieldLabel htmlFor={field.name}>Date of birth</FieldLabel>
+                    <span className="text-right text-xs font-medium text-muted-foreground">
+                      {calculatedAge !== undefined && calculatedAge >= 0
+                        ? `Age: ${calculatedAge} ${calculatedAge === 1 ? 'year' : 'years'}`
+                        : 'Age calculated automatically'}
+                    </span>
+                  </FieldLabelRow>
 
-                    <Input
-                      {...field}
-                      id={field.name}
-                      value={field.value ?? ''}
-                      type="date"
-                      disabled={disabled}
-                      aria-invalid={fieldState.invalid}
-                    />
+                  <Input
+                    {...field}
+                    id={field.name}
+                    type="date"
+                    max={getTodayDateKey()}
+                    disabled={disabled}
+                    aria-invalid={fieldState.invalid}
+                  />
 
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-            </div>
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+          </FieldGrid>
 
+          <FieldGrid>
             <Controller
               name="ownerName"
               control={control}
@@ -159,115 +240,9 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                 </Field>
               )}
             />
+          </FieldGrid>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <Controller
-                name="breed"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <div className="flex items-center gap-1">
-                      <FieldLabel htmlFor={field.name}>Breed</FieldLabel>
-                      <FormHelpTooltip label="About horse breed">
-                        Breed is optional. Leave it empty if you do not track it.
-                      </FormHelpTooltip>
-                    </div>
-
-                    <Input
-                      {...field}
-                      id={field.name}
-                      type="text"
-                      disabled={disabled}
-                      aria-invalid={fieldState.invalid}
-                      placeholder="Paint"
-                      autoComplete="off"
-                    />
-
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-
-              <Controller
-                name="color"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>Color</FieldLabel>
-
-                    <Input
-                      {...field}
-                      id={field.name}
-                      value={field.value ?? ''}
-                      type="text"
-                      disabled={disabled}
-                      aria-invalid={fieldState.invalid}
-                      placeholder="Chestnut"
-                      autoComplete="off"
-                    />
-
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <Controller
-                name="height"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>Height</FieldLabel>
-
-                    <Input
-                      {...field}
-                      id={field.name}
-                      value={field.value ?? ''}
-                      type="text"
-                      disabled={disabled}
-                      aria-invalid={fieldState.invalid}
-                      placeholder="16.1hh"
-                      autoComplete="off"
-                    />
-
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-
-              <Controller
-                name="discipline"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>Discipline</FieldLabel>
-
-                    <Input
-                      {...field}
-                      id={field.name}
-                      value={field.value ?? ''}
-                      type="text"
-                      disabled={disabled}
-                      aria-invalid={fieldState.invalid}
-                      placeholder="Eventing"
-                      autoComplete="off"
-                    />
-
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-            </div>
-
+          <FieldGrid>
             <Controller
               name="sex"
               control={control}
@@ -275,24 +250,15 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>Sex</FieldLabel>
 
-                  <RadioGroup
-                    value={field.value ?? ''}
+                  <ChoiceButtonGroup
+                    value={field.value ?? 'unspecified'}
+                    options={sexOptions}
                     disabled={disabled}
-                    className="flex flex-wrap gap-4"
-                    onValueChange={(value) => field.onChange(toOptionalSex(value))}
-                  >
-                    {sexOptions.map((option) => (
-                      <Field key={option.value} orientation="horizontal">
-                        <RadioGroupItem
-                          id={`sex-${option.value || 'empty'}`}
-                          value={option.value}
-                        />
-                        <FieldLabel htmlFor={`sex-${option.value || 'empty'}`}>
-                          {option.label}
-                        </FieldLabel>
-                      </Field>
-                    ))}
-                  </RadioGroup>
+                    aria-invalid={fieldState.invalid}
+                    onValueChange={(value) =>
+                      field.onChange(toOptionalSex(value))
+                    }
+                  />
 
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
@@ -300,74 +266,81 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                 </Field>
               )}
             />
+          </FieldGrid>
 
+          <FieldGrid>
             <Controller
               name="profileImage"
               control={control}
-              render={({ field: { name, onBlur, onChange, ref } }) => (
-                <Field>
-                  <div className="flex items-center gap-1">
-                    <FieldLabel htmlFor={name}>Profile picture</FieldLabel>
-                    <FormHelpTooltip label="About horse profile picture">
-                      Upload an optional image to show on horse cards.
-                    </FormHelpTooltip>
-                  </div>
-
-                  <Input
-                    id={name}
-                    name={name}
-                    type="file"
-                    accept="image/*"
-                    disabled={disabled}
-                    autoComplete="off"
-                    ref={ref}
-                    onBlur={onBlur}
-                    onChange={(event) => onChange(event.target.files)}
-                  />
-                </Field>
+              render={({ field: { name, onBlur, onChange, ref, value } }) => (
+                <FileUploadField
+                  id={name}
+                  name={name}
+                  label="Profile picture"
+                  helpLabel="About horse profile picture"
+                  help="Upload an optional image to show on horse cards."
+                  accept="image/*"
+                  kind="image"
+                  width="full"
+                  disabled={disabled}
+                  autoComplete="off"
+                  files={value ?? null}
+                  inputRef={ref}
+                  onBlur={onBlur}
+                  onFilesChange={onChange}
+                />
               )}
             />
-          </FieldGroup>
-        </FieldSet>
-      </TabsContent>
+          </FieldGrid>
+        </FieldGroup>
+      </FormSection>
 
-      <TabsContent keepMounted value="care" className="flex flex-col gap-4">
-        <FieldSet>
-          <FieldLegend>Care contacts and documents</FieldLegend>
+      <FormSection
+        description="Keep documents, insurance, and care contacts together."
+        invalid={careInvalid}
+        number={2}
+        summary={careSummary}
+        title="Care & records"
+        validationAttempt={submitCount}
+      >
+        <FieldGroup gap="compact">
+          <CareRecordRow label="Identification">
+            <FieldGrid>
+              <Controller
+                name="passportNumber"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>
+                      Passport number
+                    </FieldLabel>
 
-          <FieldGroup>
-            <Controller
-              name="passportNumber"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Passport number</FieldLabel>
+                    <Input
+                      {...field}
+                      id={field.name}
+                      value={field.value ?? ''}
+                      type="text"
+                      disabled={disabled}
+                      aria-invalid={fieldState.invalid}
+                      placeholder="Passport or registration reference"
+                      autoComplete="off"
+                    />
 
-                  <Input
-                    {...field}
-                    id={field.name}
-                    value={field.value ?? ''}
-                    type="text"
-                    disabled={disabled}
-                    aria-invalid={fieldState.invalid}
-                    placeholder="Passport or registration reference"
-                    autoComplete="off"
-                  />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
 
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-
-            <div className="grid gap-4 md:grid-cols-2">
               <Controller
                 name="microchipNumber"
                 control={control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>Microchip number</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>
+                      Microchip number
+                    </FieldLabel>
 
                     <Input
                       {...field}
@@ -386,13 +359,45 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                   </Field>
                 )}
               />
+            </FieldGrid>
+          </CareRecordRow>
 
+          <CareRecordRow label="Insurance">
+            <FieldGrid>
+              <Controller
+                name="insuranceProvider"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>
+                      Insurance provider
+                    </FieldLabel>
+
+                    <Input
+                      {...field}
+                      id={field.name}
+                      value={field.value ?? ''}
+                      type="text"
+                      disabled={disabled}
+                      aria-invalid={fieldState.invalid}
+                      placeholder="Insurer name"
+                      autoComplete="off"
+                    />
+
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
               <Controller
                 name="insurancePolicyNumber"
                 control={control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>Insurance policy</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>
+                      Insurance policy
+                    </FieldLabel>
 
                     <Input
                       {...field}
@@ -411,32 +416,11 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                   </Field>
                 )}
               />
-            </div>
+            </FieldGrid>
+          </CareRecordRow>
 
-            <Controller
-              name="insuranceProvider"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Insurance provider</FieldLabel>
-
-                  <Input
-                    {...field}
-                    id={field.name}
-                    value={field.value ?? ''}
-                    type="text"
-                    disabled={disabled}
-                    aria-invalid={fieldState.invalid}
-                    placeholder="Insurer name"
-                    autoComplete="off"
-                  />
-
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-
-            <div className="grid gap-4 md:grid-cols-2">
+          <CareRecordRow label="Veterinary">
+            <FieldGrid>
               <Controller
                 name="vetName"
                 control={control}
@@ -480,9 +464,11 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                   </Field>
                 )}
               />
-            </div>
+            </FieldGrid>
+          </CareRecordRow>
 
-            <div className="grid gap-4 md:grid-cols-2">
+          <CareRecordRow label="Farrier">
+            <FieldGrid>
               <Controller
                 name="farrierName"
                 control={control}
@@ -526,8 +512,10 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                   </Field>
                 )}
               />
-            </div>
+            </FieldGrid>
+          </CareRecordRow>
 
+          <CareRecordRow label="Emergency">
             <Controller
               name="emergencyNotes"
               control={control}
@@ -551,61 +539,166 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                 </Field>
               )}
             />
-          </FieldGroup>
-        </FieldSet>
-      </TabsContent>
+          </CareRecordRow>
+        </FieldGroup>
+      </FormSection>
 
-      <TabsContent keepMounted value="profile" className="flex flex-col gap-4">
-        <FieldSet>
-          <FieldLegend>Additional horse details</FieldLegend>
+      <FormSection
+        description="Record breeding, hoof care, and ongoing health details."
+        invalid={profileInvalid}
+        number={3}
+        summary={profileSummary}
+        title="Profile & health"
+        validationAttempt={submitCount}
+      >
+        <FieldGroup gap="compact">
+          <FieldGrid>
+            <Controller
+              name="breed"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Breed</FieldLabel>
 
-          <FieldGroup>
-            <div className="grid gap-4 md:grid-cols-2">
-              <Controller
-                name="sire"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>Sire</FieldLabel>
-                    <Input
-                      {...field}
-                      id={field.name}
-                      value={field.value ?? ''}
-                      disabled={disabled}
-                      aria-invalid={fieldState.invalid}
-                      placeholder="Sire name"
-                      autoComplete="off"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
+                  <HorseBreedAutocomplete
+                    id={field.name}
+                    name={field.name}
+                    value={field.value ?? ''}
+                    disabled={disabled}
+                    invalid={fieldState.invalid}
+                    onBlur={field.onBlur}
+                    onValueChange={field.onChange}
+                  />
 
-              <Controller
-                name="dam"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>Dam</FieldLabel>
-                    <Input
-                      {...field}
-                      id={field.name}
-                      value={field.value ?? ''}
-                      disabled={disabled}
-                      aria-invalid={fieldState.invalid}
-                      placeholder="Dam name"
-                      autoComplete="off"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-            </div>
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
 
+            <Controller
+              name="color"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Color</FieldLabel>
+
+                  <Input
+                    {...field}
+                    id={field.name}
+                    value={field.value ?? ''}
+                    type="text"
+                    disabled={disabled}
+                    aria-invalid={fieldState.invalid}
+                    placeholder="Chestnut"
+                    autoComplete="off"
+                  />
+
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+            <Controller
+              name="height"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Height</FieldLabel>
+
+                  <Input
+                    {...field}
+                    id={field.name}
+                    value={field.value ?? ''}
+                    type="text"
+                    disabled={disabled}
+                    aria-invalid={fieldState.invalid}
+                    placeholder="16.1hh"
+                    autoComplete="off"
+                  />
+
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="discipline"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Discipline</FieldLabel>
+
+                  <Input
+                    {...field}
+                    id={field.name}
+                    value={field.value ?? ''}
+                    type="text"
+                    disabled={disabled}
+                    aria-invalid={fieldState.invalid}
+                    placeholder="Eventing"
+                    autoComplete="off"
+                  />
+
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+          </FieldGrid>
+
+          <FieldGrid>
+            <Controller
+              name="sire"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Sire</FieldLabel>
+                  <Input
+                    {...field}
+                    id={field.name}
+                    value={field.value ?? ''}
+                    disabled={disabled}
+                    aria-invalid={fieldState.invalid}
+                    placeholder="Sire name"
+                    autoComplete="off"
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="dam"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Dam</FieldLabel>
+                  <Input
+                    {...field}
+                    id={field.name}
+                    value={field.value ?? ''}
+                    disabled={disabled}
+                    aria-invalid={fieldState.invalid}
+                    placeholder="Dam name"
+                    autoComplete="off"
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+          </FieldGrid>
+
+          <FieldGrid>
             <Controller
               name="shoeingStatus"
               control={control}
@@ -613,32 +706,25 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>Shoeing status</FieldLabel>
 
-                  <RadioGroup
-                    value={field.value ?? ''}
+                  <ChoiceButtonGroup
+                    value={field.value ?? 'unspecified'}
+                    options={shoeingOptions}
                     disabled={disabled}
-                    className="flex flex-wrap gap-4"
+                    aria-invalid={fieldState.invalid}
                     onValueChange={(value) =>
                       field.onChange(toOptionalShoeingStatus(value))
                     }
-                  >
-                    {shoeingOptions.map((option) => (
-                      <Field key={option.value} orientation="horizontal">
-                        <RadioGroupItem
-                          id={`shoeing-${option.value || 'empty'}`}
-                          value={option.value}
-                        />
-                        <FieldLabel htmlFor={`shoeing-${option.value || 'empty'}`}>
-                          {option.label}
-                        </FieldLabel>
-                      </Field>
-                    ))}
-                  </RadioGroup>
+                  />
 
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
+          </FieldGrid>
 
+          <FieldGrid>
             <Controller
               name="dewormingNotes"
               control={control}
@@ -656,7 +742,9 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                     autoComplete="off"
                   />
 
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </Field>
               )}
             />
@@ -668,15 +756,20 @@ export function HorseFormFields({ control, disabled = false }: Props) {
               placeholder="One item per line\nPenicillin\nBee stings"
               disabled={disabled}
             />
-          </FieldGroup>
-        </FieldSet>
-      </TabsContent>
+          </FieldGrid>
+        </FieldGroup>
+      </FormSection>
 
-      <TabsContent keepMounted value="nutrition" className="flex flex-col gap-4">
-        <FieldSet>
-          <FieldLegend>Nutrition profile</FieldLegend>
-
-          <FieldGroup>
+      <FormSection
+        description="Document feeding routines, requirements, and restrictions."
+        invalid={nutritionInvalid}
+        number={4}
+        summary={nutritionSummary}
+        title="Nutrition"
+        validationAttempt={submitCount}
+      >
+        <FieldGroup gap="compact">
+          <FieldGrid>
             <Controller
               name="feedingRoutine"
               control={control}
@@ -724,27 +817,44 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                 </Field>
               )}
             />
+          </FieldGrid>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <HorseStringListField
-                control={control}
-                name="nutritionRecommended"
-                label="Recommended or required"
-                placeholder="One item per line\nLow-sugar chaff\nJoint supplement"
-                disabled={disabled}
-              />
+          <FieldGrid>
+            <HorseStringListField
+              control={control}
+              name="nutritionRecommended"
+              label="Recommended or required"
+              placeholder="One item per line\nLow-sugar chaff\nJoint supplement"
+              disabled={disabled}
+            />
 
-              <HorseStringListField
-                control={control}
-                name="nutritionAvoid"
-                label="Avoid or cannot eat"
-                placeholder="One item per line\nOats\nHigh-sugar treats"
-                disabled={disabled}
-              />
-            </div>
-          </FieldGroup>
-        </FieldSet>
-      </TabsContent>
-    </Tabs>
+            <HorseStringListField
+              control={control}
+              name="nutritionAvoid"
+              label="Avoid or cannot eat"
+              placeholder="One item per line\nOats\nHigh-sugar treats"
+              disabled={disabled}
+            />
+          </FieldGrid>
+        </FieldGroup>
+      </FormSection>
+    </>
+  )
+}
+
+function CareRecordRow({
+  children,
+  label,
+}: {
+  children: ReactNode
+  label: string
+}) {
+  return (
+    <div className="grid gap-4 md:grid-cols-[8.5rem_minmax(0,1fr)]">
+      <p className="pl-2 text-sm leading-snug font-bold text-foreground">
+        {label}
+      </p>
+      <div className="min-w-0">{children}</div>
+    </div>
   )
 }

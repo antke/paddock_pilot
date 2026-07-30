@@ -1,6 +1,10 @@
-import { ClerkLoaded, ClerkLoading, Show } from '@clerk/tanstack-react-start'
-import { createFileRoute, Navigate, Outlet, useLocation } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Outlet,
+} from '@tanstack/react-router'
+import { AuthStateSwitch } from '#/components/layout/AuthStateSwitch'
 import { RoutePending } from '#/components/layout/RoutePending'
+import { SignedOutRoutePrompt } from '#/components/layout/SignedOutRoutePrompt'
 
 export const Route = createFileRoute('/stables/_layout')({
   pendingComponent: RoutePending,
@@ -8,23 +12,15 @@ export const Route = createFileRoute('/stables/_layout')({
 })
 
 function StableLayout() {
-  const location = useLocation()
-
   return (
-    <>
-      <ClerkLoading>
-        <RoutePending />
-      </ClerkLoading>
-
-      <ClerkLoaded>
-        <Show when="signed-out">
-          <Navigate to="/" search={{ redirect: location.href }} />
-        </Show>
-
-        <Show when="signed-in">
-          <Outlet />
-        </Show>
-      </ClerkLoaded>
-    </>
+    <AuthStateSwitch
+      signedOut={
+        <SignedOutRoutePrompt
+          title="Sign in to view this stable"
+          description="Stable records, horses, care reminders, events, documents, and settings are available after signing in."
+        />
+      }
+      signedIn={<Outlet />}
+    />
   )
 }

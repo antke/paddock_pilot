@@ -10,7 +10,9 @@ const optionalText = <TSchema extends z.ZodString>(schema: TSchema) =>
 
 const optionalNumber = z
   .union([z.number(), z.nan(), z.undefined()])
-  .transform((val) => (val === undefined || Number.isNaN(val) ? undefined : val))
+  .transform((val) =>
+    val === undefined || Number.isNaN(val) ? undefined : val,
+  )
 
 export const eventHorseCostShareSchema = optionalNumber.pipe(
   z
@@ -33,5 +35,8 @@ export const eventHorseDetailsFormSchema = z.object({
 })
 
 export type EventHorseDetailsFormSchema = z.infer<
+  typeof eventHorseDetailsFormSchema
+>
+export type EventHorseDetailsFormInput = z.input<
   typeof eventHorseDetailsFormSchema
 >

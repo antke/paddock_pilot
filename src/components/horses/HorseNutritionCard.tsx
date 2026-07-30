@@ -1,15 +1,26 @@
-import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
+import {
+  DetailGrid,
+  DetailIconList,
+  DetailPanel,
+  DetailTextBlock,
+} from '#/components/dashboard/DetailBlocks'
+import type { DetailTone } from '#/components/dashboard/DetailBlocks'
+import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { CheckIcon, XIcon } from '@phosphor-icons/react'
 import type { Doc } from 'convex/_generated/dataModel'
 
 type HorseNutritionCardProps = {
   horse: Doc<'horses'>
+  showHeader?: boolean
 }
 
 const hasText = (value: string | undefined) => Boolean(value?.trim())
 const hasItems = (items: Array<string> | undefined) => Boolean(items?.length)
 
-export function HorseNutritionCard({ horse }: HorseNutritionCardProps) {
+export function HorseNutritionCard({
+  horse,
+  showHeader = true,
+}: HorseNutritionCardProps) {
   const hasNutrition =
     hasText(horse.feedingRoutine) ||
     hasText(horse.nutritionNotes) ||
@@ -18,47 +29,44 @@ export function HorseNutritionCard({ horse }: HorseNutritionCardProps) {
 
   if (!hasNutrition) return null
 
-  return (
-    <Card className="bg-card/80">
-      <CardHeader>
-        <CardTitle>Nutrition</CardTitle>
-      </CardHeader>
+  const content = (
+    <>
+      {horse.feedingRoutine && (
+        <DetailTextBlock label="Feeding routine" labelProps={{ size: 'sm' }}>
+          {horse.feedingRoutine}
+        </DetailTextBlock>
+      )}
 
-      <CardContent className="grid gap-4 text-sm">
-        {horse.feedingRoutine && (
-          <TextBlock label="Feeding routine" value={horse.feedingRoutine} />
-        )}
+      {horse.nutritionNotes && (
+        <DetailTextBlock label="Nutrition notes" labelProps={{ size: 'sm' }}>
+          {horse.nutritionNotes}
+        </DetailTextBlock>
+      )}
 
-        {horse.nutritionNotes && (
-          <TextBlock label="Nutrition notes" value={horse.nutritionNotes} />
-        )}
-
-        {(hasItems(horse.nutritionRecommended) ||
-          hasItems(horse.nutritionAvoid)) && (
-          <div className="grid gap-4 md:grid-cols-2">
-            <NutritionList
-              title="Recommended"
-              items={horse.nutritionRecommended ?? []}
-              tone="positive"
-            />
-            <NutritionList
-              title="Avoid"
-              items={horse.nutritionAvoid ?? []}
-              tone="negative"
-            />
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      {(hasItems(horse.nutritionRecommended) ||
+        hasItems(horse.nutritionAvoid)) && (
+        <DetailGrid breakpoint="md" gap="default">
+          <NutritionList
+            title="Recommended"
+            items={horse.nutritionRecommended ?? []}
+            tone="positive"
+          />
+          <NutritionList
+            title="Avoid"
+            items={horse.nutritionAvoid ?? []}
+            tone="negative"
+          />
+        </DetailGrid>
+      )}
+    </>
   )
-}
 
-function TextBlock({ label, value }: { label: string; value: string }) {
+  if (!showHeader) return content
+
   return (
-    <div className="grid gap-1">
-      <span className="text-muted-foreground">{label}</span>
-      <p className="whitespace-pre-wrap">{value}</p>
-    </div>
+    <DashboardSectionCard title="Nutrition" contentTextSize="sm">
+      {content}
+    </DashboardSectionCard>
   )
 }
 
@@ -69,24 +77,17 @@ function NutritionList({
 }: {
   title: string
   items: Array<string>
-  tone: 'positive' | 'negative'
+  tone: Extract<DetailTone, 'positive' | 'negative'>
 }) {
   if (items.length === 0) return null
 
-  const Icon = tone === 'positive' ? CheckIcon : XIcon
-  const iconClassName = tone === 'positive' ? 'text-green-600' : 'text-red-600'
-
   return (
-    <div className="grid gap-2 rounded-row bg-background/55 p-5">
-      <h3 className="font-medium">{title}</h3>
-      <ul className="grid gap-2">
-        {items.map((item) => (
-          <li key={item} className="flex items-start gap-2">
-            <Icon className={`mt-0.5 size-4 ${iconClassName}`} weight="bold" />
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <DetailPanel title={title} gap="compact">
+      <DetailIconList
+        icon={tone === 'positive' ? CheckIcon : XIcon}
+        iconTone={tone}
+        items={items}
+      />
+    </DetailPanel>
   )
 }

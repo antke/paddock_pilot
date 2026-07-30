@@ -1,13 +1,34 @@
+import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
+import { DashboardBadgeList } from '#/components/dashboard/DashboardBadgeList'
+import {
+  DashboardCountBadge,
+  DashboardValueBadge,
+} from '#/components/dashboard/DashboardBadges'
+import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
+import { DashboardSection } from '#/components/dashboard/DashboardSection'
+import {
+  DashboardItemList,
+  DashboardItemOpenLink,
+  DashboardItemOpenTitle,
+} from '#/components/dashboard/DashboardItemCard'
+import { DashboardLayoutGrid } from '#/components/dashboard/DashboardLayoutGrid'
+import { DashboardMetaList } from '#/components/dashboard/DashboardMetaList'
 import { formatEventDate } from '#/components/events/eventDisplay'
-import { Badge } from '#/components/ui/badge'
+import { EventRow } from '#/components/events/EventRow'
+import { HealthIssueSeverityBadge } from '#/components/horses/HorseCareBadges'
+import {
+  CareReminderCategoryBadge,
+  CareReminderStatusBadge,
+} from '#/components/reminders/CareReminderBadges'
+import { stableInvitationStatusLabels } from '#/components/stables/StableInvitationBadges'
+import { formatCommaList, formatConjunctionList } from '#/lib/textDisplay'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
+import type { ComponentProps } from 'react'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import type { FunctionReturnType } from 'convex/server'
-import { eventTypeLabels } from 'shared/events/eventSchema'
-import { careReminderCategoryLabels } from 'shared/reminders/careReminderSchema'
+import { stableInvitationRoleLabels } from 'shared/stableInvitations/invitationSchema'
 
 type StableDashboardAlerts = FunctionReturnType<
   typeof api.stableDashboardAlerts.getForStable
@@ -16,6 +37,18 @@ type StableDashboardAlerts = FunctionReturnType<
 type StableDashboardAlertsProps = {
   stableId: string
 }
+
+type AlertTone = 'attention' | 'due' | 'planned' | 'stable'
+
+const alertRowTone = {
+  attention: 'danger',
+  due: 'warning',
+  planned: 'primary',
+  stable: 'muted',
+} satisfies Record<
+  AlertTone,
+  NonNullable<ComponentProps<typeof DashboardItemOpenLink>['tone']>
+>
 
 export function StableDashboardAlerts({
   stableId,
@@ -28,19 +61,19 @@ export function StableDashboardAlerts({
   const hasAlerts = Object.values(alerts.summary).some((count) => count > 0)
 
   return (
-    <section className="grid gap-4">
-      <div>
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-xl font-semibold tracking-tight">Care alerts</h2>
-          {hasAlerts && <Badge variant="secondary">Actionable</Badge>}
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Quick checks for urgent care, missing details, follow-ups, and
-          upcoming service coordination.
-        </p>
-      </div>
-
-      <div className="grid items-start gap-x-8 gap-y-5 lg:grid-cols-2 2xl:grid-cols-4">
+    <DashboardSection
+      chrome="cards"
+      gap="compact"
+      title="Care alerts"
+      badges={
+        hasAlerts && <DashboardValueBadge>Actionable</DashboardValueBadge>
+      }
+      description="Quick checks for urgent care, missing details, follow-ups, and upcoming service coordination."
+      size="panel"
+      descriptionSize="sm"
+      titleStyle="display"
+    >
+      <DashboardLayoutGrid variant="alertColumns">
         <AlertSection
           title="Needs attention"
           count={alerts.summary.highSeverityIssueCount}
@@ -49,16 +82,21 @@ export function StableDashboardAlerts({
             <EmptyAlert>No high-severity active health issues.</EmptyAlert>
           ) : (
             alerts.highSeverityIssues.slice(0, 4).map((issue) => (
-              <AlertItem key={issue.id}>
-                <Link
-                  to="/stables/$stableId/horses/$horseId"
-                  params={{ stableId, horseId: issue.horseId }}
-                  className="font-medium hover:underline"
-                >
-                  {issue.horseName}
-                </Link>
-                <p className="text-sm text-muted-foreground">{issue.title}</p>
-              </AlertItem>
+              <DashboardItemOpenLink
+                key={issue.id}
+                to="/stables/$stableId/horses/$horseId"
+                params={{ stableId, horseId: issue.horseId }}
+                tone={alertRowTone.attention}
+                density="compact"
+              >
+                <DashboardBadgeList>
+                  <DashboardItemOpenTitle>
+                    {issue.horseName}
+                  </DashboardItemOpenTitle>
+                  <HealthIssueSeverityBadge severity="high" />
+                </DashboardBadgeList>
+                <DashboardMetaList>{issue.title}</DashboardMetaList>
+              </DashboardItemOpenLink>
             ))
           )}
         </AlertSection>
@@ -71,21 +109,28 @@ export function StableDashboardAlerts({
             <EmptyAlert>No reminders due in the next 7 days.</EmptyAlert>
           ) : (
             alerts.dueReminders.slice(0, 4).map((reminder) => (
-              <AlertItem key={reminder.id}>
-                <Link
-                  to="/stables/$stableId/reminders"
-                  params={{ stableId }}
-                  className="font-medium hover:underline"
-                >
-                  {reminder.title}
-                </Link>
-                <p className="text-sm text-muted-foreground">
-                  {reminder.overdue ? 'Overdue' : 'Due'}{' '}
-                  {formatEventDate(reminder.dueDate)} ·{' '}
-                  {careReminderCategoryLabels[reminder.category]}
-                  {reminder.horseName ? ` · ${reminder.horseName}` : ''}
-                </p>
-              </AlertItem>
+              <DashboardItemOpenLink
+                key={reminder.id}
+                to="/stables/$stableId/reminders"
+                params={{ stableId }}
+                tone={alertRowTone[reminder.overdue ? 'attention' : 'due']}
+                density="compact"
+              >
+                <DashboardBadgeList>
+                  <DashboardItemOpenTitle>
+                    {reminder.title}
+                  </DashboardItemOpenTitle>
+                  <CareReminderStatusBadge
+                    status="pending"
+                    overdue={reminder.overdue}
+                  />
+                  <CareReminderCategoryBadge category={reminder.category} />
+                </DashboardBadgeList>
+                <DashboardMetaList separator="dot">
+                  <span>Due {formatEventDate(reminder.dueDate)}</span>
+                  {reminder.horseName && <span>{reminder.horseName}</span>}
+                </DashboardMetaList>
+              </DashboardItemOpenLink>
             ))
           )}
         </AlertSection>
@@ -98,19 +143,23 @@ export function StableDashboardAlerts({
             <EmptyAlert>No planned events in the next 30 days.</EmptyAlert>
           ) : (
             alerts.upcomingEvents.slice(0, 4).map((event) => (
-              <AlertItem key={event.id}>
-                <Link
-                  to="/stables/$stableId/events/$eventId"
-                  params={{ stableId, eventId: event.id }}
-                  className="font-medium hover:underline"
-                >
-                  {event.title}
-                </Link>
-                <p className="text-sm text-muted-foreground">
-                  {formatEventDate(event.date)} · {eventTypeLabels[event.type]}{' '}
-                  · {event.horseCount} horse{event.horseCount === 1 ? '' : 's'}
-                </p>
-              </AlertItem>
+              <EventRow
+                key={event.id}
+                event={{
+                  _id: event.id,
+                  stableId,
+                  title: event.title,
+                  date: event.date,
+                  time: event.time,
+                  type: event.type,
+                  status: 'planned',
+                }}
+                accent="primary"
+                chrome="soft"
+                density="compact"
+                horseCount={event.horseCount}
+                variant="compact"
+              />
             ))
           )}
         </AlertSection>
@@ -125,19 +174,21 @@ export function StableDashboardAlerts({
             </EmptyAlert>
           ) : (
             alerts.profileGaps.slice(0, 4).map((horse) => (
-              <AlertItem key={horse.horseId}>
-                <Link
-                  to="/stables/$stableId/horses/$horseId/edit"
-                  params={{ stableId, horseId: horse.horseId }}
-                  className="font-medium hover:underline"
-                >
+              <DashboardItemOpenLink
+                key={horse.horseId}
+                to="/stables/$stableId/horses/$horseId/edit"
+                params={{ stableId, horseId: horse.horseId }}
+                tone={alertRowTone.stable}
+                density="compact"
+              >
+                <DashboardItemOpenTitle>
                   {horse.horseName}
-                </Link>
-                <p className="text-sm text-muted-foreground">
-                  Missing {horse.missingFields.slice(0, 3).join(', ')}
+                </DashboardItemOpenTitle>
+                <DashboardMetaList>
+                  Missing {formatCommaList(horse.missingFields.slice(0, 3))}
                   {horse.missingFields.length > 3 ? '…' : ''}
-                </p>
-              </AlertItem>
+                </DashboardMetaList>
+              </DashboardItemOpenLink>
             ))
           )}
         </AlertSection>
@@ -150,18 +201,18 @@ export function StableDashboardAlerts({
             <EmptyAlert>Completed events have aftercare notes.</EmptyAlert>
           ) : (
             alerts.completionNoteGaps.slice(0, 4).map((event) => (
-              <AlertItem key={event.id}>
-                <Link
-                  to="/stables/$stableId/events/$eventId/edit"
-                  params={{ stableId, eventId: event.id }}
-                  className="font-medium hover:underline"
-                >
-                  {event.title}
-                </Link>
-                <p className="text-sm text-muted-foreground">
+              <DashboardItemOpenLink
+                key={event.id}
+                to="/stables/$stableId/events/$eventId/edit"
+                params={{ stableId, eventId: event.id }}
+                tone={alertRowTone.stable}
+                density="compact"
+              >
+                <DashboardItemOpenTitle>{event.title}</DashboardItemOpenTitle>
+                <DashboardMetaList>
                   Completed {formatEventDate(event.date)} without notes.
-                </p>
-              </AlertItem>
+                </DashboardMetaList>
+              </DashboardItemOpenLink>
             ))
           )}
         </AlertSection>
@@ -176,18 +227,20 @@ export function StableDashboardAlerts({
             </EmptyAlert>
           ) : (
             alerts.serviceOutcomeGaps.slice(0, 4).map((row) => (
-              <AlertItem key={row.id}>
-                <Link
-                  to="/stables/$stableId/events/$eventId"
-                  params={{ stableId, eventId: row.eventId }}
-                  className="font-medium hover:underline"
-                >
+              <DashboardItemOpenLink
+                key={row.id}
+                to="/stables/$stableId/events/$eventId"
+                params={{ stableId, eventId: row.eventId }}
+                tone={alertRowTone.stable}
+                density="compact"
+              >
+                <DashboardItemOpenTitle>
                   {row.eventTitle}
-                </Link>
-                <p className="text-sm text-muted-foreground">
+                </DashboardItemOpenTitle>
+                <DashboardMetaList>
                   Add outcome notes for {row.horseName}.
-                </p>
-              </AlertItem>
+                </DashboardMetaList>
+              </DashboardItemOpenLink>
             ))
           )}
         </AlertSection>
@@ -200,25 +253,23 @@ export function StableDashboardAlerts({
             <EmptyAlert>Event provider details are filled in.</EmptyAlert>
           ) : (
             alerts.providerGaps.slice(0, 4).map((event) => (
-              <AlertItem key={event.id}>
-                <Link
-                  to="/stables/$stableId/events/$eventId/edit"
-                  params={{ stableId, eventId: event.id }}
-                  className="font-medium hover:underline"
-                >
-                  {event.title}
-                </Link>
-                <p className="text-sm text-muted-foreground">
+              <DashboardItemOpenLink
+                key={event.id}
+                to="/stables/$stableId/events/$eventId/edit"
+                params={{ stableId, eventId: event.id }}
+                tone={alertRowTone.stable}
+                density="compact"
+              >
+                <DashboardItemOpenTitle>{event.title}</DashboardItemOpenTitle>
+                <DashboardMetaList>
                   Missing{' '}
-                  {[
+                  {formatConjunctionList([
                     event.missingProviderName ? 'provider name' : null,
                     event.missingProviderPhone ? 'provider phone' : null,
-                  ]
-                    .filter(Boolean)
-                    .join(' and ')}
+                  ])}
                   .
-                </p>
-              </AlertItem>
+                </DashboardMetaList>
+              </DashboardItemOpenLink>
             ))
           )}
         </AlertSection>
@@ -232,40 +283,46 @@ export function StableDashboardAlerts({
               No pending stable or horse event invitations.
             </EmptyAlert>
           ) : (
-            <div className="grid gap-3">
+            <>
               {alerts.pendingStableInvitations.slice(0, 2).map((invitation) => (
-                <AlertItem key={invitation.id}>
-                  <Link
-                    to="/stables/$stableId/settings"
-                    params={{ stableId }}
-                    className="font-medium hover:underline"
-                  >
+                <DashboardItemOpenLink
+                  key={invitation.id}
+                  to="/stables/$stableId/settings"
+                  params={{ stableId }}
+                  tone={alertRowTone.stable}
+                  density="compact"
+                >
+                  <DashboardItemOpenTitle>
                     {invitation.email}
-                  </Link>
-                  <p className="text-sm text-muted-foreground">
-                    Stable {invitation.role} invitation is {invitation.status}.
-                  </p>
-                </AlertItem>
+                  </DashboardItemOpenTitle>
+                  <DashboardMetaList>
+                    Stable {stableInvitationRoleLabels[invitation.role]}{' '}
+                    invitation is{' '}
+                    {stableInvitationStatusLabels[invitation.status]}.
+                  </DashboardMetaList>
+                </DashboardItemOpenLink>
               ))}
               {alerts.pendingHorseInvitations.slice(0, 2).map((invitation) => (
-                <AlertItem key={invitation.id}>
-                  <Link
-                    to="/stables/$stableId/events/$eventId"
-                    params={{ stableId, eventId: invitation.eventId }}
-                    className="font-medium hover:underline"
-                  >
+                <DashboardItemOpenLink
+                  key={invitation.id}
+                  to="/stables/$stableId/events/$eventId"
+                  params={{ stableId, eventId: invitation.eventId }}
+                  tone={alertRowTone.stable}
+                  density="compact"
+                >
+                  <DashboardItemOpenTitle>
                     {invitation.eventTitle}
-                  </Link>
-                  <p className="text-sm text-muted-foreground">
+                  </DashboardItemOpenTitle>
+                  <DashboardMetaList>
                     Waiting for {invitation.horseName}.
-                  </p>
-                </AlertItem>
+                  </DashboardMetaList>
+                </DashboardItemOpenLink>
               ))}
-            </div>
+            </>
           )}
         </AlertSection>
-      </div>
-    </section>
+      </DashboardLayoutGrid>
+    </DashboardSection>
   )
 }
 
@@ -279,20 +336,21 @@ function AlertSection({
   children: React.ReactNode
 }) {
   return (
-    <div className="grid gap-3 border-t border-border-subtle pt-4">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="font-medium">{title}</h3>
-        <Badge variant={count > 0 ? 'default' : 'secondary'}>{count}</Badge>
-      </div>
-      <div className="grid gap-3">{children}</div>
-    </div>
+    <DashboardSection chrome="soft" gap="compact">
+      <DashboardInlineHeader
+        title={title}
+        as="h3"
+        aside={<DashboardCountBadge count={count} />}
+      />
+      <DashboardItemList>{children}</DashboardItemList>
+    </DashboardSection>
   )
 }
 
-function AlertItem({ children }: { children: React.ReactNode }) {
-  return <div className="grid gap-1 text-sm">{children}</div>
-}
-
 function EmptyAlert({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm text-muted-foreground">{children}</p>
+  return (
+    <DashboardEmptyState chrome="soft" spacing="flush">
+      {children}
+    </DashboardEmptyState>
+  )
 }

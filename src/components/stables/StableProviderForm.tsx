@@ -1,23 +1,21 @@
-import { Button } from '#/components/ui/button'
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-} from '#/components/ui/field'
+import { InlineForm } from '#/components/forms/FormLayout'
+import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
+import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
+import { Field, FieldError, FieldGrid, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Textarea } from '#/components/ui/textarea'
-import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Doc } from 'convex/_generated/dataModel'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import {
   stableProviderFormSchema,
   stableProviderTypeLabels,
-  stableProviderTypes
-  
-  
+  stableProviderTypes,
 } from 'shared/stables/stableProviderSchema'
-import type {StableProviderFormSchema, StableProviderType} from 'shared/stables/stableProviderSchema';
+import type {
+  StableProviderFormSchema,
+  StableProviderType,
+} from 'shared/stables/stableProviderSchema'
 
 type StableProviderFormProps = {
   provider?: Doc<'stableProviders'>
@@ -26,6 +24,10 @@ type StableProviderFormProps = {
 }
 
 const asProviderType = (value: string) => value as StableProviderType
+const providerTypeOptions = stableProviderTypes.map((type) => ({
+  value: type,
+  label: stableProviderTypeLabels[type],
+}))
 
 export function StableProviderForm({
   provider,
@@ -50,35 +52,26 @@ export function StableProviderForm({
   }
 
   return (
-    <form className="grid gap-5" onSubmit={form.handleSubmit(submit)}>
-      <Field data-invalid={Boolean(form.formState.errors.type)}>
-        <FieldLabel>Provider type</FieldLabel>
-        <ToggleGroup
-          value={[form.watch('type')]}
-          onValueChange={(values) => {
-            const nextValue = values.at(-1)
-            if (nextValue) {
-              form.setValue('type', asProviderType(nextValue), {
-                shouldDirty: true,
-                shouldValidate: true,
-              })
-            }
-          }}
-          variant="outline"
-          className="flex-wrap"
-        >
-          {stableProviderTypes.map((type) => (
-            <ToggleGroupItem key={type} value={type}>
-              {stableProviderTypeLabels[type]}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-        {form.formState.errors.type && (
-          <FieldError errors={[form.formState.errors.type]} />
+    <InlineForm onSubmit={form.handleSubmit(submit)}>
+      <Controller
+        name="type"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel>Provider type</FieldLabel>
+            <ChoiceButtonGroup
+              value={field.value}
+              options={providerTypeOptions}
+              disabled={form.formState.isSubmitting}
+              aria-invalid={fieldState.invalid}
+              onValueChange={(value) => field.onChange(asProviderType(value))}
+            />
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
         )}
-      </Field>
+      />
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <FieldGrid>
         <Field data-invalid={Boolean(form.formState.errors.name)}>
           <FieldLabel htmlFor="provider-name">Name</FieldLabel>
           <Input
@@ -86,6 +79,8 @@ export function StableProviderForm({
             type="text"
             autoComplete="off"
             placeholder="Provider name"
+            disabled={form.formState.isSubmitting}
+            aria-invalid={Boolean(form.formState.errors.name)}
             {...form.register('name')}
           />
           {form.formState.errors.name && (
@@ -100,13 +95,15 @@ export function StableProviderForm({
             type="tel"
             autoComplete="off"
             placeholder="Contact number"
+            disabled={form.formState.isSubmitting}
+            aria-invalid={Boolean(form.formState.errors.phone)}
             {...form.register('phone')}
           />
           {form.formState.errors.phone && (
             <FieldError errors={[form.formState.errors.phone]} />
           )}
         </Field>
-      </div>
+      </FieldGrid>
 
       <Field data-invalid={Boolean(form.formState.errors.email)}>
         <FieldLabel htmlFor="provider-email">Email</FieldLabel>
@@ -115,6 +112,8 @@ export function StableProviderForm({
           type="email"
           autoComplete="off"
           placeholder="Optional email"
+          disabled={form.formState.isSubmitting}
+          aria-invalid={Boolean(form.formState.errors.email)}
           {...form.register('email')}
         />
         {form.formState.errors.email && (
@@ -128,6 +127,8 @@ export function StableProviderForm({
           id="provider-notes"
           autoComplete="off"
           placeholder="Specialisms, preferred booking details, or reminders"
+          disabled={form.formState.isSubmitting}
+          aria-invalid={Boolean(form.formState.errors.notes)}
           {...form.register('notes')}
         />
         {form.formState.errors.notes && (
@@ -135,16 +136,12 @@ export function StableProviderForm({
         )}
       </Field>
 
-      <div className="flex flex-wrap justify-end gap-2">
-        {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-        )}
-        <Button type="submit" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting ? 'Saving...' : 'Save provider'}
-        </Button>
-      </div>
-    </form>
+      <FormSubmitActions
+        isSubmitting={form.formState.isSubmitting}
+        onCancel={onCancel}
+        submitLabel="Save provider"
+        submittingLabel="Saving..."
+      />
+    </InlineForm>
   )
 }

@@ -1,8 +1,17 @@
 import { useEffect, useState } from 'react'
+import { XIcon } from '@phosphor-icons/react'
 
+import { ActionGroup } from '#/components/ui/action-group'
+import { Badge } from '#/components/ui/badge'
+import { Button } from '#/components/ui/button'
 import { cn } from '#/lib/utils'
 
 const CHIP_ROW_TRANSITION_MS = 200 // Keep in sync with app-height-collapse duration.
+const listFilterChipClassName =
+  'max-w-full min-w-0 animate-in duration-200 fade-in-0 slide-in-from-top-1 zoom-in-95 motion-reduce:animate-none'
+const listFilterChipLabelClassName =
+  'shrink-0 font-semibold text-muted-foreground'
+const listFilterChipValueClassName = 'min-w-0 max-w-48 truncate font-medium'
 
 export type ListFilterChip<TFacetId extends string = string> = {
   facetId: TFacetId
@@ -25,9 +34,8 @@ export function ListFilterChips<TFacetId extends string = string>({
   onReset,
   className,
 }: ListFilterChipsProps<TFacetId>) {
-  const [previousChips, setPreviousChips] = useState<
-    ReadonlyArray<ListFilterChip<TFacetId>>
-  >(chips)
+  const [previousChips, setPreviousChips] =
+    useState<ReadonlyArray<ListFilterChip<TFacetId>>>(chips)
 
   useEffect(() => {
     if (isFiltering) {
@@ -49,52 +57,73 @@ export function ListFilterChips<TFacetId extends string = string>({
       aria-hidden={!isFiltering}
       className={cn(
         'app-height-collapse',
-        isFiltering
-          ? 'app-height-collapse-open'
-          : 'app-height-collapse-closed',
+        isFiltering ? 'app-height-collapse-open' : 'app-height-collapse-closed',
         className,
       )}
     >
       <div className="app-height-collapse-inner">
-        <div className="flex flex-wrap items-center gap-2 pt-3">
+        <ActionGroup align="start" className="pt-3 sm:pt-4">
           {visibleChips.map((chip) => {
             const accessibleLabel = `${chip.label}: ${chip.valueLabel}`
 
             return (
-              <span
+              <ListFilterChipItem
                 key={chip.facetId}
-                className="inline-flex max-w-full min-w-0 animate-in items-center gap-1.5 rounded-control bg-muted px-2.5 py-1 text-xs text-foreground duration-200 fade-in-0 slide-in-from-top-1 zoom-in-95 motion-reduce:animate-none"
+                chip={chip}
+                disabled={!isFiltering}
+                onRemove={() => onRemove(chip.facetId)}
                 title={accessibleLabel}
-              >
-                <span className="shrink-0 text-muted-foreground">
-                  {chip.label}:
-                </span>
-                <span className="min-w-0 max-w-48 truncate font-medium">
-                  {chip.valueLabel}
-                </span>
-                <button
-                  type="button"
-                  className="-mr-1 inline-flex size-5 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/80 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:outline-none"
-                  aria-label={`Remove ${accessibleLabel} filter`}
-                  disabled={!isFiltering}
-                  onClick={() => onRemove(chip.facetId)}
-                >
-                  ×
-                </button>
-              </span>
+              />
             )
           })}
 
-          <button
+          <Button
             type="button"
-            className="inline-flex h-7 items-center rounded-control px-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:outline-none disabled:pointer-events-none"
+            variant="subtle"
+            size="xs"
             disabled={!isFiltering}
             onClick={onReset}
           >
             Clear all
-          </button>
-        </div>
+          </Button>
+        </ActionGroup>
       </div>
     </div>
+  )
+}
+
+function ListFilterChipItem<TFacetId extends string = string>({
+  chip,
+  disabled,
+  onRemove,
+  title,
+}: {
+  chip: ListFilterChip<TFacetId>
+  disabled: boolean
+  onRemove: () => void
+  title: string
+}) {
+  return (
+    <Badge
+      variant="filter"
+      size="chip"
+      className={listFilterChipClassName}
+      title={title}
+    >
+      <span className={listFilterChipLabelClassName}>
+        {chip.label}:
+      </span>
+      <span className={listFilterChipValueClassName}>{chip.valueLabel}</span>
+      <Button
+        type="button"
+        variant="subtle"
+        size="chip-icon"
+        aria-label={`Remove ${title} filter`}
+        disabled={disabled}
+        onClick={onRemove}
+      >
+        <XIcon aria-hidden={true} weight="bold" />
+      </Button>
+    </Badge>
   )
 }

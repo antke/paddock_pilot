@@ -1,25 +1,29 @@
 import { NutritionLogForm } from '#/components/horses/NutritionLogForm'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
-import { ListFilterBar } from '#/components/list-filtering/ListFilterBar'
+import { FilteredDashboardItemList } from '#/components/list-filtering/FilteredDashboardItemList'
 import { useListFiltering } from '#/components/list-filtering/useListFiltering'
 import {
-  dashboardEmptyClassName,
-  dashboardSectionClassName,
-} from '#/components/dashboard/dashboardChrome'
+  DetailListBlock,
+  DetailListGrid,
+  DetailTextBlock,
+} from '#/components/dashboard/DetailBlocks'
+import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import {
-  dashboardItemActionButtonsClassName,
-  dashboardItemActionColumnClassName,
-  dashboardItemActionGridClassName,
-  dashboardItemCardClassName,
+  DashboardItemRecordCard,
+  DashboardItemRecordContent,
 } from '#/components/dashboard/DashboardItemCard'
 import { Button } from '#/components/ui/button'
+import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
+import {
+  dateKeyToTimestamp,
+  formatMediumTimestampDate,
+} from '#/lib/dateDisplay'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 import { useCallback, useMemo, useState } from 'react'
-import { toast } from 'sonner'
 import type { NutritionLogFormSchema } from 'shared/horses/nutritionLogSchema'
 import { createHorseNutritionLogListFilterConfig } from './horseDetailListFilters'
 import type { HorseDetailCreateActionChange } from './useHorseDetailCreateAction'
@@ -29,18 +33,6 @@ type HorseNutritionLogsCardProps = {
   horse: Doc<'horses'>
   onCreateActionChange?: HorseDetailCreateActionChange
 }
-
-const dateFormatter = new Intl.DateTimeFormat(undefined, {
-  month: 'short',
-  day: 'numeric',
-  year: 'numeric',
-})
-
-const formatChangedAt = (timestamp: number) =>
-  dateFormatter.format(new Date(timestamp))
-
-const changedDateToTimestamp = (date: string) =>
-  new Date(`${date}T00:00:00`).getTime()
 
 export function HorseNutritionLogsCard({
   horse,
@@ -62,44 +54,32 @@ export function HorseNutritionLogsCard({
     items: logs,
     config: filterConfig,
   })
-  const listToolbar =
-    logs.length > 0 ? (
-      <ListFilterBar
-        config={filterConfig}
-        query={filtering.query}
-        onQueryChange={filtering.setQuery}
-        selectedFacets={filtering.selectedFacets}
-        onFacetChange={filtering.setFacetValue}
-        onReset={filtering.resetFilters}
-        isFiltering={filtering.isFiltering}
-      />
-    ) : undefined
 
-  const onAddNutritionLog = useCallback(async (data: NutritionLogFormSchema) => {
-    try {
-      await addNutritionLog({
-        horseId: horse._id,
-        changedAt: changedDateToTimestamp(data.changedDate),
-        summary: data.summary,
-        feedingRoutineSnapshot: data.feedingRoutineSnapshot,
-        recommendedSnapshot: data.recommendedSnapshot,
-        avoidSnapshot: data.avoidSnapshot,
-        notes: data.notes,
-      })
+  const onAddNutritionLog = useCallback(
+    async (data: NutritionLogFormSchema) => {
+      try {
+        await addNutritionLog({
+          horseId: horse._id,
+          changedAt: dateKeyToTimestamp(data.changedDate),
+          summary: data.summary,
+          feedingRoutineSnapshot: data.feedingRoutineSnapshot,
+          recommendedSnapshot: data.recommendedSnapshot,
+          avoidSnapshot: data.avoidSnapshot,
+          notes: data.notes,
+        })
 
-      toast.success('Nutrition log added', {
-        description: <p>{horse.name}'s nutrition history was updated.</p>,
-        position: 'top-right',
-      })
-      setIsCreateOpen(false)
-    } catch (err) {
-      toast.error('Oops! Something went wrong.', {
-        description: <p>Please try again.</p>,
-        position: 'top-right',
-      })
-      throw err
-    }
-  }, [addNutritionLog, horse._id, horse.name])
+        showAppSuccessToast({
+          title: 'Nutrition log added',
+          description: <p>{horse.name}'s nutrition history was updated.</p>,
+        })
+        setIsCreateOpen(false)
+      } catch (err) {
+        showAppErrorToast()
+        throw err
+      }
+    },
+    [addNutritionLog, horse._id, horse.name],
+  )
 
   const createDialog = useMemo(
     () =>
@@ -124,43 +104,33 @@ export function HorseNutritionLogsCard({
     try {
       setPendingLogId(log._id)
       await removeNutritionLog({ id: log._id })
-      toast.success('Nutrition log removed', {
+      showAppSuccessToast({
+        title: 'Nutrition log removed',
         description: <p>{log.summary} was removed.</p>,
-        position: 'top-right',
       })
     } catch (err) {
-      toast.error('Oops! Something went wrong.', {
-        description: <p>Please try again.</p>,
-        position: 'top-right',
-      })
+      showAppErrorToast()
     } finally {
       setPendingLogId(undefined)
     }
   }
 
   const logList = (
-    <div className="grid gap-4">
-      {listToolbar}
-      {logs.length === 0 ? (
-        <div className={dashboardEmptyClassName('soft')}>
-          <p>No nutrition changes have been logged for this horse yet.</p>
-        </div>
-      ) : filtering.items.length === 0 ? (
-        <div className={dashboardEmptyClassName('soft')}>
-          <p>No nutrition logs match this search.</p>
-        </div>
-      ) : (
-        filtering.items.map((log) => (
-          <NutritionLogRow
-            key={log._id}
-            log={log}
-            canManage={canManage}
-            pending={pendingLogId === log._id}
-            onRemove={onRemoveNutritionLog}
-          />
-        ))
+    <FilteredDashboardItemList
+      config={filterConfig}
+      filtering={filtering}
+      emptyMessage="No nutrition changes have been logged for this horse yet."
+      filteredEmptyMessage="No nutrition logs match this search."
+      renderItem={(log) => (
+        <NutritionLogRow
+          key={log._id}
+          log={log}
+          canManage={canManage}
+          pending={pendingLogId === log._id}
+          onRemove={onRemoveNutritionLog}
+        />
       )}
-    </div>
+    />
   )
 
   const content = (
@@ -172,11 +142,7 @@ export function HorseNutritionLogsCard({
 
   if (onCreateActionChange) return content
 
-  return (
-    <section className={dashboardSectionClassName('soft', 'grid gap-6')}>
-      {content}
-    </section>
-  )
+  return <DashboardSection chrome="cards">{content}</DashboardSection>
 }
 
 function NutritionLogRow({
@@ -191,85 +157,52 @@ function NutritionLogRow({
   onRemove: (log: Doc<'horseNutritionLogs'>) => Promise<void>
 }) {
   return (
-    <div
-      className={dashboardItemCardClassName({
-        interactive: true,
-        chrome: 'soft',
-        className: dashboardItemActionGridClassName,
-      })}
+    <DashboardItemRecordCard
+      chrome="cards"
+      actionsPlacement="footer"
+      actionsClassName="ml-auto"
+      actions={
+        canManage ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={pending}
+            onClick={() => onRemove(log)}
+          >
+            Remove
+          </Button>
+        ) : undefined
+      }
     >
-      <div className="grid min-w-0 gap-3">
-        <div className="grid gap-2">
-          <h3 className="font-medium">{log.summary}</h3>
-          <p className="text-sm text-muted-foreground">
-            Logged {formatChangedAt(log.changedAt)}
-          </p>
-          {log.notes && (
-            <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-              {log.notes}
-            </p>
-          )}
-        </div>
-
+      <DashboardItemRecordContent
+        title={log.summary}
+        titleSize="dense"
+        meta={<span>Logged {formatMediumTimestampDate(log.changedAt)}</span>}
+        description={log.notes}
+      >
         {log.feedingRoutineSnapshot && (
-          <div className="grid gap-1 text-sm">
-            <span className="text-muted-foreground">Routine snapshot</span>
-            <p className="whitespace-pre-wrap">{log.feedingRoutineSnapshot}</p>
-          </div>
+          <DetailTextBlock label="Routine snapshot">
+            {log.feedingRoutineSnapshot}
+          </DetailTextBlock>
         )}
 
         {Boolean(
           log.recommendedSnapshot?.length || log.avoidSnapshot?.length,
         ) && (
-          <div className="grid gap-2 text-sm sm:grid-cols-2">
+          <DetailListGrid>
             {Boolean(log.recommendedSnapshot?.length) && (
-              <SnapshotList
-                title="Recommended"
+              <DetailListBlock
+                label="Recommended"
                 items={log.recommendedSnapshot ?? []}
               />
             )}
             {Boolean(log.avoidSnapshot?.length) && (
-              <SnapshotList title="Avoid" items={log.avoidSnapshot ?? []} />
+              <DetailListBlock label="Avoid" items={log.avoidSnapshot ?? []} />
             )}
-          </div>
+          </DetailListGrid>
         )}
-      </div>
-
-      {canManage && (
-        <div className={dashboardItemActionColumnClassName}>
-          <div className={dashboardItemActionButtonsClassName}>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="shadow-none"
-              disabled={pending}
-              onClick={() => onRemove(log)}
-            >
-              Remove
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function SnapshotList({
-  title,
-  items,
-}: {
-  title: string
-  items: Array<string>
-}) {
-  return (
-    <div className="grid gap-1">
-      <span className="text-muted-foreground">{title}</span>
-      <ul className="list-inside list-disc">
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    </div>
+      </DashboardItemRecordContent>
+    </DashboardItemRecordCard>
   )
 }

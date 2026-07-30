@@ -1,8 +1,8 @@
 import { ConvexError, v } from 'convex/values'
 import { stableDocumentInputSchema } from '../shared/stables/stableDocumentSchema'
 import type { Doc, Id } from './_generated/dataModel'
-import { mutation, query   } from './_generated/server'
-import type {MutationCtx, QueryCtx} from './_generated/server';
+import { mutation, query } from './_generated/server'
+import type { MutationCtx, QueryCtx } from './_generated/server'
 import { assertHasPersonalPro, hasPersonalPro } from './libs/entitlements'
 import { assertCanViewStable, getCurrentUser } from './libs/stablePermissions'
 

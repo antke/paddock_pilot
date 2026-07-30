@@ -4,6 +4,7 @@ import type { Id } from './_generated/dataModel'
 import { getUserFromIdentity } from './libs/auth'
 import { horsesFields } from './schema'
 import { horseInputSchema } from '../shared/horses/horseSchema'
+import { calculateHorseAge } from '../shared/horses/horseAge'
 import { omit } from 'lodash'
 import {
   assertCanCreateStableHorse,
@@ -50,8 +51,17 @@ const validateHorseInput = (args: {
     )
   }
 
+  const age = result.data.dateOfBirth
+    ? calculateHorseAge(result.data.dateOfBirth)
+    : result.data.age
+
+  if (age === undefined || age < 0 || age > 100) {
+    throw new ConvexError('Use a valid date of birth.')
+  }
+
   return {
     ...result.data,
+    age,
     profileImageId: args.profileImageId,
   }
 }
@@ -79,9 +89,12 @@ export const list = query({
 })
 
 export const get = query({
-  args: { id: v.id('horses') },
+  args: { id: v.string() },
   handler: async (ctx, args) => {
-    const horse = await ctx.db.get(args.id)
+    const horseId = ctx.db.normalizeId('horses', args.id)
+    if (!horseId) return null
+
+    const horse = await ctx.db.get(horseId)
 
     if (!horse) return horse
 

@@ -1,48 +1,72 @@
-import { Badge } from '#/components/ui/badge'
+import { DashboardValueBadge } from '#/components/dashboard/DashboardBadges'
+import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
+import { DashboardInlinePanel } from '#/components/dashboard/DashboardInlinePanel'
+import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
+import { DetailKeyValueRow } from '#/components/dashboard/DetailBlocks'
+import { TextLabel } from '#/components/ui/text-label'
 import { landingPreviewEvents } from './landingContent'
+import {
+  LandingCompactStack,
+  LandingMutedValue,
+  LandingPreviewShell,
+} from './LandingPrimitives'
 
 export function LandingAppPreview() {
   return (
-    <div className="rounded-3xl border bg-card p-4 shadow-sm md:p-6">
-      <div className="grid gap-4 rounded-2xl border bg-background p-4">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium">Misty</p>
-            <p className="text-xs text-muted-foreground">Chestnut mare</p>
-          </div>
-          <Badge variant="secondary">Active issue</Badge>
-        </div>
+    <LandingPreviewShell>
+      <DashboardInlinePanel
+        stack="loose"
+        padding="compact"
+      >
+        <DashboardInlineHeader
+          title="Misty"
+          description="Chestnut mare"
+          aside={
+            <DashboardValueBadge variant="secondary">
+              Active issue
+            </DashboardValueBadge>
+          }
+          gap="loose"
+          titleSize="sm"
+          descriptionSize="xs"
+        />
 
-        <div className="grid gap-3 rounded-xl bg-muted/50 p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <DashboardInlinePanel chrome="cards" stack="default" padding="compact">
+          <TextLabel as="p" tracking="wide">
             Nutrition
-          </p>
-          <div className="grid gap-2 text-sm">
-            <div className="flex items-center justify-between gap-3">
-              <span>Low-sugar chaff</span>
-              <span className="text-green-600">Recommended</span>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <span>Oats</span>
-              <span className="text-red-600">Avoid</span>
-            </div>
-          </div>
-        </div>
+          </TextLabel>
+          <LandingCompactStack>
+            <DetailKeyValueRow
+              label="Low-sugar chaff"
+              value="Recommended"
+              valueTone="positive"
+              valueClassName="font-normal"
+            />
+            <DetailKeyValueRow
+              label="Oats"
+              value="Avoid"
+              valueTone="negative"
+              valueClassName="font-normal"
+            />
+          </LandingCompactStack>
+        </DashboardInlinePanel>
 
-        <div className="grid gap-2">
+        <DashboardItemList gap="compact">
           {landingPreviewEvents.map((event) => (
-            <div
+            <DashboardInlinePanel
               key={event.label}
-              className="flex items-center justify-between gap-4 rounded-xl border p-3 text-sm"
+              chrome="cards"
+              padding="tight"
+              textSize="sm"
             >
-              <span className="font-medium">{event.label}</span>
-              <span className="text-right text-muted-foreground">
-                {event.detail}
-              </span>
-            </div>
+              <DashboardInlineHeader
+                title={event.label}
+                aside={<LandingMutedValue>{event.detail}</LandingMutedValue>}
+              />
+            </DashboardInlinePanel>
           ))}
-        </div>
-      </div>
-    </div>
+        </DashboardItemList>
+      </DashboardInlinePanel>
+    </LandingPreviewShell>
   )
 }

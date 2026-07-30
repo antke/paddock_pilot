@@ -363,15 +363,19 @@ export const eventStatus = v.union(
   v.literal('cancelled'),
 )
 
-export const recurrenceEndRule = v.object({
-  type: v.union(
-    v.literal('never'),
-    v.literal('on_date'),
-    v.literal('after_occurrences'),
-  ),
-  date: v.optional(v.string()),
-  count: v.optional(v.number()),
-})
+export const recurrenceEndRule = v.union(
+  v.object({
+    type: v.literal('never'),
+  }),
+  v.object({
+    type: v.literal('on_date'),
+    date: v.string(),
+  }),
+  v.object({
+    type: v.literal('after_occurrences'),
+    count: v.number(),
+  }),
+)
 
 export const eventRecurrenceSetup = v.object({
   frequency: v.union(

@@ -1,13 +1,19 @@
-import { dashboardHeroClassName } from '#/components/dashboard/dashboardChrome'
-import { buttonVariants } from '#/components/ui/button'
+import { DashboardPage } from '#/components/dashboard/DashboardPage'
+import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
+import {
+  getListFilterEmptyMessage,
+  ListFilterControls,
+} from '#/components/list-filtering/ListFilterControls'
+import { useListFiltering } from '#/components/list-filtering/useListFiltering'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
-import { toast } from 'sonner'
-import { DocumentsCard } from './DocumentsCard'
+import { useMemo } from 'react'
+import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
+import { createDocumentListFilterConfig } from './documentListFilters'
+import { DocumentsCard, DocumentUploadDialog } from './DocumentsCard'
 import type { DocumentListItem } from './DocumentsCard'
 import type { DocumentUploadValues } from './DocumentUploadForm'
 
@@ -16,9 +22,6 @@ type StableDocumentsPageProps = {
 }
 
 export function StableDocumentsPage({ stableId }: StableDocumentsPageProps) {
-  const { data: stable } = useSuspenseQuery(
-    convexQuery(api.stables.get, { id: stableId }),
-  )
   const { data } = useSuspenseQuery(
     convexQuery(api.stableDocuments.listForStable, { stableId }),
   )
@@ -28,6 +31,15 @@ export function StableDocumentsPage({ stableId }: StableDocumentsPageProps) {
   const generateUploadUrl = useMutation(api.stableDocuments.generateUploadUrl)
   const addDocument = useMutation(api.stableDocuments.add)
   const removeDocument = useMutation(api.stableDocuments.remove)
+  const documents = data.documents as Array<DocumentListItem>
+  const filterConfig = useMemo(
+    () => createDocumentListFilterConfig({ horseOptions: horses }),
+    [horses],
+  )
+  const filtering = useListFiltering({
+    items: documents,
+    config: filterConfig,
+  })
 
   const uploadFile = async (file: File) => {
     const uploadUrl = await generateUploadUrl()
@@ -60,9 +72,9 @@ export function StableDocumentsPage({ stableId }: StableDocumentsPageProps) {
         size: file.size,
         notes: values.notes,
       })
-      toast.success('Document added', { position: 'top-right' })
+      showAppSuccessToast({ title: 'Document added' })
     } catch (err) {
-      toast.error('Could not add document', { position: 'top-right' })
+      showAppErrorToast({ title: 'Could not add document' })
       throw err
     }
   }
@@ -70,47 +82,44 @@ export function StableDocumentsPage({ stableId }: StableDocumentsPageProps) {
   const onRemove = async (id: Id<'stableDocuments'>) => {
     try {
       await removeDocument({ id })
-      toast.success('Document removed', { position: 'top-right' })
+      showAppSuccessToast({ title: 'Document removed' })
     } catch {
-      toast.error('Could not remove document', { position: 'top-right' })
+      showAppErrorToast({ title: 'Could not remove document' })
     }
   }
 
   return (
-    <div className="grid gap-6">
-      <header className={dashboardHeroClassName('cards')}>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="grid gap-2">
-            <p className="text-sm text-muted-foreground">
-              {stable?.name ?? 'Stable'}
-            </p>
-            <h1 className="text-2xl font-semibold">Documents</h1>
-            <p className="text-sm text-muted-foreground">
-              Keep passport scans, proof of vaccination, insurance paperwork,
-              and care reports close to the stable record.
-            </p>
-          </div>
-          <Link
-            to="/stables/$stableId"
-            params={{ stableId }}
-            className={buttonVariants({ variant: 'outline' })}
-          >
-            Back to stable
-          </Link>
-        </div>
-      </header>
+    <DashboardPage>
+      <DashboardPageHeader
+        title="Documents"
+        actions={
+          <DocumentUploadDialog
+            canAddDocument={data.canManageStableDocuments}
+            horseOptions={horses}
+            onAdd={onAdd}
+          />
+        }
+      />
 
       <DocumentsCard
-        title="Stable documents"
-        description="Upload stable-wide paperwork or attach documents to a specific horse."
-        documents={data.documents as Array<DocumentListItem>}
-        canAddDocument={data.canManageStableDocuments}
-        horseOptions={horses}
-        emptyMessage="No documents have been added yet."
-        chrome="soft"
-        onAdd={onAdd}
+        documents={filtering.items}
+        emptyMessage={getListFilterEmptyMessage({
+          filtering,
+          emptyMessage: 'No documents have been added yet.',
+          filteredEmptyMessage: 'No documents match these filters.',
+        })}
+        listToolbar={
+          <ListFilterControls
+            config={filterConfig}
+            filtering={filtering}
+            hideWhenEmpty
+            sticky
+          />
+        }
+        chrome="cards"
+        rowChrome="soft"
         onRemove={onRemove}
       />
-    </div>
+    </DashboardPage>
   )
 }

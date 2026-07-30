@@ -1,18 +1,18 @@
-import { Button } from '#/components/ui/button'
+import { DashboardPage } from '#/components/dashboard/DashboardPage'
+import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
+import { AuthStateSwitch } from '#/components/layout/AuthStateSwitch'
+import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
+import { SignedOutRoutePrompt } from '#/components/layout/SignedOutRoutePrompt'
+import { Button, ButtonLink } from '#/components/ui/button'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
-import { ClerkLoaded, ClerkLoading, Show, SignInButton, SignUpButton } from '@clerk/tanstack-react-start'
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+  showAppErrorToast,
+  showAppSuccessToast,
+} from '#/components/ui/sonner'
+import { SignInButton, SignUpButton } from '@clerk/tanstack-react-start'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
 import { useMutation } from 'convex/react'
 import { useState } from 'react'
-import { toast } from 'sonner'
 
 export const Route = createFileRoute('/invitations/$token')({
   component: InvitationPage,
@@ -22,40 +22,39 @@ function InvitationPage() {
   const { token } = Route.useParams()
 
   return (
-    <main className="mx-auto flex min-h-[70vh] w-full max-w-xl items-center px-4 py-10">
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Stable invitation</CardTitle>
-          <CardDescription>
-            Sign in with the invited email address to accept this stable invitation.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ClerkLoading>
-            <p className="text-sm text-muted-foreground">Loading...</p>
-          </ClerkLoading>
+    <DashboardPage width="compact" verticalAlign="center">
+      <DashboardSectionCard
+        title="Stable invitation"
+        description="Review and accept your stable invitation."
+        descriptionSize="sm"
+      >
+        <AuthStateSwitch
+          signedOut={<SignedOutInvitationActions />}
+          signedIn={<AcceptInvitation token={token} />}
+        />
+      </DashboardSectionCard>
+    </DashboardPage>
+  )
+}
 
-          <ClerkLoaded>
-            <Show when="signed-out">
-              <div className="flex flex-wrap gap-3">
-                <SignInButton>
-                  <Button type="button">Sign in</Button>
-                </SignInButton>
-                <SignUpButton>
-                  <Button type="button" variant="outline">
-                    Sign up
-                  </Button>
-                </SignUpButton>
-              </div>
-            </Show>
-
-            <Show when="signed-in">
-              <AcceptInvitation token={token} />
-            </Show>
-          </ClerkLoaded>
-        </CardContent>
-      </Card>
-    </main>
+function SignedOutInvitationActions() {
+  return (
+    <SignedOutRoutePrompt
+      title="Sign in to accept this invitation"
+      description="Use the invited email address so the stable membership can be matched to your account."
+      actions={
+        <>
+          <SignInButton>
+            <Button type="button">Sign in</Button>
+          </SignInButton>
+          <SignUpButton>
+            <Button type="button" variant="outline">
+              Sign up
+            </Button>
+          </SignUpButton>
+        </>
+      }
+    />
   )
 }
 
@@ -75,18 +74,18 @@ function AcceptInvitation({ token }: { token: string }) {
         return
       }
 
-      toast.success('Invitation accepted', {
+      showAppSuccessToast({
+        title: 'Invitation accepted',
         description: <p>You can now access the stable.</p>,
-        position: 'top-right',
       })
       await navigate({
         to: '/stables/$stableId',
         params: { stableId: result.stableId },
       })
     } catch {
-      toast.error('Could not accept invitation', {
+      showAppErrorToast({
+        title: 'Could not accept invitation',
         description: <p>Please check the invite link and signed-in email.</p>,
-        position: 'top-right',
       })
     } finally {
       setIsSubmitting(false)
@@ -95,17 +94,14 @@ function AcceptInvitation({ token }: { token: string }) {
 
   if (needsSubscription) {
     return (
-      <div className="grid gap-4">
-        <p className="text-sm text-muted-foreground">
-          Your invitation was accepted, but a Personal Plus subscription is needed
-          before stable membership activates.
-        </p>
-        <CardFooter className="p-0">
-          <Link to="/pricing">
-            <Button type="button">Choose plan</Button>
-          </Link>
-        </CardFooter>
-      </div>
+      <RouteStatusAlert
+        tone="warning"
+        title="Subscription needed"
+        description="Your invitation was accepted, but a Personal Plus subscription is needed before stable membership activates."
+        actions={
+          <ButtonLink to="/pricing">Choose plan</ButtonLink>
+        }
+      />
     )
   }
 

@@ -1,12 +1,8 @@
 import type { Doc } from 'convex/_generated/dataModel'
+import { formatMediumDateKey } from '#/lib/dateDisplay'
+import { formatCommaList } from '#/lib/textDisplay'
 import { dayOfWeekLabels, eventTypeLabels } from 'shared/events/eventSchema'
 import type { RecurrenceOrdinal } from 'shared/events/eventSchema'
-
-const dateFormatter = new Intl.DateTimeFormat(undefined, {
-  month: 'short',
-  day: 'numeric',
-  year: 'numeric',
-})
 
 const ordinalLabels = {
   1: '1st',
@@ -17,13 +13,21 @@ const ordinalLabels = {
 } satisfies Record<RecurrenceOrdinal, string>
 
 export function formatEventDate(date: string) {
-  return dateFormatter.format(new Date(`${date}T00:00:00`))
+  return formatMediumDateKey(date)
 }
 
 export function formatEventDateRange(date: string, endDate?: string) {
   if (!endDate || endDate <= date) return formatEventDate(date)
 
   return `${formatEventDate(date)} – ${formatEventDate(endDate)}`
+}
+
+export function formatEventDateTime(
+  date: string,
+  time: string,
+  endDate?: string,
+) {
+  return `${formatEventDateRange(date, endDate)} at ${time}`
 }
 
 export function formatEventType(type: Doc<'events'>['type']) {
@@ -43,10 +47,12 @@ export function formatRecurrence(recurrence: Doc<'events'>['recurrence']) {
   if (recurrence.frequency === 'weekly') {
     const days = recurrence.daysOfWeek
       ?.map((day) => dayOfWeekLabels[day])
-      .join(', ')
+      .filter(Boolean)
 
     return formatRecurrenceEnd(
-      days ? `${interval} week on ${days}` : `${interval} week`,
+      days?.length
+        ? `${interval} week on ${formatCommaList(days)}`
+        : `${interval} week`,
       recurrence.end,
     )
   }

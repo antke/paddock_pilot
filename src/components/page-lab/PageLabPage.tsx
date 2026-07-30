@@ -6,21 +6,33 @@ import { EventListPageLab } from '#/components/page-lab/prototypes/EventListPage
 import { EventDetailPageLab } from '#/components/page-lab/prototypes/EventDetailPageLab'
 import { RemindersPageLab } from '#/components/page-lab/prototypes/RemindersPageLab'
 import { DocumentsPageLab } from '#/components/page-lab/prototypes/DocumentsPageLab'
-import { AnalysisPageLab } from '#/components/page-lab/prototypes/AnalysisPageLab'
-import { SurfaceSystemPageLab } from '#/components/page-lab/prototypes/SurfaceSystemPageLab'
+import { AnalysisCentre } from '#/components/analysis/AnalysisCentre'
+import { SettingsPageLab } from '#/components/page-lab/prototypes/SettingsPageLab'
+import { FormsPageLab } from '#/components/page-lab/prototypes/FormsPageLab'
+import { CalendarPageLab } from '#/components/page-lab/prototypes/CalendarPageLab'
+import { TimelinePageLab } from '#/components/page-lab/prototypes/TimelinePageLab'
+import { CareSummaryPageLab } from '#/components/page-lab/prototypes/CareSummaryPageLab'
 import {
   getPageLabPage,
   pageLabPages,
 } from '#/components/page-lab/pageLabPages'
 import type { PageLabPageId } from '#/components/page-lab/pageLabPages'
+import { DashboardNavigation } from '#/components/dashboard/DashboardNavigation'
+import { DashboardSection } from '#/components/dashboard/DashboardSection'
+import { DashboardValueBadge } from '#/components/dashboard/DashboardBadges'
 import {
-  dashboardEmptyClassName,
-  dashboardSectionClassName,
-} from '#/components/dashboard/dashboardChrome'
-import { Badge } from '#/components/ui/badge'
-import { buttonVariants } from '#/components/ui/button'
+  LabPageHeader,
+  LabPageShell,
+  LabPreviewSeparator,
+} from '#/components/lab/LabChrome'
+import { NoStablesPrompt } from '#/components/stables/NoStablesPrompt'
+import {
+  NavigationMenuItem,
+  NavigationMenuLink,
+} from '#/components/ui/navigation-menu'
+import { Field, FieldLabel } from '#/components/ui/field'
 import { Select } from '#/components/ui/select'
-import { cn } from '#/lib/utils'
+import { isDevAuthBypassEnabled } from '#/lib/devAuthBypass'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Link, Navigate } from '@tanstack/react-router'
@@ -28,6 +40,7 @@ import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
 import { useEffect, useState } from 'react'
 import { createDashboardLabData } from '#/components/dashboard-lab/dashboardLabData'
+import { createDashboardLabFixtureData } from '#/components/dashboard-lab/dashboardLabFixtures'
 import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
 
 type PageLabPageProps = {
@@ -35,6 +48,42 @@ type PageLabPageProps = {
 }
 
 export function PageLabPage({ pageId }: PageLabPageProps) {
+  const page = getPageLabPage(pageId)
+
+  if (isDevAuthBypassEnabled()) {
+    if (!page) {
+      return (
+        <Navigate to="/page-lab/$page" params={{ page: 'stable-dashboard' }} />
+      )
+    }
+
+    const data = createDashboardLabFixtureData()
+
+    return (
+      <LabPageShell width="wide">
+        <PageLabControls
+          pageId={page.id}
+          data={data}
+          onActiveStableChange={() => undefined}
+        />
+
+        <LabPreviewSeparator />
+
+        <div>
+          <PageLabReviewSurface
+            pageId={page.id}
+            data={data}
+            allEvents={data.events}
+          />
+        </div>
+      </LabPageShell>
+    )
+  }
+
+  return <PageLabLivePage pageId={pageId} />
+}
+
+function PageLabLivePage({ pageId }: PageLabPageProps) {
   const page = getPageLabPage(pageId)
   const { data: stables } = useSuspenseQuery(convexQuery(api.stables.list))
   const { data: events } = useSuspenseQuery(convexQuery(api.events.list))
@@ -64,13 +113,9 @@ export function PageLabPage({ pageId }: PageLabPageProps) {
 
   if (!activeStable) {
     return (
-      <div className={dashboardEmptyClassName('cards')}>
-        <p className="font-medium text-foreground">No stables yet</p>
-        <p>Create a stable to use the page lab with real app data.</p>
-        <Link to="/stables/create" className={cn(buttonVariants(), 'mt-4')}>
-          Create stable
-        </Link>
-      </div>
+      <NoStablesPrompt>
+        Create a stable to use the page lab with real app data.
+      </NoStablesPrompt>
     )
   }
 
@@ -115,24 +160,19 @@ function PageLabData({
   })
 
   return (
-    <div className="mx-auto grid max-w-[92rem] gap-6">
+    <LabPageShell width="wide">
       <PageLabControls
         pageId={pageId}
         data={data}
         onActiveStableChange={onActiveStableChange}
       />
 
-      <PageLabPreviewSeparator />
+      <LabPreviewSeparator />
 
       <div>
-        <PageLabPrototype
-          pageId={pageId}
-          data={data}
-          allEvents={events}
-          onActiveStableChange={onActiveStableChange}
-        />
+        <PageLabReviewSurface pageId={pageId} data={data} allEvents={events} />
       </div>
-    </div>
+    </LabPageShell>
   )
 }
 
@@ -145,118 +185,64 @@ function PageLabControls({
   data: DashboardLabData
   onActiveStableChange: (stableId: DashboardLabData['stable']['_id']) => void
 }) {
-  const page = getPageLabPage(pageId)
-
   return (
-    <header className="rounded-panel border border-primary/30 bg-primary/5 p-4 shadow-card md:p-5">
-      <div className="grid gap-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="grid gap-2">
-            <Badge variant="outline" className="w-fit bg-background/70">
-              Lab controls
-            </Badge>
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-                {page?.label}
-              </h1>
-              {page?.description && (
-                <p className="text-sm text-muted-foreground">
-                  {page.description}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <label className="grid min-w-60 gap-2 text-sm font-medium">
-            Data stable
-            <Select
-              value={data.stable._id}
-              onChange={(event) => {
-                const selectedStable = data.stables.find(
-                  (stable) => stable._id === event.currentTarget.value,
-                )
-                if (selectedStable) onActiveStableChange(selectedStable._id)
-              }}
-              className="bg-background"
-            >
-              {data.stables.map((stable) => (
-                <option key={stable._id} value={stable._id}>
-                  {stable.name}
-                </option>
-              ))}
-            </Select>
-          </label>
-        </div>
-
-        <div className="grid gap-2">
-          <h2 className="text-sm font-semibold tracking-tight">Pages</h2>
-          <PageLabNavigation activePageId={pageId} />
-        </div>
-      </div>
-    </header>
+    <LabPageHeader
+      variant="panel"
+      actions={
+        <Field className="min-w-60">
+          <FieldLabel htmlFor="page-lab-stable">Data stable</FieldLabel>
+          <Select
+            id="page-lab-stable"
+            value={data.stable._id}
+            onChange={(event) => {
+              const selectedStable = data.stables.find(
+                (stable) => stable._id === event.currentTarget.value,
+              )
+              if (selectedStable) onActiveStableChange(selectedStable._id)
+            }}
+          >
+            {data.stables.map((stable) => (
+              <option key={stable._id} value={stable._id}>
+                {stable.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      }
+    >
+      <PageLabNavigation activePageId={pageId} />
+    </LabPageHeader>
   )
 }
 
 function PageLabNavigation({ activePageId }: { activePageId: PageLabPageId }) {
   return (
-    <nav className="flex flex-wrap gap-2">
+    <DashboardNavigation inset={false}>
       {pageLabPages.map((page) => (
-        <Link
-          key={page.id}
-          to="/page-lab/$page"
-          params={{ page: page.id }}
-          className={cn(
-            'rounded-row border px-3 py-2 text-sm font-medium transition-colors',
-            page.id === activePageId
-              ? 'border-primary bg-primary text-primary-foreground shadow-control'
-              : 'border-border-subtle bg-background/70 text-muted-foreground hover:bg-background hover:text-foreground',
-          )}
-        >
-          <span>{page.label}</span>
-          {'status' in page && page.status === 'ready' && (
-            <span className="ml-2 text-[0.68rem] uppercase tracking-[0.18em] opacity-75">
-              Ready
-            </span>
-          )}
-        </Link>
+        <NavigationMenuItem key={page.id}>
+          <NavigationMenuLink
+            data-active={page.id === activePageId || undefined}
+            render={<Link to="/page-lab/$page" params={{ page: page.id }} />}
+          >
+            <span>{page.label}</span>
+          </NavigationMenuLink>
+        </NavigationMenuItem>
       ))}
-    </nav>
+    </DashboardNavigation>
   )
 }
 
-function PageLabPreviewSeparator() {
-  return (
-    <div className="grid gap-3 pt-2" aria-hidden="true">
-      <div className="h-1 rounded-full bg-primary" />
-      <div className="flex items-center gap-3">
-        <div className="h-px flex-1 bg-border" />
-        <span className="rounded-full border border-border-subtle bg-background px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-          Page preview
-        </span>
-        <div className="h-px flex-1 bg-border" />
-      </div>
-    </div>
-  )
-}
-
-function PageLabPrototype({
+function PageLabReviewSurface({
   pageId,
   data,
   allEvents,
-  onActiveStableChange,
 }: {
   pageId: PageLabPageId
   data: DashboardLabData
   allEvents: Array<Doc<'events'>>
-  onActiveStableChange: (stableId: DashboardLabData['stable']['_id']) => void
 }) {
   if (pageId === 'stable-dashboard') {
-    return (
-      <StableDashboardPageLab
-        data={data}
-        onActiveStableChange={onActiveStableChange}
-      />
-    )
+    return <StableDashboardPageLab data={data} />
   }
 
   if (pageId === 'stables-list') {
@@ -288,29 +274,55 @@ function PageLabPrototype({
   }
 
   if (pageId === 'analysis') {
+    if (isDevAuthBypassEnabled()) {
+      return (
+        <AnalysisCentre
+          data={data}
+          stableAnalysis={{
+            hasAccess: false,
+            requiredPlan: 'personal_pro',
+            stable: data.stable,
+          }}
+        />
+      )
+    }
+
     return <AnalysisPageLabData data={data} />
   }
 
-  if (pageId === 'surface-system') {
-    return <SurfaceSystemPageLab />
+  if (pageId === 'settings') {
+    return <SettingsPageLab data={data} />
+  }
+
+  if (pageId === 'forms') {
+    return <FormsPageLab data={data} />
+  }
+
+  if (pageId === 'calendar') {
+    return <CalendarPageLab data={data} />
+  }
+
+  if (pageId === 'timeline') {
+    return <TimelinePageLab data={data} />
+  }
+
+  if (pageId === 'care-summary') {
+    return <CareSummaryPageLab data={data} />
   }
 
   const page = getPageLabPage(pageId)
 
   return (
-    <section className={dashboardSectionClassName('cards')}>
-      <Badge variant="outline">Queued prototype</Badge>
-      <div className="grid gap-2">
-        <h2 className="text-2xl font-semibold tracking-tight">
-          {page?.label} is ready for the next pass
-        </h2>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          This page now has a lab slot, shared real-data context, and
-          navigation. We can prototype it here, approve the direction, then
-          apply the final version back to production.
-        </p>
-      </div>
-    </section>
+    <DashboardSection
+      chrome="cards"
+      title={`${page?.label ?? 'Page'} is ready for implementation review`}
+      description="This page has shared real-data context, navigation, and a reserved review surface. Use it to validate layout and component choices before applying the final route treatment."
+      badges={<DashboardValueBadge>Review slot</DashboardValueBadge>}
+      size="section"
+      descriptionSize="sm"
+    >
+      <div />
+    </DashboardSection>
   )
 }
 
@@ -321,5 +333,5 @@ function AnalysisPageLabData({ data }: { data: DashboardLabData }) {
     }),
   )
 
-  return <AnalysisPageLab data={data} stableAnalysis={stableAnalysis} />
+  return <AnalysisCentre data={data} stableAnalysis={stableAnalysis} />
 }

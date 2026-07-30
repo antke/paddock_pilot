@@ -68,5 +68,10 @@ export const medicationRecordFormSchema = z.object({
   status: medicationRecordStatusSchema,
 })
 
-export type MedicationRecordFormSchema = z.infer<typeof medicationRecordFormSchema>
+export type MedicationRecordFormSchema = z.infer<
+  typeof medicationRecordFormSchema
+>
+export type MedicationRecordFormInput = z.input<
+  typeof medicationRecordFormSchema
+>
 export type MedicationRecordStatus = (typeof medicationRecordStatuses)[number]

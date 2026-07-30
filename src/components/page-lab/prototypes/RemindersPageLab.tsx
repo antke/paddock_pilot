@@ -1,8 +1,7 @@
-import { buttonVariants } from '#/components/ui/button'
 import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
 import type { CareReminderListItem } from '#/components/reminders/CareRemindersCard'
 import { FilterableCareRemindersCard } from '#/components/reminders/FilterableCareRemindersCard'
-import { Link } from '@tanstack/react-router'
+import { formatDateKey } from '#/lib/dateDisplay'
 import type { Doc } from 'convex/_generated/dataModel'
 
 type RemindersPageLabProps = {
@@ -101,20 +100,12 @@ export function RemindersPageLab({ data }: RemindersPageLabProps) {
 
   return (
     <FilterableCareRemindersCard
+      as="h1"
       title="Care reminders"
       reminders={reminders}
       canAddReminder
       horseOptions={horseOptions}
-      chrome="soft"
-      headerAction={
-        <Link
-          to="/stables/$stableId"
-          params={{ stableId: data.stable._id }}
-          className={buttonVariants({ variant: 'secondary' })}
-        >
-          Back to stable
-        </Link>
-      }
+      chrome="cards"
       emptyMessage="No fixture reminders are available."
       onAdd={async () => undefined}
       onComplete={async () => undefined}
@@ -176,5 +167,5 @@ function createLabReminder({
 function dateKeyFromOffset(offsetDays: number) {
   const date = new Date()
   date.setDate(date.getDate() + offsetDays)
-  return date.toISOString().slice(0, 10)
+  return formatDateKey(date)
 }

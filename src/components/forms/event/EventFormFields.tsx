@@ -1,26 +1,31 @@
-import { Checkbox } from '#/components/ui/checkbox'
+import { FormSection } from '#/components/forms/FormLayout'
 import { FormHelpTooltip } from '#/components/forms/FormHelpTooltip'
-import { HorseCard } from '#/components/horses/HorseCard'
-import { Button } from '#/components/ui/button'
+import { HorseSelectionCard } from '#/components/horses/HorseCard'
 import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
-import { cn } from '#/lib/utils'
+import { formatShortDate, formatShortDateKey } from '#/lib/dateDisplay'
+import { formatConjunctionList, formatMetaText } from '#/lib/textDisplay'
 import {
   Field,
   FieldDescription,
   FieldError,
+  FieldGrid,
+  FieldGroup,
+  FieldInlineControl,
+  FieldInlineText,
   FieldLabel,
+  FieldLabelRow,
   FieldLegend,
   FieldSet,
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { RadioGroup, RadioGroupItem } from '#/components/ui/radio-group'
 import { Switch } from '#/components/ui/switch'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
 import { Textarea } from '#/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group'
+import { cn } from '#/lib/utils'
 import type { Id } from 'convex/_generated/dataModel'
 import { useEffect, useState } from 'react'
-import { Controller, useWatch } from 'react-hook-form'
+import { Controller, useFormState, useWatch } from 'react-hook-form'
 import type { Control, UseFormSetValue } from 'react-hook-form'
 import {
   dayOfWeekLabels,
@@ -38,8 +43,8 @@ import type {
   RecurrenceFrequency,
   RecurrenceOrdinal,
 } from 'shared/events/eventSchema'
-import { stableProviderTypeLabels } from 'shared/stables/stableProviderSchema'
 import type { EventFormInput, EventFormSchema } from './eventFormSchema'
+import { ProviderAutocomplete } from './ProviderAutocomplete'
 
 type HorseOption = {
   _id: Id<'horses'>
@@ -107,6 +112,36 @@ const simpleRecurrencePresetLabels = {
   monthly: 'Every month',
 } satisfies Record<SimpleRecurrencePreset, string>
 
+const simpleRecurrencePresetDescriptions = {
+  daily: 'Runs on every calendar day',
+  weekly: 'Choose one or more weekdays',
+  biweekly: 'Repeats on alternate weeks',
+  monthly: 'Uses the event date each month',
+} satisfies Record<SimpleRecurrencePreset, string>
+
+const recurrenceEditorModeOptions = [
+  {
+    value: 'simple',
+    number: '01',
+    label: 'Simple',
+    description: 'Use a familiar daily, weekly, or monthly pattern.',
+  },
+  {
+    value: 'advanced',
+    number: '02',
+    label: 'Advanced',
+    description: 'Control intervals, monthly rules, and when repeats end.',
+  },
+] satisfies Array<{
+  value: RecurrenceEditorMode
+  number: string
+  label: string
+  description: string
+}>
+
+const advancedRecurrenceLabelClassName =
+  'text-xs font-bold text-muted-foreground'
+
 const ordinalLabels = {
   1: '1st',
   2: '2nd',
@@ -128,14 +163,8 @@ const asRecurrenceFrequency = (value: string) => value as RecurrenceFrequency
 const asDayOfWeek = (value: string) => Number(value) as DayOfWeek
 const asRecurrenceOrdinal = (value: string) =>
   (value === 'last' ? value : Number(value)) as RecurrenceOrdinal
-const asRecurrenceEditorMode = (value: string) => value as RecurrenceEditorMode
 const asSimpleRecurrencePreset = (value: string) =>
   value as SimpleRecurrencePreset
-
-const datePreviewFormatter = new Intl.DateTimeFormat(undefined, {
-  month: 'short',
-  day: 'numeric',
-})
 
 const eventTypeOptions = eventTypes.map((eventType) => ({
   value: eventType,
@@ -377,12 +406,6 @@ const getStartOrdinal = (date: string | undefined): RecurrenceOrdinal => {
   return Math.ceil(parsedDate.dayOfMonth / 7) as RecurrenceOrdinal
 }
 
-const formatList = (items: Array<string>) => {
-  if (items.length <= 2) return items.join(' and ')
-
-  return `${items.slice(0, -1).join(', ')}, and ${items.at(-1)}`
-}
-
 const getEventSpanDayCount = (
   eventDate: string | undefined,
   endDate: string | undefined,
@@ -431,7 +454,10 @@ const getRecurrencePreview = (
       .sort((left, right) => left - right)
       .map((day) => dayOfWeekLabels[day])
 
-    preview += selectedDays.length > 0 ? ` on ${formatList(selectedDays)}` : ''
+    preview +=
+      selectedDays.length > 0
+        ? ` on ${formatConjunctionList(selectedDays)}`
+        : ''
   }
 
   if (frequency === 'monthly') {
@@ -460,15 +486,75 @@ const getRecurrencePreview = (
   }
 
   const durationPreview = getEventDurationPreview(eventDate, endDate)
-  if (durationPreview) preview += ` · ${durationPreview}`
+  if (durationPreview) preview = formatMetaText([preview, durationPreview])
 
   const nextDates = getNextRecurrenceDates(recurrence, eventDate).map((date) =>
-    datePreviewFormatter.format(date),
+    formatShortDate(date),
   )
 
   if (nextDates.length === 0) return `${preview}.`
 
-  return `${preview}. Upcoming dates: ${formatList(nextDates)}${nextDates.length > 3 ? ' etc.' : '.'}`
+  return `${preview}. Upcoming dates: ${formatConjunctionList(nextDates)}${nextDates.length > 3 ? ' etc.' : '.'}`
+}
+
+function RecurrenceModeSelector({
+  disabled,
+  onValueChange,
+  value,
+}: {
+  disabled: boolean
+  onValueChange: (value: RecurrenceEditorMode) => void
+  value: RecurrenceEditorMode
+}) {
+  return (
+    <div className="grid gap-2">
+      <span className="text-xs font-bold tracking-[0.08em] text-muted-foreground uppercase">
+        Schedule setup
+      </span>
+
+      <div
+        role="radiogroup"
+        aria-label="Schedule setup mode"
+        className="grid gap-2 sm:grid-cols-2"
+      >
+        {recurrenceEditorModeOptions.map((option) => {
+          const selected = value === option.value
+
+          return (
+            <button
+              key={option.value}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              disabled={disabled}
+              className={cn(
+                'app-control-focus app-row app-row-hover grid min-h-20 grid-cols-[auto_1fr] items-start gap-x-3 gap-y-1 bg-card p-4 text-left disabled:pointer-events-none disabled:opacity-50',
+                selected && 'border-primary bg-primary/8',
+              )}
+              onClick={() => onValueChange(option.value)}
+            >
+              <span
+                className={cn(
+                  'row-span-2 grid size-7 place-items-center rounded-control border border-border-subtle bg-surface-muted font-mono text-[0.6875rem] font-semibold text-muted-foreground',
+                  selected &&
+                    'border-primary bg-primary text-primary-foreground',
+                )}
+                aria-hidden="true"
+              >
+                {option.number}
+              </span>
+              <span className="font-display text-base leading-none font-black tracking-[-0.02em] text-foreground uppercase">
+                {option.label}
+              </span>
+              <span className="text-xs leading-relaxed text-muted-foreground">
+                {option.description}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 export function EventFormFields({
@@ -480,8 +566,58 @@ export function EventFormFields({
 }: Props) {
   const eventDate = useWatch({ control, name: 'date' })
   const endDate = useWatch({ control, name: 'endDate' })
+  const eventTitle = useWatch({ control, name: 'title' })
+  const eventType = useWatch({ control, name: 'type' })
+  const location = useWatch({ control, name: 'location' })
+  const providerName = useWatch({ control, name: 'providerName' })
+  const totalCost = useWatch({ control, name: 'totalCost' })
+  const description = useWatch({ control, name: 'description' })
+  const notesAfterCompletion = useWatch({
+    control,
+    name: 'notesAfterCompletion',
+  })
+  const horseIds = useWatch({ control, name: 'horseIds' })
+  const recurring = useWatch({ control, name: 'recurring' })
   const recurrence = useWatch({ control, name: 'recurrence' })
+  const { errors, submitCount } = useFormState({ control })
   const recurrencePreview = getRecurrencePreview(recurrence, eventDate, endDate)
+  const essentialsSummary = formatMetaText([
+    eventTitle || 'Untitled event',
+    eventTypeLabels[eventType],
+    eventDate ? formatShortDateKey(eventDate) : 'No date',
+  ])
+  const logisticsSummary =
+    formatMetaText([
+      location,
+      providerName,
+      totalCost !== undefined ? `${totalCost} total` : undefined,
+    ]) || 'Optional'
+  const notesSummary =
+    description || notesAfterCompletion ? 'Notes added' : 'Optional'
+  const horsesSummary = `${horseIds.length} ${pluralize('horse', horseIds.length)} selected`
+  const recurrenceSummary = recurring
+    ? recurrencePreview || 'Repeating event'
+    : 'Does not repeat'
+  const essentialsInvalid = Boolean(
+    errors.title ||
+    errors.type ||
+    errors.status ||
+    errors.date ||
+    errors.endDate ||
+    errors.time,
+  )
+  const logisticsInvalid = Boolean(
+    errors.location ||
+    errors.providerName ||
+    errors.providerPhone ||
+    errors.totalCost ||
+    errors.costPerHorse,
+  )
+  const notesInvalid = Boolean(
+    errors.description || errors.notesAfterCompletion,
+  )
+  const horsesInvalid = Boolean(errors.horseIds)
+  const recurrenceInvalid = Boolean(errors.recurring || errors.recurrence)
   const [recurrenceEditorMode, setRecurrenceEditorMode] =
     useState<RecurrenceEditorMode>('simple')
   const [simplePreset, setSimplePreset] =
@@ -544,195 +680,29 @@ export function EventFormFields({
 
   return (
     <>
-      <Controller
-        name="title"
-        control={control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>Title</FieldLabel>
-
-            <Input
-              {...field}
-              id={field.name}
-              type="text"
-              disabled={disabled}
-              aria-invalid={fieldState.invalid}
-              placeholder="Farrier appointment"
-              autoComplete="off"
-            />
-
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
-      />
-
-      <Controller
-        name="type"
-        control={control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel>Type</FieldLabel>
-
-            <ChoiceButtonGroup
-              value={field.value}
-              options={eventTypeOptions}
-              onValueChange={(nextValue) =>
-                field.onChange(asEventType(nextValue))
-              }
-              disabled={disabled}
-              aria-invalid={fieldState.invalid}
-            />
-
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
-      />
-
-      <Controller
-        name="status"
-        control={control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel>Status</FieldLabel>
-
-            <ChoiceButtonGroup
-              value={field.value ?? 'planned'}
-              options={eventStatusOptions}
-              onValueChange={(nextValue) =>
-                field.onChange(asEventStatus(nextValue))
-              }
-              disabled={disabled}
-              aria-invalid={fieldState.invalid}
-            />
-
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
-      />
-
-      <div className="grid gap-4 md:grid-cols-3">
+      <FormSection
+        defaultOpen
+        description="Name the event and set its timing."
+        invalid={essentialsInvalid}
+        number={1}
+        summary={essentialsSummary}
+        title="Event details"
+        validationAttempt={submitCount}
+      >
         <Controller
-          name="date"
+          name="title"
           control={control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Date</FieldLabel>
+              <FieldLabel htmlFor={field.name}>Title</FieldLabel>
 
               <Input
                 {...field}
                 id={field.name}
-                type="date"
-                disabled={disabled}
-                aria-invalid={fieldState.invalid}
-              />
-
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-
-        <Controller
-          name="endDate"
-          control={control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>End date</FieldLabel>
-
-              <Input
-                {...field}
-                id={field.name}
-                value={field.value ?? ''}
-                type="date"
-                disabled={disabled}
-                aria-invalid={fieldState.invalid}
-              />
-
-              <FieldDescription>Leave blank for a one-day event.</FieldDescription>
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-
-        <Controller
-          name="time"
-          control={control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Time</FieldLabel>
-
-              <Input
-                {...field}
-                id={field.name}
-                type="time"
-                disabled={disabled}
-                aria-invalid={fieldState.invalid}
-              />
-
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-      </div>
-
-      {providers.length > 0 && (
-        <div className="grid gap-2 rounded-row bg-muted/30 p-5">
-          <p className="text-sm font-medium">Saved providers</p>
-          <div className="flex flex-wrap gap-2">
-            {providers.map((provider) => (
-              <Button
-                key={provider._id}
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={disabled}
-                onClick={() => applyProvider(provider)}
-              >
-                {provider.name} · {stableProviderTypeLabels[provider.type]}
-              </Button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <Controller
-        name="location"
-        control={control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>Location</FieldLabel>
-
-            <Input
-              {...field}
-              id={field.name}
-              value={field.value ?? ''}
-              type="text"
-              disabled={disabled}
-              aria-invalid={fieldState.invalid}
-              placeholder="Main arena"
-              autoComplete="off"
-            />
-
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
-      />
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Controller
-          name="providerName"
-          control={control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Provider name</FieldLabel>
-
-              <Input
-                {...field}
-                id={field.name}
-                value={field.value ?? ''}
                 type="text"
                 disabled={disabled}
                 aria-invalid={fieldState.invalid}
-                placeholder="Vet, farrier, dentist, trainer"
+                placeholder="Farrier appointment"
                 autoComplete="off"
               />
 
@@ -742,56 +712,20 @@ export function EventFormFields({
         />
 
         <Controller
-          name="providerPhone"
+          name="type"
           control={control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Provider phone</FieldLabel>
+              <FieldLabel>Type</FieldLabel>
 
-              <Input
-                {...field}
-                id={field.name}
-                value={field.value ?? ''}
-                type="tel"
+              <ChoiceButtonGroup
+                value={field.value}
+                options={eventTypeOptions}
+                onValueChange={(nextValue) =>
+                  field.onChange(asEventType(nextValue))
+                }
                 disabled={disabled}
                 aria-invalid={fieldState.invalid}
-                placeholder="Provider contact number"
-                autoComplete="off"
-              />
-
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Controller
-          name="totalCost"
-          control={control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Total cost</FieldLabel>
-
-              <Input
-                id={field.name}
-                name={field.name}
-                value={field.value ?? ''}
-                type="number"
-                min="0"
-                step="0.01"
-                disabled={disabled}
-                aria-invalid={fieldState.invalid}
-                placeholder="Optional shared visit total"
-                autoComplete="off"
-                onBlur={field.onBlur}
-                onChange={(event) => {
-                  field.onChange(
-                    event.target.value === ''
-                      ? undefined
-                      : event.target.valueAsNumber,
-                  )
-                }}
               />
 
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -800,110 +734,130 @@ export function EventFormFields({
         />
 
         <Controller
-          name="costPerHorse"
+          name="status"
           control={control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Cost per horse</FieldLabel>
+              <FieldLabel>Status</FieldLabel>
 
-              <Input
-                id={field.name}
-                name={field.name}
-                value={field.value ?? ''}
-                type="number"
-                min="0"
-                step="0.01"
+              <ChoiceButtonGroup
+                value={field.value ?? 'planned'}
+                options={eventStatusOptions}
+                onValueChange={(nextValue) =>
+                  field.onChange(asEventStatus(nextValue))
+                }
                 disabled={disabled}
                 aria-invalid={fieldState.invalid}
-                placeholder="Optional split amount"
-                autoComplete="off"
-                onBlur={field.onBlur}
-                onChange={(event) => {
-                  field.onChange(
-                    event.target.value === ''
-                      ? undefined
-                      : event.target.valueAsNumber,
-                  )
-                }}
               />
 
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
-      </div>
 
-      <Controller
-        name="description"
-        control={control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>Description</FieldLabel>
+        <FieldGrid columns={3}>
+          <Controller
+            name="date"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>Date</FieldLabel>
 
-            <Textarea
-              {...field}
-              id={field.name}
-              value={field.value ?? ''}
-              disabled={disabled}
-              aria-invalid={fieldState.invalid}
-              placeholder="Notes for this event"
-              autoComplete="off"
-            />
+                <Input
+                  {...field}
+                  id={field.name}
+                  type="date"
+                  disabled={disabled}
+                  aria-invalid={fieldState.invalid}
+                />
 
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
-      />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
 
-      <Controller
-        name="notesAfterCompletion"
-        control={control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>Notes after completion</FieldLabel>
+          <Controller
+            name="endDate"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>End date</FieldLabel>
 
-            <Textarea
-              {...field}
-              id={field.name}
-              value={field.value ?? ''}
-              disabled={disabled}
-              aria-invalid={fieldState.invalid}
-              placeholder="What was done, follow-up instructions, or next steps"
-              autoComplete="off"
-            />
+                <Input
+                  {...field}
+                  id={field.name}
+                  value={field.value ?? ''}
+                  type="date"
+                  disabled={disabled}
+                  aria-invalid={fieldState.invalid}
+                />
 
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
-      />
+                <FieldDescription>
+                  Leave blank for a one-day event.
+                </FieldDescription>
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
 
-      <Controller
-        name="horseIds"
-        control={control}
-        render={({ field, fieldState }) => (
-          <FieldSet data-invalid={fieldState.invalid} disabled={disabled}>
-            <FieldLegend>Horses</FieldLegend>
-            <FieldDescription>
-              Select the horses this event applies to.
-            </FieldDescription>
+          <Controller
+            name="time"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>Time</FieldLabel>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              {horses.map((horse) => {
-                const horseId = horse._id
-                const checked = field.value.includes(horseId)
+                <Input
+                  {...field}
+                  id={field.name}
+                  type="time"
+                  disabled={disabled}
+                  aria-invalid={fieldState.invalid}
+                />
 
-                return (
-                  <Field
-                    key={horseId}
-                    orientation="horizontal"
-                    className="items-start"
-                  >
-                    <Checkbox
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+        </FieldGrid>
+      </FormSection>
+
+      <FormSection
+        description="Choose every horse this event applies to."
+        invalid={horsesInvalid}
+        number={2}
+        summary={horsesSummary}
+        title="Horses"
+        validationAttempt={submitCount}
+      >
+        <Controller
+          name="horseIds"
+          control={control}
+          render={({ field, fieldState }) => (
+            <FieldSet data-invalid={fieldState.invalid} disabled={disabled}>
+              <FieldLegend className="sr-only">Horses</FieldLegend>
+
+              <FieldGrid breakpoint="sm" gap="compact">
+                {horses.map((horse) => {
+                  const horseId = horse._id
+                  const checked = field.value.includes(horseId)
+
+                  return (
+                    <HorseSelectionCard
+                      key={horseId}
                       id={horseId}
+                      name={field.name}
+                      value={horseId}
+                      horse={horse}
                       checked={checked}
                       disabled={disabled}
-                      aria-invalid={fieldState.invalid}
-                      className="mt-4"
+                      invalid={fieldState.invalid}
                       onCheckedChange={(isChecked) => {
                         field.onChange(
                           isChecked
@@ -912,504 +866,568 @@ export function EventFormFields({
                         )
                       }}
                     />
-                    <FieldLabel htmlFor={horseId} className="w-full">
-                      <HorseCard
-                        horse={horse}
-                        className={cn(
-                          'w-full cursor-pointer',
-                          checked && 'border-primary bg-primary/5',
-                        )}
-                      />
-                    </FieldLabel>
-                  </Field>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </FieldGrid>
 
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </FieldSet>
-        )}
-      />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </FieldSet>
+          )}
+        />
+      </FormSection>
 
-      <Controller
-        name="recurring"
-        control={control}
-        render={({ field }) => (
-          <Field orientation="horizontal">
-            <Switch
-              id={field.name}
-              checked={field.value}
-              disabled={disabled}
-              onCheckedChange={(checked) => {
-                field.onChange(checked)
-                if (checked) {
-                  setRecurrenceEditorMode('simple')
-                  setSimplePreset('weekly')
-                }
-                setValue(
-                  'recurrence',
-                  checked
-                    ? {
-                        ...recurrenceDefaults,
-                        daysOfWeek: [getStartDayOfWeek(eventDate)],
-                      }
-                    : undefined,
-                  {
-                    shouldDirty: true,
-                    shouldValidate: true,
-                  },
-                )
-              }}
-            />
-            <div>
-              <FieldLabel htmlFor={field.name}>Recurring event</FieldLabel>
-              <FieldDescription>
-                Repeat this event on a schedule.
-              </FieldDescription>
-            </div>
-          </Field>
-        )}
-      />
+      <FormSection
+        description="Add a location, service provider, and costs when relevant."
+        invalid={logisticsInvalid}
+        number={3}
+        summary={logisticsSummary}
+        title="Place & provider"
+        validationAttempt={submitCount}
+      >
+        <Controller
+          name="location"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={field.name}>Location</FieldLabel>
 
-      <Controller
-        name="recurring"
-        control={control}
-        render={({ field }) => {
-          if (!field.value) return <></>
+              <Input
+                {...field}
+                id={field.name}
+                value={field.value ?? ''}
+                type="text"
+                disabled={disabled}
+                aria-invalid={fieldState.invalid}
+                placeholder="Main arena"
+                autoComplete="off"
+              />
 
-          return (
-            <FieldSet>
-              <FieldLegend>Recurrence</FieldLegend>
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
 
-              <Tabs
-                value={recurrenceEditorMode}
-                onValueChange={(value) => {
-                  setRecurrenceEditorMode(asRecurrenceEditorMode(value))
+        <FieldGrid>
+          <Controller
+            name="providerName"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>Provider</FieldLabel>
+
+                <ProviderAutocomplete
+                  id={field.name}
+                  name={field.name}
+                  value={field.value ?? ''}
+                  providers={providers}
+                  disabled={disabled}
+                  invalid={fieldState.invalid}
+                  onBlur={field.onBlur}
+                  onValueChange={field.onChange}
+                  onProviderSelect={applyProvider}
+                />
+
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+
+          <Controller
+            name="providerPhone"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>Provider phone</FieldLabel>
+
+                <Input
+                  {...field}
+                  id={field.name}
+                  value={field.value ?? ''}
+                  type="tel"
+                  disabled={disabled}
+                  aria-invalid={fieldState.invalid}
+                  placeholder="Provider contact number"
+                  autoComplete="off"
+                />
+
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+        </FieldGrid>
+
+        <FieldGrid>
+          <Controller
+            name="totalCost"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>Total cost</FieldLabel>
+
+                <Input
+                  id={field.name}
+                  name={field.name}
+                  value={field.value ?? ''}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  disabled={disabled}
+                  aria-invalid={fieldState.invalid}
+                  placeholder="Optional shared visit total"
+                  autoComplete="off"
+                  onBlur={field.onBlur}
+                  onChange={(event) => {
+                    field.onChange(
+                      event.target.value === ''
+                        ? undefined
+                        : event.target.valueAsNumber,
+                    )
+                  }}
+                />
+
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+
+          <Controller
+            name="costPerHorse"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>Cost per horse</FieldLabel>
+
+                <Input
+                  id={field.name}
+                  name={field.name}
+                  value={field.value ?? ''}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  disabled={disabled}
+                  aria-invalid={fieldState.invalid}
+                  placeholder="Optional split amount"
+                  autoComplete="off"
+                  onBlur={field.onBlur}
+                  onChange={(event) => {
+                    field.onChange(
+                      event.target.value === ''
+                        ? undefined
+                        : event.target.valueAsNumber,
+                    )
+                  }}
+                />
+
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+        </FieldGrid>
+      </FormSection>
+
+      <FormSection
+        description="Turn a one-off event into a repeating schedule."
+        invalid={recurrenceInvalid}
+        number={4}
+        summary={recurrenceSummary}
+        title="Repeat schedule"
+        validationAttempt={submitCount}
+      >
+        <Controller
+          name="recurring"
+          control={control}
+          render={({ field }) => (
+            <Field orientation="horizontal" className="app-row bg-card p-4">
+              <Switch
+                id={field.name}
+                checked={field.value}
+                disabled={disabled}
+                onCheckedChange={(checked) => {
+                  field.onChange(checked)
+                  if (checked) {
+                    setRecurrenceEditorMode('simple')
+                    setSimplePreset('weekly')
+                  }
+                  setValue(
+                    'recurrence',
+                    checked
+                      ? {
+                          ...recurrenceDefaults,
+                          daysOfWeek: [getStartDayOfWeek(eventDate)],
+                        }
+                      : undefined,
+                    {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    },
+                  )
                 }}
-              >
-                <TabsList>
-                  <TabsTrigger value="simple">Simple</TabsTrigger>
-                  <TabsTrigger value="advanced">Advanced</TabsTrigger>
-                </TabsList>
+              />
+              <div>
+                <FieldLabel htmlFor={field.name}>Recurring event</FieldLabel>
+                <FieldDescription>
+                  Repeat this event on a schedule.
+                </FieldDescription>
+              </div>
+            </Field>
+          )}
+        />
 
-                <TabsContent value="simple" className="flex flex-col gap-4">
-                  <Field>
-                    <div className="flex items-center gap-1">
-                      <FieldLabel>Repeat</FieldLabel>
-                      <FormHelpTooltip label="About simple recurrence presets">
-                        Start with a common schedule. Use advanced for custom
-                        intervals, monthly patterns, or end conditions.
-                      </FormHelpTooltip>
+        <Controller
+          name="recurring"
+          control={control}
+          render={({ field }) => {
+            if (!field.value) return <></>
+
+            return (
+              <FieldSet>
+                <FieldLegend className="sr-only">
+                  Recurrence schedule
+                </FieldLegend>
+
+                <RecurrenceModeSelector
+                  disabled={disabled}
+                  value={recurrenceEditorMode}
+                  onValueChange={(value) => {
+                    setRecurrenceEditorMode(value)
+                  }}
+                />
+
+                {recurrenceEditorMode === 'simple' && (
+                  <div className="grid gap-4 rounded-row border border-border-subtle bg-card p-4 sm:p-5">
+                    <div className="grid gap-1 border-b border-border-subtle pb-4">
+                      <span className="font-display text-base leading-none font-black tracking-[-0.02em] text-foreground uppercase">
+                        Choose a repeat pattern
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        Start with a common schedule, then choose weekdays when
+                        needed.
+                      </span>
                     </div>
 
-                    <ToggleGroup
-                      value={[simplePreset]}
-                      onValueChange={(values) => {
-                        const nextValue = values.at(-1)
-                        if (nextValue) {
-                          applySimplePreset(asSimpleRecurrencePreset(nextValue))
-                        }
-                      }}
-                      variant="outline"
-                      className="flex-wrap"
-                      disabled={disabled}
-                    >
-                      {simpleRecurrencePresets.map((preset) => (
-                        <ToggleGroupItem key={preset} value={preset}>
-                          {simpleRecurrencePresetLabels[preset]}
-                        </ToggleGroupItem>
-                      ))}
-                    </ToggleGroup>
-                  </Field>
+                    <Field>
+                      <FieldLabelRow>
+                        <FieldLabel>Repeat</FieldLabel>
+                        <FormHelpTooltip label="About simple recurrence presets">
+                          Start with a common schedule. Use advanced for custom
+                          intervals, monthly patterns, or end conditions.
+                        </FormHelpTooltip>
+                      </FieldLabelRow>
 
-                  {simplePresetUsesDays && (
-                    <Controller
-                      name="recurrence.daysOfWeek"
-                      control={control}
-                      render={({ field: daysField, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <div className="flex items-center gap-1">
-                            <FieldLabel>Days of week</FieldLabel>
-                            <FormHelpTooltip label="About weekly recurrence days">
-                              Choose one or more days this event repeats.
-                            </FormHelpTooltip>
-                          </div>
-
-                          <ToggleGroup
-                            value={(daysField.value ?? []).map(String)}
-                            onValueChange={(values) => {
-                              daysField.onChange(values.map(asDayOfWeek))
-                            }}
-                            multiple
-                            variant="outline"
-                            className="flex-wrap"
-                            disabled={disabled}
-                            aria-invalid={fieldState.invalid}
-                          >
-                            {daysOfWeekButtonOrder.map((day) => (
-                              <ToggleGroupItem
-                                key={day}
-                                value={String(day)}
-                                aria-label={dayOfWeekLabels[day]}
-                              >
-                                {shortDayLabels[day]}
-                              </ToggleGroupItem>
-                            ))}
-                          </ToggleGroup>
-
-                          {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
-                          )}
-                        </Field>
-                      )}
-                    />
-                  )}
-                </TabsContent>
-
-                <TabsContent value="advanced" className="flex flex-col gap-4">
-                  <Controller
-                    name="recurrence.frequency"
-                    control={control}
-                    render={({ field: frequencyField, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>Frequency</FieldLabel>
-
-                        <ToggleGroup
-                          value={
-                            frequencyField.value ? [frequencyField.value] : []
+                      <ToggleGroup
+                        value={[simplePreset]}
+                        onValueChange={(values) => {
+                          const nextValue = values.at(-1)
+                          if (nextValue) {
+                            applySimplePreset(
+                              asSimpleRecurrencePreset(nextValue),
+                            )
                           }
-                          onValueChange={(values) => {
-                            const nextValue = values.at(-1)
-                            if (nextValue) {
-                              const nextFrequency =
-                                asRecurrenceFrequency(nextValue)
-
-                              frequencyField.onChange(nextFrequency)
-
-                              if (nextFrequency === 'daily') {
-                                setValue('recurrence.daysOfWeek', undefined, {
-                                  shouldDirty: true,
-                                  shouldValidate: true,
-                                })
-                                setValue('recurrence.monthlyMode', undefined, {
-                                  shouldDirty: true,
-                                  shouldValidate: true,
-                                })
-                                setValue('recurrence.dayOfMonth', undefined, {
-                                  shouldDirty: true,
-                                  shouldValidate: true,
-                                })
-                                setValue('recurrence.ordinal', undefined, {
-                                  shouldDirty: true,
-                                  shouldValidate: true,
-                                })
-                                setValue('recurrence.weekday', undefined, {
-                                  shouldDirty: true,
-                                  shouldValidate: true,
-                                })
-                                setValue(
-                                  'recurrence.missingDateStrategy',
-                                  undefined,
-                                  { shouldDirty: true, shouldValidate: true },
-                                )
-                              }
-
-                              if (nextFrequency === 'weekly') {
-                                setValue(
-                                  'recurrence.daysOfWeek',
-                                  [getStartDayOfWeek(eventDate)],
-                                  { shouldDirty: true, shouldValidate: true },
-                                )
-                                setValue('recurrence.monthlyMode', undefined, {
-                                  shouldDirty: true,
-                                  shouldValidate: true,
-                                })
-                                setValue('recurrence.dayOfMonth', undefined, {
-                                  shouldDirty: true,
-                                  shouldValidate: true,
-                                })
-                                setValue('recurrence.ordinal', undefined, {
-                                  shouldDirty: true,
-                                  shouldValidate: true,
-                                })
-                                setValue('recurrence.weekday', undefined, {
-                                  shouldDirty: true,
-                                  shouldValidate: true,
-                                })
-                                setValue(
-                                  'recurrence.missingDateStrategy',
-                                  undefined,
-                                  { shouldDirty: true, shouldValidate: true },
-                                )
-                              }
-
-                              if (nextFrequency === 'monthly') {
-                                const dayOfMonth = getStartDayOfMonth(eventDate)
-
-                                setValue('recurrence.daysOfWeek', undefined, {
-                                  shouldDirty: true,
-                                  shouldValidate: true,
-                                })
-                                setValue(
-                                  'recurrence.monthlyMode',
-                                  'dayOfMonth',
-                                  {
-                                    shouldDirty: true,
-                                    shouldValidate: true,
-                                  },
-                                )
-                                setValue('recurrence.dayOfMonth', dayOfMonth, {
-                                  shouldDirty: true,
-                                  shouldValidate: true,
-                                })
-                                setValue('recurrence.ordinal', undefined, {
-                                  shouldDirty: true,
-                                  shouldValidate: true,
-                                })
-                                setValue('recurrence.weekday', undefined, {
-                                  shouldDirty: true,
-                                  shouldValidate: true,
-                                })
-                                setValue(
-                                  'recurrence.missingDateStrategy',
-                                  dayOfMonth >= 29
-                                    ? 'lastDayOfMonth'
-                                    : undefined,
-                                  { shouldDirty: true, shouldValidate: true },
-                                )
-                              }
-                            }
-                          }}
-                          variant="outline"
-                          disabled={disabled}
-                          aria-invalid={fieldState.invalid}
-                        >
-                          {recurrenceFrequencies.map((frequency) => (
-                            <ToggleGroupItem key={frequency} value={frequency}>
-                              {recurrenceFrequencyLabels[frequency]}
-                            </ToggleGroupItem>
-                          ))}
-                        </ToggleGroup>
-
-                        {fieldState.invalid && (
-                          <FieldError errors={[fieldState.error]} />
-                        )}
-                      </Field>
-                    )}
-                  />
-
-                  <Controller
-                    name="recurrence.interval"
-                    control={control}
-                    render={({ field: intervalField, fieldState }) => {
-                      const frequency = recurrence?.frequency ?? 'weekly'
-                      const unit = recurrenceUnits[frequency]
-
-                      return (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel htmlFor={intervalField.name}>
-                            Interval
-                          </FieldLabel>
-
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">
-                              Every
+                        }}
+                        variant="outline"
+                        disabled={disabled}
+                        className="grid w-full grid-cols-1 items-stretch gap-2 sm:grid-cols-2 lg:grid-cols-4"
+                      >
+                        {simpleRecurrencePresets.map((preset) => (
+                          <ToggleGroupItem
+                            key={preset}
+                            value={preset}
+                            className="h-auto min-h-16 flex-col items-start gap-1 px-3 py-3 text-left whitespace-normal"
+                          >
+                            <span className="text-sm font-bold">
+                              {simpleRecurrencePresetLabels[preset]}
                             </span>
-                            <Input
-                              id={intervalField.name}
-                              name={intervalField.name}
-                              value={intervalField.value ?? 1}
-                              type="number"
-                              min={1}
-                              className="w-24"
+                            <span className="text-[0.6875rem] leading-relaxed opacity-75">
+                              {simpleRecurrencePresetDescriptions[preset]}
+                            </span>
+                          </ToggleGroupItem>
+                        ))}
+                      </ToggleGroup>
+                    </Field>
+
+                    {simplePresetUsesDays && (
+                      <Controller
+                        name="recurrence.daysOfWeek"
+                        control={control}
+                        render={({ field: daysField, fieldState }) => (
+                          <Field
+                            data-invalid={fieldState.invalid}
+                            className="border-t border-border-subtle pt-4"
+                          >
+                            <FieldLabelRow>
+                              <FieldLabel>Days of week</FieldLabel>
+                              <FormHelpTooltip label="About weekly recurrence days">
+                                Choose one or more days this event repeats.
+                              </FormHelpTooltip>
+                            </FieldLabelRow>
+
+                            <ToggleGroup
+                              value={(daysField.value ?? []).map(String)}
+                              onValueChange={(values) => {
+                                daysField.onChange(values.map(asDayOfWeek))
+                              }}
+                              multiple
+                              variant="outline"
+                              wrap
                               disabled={disabled}
                               aria-invalid={fieldState.invalid}
-                              onBlur={intervalField.onBlur}
-                              onChange={(e) => {
-                                const val = e.target.value
-                                intervalField.onChange(
-                                  val === ''
-                                    ? undefined
-                                    : e.target.valueAsNumber,
-                                )
-                              }}
-                            />
-                            <span className="text-sm text-muted-foreground">
-                              {pluralize(unit, intervalField.value ?? 1)}
-                            </span>
-                          </div>
+                            >
+                              {daysOfWeekButtonOrder.map((day) => (
+                                <ToggleGroupItem
+                                  key={day}
+                                  value={String(day)}
+                                  aria-label={dayOfWeekLabels[day]}
+                                >
+                                  {shortDayLabels[day]}
+                                </ToggleGroupItem>
+                              ))}
+                            </ToggleGroup>
 
-                          {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
-                          )}
-                        </Field>
-                      )
-                    }}
-                  />
+                            {fieldState.invalid && (
+                              <FieldError errors={[fieldState.error]} />
+                            )}
+                          </Field>
+                        )}
+                      />
+                    )}
+                  </div>
+                )}
 
-                  <Controller
-                    name="recurrence.frequency"
-                    control={control}
-                    render={({ field: frequencyField }) => {
-                      if (frequencyField.value !== 'weekly') return <></>
+                {recurrenceEditorMode === 'advanced' && (
+                  <div className="grid gap-4 rounded-row border border-border-subtle bg-card p-4 sm:p-5">
+                    <div className="grid gap-1 border-b border-border-subtle pb-4">
+                      <span className="font-display text-base leading-none font-black tracking-[-0.02em] text-foreground uppercase">
+                        Build a custom schedule
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        Define the repeat pattern first, then decide when it
+                        ends.
+                      </span>
+                    </div>
 
-                      return (
-                        <Controller
-                          name="recurrence.daysOfWeek"
-                          control={control}
-                          render={({ field: daysField, fieldState }) => (
-                            <Field data-invalid={fieldState.invalid}>
-                              <FieldLabel>Days of week</FieldLabel>
+                    <div className="grid gap-6 lg:grid-cols-2 lg:items-start lg:gap-0">
+                      <div className="grid min-w-0 gap-5 lg:pr-6">
+                        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                          <span
+                            className="row-span-2 grid size-7 place-items-center rounded-control border border-border-subtle bg-surface-muted font-mono text-[0.6875rem] font-semibold text-muted-foreground"
+                            aria-hidden="true"
+                          >
+                            01
+                          </span>
+                          <span className="text-xs font-bold tracking-[0.08em] text-foreground uppercase">
+                            Pattern
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            Set the frequency, interval, and applicable days.
+                          </span>
+                        </div>
 
-                              <ToggleGroup
-                                value={(daysField.value ?? []).map(String)}
-                                onValueChange={(values) => {
-                                  daysField.onChange(values.map(asDayOfWeek))
-                                }}
-                                multiple
-                                variant="outline"
-                                className="flex-wrap"
-                                disabled={disabled}
-                                aria-invalid={fieldState.invalid}
-                              >
-                                {daysOfWeekButtonOrder.map((day) => (
-                                  <ToggleGroupItem
-                                    key={day}
-                                    value={String(day)}
-                                    aria-label={dayOfWeekLabels[day]}
-                                  >
-                                    {shortDayLabels[day]}
-                                  </ToggleGroupItem>
-                                ))}
-                              </ToggleGroup>
-
-                              {fieldState.invalid && (
-                                <FieldError errors={[fieldState.error]} />
-                              )}
-                            </Field>
-                          )}
-                        />
-                      )
-                    }}
-                  />
-
-                  <Controller
-                    name="recurrence.frequency"
-                    control={control}
-                    render={({ field: frequencyField }) => {
-                      if (frequencyField.value !== 'monthly') return <></>
-
-                      return (
-                        <div className="flex flex-col gap-4">
+                        <div className="grid gap-5 md:grid-cols-[max-content_max-content] md:items-start md:justify-start md:gap-x-10">
                           <Controller
-                            name="recurrence.monthlyMode"
+                            name="recurrence.frequency"
                             control={control}
-                            render={({ field: modeField, fieldState }) => (
+                            render={({ field: frequencyField, fieldState }) => (
                               <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel>Repeat by</FieldLabel>
+                                <FieldLabel
+                                  className={advancedRecurrenceLabelClassName}
+                                >
+                                  Frequency
+                                </FieldLabel>
 
-                                <RadioGroup
-                                  value={modeField.value ?? 'dayOfMonth'}
-                                  onValueChange={(value) => {
-                                    modeField.onChange(value)
+                                <ToggleGroup
+                                  value={
+                                    frequencyField.value
+                                      ? [frequencyField.value]
+                                      : []
+                                  }
+                                  onValueChange={(values) => {
+                                    const nextValue = values.at(-1)
+                                    if (nextValue) {
+                                      const nextFrequency =
+                                        asRecurrenceFrequency(nextValue)
 
-                                    if (value === 'dayOfMonth') {
-                                      const dayOfMonth =
-                                        getStartDayOfMonth(eventDate)
+                                      frequencyField.onChange(nextFrequency)
 
-                                      setValue(
-                                        'recurrence.dayOfMonth',
-                                        dayOfMonth,
-                                        {
-                                          shouldDirty: true,
-                                          shouldValidate: true,
-                                        },
-                                      )
-                                      setValue(
-                                        'recurrence.ordinal',
-                                        undefined,
-                                        {
-                                          shouldDirty: true,
-                                          shouldValidate: true,
-                                        },
-                                      )
-                                      setValue(
-                                        'recurrence.weekday',
-                                        undefined,
-                                        {
-                                          shouldDirty: true,
-                                          shouldValidate: true,
-                                        },
-                                      )
-                                      setValue(
-                                        'recurrence.missingDateStrategy',
-                                        dayOfMonth >= 29
-                                          ? 'lastDayOfMonth'
-                                          : undefined,
-                                        {
-                                          shouldDirty: true,
-                                          shouldValidate: true,
-                                        },
-                                      )
-                                    }
+                                      if (nextFrequency === 'daily') {
+                                        setValue(
+                                          'recurrence.daysOfWeek',
+                                          undefined,
+                                          {
+                                            shouldDirty: true,
+                                            shouldValidate: true,
+                                          },
+                                        )
+                                        setValue(
+                                          'recurrence.monthlyMode',
+                                          undefined,
+                                          {
+                                            shouldDirty: true,
+                                            shouldValidate: true,
+                                          },
+                                        )
+                                        setValue(
+                                          'recurrence.dayOfMonth',
+                                          undefined,
+                                          {
+                                            shouldDirty: true,
+                                            shouldValidate: true,
+                                          },
+                                        )
+                                        setValue(
+                                          'recurrence.ordinal',
+                                          undefined,
+                                          {
+                                            shouldDirty: true,
+                                            shouldValidate: true,
+                                          },
+                                        )
+                                        setValue(
+                                          'recurrence.weekday',
+                                          undefined,
+                                          {
+                                            shouldDirty: true,
+                                            shouldValidate: true,
+                                          },
+                                        )
+                                        setValue(
+                                          'recurrence.missingDateStrategy',
+                                          undefined,
+                                          {
+                                            shouldDirty: true,
+                                            shouldValidate: true,
+                                          },
+                                        )
+                                      }
 
-                                    if (value === 'weekdayPattern') {
-                                      setValue(
-                                        'recurrence.dayOfMonth',
-                                        undefined,
-                                        {
-                                          shouldDirty: true,
-                                          shouldValidate: true,
-                                        },
-                                      )
-                                      setValue(
-                                        'recurrence.missingDateStrategy',
-                                        undefined,
-                                        {
-                                          shouldDirty: true,
-                                          shouldValidate: true,
-                                        },
-                                      )
-                                      setValue(
-                                        'recurrence.ordinal',
-                                        getStartOrdinal(eventDate),
-                                        {
-                                          shouldDirty: true,
-                                          shouldValidate: true,
-                                        },
-                                      )
-                                      setValue(
-                                        'recurrence.weekday',
-                                        getStartDayOfWeek(eventDate),
-                                        {
-                                          shouldDirty: true,
-                                          shouldValidate: true,
-                                        },
-                                      )
+                                      if (nextFrequency === 'weekly') {
+                                        setValue(
+                                          'recurrence.daysOfWeek',
+                                          [getStartDayOfWeek(eventDate)],
+                                          {
+                                            shouldDirty: true,
+                                            shouldValidate: true,
+                                          },
+                                        )
+                                        setValue(
+                                          'recurrence.monthlyMode',
+                                          undefined,
+                                          {
+                                            shouldDirty: true,
+                                            shouldValidate: true,
+                                          },
+                                        )
+                                        setValue(
+                                          'recurrence.dayOfMonth',
+                                          undefined,
+                                          {
+                                            shouldDirty: true,
+                                            shouldValidate: true,
+                                          },
+                                        )
+                                        setValue(
+                                          'recurrence.ordinal',
+                                          undefined,
+                                          {
+                                            shouldDirty: true,
+                                            shouldValidate: true,
+                                          },
+                                        )
+                                        setValue(
+                                          'recurrence.weekday',
+                                          undefined,
+                                          {
+                                            shouldDirty: true,
+                                            shouldValidate: true,
+                                          },
+                                        )
+                                        setValue(
+                                          'recurrence.missingDateStrategy',
+                                          undefined,
+                                          {
+                                            shouldDirty: true,
+                                            shouldValidate: true,
+                                          },
+                                        )
+                                      }
+
+                                      if (nextFrequency === 'monthly') {
+                                        const dayOfMonth =
+                                          getStartDayOfMonth(eventDate)
+
+                                        setValue(
+                                          'recurrence.daysOfWeek',
+                                          undefined,
+                                          {
+                                            shouldDirty: true,
+                                            shouldValidate: true,
+                                          },
+                                        )
+                                        setValue(
+                                          'recurrence.monthlyMode',
+                                          'dayOfMonth',
+                                          {
+                                            shouldDirty: true,
+                                            shouldValidate: true,
+                                          },
+                                        )
+                                        setValue(
+                                          'recurrence.dayOfMonth',
+                                          dayOfMonth,
+                                          {
+                                            shouldDirty: true,
+                                            shouldValidate: true,
+                                          },
+                                        )
+                                        setValue(
+                                          'recurrence.ordinal',
+                                          undefined,
+                                          {
+                                            shouldDirty: true,
+                                            shouldValidate: true,
+                                          },
+                                        )
+                                        setValue(
+                                          'recurrence.weekday',
+                                          undefined,
+                                          {
+                                            shouldDirty: true,
+                                            shouldValidate: true,
+                                          },
+                                        )
+                                        setValue(
+                                          'recurrence.missingDateStrategy',
+                                          dayOfMonth >= 29
+                                            ? 'lastDayOfMonth'
+                                            : undefined,
+                                          {
+                                            shouldDirty: true,
+                                            shouldValidate: true,
+                                          },
+                                        )
+                                      }
                                     }
                                   }}
+                                  variant="outline"
                                   disabled={disabled}
+                                  aria-invalid={fieldState.invalid}
                                 >
-                                  <Field orientation="horizontal">
-                                    <RadioGroupItem
-                                      id="recurrence-monthly-day"
-                                      value="dayOfMonth"
-                                    />
-                                    <FieldLabel htmlFor="recurrence-monthly-day">
-                                      Day of month
-                                    </FieldLabel>
-                                  </Field>
-
-                                  <Field orientation="horizontal">
-                                    <RadioGroupItem
-                                      id="recurrence-monthly-weekday"
-                                      value="weekdayPattern"
-                                    />
-                                    <FieldLabel htmlFor="recurrence-monthly-weekday">
-                                      Weekday pattern
-                                    </FieldLabel>
-                                  </Field>
-                                </RadioGroup>
+                                  {recurrenceFrequencies.map((frequency) => (
+                                    <ToggleGroupItem
+                                      key={frequency}
+                                      value={frequency}
+                                    >
+                                      {recurrenceFrequencyLabels[frequency]}
+                                    </ToggleGroupItem>
+                                  ))}
+                                </ToggleGroup>
 
                                 {fieldState.invalid && (
                                   <FieldError errors={[fieldState.error]} />
@@ -1418,192 +1436,96 @@ export function EventFormFields({
                             )}
                           />
 
-                          {recurrence?.monthlyMode === 'dayOfMonth' && (
-                            <>
-                              <Controller
-                                name="recurrence.dayOfMonth"
-                                control={control}
-                                render={({ field: dayField, fieldState }) => (
-                                  <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel htmlFor={dayField.name}>
-                                      Day of month
-                                    </FieldLabel>
+                          <Controller
+                            name="recurrence.interval"
+                            control={control}
+                            render={({ field: intervalField, fieldState }) => {
+                              const frequency =
+                                recurrence?.frequency ?? 'weekly'
+                              const unit = recurrenceUnits[frequency]
 
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-sm text-muted-foreground">
-                                        Day
-                                      </span>
-                                      <Input
-                                        id={dayField.name}
-                                        name={dayField.name}
-                                        value={dayField.value ?? ''}
-                                        type="number"
-                                        min={1}
-                                        max={31}
-                                        className="w-24"
-                                        disabled={disabled}
-                                        aria-invalid={fieldState.invalid}
-                                        onBlur={dayField.onBlur}
-                                        onChange={(e) => {
-                                          const val = e.target.value
-                                          const nextDay =
-                                            val === ''
-                                              ? undefined
-                                              : e.target.valueAsNumber
+                              return (
+                                <Field
+                                  data-invalid={fieldState.invalid}
+                                  className="md:min-w-52"
+                                >
+                                  <FieldLabel
+                                    htmlFor={intervalField.name}
+                                    className={advancedRecurrenceLabelClassName}
+                                  >
+                                    Interval
+                                  </FieldLabel>
 
-                                          dayField.onChange(nextDay)
-                                          setValue(
-                                            'recurrence.missingDateStrategy',
-                                            nextDay && nextDay >= 29
-                                              ? 'lastDayOfMonth'
-                                              : undefined,
-                                            {
-                                              shouldDirty: true,
-                                              shouldValidate: true,
-                                            },
-                                          )
-                                        }}
-                                      />
-                                      <span className="text-sm text-muted-foreground">
-                                        of every month
-                                      </span>
-                                    </div>
-
-                                    {fieldState.invalid && (
-                                      <FieldError errors={[fieldState.error]} />
-                                    )}
-                                  </Field>
-                                )}
-                              />
-
-                              {(recurrence.dayOfMonth ?? 0) >= 29 && (
-                                <Controller
-                                  name="recurrence.missingDateStrategy"
-                                  control={control}
-                                  render={({
-                                    field: strategyField,
-                                    fieldState,
-                                  }) => (
-                                    <Field data-invalid={fieldState.invalid}>
-                                      <FieldLabel>
-                                        When a month does not have that date
-                                      </FieldLabel>
-
-                                      <RadioGroup
-                                        value={
-                                          strategyField.value ??
-                                          'lastDayOfMonth'
-                                        }
-                                        onValueChange={strategyField.onChange}
-                                        disabled={disabled}
-                                      >
-                                        <Field orientation="horizontal">
-                                          <RadioGroupItem
-                                            id="recurrence-missing-last-day"
-                                            value="lastDayOfMonth"
-                                          />
-                                          <FieldLabel htmlFor="recurrence-missing-last-day">
-                                            Use the last day of the month
-                                          </FieldLabel>
-                                        </Field>
-
-                                        <Field orientation="horizontal">
-                                          <RadioGroupItem
-                                            id="recurrence-missing-skip"
-                                            value="skip"
-                                          />
-                                          <FieldLabel htmlFor="recurrence-missing-skip">
-                                            Skip that month
-                                          </FieldLabel>
-                                        </Field>
-                                      </RadioGroup>
-
-                                      {fieldState.invalid && (
-                                        <FieldError
-                                          errors={[fieldState.error]}
-                                        />
-                                      )}
-                                    </Field>
-                                  )}
-                                />
-                              )}
-                            </>
-                          )}
-
-                          {recurrence?.monthlyMode === 'weekdayPattern' && (
-                            <div className="flex flex-col gap-4">
-                              <Controller
-                                name="recurrence.ordinal"
-                                control={control}
-                                render={({
-                                  field: ordinalField,
-                                  fieldState,
-                                }) => (
-                                  <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel>Week of month</FieldLabel>
-
-                                    <ToggleGroup
-                                      value={
-                                        ordinalField.value
-                                          ? [String(ordinalField.value)]
-                                          : []
-                                      }
-                                      onValueChange={(values) => {
-                                        const nextValue = values.at(-1)
-                                        if (nextValue) {
-                                          ordinalField.onChange(
-                                            asRecurrenceOrdinal(nextValue),
-                                          )
-                                        }
-                                      }}
-                                      variant="outline"
-                                      className="flex-wrap"
+                                  <FieldInlineControl>
+                                    <FieldInlineText>Every</FieldInlineText>
+                                    <Input
+                                      id={intervalField.name}
+                                      name={intervalField.name}
+                                      value={intervalField.value ?? 1}
+                                      type="number"
+                                      min={1}
+                                      width="compactNumber"
                                       disabled={disabled}
                                       aria-invalid={fieldState.invalid}
-                                    >
-                                      {recurrenceOrdinals.map((ordinal) => (
-                                        <ToggleGroupItem
-                                          key={ordinal}
-                                          value={String(ordinal)}
-                                        >
-                                          {ordinalLabels[ordinal]}
-                                        </ToggleGroupItem>
-                                      ))}
-                                    </ToggleGroup>
+                                      onBlur={intervalField.onBlur}
+                                      onChange={(e) => {
+                                        const val = e.target.value
+                                        intervalField.onChange(
+                                          val === ''
+                                            ? undefined
+                                            : e.target.valueAsNumber,
+                                        )
+                                      }}
+                                    />
+                                    <FieldInlineText>
+                                      {pluralize(
+                                        unit,
+                                        intervalField.value ?? 1,
+                                      )}
+                                    </FieldInlineText>
+                                  </FieldInlineControl>
 
-                                    {fieldState.invalid && (
-                                      <FieldError errors={[fieldState.error]} />
-                                    )}
-                                  </Field>
-                                )}
-                              />
+                                  {fieldState.invalid && (
+                                    <FieldError errors={[fieldState.error]} />
+                                  )}
+                                </Field>
+                              )
+                            }}
+                          />
+                        </div>
 
+                        <Controller
+                          name="recurrence.frequency"
+                          control={control}
+                          render={({ field: frequencyField }) => {
+                            if (frequencyField.value !== 'weekly') return <></>
+
+                            return (
                               <Controller
-                                name="recurrence.weekday"
+                                name="recurrence.daysOfWeek"
                                 control={control}
-                                render={({
-                                  field: weekdayField,
-                                  fieldState,
-                                }) => (
+                                render={({ field: daysField, fieldState }) => (
                                   <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel>Weekday</FieldLabel>
+                                    <FieldLabel
+                                      className={
+                                        advancedRecurrenceLabelClassName
+                                      }
+                                    >
+                                      Days of week
+                                    </FieldLabel>
 
                                     <ToggleGroup
-                                      value={
-                                        weekdayField.value !== undefined
-                                          ? [String(weekdayField.value)]
-                                          : []
-                                      }
+                                      value={(daysField.value ?? []).map(
+                                        String,
+                                      )}
                                       onValueChange={(values) => {
-                                        const nextValue = values.at(-1)
-                                        if (nextValue) {
-                                          weekdayField.onChange(
-                                            asDayOfWeek(nextValue),
-                                          )
-                                        }
+                                        daysField.onChange(
+                                          values.map(asDayOfWeek),
+                                        )
                                       }}
+                                      multiple
                                       variant="outline"
-                                      className="flex-wrap"
+                                      wrap
                                       disabled={disabled}
                                       aria-invalid={fieldState.invalid}
                                     >
@@ -1624,157 +1546,654 @@ export function EventFormFields({
                                   </Field>
                                 )}
                               />
-                            </div>
-                          )}
-                        </div>
-                      )
-                    }}
-                  />
-
-                  <Controller
-                    name="recurrence.end"
-                    control={control}
-                    render={({ field: endField, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>Ends</FieldLabel>
-
-                        <RadioGroup
-                          value={endField.value?.type ?? 'never'}
-                          onValueChange={(value) => {
-                            endField.onChange(
-                              value === 'on_date'
-                                ? { type: 'on_date', date: '' }
-                                : value === 'after_occurrences'
-                                  ? { type: 'after_occurrences', count: 1 }
-                                  : { type: 'never' },
                             )
                           }}
-                          disabled={disabled}
-                        >
-                          <Field orientation="horizontal">
-                            <RadioGroupItem
-                              id="recurrence-end-never"
-                              value="never"
-                            />
-                            <FieldLabel htmlFor="recurrence-end-never">
-                              Never
-                            </FieldLabel>
-                          </Field>
+                        />
 
-                          <Field orientation="horizontal">
-                            <RadioGroupItem
-                              id="recurrence-end-on-date"
-                              value="on_date"
-                            />
-                            <FieldLabel htmlFor="recurrence-end-on-date">
-                              On date
-                            </FieldLabel>
-                          </Field>
+                        <Controller
+                          name="recurrence.frequency"
+                          control={control}
+                          render={({ field: frequencyField }) => {
+                            if (frequencyField.value !== 'monthly') return <></>
 
-                          <Field orientation="horizontal">
-                            <RadioGroupItem
-                              id="recurrence-end-after-occurrences"
-                              value="after_occurrences"
-                            />
-                            <FieldLabel htmlFor="recurrence-end-after-occurrences">
-                              After occurrences
-                            </FieldLabel>
-                          </Field>
-                        </RadioGroup>
+                            return (
+                              <FieldGroup>
+                                <Controller
+                                  name="recurrence.monthlyMode"
+                                  control={control}
+                                  render={({
+                                    field: modeField,
+                                    fieldState,
+                                  }) => (
+                                    <Field data-invalid={fieldState.invalid}>
+                                      <FieldLabel
+                                        className={
+                                          advancedRecurrenceLabelClassName
+                                        }
+                                      >
+                                        Repeat by
+                                      </FieldLabel>
 
-                        {fieldState.invalid && (
-                          <FieldError errors={[fieldState.error]} />
-                        )}
-                      </Field>
-                    )}
-                  />
+                                      <RadioGroup
+                                        value={modeField.value ?? 'dayOfMonth'}
+                                        className="sm:w-auto sm:grid-cols-[max-content_max-content] sm:justify-start sm:gap-x-8"
+                                        onValueChange={(value) => {
+                                          modeField.onChange(value)
 
-                  <Controller
-                    name="recurrence.end"
-                    control={control}
-                    render={({ field: endField, fieldState }) => {
-                      if (endField.value?.type !== 'on_date') return <></>
+                                          if (value === 'dayOfMonth') {
+                                            const dayOfMonth =
+                                              getStartDayOfMonth(eventDate)
 
-                      return (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel htmlFor="recurrence-end-date">
-                            End date
-                          </FieldLabel>
+                                            setValue(
+                                              'recurrence.dayOfMonth',
+                                              dayOfMonth,
+                                              {
+                                                shouldDirty: true,
+                                                shouldValidate: true,
+                                              },
+                                            )
+                                            setValue(
+                                              'recurrence.ordinal',
+                                              undefined,
+                                              {
+                                                shouldDirty: true,
+                                                shouldValidate: true,
+                                              },
+                                            )
+                                            setValue(
+                                              'recurrence.weekday',
+                                              undefined,
+                                              {
+                                                shouldDirty: true,
+                                                shouldValidate: true,
+                                              },
+                                            )
+                                            setValue(
+                                              'recurrence.missingDateStrategy',
+                                              dayOfMonth >= 29
+                                                ? 'lastDayOfMonth'
+                                                : undefined,
+                                              {
+                                                shouldDirty: true,
+                                                shouldValidate: true,
+                                              },
+                                            )
+                                          }
 
-                          <Input
-                            id="recurrence-end-date"
-                            type="date"
-                            value={endField.value.date}
-                            disabled={disabled}
-                            aria-invalid={fieldState.invalid}
-                            onBlur={endField.onBlur}
-                            onChange={(e) => {
-                              endField.onChange({
-                                type: 'on_date',
-                                date: e.target.value,
-                              })
-                            }}
-                          />
+                                          if (value === 'weekdayPattern') {
+                                            setValue(
+                                              'recurrence.dayOfMonth',
+                                              undefined,
+                                              {
+                                                shouldDirty: true,
+                                                shouldValidate: true,
+                                              },
+                                            )
+                                            setValue(
+                                              'recurrence.missingDateStrategy',
+                                              undefined,
+                                              {
+                                                shouldDirty: true,
+                                                shouldValidate: true,
+                                              },
+                                            )
+                                            setValue(
+                                              'recurrence.ordinal',
+                                              getStartOrdinal(eventDate),
+                                              {
+                                                shouldDirty: true,
+                                                shouldValidate: true,
+                                              },
+                                            )
+                                            setValue(
+                                              'recurrence.weekday',
+                                              getStartDayOfWeek(eventDate),
+                                              {
+                                                shouldDirty: true,
+                                                shouldValidate: true,
+                                              },
+                                            )
+                                          }
+                                        }}
+                                        disabled={disabled}
+                                      >
+                                        <Field orientation="horizontal">
+                                          <RadioGroupItem
+                                            id="recurrence-monthly-day"
+                                            value="dayOfMonth"
+                                          />
+                                          <FieldLabel htmlFor="recurrence-monthly-day">
+                                            Day of month
+                                          </FieldLabel>
+                                        </Field>
 
-                          {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
+                                        <Field orientation="horizontal">
+                                          <RadioGroupItem
+                                            id="recurrence-monthly-weekday"
+                                            value="weekdayPattern"
+                                          />
+                                          <FieldLabel htmlFor="recurrence-monthly-weekday">
+                                            Weekday pattern
+                                          </FieldLabel>
+                                        </Field>
+                                      </RadioGroup>
+
+                                      {fieldState.invalid && (
+                                        <FieldError
+                                          errors={[fieldState.error]}
+                                        />
+                                      )}
+                                    </Field>
+                                  )}
+                                />
+
+                                {recurrence?.monthlyMode === 'dayOfMonth' && (
+                                  <>
+                                    <Controller
+                                      name="recurrence.dayOfMonth"
+                                      control={control}
+                                      render={({
+                                        field: dayField,
+                                        fieldState,
+                                      }) => (
+                                        <Field
+                                          data-invalid={fieldState.invalid}
+                                        >
+                                          <FieldLabel
+                                            htmlFor={dayField.name}
+                                            className={
+                                              advancedRecurrenceLabelClassName
+                                            }
+                                          >
+                                            Day of month
+                                          </FieldLabel>
+
+                                          <FieldInlineControl>
+                                            <FieldInlineText>
+                                              Day
+                                            </FieldInlineText>
+                                            <Input
+                                              id={dayField.name}
+                                              name={dayField.name}
+                                              value={dayField.value ?? ''}
+                                              type="number"
+                                              min={1}
+                                              max={31}
+                                              width="compactNumber"
+                                              disabled={disabled}
+                                              aria-invalid={fieldState.invalid}
+                                              onBlur={dayField.onBlur}
+                                              onChange={(e) => {
+                                                const val = e.target.value
+                                                const nextDay =
+                                                  val === ''
+                                                    ? undefined
+                                                    : e.target.valueAsNumber
+
+                                                dayField.onChange(nextDay)
+                                                setValue(
+                                                  'recurrence.missingDateStrategy',
+                                                  nextDay && nextDay >= 29
+                                                    ? 'lastDayOfMonth'
+                                                    : undefined,
+                                                  {
+                                                    shouldDirty: true,
+                                                    shouldValidate: true,
+                                                  },
+                                                )
+                                              }}
+                                            />
+                                            <FieldInlineText>
+                                              of every month
+                                            </FieldInlineText>
+                                          </FieldInlineControl>
+
+                                          {fieldState.invalid && (
+                                            <FieldError
+                                              errors={[fieldState.error]}
+                                            />
+                                          )}
+                                        </Field>
+                                      )}
+                                    />
+
+                                    {(recurrence.dayOfMonth ?? 0) >= 29 && (
+                                      <Controller
+                                        name="recurrence.missingDateStrategy"
+                                        control={control}
+                                        render={({
+                                          field: strategyField,
+                                          fieldState,
+                                        }) => (
+                                          <Field
+                                            data-invalid={fieldState.invalid}
+                                          >
+                                            <FieldLabel
+                                              className={
+                                                advancedRecurrenceLabelClassName
+                                              }
+                                            >
+                                              When a month does not have that
+                                              date
+                                            </FieldLabel>
+
+                                            <RadioGroup
+                                              value={
+                                                strategyField.value ??
+                                                'lastDayOfMonth'
+                                              }
+                                              onValueChange={
+                                                strategyField.onChange
+                                              }
+                                              disabled={disabled}
+                                            >
+                                              <Field orientation="horizontal">
+                                                <RadioGroupItem
+                                                  id="recurrence-missing-last-day"
+                                                  value="lastDayOfMonth"
+                                                />
+                                                <FieldLabel htmlFor="recurrence-missing-last-day">
+                                                  Use the last day of the month
+                                                </FieldLabel>
+                                              </Field>
+
+                                              <Field orientation="horizontal">
+                                                <RadioGroupItem
+                                                  id="recurrence-missing-skip"
+                                                  value="skip"
+                                                />
+                                                <FieldLabel htmlFor="recurrence-missing-skip">
+                                                  Skip that month
+                                                </FieldLabel>
+                                              </Field>
+                                            </RadioGroup>
+
+                                            {fieldState.invalid && (
+                                              <FieldError
+                                                errors={[fieldState.error]}
+                                              />
+                                            )}
+                                          </Field>
+                                        )}
+                                      />
+                                    )}
+                                  </>
+                                )}
+
+                                {recurrence?.monthlyMode ===
+                                  'weekdayPattern' && (
+                                  <FieldGroup
+                                    gap="default"
+                                    className="sm:grid sm:w-auto sm:grid-cols-[max-content_max-content] sm:justify-start sm:gap-x-10"
+                                  >
+                                    <Controller
+                                      name="recurrence.ordinal"
+                                      control={control}
+                                      render={({
+                                        field: ordinalField,
+                                        fieldState,
+                                      }) => (
+                                        <Field
+                                          data-invalid={fieldState.invalid}
+                                        >
+                                          <FieldLabel
+                                            className={
+                                              advancedRecurrenceLabelClassName
+                                            }
+                                          >
+                                            Week of month
+                                          </FieldLabel>
+
+                                          <ToggleGroup
+                                            value={
+                                              ordinalField.value
+                                                ? [String(ordinalField.value)]
+                                                : []
+                                            }
+                                            onValueChange={(values) => {
+                                              const nextValue = values.at(-1)
+                                              if (nextValue) {
+                                                ordinalField.onChange(
+                                                  asRecurrenceOrdinal(
+                                                    nextValue,
+                                                  ),
+                                                )
+                                              }
+                                            }}
+                                            variant="outline"
+                                            wrap
+                                            disabled={disabled}
+                                            aria-invalid={fieldState.invalid}
+                                          >
+                                            {recurrenceOrdinals.map(
+                                              (ordinal) => (
+                                                <ToggleGroupItem
+                                                  key={ordinal}
+                                                  value={String(ordinal)}
+                                                >
+                                                  {ordinalLabels[ordinal]}
+                                                </ToggleGroupItem>
+                                              ),
+                                            )}
+                                          </ToggleGroup>
+
+                                          {fieldState.invalid && (
+                                            <FieldError
+                                              errors={[fieldState.error]}
+                                            />
+                                          )}
+                                        </Field>
+                                      )}
+                                    />
+
+                                    <Controller
+                                      name="recurrence.weekday"
+                                      control={control}
+                                      render={({
+                                        field: weekdayField,
+                                        fieldState,
+                                      }) => (
+                                        <Field
+                                          data-invalid={fieldState.invalid}
+                                        >
+                                          <FieldLabel
+                                            className={
+                                              advancedRecurrenceLabelClassName
+                                            }
+                                          >
+                                            Weekday
+                                          </FieldLabel>
+
+                                          <ToggleGroup
+                                            value={
+                                              weekdayField.value !== undefined
+                                                ? [String(weekdayField.value)]
+                                                : []
+                                            }
+                                            onValueChange={(values) => {
+                                              const nextValue = values.at(-1)
+                                              if (nextValue) {
+                                                weekdayField.onChange(
+                                                  asDayOfWeek(nextValue),
+                                                )
+                                              }
+                                            }}
+                                            variant="outline"
+                                            wrap
+                                            disabled={disabled}
+                                            aria-invalid={fieldState.invalid}
+                                          >
+                                            {daysOfWeekButtonOrder.map(
+                                              (day) => (
+                                                <ToggleGroupItem
+                                                  key={day}
+                                                  value={String(day)}
+                                                  aria-label={
+                                                    dayOfWeekLabels[day]
+                                                  }
+                                                >
+                                                  {shortDayLabels[day]}
+                                                </ToggleGroupItem>
+                                              ),
+                                            )}
+                                          </ToggleGroup>
+
+                                          {fieldState.invalid && (
+                                            <FieldError
+                                              errors={[fieldState.error]}
+                                            />
+                                          )}
+                                        </Field>
+                                      )}
+                                    />
+                                  </FieldGroup>
+                                )}
+                              </FieldGroup>
+                            )
+                          }}
+                        />
+                      </div>
+
+                      <div className="grid min-w-0 gap-5 border-t border-border-subtle pt-5 lg:border-t-0 lg:pt-0 lg:pl-6">
+                        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                          <span
+                            className="row-span-2 grid size-7 place-items-center rounded-control border border-border-subtle bg-surface-muted font-mono text-[0.6875rem] font-semibold text-muted-foreground"
+                            aria-hidden="true"
+                          >
+                            02
+                          </span>
+                          <span className="text-xs font-bold tracking-[0.08em] text-foreground uppercase">
+                            End condition
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            Keep the schedule open, stop on a date, or limit the
+                            number of occurrences.
+                          </span>
+                        </div>
+
+                        <Controller
+                          name="recurrence.end"
+                          control={control}
+                          render={({ field: endField, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                              <FieldLabel
+                                className={advancedRecurrenceLabelClassName}
+                              >
+                                Ends
+                              </FieldLabel>
+
+                              <RadioGroup
+                                value={endField.value?.type ?? 'never'}
+                                className="sm:grid-cols-3 lg:grid-cols-1"
+                                onValueChange={(value) => {
+                                  endField.onChange(
+                                    value === 'on_date'
+                                      ? { type: 'on_date', date: '' }
+                                      : value === 'after_occurrences'
+                                        ? {
+                                            type: 'after_occurrences',
+                                            count: 1,
+                                          }
+                                        : { type: 'never' },
+                                  )
+                                }}
+                                disabled={disabled}
+                              >
+                                <Field orientation="horizontal">
+                                  <RadioGroupItem
+                                    id="recurrence-end-never"
+                                    value="never"
+                                  />
+                                  <FieldLabel htmlFor="recurrence-end-never">
+                                    Never
+                                  </FieldLabel>
+                                </Field>
+
+                                <Field orientation="horizontal">
+                                  <RadioGroupItem
+                                    id="recurrence-end-on-date"
+                                    value="on_date"
+                                  />
+                                  <FieldLabel htmlFor="recurrence-end-on-date">
+                                    On date
+                                  </FieldLabel>
+                                </Field>
+
+                                <Field orientation="horizontal">
+                                  <RadioGroupItem
+                                    id="recurrence-end-after-occurrences"
+                                    value="after_occurrences"
+                                  />
+                                  <FieldLabel htmlFor="recurrence-end-after-occurrences">
+                                    After occurrences
+                                  </FieldLabel>
+                                </Field>
+                              </RadioGroup>
+
+                              {fieldState.invalid && (
+                                <FieldError errors={[fieldState.error]} />
+                              )}
+                            </Field>
                           )}
-                        </Field>
-                      )
-                    }}
-                  />
+                        />
 
-                  <Controller
-                    name="recurrence.end"
-                    control={control}
-                    render={({ field: endField, fieldState }) => {
-                      if (endField.value?.type !== 'after_occurrences')
-                        return <></>
+                        <Controller
+                          name="recurrence.end"
+                          control={control}
+                          render={({ field: endField, fieldState }) => {
+                            if (endField.value?.type !== 'on_date') return <></>
 
-                      return (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel htmlFor="recurrence-end-count">
-                            Occurrences
-                          </FieldLabel>
+                            return (
+                              <Field data-invalid={fieldState.invalid}>
+                                <FieldLabel
+                                  htmlFor="recurrence-end-date"
+                                  className={advancedRecurrenceLabelClassName}
+                                >
+                                  End date
+                                </FieldLabel>
 
-                          <Input
-                            id="recurrence-end-count"
-                            type="number"
-                            min={1}
-                            value={endField.value.count ?? 1}
-                            className="w-24"
-                            disabled={disabled}
-                            aria-invalid={fieldState.invalid}
-                            onBlur={endField.onBlur}
-                            onChange={(e) => {
-                              const val = e.target.value
-                              endField.onChange({
-                                type: 'after_occurrences',
-                                count:
-                                  val === ''
-                                    ? undefined
-                                    : e.target.valueAsNumber,
-                              })
-                            }}
-                          />
+                                <Input
+                                  id="recurrence-end-date"
+                                  type="date"
+                                  value={endField.value.date}
+                                  disabled={disabled}
+                                  aria-invalid={fieldState.invalid}
+                                  onBlur={endField.onBlur}
+                                  onChange={(e) => {
+                                    endField.onChange({
+                                      type: 'on_date',
+                                      date: e.target.value,
+                                    })
+                                  }}
+                                />
 
-                          {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
-                          )}
-                        </Field>
-                      )
-                    }}
-                  />
-                </TabsContent>
-              </Tabs>
+                                {fieldState.invalid && (
+                                  <FieldError errors={[fieldState.error]} />
+                                )}
+                              </Field>
+                            )
+                          }}
+                        />
 
-              {recurrencePreview && (
-                <FieldDescription>{recurrencePreview}</FieldDescription>
-              )}
-            </FieldSet>
-          )
-        }}
-      />
+                        <Controller
+                          name="recurrence.end"
+                          control={control}
+                          render={({ field: endField, fieldState }) => {
+                            if (endField.value?.type !== 'after_occurrences')
+                              return <></>
+
+                            return (
+                              <Field data-invalid={fieldState.invalid}>
+                                <FieldLabel
+                                  htmlFor="recurrence-end-count"
+                                  className={advancedRecurrenceLabelClassName}
+                                >
+                                  Occurrences
+                                </FieldLabel>
+
+                                <Input
+                                  id="recurrence-end-count"
+                                  type="number"
+                                  min={1}
+                                  value={endField.value.count ?? 1}
+                                  width="compactNumber"
+                                  disabled={disabled}
+                                  aria-invalid={fieldState.invalid}
+                                  onBlur={endField.onBlur}
+                                  onChange={(e) => {
+                                    const val = e.target.value
+                                    endField.onChange({
+                                      type: 'after_occurrences',
+                                      count:
+                                        val === ''
+                                          ? undefined
+                                          : e.target.valueAsNumber,
+                                    })
+                                  }}
+                                />
+
+                                {fieldState.invalid && (
+                                  <FieldError errors={[fieldState.error]} />
+                                )}
+                              </Field>
+                            )
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {recurrencePreview && (
+                  <div className="grid gap-1 border-l-4 border-l-primary py-1 pl-4">
+                    <span className="text-xs font-bold tracking-[0.08em] text-muted-foreground uppercase">
+                      Schedule summary
+                    </span>
+                    <p className="m-0 text-sm leading-relaxed text-foreground">
+                      {recurrencePreview}
+                    </p>
+                  </div>
+                )}
+              </FieldSet>
+            )
+          }}
+        />
+      </FormSection>
+
+      <FormSection
+        description="Keep preparation notes and record the outcome."
+        invalid={notesInvalid}
+        number={5}
+        summary={notesSummary}
+        title="Notes & outcome"
+        validationAttempt={submitCount}
+      >
+        <Controller
+          name="description"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={field.name}>Description</FieldLabel>
+
+              <Textarea
+                {...field}
+                id={field.name}
+                value={field.value ?? ''}
+                disabled={disabled}
+                aria-invalid={fieldState.invalid}
+                placeholder="Notes for this event"
+                autoComplete="off"
+              />
+
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
+
+        <Controller
+          name="notesAfterCompletion"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={field.name}>
+                Notes after completion
+              </FieldLabel>
+
+              <Textarea
+                {...field}
+                id={field.name}
+                value={field.value ?? ''}
+                disabled={disabled}
+                aria-invalid={fieldState.invalid}
+                placeholder="What was done, follow-up instructions, or next steps"
+                autoComplete="off"
+              />
+
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
+      </FormSection>
     </>
   )
 }

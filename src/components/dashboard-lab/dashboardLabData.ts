@@ -1,4 +1,4 @@
-import { formatDateKey } from '#/components/stables/stableDashboardDates'
+import { formatDateKey, formatShortWeekdayDate } from '#/lib/dateDisplay'
 import type {
   DashboardLabData,
   DashboardLabEvent,
@@ -6,8 +6,6 @@ import type {
   DashboardLabOverview,
   DashboardLabStable,
 } from './dashboardLabTypes'
-
-const dayFormatter = new Intl.DateTimeFormat('en-GB', { weekday: 'short' })
 
 export function createDashboardLabData({
   stable,
@@ -40,7 +38,7 @@ export function createDashboardLabData({
     return {
       date,
       key,
-      label: index === 0 ? 'Today' : dayFormatter.format(date),
+      label: index === 0 ? 'Today' : formatShortWeekdayDate(date),
       day: `${date.getDate()}`,
       eventCount: dayEvents.length,
       events: dayEvents,
@@ -59,6 +57,7 @@ export function createDashboardLabData({
     todayEvents: stableEvents.filter((event) => event.date === todayKey),
     weekDays,
     urgentCount:
-      overview.summary.overdueReminderCount + overview.summary.highSeverityIssueCount,
+      overview.summary.overdueReminderCount +
+      overview.summary.highSeverityIssueCount,
   }
 }

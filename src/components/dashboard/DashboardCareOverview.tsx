@@ -1,17 +1,39 @@
-import { Badge } from '#/components/ui/badge'
-import { cn } from '#/lib/utils'
+import { DashboardBadgeList } from '#/components/dashboard/DashboardBadgeList'
+import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
+import { DashboardLayoutGrid } from '#/components/dashboard/DashboardLayoutGrid'
+import { DashboardSection } from '#/components/dashboard/DashboardSection'
+import {
+  DashboardMetric,
+  DashboardMetricStrip,
+} from '#/components/dashboard/DashboardMetric'
+import {
+  DashboardItemOpenLink,
+  DashboardItemList,
+  DashboardItemOpenTitle,
+} from '#/components/dashboard/DashboardItemCard'
+import { DashboardMetaList } from '#/components/dashboard/DashboardMetaList'
+import { EventRow } from '#/components/events/EventRow'
+import { HorseNameBadge } from '#/components/horses/HorseBadges'
+import { HorseCardLink } from '#/components/horses/HorseCard'
+import {
+  HorseActiveMedicationCountBadge,
+  HorseHighIssueCountBadge,
+  HorseOverdueReminderCountBadge,
+} from '#/components/horses/HorseCareBadges'
+import {
+  CareReminderCategoryBadge,
+  CareReminderPriorityBadge,
+  CareReminderStatusBadge,
+} from '#/components/reminders/CareReminderBadges'
+import { StableNameBadge } from '#/components/stables/StableBadges'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
+import type { ComponentProps } from 'react'
 import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
 import type { FunctionReturnType } from 'convex/server'
-import type { ReactNode } from 'react'
-import { eventTypeLabels } from 'shared/events/eventSchema'
-import {
-  careReminderCategoryLabels,
-  careReminderPriorityLabels,
-} from 'shared/reminders/careReminderSchema'
+import { formatShortDateKey } from '#/lib/dateDisplay'
+import { formatCountLabel } from '#/lib/numberDisplay'
 
 type UserCareOverview = FunctionReturnType<
   typeof api.userCareOverview.getForCurrentUser
@@ -21,45 +43,43 @@ type EventItem = UserCareOverview['upcomingEvents'][number]
 type AttentionHorseItem = UserCareOverview['attentionHorses'][number]
 type CareTone = 'due' | 'planned' | 'attention' | 'stable'
 
-const dashboardDateFormatter = new Intl.DateTimeFormat('en-GB', {
-  day: 'numeric',
-  month: 'short',
-})
-
-const careRowClassName = (tone: CareTone) =>
-  cn(
-    'group/open grid gap-2 rounded-row border-l-4 bg-transparent p-5 transition-colors hover:bg-primary/5',
-    tone === 'due' && 'border-l-amber-400',
-    tone === 'planned' && 'border-l-primary/45',
-    tone === 'attention' && 'border-l-destructive/45',
-    tone === 'stable' && 'border-l-muted-foreground/30',
-  )
+const careRowTone = {
+  due: 'warning',
+  planned: 'primary',
+  attention: 'danger',
+  stable: 'muted',
+} satisfies Record<
+  CareTone,
+  NonNullable<ComponentProps<typeof DashboardItemOpenLink>['tone']>
+>
 
 type DashboardCareOverviewProps = {
   stableId: Doc<'stables'>['_id'] | undefined
 }
 
-export function DashboardCareOverview({ stableId }: DashboardCareOverviewProps) {
+export function DashboardCareOverview({
+  stableId,
+}: DashboardCareOverviewProps) {
   const overviewArgs = stableId ? { stableId } : {}
   const { data: overview } = useSuspenseQuery(
     convexQuery(api.userCareOverview.getForCurrentUser, overviewArgs),
   )
 
   return (
-    <section className="grid gap-4">
-      <div>
-        <h2 className="text-xl font-semibold">Care command centre</h2>
-        <p className="text-sm text-muted-foreground">
-          Reminders, attention items, and upcoming care for the selected stable.
-        </p>
-      </div>
-
-      <div className="grid gap-3 border-y border-border-subtle py-5 sm:grid-cols-2 xl:grid-cols-4">
+    <DashboardSection
+      chrome="cards"
+      gap="compact"
+      title="Care command centre"
+      description="Reminders, attention items, and upcoming care for the selected stable."
+      size="panel"
+      descriptionSize="sm"
+    >
+      <DashboardMetricStrip>
         <OverviewMetric
           title="Due reminders"
           value={`${overview.summary.dueReminderCount}`}
         >
-          {overview.summary.overdueReminderCount} overdue
+          {`${overview.summary.overdueReminderCount} overdue`}
         </OverviewMetric>
         <OverviewMetric
           title="Upcoming care"
@@ -79,14 +99,14 @@ export function DashboardCareOverview({ stableId }: DashboardCareOverviewProps) 
         >
           Current medication courses
         </OverviewMetric>
-      </div>
+      </DashboardMetricStrip>
 
-      <div className="grid items-start gap-6 lg:grid-cols-2">
+      <DashboardLayoutGrid variant="equal">
         <DueReminderCard reminders={overview.dueReminders} />
         <UpcomingEventCard events={overview.upcomingEvents} />
         <AttentionHorseCard horses={overview.attentionHorses} />
-      </div>
-    </section>
+      </DashboardLayoutGrid>
+    </DashboardSection>
   )
 }
 
@@ -100,199 +120,180 @@ function OverviewMetric({
   children: string
 }) {
   return (
-    <div className="grid gap-1 sm:border-l sm:border-border-subtle sm:pl-4 first:sm:border-l-0 first:sm:pl-0">
-      <p className="text-sm font-medium text-muted-foreground">{title}</p>
-      <p className="text-3xl font-semibold tracking-tight">{value}</p>
-      <p className="text-sm text-muted-foreground">{children}</p>
-    </div>
+    <DashboardMetric
+      title={title}
+      value={value}
+      stripItem={{ inset: 'compact' }}
+    >
+      {children}
+    </DashboardMetric>
   )
 }
 
 function DueReminderCard({ reminders }: { reminders: ReminderItem[] }) {
   return (
-    <section className="grid min-w-0 content-start gap-4">
-      <div>
-        <h3 className="text-lg font-semibold tracking-tight">Due reminders</h3>
-        <p className="text-sm text-muted-foreground">
-          Pending reminders due soon for this stable.
-        </p>
-      </div>
-      <div className="grid gap-2">
+    <DashboardSection
+      as="h3"
+      chrome="soft"
+      className="min-w-0"
+      contentAlign="start"
+      gap="compact"
+      padding="none"
+      title="Due reminders"
+      description="Pending reminders due soon for this stable."
+      size="panel"
+      descriptionSize="sm"
+    >
+      <DashboardItemList gap="compact">
         {reminders.length === 0 ? (
-          <EmptyState>No reminders due in the next 14 days.</EmptyState>
+          <DashboardEmptyState chrome="cards">
+            No reminders due in the next 14 days.
+          </DashboardEmptyState>
         ) : (
           reminders.map((reminder) => (
-            <Link
+            <DashboardItemOpenLink
               key={reminder.id}
               to="/stables/$stableId/reminders"
               params={{ stableId: reminder.stableId }}
-              className={careRowClassName(reminder.overdue ? 'attention' : 'due')}
+              tone={careRowTone[reminder.overdue ? 'attention' : 'due']}
+              density="compact"
             >
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-semibold underline-offset-4 transition-colors group-hover/open:text-primary group-hover/open:underline">
+              <DashboardBadgeList>
+                <DashboardItemOpenTitle>
                   {reminder.title}
-                </span>
-                {reminder.overdue && <CareTag tone="attention">Overdue</CareTag>}
+                </DashboardItemOpenTitle>
+                {reminder.overdue && (
+                  <CareReminderStatusBadge
+                    status="pending"
+                    overdue={reminder.overdue}
+                  />
+                )}
                 {reminder.priority && (
-                  <CareTag tone="due">
-                    {careReminderPriorityLabels[reminder.priority]}
-                  </CareTag>
+                  <CareReminderPriorityBadge priority={reminder.priority} />
                 )}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Due {formatDashboardDate(reminder.dueDate)}
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                <CareTag tone="planned">
-                  {careReminderCategoryLabels[reminder.category]}
-                </CareTag>
-                <CareTag tone="stable">{reminder.stableName}</CareTag>
+              </DashboardBadgeList>
+              <DashboardMetaList size="xs">
+                <span>Due {formatShortDateKey(reminder.dueDate)}</span>
+              </DashboardMetaList>
+              <DashboardBadgeList gap="compact">
+                <CareReminderCategoryBadge category={reminder.category} />
+                <StableNameBadge name={reminder.stableName} />
                 {reminder.horseName && (
-                  <CareTag tone="horse">{reminder.horseName}</CareTag>
+                  <HorseNameBadge name={reminder.horseName} />
                 )}
-              </div>
-            </Link>
+              </DashboardBadgeList>
+            </DashboardItemOpenLink>
           ))
         )}
-      </div>
-    </section>
+      </DashboardItemList>
+    </DashboardSection>
   )
 }
 
 function UpcomingEventCard({ events }: { events: EventItem[] }) {
   return (
-    <section className="grid min-w-0 content-start gap-4">
-      <div>
-        <h3 className="text-lg font-semibold tracking-tight">Upcoming care</h3>
-        <p className="text-sm text-muted-foreground">
-          Planned events for this stable.
-        </p>
-      </div>
-      <div className="grid gap-2">
+    <DashboardSection
+      as="h3"
+      chrome="soft"
+      className="min-w-0"
+      contentAlign="start"
+      gap="compact"
+      padding="none"
+      title="Upcoming care"
+      description="Planned events for this stable."
+      size="panel"
+      descriptionSize="sm"
+    >
+      <DashboardItemList gap="compact">
         {events.length === 0 ? (
-          <EmptyState>No planned events in the next 14 days.</EmptyState>
+          <DashboardEmptyState chrome="cards">
+            No planned events in the next 14 days.
+          </DashboardEmptyState>
         ) : (
           events.map((event) => (
-            <Link
+            <EventRow
               key={event.id}
-              to="/stables/$stableId/events/$eventId"
-              params={{ stableId: event.stableId, eventId: event.id }}
-              className={careRowClassName('planned')}
-            >
-              <span className="text-sm font-semibold underline-offset-4 transition-colors group-hover/open:text-primary group-hover/open:underline">
-                {event.title}
-              </span>
-              <p className="text-xs text-muted-foreground">
-                {formatDashboardDate(event.date)} at {event.time}
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                <CareTag tone="planned">{eventTypeLabels[event.type]}</CareTag>
-                <CareTag tone="stable">{event.stableName}</CareTag>
-                <CareTag tone="horse">
-                  {event.horseCount} horse
-                  {event.horseCount === 1 ? '' : 's'}
-                </CareTag>
-              </div>
-            </Link>
+              event={{
+                _id: event.id,
+                stableId: event.stableId,
+                title: event.title,
+                date: event.date,
+                time: event.time,
+                type: event.type,
+                status: 'planned',
+              }}
+              accent="primary"
+              chrome="soft"
+              density="compact"
+              horseCount={event.horseCount}
+              supplementalMeta={[event.stableName]}
+              variant="agenda"
+            />
           ))
         )}
-      </div>
-    </section>
+      </DashboardItemList>
+    </DashboardSection>
   )
 }
 
 function AttentionHorseCard({ horses }: { horses: AttentionHorseItem[] }) {
   return (
-    <section className="grid min-w-0 content-start gap-4">
-      <div>
-        <h3 className="text-lg font-semibold tracking-tight">
-          Horses needing attention
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          Health, medication, and overdue reminder signals.
-        </p>
-      </div>
-      <div className="grid gap-2">
+    <DashboardSection
+      as="h3"
+      chrome="soft"
+      className="min-w-0"
+      contentAlign="start"
+      gap="compact"
+      padding="none"
+      title="Horses needing attention"
+      description="Health, medication, and overdue reminder signals."
+      size="panel"
+      descriptionSize="sm"
+    >
+      <DashboardItemList gap="compact">
         {horses.length === 0 ? (
-          <EmptyState>No horse-level attention items right now.</EmptyState>
+          <DashboardEmptyState chrome="cards">
+            No horse-level attention items right now.
+          </DashboardEmptyState>
         ) : (
           horses.map((horse) => (
-            <Link
+            <HorseCardLink
               key={horse.horseId}
-              to="/stables/$stableId/horses/$horseId"
-              params={{ stableId: horse.stableId, horseId: horse.horseId }}
-              className={careRowClassName('attention')}
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-semibold underline-offset-4 transition-colors group-hover/open:text-primary group-hover/open:underline">
-                  {horse.horseName}
+              horse={{
+                name: horse.horseName,
+                ownerName: horse.ownerName,
+                breed: horse.breed,
+                profileImageUrl: horse.profileImageUrl,
+              }}
+              stableId={horse.stableId}
+              horseId={horse.horseId}
+              badges={
+                <>
+                  {horse.highIssueCount > 0 && (
+                    <HorseHighIssueCountBadge count={horse.highIssueCount} />
+                  )}
+                  {horse.overdueReminderCount > 0 && (
+                    <HorseOverdueReminderCountBadge
+                      count={horse.overdueReminderCount}
+                    />
+                  )}
+                  {horse.activeMedicationCount > 0 && (
+                    <HorseActiveMedicationCountBadge
+                      count={horse.activeMedicationCount}
+                    />
+                  )}
+                  <StableNameBadge name={horse.stableName} />
+                </>
+              }
+              meta={
+                <span>
+                  {formatCountLabel(horse.activeIssueCount, 'active issue')}
                 </span>
-                {horse.highIssueCount > 0 && (
-                  <CareTag tone="attention">{horse.highIssueCount} high</CareTag>
-                )}
-                {horse.overdueReminderCount > 0 && (
-                  <CareTag tone="due">
-                    {horse.overdueReminderCount} overdue
-                  </CareTag>
-                )}
-                {horse.activeMedicationCount > 0 && (
-                  <CareTag tone="medication">
-                    {horse.activeMedicationCount} medication
-                  </CareTag>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {horse.activeIssueCount} active issue
-                {horse.activeIssueCount === 1 ? '' : 's'}
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                <CareTag tone="stable">{horse.stableName}</CareTag>
-              </div>
-            </Link>
+              }
+            />
           ))
         )}
-      </div>
-    </section>
-  )
-}
-
-function EmptyState({ children }: { children: string }) {
-  return (
-    <p className="rounded-row border border-dashed border-border-subtle p-5 text-sm text-muted-foreground">
-      {children}
-    </p>
-  )
-}
-
-function formatDashboardDate(date: string) {
-  return dashboardDateFormatter.format(new Date(`${date}T00:00:00`))
-}
-
-function CareTag({
-  tone,
-  children,
-}: {
-  tone: 'attention' | 'due' | 'planned' | 'stable' | 'horse' | 'medication'
-  children: ReactNode
-}) {
-  return (
-    <Badge
-      variant="outline"
-      className={cn(
-        'shadow-none',
-        tone === 'attention' &&
-          'border-destructive/25 bg-destructive/10 text-destructive',
-        tone === 'due' && 'border-amber-400/35 bg-amber-100/45 text-amber-900',
-        tone === 'planned' && 'border-primary/25 bg-primary/8 text-primary',
-        tone === 'stable' &&
-          'border-slate-400/25 bg-slate-100/40 text-slate-700 dark:border-slate-500/30 dark:bg-slate-900/30 dark:text-slate-200',
-        tone === 'horse' &&
-          'border-emerald-500/25 bg-emerald-100/35 text-emerald-800 dark:bg-emerald-950/25 dark:text-emerald-200',
-        tone === 'medication' &&
-          'border-sky-500/25 bg-sky-100/40 text-sky-800 dark:bg-sky-950/30 dark:text-sky-200',
-      )}
-    >
-      {children}
-    </Badge>
+      </DashboardItemList>
+    </DashboardSection>
   )
 }

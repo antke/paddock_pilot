@@ -9,8 +9,11 @@ import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { nitro } from 'nitro/vite'
 
+const shouldEnableDevtoolsEventBus =
+  process.env.TANSTACK_DEVTOOLS_EVENT_BUS !== '0'
+
 const appPlugins = [
-  devtools(),
+  devtools({ eventBusConfig: { enabled: shouldEnableDevtoolsEventBus } }),
   nitro({ rollupConfig: { external: [/^@sentry\//] } }),
   contentCollections(),
   tsconfigPaths({ projects: ['./tsconfig.json'] }),

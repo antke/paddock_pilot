@@ -1,14 +1,15 @@
 import { HorseFormFields } from '#/components/forms/horse/HorseFormFields'
 import { horseFormSchema } from '#/components/forms/horse/horseFormSchema'
-import type { HorseFormSchema } from '#/components/forms/horse/horseFormSchema'
-import { Button } from '#/components/ui/button'
+import type {
+  HorseFormInput,
+  HorseFormSchema,
+} from '#/components/forms/horse/horseFormSchema'
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
+  RouteFormActions,
+  RouteFormCard,
+} from '#/components/forms/RouteFormCard'
+import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
+import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { convexQuery } from '@convex-dev/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -17,7 +18,7 @@ import { api } from 'convex/_generated/api'
 import type { Doc, Id } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 import { useForm } from 'react-hook-form'
-import { toast } from 'sonner'
+import { calculateHorseAge } from 'shared/horses/horseAge'
 
 export const Route = createFileRoute(
   '/stables/_layout/$stableId/horses/$horseId/edit',
@@ -29,10 +30,12 @@ function RouteComponent() {
   const { horseId, stableId } = Route.useParams()
 
   const { data: horse } = useSuspenseQuery(
-    convexQuery(api.horses.get, { id: horseId as Id<'horses'> }),
+    convexQuery(api.horses.get, { id: horseId }),
   )
 
-  if (!horse || horse.stableId !== stableId) return <div>Horse not found</div>
+  if (!horse || horse.stableId !== stableId) {
+    return <RouteEntityNotFoundAlert entity="horse" />
+  }
 
   return <EditHorseForm key={horse._id} horse={horse} />
 }
@@ -48,13 +51,12 @@ function EditHorseForm({ horse }: EditHorseFormProps) {
     api.horses.generateProfileImageUploadUrl,
   )
 
-  const form = useForm<HorseFormSchema>({
+  const form = useForm<HorseFormInput, unknown, HorseFormSchema>({
     resolver: zodResolver(horseFormSchema),
     mode: 'onTouched',
     defaultValues: {
       name: horse.name,
       ownerName: horse.ownerName ?? '',
-      age: horse.age,
       breed: horse.breed ?? '',
       sex: horse.sex,
       color: horse.color ?? '',
@@ -101,15 +103,20 @@ function EditHorseForm({ horse }: EditHorseFormProps) {
 
   const onSubmit = async (data: HorseFormSchema) => {
     try {
+      const age = calculateHorseAge(data.dateOfBirth)
+      if (age === undefined || age < 0 || age > 100) {
+        throw new Error('Invalid horse date of birth')
+      }
+
       const profileImageId = await uploadProfileImage(
-        data.profileImage?.item(0),
+        data.profileImage?.item(0) ?? undefined,
       )
 
       await updateHorse({
         id: horse._id,
         name: data.name,
         ownerName: data.ownerName,
-        age: data.age,
+        age,
         breed: data.breed,
         sex: data.sex,
         color: data.color,
@@ -137,9 +144,9 @@ function EditHorseForm({ horse }: EditHorseFormProps) {
         profileImageId,
       })
 
-      toast.success('Horse updated', {
+      showAppSuccessToast({
+        title: 'Horse updated',
         description: <p>{data.name} has been updated.</p>,
-        position: 'top-right',
       })
 
       nav({
@@ -147,42 +154,28 @@ function EditHorseForm({ horse }: EditHorseFormProps) {
         params: { stableId: horse.stableId, horseId: horse._id },
       })
     } catch (err) {
-      toast.error('Oops! Something went wrong.', {
-        description: <p>Please try again.</p>,
-        position: 'top-right',
-      })
+      showAppErrorToast()
     }
   }
 
   return (
-    <form id="horse-form" onSubmit={form.handleSubmit(onSubmit)}>
-      <Card className="w-full bg-card/80">
-        <CardHeader>
-          <CardTitle className="text-xl tracking-tight">Edit horse</CardTitle>
-        </CardHeader>
-
-        <CardContent className="flex flex-col gap-4">
-          <HorseFormFields
-            control={form.control}
-            disabled={form.formState.isSubmitting}
-          />
-        </CardContent>
-
-        <CardFooter className="justify-end gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={form.formState.isSubmitting}
-            onClick={() => form.reset()}
-          >
-            Reset
-          </Button>
-
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? 'Saving...' : 'Update Horse'}
-          </Button>
-        </CardFooter>
-      </Card>
-    </form>
+    <RouteFormCard
+      formId="horse-form"
+      title="Edit horse"
+      onSubmit={form.handleSubmit(onSubmit)}
+      actions={
+        <RouteFormActions
+          isSubmitting={form.formState.isSubmitting}
+          onReset={() => form.reset()}
+          submitLabel="Update Horse"
+          submittingLabel="Saving..."
+        />
+      }
+    >
+      <HorseFormFields
+        control={form.control}
+        disabled={form.formState.isSubmitting}
+      />
+    </RouteFormCard>
   )
 }

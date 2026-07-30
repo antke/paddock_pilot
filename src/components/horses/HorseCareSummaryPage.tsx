@@ -1,18 +1,36 @@
-import { dashboardHeroClassName } from '#/components/dashboard/dashboardChrome'
-import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
-import { Badge } from '#/components/ui/badge'
-import { Button, buttonVariants } from '#/components/ui/button'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
-import { Separator } from '#/components/ui/separator'
+  DetailGrid,
+  DetailPrintField,
+  DetailPrintListBlock,
+} from '#/components/dashboard/DetailBlocks'
+import {
+  FeatureAccessBackLink,
+  FeatureAccessPrompt,
+} from '#/components/dashboard/FeatureAccessPrompt'
+import { DashboardFeatureBadge } from '#/components/dashboard/DashboardBadges'
+import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
+import { DashboardSectionDivider } from '#/components/dashboard/DashboardSectionCard'
+import {
+  PrintSummaryBodyText,
+  PrintSummaryEmptyState,
+  PrintSummaryHeader,
+  PrintSummaryPage,
+  PrintSummaryRecordHeader,
+  PrintSummaryRecordPanel,
+  PrintSummaryScreenOnly,
+  PrintSummarySection,
+} from '#/components/dashboard/PrintSummary'
+import { calculateHorseAge } from 'shared/horses/horseAge'
+import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
+import { Button, ButtonLink } from '#/components/ui/button'
+import {
+  formatMediumDateKey,
+  formatMediumTimestampDate,
+} from '#/lib/dateDisplay'
+import { formatCurrencyAmount, formatFileSize } from '#/lib/numberDisplay'
+import { formatLineText, formatMetaText } from '#/lib/textDisplay'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
 import type { Doc, Id } from 'convex/_generated/dataModel'
 import type { ReactNode } from 'react'
@@ -36,11 +54,6 @@ const shoeingStatusLabels = {
   full_set: 'Full set',
 } satisfies Record<NonNullable<Doc<'horses'>['shoeingStatus']>, string>
 
-const formatTimestamp = (timestamp: number) =>
-  new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(
-    new Date(timestamp),
-  )
-
 export function HorseCareSummaryPage({
   stableId,
   horseId,
@@ -51,45 +64,32 @@ export function HorseCareSummaryPage({
 
   if (!summary.horse) {
     return (
-      <Alert>
-        <AlertTitle>Horse not found</AlertTitle>
-        <AlertDescription>
-          This care summary is no longer available.
-        </AlertDescription>
-      </Alert>
+      <RouteEntityNotFoundAlert
+        entity="horse"
+        description="This care summary is no longer available."
+      />
     )
   }
 
   if (!summary.hasAccess) {
     return (
-      <Card>
-        <CardHeader>
-          <div className="flex flex-wrap items-center gap-2">
-            <CardTitle>Care summary is a Personal Pro feature</CardTitle>
-            <Badge>Premium</Badge>
-          </div>
-          <CardDescription>
-            Upgrade to create print-friendly horse summaries for vets, farriers,
-            dentists, and emergency contacts.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          <Link to="/pricing" className={buttonVariants()}>
-            View plans
-          </Link>
-          <Link
+      <FeatureAccessPrompt
+        title="Care summary is a Personal Pro feature"
+        description="Upgrade to create print-friendly horse summaries for vets, farriers, dentists, and emergency contacts."
+        secondaryAction={
+          <FeatureAccessBackLink
             to="/stables/$stableId/horses/$horseId"
             params={{ stableId, horseId }}
-            className={buttonVariants({ variant: 'outline' })}
           >
             Back to horse
-          </Link>
-        </CardContent>
-      </Card>
+          </FeatureAccessBackLink>
+        }
+      />
     )
   }
 
   const { horse, stable } = summary
+  const age = calculateHorseAge(horse.dateOfBirth) ?? horse.age
   const stableAddress = [
     stable.addressLine1,
     stable.addressLine2,
@@ -98,65 +98,69 @@ export function HorseCareSummaryPage({
   ].filter(Boolean)
 
   return (
-    <div className="grid gap-6 print:block print:text-black">
-      <header className={dashboardHeroClassName('cards')}>
-        <div className="flex flex-wrap items-start justify-between gap-4 print:block">
-          <div className="grid gap-2">
-            <div className="flex flex-wrap items-center gap-2 print:block">
-              <h1 className="text-3xl font-semibold">
-                {horse.name} care summary
-              </h1>
-              <Badge variant="outline" className="print:hidden">
-                Personal Pro
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground print:text-black">
-              {stable.name} · Generated {formatTimestamp(Date.now())}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-2 print:hidden">
+    <PrintSummaryPage>
+      <PrintSummaryHeader
+        title={`${horse.name} care summary`}
+        badges={
+          <PrintSummaryScreenOnly>
+            <DashboardFeatureBadge variant="outline">
+              Personal Pro
+            </DashboardFeatureBadge>
+          </PrintSummaryScreenOnly>
+        }
+        description={formatMetaText([
+          stable.name,
+          `Generated ${formatMediumTimestampDate(Date.now())}`,
+        ])}
+        actions={
+          <>
             <Button type="button" onClick={() => window.print()}>
               Print summary
             </Button>
-            <Link
+            <ButtonLink
               to="/stables/$stableId/horses/$horseId"
               params={{ stableId, horseId }}
-              className={buttonVariants({ variant: 'outline' })}
+              variant="outline"
             >
               Back to horse
-            </Link>
-          </div>
-        </div>
-      </header>
+            </ButtonLink>
+          </>
+        }
+      />
 
       <SummarySection title="Profile and identification">
         <DetailGrid>
-          <DetailItem label="Stable" value={stable.name} />
-          <DetailItem label="Owner" value={horse.ownerName} />
-          <DetailItem label="Age" value={`${horse.age}`} />
-          <DetailItem label="Breed" value={horse.breed} />
-          <DetailItem
+          <DetailPrintField label="Stable" value={stable.name} />
+          <DetailPrintField label="Owner" value={horse.ownerName} />
+          <DetailPrintField label="Age" value={`${age}`} />
+          <DetailPrintField label="Breed" value={horse.breed} />
+          <DetailPrintField
             label="Sex"
             value={horse.sex ? sexLabels[horse.sex] : undefined}
           />
-          <DetailItem label="Color" value={horse.color} />
-          <DetailItem label="Height" value={horse.height} />
-          <DetailItem label="Discipline" value={horse.discipline} />
-          <DetailItem label="Date of birth" value={horse.dateOfBirth} />
-          <DetailItem label="Passport number" value={horse.passportNumber} />
-          <DetailItem label="Microchip number" value={horse.microchipNumber} />
-          <DetailItem
+          <DetailPrintField label="Color" value={horse.color} />
+          <DetailPrintField label="Height" value={horse.height} />
+          <DetailPrintField label="Discipline" value={horse.discipline} />
+          <DetailPrintField label="Date of birth" value={horse.dateOfBirth} />
+          <DetailPrintField
+            label="Passport number"
+            value={horse.passportNumber}
+          />
+          <DetailPrintField
+            label="Microchip number"
+            value={horse.microchipNumber}
+          />
+          <DetailPrintField
             label="Insurance provider"
             value={horse.insuranceProvider}
           />
-          <DetailItem
+          <DetailPrintField
             label="Insurance policy"
             value={horse.insurancePolicyNumber}
           />
-          <DetailItem label="Sire" value={horse.sire} />
-          <DetailItem label="Dam" value={horse.dam} />
-          <DetailItem
+          <DetailPrintField label="Sire" value={horse.sire} />
+          <DetailPrintField label="Dam" value={horse.dam} />
+          <DetailPrintField
             label="Shoeing status"
             value={
               horse.shoeingStatus
@@ -169,38 +173,61 @@ export function HorseCareSummaryPage({
 
       <SummarySection title="Emergency and care contacts">
         <DetailGrid>
-          <DetailItem label="Vet" value={horse.vetName} />
-          <DetailItem label="Vet phone" value={horse.vetPhone} />
-          <DetailItem label="Farrier" value={horse.farrierName} />
-          <DetailItem label="Farrier phone" value={horse.farrierPhone} />
-          <DetailItem label="Stable contact" value={stable.contactName} />
-          <DetailItem
+          <DetailPrintField label="Vet" value={horse.vetName} />
+          <DetailPrintField label="Vet phone" value={horse.vetPhone} />
+          <DetailPrintField label="Farrier" value={horse.farrierName} />
+          <DetailPrintField label="Farrier phone" value={horse.farrierPhone} />
+          <DetailPrintField label="Stable contact" value={stable.contactName} />
+          <DetailPrintField
             label="Stable contact phone"
             value={stable.contactPhone}
           />
-          <DetailItem
+          <DetailPrintField
             label="Stable emergency phone"
             value={stable.emergencyPhone}
           />
         </DetailGrid>
         {stableAddress.length > 0 && (
-          <LongText
+          <DetailPrintField
             label="Stable postal address"
-            value={stableAddress.join('\n')}
+            value={formatLineText(stableAddress)}
+            multiline
           />
         )}
         {horse.emergencyNotes && (
-          <LongText label="Emergency notes" value={horse.emergencyNotes} />
+          <DetailPrintField
+            label="Emergency notes"
+            value={horse.emergencyNotes}
+            multiline
+          />
         )}
-        <LongText label="Deworming notes" value={horse.dewormingNotes} />
-        <ListBlock title="Allergies or sensitivities" items={horse.allergies} />
+        <DetailPrintField
+          label="Deworming notes"
+          value={horse.dewormingNotes}
+          multiline
+        />
+        <DetailPrintListBlock
+          label="Allergies or sensitivities"
+          items={horse.allergies}
+        />
       </SummarySection>
 
       <SummarySection title="Nutrition profile">
-        <LongText label="Feeding routine" value={horse.feedingRoutine} />
-        <LongText label="Nutrition notes" value={horse.nutritionNotes} />
-        <ListBlock title="Recommended" items={horse.nutritionRecommended} />
-        <ListBlock title="Avoid" items={horse.nutritionAvoid} />
+        <DetailPrintField
+          label="Feeding routine"
+          value={horse.feedingRoutine}
+          multiline
+        />
+        <DetailPrintField
+          label="Nutrition notes"
+          value={horse.nutritionNotes}
+          multiline
+        />
+        <DetailPrintListBlock
+          label="Recommended"
+          items={horse.nutritionRecommended}
+        />
+        <DetailPrintListBlock label="Avoid" items={horse.nutritionAvoid} />
       </SummarySection>
 
       <SummarySection title="Active health and medication">
@@ -209,26 +236,25 @@ export function HorseCareSummaryPage({
           records={summary.activeHealthIssues.map((issue) => ({
             id: issue._id,
             title: issue.title,
-            meta: [issue.severity, formatTimestamp(issue.notedAt)]
-              .filter(Boolean)
-              .join(' · '),
+            meta: formatMetaText([
+              issue.severity,
+              formatMediumTimestampDate(issue.notedAt),
+            ]),
             body: issue.description,
           }))}
         />
-        <Separator />
+        <DashboardSectionDivider />
         <RecordList
           emptyLabel="No active medication."
           records={summary.activeMedicationRecords.map((record) => ({
             id: record._id,
             title: record.medicationName,
-            meta: [
+            meta: formatMetaText([
               record.dosage,
               record.frequency,
-              `Started ${record.startDate}`,
-            ]
-              .filter(Boolean)
-              .join(' · '),
-            body: [record.reason, record.notes].filter(Boolean).join('\n'),
+              `Started ${formatMediumDateKey(record.startDate)}`,
+            ]),
+            body: formatLineText([record.reason, record.notes]),
           }))}
         />
       </SummarySection>
@@ -239,14 +265,12 @@ export function HorseCareSummaryPage({
           records={summary.recentWeightRecords.map((record) => ({
             id: record._id,
             title: `${record.weight} ${record.unit}`,
-            meta: [
-              formatTimestamp(record.measuredAt),
+            meta: formatMetaText([
+              formatMediumTimestampDate(record.measuredAt),
               record.bodyConditionScore
                 ? `BCS ${record.bodyConditionScore}/9`
                 : undefined,
-            ]
-              .filter(Boolean)
-              .join(' · '),
+            ]),
             body: record.notes,
           }))}
         />
@@ -258,21 +282,19 @@ export function HorseCareSummaryPage({
           records={summary.recentEvents.map(({ event, eventHorse }) => ({
             id: event._id,
             title: event.title,
-            meta: [
+            meta: formatMetaText([
               eventTypeLabels[event.type],
               eventStatusLabels[event.status ?? 'planned'],
-              event.date,
+              formatMediumDateKey(event.date),
               event.providerName,
               event.totalCost !== undefined
-                ? `Total ${formatCost(event.totalCost)}`
+                ? `Total ${formatCurrencyAmount(event.totalCost)}`
                 : undefined,
               event.costPerHorse !== undefined
-                ? `${formatCost(event.costPerHorse)} per horse`
+                ? `${formatCurrencyAmount(event.costPerHorse)} per horse`
                 : undefined,
-            ]
-              .filter(Boolean)
-              .join(' · '),
-            body: [
+            ]),
+            body: formatLineText([
               event.notesAfterCompletion,
               eventHorse?.requestedServiceNotes
                 ? `Requested: ${eventHorse.requestedServiceNotes}`
@@ -280,9 +302,7 @@ export function HorseCareSummaryPage({
               eventHorse?.completionNotes
                 ? `Horse outcome: ${eventHorse.completionNotes}`
                 : undefined,
-            ]
-              .filter(Boolean)
-              .join('\n'),
+            ]),
           }))}
         />
       </SummarySection>
@@ -293,7 +313,7 @@ export function HorseCareSummaryPage({
           records={summary.recentNutritionLogs.map((log) => ({
             id: log._id,
             title: log.summary,
-            meta: formatTimestamp(log.changedAt),
+            meta: formatMediumTimestampDate(log.changedAt),
             body: log.notes,
           }))}
         />
@@ -305,20 +325,18 @@ export function HorseCareSummaryPage({
           records={summary.documents.map((document) => ({
             id: document._id,
             title: document.fileName,
-            meta: [
+            meta: formatMetaText([
               stableDocumentTypeLabels[document.type],
               document.contentType,
               document.size !== undefined
                 ? formatFileSize(document.size)
                 : undefined,
-            ]
-              .filter(Boolean)
-              .join(' · '),
+            ]),
             body: document.notes,
           }))}
         />
       </SummarySection>
-    </div>
+    </PrintSummaryPage>
   )
 }
 
@@ -329,55 +347,7 @@ function SummarySection({
   title: string
   children: ReactNode
 }) {
-  return (
-    <Card className="bg-card/80 print:break-inside-avoid print:border-black/30 print:shadow-none">
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="grid gap-4 text-sm">{children}</CardContent>
-    </Card>
-  )
-}
-
-function DetailGrid({ children }: { children: ReactNode }) {
-  return <div className="grid gap-3 sm:grid-cols-2">{children}</div>
-}
-
-function DetailItem({ label, value }: { label: string; value?: string }) {
-  if (!value) return null
-
-  return (
-    <div className="grid gap-1">
-      <span className="text-muted-foreground print:text-black/70">{label}</span>
-      <span>{value}</span>
-    </div>
-  )
-}
-
-function LongText({ label, value }: { label: string; value?: string }) {
-  if (!value) return null
-
-  return (
-    <div className="grid gap-1">
-      <span className="text-muted-foreground print:text-black/70">{label}</span>
-      <p className="whitespace-pre-wrap">{value}</p>
-    </div>
-  )
-}
-
-function ListBlock({ title, items }: { title: string; items?: Array<string> }) {
-  if (!items?.length) return null
-
-  return (
-    <div className="grid gap-1">
-      <span className="text-muted-foreground print:text-black/70">{title}</span>
-      <ul className="list-disc pl-5">
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    </div>
-  )
+  return <PrintSummarySection title={title}>{children}</PrintSummarySection>
 }
 
 function RecordList({
@@ -388,41 +358,25 @@ function RecordList({
   records: Array<{ id: string; title: string; meta?: string; body?: string }>
 }) {
   if (records.length === 0) {
-    return (
-      <p className="text-muted-foreground print:text-black/70">{emptyLabel}</p>
-    )
+    return <PrintSummaryEmptyState>{emptyLabel}</PrintSummaryEmptyState>
   }
 
   return (
-    <div className="grid gap-3">
+    <DashboardItemList>
       {records.map((record) => (
-        <div
-          key={record.id}
-          className="grid gap-1 rounded-row bg-background/55 p-5 print:border print:border-black/30"
-        >
-          <h3 className="font-medium">{record.title}</h3>
-          {record.meta && (
-            <p className="text-xs text-muted-foreground print:text-black/70">
-              {record.meta}
-            </p>
+        <PrintSummaryRecordPanel key={record.id} stack="tight">
+          <PrintSummaryRecordHeader
+            as="h3"
+            title={record.title}
+            description={record.meta}
+            descriptionSize="xs"
+            titleWeight="medium"
+          />
+          {record.body && (
+            <PrintSummaryBodyText>{record.body}</PrintSummaryBodyText>
           )}
-          {record.body && <p className="whitespace-pre-wrap">{record.body}</p>}
-        </div>
+        </PrintSummaryRecordPanel>
       ))}
-    </div>
+    </DashboardItemList>
   )
-}
-
-function formatCost(value: number) {
-  return new Intl.NumberFormat(undefined, {
-    style: 'currency',
-    currency: 'GBP',
-  }).format(value)
-}
-
-function formatFileSize(size: number) {
-  if (size < 1024) return `${size} B`
-  if (size < 1024 * 1024) return `${Math.round(size / 102.4) / 10} KB`
-
-  return `${Math.round(size / 104857.6) / 10} MB`
 }

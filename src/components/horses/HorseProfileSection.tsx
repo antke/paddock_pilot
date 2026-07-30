@@ -1,9 +1,22 @@
-import { dashboardSectionClassName } from '#/components/dashboard/dashboardChrome'
-import type { ReactNode } from 'react'
+import {
+  DetailField,
+  DetailGrid,
+  DetailMetricBlock,
+  DetailNoteBlock,
+  DetailPanel,
+  DetailPanelGrid,
+  DetailStack,
+} from '#/components/dashboard/DetailBlocks'
+import { DashboardBadgeList } from '#/components/dashboard/DashboardBadgeList'
+import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
+import { TextLabel } from '#/components/ui/text-label'
+import { calculateHorseAge } from 'shared/horses/horseAge'
+import { HorseAllergyBadge } from './HorseBadges'
 import { sexLabels, shoeingStatusLabels } from './HorseDetail'
 import type { HorseDetailSectionProps } from './HorseDetail'
 
 export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
+  const age = calculateHorseAge(horse.dateOfBirth) ?? horse.age
   const hasRegistrationDetails =
     horse.passportNumber ||
     horse.microchipNumber ||
@@ -15,160 +28,98 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
   const hasCareNotes = horse.allergies?.length || horse.dewormingNotes
 
   return (
-    <section className={dashboardSectionClassName('cards', 'grid gap-6')}>
-      <div className="grid gap-2">
-        <h2 className="text-xl font-semibold tracking-tight">Profile</h2>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <ProfileMetric label="Age" value={`${horse.age}`} />
-        {horse.breed && <ProfileMetric label="Breed" value={horse.breed} />}
+    <DashboardSectionCard size="panel" contentGap="loose">
+      <DetailGrid columns={4}>
+        <DetailMetricBlock label="Age" value={`${age}`} />
+        {horse.breed && <DetailMetricBlock label="Breed" value={horse.breed} />}
         {horse.sex && (
-          <ProfileMetric label="Sex" value={sexLabels[horse.sex]} />
+          <DetailMetricBlock label="Sex" value={sexLabels[horse.sex]} />
         )}
-        {horse.height && <ProfileMetric label="Height" value={horse.height} />}
-      </div>
+        {horse.height && (
+          <DetailMetricBlock label="Height" value={horse.height} />
+        )}
+      </DetailGrid>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)]">
+      <DetailPanelGrid>
         {hasAtGlanceDetails && (
-          <ProfilePanel title="At a glance">
-            <div className="grid gap-3 sm:grid-cols-2">
-              {horse.color && (
-                <ProfileField label="Color" value={horse.color} />
-              )}
+          <DetailPanel title="At a glance">
+            <DetailGrid>
+              {horse.color && <DetailField label="Color" value={horse.color} />}
               {horse.discipline && (
-                <ProfileField label="Discipline" value={horse.discipline} />
+                <DetailField label="Discipline" value={horse.discipline} />
               )}
               {horse.dateOfBirth && (
-                <ProfileField label="Date of birth" value={horse.dateOfBirth} />
+                <DetailField label="Date of birth" value={horse.dateOfBirth} />
               )}
-            </div>
-          </ProfilePanel>
+            </DetailGrid>
+          </DetailPanel>
         )}
 
         {hasRegistrationDetails && (
-          <ProfilePanel title="Identification">
-            <div className="grid gap-3">
+          <DetailPanel title="Identification">
+            <DetailStack>
               {horse.passportNumber && (
-                <ProfileField
+                <DetailField
                   label="Passport number"
                   value={horse.passportNumber}
                 />
               )}
               {horse.microchipNumber && (
-                <ProfileField label="Microchip" value={horse.microchipNumber} />
+                <DetailField label="Microchip" value={horse.microchipNumber} />
               )}
               {horse.insuranceProvider && (
-                <ProfileField
+                <DetailField
                   label="Insurance"
                   value={horse.insuranceProvider}
                 />
               )}
               {horse.insurancePolicyNumber && (
-                <ProfileField
+                <DetailField
                   label="Insurance policy"
                   value={horse.insurancePolicyNumber}
                 />
               )}
-            </div>
-          </ProfilePanel>
+            </DetailStack>
+          </DetailPanel>
         )}
 
         {hasBreedingDetails && (
-          <ProfilePanel title="Lineage & routine">
-            <div className="grid gap-3 sm:grid-cols-2">
-              {horse.sire && <ProfileField label="Sire" value={horse.sire} />}
-              {horse.dam && <ProfileField label="Dam" value={horse.dam} />}
+          <DetailPanel title="Lineage & routine">
+            <DetailGrid>
+              {horse.sire && <DetailField label="Sire" value={horse.sire} />}
+              {horse.dam && <DetailField label="Dam" value={horse.dam} />}
               {horse.shoeingStatus && (
-                <ProfileField
+                <DetailField
                   label="Shoeing status"
                   value={shoeingStatusLabels[horse.shoeingStatus]}
                 />
               )}
-            </div>
-          </ProfilePanel>
+            </DetailGrid>
+          </DetailPanel>
         )}
 
         {hasCareNotes && (
-          <ProfilePanel title="Notes" className="lg:col-span-2">
-            <div className="grid gap-4">
+          <DetailPanel title="Notes" span="lg2">
+            <DetailStack gap="loose">
               {horse.allergies?.length ? (
-                <div className="grid gap-2">
-                  <span className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                    Allergies
-                  </span>
-                  <div className="flex flex-wrap gap-2">
+                <DetailStack gap="compact">
+                  <TextLabel>Allergies</TextLabel>
+                  <DashboardBadgeList>
                     {horse.allergies.map((allergy) => (
-                      <span
-                        key={allergy}
-                        className="rounded-full border border-border-subtle bg-background/70 px-3 py-1 text-sm"
-                      >
-                        {allergy}
-                      </span>
+                      <HorseAllergyBadge key={allergy} allergy={allergy} />
                     ))}
-                  </div>
-                </div>
+                  </DashboardBadgeList>
+                </DetailStack>
               ) : null}
               {horse.dewormingNotes && (
-                <div className="grid gap-2">
-                  <span className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                    Deworming notes
-                  </span>
-                  <p className="whitespace-pre-wrap rounded-row bg-background/55 p-5 text-sm leading-6">
-                    {horse.dewormingNotes}
-                  </p>
-                </div>
+                <DetailNoteBlock label="Deworming notes">
+                  {horse.dewormingNotes}
+                </DetailNoteBlock>
               )}
-            </div>
-          </ProfilePanel>
+            </DetailStack>
+          </DetailPanel>
         )}
-      </div>
-    </section>
-  )
-}
-
-function ProfileMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-row bg-background/55 p-5">
-      <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-        {label}
-      </div>
-      <div className="mt-3 text-xl font-semibold tracking-tight">{value}</div>
-    </div>
-  )
-}
-
-function ProfilePanel({
-  title,
-  className,
-  children,
-}: {
-  title: string
-  className?: string
-  children: ReactNode
-}) {
-  return (
-    <div
-      className={[
-        'grid content-start gap-4 rounded-row bg-background/55 p-5',
-        className,
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    >
-      <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-        {title}
-      </h3>
-      {children}
-    </div>
-  )
-}
-
-function ProfileField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="grid gap-1 pl-2">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-sm font-medium leading-6">{value}</span>
-    </div>
+      </DetailPanelGrid>
+    </DashboardSectionCard>
   )
 }

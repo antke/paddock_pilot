@@ -18,6 +18,9 @@ type ListFilterPanelProps<TFacetId extends string = string> = {
   className?: string
 }
 
+const listFilterPanelClassName =
+  'grid min-w-0 gap-3 sm:grid-cols-[repeat(2,minmax(0,1fr))] xl:grid-cols-[repeat(3,minmax(0,1fr))]'
+
 export function ListFilterPanel<TFacetId extends string = string>({
   facets,
   selectedFacets,
@@ -28,19 +31,15 @@ export function ListFilterPanel<TFacetId extends string = string>({
 }: ListFilterPanelProps<TFacetId>) {
   return (
     <div
-      className={cn(
-        'grid min-w-0 gap-3 sm:grid-cols-[repeat(2,minmax(0,1fr))] xl:grid-cols-[repeat(3,minmax(0,1fr))]',
-        className,
-      )}
+      data-slot="list-filter-panel"
+      className={cn(listFilterPanelClassName, className)}
     >
       {facets.map((facet) => {
         const selectId = `${idPrefix}-${facet.id}`
 
         return (
           <Field key={facet.id} className="min-w-0">
-            <FieldLabel htmlFor={selectId}>
-              {facet.label}
-            </FieldLabel>
+            <FieldLabel htmlFor={selectId}>{facet.label}</FieldLabel>
             <Select
               id={selectId}
               className="truncate"

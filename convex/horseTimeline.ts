@@ -78,6 +78,7 @@ export const listForHorse = query({
           horseCompletionNotes: eventHorse.completionNotes,
           costShare: eventHorse.costShare,
           date: event.date,
+          endDate: event.endDate,
           time: event.time,
         }
       })

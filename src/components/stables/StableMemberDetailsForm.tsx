@@ -1,18 +1,16 @@
-import { Button } from '#/components/ui/button'
-import { Field, FieldError, FieldLabel } from '#/components/ui/field'
+import { InlineForm } from '#/components/forms/FormLayout'
+import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
+import { Field, FieldError, FieldGrid, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
+import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { Textarea } from '#/components/ui/textarea'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 import { Controller, useForm } from 'react-hook-form'
-import {
-  stableMemberDetailsFormSchema
-  
-} from 'shared/stables/stableMemberSchema'
-import type {StableMemberDetailsFormSchema} from 'shared/stables/stableMemberSchema';
-import { toast } from 'sonner'
+import { stableMemberDetailsFormSchema } from 'shared/stables/stableMemberSchema'
+import type { StableMemberDetailsFormSchema } from 'shared/stables/stableMemberSchema'
 
 type StableMemberDetailsFormProps = {
   member: Doc<'stableMembers'>
@@ -45,19 +43,16 @@ export function StableMemberDetailsForm({
         emergencyContact: data.emergencyContact,
       })
 
-      toast.success('Member details updated', { position: 'top-right' })
+      showAppSuccessToast({ title: 'Member details updated' })
       onSaved()
     } catch (err) {
-      toast.error('Oops! Something went wrong.', {
-        description: <p>Please try again.</p>,
-        position: 'top-right',
-      })
+      showAppErrorToast()
     }
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-3">
-      <div className="grid gap-3 md:grid-cols-2">
+    <InlineForm gap="tight" onSubmit={form.handleSubmit(onSubmit)}>
+      <FieldGrid gap="compact">
         <Controller
           name="displayNameOverride"
           control={form.control}
@@ -94,7 +89,7 @@ export function StableMemberDetailsForm({
             </Field>
           )}
         />
-      </div>
+      </FieldGrid>
 
       <Controller
         name="emergencyContact"
@@ -114,19 +109,12 @@ export function StableMemberDetailsForm({
         )}
       />
 
-      <div className="flex justify-end gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          disabled={form.formState.isSubmitting}
-          onClick={onCancel}
-        >
-          Cancel
-        </Button>
-        <Button type="submit" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting ? 'Saving...' : 'Save details'}
-        </Button>
-      </div>
-    </form>
+      <FormSubmitActions
+        isSubmitting={form.formState.isSubmitting}
+        onCancel={onCancel}
+        submitLabel="Save details"
+        submittingLabel="Saving..."
+      />
+    </InlineForm>
   )
 }

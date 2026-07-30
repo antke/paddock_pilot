@@ -1,13 +1,15 @@
+import { AppFooter, AppFooterInner } from './layout/AppShell'
+
 export default function Footer() {
   const year = new Date().getFullYear()
 
   return (
-    <footer className="mt-16 border-t border-[var(--line)] px-4 py-8 text-[var(--sea-ink-soft)]">
-      <div className="page-wrap text-center sm:text-left">
+    <AppFooter>
+      <AppFooterInner>
         <p className="m-0 text-sm">
           &copy; {year} PineappleDev. All rights reserved.
         </p>
-      </div>
-    </footer>
+      </AppFooterInner>
+    </AppFooter>
   )
 }

@@ -1,10 +1,5 @@
-import { dashboardSectionClassName } from '#/components/dashboard/dashboardChrome'
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-} from '#/components/ui/navigation-menu'
+import { DashboardSectionTabGroup } from '#/components/dashboard/DashboardNavigation'
+import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { HorseMedicationRecordsCard } from './HorseMedicationRecordsCard'
@@ -56,49 +51,29 @@ export function HorseNutritionSection({ horse }: HorseDetailSectionProps) {
   const activeTabDetails = nutritionTabDetails[activeTab]
 
   return (
-    <div className="grid gap-3">
-      <NavigationMenu className="justify-start px-1">
-        <NavigationMenuList className="flex-wrap justify-start gap-1">
-          {nutritionTabs.map((tab) => (
-            <NavigationMenuItem key={tab.id}>
-              <NavigationMenuLink
-                render={<button type="button" />}
-                data-active={activeTab === tab.id || undefined}
-                onClick={() => {
-                  if (activeTab === tab.id) return
-                  setHeaderAction(null)
-                  setActiveTab(tab.id)
-                }}
-              >
-                {tab.label}
-              </NavigationMenuLink>
-            </NavigationMenuItem>
-          ))}
-        </NavigationMenuList>
-      </NavigationMenu>
-
-      <section className={dashboardSectionClassName('soft', 'grid gap-6')}>
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold leading-tight tracking-tight">
-              {activeTabDetails.title}
-            </h2>
-            <p className="text-base leading-6 text-muted-foreground">
-              {activeTabDetails.description}
-            </p>
-          </div>
-
-          {headerAction}
-        </header>
-
+    <DashboardSectionTabGroup
+      activeId={activeTab}
+      items={nutritionTabs}
+      onSelect={(nextTab) => {
+        if (activeTab === nextTab) return
+        setHeaderAction(null)
+        setActiveTab(nextTab)
+      }}
+    >
+      <DashboardSectionCard
+        title={activeTabDetails.title}
+        description={activeTabDetails.description}
+        actions={headerAction}
+        contentGap="loose"
+      >
         {activeTab === 'nutrition' && (
-          <div className="grid gap-5">
-            <HorseNutritionCard horse={horse} />
+          <>
+            <HorseNutritionCard horse={horse} showHeader={false} />
             <HorseNutritionLogsCard
               horse={horse}
               onCreateActionChange={setHeaderAction}
             />
-          </div>
+          </>
         )}
 
         {activeTab === 'weight' && (
@@ -114,7 +89,7 @@ export function HorseNutritionSection({ horse }: HorseDetailSectionProps) {
             onCreateActionChange={setHeaderAction}
           />
         )}
-      </section>
-    </div>
+      </DashboardSectionCard>
+    </DashboardSectionTabGroup>
   )
 }

@@ -1,6 +1,22 @@
 import * as React from 'react'
 
+import { textLabelVariants } from '#/components/ui/text-label'
 import { cn } from '#/lib/utils.ts'
+
+type TableCellAlign = 'left' | 'right'
+
+type TableHeadProps = React.ComponentProps<'th'> & {
+  align?: TableCellAlign
+}
+
+type TableCellProps = React.ComponentProps<'td'> & {
+  align?: TableCellAlign
+}
+
+const tableCellAlignClassNames = {
+  left: 'text-left',
+  right: 'text-right',
+} satisfies Record<TableCellAlign, string>
 
 function Table({ className, ...props }: React.ComponentProps<'table'>) {
   return (
@@ -21,7 +37,10 @@ function TableHeader({ className, ...props }: React.ComponentProps<'thead'>) {
   return (
     <thead
       data-slot="table-header"
-      className={cn('[&_tr]:border-b', className)}
+      className={cn(
+        '[&_tr]:border-b [&_tr]:bg-surface-muted [&_tr:hover]:bg-surface-muted',
+        className,
+      )}
       {...props}
     />
   )
@@ -42,7 +61,7 @@ function TableFooter({ className, ...props }: React.ComponentProps<'tfoot'>) {
     <tfoot
       data-slot="table-footer"
       className={cn(
-        'border-t bg-muted/50 font-medium [&>tr]:last:border-b-0',
+        'border-t border-border-subtle bg-surface-muted font-medium [&>tr]:last:border-b-0',
         className,
       )}
       {...props}
@@ -55,7 +74,7 @@ function TableRow({ className, ...props }: React.ComponentProps<'tr'>) {
     <tr
       data-slot="table-row"
       className={cn(
-        'border-b border-border-subtle transition-colors hover:bg-muted/60 has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted',
+        'border-b border-border-subtle bg-card transition-colors hover:bg-primary/6 has-aria-expanded:bg-primary/8 data-[state=selected]:bg-primary/10',
         className,
       )}
       {...props}
@@ -63,12 +82,18 @@ function TableRow({ className, ...props }: React.ComponentProps<'tr'>) {
   )
 }
 
-function TableHead({ className, ...props }: React.ComponentProps<'th'>) {
+function TableHead({ align = 'left', className, ...props }: TableHeadProps) {
   return (
     <th
       data-slot="table-head"
       className={cn(
-        'h-11 px-3 text-left align-middle text-xs font-semibold tracking-wide whitespace-nowrap text-muted-foreground uppercase [&:has([role=checkbox])]:pr-0',
+        'h-11 px-3 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0',
+        tableCellAlignClassNames[align],
+        textLabelVariants({
+          size: 'xs',
+          weight: 'semibold',
+          tracking: 'wide',
+        }),
         className,
       )}
       {...props}
@@ -76,12 +101,13 @@ function TableHead({ className, ...props }: React.ComponentProps<'th'>) {
   )
 }
 
-function TableCell({ className, ...props }: React.ComponentProps<'td'>) {
+function TableCell({ align = 'left', className, ...props }: TableCellProps) {
   return (
     <td
       data-slot="table-cell"
       className={cn(
         'px-3 py-3 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0',
+        tableCellAlignClassNames[align],
         className,
       )}
       {...props}

@@ -43,7 +43,9 @@ const optionalText = <TSchema extends z.ZodString>(schema: TSchema) =>
 
 const optionalNumber = z
   .union([z.number(), z.nan(), z.undefined()])
-  .transform((val) => (val === undefined || Number.isNaN(val) ? undefined : val))
+  .transform((val) =>
+    val === undefined || Number.isNaN(val) ? undefined : val,
+  )
 
 const optionalId = z
   .string()
@@ -68,11 +70,7 @@ export const stableDocumentInputSchema = z.object({
 export const stableDocumentFormSchema = z.object({
   horseId: z.string(),
   type: stableDocumentTypeSchema,
-  file: z
-    .custom<{
-      item: (index: number) => { name: string; type: string; size: number } | null
-    }>()
-    .optional(),
+  file: z.custom<FileList>().optional(),
   fileName: documentFileNameSchema,
   notes: documentNotesSchema,
 })

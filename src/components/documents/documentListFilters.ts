@@ -8,14 +8,15 @@ import {
 } from 'shared/stables/stableDocumentSchema'
 import type { StableDocumentType } from 'shared/stables/stableDocumentSchema'
 
-import type { DocumentListItem } from './DocumentsCard'
+import type { DocumentHorseOption, DocumentListItem } from './DocumentsCard'
 
-export type DocumentListFilterFacetId = 'type' | 'fileState'
+export type DocumentListFilterFacetId = 'horse' | 'type' | 'fileState'
 
-export function createDocumentListFilterConfig(): ListFilterConfig<
-  DocumentListItem,
-  DocumentListFilterFacetId
-> {
+export function createDocumentListFilterConfig({
+  horseOptions = [],
+}: {
+  horseOptions?: ReadonlyArray<DocumentHorseOption>
+} = {}): ListFilterConfig<DocumentListItem, DocumentListFilterFacetId> {
   return {
     searchLabel: 'Search documents',
     searchPlaceholder: 'Search file name, notes, type, or linked records',
@@ -42,6 +43,21 @@ export function createDocumentListFilterConfig(): ListFilterConfig<
       },
     ],
     facets: [
+      ...(horseOptions.length > 0
+        ? [
+            {
+              id: 'horse' as const,
+              label: 'Horse',
+              allLabel: 'All horses',
+              options: horseOptions.map((horse) => ({
+                value: horse._id,
+                label: horse.name,
+              })),
+              matches: (item: DocumentListItem, selectedValue: string) =>
+                item.document.horseId === selectedValue,
+            },
+          ]
+        : []),
       {
         id: 'type',
         label: 'Type',
@@ -76,10 +92,7 @@ function isStableDocumentType(value: string): value is StableDocumentType {
   return stableDocumentTypes.some((type) => type === value)
 }
 
-function matchesFileStateFilter(
-  item: DocumentListItem,
-  selectedValue: string,
-) {
+function matchesFileStateFilter(item: DocumentListItem, selectedValue: string) {
   if (selectedValue === 'uploaded-file') return Boolean(item.fileUrl)
   if (selectedValue === 'metadata-only') return !item.fileUrl
 

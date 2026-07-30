@@ -1,20 +1,23 @@
-import { Button } from '#/components/ui/button'
-import { Field, FieldError, FieldLabel } from '#/components/ui/field'
+import { FormGroup, InlineForm } from '#/components/forms/FormLayout'
+import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
+import { Field, FieldError, FieldGrid, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Textarea } from '#/components/ui/textarea'
+import { getTodayDateKey } from '#/lib/dateDisplay'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Doc } from 'convex/_generated/dataModel'
 import { Controller, useForm } from 'react-hook-form'
 import { nutritionLogFormSchema } from 'shared/horses/nutritionLogSchema'
-import type { NutritionLogFormSchema } from 'shared/horses/nutritionLogSchema'
+import type {
+  NutritionLogFormInput,
+  NutritionLogFormSchema,
+} from 'shared/horses/nutritionLogSchema'
 
 type NutritionLogFormProps = {
   disabled?: boolean
   horse: Doc<'horses'>
   onSubmit: (data: NutritionLogFormSchema) => Promise<void>
 }
-
-const todayDateKey = () => new Date().toISOString().slice(0, 10)
 
 const toTextareaValue = (items: Array<string> | undefined) =>
   items?.join('\n') ?? ''
@@ -26,7 +29,7 @@ const toStringList = (value: string) =>
     .filter(Boolean)
 
 const getDefaults = (horse: Doc<'horses'>): NutritionLogFormSchema => ({
-  changedDate: todayDateKey(),
+  changedDate: getTodayDateKey(),
   summary: '',
   feedingRoutineSnapshot: horse.feedingRoutine ?? '',
   recommendedSnapshot: horse.nutritionRecommended ?? [],
@@ -39,7 +42,11 @@ export function NutritionLogForm({
   horse,
   onSubmit,
 }: NutritionLogFormProps) {
-  const form = useForm<NutritionLogFormSchema>({
+  const form = useForm<
+    NutritionLogFormInput,
+    unknown,
+    NutritionLogFormSchema
+  >({
     resolver: zodResolver(nutritionLogFormSchema),
     mode: 'onTouched',
     defaultValues: getDefaults(horse),
@@ -51,153 +58,162 @@ export function NutritionLogForm({
   }
 
   return (
-    <form
-      className="grid gap-5"
-      onSubmit={form.handleSubmit(submitNutritionLog)}
-    >
-      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_12rem]">
-        <Controller
-          name="summary"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Change summary</FieldLabel>
-              <Input
-                {...field}
-                id={field.name}
-                disabled={disabled || form.formState.isSubmitting}
-                aria-invalid={fieldState.invalid}
-                placeholder="Moved to soaked hay only"
-                autoComplete="off"
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
+    <InlineForm onSubmit={form.handleSubmit(submitNutritionLog)}>
+      <FormGroup
+        title="Change"
+        description="Summarise what changed and when the new plan started."
+      >
+        <FieldGrid breakpoint="sm" template="trailing-md">
+          <Controller
+            name="summary"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>Change summary</FieldLabel>
+                <Input
+                  {...field}
+                  id={field.name}
+                  disabled={disabled || form.formState.isSubmitting}
+                  aria-invalid={fieldState.invalid}
+                  placeholder="Moved to soaked hay only"
+                  autoComplete="off"
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
 
-        <Controller
-          name="changedDate"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Changed date</FieldLabel>
-              <Input
-                {...field}
-                id={field.name}
-                type="date"
-                disabled={disabled || form.formState.isSubmitting}
-                aria-invalid={fieldState.invalid}
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-      </div>
+          <Controller
+            name="changedDate"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>Changed date</FieldLabel>
+                <Input
+                  {...field}
+                  id={field.name}
+                  type="date"
+                  disabled={disabled || form.formState.isSubmitting}
+                  aria-invalid={fieldState.invalid}
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+        </FieldGrid>
+      </FormGroup>
 
-      <Controller
-        name="feedingRoutineSnapshot"
-        control={form.control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>
-              Feeding routine snapshot
-            </FieldLabel>
-            <Textarea
-              {...field}
-              id={field.name}
-              disabled={disabled || form.formState.isSubmitting}
-              aria-invalid={fieldState.invalid}
-              placeholder="The routine after this change..."
-              autoComplete="off"
-            />
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
-      />
-
-      <div className="grid gap-4 sm:grid-cols-2">
+      <FormGroup
+        title="Updated plan"
+        description="Capture the complete feeding plan after this change."
+      >
         <Controller
-          name="recommendedSnapshot"
+          name="feedingRoutineSnapshot"
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={field.name}>
-                Recommended after change
+                Feeding routine snapshot
               </FieldLabel>
               <Textarea
+                {...field}
                 id={field.name}
-                name={field.name}
-                value={toTextareaValue(field.value)}
                 disabled={disabled || form.formState.isSubmitting}
                 aria-invalid={fieldState.invalid}
-                placeholder="One item per line"
+                placeholder="The routine after this change..."
                 autoComplete="off"
-                onBlur={field.onBlur}
-                onChange={(event) =>
-                  field.onChange(toStringList(event.target.value))
-                }
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
 
+        <FieldGrid breakpoint="sm">
+          <Controller
+            name="recommendedSnapshot"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>
+                  Recommended after change
+                </FieldLabel>
+                <Textarea
+                  id={field.name}
+                  name={field.name}
+                  value={toTextareaValue(field.value)}
+                  disabled={disabled || form.formState.isSubmitting}
+                  aria-invalid={fieldState.invalid}
+                  placeholder="One item per line"
+                  autoComplete="off"
+                  onBlur={field.onBlur}
+                  onChange={(event) =>
+                    field.onChange(toStringList(event.target.value))
+                  }
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+
+          <Controller
+            name="avoidSnapshot"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>Avoid after change</FieldLabel>
+                <Textarea
+                  id={field.name}
+                  name={field.name}
+                  value={toTextareaValue(field.value)}
+                  disabled={disabled || form.formState.isSubmitting}
+                  aria-invalid={fieldState.invalid}
+                  placeholder="One item per line"
+                  autoComplete="off"
+                  onBlur={field.onBlur}
+                  onChange={(event) =>
+                    field.onChange(toStringList(event.target.value))
+                  }
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+        </FieldGrid>
+
         <Controller
-          name="avoidSnapshot"
+          name="notes"
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>
-                Avoid after change
-              </FieldLabel>
+              <FieldLabel htmlFor={field.name}>Notes</FieldLabel>
               <Textarea
+                {...field}
                 id={field.name}
-                name={field.name}
-                value={toTextareaValue(field.value)}
                 disabled={disabled || form.formState.isSubmitting}
                 aria-invalid={fieldState.invalid}
-                placeholder="One item per line"
+                placeholder="Why it changed, what to monitor, transition details..."
                 autoComplete="off"
-                onBlur={field.onBlur}
-                onChange={(event) =>
-                  field.onChange(toStringList(event.target.value))
-                }
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
-      </div>
+      </FormGroup>
 
-      <Controller
-        name="notes"
-        control={form.control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>
-              Notes
-            </FieldLabel>
-            <Textarea
-              {...field}
-              id={field.name}
-              disabled={disabled || form.formState.isSubmitting}
-              aria-invalid={fieldState.invalid}
-              placeholder="Why it changed, what to monitor, transition details..."
-              autoComplete="off"
-            />
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
+      <FormSubmitActions
+        isSubmitting={form.formState.isSubmitting}
+        disabled={disabled}
+        submitLabel="Add nutrition log"
+        submittingLabel="Adding..."
       />
-
-      <div className="flex justify-end">
-        <Button
-          type="submit"
-          disabled={disabled || form.formState.isSubmitting}
-        >
-          {form.formState.isSubmitting ? 'Adding...' : 'Add nutrition log'}
-        </Button>
-      </div>
-    </form>
+    </InlineForm>
   )
 }

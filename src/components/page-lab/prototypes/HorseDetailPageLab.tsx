@@ -1,5 +1,5 @@
 import { HorseDetail } from '#/components/horses/HorseDetail'
-import { dashboardEmptyClassName } from '#/components/dashboard/dashboardChrome'
+import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
 
 type HorseDetailPageLabProps = {
@@ -11,9 +11,9 @@ export function HorseDetailPageLab({ data }: HorseDetailPageLabProps) {
 
   if (!horse) {
     return (
-      <div className={dashboardEmptyClassName('cards')}>
-        <p>No horses added yet.</p>
-      </div>
+      <DashboardEmptyState chrome="cards">
+        No horses added yet.
+      </DashboardEmptyState>
     )
   }
 

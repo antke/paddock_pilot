@@ -1,24 +1,22 @@
-import {
-  dashboardEmptyClassName,
-  dashboardSectionClassName,
-} from '#/components/dashboard/dashboardChrome'
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
-import { dashboardItemCardClassName } from '#/components/dashboard/DashboardItemCard'
-import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
-import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
+import { DashboardBadgeList } from '#/components/dashboard/DashboardBadgeList'
+import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
+import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import {
-  Card,
-  CardContent,
-  CardHeader,
-} from '#/components/ui/card'
-import { FileTextIcon } from '@phosphor-icons/react'
+  DashboardItemList,
+  DashboardItemMediaCard,
+} from '#/components/dashboard/DashboardItemCard'
+import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
+import { Button, ButtonAnchor } from '#/components/ui/button'
+import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import type { Doc, Id } from 'convex/_generated/dataModel'
 import { useState } from 'react'
-import type { ReactNode } from 'react'
-import { stableDocumentTypeLabels } from 'shared/stables/stableDocumentSchema'
+import type { ElementType, ReactNode } from 'react'
+import { DocumentMetadataOnlyBadge, DocumentTypeBadge } from './DocumentBadges'
+import { DocumentPreview } from './DocumentPreview'
 import { DocumentUploadForm } from './DocumentUploadForm'
 import type { DocumentUploadValues } from './DocumentUploadForm'
+import { formatFileSize } from '#/lib/numberDisplay'
 
 export type DocumentListItem = {
   document: Doc<'stableDocuments'>
@@ -28,57 +26,47 @@ export type DocumentListItem = {
   canManage: boolean
 }
 
-type HorseOption = {
+export type DocumentHorseOption = {
   _id: Id<'horses'>
   name: string
 }
 
 type DocumentsCardProps = {
-  title: string
-  description: string
+  title?: string
+  actions?: ReactNode
+  as?: ElementType
+  description?: string
   documents: Array<DocumentListItem>
-  canAddDocument: boolean
-  horseOptions?: Array<HorseOption>
-  fixedHorseId?: Id<'horses'>
-  emptyMessage: string
+  emptyMessage: ReactNode
   listToolbar?: ReactNode
   chrome?: DashboardChrome
-  onAdd: (values: DocumentUploadValues) => Promise<void>
+  rowChrome?: DashboardChrome
   onRemove: (id: Id<'stableDocuments'>) => Promise<void>
 }
 
-const fileSizeFormatter = new Intl.NumberFormat(undefined, {
-  maximumFractionDigits: 1,
-})
+type DocumentUploadDialogProps = {
+  canAddDocument: boolean
+  horseOptions?: Array<DocumentHorseOption>
+  fixedHorseId?: Id<'horses'>
+  onAdd: (values: DocumentUploadValues) => Promise<void>
+}
 
-export function DocumentsCard({
-  title,
-  description,
-  documents,
+export function DocumentUploadDialog({
   canAddDocument,
   horseOptions,
   fixedHorseId,
-  emptyMessage,
-  listToolbar,
-  chrome = 'cards',
   onAdd,
-  onRemove,
-}: DocumentsCardProps) {
+}: DocumentUploadDialogProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+
+  if (!canAddDocument) return null
 
   const onAddFromDialog = async (values: DocumentUploadValues) => {
     await onAdd(values)
     setIsCreateOpen(false)
   }
 
-  const uploadForm = canAddDocument ? (
-    <DocumentUploadForm
-      horseOptions={horseOptions}
-      fixedHorseId={fixedHorseId}
-      onSubmit={onAddFromDialog}
-    />
-  ) : null
-  const uploadDialog = uploadForm ? (
+  return (
     <CreateRecordDialog
       open={isCreateOpen}
       onOpenChange={setIsCreateOpen}
@@ -86,83 +74,70 @@ export function DocumentsCard({
       title="Add document"
       description="Upload paperwork without losing your place in the document list."
     >
-      {uploadForm}
+      <DocumentUploadForm
+        horseOptions={horseOptions}
+        fixedHorseId={fixedHorseId}
+        onSubmit={onAddFromDialog}
+      />
     </CreateRecordDialog>
-  ) : null
-
-  const documentList = (
-    <div className="grid gap-4">
-      {documents.length === 0 ? (
-        <p className={dashboardEmptyClassName(chrome)}>{emptyMessage}</p>
-      ) : (
-        <div className="grid gap-2">
-          {documents.map((item) => (
-            <DocumentRow
-              key={item.document._id}
-              item={item}
-              chrome={chrome}
-              onRemove={onRemove}
-            />
-          ))}
-        </div>
-      )}
-    </div>
   )
+}
+
+export function DocumentsCard({
+  title,
+  actions,
+  as,
+  description,
+  documents,
+  emptyMessage,
+  listToolbar,
+  chrome = 'cards',
+  rowChrome = chrome,
+  onRemove,
+}: DocumentsCardProps) {
+  const documentList =
+    documents.length === 0 ? (
+      <DashboardEmptyState chrome={chrome}>{emptyMessage}</DashboardEmptyState>
+    ) : (
+      <DashboardItemList gap="compact">
+        {documents.map((item) => (
+          <DocumentRow
+            key={item.document._id}
+            item={item}
+            chrome={rowChrome}
+            onRemove={onRemove}
+          />
+        ))}
+      </DashboardItemList>
+    )
 
   if (chrome === 'soft') {
     return (
-      <section className={dashboardSectionClassName('soft', 'grid gap-6')}>
-        <DocumentsHeader
-          title={title}
-          description={description}
-          action={uploadDialog}
-        />
-
+      <DashboardSection
+        chrome="soft"
+        as={as}
+        title={title}
+        description={description}
+        actions={actions}
+      >
         {listToolbar}
         {documentList}
-      </section>
+      </DashboardSection>
     )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <DocumentsHeader
-          title={title}
-          description={description}
-          action={uploadDialog}
-        />
-      </CardHeader>
-      <CardContent className="grid gap-5">
-        {listToolbar}
+    <DashboardSectionCard
+      as={as}
+      title={title}
+      description={description}
+      actions={actions}
+      contentGap="comfortable"
+    >
+      {listToolbar}
 
-        {documentList}
-      </CardContent>
-    </Card>
-  )
-}
-
-function DocumentsHeader({
-  title,
-  description,
-  action,
-}: {
-  title: string
-  description: string
-  action?: ReactNode
-}) {
-  return (
-    <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div className="grid gap-1">
-        <h2 className="text-2xl font-semibold leading-tight tracking-tight">
-          {title}
-        </h2>
-        <p className="max-w-2xl text-base leading-6 text-muted-foreground">
-          {description}
-        </p>
-      </div>
-      {action}
-    </header>
+      {documentList}
+    </DashboardSectionCard>
   )
 }
 
@@ -178,105 +153,58 @@ function DocumentRow({
   const { document } = item
 
   return (
-    <div
-      className={dashboardItemCardClassName({
-        interactive: true,
-        chrome,
-        className: 'grid',
-      })}
-    >
-      <div className="flex h-28 items-stretch gap-4">
-        <DocumentPreview item={item} />
-
-        <div className="grid min-w-0 flex-1 grid-rows-[auto_1fr_auto] gap-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="grid min-w-0 gap-2">
-              <h3 className="break-words text-sm font-semibold underline-offset-4 transition-colors group-hover/dashboard-item:text-primary group-hover/dashboard-item:underline">
-                {document.fileName}
-              </h3>
-
-              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                <span>{getDocumentFormatLabel(document)}</span>
-                {document.size !== undefined && (
-                  <span>{formatFileSize(document.size)}</span>
-                )}
-                {item.horseName && <span>{item.horseName}</span>}
-                {item.eventTitle && <span>Linked to {item.eventTitle}</span>}
-              </div>
-            </div>
-
-            <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2">
-              <Badge variant="outline">
-                {stableDocumentTypeLabels[document.type]}
-              </Badge>
-              {!item.fileUrl && (
-                <Badge variant="secondary">Metadata only</Badge>
-              )}
-            </div>
-          </div>
-
-          <p className="line-clamp-2 min-h-8 whitespace-pre-line text-sm text-muted-foreground">
-            {document.notes ?? ''}
-          </p>
-
-          <div className="flex flex-wrap justify-end gap-2">
-            {item.fileUrl && (
-              <Button
-                asChild
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="shadow-none"
-              >
-                <a href={item.fileUrl} target="_blank" rel="noreferrer">
-                  Open
-                </a>
-              </Button>
-            )}
-            {item.canManage && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="shadow-none"
-                onClick={() => onRemove(document._id)}
-              >
-                Remove
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+    <DashboardItemMediaCard
+      chrome={chrome}
+      media={<DocumentPreview document={document} fileUrl={item.fileUrl} />}
+      title={document.fileName}
+      titleSize="sm"
+      titleClassName="line-clamp-2 break-words"
+      meta={
+        <>
+          <span>{getDocumentFormatLabel(document)}</span>
+          {document.size !== undefined && (
+            <span>{formatFileSize(document.size)}</span>
+          )}
+          {item.horseName && <span>{item.horseName}</span>}
+          {item.eventTitle && <span>Linked to {item.eventTitle}</span>}
+        </>
+      }
+      metaSeparator="dot"
+      summary={document.notes ?? ''}
+      badges={
+        <DashboardBadgeList align="end">
+          <DocumentTypeBadge type={document.type} />
+          {!item.fileUrl && <DocumentMetadataOnlyBadge />}
+        </DashboardBadgeList>
+      }
+      badgesClassName="ml-auto shrink-0"
+      actions={
+        <>
+          {item.fileUrl && (
+            <ButtonAnchor
+              href={item.fileUrl}
+              target="_blank"
+              rel="noreferrer"
+              variant="ghost"
+              size="sm"
+            >
+              Open
+            </ButtonAnchor>
+          )}
+          {item.canManage && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onRemove(document._id)}
+            >
+              Remove
+            </Button>
+          )}
+        </>
+      }
+    />
   )
-}
-
-function DocumentPreview({ item }: { item: DocumentListItem }) {
-  const { document, fileUrl } = item
-  const isImage = isImageDocument(document)
-
-  if (isImage && fileUrl) {
-    return (
-      <img
-        src={fileUrl}
-        alt={`${document.fileName} preview`}
-        className="size-28 shrink-0 rounded-row bg-background/55 object-contain"
-        loading="lazy"
-      />
-    )
-  }
-
-  return (
-    <div className="grid size-28 shrink-0 place-items-center rounded-row bg-background/55 text-muted-foreground">
-      <FileTextIcon className="size-10" weight="duotone" />
-    </div>
-  )
-}
-
-function isImageDocument(document: Doc<'stableDocuments'>) {
-  if (document.contentType?.startsWith('image/')) return true
-
-  return /\.(avif|gif|jpe?g|png|webp)$/i.test(document.fileName)
 }
 
 function getDocumentFormatLabel(document: Doc<'stableDocuments'>) {
@@ -326,11 +254,4 @@ const documentMimeTypeLabels: Record<string, string> = {
   'image/webp': 'WEBP',
   'text/csv': 'CSV',
   'text/plain': 'TXT',
-}
-
-function formatFileSize(size: number) {
-  if (size < 1024) return `${size} B`
-  if (size < 1024 * 1024) return `${fileSizeFormatter.format(size / 1024)} KB`
-
-  return `${fileSizeFormatter.format(size / (1024 * 1024))} MB`
 }

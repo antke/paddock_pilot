@@ -17,6 +17,10 @@ import type {
 } from 'shared/reminders/careReminderSchema'
 
 import type { CareReminderListItem } from './CareRemindersCard'
+import {
+  careReminderOverdueLabel,
+  getCareReminderStateLabel,
+} from './careReminderDisplay'
 import { isCareReminderOverdue } from './careReminderState'
 
 type CareReminderFilterHorseOption = {
@@ -86,7 +90,10 @@ export function createCareReminderListFilterConfig(
         weight: 2,
         getValues: (item) => [
           careReminderCategoryLabels[item.reminder.category],
-          getReminderStateLabel(item),
+          getCareReminderStateLabel({
+            status: item.reminder.status,
+            overdue: isCareReminderOverdue(item.reminder),
+          }),
         ],
       },
     ],
@@ -126,7 +133,9 @@ export function createHorseCareReminderListFilterConfig(): ListFilterConfig<
     ...config,
     searchPlaceholder: 'Search title, notes, category, or state',
     facets: config.facets.filter(
-      (facet): facet is ListFilterFacet<
+      (
+        facet,
+      ): facet is ListFilterFacet<
         CareReminderListItem,
         HorseCareReminderListFilterFacetId
       > => facet.id !== 'horse',
@@ -157,10 +166,7 @@ function getHorseIdFilterArg(value: string | undefined) {
   return value.slice(horseFilterValuePrefix.length) as Id<'horses'>
 }
 
-function matchesHorseFilter(
-  item: CareReminderListItem,
-  selectedValue: string,
-) {
+function matchesHorseFilter(item: CareReminderListItem, selectedValue: string) {
   if (selectedValue === stableWideHorseFilterValue) {
     return !item.reminder.horseId
   }
@@ -173,17 +179,14 @@ function matchesHorseFilter(
 }
 
 const reminderStateFilterOptions = [
-  { value: 'overdue', label: 'Overdue' },
+  { value: 'overdue', label: careReminderOverdueLabel },
   ...careReminderStatuses.map((status) => ({
     value: status,
     label: careReminderStatusLabels[status],
   })),
 ] satisfies ReadonlyArray<ListFilterOption>
 
-function matchesStateFilter(
-  item: CareReminderListItem,
-  selectedValue: string,
-) {
+function matchesStateFilter(item: CareReminderListItem, selectedValue: string) {
   if (selectedValue === 'overdue') {
     return isCareReminderOverdue(item.reminder)
   }
@@ -193,12 +196,6 @@ function matchesStateFilter(
   }
 
   return false
-}
-
-function getReminderStateLabel(item: CareReminderListItem) {
-  if (isCareReminderOverdue(item.reminder)) return 'Overdue'
-
-  return careReminderStatusLabels[item.reminder.status]
 }
 
 function isCareReminderStatus(value: string): value is CareReminderStatus {
@@ -214,10 +211,12 @@ function getStateFilterArg(
   return undefined
 }
 
-const reminderCategoryFilterOptions = careReminderCategories.map((category) => ({
-  value: category,
-  label: careReminderCategoryLabels[category],
-})) satisfies ReadonlyArray<ListFilterOption>
+const reminderCategoryFilterOptions = careReminderCategories.map(
+  (category) => ({
+    value: category,
+    label: careReminderCategoryLabels[category],
+  }),
+) satisfies ReadonlyArray<ListFilterOption>
 
 function matchesCategoryFilter(
   item: CareReminderListItem,

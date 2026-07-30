@@ -1,10 +1,10 @@
+import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { HorseDetail } from '#/components/horses/HorseDetail'
-import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
+import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
-import type { Id } from 'convex/_generated/dataModel'
 
 export const Route = createFileRoute(
   '/stables/_layout/$stableId/horses/$horseId',
@@ -16,28 +16,21 @@ function RouteComponent() {
   const { stableId, horseId } = Route.useParams()
 
   const { data: horse } = useSuspenseQuery(
-    convexQuery(api.horses.get, { id: horseId as Id<'horses'> }),
+    convexQuery(api.horses.get, { id: horseId }),
   )
 
   const { data: events } = useSuspenseQuery(
-    convexQuery(api.events.listForHorse, { horseId: horseId as Id<'horses'> }),
+    convexQuery(api.events.listForHorse, { horseId }),
   )
 
   if (!horse || horse.stableId !== stableId) {
-    return (
-      <Alert>
-        <AlertTitle>Horse not found</AlertTitle>
-        <AlertDescription>
-          This horse does not exist or is no longer available.
-        </AlertDescription>
-      </Alert>
-    )
+    return <RouteEntityNotFoundAlert entity="horse" />
   }
 
   return (
-    <div className="grid gap-6">
+    <DashboardPage>
       <HorseDetail stableId={stableId} horse={horse} events={events} />
       <Outlet />
-    </div>
+    </DashboardPage>
   )
 }

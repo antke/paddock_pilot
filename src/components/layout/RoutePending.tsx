@@ -1,9 +1,12 @@
-import { Spinner } from '#/components/ui/spinner'
+import { DashboardLoadingState } from '#/components/dashboard/DashboardLoadingState'
 
 export function RoutePending() {
   return (
-    <div className="flex min-h-48 items-center justify-center">
-      <Spinner className="size-5" />
-    </div>
+    <DashboardLoadingState
+      data-slot="route-pending"
+      className="h-full min-h-[60dvh]"
+      panelClassName="size-auto border-0 bg-transparent"
+      spinnerClassName="size-10"
+    />
   )
 }

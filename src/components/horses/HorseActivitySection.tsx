@@ -1,29 +1,19 @@
+import { DashboardActions } from '#/components/dashboard/DashboardActions'
+import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
+import { DashboardSectionTabGroup } from '#/components/dashboard/DashboardNavigation'
+import { DashboardSection } from '#/components/dashboard/DashboardSection'
+import { EventRow } from '#/components/events/EventRow'
 import {
-  DashboardItemCardContent,
-  dashboardItemCardClassName,
-} from '#/components/dashboard/DashboardItemCard'
-import {
-  dashboardEmptyClassName,
-  dashboardSectionClassName,
-} from '#/components/dashboard/dashboardChrome'
-import {
-  formatEventDate,
-  formatRecurrence,
-} from '#/components/events/eventDisplay'
-import { ListFilterBar } from '#/components/list-filtering/ListFilterBar'
+  getListFilterEmptyMessage,
+  ListFilterControls,
+} from '#/components/list-filtering/ListFilterControls'
+import { ListFilterLayout } from '#/components/list-filtering/ListFilterLayout'
 import { useListFiltering } from '#/components/list-filtering/useListFiltering'
-import { Badge } from '#/components/ui/badge'
-import { buttonVariants } from '#/components/ui/button'
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-} from '#/components/ui/navigation-menu'
+import { Button, ButtonLink } from '#/components/ui/button'
 import { ScrollableList } from '#/components/ui/scrollable-list'
-import { Link } from '@tanstack/react-router'
+import { getTodayDateKey } from '#/lib/dateDisplay'
 import { useMemo, useState } from 'react'
-import { eventStatusLabels, eventTypeLabels } from 'shared/events/eventSchema'
+import type { ReactNode } from 'react'
 import type { HorseDetailSectionProps } from './HorseDetail'
 import { createHorseActivityListFilterConfig } from './horseDetailListFilters'
 
@@ -67,13 +57,13 @@ export function HorseActivitySection({
   const [activeTab, setActiveTab] = useState<ActivityTab>('upcoming')
   const [pastEventsExpanded, setPastEventsExpanded] = useState(false)
   const activeTabDetails = activityTabDetails[activeTab]
-  const today = getLocalDateString(new Date())
+  const today = getTodayDateKey()
   const upcomingEvents = events
     .filter((event) => event.date >= today)
-    .toSorted(compareEventsAscending)
+    .sort(compareEventsAscending)
   const pastEvents = events
     .filter((event) => event.date < today)
-    .toSorted(compareEventsDescending)
+    .sort(compareEventsDescending)
   const pastEventsVisibleItemLimit = pastEventsExpanded
     ? expandedVisibleItemLimit
     : compactVisibleItemLimit
@@ -83,115 +73,104 @@ export function HorseActivitySection({
     items: activeEvents,
     config: filterConfig,
   })
-  const activityListToolbar =
-    activeEvents.length > 0 ? (
-      <ListFilterBar
-        config={filterConfig}
-        query={filtering.query}
-        onQueryChange={filtering.setQuery}
-        selectedFacets={filtering.selectedFacets}
-        onFacetChange={filtering.setFacetValue}
-        onReset={filtering.resetFilters}
-        isFiltering={filtering.isFiltering}
-      />
-    ) : undefined
 
   return (
-    <div className="grid gap-3">
-      <NavigationMenu className="justify-start px-1">
-        <NavigationMenuList className="flex-wrap justify-start gap-1">
-          {activityTabs.map((tab) => (
-            <NavigationMenuItem key={tab.id}>
-              <NavigationMenuLink
-                render={
-                  <button
-                    type="button"
-                    data-active={activeTab === tab.id || undefined}
-                    onClick={() => setActiveTab(tab.id)}
-                  >
-                    {tab.label}
-                  </button>
-                }
-              />
-            </NavigationMenuItem>
-          ))}
-        </NavigationMenuList>
-      </NavigationMenu>
-
-      <section className={dashboardSectionClassName('soft', 'grid gap-6')}>
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold leading-tight tracking-tight">
-              {activeTabDetails.title}
-            </h2>
-            <p className="text-base leading-6 text-muted-foreground">
-              {activeTabDetails.description}
-            </p>
-          </div>
-
-          <Link
+    <DashboardSectionTabGroup
+      activeId={activeTab}
+      items={activityTabs}
+      onSelect={setActiveTab}
+    >
+      <DashboardSection
+        chrome="cards"
+        title={activeTabDetails.title}
+        description={activeTabDetails.description}
+        actions={
+          <ButtonLink
             to="/stables/$stableId/events/create"
             params={{ stableId }}
-            className={buttonVariants({ variant: 'secondary' })}
+            variant="secondary"
           >
             Add event
-          </Link>
-        </header>
-
+          </ButtonLink>
+        }
+        titleStyle="display"
+      >
         {activeTab === 'upcoming' ? (
-          <div className="grid gap-4">
-            {activityListToolbar}
+          <ListFilterLayout
+            controls={
+              <ListFilterControls
+                config={filterConfig}
+                filtering={filtering}
+                hideWhenEmpty
+              />
+            }
+          >
             <ActivityEventList
               stableId={stableId}
               events={filtering.items}
-              emptyTitle={
-                filtering.isFiltering
-                  ? 'No upcoming activity matches these filters.'
-                  : 'No upcoming activity for this horse.'
-              }
-              emptyDescription={
-                filtering.isFiltering
-                  ? 'Adjust the search or filters to see more activity.'
-                  : 'Create an event and select this horse to show it here.'
-              }
+              emptyTitle={getListFilterEmptyMessage({
+                filtering,
+                emptyMessage: 'No upcoming activity for this horse.',
+                filteredEmptyMessage:
+                  'No upcoming activity matches these filters.',
+              })}
+              emptyDescription={getListFilterEmptyMessage({
+                filtering,
+                emptyMessage:
+                  'Create an event and select this horse to show it here.',
+                filteredEmptyMessage:
+                  'Adjust the search or filters to see more activity.',
+              })}
               visibleItemLimit={compactVisibleItemLimit}
             />
-          </div>
+          </ListFilterLayout>
         ) : (
-          <div className="grid gap-4">
-            {activityListToolbar}
-
-            {filtering.items.length > compactVisibleItemLimit && (
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  className={buttonVariants({ variant: 'outline', size: 'sm' })}
-                  onClick={() => setPastEventsExpanded((expanded) => !expanded)}
-                >
-                  {pastEventsExpanded ? 'Compact list' : 'Expand list'}
-                </button>
-              </div>
-            )}
-
+          <ListFilterLayout
+            controls={
+              <ListFilterControls
+                config={filterConfig}
+                filtering={filtering}
+                hideWhenEmpty
+              />
+            }
+            actions={
+              filtering.items.length > compactVisibleItemLimit ? (
+                <DashboardActions>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setPastEventsExpanded((expanded) => !expanded)
+                    }
+                  >
+                    {pastEventsExpanded ? 'Compact list' : 'Expand list'}
+                  </Button>
+                </DashboardActions>
+              ) : undefined
+            }
+          >
             <ActivityEventList
               stableId={stableId}
               events={filtering.items}
-              emptyTitle={
-                filtering.isFiltering
-                  ? 'No past activity matches these filters.'
-                  : 'No past events yet.'
-              }
-              emptyDescription={
-                filtering.isFiltering
-                  ? 'Adjust the search or filters to see more activity.'
-                  : 'Past activity will appear here once event dates have passed.'
-              }
+              emptyTitle={getListFilterEmptyMessage({
+                filtering,
+                emptyMessage: 'No past events yet.',
+                filteredEmptyMessage: 'No past activity matches these filters.',
+              })}
+              emptyDescription={getListFilterEmptyMessage({
+                filtering,
+                emptyMessage:
+                  'Past activity will appear here once event dates have passed.',
+                filteredEmptyMessage:
+                  'Adjust the search or filters to see more activity.',
+              })}
               visibleItemLimit={pastEventsVisibleItemLimit}
             />
-          </div>
+          </ListFilterLayout>
         )}
-      </section>
-    </div>
+      </DashboardSection>
+    </DashboardSectionTabGroup>
   )
 }
 
@@ -206,21 +185,22 @@ function ActivityEventList({
 }: {
   stableId: string
   events: Array<ActivityEvent>
-  emptyTitle: string
-  emptyDescription: string
+  emptyTitle: ReactNode
+  emptyDescription: ReactNode
   visibleItemLimit: number
 }) {
   if (events.length === 0) {
     return (
-      <div className={dashboardEmptyClassName('soft')}>
-        <p className="font-medium text-foreground">{emptyTitle}</p>
-        <p>{emptyDescription}</p>
-      </div>
+      <DashboardEmptyState chrome="soft" title={emptyTitle}>
+        {emptyDescription}
+      </DashboardEmptyState>
     )
   }
 
   return (
     <ScrollableList
+      className="gap-0"
+      estimatedItemHeightRem={7}
       itemCount={events.length}
       visibleItemLimit={visibleItemLimit}
     >
@@ -237,40 +217,13 @@ type ActivityEventCardProps = {
 }
 
 function ActivityEventCard({ stableId, event }: ActivityEventCardProps) {
-  const recurrenceSummary = formatRecurrence(event.recurrence)
-  const scheduleMeta = [
-    formatEventDate(event.date),
-    event.location,
-    recurrenceSummary,
-  ]
-    .filter(Boolean)
-    .join(' · ')
-
   return (
-    <Link
-      to="/stables/$stableId/events/$eventId"
-      params={{ stableId, eventId: event._id }}
-      className={dashboardItemCardClassName({
-        interactive: true,
-        chrome: 'soft',
-      })}
-    >
-      <DashboardItemCardContent
-        title={event.title}
-        leading={
-          <span className="grid min-w-16 place-items-center rounded-md bg-primary/8 px-2 py-3 text-sm font-semibold text-primary">
-            {event.time}
-          </span>
-        }
-        meta={scheduleMeta}
-        badges={
-          <>
-            <Badge variant="secondary">{eventTypeLabels[event.type]}</Badge>
-            <Badge variant="outline">{eventStatusLabels[event.status]}</Badge>
-          </>
-        }
-      />
-    </Link>
+    <EventRow
+      event={event}
+      stableId={stableId}
+      chrome="soft"
+      variant="agenda"
+    />
   )
 }
 
@@ -280,12 +233,4 @@ function compareEventsAscending(a: ActivityEvent, b: ActivityEvent) {
 
 function compareEventsDescending(a: ActivityEvent, b: ActivityEvent) {
   return compareEventsAscending(b, a)
-}
-
-function getLocalDateString(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-
-  return `${year}-${month}-${day}`
 }

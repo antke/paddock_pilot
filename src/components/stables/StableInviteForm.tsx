@@ -1,94 +1,111 @@
-import { Button } from '#/components/ui/button'
+import { InlineForm } from '#/components/forms/FormLayout'
+import { FormSubmitButtons } from '#/components/forms/FormSubmitActions'
+import { Field, FieldError, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Select } from '#/components/ui/select'
+import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
-import { useState } from 'react'
-import type { FormEvent } from 'react'
-import { toast } from 'sonner'
+import { Controller, useForm } from 'react-hook-form'
 import {
   stableInvitationRoleLabels,
   stableInvitationRoles,
   stableInvitationSchema,
 } from 'shared/stableInvitations/invitationSchema'
-import type { StableInvitationRole } from 'shared/stableInvitations/invitationSchema'
+import type { StableInvitationInput } from 'shared/stableInvitations/invitationSchema'
 
 type StableInviteFormProps = {
   stableId: Id<'stables'>
   onCreated?: () => void
 }
 
-export function StableInviteForm({ stableId, onCreated }: StableInviteFormProps) {
+export function StableInviteForm({
+  stableId,
+  onCreated,
+}: StableInviteFormProps) {
   const createInvitation = useMutation(api.stableInvitations.create)
-  const [email, setEmail] = useState('')
-  const [role, setRole] = useState<StableInvitationRole>('member')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const form = useForm<StableInvitationInput>({
+    resolver: zodResolver(stableInvitationSchema),
+    mode: 'onTouched',
+    defaultValues: {
+      email: '',
+      role: 'member',
+    },
+  })
 
-  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-
-    const result = stableInvitationSchema.safeParse({ email, role })
-    if (!result.success) {
-      toast.error('Invalid invitation', {
-        description: <p>{result.error.issues[0]?.message}</p>,
-        position: 'top-right',
-      })
-      return
-    }
-
+  const onSubmit = form.handleSubmit(async (values) => {
     try {
-      setIsSubmitting(true)
       await createInvitation({
         stableId,
-        email: result.data.email,
-        role: result.data.role,
+        email: values.email,
+        role: values.role,
       })
-      setEmail('')
-      setRole('member')
+      form.reset()
       onCreated?.()
-      toast.success('Invitation sent', {
-        description: <p>{result.data.email} has been invited.</p>,
-        position: 'top-right',
+      showAppSuccessToast({
+        title: 'Invitation sent',
+        description: <p>{values.email} has been invited.</p>,
       })
     } catch {
-      toast.error('Oops! Something went wrong.', {
-        description: <p>Please try again.</p>,
-        position: 'top-right',
-      })
-    } finally {
-      setIsSubmitting(false)
+      showAppErrorToast()
     }
-  }
+  })
 
   return (
-    <form
-      className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_12rem_auto]"
-      onSubmit={onSubmit}
-    >
-      <Input
-        type="email"
-        placeholder="member@example.com"
-        value={email}
-        disabled={isSubmitting}
-        onChange={(event) => setEmail(event.target.value)}
+    <InlineForm gap="compact" layout="invite" onSubmit={onSubmit}>
+      <Controller
+        name="email"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel className="sr-only" htmlFor={field.name}>
+              Email address
+            </FieldLabel>
+            <Input
+              {...field}
+              id={field.name}
+              type="email"
+              placeholder="member@example.com"
+              disabled={form.formState.isSubmitting}
+              aria-invalid={fieldState.invalid}
+            />
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
+        )}
       />
-      <Select
-        value={role}
-        disabled={isSubmitting}
-        onChange={(event) =>
-          setRole(event.target.value as StableInvitationRole)
-        }
-      >
-        {stableInvitationRoles.map((roleOption) => (
-          <option key={roleOption} value={roleOption}>
-            {stableInvitationRoleLabels[roleOption]}
-          </option>
-        ))}
-      </Select>
-      <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Inviting...' : 'Invite'}
-      </Button>
-    </form>
+
+      <Controller
+        name="role"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel className="sr-only" htmlFor={field.name}>
+              Role
+            </FieldLabel>
+            <Select
+              {...field}
+              id={field.name}
+              disabled={form.formState.isSubmitting}
+              aria-invalid={fieldState.invalid}
+            >
+              {stableInvitationRoles.map((roleOption) => (
+                <option key={roleOption} value={roleOption}>
+                  {stableInvitationRoleLabels[roleOption]}
+                </option>
+              ))}
+            </Select>
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
+        )}
+      />
+
+      <FormSubmitButtons
+        isSubmitting={form.formState.isSubmitting}
+        submitLabel="Invite"
+        submittingLabel="Inviting..."
+      />
+    </InlineForm>
   )
 }

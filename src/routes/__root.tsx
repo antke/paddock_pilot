@@ -1,7 +1,6 @@
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import {
   HeadContent,
-  Link,
   Outlet,
   Scripts,
   createRootRoute,
@@ -9,23 +8,19 @@ import {
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import Footer from '../components/Footer'
 import Header from '../components/Header'
+import { AppShell, appBodyClassName } from '#/components/layout/AppShell'
 import { PageLayout } from '#/components/layout/PageLayout'
-import { buttonVariants } from '#/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
+import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
+import { ButtonLink } from '#/components/ui/button'
+import { Toaster } from '#/components/ui/sonner'
 import { TooltipProvider } from '#/components/ui/tooltip'
+import { AppUserStateProvider } from '#/components/layout/AppUserStateProvider'
 
 import ConvexProviderWithClerk from '../integrations/clerk/provider'
 
 import appCss from '../styles.css?url'
-import { Toaster } from 'sonner'
 
-const THEME_INIT_SCRIPT = `(function(){try{var stored=window.localStorage.getItem('theme');var mode=(stored==='light'||stored==='dark'||stored==='auto')?stored:'auto';var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var resolved=mode==='auto'?(prefersDark?'dark':'light'):mode;var root=document.documentElement;root.classList.remove('light','dark');root.classList.add(resolved);if(mode==='auto'){root.removeAttribute('data-theme')}else{root.setAttribute('data-theme',mode)}root.style.colorScheme=resolved;}catch(e){}})();`
+const THEME_INIT_SCRIPT = `(function(){try{var stored=window.localStorage.getItem('theme');var mode=(stored==='light'||stored==='dark'||stored==='auto')?stored:'light';var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var resolved=mode==='auto'?(prefersDark?'dark':'light'):mode;var root=document.documentElement;root.classList.remove('light','dark');root.classList.add(resolved);if(mode==='auto'){root.removeAttribute('data-theme')}else{root.setAttribute('data-theme',mode)}root.style.colorScheme=resolved;}catch(e){}})();`
 
 const RootComponent = () => {
   return <Outlet />
@@ -61,19 +56,12 @@ export const Route = createRootRoute({
 
 function NotFoundPage() {
   return (
-    <Card className="mx-auto max-w-xl">
-      <CardHeader>
-        <CardTitle>Page not found</CardTitle>
-        <CardDescription>
-          The page you are looking for does not exist or has moved.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Link to="/" className={buttonVariants()}>
-          Go home
-        </Link>
-      </CardContent>
-    </Card>
+    <RouteStatusAlert
+      title="Page not found"
+      description="The page you are looking for does not exist or has moved."
+      width="narrow"
+      actions={<ButtonLink to="/">Go home</ButtonLink>}
+    />
   )
 }
 
@@ -85,30 +73,35 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
 
-      <body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-primary/20">
+      <body className={appBodyClassName}>
         <ConvexProviderWithClerk>
-          <TooltipProvider>
-            <Header />
+          <AppUserStateProvider>
+            <TooltipProvider>
+              <AppShell>
+                <Header />
 
-            <PageLayout>{children}</PageLayout>
+                <PageLayout>{children}</PageLayout>
 
-            <Toaster />
-            <Footer />
+                <Footer />
+              </AppShell>
 
-            {import.meta.env.DEV ? (
-              <TanStackDevtools
-                config={{
-                  position: 'bottom-right',
-                }}
-                plugins={[
-                  {
-                    name: 'TanStack Router',
-                    render: <TanStackRouterDevtoolsPanel />,
-                  },
-                ]}
-              />
-            ) : null}
-          </TooltipProvider>
+              <Toaster />
+
+              {import.meta.env.DEV ? (
+                <TanStackDevtools
+                  config={{
+                    position: 'bottom-right',
+                  }}
+                  plugins={[
+                    {
+                      name: 'TanStack Router',
+                      render: <TanStackRouterDevtoolsPanel />,
+                    },
+                  ]}
+                />
+              ) : null}
+            </TooltipProvider>
+          </AppUserStateProvider>
         </ConvexProviderWithClerk>
         <Scripts />
       </body>

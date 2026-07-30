@@ -51,3 +51,4 @@ export const nutritionLogFormSchema = z.object({
 })
 
 export type NutritionLogFormSchema = z.infer<typeof nutritionLogFormSchema>
+export type NutritionLogFormInput = z.input<typeof nutritionLogFormSchema>

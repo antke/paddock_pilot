@@ -36,13 +36,13 @@ function ItemSeparator({
 }
 
 const itemVariants = cva(
-  'group/item flex w-full flex-wrap items-center rounded-row border text-sm shadow-control transition-colors duration-100 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/30 [a]:transition-colors [a]:hover:bg-muted',
+  'group/item flex w-full flex-wrap items-center rounded-row border text-sm shadow-none transition-colors duration-100 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/30 [a]:transition-colors [a]:hover:bg-primary/8',
   {
     variants: {
       variant: {
         default: 'border-transparent',
         outline: 'app-row app-row-hover',
-        muted: 'border-transparent bg-muted/60',
+        muted: 'border-border-subtle bg-surface-elevated',
       },
       size: {
         default: 'gap-2.5 px-3 py-2.5',
@@ -131,7 +131,7 @@ function ItemTitle({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="item-title"
       className={cn(
-        'line-clamp-1 flex w-fit items-center gap-2 text-sm font-semibold underline-offset-4',
+        'line-clamp-1 flex w-fit items-center gap-2 text-sm font-semibold',
         className,
       )}
       {...props}

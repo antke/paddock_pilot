@@ -54,32 +54,39 @@ const missingProfileFields = (horse: Doc<'horses'>) => {
 export const getForStable = query({
   args: { stableId: v.id('stables') },
   handler: async (ctx, args) => {
-    await assertCanViewStable(ctx, args.stableId)
+    const access = await assertCanViewStable(ctx, args.stableId)
 
-    const [horses, events, healthIssues, stableInvitations, careReminders] = await Promise.all([
-      ctx.db
-        .query('horses')
-        .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
-        .collect(),
-      ctx.db
-        .query('events')
-        .withIndex('by_stable_id_date', (q) => q.eq('stableId', args.stableId))
-        .collect(),
-      ctx.db
-        .query('horseHealthIssues')
-        .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
-        .collect(),
-      ctx.db
-        .query('stableInvitations')
-        .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
-        .collect(),
-      ctx.db
-        .query('careReminders')
-        .withIndex('by_stable_id_status_due_date', (q) =>
-          q.eq('stableId', args.stableId).eq('status', 'pending'),
-        )
-        .collect(),
-    ])
+    const [horses, events, healthIssues, stableInvitations, careReminders] =
+      await Promise.all([
+        ctx.db
+          .query('horses')
+          .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
+          .collect(),
+        ctx.db
+          .query('events')
+          .withIndex('by_stable_id_date', (q) =>
+            q.eq('stableId', args.stableId),
+          )
+          .collect(),
+        ctx.db
+          .query('horseHealthIssues')
+          .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
+          .collect(),
+        access.role === 'owner'
+          ? ctx.db
+              .query('stableInvitations')
+              .withIndex('by_stable_id', (q) =>
+                q.eq('stableId', args.stableId),
+              )
+              .collect()
+          : Promise.resolve([]),
+        ctx.db
+          .query('careReminders')
+          .withIndex('by_stable_id_status_due_date', (q) =>
+            q.eq('stableId', args.stableId).eq('status', 'pending'),
+          )
+          .collect(),
+      ])
     const horsesById = new Map(horses.map((horse) => [horse._id, horse]))
     const eventHorseRows = await Promise.all(
       events.map((event) =>

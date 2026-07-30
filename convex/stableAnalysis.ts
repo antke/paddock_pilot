@@ -30,9 +30,9 @@ const compareEventDateAndTime = (a: Doc<'events'>, b: Doc<'events'>) => {
 const hasNutritionDetails = (horse: Doc<'horses'>) => {
   return Boolean(
     horse.feedingRoutine ||
-      horse.nutritionNotes ||
-      horse.nutritionRecommended?.length ||
-      horse.nutritionAvoid?.length,
+    horse.nutritionNotes ||
+    horse.nutritionRecommended?.length ||
+    horse.nutritionAvoid?.length,
   )
 }
 
@@ -46,7 +46,8 @@ const getMissingProfileFields = (horse: Doc<'horses'>) => {
     missingFields.push('insurance details')
   }
   if (!horse.vetName && !horse.vetPhone) missingFields.push('vet contact')
-  if (!horse.farrierName && !horse.farrierPhone) missingFields.push('farrier contact')
+  if (!horse.farrierName && !horse.farrierPhone)
+    missingFields.push('farrier contact')
   if (!horse.emergencyNotes) missingFields.push('emergency notes')
   if (!hasNutritionDetails(horse)) missingFields.push('nutrition notes')
 
@@ -89,7 +90,9 @@ type StableTimelineSignal = {
 }
 
 const joinDetails = (details: Array<string | undefined>) => {
-  return details.filter((detail): detail is string => Boolean(detail)).join(' · ')
+  return details
+    .filter((detail): detail is string => Boolean(detail))
+    .join(' · ')
 }
 
 const compareStableTimelineSignals = (
@@ -175,9 +178,10 @@ const getStableTimelineSignals = ({
     }),
     ...weightRecords.map((record): StableTimelineSignal => {
       const horse = horsesById.get(record.horseId)
-      const bodyCondition = record.bodyConditionScore !== undefined
-        ? `BCS ${record.bodyConditionScore}`
-        : undefined
+      const bodyCondition =
+        record.bodyConditionScore !== undefined
+          ? `BCS ${record.bodyConditionScore}`
+          : undefined
 
       return {
         id: record._id,
@@ -191,7 +195,9 @@ const getStableTimelineSignals = ({
       }
     }),
     ...careReminders.map((reminder): StableTimelineSignal => {
-      const horse = reminder.horseId ? horsesById.get(reminder.horseId) : undefined
+      const horse = reminder.horseId
+        ? horsesById.get(reminder.horseId)
+        : undefined
       const priority = reminder.priority ?? 'medium'
 
       return {
@@ -240,7 +246,8 @@ const getWeightTrends = (
         latestBodyConditionScore: latest.bodyConditionScore,
         previousBodyConditionScore: previous?.bodyConditionScore,
         bodyConditionChange:
-          latest.bodyConditionScore !== undefined && previous?.bodyConditionScore !== undefined
+          latest.bodyConditionScore !== undefined &&
+          previous?.bodyConditionScore !== undefined
             ? latest.bodyConditionScore - previous.bodyConditionScore
             : undefined,
       }
@@ -255,9 +262,15 @@ const getHealthIssueFrequency = (
 ) => {
   return horses
     .map((horse) => {
-      const horseIssues = healthIssues.filter((issue) => issue.horseId === horse._id)
-      const activeCount = horseIssues.filter((issue) => issue.status === 'active').length
-      const resolvedCount = horseIssues.filter((issue) => issue.status === 'resolved').length
+      const horseIssues = healthIssues.filter(
+        (issue) => issue.horseId === horse._id,
+      )
+      const activeCount = horseIssues.filter(
+        (issue) => issue.status === 'active',
+      ).length
+      const resolvedCount = horseIssues.filter(
+        (issue) => issue.status === 'resolved',
+      ).length
       const latestIssue = horseIssues.sort((a, b) => b.notedAt - a.notedAt)[0]
 
       return {
@@ -293,7 +306,6 @@ const getCareCadence = (
 
     if (!event) continue
 
-
     const existing = horseEvents.get(row.horseId) ?? []
     existing.push(event)
     horseEvents.set(row.horseId, existing)
@@ -304,20 +316,34 @@ const getCareCadence = (
       const eventsForHorse = horseEvents.get(horse._id) ?? []
 
       return Object.entries(careCadenceDays).map(([type, expectedDays]) => {
-        const typedEvents = eventsForHorse.filter((event) => event.type === type)
+        const typedEvents = eventsForHorse.filter(
+          (event) => event.type === type,
+        )
         const lastCompleted = typedEvents
-          .filter((event) => event.status === 'completed' && event.date <= today)
+          .filter(
+            (event) => event.status === 'completed' && event.date <= today,
+          )
           .sort((a, b) => sortByDateDesc(a.date, b.date))[0]
         const nextPlanned = typedEvents
-          .filter((event) => (event.status ?? 'planned') === 'planned' && event.date >= today)
+          .filter(
+            (event) =>
+              (event.status ?? 'planned') === 'planned' && event.date >= today,
+          )
           .sort(compareEventDateAndTime)[0]
         const daysSinceLast = lastCompleted
-          ? Math.floor((Date.parse(today) - Date.parse(lastCompleted.date)) / oneDayInMs)
+          ? Math.floor(
+              (Date.parse(today) - Date.parse(lastCompleted.date)) / oneDayInMs,
+            )
           : undefined
         const daysUntilNext = nextPlanned
-          ? Math.ceil((Date.parse(nextPlanned.date) - Date.parse(today)) / oneDayInMs)
+          ? Math.ceil(
+              (Date.parse(nextPlanned.date) - Date.parse(today)) / oneDayInMs,
+            )
           : undefined
-        const overdue = daysSinceLast !== undefined && daysSinceLast > expectedDays && !nextPlanned
+        const overdue =
+          daysSinceLast !== undefined &&
+          daysSinceLast > expectedDays &&
+          !nextPlanned
 
         return {
           horseId: horse._id,
@@ -366,7 +392,8 @@ const getNutritionSignals = (
           Math.abs(issue.notedAt - log.changedAt) <= fourteenDaysInMs,
       )
 
-      if (!horse || (nearbyWeights.length === 0 && nearbyIssues.length === 0)) return []
+      if (!horse || (nearbyWeights.length === 0 && nearbyIssues.length === 0))
+        return []
 
       return [
         {
@@ -391,14 +418,20 @@ const getCompletionCoverage = (
   const completedHorseRows = eventHorseRows.filter(
     (row) => completedEventIds.has(row.eventId) && isConfirmedEventHorse(row),
   )
-  const eventsWithNotes = completedEvents.filter((event) => event.notesAfterCompletion).length
-  const horseRowsWithNotes = completedHorseRows.filter((row) => row.completionNotes).length
+  const eventsWithNotes = completedEvents.filter(
+    (event) => event.notesAfterCompletion,
+  ).length
+  const horseRowsWithNotes = completedHorseRows.filter(
+    (row) => row.completionNotes,
+  ).length
 
   return {
     completedEventCount: completedEvents.length,
     eventsWithNotesCount: eventsWithNotes,
     eventNoteCoveragePercent:
-      completedEvents.length > 0 ? Math.round((eventsWithNotes / completedEvents.length) * 100) : 100,
+      completedEvents.length > 0
+        ? Math.round((eventsWithNotes / completedEvents.length) * 100)
+        : 100,
     completedHorseOutcomeCount: completedHorseRows.length,
     horseOutcomesWithNotesCount: horseRowsWithNotes,
     horseOutcomeCoveragePercent:
@@ -424,6 +457,7 @@ const countHealthIssuesByHorse = (
   horses: Array<Doc<'horses'>>,
   issues: Array<Doc<'horseHealthIssues'>>,
   medicationRecords: Array<Doc<'horseMedicationRecords'>>,
+  profileImageUrls: Map<Id<'horses'>, string | undefined>,
 ) => {
   const activeIssueCounts = new Map<string, number>()
   const activeMedicationCounts = new Map<string, number>()
@@ -450,6 +484,9 @@ const countHealthIssuesByHorse = (
     .map((horse) => ({
       horseId: horse._id,
       horseName: horse.name,
+      ownerName: horse.ownerName,
+      breed: horse.breed,
+      profileImageUrl: profileImageUrls.get(horse._id),
       activeIssueCount: activeIssueCounts.get(horse._id) ?? 0,
       activeMedicationCount: activeMedicationCounts.get(horse._id) ?? 0,
       missingProfileFields: getMissingProfileFields(horse),
@@ -522,7 +559,9 @@ export const getForStable = query({
         .collect(),
       ctx.db
         .query('careReminders')
-        .withIndex('by_stable_id_due_date', (q) => q.eq('stableId', args.stableId))
+        .withIndex('by_stable_id_due_date', (q) =>
+          q.eq('stableId', args.stableId),
+        )
         .collect(),
     ])
     const eventHorseRows = await Promise.all(
@@ -535,6 +574,16 @@ export const getForStable = query({
     )
     const eventsById = new Map(events.map((event) => [event._id, event]))
     const horsesById = new Map(horses.map((horse) => [horse._id, horse]))
+    const horseProfileImageUrls = new Map(
+      await Promise.all(
+        horses.map(async (horse) => [
+          horse._id,
+          horse.profileImageId
+            ? ((await ctx.storage.getUrl(horse.profileImageId)) ?? undefined)
+            : undefined,
+        ] as const),
+      ),
+    )
 
     const today = dateKey(new Date())
     const nextThirtyDays = dateKey(new Date(Date.now() + thirtyDaysInMs))
@@ -548,8 +597,12 @@ export const getForStable = query({
     const plannedEvents = events.filter(
       (event) => (event.status ?? 'planned') === 'planned',
     )
-    const completedEvents = events.filter((event) => event.status === 'completed')
-    const cancelledEvents = events.filter((event) => event.status === 'cancelled')
+    const completedEvents = events.filter(
+      (event) => event.status === 'completed',
+    )
+    const cancelledEvents = events.filter(
+      (event) => event.status === 'cancelled',
+    )
     const upcomingEvents = plannedEvents
       .filter((event) => event.date >= today && event.date <= nextThirtyDays)
       .sort(compareEventDateAndTime)
@@ -598,6 +651,7 @@ export const getForStable = query({
       horses,
       healthIssues,
       medicationRecords,
+      horseProfileImageUrls,
     )
     const flattenedEventHorseRows = eventHorseRows.flat()
     const weightTrends = getWeightTrends(horses, weightRecords)
@@ -662,10 +716,12 @@ export const getForStable = query({
         providerDetailsMissingCount: providerDetailsMissing.length,
         weightRecordCount: weightRecords.length,
         horsesWithWeightRecordsCount: weightTrends.length,
-        overdueCareCadenceCount: careCadence.filter((item) => item.overdue).length,
+        overdueCareCadenceCount: careCadence.filter((item) => item.overdue)
+          .length,
         nutritionSignalCount: nutritionSignals.length,
         eventNoteCoveragePercent: completionCoverage.eventNoteCoveragePercent,
-        horseOutcomeCoveragePercent: completionCoverage.horseOutcomeCoveragePercent,
+        horseOutcomeCoveragePercent:
+          completionCoverage.horseOutcomeCoveragePercent,
         pendingReminderCount: pendingReminders.length,
         overdueReminderCount: overdueReminders.length,
       },
@@ -675,7 +731,9 @@ export const getForStable = query({
       upcomingReminders: upcomingReminders.map((reminder) => ({
         id: reminder._id,
         horseId: reminder.horseId,
-        horseName: reminder.horseId ? horsesById.get(reminder.horseId)?.name : undefined,
+        horseName: reminder.horseId
+          ? horsesById.get(reminder.horseId)?.name
+          : undefined,
         title: reminder.title,
         dueDate: reminder.dueDate,
         category: reminder.category,

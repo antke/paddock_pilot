@@ -1,4 +1,6 @@
+import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { Button } from '#/components/ui/button'
+import { Spinner } from '#/components/ui/spinner'
 import { cn } from '#/lib/utils'
 
 export type ListPaginationStatus =
@@ -21,7 +23,7 @@ export function ListLoadMoreFooter({
   onLoadMore,
   pageSize,
   loadMoreLabel = 'Load more',
-  loadingLabel = 'Loading…',
+  loadingLabel = 'Loading...',
   className,
 }: ListLoadMoreFooterProps) {
   if (status === 'LoadingFirstPage' || status === 'Exhausted') return null
@@ -29,15 +31,22 @@ export function ListLoadMoreFooter({
   const isLoading = status === 'LoadingMore'
 
   return (
-    <div className={cn('flex justify-center pt-2', className)}>
+    <DashboardActions align="center" className={cn('pt-2', className)}>
       <Button
         type="button"
         variant="secondary"
         disabled={status !== 'CanLoadMore'}
         onClick={() => onLoadMore(pageSize)}
       >
+        {isLoading && (
+          <Spinner
+            data-icon="inline-start"
+            role="presentation"
+            aria-hidden={true}
+          />
+        )}
         {isLoading ? loadingLabel : loadMoreLabel}
       </Button>
-    </div>
+    </DashboardActions>
   )
 }

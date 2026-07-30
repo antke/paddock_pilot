@@ -4,14 +4,11 @@ import type {
   EventFormInput,
   EventFormSchema,
 } from '#/components/forms/event/eventFormSchema'
-import { Button } from '#/components/ui/button'
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
+  RouteFormActions,
+  RouteFormCard,
+} from '#/components/forms/RouteFormCard'
+import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { convexQuery } from '@convex-dev/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -20,7 +17,6 @@ import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 import { useForm } from 'react-hook-form'
-import { toast } from 'sonner'
 
 export const Route = createFileRoute(
   '/stables/_layout/$stableId/events/create',
@@ -86,9 +82,9 @@ function RouteComponent() {
         recurrence: data.recurring ? data.recurrence : undefined,
       })
 
-      toast.success('Event created', {
+      showAppSuccessToast({
+        title: 'Event created',
         description: <p>{data.title} is ready.</p>,
-        position: 'top-right',
       })
 
       nav({
@@ -96,45 +92,31 @@ function RouteComponent() {
         params: { stableId, eventId: newEventId },
       })
     } catch (err) {
-      toast.error('Oops! Something went wrong.', {
-        description: <p>Please try again.</p>,
-        position: 'top-right',
-      })
+      showAppErrorToast()
     }
   }
 
   return (
-    <form id="event-form" onSubmit={form.handleSubmit(onSubmit)}>
-      <Card className="w-full bg-card/80">
-        <CardHeader>
-          <CardTitle className="text-xl tracking-tight">Add event</CardTitle>
-        </CardHeader>
-
-        <CardContent className="flex flex-col gap-4">
-          <EventFormFields
-            control={form.control}
-            setValue={form.setValue}
-            horses={horses}
-            providers={providerData.providers}
-            disabled={form.formState.isSubmitting}
-          />
-        </CardContent>
-
-        <CardFooter className="justify-end gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={form.formState.isSubmitting}
-            onClick={() => form.reset()}
-          >
-            Reset
-          </Button>
-
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? 'Creating...' : 'Create Event'}
-          </Button>
-        </CardFooter>
-      </Card>
-    </form>
+    <RouteFormCard
+      formId="event-form"
+      title="Add event"
+      onSubmit={form.handleSubmit(onSubmit)}
+      actions={
+        <RouteFormActions
+          isSubmitting={form.formState.isSubmitting}
+          onReset={() => form.reset()}
+          submitLabel="Create Event"
+          submittingLabel="Creating..."
+        />
+      }
+    >
+      <EventFormFields
+        control={form.control}
+        setValue={form.setValue}
+        horses={horses}
+        providers={providerData.providers}
+        disabled={form.formState.isSubmitting}
+      />
+    </RouteFormCard>
   )
 }

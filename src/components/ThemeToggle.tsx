@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Button } from '#/components/ui/button'
+import { DesktopIcon, MoonIcon, SunIcon } from '@phosphor-icons/react'
 
 type ThemeMode = 'light' | 'dark' | 'auto'
 
@@ -13,7 +14,7 @@ function getInitialMode(): ThemeMode {
     return stored
   }
 
-  return 'auto'
+  return 'light'
 }
 
 function applyThemeMode(mode: ThemeMode) {
@@ -33,7 +34,7 @@ function applyThemeMode(mode: ThemeMode) {
 }
 
 export default function ThemeToggle() {
-  const [mode, setMode] = useState<ThemeMode>('auto')
+  const [mode, setMode] = useState<ThemeMode>('light')
 
   useEffect(() => {
     const initialMode = getInitialMode()
@@ -72,13 +73,18 @@ export default function ThemeToggle() {
     <Button
       type="button"
       variant="ghost"
-      size="sm"
+      size="icon-sm"
       onClick={toggleMode}
       aria-label={label}
       title={label}
-      className="rounded-full text-[var(--sea-ink)] shadow-none"
     >
-      {mode === 'auto' ? 'Auto' : mode === 'dark' ? 'Dark' : 'Light'}
+      {mode === 'auto' ? (
+        <DesktopIcon aria-hidden="true" />
+      ) : mode === 'dark' ? (
+        <MoonIcon aria-hidden="true" />
+      ) : (
+        <SunIcon aria-hidden="true" />
+      )}
     </Button>
   )
 }

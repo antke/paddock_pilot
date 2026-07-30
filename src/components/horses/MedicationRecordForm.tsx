@@ -1,8 +1,10 @@
-import { Button } from '#/components/ui/button'
+import { FormGroup, InlineForm } from '#/components/forms/FormLayout'
+import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
 import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
-import { Field, FieldError, FieldLabel } from '#/components/ui/field'
+import { Field, FieldError, FieldGrid, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Textarea } from '#/components/ui/textarea'
+import { getTodayDateKey } from '#/lib/dateDisplay'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
 import {
@@ -10,26 +12,21 @@ import {
   medicationRecordStatuses,
 } from 'shared/horses/medicationRecordSchema'
 import type {
+  MedicationRecordFormInput,
   MedicationRecordFormSchema,
   MedicationRecordStatus,
 } from 'shared/horses/medicationRecordSchema'
+import { horseMedicationStatusLabels } from './horseCareLabels'
 
 type MedicationRecordFormProps = {
   disabled?: boolean
   onSubmit: (data: MedicationRecordFormSchema) => Promise<void>
 }
 
-const medicationStatusLabels = {
-  active: 'Active',
-  completed: 'Completed',
-} satisfies Record<MedicationRecordStatus, string>
-
 const medicationStatusOptions = medicationRecordStatuses.map((status) => ({
   value: status,
-  label: medicationStatusLabels[status],
+  label: horseMedicationStatusLabels[status],
 }))
-
-const todayDateKey = () => new Date().toISOString().slice(0, 10)
 
 const asMedicationStatus = (value: string) => value as MedicationRecordStatus
 
@@ -37,14 +34,18 @@ export function MedicationRecordForm({
   disabled = false,
   onSubmit,
 }: MedicationRecordFormProps) {
-  const form = useForm<MedicationRecordFormSchema>({
+  const form = useForm<
+    MedicationRecordFormInput,
+    unknown,
+    MedicationRecordFormSchema
+  >({
     resolver: zodResolver(medicationRecordFormSchema),
     mode: 'onTouched',
     defaultValues: {
       medicationName: '',
       dosage: '',
       frequency: '',
-      startDate: todayDateKey(),
+      startDate: getTodayDateKey(),
       prescribedBy: '',
       reason: '',
       notes: '',
@@ -58,7 +59,7 @@ export function MedicationRecordForm({
       medicationName: '',
       dosage: '',
       frequency: '',
-      startDate: todayDateKey(),
+      startDate: getTodayDateKey(),
       prescribedBy: '',
       reason: '',
       notes: '',
@@ -67,42 +68,23 @@ export function MedicationRecordForm({
   }
 
   return (
-    <form
-      className="grid gap-5"
-      onSubmit={form.handleSubmit(submitMedicationRecord)}
-    >
-      <Controller
-        name="medicationName"
-        control={form.control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>Medication</FieldLabel>
-            <Input
-              {...field}
-              id={field.name}
-              disabled={disabled || form.formState.isSubmitting}
-              aria-invalid={fieldState.invalid}
-              placeholder="Bute, antibiotics, supplement course..."
-              autoComplete="off"
-            />
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
-      />
-
-      <div className="grid gap-4 sm:grid-cols-2">
+    <InlineForm onSubmit={form.handleSubmit(submitMedicationRecord)}>
+      <FormGroup
+        title="Course details"
+        description="Record what is being given, how often, and for how long."
+      >
         <Controller
-          name="dosage"
+          name="medicationName"
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Dosage</FieldLabel>
+              <FieldLabel htmlFor={field.name}>Medication</FieldLabel>
               <Input
                 {...field}
                 id={field.name}
                 disabled={disabled || form.formState.isSubmitting}
                 aria-invalid={fieldState.invalid}
-                placeholder="1 sachet, 10 ml, as directed..."
+                placeholder="Bute, antibiotics, supplement course..."
                 autoComplete="off"
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -110,151 +92,193 @@ export function MedicationRecordForm({
           )}
         />
 
+        <FieldGrid breakpoint="sm">
+          <Controller
+            name="dosage"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>Dosage</FieldLabel>
+                <Input
+                  {...field}
+                  id={field.name}
+                  disabled={disabled || form.formState.isSubmitting}
+                  aria-invalid={fieldState.invalid}
+                  placeholder="1 sachet, 10 ml, as directed..."
+                  autoComplete="off"
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+
+          <Controller
+            name="frequency"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>Frequency</FieldLabel>
+                <Input
+                  {...field}
+                  id={field.name}
+                  disabled={disabled || form.formState.isSubmitting}
+                  aria-invalid={fieldState.invalid}
+                  placeholder="Twice daily"
+                  autoComplete="off"
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+        </FieldGrid>
+
+        <FieldGrid breakpoint="sm">
+          <Controller
+            name="startDate"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>Start date</FieldLabel>
+                <Input
+                  {...field}
+                  id={field.name}
+                  type="date"
+                  disabled={disabled || form.formState.isSubmitting}
+                  aria-invalid={fieldState.invalid}
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+
+          <Controller
+            name="endDate"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>End date</FieldLabel>
+                <Input
+                  id={field.name}
+                  type="date"
+                  value={field.value ?? ''}
+                  disabled={disabled || form.formState.isSubmitting}
+                  aria-invalid={fieldState.invalid}
+                  onBlur={field.onBlur}
+                  onChange={(event) => field.onChange(event.target.value)}
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+        </FieldGrid>
+
         <Controller
-          name="frequency"
+          name="status"
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Frequency</FieldLabel>
-              <Input
-                {...field}
-                id={field.name}
+              <FieldLabel>Status</FieldLabel>
+              <ChoiceButtonGroup
+                value={field.value}
+                options={medicationStatusOptions}
                 disabled={disabled || form.formState.isSubmitting}
                 aria-invalid={fieldState.invalid}
-                placeholder="Twice daily"
-                autoComplete="off"
+                onValueChange={(value) =>
+                  field.onChange(asMedicationStatus(value))
+                }
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
-      </div>
+      </FormGroup>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Controller
-          name="startDate"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Start date</FieldLabel>
-              <Input
-                {...field}
-                id={field.name}
-                type="date"
-                disabled={disabled || form.formState.isSubmitting}
-                aria-invalid={fieldState.invalid}
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
+      <FormGroup
+        title="Clinical context"
+        description="Add the prescriber, reason, and any safety or follow-up notes."
+      >
+        <FieldGrid>
+          <Controller
+            name="prescribedBy"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>Prescribed by</FieldLabel>
+                <Input
+                  {...field}
+                  id={field.name}
+                  disabled={disabled || form.formState.isSubmitting}
+                  aria-invalid={fieldState.invalid}
+                  placeholder="Vet or clinic name"
+                  autoComplete="off"
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+        </FieldGrid>
 
-        <Controller
-          name="endDate"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>End date</FieldLabel>
-              <Input
-                id={field.name}
-                type="date"
-                value={field.value ?? ''}
-                disabled={disabled || form.formState.isSubmitting}
-                aria-invalid={fieldState.invalid}
-                onBlur={field.onBlur}
-                onChange={(event) => field.onChange(event.target.value)}
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-      </div>
+        <FieldGrid>
+          <Controller
+            name="reason"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>Reason</FieldLabel>
+                <Textarea
+                  {...field}
+                  id={field.name}
+                  disabled={disabled || form.formState.isSubmitting}
+                  aria-invalid={fieldState.invalid}
+                  placeholder="Why this medication is being given..."
+                  autoComplete="off"
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
 
-      <Controller
-        name="status"
-        control={form.control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel>Status</FieldLabel>
-            <ChoiceButtonGroup
-              value={field.value}
-              options={medicationStatusOptions}
-              disabled={disabled || form.formState.isSubmitting}
-              aria-invalid={fieldState.invalid}
-              onValueChange={(value) =>
-                field.onChange(asMedicationStatus(value))
-              }
-            />
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
+          <Controller
+            name="notes"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>Notes</FieldLabel>
+                <Textarea
+                  {...field}
+                  id={field.name}
+                  disabled={disabled || form.formState.isSubmitting}
+                  aria-invalid={fieldState.invalid}
+                  placeholder="Administration notes, side effects, withdrawal period..."
+                  autoComplete="off"
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+        </FieldGrid>
+      </FormGroup>
+
+      <FormSubmitActions
+        isSubmitting={form.formState.isSubmitting}
+        disabled={disabled}
+        submitLabel="Add medication"
+        submittingLabel="Adding..."
       />
-
-      <Controller
-        name="prescribedBy"
-        control={form.control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>Prescribed by</FieldLabel>
-            <Input
-              {...field}
-              id={field.name}
-              disabled={disabled || form.formState.isSubmitting}
-              aria-invalid={fieldState.invalid}
-              placeholder="Vet or clinic name"
-              autoComplete="off"
-            />
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
-      />
-
-      <Controller
-        name="reason"
-        control={form.control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>Reason</FieldLabel>
-            <Textarea
-              {...field}
-              id={field.name}
-              disabled={disabled || form.formState.isSubmitting}
-              aria-invalid={fieldState.invalid}
-              placeholder="Why this medication is being given..."
-              autoComplete="off"
-            />
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
-      />
-
-      <Controller
-        name="notes"
-        control={form.control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>Notes</FieldLabel>
-            <Textarea
-              {...field}
-              id={field.name}
-              disabled={disabled || form.formState.isSubmitting}
-              aria-invalid={fieldState.invalid}
-              placeholder="Administration notes, side effects, withdrawal period..."
-              autoComplete="off"
-            />
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
-      />
-
-      <div className="flex justify-end">
-        <Button
-          type="submit"
-          disabled={disabled || form.formState.isSubmitting}
-        >
-          {form.formState.isSubmitting ? 'Adding...' : 'Add medication'}
-        </Button>
-      </div>
-    </form>
+    </InlineForm>
   )
 }

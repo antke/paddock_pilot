@@ -22,6 +22,9 @@ export const getCurrentUser = query({
 export const get = query({
   args: { id: v.id('users') },
   handler: async (ctx, args) => {
+    const currentUser = await getUserFromIdentity(ctx)
+    if (!currentUser || currentUser._id !== args.id) return null
+
     return ctx.db.get(args.id)
   },
 })

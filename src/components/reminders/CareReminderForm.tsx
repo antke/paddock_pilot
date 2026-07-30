@@ -1,12 +1,19 @@
-import { dashboardInlinePanelClassName } from '#/components/dashboard/dashboardChrome'
+import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
+import { DashboardValueBadge } from '#/components/dashboard/DashboardBadges'
+import { DashboardInlineForm } from '#/components/dashboard/DashboardInlineForm'
+import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
+import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
+import { HorseSelectionCard } from '#/components/horses/HorseCard'
 import { Button } from '#/components/ui/button'
-import { Checkbox } from '#/components/ui/checkbox'
 import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
 import {
   Field,
   FieldDescription,
   FieldError,
+  FieldGrid,
+  FieldHeader,
+  FieldHeaderContent,
   FieldLabel,
   FieldLegend,
   FieldSet,
@@ -15,6 +22,7 @@ import { Input } from '#/components/ui/input'
 import { ScrollableList } from '#/components/ui/scrollable-list'
 import { Select } from '#/components/ui/select'
 import { Textarea } from '#/components/ui/textarea'
+import { getTodayDateKey } from '#/lib/dateDisplay'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
 import {
@@ -69,8 +77,6 @@ type CareReminderFormProps = {
   presentation?: 'panel' | 'plain'
 }
 
-const todayKey = () => new Date().toISOString().slice(0, 10)
-
 const asTargetType = (value: string) => value as CareReminderFormTargetType
 
 const asPriority = (value: string) => value as CareReminderPriority
@@ -95,13 +101,14 @@ export function CareReminderForm({
 }: CareReminderFormProps) {
   const form = useForm<CareReminderFormSchema>({
     resolver: zodResolver(careReminderFormSchema),
+    mode: 'onTouched',
     defaultValues: {
       targetType: fixedHorseId ? 'horses' : 'stable',
       horseIds: fixedHorseId ? [fixedHorseId] : [],
       title: '',
       description: '',
       category: 'other',
-      dueDate: todayKey(),
+      dueDate: getTodayDateKey(),
       priority: 'medium',
     },
   })
@@ -113,6 +120,10 @@ export function CareReminderForm({
   const targetType = form.watch('targetType')
   const selectedHorseIds = form.watch('horseIds')
   const selectedHorseCount = selectedHorseIds.length
+  const submitLabel =
+    !fixedHorseId && targetType === 'horses' && selectedHorseCount !== 1
+      ? 'Add reminders'
+      : 'Add reminder'
 
   const handleSubmit = form.handleSubmit(async (values) => {
     const reminder = {
@@ -148,24 +159,24 @@ export function CareReminderForm({
       title: '',
       description: '',
       category: values.category,
-      dueDate: todayKey(),
+      dueDate: getTodayDateKey(),
       priority: values.priority,
     })
   })
 
   return (
-    <form
-      className={
-        presentation === 'plain'
-          ? 'grid gap-5'
-          : dashboardInlinePanelClassName(chrome, 'grid gap-5 p-5')
-      }
+    <DashboardInlineForm
+      chrome={chrome}
+      presentation={presentation}
       onSubmit={handleSubmit}
     >
       {heading && (
-        <h3 className="text-lg font-semibold leading-snug tracking-tight">
-          {heading}
-        </h3>
+        <DashboardInlineHeader
+          as="h3"
+          title={heading}
+          titleSize="lg"
+          titleWeight="semibold"
+        />
       )}
 
       {!fixedHorseId && horseOptions.length > 0 && (
@@ -207,25 +218,26 @@ export function CareReminderForm({
           control={control}
           render={({ field, fieldState }) => (
             <FieldSet data-invalid={fieldState.invalid}>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
+              <FieldHeader>
+                <FieldHeaderContent>
                   <FieldLegend>Horses</FieldLegend>
                   <FieldDescription>
                     Create one reminder for each selected horse.
                   </FieldDescription>
-                </div>
-                <span className="rounded-row bg-background/55 px-3 py-1 text-xs font-medium text-muted-foreground">
+                </FieldHeaderContent>
+                <DashboardValueBadge variant="neutral">
                   {field.value.length} selected
-                </span>
-              </div>
+                </DashboardValueBadge>
+              </FieldHeader>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <DashboardActions align="start">
                 <Button
                   type="button"
                   size="sm"
                   variant="ghost"
-                  className="shadow-none"
-                  disabled={isSubmitting || field.value.length === horseOptions.length}
+                  disabled={
+                    isSubmitting || field.value.length === horseOptions.length
+                  }
                   onClick={() =>
                     field.onChange(horseOptions.map((horse) => horse.id))
                   }
@@ -236,18 +248,18 @@ export function CareReminderForm({
                   type="button"
                   size="sm"
                   variant="ghost"
-                  className="shadow-none"
                   disabled={isSubmitting || field.value.length === 0}
                   onClick={() => field.onChange([])}
                 >
                   Clear
                 </Button>
-              </div>
+              </DashboardActions>
 
               <ScrollableList
                 itemCount={horseOptions.length}
                 visibleItemLimit={3}
-                estimatedItemHeightRem={3.25}
+                estimatedItemHeightRem={5.5}
+                className="p-0.5"
               >
                 {horseOptions.map((horse) => {
                   const inputId = `care-reminder-horse-${horse.id}`
@@ -261,38 +273,17 @@ export function CareReminderForm({
                   }
 
                   return (
-                    <Field
+                    <HorseSelectionCard
                       key={horse.id}
-                      orientation="horizontal"
-                      className={cn(
-                        'cursor-pointer items-center rounded-row bg-background/55 p-3 transition-colors hover:bg-muted/60',
-                        checked && 'bg-primary/5 text-foreground',
-                        isSubmitting && 'cursor-not-allowed',
-                      )}
-                      onClick={() => {
-                        if (!isSubmitting) {
-                          setHorseChecked(!checked)
-                        }
-                      }}
-                    >
-                      <Checkbox
-                        id={inputId}
-                        checked={checked}
-                        disabled={isSubmitting}
-                        aria-invalid={fieldState.invalid}
-                        onClick={(event) => event.stopPropagation()}
-                        onCheckedChange={(isChecked) => {
-                          setHorseChecked(isChecked)
-                        }}
-                      />
-                      <FieldLabel
-                        htmlFor={inputId}
-                        className="w-full cursor-pointer"
-                        onClick={(event) => event.stopPropagation()}
-                      >
-                        {horse.name}
-                      </FieldLabel>
-                    </Field>
+                      id={inputId}
+                      name={field.name}
+                      value={horse.id}
+                      horse={horse}
+                      checked={checked}
+                      disabled={isSubmitting}
+                      invalid={fieldState.invalid}
+                      onCheckedChange={setHorseChecked}
+                    />
                   )
                 })}
               </ScrollableList>
@@ -308,21 +299,34 @@ export function CareReminderForm({
         <Input
           id="title"
           placeholder="Book next farrier visit"
+          disabled={isSubmitting}
+          aria-invalid={Boolean(errors.title)}
           {...register('title')}
         />
         <FieldError errors={[errors.title]} />
       </Field>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <FieldGrid>
         <Field data-invalid={!!errors.dueDate}>
           <FieldLabel htmlFor="dueDate">Due date</FieldLabel>
-          <Input id="dueDate" type="date" {...register('dueDate')} />
+          <Input
+            id="dueDate"
+            type="date"
+            disabled={isSubmitting}
+            aria-invalid={Boolean(errors.dueDate)}
+            {...register('dueDate')}
+          />
           <FieldError errors={[errors.dueDate]} />
         </Field>
 
         <Field data-invalid={!!errors.category}>
           <FieldLabel htmlFor="category">Category</FieldLabel>
-          <Select id="category" {...register('category')}>
+          <Select
+            id="category"
+            disabled={isSubmitting}
+            aria-invalid={Boolean(errors.category)}
+            {...register('category')}
+          >
             {careReminderCategories.map((category) => (
               <option key={category} value={category}>
                 {careReminderCategoryLabels[category]}
@@ -331,7 +335,7 @@ export function CareReminderForm({
           </Select>
           <FieldError errors={[errors.category]} />
         </Field>
-      </div>
+      </FieldGrid>
 
       <Controller
         name="priority"
@@ -358,16 +362,18 @@ export function CareReminderForm({
         <Textarea
           id="description"
           placeholder="What should be remembered or checked?"
+          disabled={isSubmitting}
+          aria-invalid={Boolean(errors.description)}
           {...register('description')}
         />
         <FieldError errors={[errors.description]} />
       </Field>
 
-      <Button type="submit" className="ml-auto w-fit" disabled={isSubmitting}>
-        {!fixedHorseId && targetType === 'horses' && selectedHorseCount !== 1
-          ? 'Add reminders'
-          : 'Add reminder'}
-      </Button>
-    </form>
+      <FormSubmitActions
+        isSubmitting={isSubmitting}
+        submitLabel={submitLabel}
+        submittingLabel="Adding..."
+      />
+    </DashboardInlineForm>
   )
 }

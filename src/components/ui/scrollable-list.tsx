@@ -25,10 +25,11 @@ function ScrollableList({
     canScrollDown: false,
   })
   const shouldConstrain = itemCount > visibleItemLimit
+  const usesViewportConstraint = fillParent || shouldConstrain
 
   const updateScrollState = useCallback(() => {
     const viewport = viewportRef.current
-    if (!viewport || !shouldConstrain) {
+    if (!viewport || !usesViewportConstraint) {
       setScrollState((current) => {
         if (!current.canScrollUp && !current.canScrollDown) return current
         return { canScrollUp: false, canScrollDown: false }
@@ -52,7 +53,7 @@ function ScrollableList({
 
       return nextState
     })
-  }, [shouldConstrain])
+  }, [usesViewportConstraint])
 
   useEffect(() => {
     updateScrollState()
@@ -60,19 +61,21 @@ function ScrollableList({
 
   return (
     <div
+      data-slot="scrollable-list"
       className={cn(
         'relative min-h-0',
-        fillParent && shouldConstrain && 'h-full',
-        shouldConstrain && 'overflow-hidden rounded-row',
+        fillParent && 'h-full',
+        usesViewportConstraint && 'overflow-hidden rounded-row',
       )}
     >
       <div
+        data-slot="scrollable-list-viewport"
         ref={viewportRef}
         onScroll={updateScrollState}
         className={cn(
-          'grid gap-2',
-          fillParent && shouldConstrain && 'h-full min-h-0',
-          shouldConstrain &&
+          'grid content-start gap-2',
+          fillParent && 'h-full min-h-0',
+          usesViewportConstraint &&
             'overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
           className,
         )}
@@ -86,10 +89,16 @@ function ScrollableList({
       </div>
 
       {scrollState.canScrollUp && (
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-8 rounded-t-row bg-gradient-to-b from-foreground/10 to-transparent" />
+        <div
+          data-slot="scrollable-list-top-fade"
+          className="pointer-events-none absolute inset-x-0 top-0 h-8 rounded-t-row bg-gradient-to-b from-foreground/10 to-transparent"
+        />
       )}
       {scrollState.canScrollDown && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 rounded-b-row bg-gradient-to-t from-foreground/10 to-transparent" />
+        <div
+          data-slot="scrollable-list-bottom-fade"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-8 rounded-b-row bg-gradient-to-t from-foreground/10 to-transparent"
+        />
       )}
     </div>
   )

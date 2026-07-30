@@ -1,24 +1,28 @@
-import { dashboardEmptyClassName } from '#/components/dashboard/dashboardChrome'
-import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
+import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
+import { DetailTextBlock } from '#/components/dashboard/DetailBlocks'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
+  DashboardItemList,
+  DashboardItemRecordCard,
+  DashboardItemRecordFooter,
+} from '#/components/dashboard/DashboardItemCard'
+import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
+import {
+  HorseCardContent,
+  horseCardSurfaceClassName,
+} from '#/components/horses/HorseCard'
+import { Button } from '#/components/ui/button'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'
 import { useState } from 'react'
 import type { EventHorseDetailsFormSchema } from 'shared/events/eventHorseDetailsSchema'
-import { toast } from 'sonner'
+import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
+import { EventCostShareBadge, EventHorseStatusBadge } from './EventBadges'
 import { EventHorseServiceDetailsForm } from './EventHorseServiceDetailsForm'
+import { cn } from '#/lib/utils'
 
 type EventHorseDetails = FunctionReturnType<
   typeof api.eventHorseDetails.listForEvent
@@ -26,12 +30,10 @@ type EventHorseDetails = FunctionReturnType<
 type EventHorseDetailRow = EventHorseDetails['rows'][number]
 
 type EventHorseServiceDetailsCardProps = {
-  stableId: string
   eventId: string
 }
 
 export function EventHorseServiceDetailsCard({
-  stableId,
   eventId,
 }: EventHorseServiceDetailsCardProps) {
   const { data } = useSuspenseQuery(
@@ -51,59 +53,50 @@ export function EventHorseServiceDetailsCard({
     try {
       await updateDetails({ id: rowId, ...values })
       setEditingRowId(null)
-      toast.success('Horse service details saved', { position: 'top-right' })
+      showAppSuccessToast({ title: 'Horse service details saved' })
     } catch (err) {
-      toast.error('Could not save service details', {
-        description: <p>Please try again.</p>,
-        position: 'top-right',
-      })
+      showAppErrorToast({ title: 'Could not save service details' })
     }
   }
 
   if (!data.event) return null
 
   return (
-    <Card className="bg-card/80">
-      <CardHeader>
-        <CardTitle>Horse service notes</CardTitle>
-        <CardDescription>
-          Record what each horse needs before a shared visit and what happened
-          afterwards.
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent className="grid gap-4">
-        {data.rows.length === 0 ? (
-          <p className={dashboardEmptyClassName('cards')}>
-            No horses are attached to this event.
-          </p>
-        ) : (
-          data.rows.map((row) => (
+    <DashboardSectionCard
+      title="Horse service notes"
+      size="panel"
+      description="Record what each horse needs before a shared visit and what happened afterwards."
+      descriptionSize="sm"
+    >
+      {data.rows.length === 0 ? (
+        <DashboardEmptyState chrome="cards">
+          No horses are attached to this event.
+        </DashboardEmptyState>
+      ) : (
+        <DashboardItemList>
+          {data.rows.map((row) => (
             <EventHorseServiceRow
               key={row.eventHorse._id}
-              stableId={stableId}
               row={row}
               isEditing={editingRowId === row.eventHorse._id}
               onEdit={() => setEditingRowId(row.eventHorse._id)}
               onCancel={() => setEditingRowId(null)}
               onSubmit={(values) => onSubmit(row.eventHorse._id, values)}
             />
-          ))
-        )}
-      </CardContent>
-    </Card>
+          ))}
+        </DashboardItemList>
+      )}
+    </DashboardSectionCard>
   )
 }
 
 function EventHorseServiceRow({
-  stableId,
   row,
   isEditing,
   onEdit,
   onCancel,
   onSubmit,
 }: {
-  stableId: string
   row: EventHorseDetailRow
   isEditing: boolean
   onEdit: () => void
@@ -123,67 +116,58 @@ function EventHorseServiceRow({
   }
 
   return (
-    <div className="grid gap-4 rounded-row bg-background/55 p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="grid gap-1">
-          {horse ? (
-            <Link
-              to="/stables/$stableId/horses/$horseId"
-              params={{ stableId, horseId: horse._id }}
-              className="font-medium hover:underline"
-            >
-              {horse.name}
-            </Link>
-          ) : (
-            <span className="font-medium">Unknown horse</span>
-          )}
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="outline">{eventHorse.status ?? 'confirmed'}</Badge>
-            {eventHorse.costShare !== undefined && (
-              <Badge variant="secondary">Cost {eventHorse.costShare}</Badge>
-            )}
-          </div>
-        </div>
-
-        {canManage && !isEditing && (
+    <DashboardItemRecordCard
+      chrome="cards"
+      density="compact"
+      interactive={false}
+      className={cn(horseCardSurfaceClassName, 'p-4')}
+      actions={
+        canManage && !isEditing ? (
           <Button type="button" variant="outline" size="sm" onClick={onEdit}>
             {hasDetails ? 'Edit details' : 'Add details'}
           </Button>
-        )}
-      </div>
-
-      {isEditing ? (
-        <EventHorseServiceDetailsForm
-          defaultValues={defaultValues}
-          onSubmit={onSubmit}
-          onCancel={onCancel}
-        />
-      ) : hasDetails ? (
-        <div className="grid gap-3 text-sm">
-          {eventHorse.requestedServiceNotes && (
-            <DetailBlock
-              title="Requested service"
-              value={eventHorse.requestedServiceNotes}
+        ) : undefined
+      }
+      footer={
+        <DashboardItemRecordFooter textSize="sm">
+          {isEditing ? (
+            <EventHorseServiceDetailsForm
+              defaultValues={defaultValues}
+              onSubmit={onSubmit}
+              onCancel={onCancel}
             />
+          ) : hasDetails ? (
+            <>
+              {eventHorse.requestedServiceNotes && (
+                <DetailTextBlock label="Requested service">
+                  {eventHorse.requestedServiceNotes}
+                </DetailTextBlock>
+              )}
+              {eventHorse.completionNotes && (
+                <DetailTextBlock label="Outcome">
+                  {eventHorse.completionNotes}
+                </DetailTextBlock>
+              )}
+            </>
+          ) : (
+            <DashboardEmptyState chrome="soft" spacing="flush">
+              No per-horse service notes have been added yet.
+            </DashboardEmptyState>
           )}
-          {eventHorse.completionNotes && (
-            <DetailBlock title="Outcome" value={eventHorse.completionNotes} />
-          )}
-        </div>
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          No per-horse service notes have been added yet.
-        </p>
-      )}
-    </div>
-  )
-}
-
-function DetailBlock({ title, value }: { title: string; value: string }) {
-  return (
-    <div className="grid gap-1">
-      <span className="text-muted-foreground">{title}</span>
-      <p className="whitespace-pre-wrap">{value}</p>
-    </div>
+        </DashboardItemRecordFooter>
+      }
+    >
+      <HorseCardContent
+        horse={horse ?? { name: 'Unknown horse' }}
+        badges={
+          <>
+            <EventHorseStatusBadge status={eventHorse.status} />
+            {eventHorse.costShare !== undefined && (
+              <EventCostShareBadge costShare={eventHorse.costShare} />
+            )}
+          </>
+        }
+      />
+    </DashboardItemRecordCard>
   )
 }

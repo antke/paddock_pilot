@@ -1,83 +1,74 @@
-import { buttonVariants } from '#/components/ui/button'
-import { Link } from '@tanstack/react-router'
+import { DashboardActions } from '#/components/dashboard/DashboardActions'
+import { ButtonLink } from '#/components/ui/button'
 import { LandingAppPreview } from './LandingAppPreview'
 import { landingCareItems } from './landingContent'
+import {
+  LandingCopyBlock,
+  LandingCtaSection,
+  LandingFeatureList,
+  LandingHeroActionStack,
+  LandingHeroGrid,
+  LandingLead,
+  LandingPageShell,
+  LandingSplitSection,
+  LandingTitle,
+} from './LandingPrimitives'
 
 export function PublicLandingPage() {
   return (
-    <div className="grid gap-16 py-10 md:py-16">
-      <section className="grid items-center gap-10 lg:grid-cols-[1fr_0.9fr]">
-        <div className="grid gap-6">
-          <div className="grid max-w-2xl gap-4">
-            <p className="text-sm font-medium text-muted-foreground">
-              Horse care, stable schedules, and provider notes
-            </p>
-            <h1 className="text-4xl font-semibold tracking-tight md:text-6xl">
+    <LandingPageShell>
+      <LandingHeroGrid>
+        <LandingHeroActionStack>
+          <LandingCopyBlock width="wide">
+            <LandingTitle as="h1" size="hero">
               Manage horse care without notebook, whiteboard, and text-message
               chaos.
-            </h1>
-            <p className="text-muted-foreground md:text-lg">
+            </LandingTitle>
+            <LandingLead size="hero">
               Paddock Pilot gives owners and stable admins one shared place for
               horse records, nutrition notes, health issues, and upcoming care
               appointments.
-            </p>
-          </div>
+            </LandingLead>
+          </LandingCopyBlock>
 
-          <div className="flex flex-wrap gap-3">
-            <Link to="/sign-up/$" className={buttonVariants()}>
-              Create account
-            </Link>
-            <Link
-              to="/sign-in/$"
-              className={buttonVariants({ variant: 'outline' })}
-            >
+          <DashboardActions align="start">
+            <ButtonLink to="/sign-up/$">Create account</ButtonLink>
+            <ButtonLink to="/sign-in/$" variant="outline">
               Sign in
-            </Link>
-          </div>
-        </div>
+            </ButtonLink>
+          </DashboardActions>
+        </LandingHeroActionStack>
 
         <LandingAppPreview />
-      </section>
+      </LandingHeroGrid>
 
-      <section className="grid gap-8 rounded-3xl border bg-muted/30 p-6 md:p-10 lg:grid-cols-[0.8fr_1fr]">
-        <div className="grid content-start gap-3">
-          <p className="text-sm font-medium text-muted-foreground">
-            Built for regular horse owners
-          </p>
-          <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
+      <LandingSplitSection>
+        <LandingCopyBlock>
+          <LandingTitle>
             Keep the care details close to the schedule.
-          </h2>
-          <p className="text-muted-foreground">
+          </LandingTitle>
+          <LandingLead>
             When a vet, farrier, dentist, or stable admin needs context, the
             important notes are already connected to the horse and the shared
             stable calendar.
-          </p>
-        </div>
+          </LandingLead>
+        </LandingCopyBlock>
 
-        <div className="grid gap-4">
-          {landingCareItems.map((item) => (
-            <div key={item} className="rounded-2xl border bg-background p-4">
-              <p className="font-medium">{item}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+        <LandingFeatureList items={landingCareItems} />
+      </LandingSplitSection>
 
-      <section className="grid justify-items-center gap-4 rounded-3xl bg-primary p-8 text-center text-primary-foreground md:p-12">
-        <h2 className="max-w-2xl text-3xl font-semibold tracking-tight">
+      <LandingCtaSection>
+        <LandingTitle className="max-w-2xl" size="cta">
           Start replacing scattered care notes today.
-        </h2>
-        <p className="max-w-xl text-primary-foreground/80">
+        </LandingTitle>
+        <LandingLead size="brand">
           Create an account, add a stable, and begin building clear horse care
           profiles for your yard.
-        </p>
-        <Link
-          to="/sign-up/$"
-          className={buttonVariants({ variant: 'secondary' })}
-        >
+        </LandingLead>
+        <ButtonLink to="/sign-up/$" variant="secondary">
           Get started
-        </Link>
-      </section>
-    </div>
+        </ButtonLink>
+      </LandingCtaSection>
+    </LandingPageShell>
   )
 }

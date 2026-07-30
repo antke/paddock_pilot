@@ -14,7 +14,7 @@ function Tabs({
       data-slot="tabs"
       data-orientation={orientation}
       className={cn(
-        'group/tabs flex gap-2 data-horizontal:flex-col',
+        'group/tabs flex gap-4 data-horizontal:flex-col',
         className,
       )}
       {...props}
@@ -29,6 +29,7 @@ const tabsListVariants = cva(
       variant: {
         default: '',
         line: 'gap-1 bg-transparent',
+        section: 'h-auto max-w-full flex-wrap justify-start',
       },
     },
     defaultVariants: {
@@ -59,7 +60,8 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
       className={cn(
         "relative inline-flex h-full flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-control border border-transparent px-3 py-1.5 text-sm font-semibold whitespace-nowrap text-foreground/65 transition-all group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start group-data-vertical/tabs:py-[calc(--spacing(1.5))] hover:text-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 aria-disabled:pointer-events-none aria-disabled:opacity-50 dark:text-muted-foreground dark:hover:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         'group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-active:bg-transparent dark:group-data-[variant=line]/tabs-list:data-active:border-transparent dark:group-data-[variant=line]/tabs-list:data-active:bg-transparent',
-        'data-active:bg-card data-active:text-foreground data-active:shadow-control dark:data-active:border-input dark:data-active:bg-input/30 dark:data-active:text-foreground',
+        'group-data-[variant=section]/tabs-list:h-10 group-data-[variant=section]/tabs-list:flex-none group-data-[variant=section]/tabs-list:px-3.5 group-data-[variant=section]/tabs-list:py-2 group-data-[variant=section]/tabs-list:font-display group-data-[variant=section]/tabs-list:text-sm group-data-[variant=section]/tabs-list:font-black group-data-[variant=section]/tabs-list:uppercase group-data-[variant=section]/tabs-list:leading-none group-data-[variant=section]/tabs-list:tracking-normal',
+        'data-active:border-border data-active:bg-surface-elevated data-active:text-foreground data-active:shadow-none dark:data-active:border-input dark:data-active:bg-surface-elevated dark:data-active:text-foreground',
         'after:absolute after:bg-primary after:opacity-0 after:transition-opacity group-data-horizontal/tabs:after:inset-x-0 group-data-horizontal/tabs:after:bottom-[-5px] group-data-horizontal/tabs:after:h-0.5 group-data-vertical/tabs:after:inset-y-0 group-data-vertical/tabs:after:-right-1 group-data-vertical/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-active:after:opacity-100',
         className,
       )}

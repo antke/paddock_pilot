@@ -1,16 +1,12 @@
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-} from '#/components/ui/field'
+import { Field, FieldError, FieldLabel } from '#/components/ui/field'
 import { Textarea } from '#/components/ui/textarea'
-import { Controller   } from 'react-hook-form'
-import type {Control, FieldPath} from 'react-hook-form';
-import type { HorseFormSchema } from './horseFormSchema'
+import { Controller } from 'react-hook-form'
+import type { Control, FieldPath } from 'react-hook-form'
+import type { HorseFormInput, HorseFormSchema } from './horseFormSchema'
 
 type HorseStringListFieldProps = {
-  control: Control<HorseFormSchema>
-  name: FieldPath<HorseFormSchema>
+  control: Control<HorseFormInput, unknown, HorseFormSchema>
+  name: FieldPath<HorseFormInput>
   label: string
   placeholder: string
   disabled?: boolean
@@ -49,7 +45,9 @@ export function HorseStringListField({
             placeholder={placeholder}
             autoComplete="off"
             onBlur={field.onBlur}
-            onChange={(event) => field.onChange(toStringList(event.target.value))}
+            onChange={(event) =>
+              field.onChange(toStringList(event.target.value))
+            }
           />
 
           {fieldState.invalid && <FieldError errors={[fieldState.error]} />}

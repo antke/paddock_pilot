@@ -8,7 +8,7 @@ export const horseNameSchema = z
 
 export const horseAgeSchema = z
   .number()
-  .min(1, 'Minimum age is 1.')
+  .min(0, 'Age cannot be negative.')
   .max(100, "That's probably not true.")
 
 export const horseBreedSchema = z

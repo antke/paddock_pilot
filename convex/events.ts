@@ -3,8 +3,8 @@ import { omit } from 'lodash'
 import { eventInputSchema } from '../shared/events/eventSchema'
 import { internal } from './_generated/api'
 import type { Doc, Id } from './_generated/dataModel'
-import { mutation, query  } from './_generated/server'
-import type {MutationCtx} from './_generated/server';
+import { mutation, query } from './_generated/server'
+import type { MutationCtx } from './_generated/server'
 import {
   assertCanViewStable,
   getCurrentUser,
@@ -81,19 +81,6 @@ const getStableHorses = async (
   }
 
   return stableHorses
-}
-
-const getEventHorse = async (
-  ctx: MutationCtx,
-  eventId: Id<'events'>,
-  horseId: Id<'horses'>,
-) => {
-  return await ctx.db
-    .query('eventsHorses')
-    .withIndex('by_horse_id_event_id', (q) =>
-      q.eq('horseId', horseId).eq('eventId', eventId),
-    )
-    .unique()
 }
 
 const sendEventInvitationEmails = async (
@@ -180,16 +167,19 @@ export const get = query({
 })
 
 export const getWithHorses = query({
-  args: { id: v.id('events') },
+  args: { id: v.string() },
   handler: async (ctx, args) => {
-    const event = await ctx.db.get(args.id)
+    const eventId = ctx.db.normalizeId('events', args.id)
+    if (!eventId) return null
+
+    const event = await ctx.db.get(eventId)
     if (!event) return null
 
     await assertCanViewStable(ctx, event.stableId)
 
     const eventHorses = await ctx.db
       .query('eventsHorses')
-      .withIndex('by_event_id', (q) => q.eq('eventId', args.id))
+      .withIndex('by_event_id', (q) => q.eq('eventId', eventId))
       .collect()
     const confirmedEventHorses = eventHorses.filter(isConfirmedEventHorse)
     const pendingEventHorses = eventHorses.filter(
@@ -223,16 +213,19 @@ export const listForStable = query({
 })
 
 export const listForHorse = query({
-  args: { horseId: v.id('horses') },
+  args: { horseId: v.string() },
   handler: async (ctx, args) => {
-    const horse = await ctx.db.get(args.horseId)
+    const horseId = ctx.db.normalizeId('horses', args.horseId)
+    if (!horseId) return []
+
+    const horse = await ctx.db.get(horseId)
     if (!horse) return []
 
     await assertCanViewStable(ctx, horse.stableId)
 
     const horseEvents = await ctx.db
       .query('eventsHorses')
-      .withIndex('by_horse_id', (q) => q.eq('horseId', args.horseId))
+      .withIndex('by_horse_id', (q) => q.eq('horseId', horseId))
       .take(250)
 
     const eventIds = [

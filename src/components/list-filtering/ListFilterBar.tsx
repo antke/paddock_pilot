@@ -1,6 +1,8 @@
 import { useId, useState } from 'react'
 import type { ChangeEvent } from 'react'
+import { FunnelSimpleIcon } from '@phosphor-icons/react'
 
+import { DashboardCountBadge } from '#/components/dashboard/DashboardBadges'
 import { Button } from '#/components/ui/button'
 import { Field, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
@@ -14,6 +16,10 @@ import { ListFilterChips } from './ListFilterChips'
 import type { ListFilterChip } from './ListFilterChips'
 import { ListFilterPanel } from './ListFilterPanel'
 
+const listFilterBarClassName = 'app-panel mb-2 p-3 sm:p-4'
+const listFilterHeaderClassName =
+  'grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3'
+
 type ListFilterBarProps<TFacetId extends string = string> = {
   config: ListFilterUiConfig<TFacetId>
   query: string
@@ -23,6 +29,7 @@ type ListFilterBarProps<TFacetId extends string = string> = {
   onReset: () => void
   isFiltering: boolean
   className?: string
+  sticky?: boolean
 }
 
 export function ListFilterBar<TFacetId extends string = string>({
@@ -34,6 +41,7 @@ export function ListFilterBar<TFacetId extends string = string>({
   onReset,
   isFiltering,
   className,
+  sticky = false,
 }: ListFilterBarProps<TFacetId>) {
   const idPrefix = useId()
   const searchId = `${idPrefix}-search`
@@ -47,9 +55,17 @@ export function ListFilterBar<TFacetId extends string = string>({
   }`
 
   return (
-    <div className={cn('mb-2 rounded-row', className)}>
+    <div
+      data-slot="list-filter-bar"
+      data-sticky={sticky || undefined}
+      className={cn(
+        listFilterBarClassName,
+        sticky && 'sticky top-36 z-30 sm:top-24',
+        className,
+      )}
+    >
       <div className="grid">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
+        <div className={listFilterHeaderClassName}>
           <Field className="min-w-0">
             <FieldLabel htmlFor={searchId}>
               {config.searchLabel ?? 'Search'}
@@ -69,18 +85,16 @@ export function ListFilterBar<TFacetId extends string = string>({
             <Button
               type="button"
               variant="outline"
-              className="min-w-10 px-3"
+              size="control"
               aria-expanded={isPanelOpen}
               aria-controls={panelId}
               aria-label={filterButtonLabel}
               onClick={() => setIsPanelOpen((current) => !current)}
             >
-              <FilterIcon className="size-4" aria-hidden={true} />
+              <FunnelSimpleIcon aria-hidden={true} weight="bold" />
               <span className="hidden sm:inline">Filters</span>
               {activeFacetCount > 0 && (
-                <span className="inline-flex size-5 flex-none items-center justify-center rounded-full bg-primary text-[0.625rem] font-medium leading-none text-primary-foreground">
-                  {activeFacetCount}
-                </span>
+                <DashboardCountBadge count={activeFacetCount} />
               )}
             </Button>
           )}
@@ -105,7 +119,7 @@ export function ListFilterBar<TFacetId extends string = string>({
             )}
           >
             <div className="app-height-collapse-inner">
-              <div className="pt-5">
+              <div className="px-0.5 pt-3 pb-0.5 sm:pt-4">
                 <ListFilterPanel
                   facets={config.facets}
                   selectedFacets={selectedFacets}
@@ -143,25 +157,4 @@ function getActiveFacetChips<TFacetId extends string>(
       },
     ]
   })
-}
-
-type FilterIconProps = {
-  className?: string
-  'aria-hidden'?: true
-}
-
-function FilterIcon(props: FilterIconProps) {
-  return (
-    <svg
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path d="M4 7h16" strokeLinecap="round" />
-      <path d="M7 12h10" strokeLinecap="round" />
-      <path d="M10 17h4" strokeLinecap="round" />
-    </svg>
-  )
 }

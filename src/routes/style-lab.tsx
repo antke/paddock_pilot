@@ -1,4 +1,4 @@
-import { ListStyleComparison } from '#/components/design/ListStyleComparison'
+import { StableDesignGuidelines } from '#/components/design/StableDesignGuidelines'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/style-lab')({
@@ -6,5 +6,5 @@ export const Route = createFileRoute('/style-lab')({
 })
 
 function StyleLabPage() {
-  return <ListStyleComparison />
+  return <StableDesignGuidelines />
 }

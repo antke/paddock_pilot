@@ -38,12 +38,131 @@ function FieldLegend({
   )
 }
 
-function FieldGroup({ className, ...props }: React.ComponentProps<'div'>) {
+type FieldGroupGap = 'compact' | 'default' | 'tight'
+
+const fieldGroupGapClassNames = {
+  compact: 'gap-4 *:data-[slot=field-group]:gap-3',
+  default: 'gap-5 *:data-[slot=field-group]:gap-4',
+  tight: 'gap-3 *:data-[slot=field-group]:gap-2',
+} satisfies Record<FieldGroupGap, string>
+
+function FieldGroup({
+  className,
+  gap = 'default',
+  ...props
+}: React.ComponentProps<'div'> & {
+  gap?: FieldGroupGap
+}) {
   return (
     <div
       data-slot="field-group"
       className={cn(
-        'group/field-group @container/field-group flex w-full flex-col gap-5 data-[slot=checkbox-group]:gap-3 *:data-[slot=field-group]:gap-4',
+        'group/field-group @container/field-group flex w-full flex-col data-[slot=checkbox-group]:gap-3',
+        fieldGroupGapClassNames[gap],
+        className,
+      )}
+      {...props}
+    />
+  )
+}
+
+type FieldPanelGap = 'compact' | 'default'
+
+const fieldPanelGapClassNames = {
+  compact: 'gap-2',
+  default: 'gap-3',
+} satisfies Record<FieldPanelGap, string>
+
+function FieldPanel({
+  className,
+  gap = 'default',
+  ...props
+}: React.ComponentProps<'div'> & {
+  gap?: FieldPanelGap
+}) {
+  return (
+    <div
+      data-slot="field-panel"
+      className={cn(
+        'app-row grid p-5 text-sm',
+        fieldPanelGapClassNames[gap],
+        className,
+      )}
+      {...props}
+    />
+  )
+}
+
+type FieldGridBreakpoint = 'sm' | 'md' | 'lg'
+type FieldGridColumns = 2 | 3 | 4
+type FieldGridGap = 'compact' | 'default'
+type FieldGridTemplate =
+  | 'equal'
+  | 'trailing-sm'
+  | 'trailing-md'
+  | 'trailing-auto'
+
+const fieldGridColumnClassNames = {
+  sm: {
+    2: 'sm:grid-cols-2',
+    3: 'sm:grid-cols-3',
+    4: 'sm:grid-cols-4',
+  },
+  md: {
+    2: 'md:grid-cols-2',
+    3: 'md:grid-cols-3',
+    4: 'md:grid-cols-4',
+  },
+  lg: {
+    2: 'lg:grid-cols-2',
+    3: 'lg:grid-cols-3',
+    4: 'lg:grid-cols-4',
+  },
+} satisfies Record<FieldGridBreakpoint, Record<FieldGridColumns, string>>
+
+const fieldGridTemplateClassNames = {
+  sm: {
+    equal: '',
+    'trailing-sm': 'sm:grid-cols-[minmax(0,1fr)_9rem]',
+    'trailing-md': 'sm:grid-cols-[minmax(0,1fr)_12rem]',
+    'trailing-auto': 'sm:grid-cols-[minmax(0,1fr)_auto]',
+  },
+  md: {
+    equal: '',
+    'trailing-sm': 'md:grid-cols-[minmax(0,1fr)_9rem]',
+    'trailing-md': 'md:grid-cols-[minmax(0,1fr)_12rem]',
+    'trailing-auto': 'md:grid-cols-[minmax(0,1fr)_auto]',
+  },
+  lg: {
+    equal: '',
+    'trailing-sm': 'lg:grid-cols-[minmax(0,1fr)_9rem]',
+    'trailing-md': 'lg:grid-cols-[minmax(0,1fr)_12rem]',
+    'trailing-auto': 'lg:grid-cols-[minmax(0,1fr)_auto]',
+  },
+} satisfies Record<FieldGridBreakpoint, Record<FieldGridTemplate, string>>
+
+function FieldGrid({
+  breakpoint = 'md',
+  className,
+  columns = 2,
+  gap = 'default',
+  template = 'equal',
+  ...props
+}: React.ComponentProps<'div'> & {
+  breakpoint?: FieldGridBreakpoint
+  columns?: FieldGridColumns
+  gap?: FieldGridGap
+  template?: FieldGridTemplate
+}) {
+  return (
+    <div
+      data-slot="field-grid"
+      className={cn(
+        'grid',
+        gap === 'compact' ? 'gap-3' : 'gap-4',
+        template === 'equal'
+          ? fieldGridColumnClassNames[breakpoint][columns]
+          : fieldGridTemplateClassNames[breakpoint][template],
         className,
       )}
       {...props}
@@ -101,13 +220,20 @@ function FieldContent({ className, ...props }: React.ComponentProps<'div'>) {
 
 function FieldLabel({
   className,
+  interactive = false,
+  width = 'fit',
   ...props
-}: React.ComponentProps<typeof Label>) {
+}: React.ComponentProps<typeof Label> & {
+  interactive?: boolean
+  width?: 'fit' | 'full'
+}) {
   return (
     <Label
       data-slot="field-label"
       className={cn(
-        'group/field-label peer/field-label flex w-fit gap-2 text-sm font-semibold leading-snug group-data-[disabled=true]/field:opacity-50 has-data-checked:border-primary/30 has-data-checked:bg-primary/5 has-[>[data-slot=field]]:rounded-lg has-[>[data-slot=field]]:border *:data-[slot=field]:p-2 dark:has-data-checked:border-primary/20 dark:has-data-checked:bg-primary/10',
+        'group/field-label peer/field-label flex gap-2 text-sm font-semibold leading-snug group-data-[disabled=true]/field:opacity-50 has-data-checked:border-primary/30 has-data-checked:bg-primary/5 has-[>[data-slot=field]]:rounded-lg has-[>[data-slot=field]]:border *:data-[slot=field]:p-2 dark:has-data-checked:border-primary/20 dark:has-data-checked:bg-primary/10',
+        width === 'fit' ? 'w-fit' : 'w-full',
+        interactive && 'cursor-pointer',
         'has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col',
         className,
       )}
@@ -139,6 +265,81 @@ function FieldDescription({ className, ...props }: React.ComponentProps<'p'>) {
         '[&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-primary',
         className,
       )}
+      {...props}
+    />
+  )
+}
+
+function FieldInlineText({
+  className,
+  ...props
+}: React.ComponentProps<'span'>) {
+  return (
+    <span
+      data-slot="field-inline-text"
+      className={cn('text-sm text-muted-foreground', className)}
+      {...props}
+    />
+  )
+}
+
+function FieldInlineControl({
+  className,
+  ...props
+}: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="field-inline-control"
+      className={cn('flex items-center gap-2', className)}
+      {...props}
+    />
+  )
+}
+
+function FieldLabelRow({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="field-label-row"
+      className={cn('flex items-center gap-1 pl-2', className)}
+      {...props}
+    />
+  )
+}
+
+function FieldHeader({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="field-header"
+      className={cn(
+        'flex flex-wrap items-start justify-between gap-3',
+        className,
+      )}
+      {...props}
+    />
+  )
+}
+
+function FieldHeaderContent({
+  className,
+  ...props
+}: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="field-header-content"
+      className={cn('grid min-w-0 gap-1', className)}
+      {...props}
+    />
+  )
+}
+
+function FieldOptionGroup({
+  className,
+  ...props
+}: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="field-option-group"
+      className={cn('flex flex-wrap gap-4', className)}
       {...props}
     />
   )
@@ -230,8 +431,16 @@ export {
   FieldLabel,
   FieldDescription,
   FieldError,
+  FieldGrid,
   FieldGroup,
+  FieldHeader,
+  FieldHeaderContent,
+  FieldInlineControl,
+  FieldInlineText,
+  FieldLabelRow,
   FieldLegend,
+  FieldOptionGroup,
+  FieldPanel,
   FieldSeparator,
   FieldSet,
   FieldContent,

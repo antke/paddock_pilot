@@ -4,14 +4,12 @@ import type {
   EventFormInput,
   EventFormSchema,
 } from '#/components/forms/event/eventFormSchema'
-import { Button } from '#/components/ui/button'
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '#/components/ui/card'
+  RouteFormActions,
+  RouteFormCard,
+} from '#/components/forms/RouteFormCard'
+import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
+import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { convexQuery } from '@convex-dev/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -20,7 +18,6 @@ import { api } from 'convex/_generated/api'
 import type { Doc, Id } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 import { useForm } from 'react-hook-form'
-import { toast } from 'sonner'
 
 export const Route = createFileRoute(
   '/stables/_layout/$stableId/events/$eventId/edit',
@@ -32,7 +29,7 @@ function RouteComponent() {
   const { eventId, stableId } = Route.useParams()
 
   const { data: eventWithHorses } = useSuspenseQuery(
-    convexQuery(api.events.getWithHorses, { id: eventId as Id<'events'> }),
+    convexQuery(api.events.getWithHorses, { id: eventId }),
   )
   const { data: horses } = useSuspenseQuery(
     convexQuery(api.horses.list, { stableId: stableId as Id<'stables'> }),
@@ -44,7 +41,7 @@ function RouteComponent() {
   )
 
   if (!eventWithHorses || eventWithHorses.event.stableId !== stableId) {
-    return <div>Event not found</div>
+    return <RouteEntityNotFoundAlert entity="event" />
   }
 
   return (
@@ -127,9 +124,9 @@ function EditEventForm({
         recurrence: data.recurring ? data.recurrence : undefined,
       })
 
-      toast.success('Event updated', {
+      showAppSuccessToast({
+        title: 'Event updated',
         description: <p>{data.title} has been updated.</p>,
-        position: 'top-right',
       })
 
       nav({
@@ -137,45 +134,31 @@ function EditEventForm({
         params: { stableId: event.stableId, eventId: event._id },
       })
     } catch (err) {
-      toast.error('Oops! Something went wrong.', {
-        description: <p>Please try again.</p>,
-        position: 'top-right',
-      })
+      showAppErrorToast()
     }
   }
 
   return (
-    <form id="event-form" onSubmit={form.handleSubmit(onSubmit)}>
-      <Card className="w-full bg-card/80">
-        <CardHeader>
-          <CardTitle className="text-xl tracking-tight">Edit event</CardTitle>
-        </CardHeader>
-
-        <CardContent className="flex flex-col gap-4">
-          <EventFormFields
-            control={form.control}
-            setValue={form.setValue}
-            horses={horses}
-            providers={providers}
-            disabled={form.formState.isSubmitting}
-          />
-        </CardContent>
-
-        <CardFooter className="justify-end gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={form.formState.isSubmitting}
-            onClick={() => form.reset()}
-          >
-            Reset
-          </Button>
-
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? 'Saving...' : 'Update Event'}
-          </Button>
-        </CardFooter>
-      </Card>
-    </form>
+    <RouteFormCard
+      formId="event-form"
+      title="Edit event"
+      onSubmit={form.handleSubmit(onSubmit)}
+      actions={
+        <RouteFormActions
+          isSubmitting={form.formState.isSubmitting}
+          onReset={() => form.reset()}
+          submitLabel="Update Event"
+          submittingLabel="Saving..."
+        />
+      }
+    >
+      <EventFormFields
+        control={form.control}
+        setValue={form.setValue}
+        horses={horses}
+        providers={providers}
+        disabled={form.formState.isSubmitting}
+      />
+    </RouteFormCard>
   )
 }

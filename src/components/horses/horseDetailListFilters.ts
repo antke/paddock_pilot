@@ -20,27 +20,16 @@ import type {
 } from 'shared/horses/healthIssueSchema'
 import { medicationRecordStatuses } from 'shared/horses/medicationRecordSchema'
 import type { MedicationRecordStatus } from 'shared/horses/medicationRecordSchema'
+import {
+  horseHealthIssueSeverityLabels,
+  horseHealthIssueStatusLabels,
+  horseMedicationStatusLabels,
+} from './horseCareLabels'
 
 export type HorseActivityFilterFacetId = 'type' | 'status'
 export type HorseHealthIssueFilterFacetId = 'status' | 'severity'
 export type HorseMedicationRecordFilterFacetId = 'status'
 export type HorseWeightRecordFilterFacetId = 'unit' | 'bodyCondition'
-
-export const horseHealthIssueSeverityLabels = {
-  low: 'Low',
-  medium: 'Medium',
-  high: 'High',
-} satisfies Record<HealthIssueSeverity, string>
-
-export const horseHealthIssueStatusLabels = {
-  active: 'Active',
-  resolved: 'Resolved',
-} satisfies Record<HealthIssueStatus, string>
-
-export const horseMedicationStatusLabels = {
-  active: 'Active',
-  completed: 'Completed',
-} satisfies Record<MedicationRecordStatus, string>
 
 const weightUnitLabels = {
   kg: 'Kilograms',
@@ -288,10 +277,12 @@ const healthIssueSeverityFilterOptions = healthIssueSeverities.map(
   }),
 ) satisfies ReadonlyArray<ListFilterOption>
 
-const medicationStatusFilterOptions = medicationRecordStatuses.map((status) => ({
-  value: status,
-  label: horseMedicationStatusLabels[status],
-})) satisfies ReadonlyArray<ListFilterOption>
+const medicationStatusFilterOptions = medicationRecordStatuses.map(
+  (status) => ({
+    value: status,
+    label: horseMedicationStatusLabels[status],
+  }),
+) satisfies ReadonlyArray<ListFilterOption>
 
 const weightUnitFilterOptions = [
   { value: 'kg', label: weightUnitLabels.kg },

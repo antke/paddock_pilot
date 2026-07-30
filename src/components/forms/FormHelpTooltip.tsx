@@ -1,4 +1,4 @@
-import { buttonVariants } from '#/components/ui/button'
+import { Button } from '#/components/ui/button'
 import {
   Tooltip,
   TooltipContent,
@@ -15,13 +15,14 @@ export function FormHelpTooltip({ label, children }: FormHelpTooltipProps) {
   return (
     <Tooltip>
       <TooltipTrigger
-        type="button"
-        aria-label={label}
-        className={buttonVariants({
-          variant: 'ghost',
-          size: 'icon-xs',
-          className: 'text-muted-foreground',
-        })}
+        render={
+          <Button
+            type="button"
+            variant="subtle"
+            size="icon-xs"
+            aria-label={label}
+          />
+        }
       >
         ?
       </TooltipTrigger>
