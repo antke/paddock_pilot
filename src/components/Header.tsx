@@ -26,13 +26,33 @@ export default function Header() {
 
         <AppHeaderActions>
           <AppHeaderUtilityCluster>
-            <ClerkHeader />
-
+            <HeaderAccountActions />
             <ThemeToggle />
           </AppHeaderUtilityCluster>
         </AppHeaderActions>
       </AppHeaderNav>
     </AppHeader>
+  )
+}
+
+function HeaderAccountActions() {
+  if (isDevAuthBypassEnabled()) return <ClerkHeader />
+
+  return (
+    <>
+      <Show when="signed-out">
+        <ButtonLink to="/sign-in/$" variant="ghost" size="sm">
+          Sign in
+        </ButtonLink>
+        <ButtonLink to="/sign-up/$" size="sm">
+          <span className="sm:hidden">Create</span>
+          <span className="hidden sm:inline">Create account</span>
+        </ButtonLink>
+      </Show>
+      <Show when="signed-in">
+        <ClerkHeader />
+      </Show>
+    </>
   )
 }
 

@@ -48,6 +48,13 @@ export function createStableBreadcrumbItems(
       ]
     }
 
+    if (entityOrAction === 'deleted') {
+      return [
+        { destination: 'horses', label: 'Horses' },
+        { label: 'Deleted horses' },
+      ]
+    }
+
     const horseItem = { label: labels.horseName ?? 'Horse' }
 
     if (!section || section === 'profile') {
@@ -92,8 +99,10 @@ export function createStableBreadcrumbItems(
     analysis: 'Analysis',
     documents: 'Documents',
     edit: 'Edit stable',
+    members: 'Stable people',
     reminders: 'Care',
     settings: 'Settings',
+    welcome: 'Getting started',
   }
 
   return [{ label: featureLabels[feature] ?? formatSegment(feature) }]

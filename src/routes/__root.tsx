@@ -15,6 +15,12 @@ import { ButtonLink } from '#/components/ui/button'
 import { Toaster } from '#/components/ui/sonner'
 import { TooltipProvider } from '#/components/ui/tooltip'
 import { AppUserStateProvider } from '#/components/layout/AppUserStateProvider'
+import {
+  SITE_DESCRIPTION,
+  SITE_SOCIAL_IMAGE,
+  SITE_TITLE,
+  SITE_URL,
+} from '#/lib/site'
 
 import ConvexProviderWithClerk from '../integrations/clerk/provider'
 
@@ -38,13 +44,62 @@ export const Route = createRootRoute({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'PaddockPilot',
+        title: SITE_TITLE,
+      },
+      {
+        name: 'description',
+        content: SITE_DESCRIPTION,
+      },
+      {
+        property: 'og:title',
+        content: SITE_TITLE,
+      },
+      {
+        property: 'og:description',
+        content: SITE_DESCRIPTION,
+      },
+      {
+        property: 'og:type',
+        content: 'website',
+      },
+      {
+        property: 'og:url',
+        content: SITE_URL,
+      },
+      {
+        property: 'og:image',
+        content: SITE_SOCIAL_IMAGE,
+      },
+      {
+        name: 'twitter:card',
+        content: 'summary_large_image',
+      },
+      {
+        name: 'twitter:title',
+        content: SITE_TITLE,
+      },
+      {
+        name: 'twitter:description',
+        content: SITE_DESCRIPTION,
+      },
+      {
+        name: 'twitter:image',
+        content: SITE_SOCIAL_IMAGE,
       },
     ],
     links: [
       {
         rel: 'stylesheet',
         href: appCss,
+      },
+      {
+        rel: 'manifest',
+        href: '/manifest.json',
+      },
+      {
+        rel: 'icon',
+        href: '/paddock-pilot-mark.svg',
+        type: 'image/svg+xml',
       },
     ],
   }),

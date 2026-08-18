@@ -1,16 +1,13 @@
 import { v } from 'convex/values'
 import type { Doc, Id } from './_generated/dataModel'
 import { query } from './_generated/server'
+import { addDaysToDateKey, resolveTodayDateKey } from './libs/dateKeys'
 import { assertCanViewStable } from './libs/stablePermissions'
-
-const todayKey = () => new Date().toISOString().slice(0, 10)
-
-const addDaysKey = (days: number) => {
-  const date = new Date()
-  date.setDate(date.getDate() + days)
-
-  return date.toISOString().slice(0, 10)
-}
+import {
+  hasActiveHorse,
+  isActiveHorse,
+  withActiveEventHorseIds,
+} from './libs/horseState'
 
 const reminderDueSoonDays = 7
 
@@ -22,16 +19,19 @@ const byEventDateAndTime = (a: Doc<'events'>, b: Doc<'events'>) => {
   return a.time.localeCompare(b.time)
 }
 
-const getHorseName = (horsesById: Map<Id<'horses'>, Doc<'horses'>>, horseId: Id<'horses'>) => {
+const getHorseName = (
+  horsesById: Map<Id<'horses'>, Doc<'horses'>>,
+  horseId: Id<'horses'>,
+) => {
   return horsesById.get(horseId)?.name ?? 'Unknown horse'
 }
 
 const hasNutrition = (horse: Doc<'horses'>) => {
   return Boolean(
     horse.feedingRoutine ||
-      horse.nutritionNotes ||
-      horse.nutritionRecommended?.length ||
-      horse.nutritionAvoid?.length,
+    horse.nutritionNotes ||
+    horse.nutritionRecommended?.length ||
+    horse.nutritionAvoid?.length,
   )
 }
 
@@ -42,7 +42,10 @@ const missingProfileFields = (horse: Doc<'horses'>) => {
     ['Date of birth', horse.dateOfBirth],
     ['Passport number', horse.passportNumber],
     ['Microchip number', horse.microchipNumber],
-    ['Insurance details', horse.insuranceProvider && horse.insurancePolicyNumber],
+    [
+      'Insurance details',
+      horse.insuranceProvider && horse.insurancePolicyNumber,
+    ],
     ['Vet contact', horse.vetName && horse.vetPhone],
     ['Farrier contact', horse.farrierName && horse.farrierPhone],
     ['Nutrition', hasNutrition(horse)],
@@ -52,7 +55,10 @@ const missingProfileFields = (horse: Doc<'horses'>) => {
 }
 
 export const getForStable = query({
-  args: { stableId: v.id('stables') },
+  args: {
+    stableId: v.id('stables'),
+    today: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     const access = await assertCanViewStable(ctx, args.stableId)
 
@@ -75,9 +81,7 @@ export const getForStable = query({
         access.role === 'owner'
           ? ctx.db
               .query('stableInvitations')
-              .withIndex('by_stable_id', (q) =>
-                q.eq('stableId', args.stableId),
-              )
+              .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
               .collect()
           : Promise.resolve([]),
         ctx.db
@@ -87,21 +91,35 @@ export const getForStable = query({
           )
           .collect(),
       ])
-    const horsesById = new Map(horses.map((horse) => [horse._id, horse]))
+    const activeHorses = horses.filter(isActiveHorse)
+    const activeHorseIds = new Set(activeHorses.map((horse) => horse._id))
+    const visibleEvents = events
+      .filter((event) => hasActiveHorse(event, activeHorseIds))
+      .map((event) => withActiveEventHorseIds(event, activeHorseIds))
+    const visibleHealthIssues = healthIssues.filter((issue) =>
+      activeHorseIds.has(issue.horseId),
+    )
+    const visibleCareReminders = careReminders.filter(
+      (reminder) => !reminder.horseId || activeHorseIds.has(reminder.horseId),
+    )
+    const horsesById = new Map(activeHorses.map((horse) => [horse._id, horse]))
     const eventHorseRows = await Promise.all(
-      events.map((event) =>
+      visibleEvents.map((event) =>
         ctx.db
           .query('eventsHorses')
           .withIndex('by_event_id', (q) => q.eq('eventId', event._id))
           .collect(),
       ),
     )
-    const eventsById = new Map(events.map((event) => [event._id, event]))
-    const startKey = todayKey()
-    const endKey = addDaysKey(30)
-    const reminderDueSoonKey = addDaysKey(reminderDueSoonDays)
+    const visibleEventHorseRows = eventHorseRows.map((rows) =>
+      rows.filter((row) => activeHorseIds.has(row.horseId)),
+    )
+    const eventsById = new Map(visibleEvents.map((event) => [event._id, event]))
+    const startKey = resolveTodayDateKey(args.today)
+    const endKey = addDaysToDateKey(startKey, 30)
+    const reminderDueSoonKey = addDaysToDateKey(startKey, reminderDueSoonDays)
 
-    const highSeverityIssues = healthIssues
+    const highSeverityIssues = visibleHealthIssues
       .filter((issue) => issue.status === 'active' && issue.severity === 'high')
       .sort((a, b) => b.notedAt - a.notedAt)
       .map((issue) => ({
@@ -112,11 +130,13 @@ export const getForStable = query({
         notedAt: issue.notedAt,
       }))
 
-    const upcomingEvents = events
+    const upcomingEvents = visibleEvents
       .filter((event) => {
         const status = event.status ?? 'planned'
 
-        return status === 'planned' && event.date >= startKey && event.date <= endKey
+        return (
+          status === 'planned' && event.date >= startKey && event.date <= endKey
+        )
       })
       .sort(byEventDateAndTime)
       .map((event) => ({
@@ -128,7 +148,7 @@ export const getForStable = query({
         horseCount: event.horseIds.length,
       }))
 
-    const profileGaps = horses
+    const profileGaps = activeHorses
       .map((horse) => ({
         horseId: horse._id,
         horseName: horse.name,
@@ -136,7 +156,7 @@ export const getForStable = query({
       }))
       .filter((horse) => horse.missingFields.length > 0)
 
-    const providerGaps = events
+    const providerGaps = visibleEvents
       .filter((event) => !event.providerName || !event.providerPhone)
       .sort(byEventDateAndTime)
       .map((event) => ({
@@ -147,8 +167,10 @@ export const getForStable = query({
         missingProviderPhone: !event.providerPhone,
       }))
 
-    const completionNoteGaps = events
-      .filter((event) => event.status === 'completed' && !event.notesAfterCompletion)
+    const completionNoteGaps = visibleEvents
+      .filter(
+        (event) => event.status === 'completed' && !event.notesAfterCompletion,
+      )
       .sort(byEventDateAndTime)
       .map((event) => ({
         id: event._id,
@@ -156,7 +178,7 @@ export const getForStable = query({
         date: event.date,
       }))
 
-    const serviceOutcomeGaps = eventHorseRows
+    const serviceOutcomeGaps = visibleEventHorseRows
       .flat()
       .filter((row) => {
         const event = eventsById.get(row.eventId)
@@ -194,7 +216,7 @@ export const getForStable = query({
         status: invitation.status,
       }))
 
-    const pendingHorseInvitations = eventHorseRows
+    const pendingHorseInvitations = visibleEventHorseRows
       .flat()
       .filter((row) => row.status === 'invited')
       .map((row) => {
@@ -209,7 +231,7 @@ export const getForStable = query({
         }
       })
 
-    const dueReminders = careReminders
+    const dueReminders = visibleCareReminders
       .filter((reminder) => reminder.dueDate <= reminderDueSoonKey)
       .map((reminder) => ({
         id: reminder._id,
@@ -237,7 +259,9 @@ export const getForStable = query({
       summary: {
         highSeverityIssueCount: highSeverityIssues.length,
         dueReminderCount: dueReminders.length,
-        overdueReminderCount: dueReminders.filter((reminder) => reminder.overdue).length,
+        overdueReminderCount: dueReminders.filter(
+          (reminder) => reminder.overdue,
+        ).length,
         upcomingEventCount: upcomingEvents.length,
         profileGapCount: profileGaps.length,
         providerGapCount: providerGaps.length,

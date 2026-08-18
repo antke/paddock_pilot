@@ -11,6 +11,17 @@ import {
   horseCardSurfaceClassName,
 } from '#/components/horses/HorseCard'
 import { Button } from '#/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '#/components/ui/alert-dialog'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { api } from 'convex/_generated/api'
@@ -42,9 +53,13 @@ export function EventHorseServiceDetailsCard({
     }),
   )
   const updateDetails = useMutation(api.eventHorseDetails.update)
+  const withdrawHorse = useMutation(api.events.withdrawHorseFromEvent)
   const [editingRowId, setEditingRowId] = useState<Id<'eventsHorses'> | null>(
     null,
   )
+  const [withdrawingRowId, setWithdrawingRowId] = useState<
+    Id<'eventsHorses'> | undefined
+  >()
 
   const onSubmit = async (
     rowId: Id<'eventsHorses'>,
@@ -56,6 +71,18 @@ export function EventHorseServiceDetailsCard({
       showAppSuccessToast({ title: 'Horse service details saved' })
     } catch (err) {
       showAppErrorToast({ title: 'Could not save service details' })
+    }
+  }
+
+  const onWithdraw = async (rowId: Id<'eventsHorses'>) => {
+    try {
+      setWithdrawingRowId(rowId)
+      await withdrawHorse({ eventHorseId: rowId })
+      showAppSuccessToast({ title: 'Horse withdrawn from event' })
+    } catch {
+      showAppErrorToast({ title: 'Could not withdraw the horse' })
+    } finally {
+      setWithdrawingRowId(undefined)
     }
   }
 
@@ -82,6 +109,8 @@ export function EventHorseServiceDetailsCard({
               onEdit={() => setEditingRowId(row.eventHorse._id)}
               onCancel={() => setEditingRowId(null)}
               onSubmit={(values) => onSubmit(row.eventHorse._id, values)}
+              onWithdraw={() => onWithdraw(row.eventHorse._id)}
+              isWithdrawing={withdrawingRowId === row.eventHorse._id}
             />
           ))}
         </DashboardItemList>
@@ -96,14 +125,18 @@ function EventHorseServiceRow({
   onEdit,
   onCancel,
   onSubmit,
+  onWithdraw,
+  isWithdrawing,
 }: {
   row: EventHorseDetailRow
   isEditing: boolean
   onEdit: () => void
   onCancel: () => void
   onSubmit: (values: EventHorseDetailsFormSchema) => Promise<void>
+  onWithdraw: () => Promise<void>
+  isWithdrawing: boolean
 }) {
-  const { eventHorse, horse, canManage } = row
+  const { eventHorse, horse, canManage, canWithdraw } = row
   const hasDetails = Boolean(
     eventHorse.requestedServiceNotes ||
     eventHorse.completionNotes ||
@@ -122,10 +155,51 @@ function EventHorseServiceRow({
       interactive={false}
       className={cn(horseCardSurfaceClassName, 'p-4')}
       actions={
-        canManage && !isEditing ? (
-          <Button type="button" variant="outline" size="sm" onClick={onEdit}>
-            {hasDetails ? 'Edit details' : 'Add details'}
-          </Button>
+        !isEditing && (canManage || canWithdraw) ? (
+          <>
+            {canManage && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onEdit}
+              >
+                {hasDetails ? 'Edit details' : 'Add details'}
+              </Button>
+            )}
+            {canWithdraw && (
+              <AlertDialog>
+                <AlertDialogTrigger
+                  render={<Button type="button" variant="outline" size="sm" />}
+                >
+                  Withdraw horse
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Withdraw {horse?.name ?? 'this horse'}?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      The horse will no longer count as participating in this
+                      event. The organiser will be notified.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isWithdrawing}>
+                      Keep horse
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      variant="destructive"
+                      disabled={isWithdrawing}
+                      onClick={onWithdraw}
+                    >
+                      {isWithdrawing ? 'Withdrawing...' : 'Withdraw horse'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </>
         ) : undefined
       }
       footer={

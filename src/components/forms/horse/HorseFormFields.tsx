@@ -3,6 +3,7 @@ import { FormSection } from '#/components/forms/FormLayout'
 import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
 import {
   Field,
+  FieldDescription,
   FieldError,
   FieldGrid,
   FieldGroup,
@@ -12,8 +13,11 @@ import {
 import { Input } from '#/components/ui/input'
 import { Textarea } from '#/components/ui/textarea'
 import { formatMetaText } from '#/lib/textDisplay'
-import { calculateHorseAge, getTodayDateKey } from 'shared/horses/horseAge'
-import type { ReactNode } from 'react'
+import {
+  calculateHorseAge,
+  splitHorseBirthDate,
+} from 'shared/horses/horseAge'
+import type { ReactNode, Ref } from 'react'
 import { Controller, useFormState, useWatch } from 'react-hook-form'
 import type { Control } from 'react-hook-form'
 import { HorseBreedAutocomplete } from './HorseBreedAutocomplete'
@@ -64,6 +68,7 @@ export function HorseFormFields({ control, disabled = false }: Props) {
   const horseName = useWatch({ control, name: 'name' })
   const ownerName = useWatch({ control, name: 'ownerName' })
   const dateOfBirth = useWatch({ control, name: 'dateOfBirth' })
+  const statedAge = useWatch({ control, name: 'age' })
   const breed = useWatch({ control, name: 'breed' })
   const passportNumber = useWatch({ control, name: 'passportNumber' })
   const microchipNumber = useWatch({ control, name: 'microchipNumber' })
@@ -80,7 +85,11 @@ export function HorseFormFields({ control, disabled = false }: Props) {
   })
   const nutritionAvoid = useWatch({ control, name: 'nutritionAvoid' })
   const { errors, submitCount } = useFormState({ control })
-  const calculatedAge = calculateHorseAge(dateOfBirth)
+  const calculatedAge = dateOfBirth
+    ? calculateHorseAge(dateOfBirth)
+    : statedAge === ''
+      ? undefined
+      : statedAge
 
   const detailsSummary = formatMetaText([
     horseName || 'Unnamed horse',
@@ -116,6 +125,7 @@ export function HorseFormFields({ control, disabled = false }: Props) {
     errors.name ||
     errors.ownerName ||
     errors.dateOfBirth ||
+    errors.age ||
     errors.sex ||
     errors.profileImage,
   )
@@ -184,39 +194,6 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                 </Field>
               )}
             />
-
-            <Controller
-              name="dateOfBirth"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabelRow className="justify-between gap-3">
-                    <FieldLabel htmlFor={field.name}>Date of birth</FieldLabel>
-                    <span className="text-right text-xs font-medium text-muted-foreground">
-                      {calculatedAge !== undefined && calculatedAge >= 0
-                        ? `Age: ${calculatedAge} ${calculatedAge === 1 ? 'year' : 'years'}`
-                        : 'Age calculated automatically'}
-                    </span>
-                  </FieldLabelRow>
-
-                  <Input
-                    {...field}
-                    id={field.name}
-                    type="date"
-                    max={getTodayDateKey()}
-                    disabled={disabled}
-                    aria-invalid={fieldState.invalid}
-                  />
-
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-          </FieldGrid>
-
-          <FieldGrid>
             <Controller
               name="ownerName"
               control={control}
@@ -239,6 +216,14 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                   )}
                 </Field>
               )}
+            />
+          </FieldGrid>
+
+          <FieldGrid breakpoint="lg" template="trailing-sm">
+            <BirthDateOrAgeFields
+              control={control}
+              disabled={disabled}
+              calculatedAge={calculatedAge}
             />
           </FieldGrid>
 
@@ -839,6 +824,182 @@ export function HorseFormFields({ control, disabled = false }: Props) {
         </FieldGroup>
       </FormSection>
     </>
+  )
+}
+
+function BirthDateOrAgeFields({
+  calculatedAge,
+  control,
+  disabled,
+}: {
+  calculatedAge?: number
+  control: Control<HorseFormInput, unknown, HorseFormSchema>
+  disabled: boolean
+}) {
+  const hasBirthDate = Boolean(useWatch({ control, name: 'dateOfBirth' }))
+
+  return (
+    <>
+      <Controller
+        name="dateOfBirth"
+        control={control}
+        render={({ field, fieldState }) => {
+          const birthDate = splitHorseBirthDate(field.value)
+          const updatePart = (
+            part: 'year' | 'month' | 'day',
+            input: string,
+          ) => {
+            const maxLength = part === 'year' ? 4 : 2
+            const value = input.replace(/\D/g, '').slice(0, maxLength)
+            const next = { ...birthDate, [part]: value }
+
+            if (part === 'year' && !value) {
+              field.onChange('')
+              return
+            }
+            if (part === 'month' && !value) next.day = ''
+
+            const parts = [next.year, next.month, next.day].filter(Boolean)
+            field.onChange(parts.join('-'))
+          }
+
+          return (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabelRow className="justify-between gap-3">
+                <FieldLabel htmlFor={`${field.name}-year`}>
+                  Birth date
+                </FieldLabel>
+                <span className="text-right text-xs font-medium text-muted-foreground">
+                  {field.value && calculatedAge !== undefined
+                    ? `Calculated age: ${calculatedAge}`
+                    : 'Year required; month and day optional'}
+                </span>
+              </FieldLabelRow>
+
+              <div className="grid grid-cols-[minmax(5rem,1fr)_minmax(4rem,0.7fr)_minmax(4rem,0.7fr)] gap-2">
+                <BirthDatePartInput
+                  id={`${field.name}-year`}
+                  label="Year"
+                  value={birthDate.year}
+                  placeholder="2016"
+                  maxLength={4}
+                  disabled={disabled}
+                  invalid={fieldState.invalid}
+                  inputRef={field.ref}
+                  onBlur={field.onBlur}
+                  onChange={(value) => updatePart('year', value)}
+                />
+                <BirthDatePartInput
+                  id={`${field.name}-month`}
+                  label="Month"
+                  value={birthDate.month}
+                  placeholder="MM"
+                  maxLength={2}
+                  disabled={disabled || !birthDate.year}
+                  invalid={fieldState.invalid}
+                  onBlur={field.onBlur}
+                  onChange={(value) => updatePart('month', value)}
+                />
+                <BirthDatePartInput
+                  id={`${field.name}-day`}
+                  label="Day"
+                  value={birthDate.day}
+                  placeholder="DD"
+                  maxLength={2}
+                  disabled={disabled || !birthDate.month}
+                  invalid={fieldState.invalid}
+                  onBlur={field.onBlur}
+                  onChange={(value) => updatePart('day', value)}
+                />
+              </div>
+
+              {fieldState.invalid && (
+                <FieldError errors={[fieldState.error]} />
+              )}
+            </Field>
+          )
+        }}
+      />
+
+      <Controller
+        name="age"
+        control={control}
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor={field.name}>Or current age</FieldLabel>
+            <Input
+              id={field.name}
+              name={field.name}
+              ref={field.ref}
+              value={field.value}
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={100}
+              placeholder="10"
+              disabled={disabled}
+              aria-invalid={fieldState.invalid}
+              onBlur={field.onBlur}
+              onChange={(event) =>
+                field.onChange(
+                  event.target.value === '' ? '' : Number(event.target.value),
+                )
+              }
+            />
+            <FieldDescription>
+              {field.value !== '' && !hasBirthDate
+                ? 'Approximate age is fine.'
+                : 'Birth date takes priority.'}
+            </FieldDescription>
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
+        )}
+      />
+    </>
+  )
+}
+
+function BirthDatePartInput({
+  disabled,
+  id,
+  inputRef,
+  invalid,
+  label,
+  maxLength,
+  onBlur,
+  onChange,
+  placeholder,
+  value,
+}: {
+  disabled: boolean
+  id: string
+  inputRef?: Ref<HTMLInputElement>
+  invalid: boolean
+  label: string
+  maxLength: number
+  onBlur: () => void
+  onChange: (value: string) => void
+  placeholder: string
+  value: string
+}) {
+  return (
+    <div className="grid gap-1.5">
+      <label htmlFor={id} className="text-xs font-medium text-muted-foreground">
+        {label}
+      </label>
+      <Input
+        id={id}
+        ref={inputRef}
+        value={value}
+        inputMode="numeric"
+        maxLength={maxLength}
+        placeholder={placeholder}
+        disabled={disabled}
+        aria-invalid={invalid}
+        onBlur={onBlur}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </div>
   )
 }
 

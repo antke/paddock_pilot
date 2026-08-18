@@ -42,6 +42,7 @@ function RouteComponent() {
       color: '',
       height: '',
       dateOfBirth: '',
+      age: '',
       passportNumber: '',
       microchipNumber: '',
       insuranceProvider: '',
@@ -82,9 +83,11 @@ function RouteComponent() {
 
   const onSubmit = async (data: HorseFormSchema) => {
     try {
-      const age = calculateHorseAge(data.dateOfBirth)
-      if (age === undefined || age < 0 || age > 100) {
-        throw new Error('Invalid horse date of birth')
+      const age = data.dateOfBirth
+        ? calculateHorseAge(data.dateOfBirth)
+        : data.age
+      if (typeof age !== 'number' || age < 0 || age > 100) {
+        throw new Error('Invalid horse age')
       }
 
       const profileImageId = await uploadProfileImage(

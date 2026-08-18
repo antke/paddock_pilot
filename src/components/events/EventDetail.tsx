@@ -32,9 +32,15 @@ type EventDetailProps = {
   stableId: string
   event: Doc<'events'>
   horses: Array<Doc<'horses'>>
+  canManageEvent: boolean
 }
 
-export function EventDetail({ stableId, event, horses }: EventDetailProps) {
+export function EventDetail({
+  stableId,
+  event,
+  horses,
+  canManageEvent,
+}: EventDetailProps) {
   const recurrenceSummary = formatRecurrence(event.recurrence)
   const eventStatus: EventStatus = event.status ?? 'planned'
   const hasProviderDetails = Boolean(
@@ -59,6 +65,7 @@ export function EventDetail({ stableId, event, horses }: EventDetailProps) {
           </>
         }
         actions={
+          canManageEvent ? (
           <ButtonLink
             to="/stables/$stableId/events/$eventId/edit"
             params={{ stableId, eventId: event._id }}
@@ -66,6 +73,7 @@ export function EventDetail({ stableId, event, horses }: EventDetailProps) {
           >
             Edit event
           </ButtonLink>
+          ) : undefined
         }
       />
 

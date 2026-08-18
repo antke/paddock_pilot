@@ -22,6 +22,7 @@ import {
 } from '#/components/reminders/CareReminderBadges'
 import { stableInvitationStatusLabels } from '#/components/stables/StableInvitationBadges'
 import { formatCommaList, formatConjunctionList } from '#/lib/textDisplay'
+import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import type { ComponentProps } from 'react'
@@ -53,9 +54,11 @@ const alertRowTone = {
 export function StableDashboardAlerts({
   stableId,
 }: StableDashboardAlertsProps) {
+  const { today } = useLocalDateContext()
   const { data: alerts } = useSuspenseQuery(
     convexQuery(api.stableDashboardAlerts.getForStable, {
       stableId: stableId as Id<'stables'>,
+      today,
     }),
   )
   const hasAlerts = Object.values(alerts.summary).some((count) => count > 0)

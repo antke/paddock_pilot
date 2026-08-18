@@ -21,12 +21,14 @@ const eventHorseStatusLabels = {
   confirmed: 'Confirmed',
   invited: 'Invited',
   declined: 'Declined',
+  withdrawn: 'Withdrawn',
 } satisfies Record<EventHorseStatus, string>
 
 const eventHorseStatusVariant = {
   confirmed: 'outline',
   invited: 'secondary',
   declined: 'neutral',
+  withdrawn: 'neutral',
 } satisfies Record<
   EventHorseStatus,
   NonNullable<ComponentProps<typeof Badge>['variant']>

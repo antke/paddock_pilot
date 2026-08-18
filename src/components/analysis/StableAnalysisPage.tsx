@@ -8,6 +8,7 @@ import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import type { FunctionReturnType } from 'convex/server'
 import { AnalysisCentre } from './AnalysisCentre'
+import { useLocalDateContext } from '#/lib/useLocalDateContext'
 
 type StableAnalysis = FunctionReturnType<typeof api.stableAnalysis.getForStable>
 type UnlockedAnalysis = Extract<StableAnalysis, { hasAccess: true }>
@@ -17,9 +18,11 @@ type StableAnalysisPageProps = {
 }
 
 export function StableAnalysisPage({ stableId }: StableAnalysisPageProps) {
+  const localDateContext = useLocalDateContext()
   const { data: analysis } = useSuspenseQuery(
     convexQuery(api.stableAnalysis.getForStable, {
       stableId: stableId as Id<'stables'>,
+      ...localDateContext,
     }),
   )
 
@@ -27,7 +30,9 @@ export function StableAnalysisPage({ stableId }: StableAnalysisPageProps) {
     return <LockedAnalysis />
   }
 
-  return <UnlockedAnalysisPage analysis={analysis} />
+  return (
+    <UnlockedAnalysisPage analysis={analysis} today={localDateContext.today} />
+  )
 }
 
 function LockedAnalysis() {
@@ -43,7 +48,13 @@ function LockedAnalysis() {
   )
 }
 
-function UnlockedAnalysisPage({ analysis }: { analysis: UnlockedAnalysis }) {
+function UnlockedAnalysisPage({
+  analysis,
+  today,
+}: {
+  analysis: UnlockedAnalysis
+  today: string
+}) {
   const stableId = analysis.stable._id
   const { data: events } = useSuspenseQuery(
     convexQuery(api.events.listForStable, { stableId }),
@@ -52,7 +63,7 @@ function UnlockedAnalysisPage({ analysis }: { analysis: UnlockedAnalysis }) {
     convexQuery(api.horses.list, { stableId }),
   )
   const { data: overview } = useSuspenseQuery(
-    convexQuery(api.userCareOverview.getForCurrentUser, { stableId }),
+    convexQuery(api.userCareOverview.getForCurrentUser, { stableId, today }),
   )
   const data = createDashboardLabData({
     stable: analysis.stable,

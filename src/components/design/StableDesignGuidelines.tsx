@@ -74,6 +74,8 @@ import {
 import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { ListFilterBar } from '#/components/list-filtering/ListFilterBar'
+import { OnboardingStepper } from '#/components/onboarding/OnboardingStepper'
+import { StablePersonCard } from '#/components/stables/StablePersonCard'
 import {
   CareReminderCategoryBadge,
   CareReminderPriorityBadge,
@@ -515,10 +517,11 @@ const componentInventory = [
   },
   {
     group: 'Progress and gauges',
-    canonical: 'ui/Progress plus DashboardPercentBadge for the numeric value',
+    canonical:
+      'ui/Progress plus DashboardPercentBadge for numeric values; OnboardingStepper for sequential first-run flows',
     use: 'Analysis coverage, documentation completeness, compact completion meters',
     status: 'Canonical',
-    rule: 'Use Progress for semantic completion meters with accessible labels, pair it with DashboardPercentBadge for visible numeric values, and keep threshold decisions in feature components; timeline marks, active navigation rails, and chart scrub handles are not progress meters.',
+    rule: 'Use Progress for semantic completion meters with accessible labels, pair it with DashboardPercentBadge for visible numeric values, and use OnboardingStepper when a person advances through a small, ordered first-run flow. A deferred optional step is a successful onboarding outcome, not an error or permanently incomplete state. Keep threshold decisions in feature components; timeline marks, active navigation rails, and chart scrub handles are not progress meters.',
   },
   {
     group: 'Date and schedule markers',
@@ -539,10 +542,10 @@ const componentInventory = [
   {
     group: 'Entity media',
     canonical:
-      'HorseAvatar, HorseCard, HorseCardLink, HorseSelectionCard, DocumentPreview, DashboardItemRecordCard, and DashboardItemMediaCard for entity row shells',
-    use: 'Horse rows, rosters, profile headers, document previews, full-row horse links, and horse selection grids',
+      'UserAvatar, StablePersonCard, HorseAvatar, HorseCard, HorseCardLink, HorseSelectionCard, DocumentPreview, DashboardItemRecordCard, and DashboardItemMediaCard for entity row shells',
+    use: 'Stable people, member management, horse rows, rosters, profile headers, document previews, full-row horse links, and horse selection grids',
     status: 'Canonical',
-    rule: 'Use HorseAvatar for horse image and initial fallback frames, HorseCard for static horse identity cards, HorseCardLink whenever a horse card opens its detail page, and HorseSelectionCard for full-card selection with outline feedback. Horse collections always use the rounded bordered card treatment with card spacing; borderless line rows and chrome overrides are not supported. Horse links must make the whole card clickable and must not add a separate open button. Use DocumentPreview for uploaded document image/file fallback frames, DashboardItemRecordCard for content-plus-action entity row shells, and DashboardItemMediaCard for preview/media rows instead of local image/fallback, title-hover, selection-outline, icon-button, or row action recipes.',
+    rule: 'Use UserAvatar for account photos and initial fallbacks, and StablePersonCard for owner/member identity rows in both roster and management contexts. Use HorseAvatar for horse image and initial fallback frames, HorseCard for static horse identity cards, HorseCardLink whenever a horse card opens its detail page, and HorseSelectionCard for full-card selection with outline feedback. Horse collections always use the rounded bordered card treatment with card spacing; borderless line rows and chrome overrides are not supported. Horse links must make the whole card clickable and must not add a separate open button. Use DocumentPreview for uploaded document image/file fallback frames, DashboardItemRecordCard for content-plus-action entity row shells, and DashboardItemMediaCard for preview/media rows instead of local image/fallback, title-hover, selection-outline, icon-button, or row action recipes.',
   },
   {
     group: 'Detail and metric blocks',
@@ -1252,6 +1255,24 @@ function ComponentSpecimens() {
 
         <div className="grid gap-3">
           <TextLabel as="p" size="sm" weight="black" tracking="none">
+            First-run stepper
+          </TextLabel>
+          <OnboardingStepper
+            steps={[
+              { id: 'profile', label: 'About you', status: 'completed' },
+              { id: 'stable', label: 'Stable', status: 'current' },
+              { id: 'horse', label: 'First horse', status: 'upcoming' },
+              { id: 'team', label: 'Your team', status: 'deferred' },
+            ]}
+          />
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Sequential onboarding stays visible and calm. Optional steps use
+            “Done later” instead of warning or incomplete styling.
+          </p>
+        </div>
+
+        <div className="grid gap-3">
+          <TextLabel as="p" size="sm" weight="black" tracking="none">
             Tables
           </TextLabel>
           <DashboardTablePanel>
@@ -1380,7 +1401,7 @@ function ComponentSpecimens() {
             </Field>
             <Field>
               <FieldLabel htmlFor="guideline-state">State</FieldLabel>
-          <Select id="guideline-state" value="today" disabled>
+              <Select id="guideline-state" value="today" disabled>
                 <option value="today">Due today</option>
                 <option value="overdue">Overdue</option>
               </Select>
@@ -1432,6 +1453,11 @@ function ComponentSpecimens() {
             Entity media
           </TextLabel>
           <div className="grid gap-2">
+            <StablePersonCard
+              name="Avery Stone"
+              role="member"
+              meta={<span>Yard member · (555) 014-0912</span>}
+            />
             <HorseCardLink
               horse={{
                 name: 'Maple',

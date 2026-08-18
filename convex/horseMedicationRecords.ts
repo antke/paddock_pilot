@@ -4,13 +4,14 @@ import {
   medicationRecordStatusSchema,
 } from '../shared/horses/medicationRecordSchema'
 import type { Doc } from './_generated/dataModel'
-import { mutation, query   } from './_generated/server'
-import type {MutationCtx, QueryCtx} from './_generated/server';
+import { mutation, query } from './_generated/server'
+import type { MutationCtx, QueryCtx } from './_generated/server'
 import {
   assertCanManageHorse,
   assertCanViewStable,
   getCurrentUser,
 } from './libs/stablePermissions'
+import { resolveTodayDateKey } from './libs/dateKeys'
 
 const medicationStatusValidator = v.union(
   v.literal('active'),
@@ -85,7 +86,9 @@ export const getPermissions = query({
 
     const access = await assertCanViewStable(ctx, horse.stableId)
 
-    return { canManage: access.role === 'owner' || horse.ownerId === access.userId }
+    return {
+      canManage: access.role === 'owner' || horse.ownerId === access.userId,
+    }
   },
 })
 
@@ -141,7 +144,7 @@ export const complete = mutation({
     const horse = await getRecordHorse(ctx, record)
     await assertCanManageHorse(ctx, horse)
 
-    const endDate = args.endDate ?? new Date().toISOString().slice(0, 10)
+    const endDate = args.endDate ?? resolveTodayDateKey()
     const input = validateAddInput({ ...record, status: 'completed', endDate })
 
     await ctx.db.patch(args.id, {

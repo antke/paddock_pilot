@@ -8,7 +8,11 @@ import {
   RouteFormActions,
   RouteFormCard,
 } from '#/components/forms/RouteFormCard'
-import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
+import {
+  RouteEntityNotFoundAlert,
+  RouteStatusAlert,
+} from '#/components/layout/RouteStatusAlert'
+import { ButtonLink } from '#/components/ui/button'
 import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { convexQuery } from '@convex-dev/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -19,6 +23,7 @@ import type { Doc, Id } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 import { useForm } from 'react-hook-form'
 import { calculateHorseAge } from 'shared/horses/horseAge'
+import { HorseDeletionActions } from '#/components/horses/HorseDeletionActions'
 
 export const Route = createFileRoute(
   '/stables/_layout/$stableId/horses/$horseId/edit',
@@ -32,9 +37,29 @@ function RouteComponent() {
   const { data: horse } = useSuspenseQuery(
     convexQuery(api.horses.get, { id: horseId }),
   )
+  const { data: permissions } = useSuspenseQuery(
+    convexQuery(api.horses.getPermissions, { id: horseId as Id<'horses'> }),
+  )
 
   if (!horse || horse.stableId !== stableId) {
     return <RouteEntityNotFoundAlert entity="horse" />
+  }
+  if (!permissions?.canManageHorse) {
+    return (
+      <RouteStatusAlert
+        tone="warning"
+        title="This horse profile is read-only for you"
+        description="Members can edit only their own horses. The stable owner can manage every horse in the stable."
+        actions={
+          <ButtonLink
+            to="/stables/$stableId/horses/$horseId"
+            params={{ stableId, horseId }}
+          >
+            Return to horse
+          </ButtonLink>
+        }
+      />
+    )
   }
 
   return <EditHorseForm key={horse._id} horse={horse} />
@@ -62,6 +87,7 @@ function EditHorseForm({ horse }: EditHorseFormProps) {
       color: horse.color ?? '',
       height: horse.height ?? '',
       dateOfBirth: horse.dateOfBirth ?? '',
+      age: horse.age,
       passportNumber: horse.passportNumber ?? '',
       microchipNumber: horse.microchipNumber ?? '',
       insuranceProvider: horse.insuranceProvider ?? '',
@@ -103,9 +129,11 @@ function EditHorseForm({ horse }: EditHorseFormProps) {
 
   const onSubmit = async (data: HorseFormSchema) => {
     try {
-      const age = calculateHorseAge(data.dateOfBirth)
-      if (age === undefined || age < 0 || age > 100) {
-        throw new Error('Invalid horse date of birth')
+      const age = data.dateOfBirth
+        ? calculateHorseAge(data.dateOfBirth)
+        : data.age
+      if (typeof age !== 'number' || age < 0 || age > 100) {
+        throw new Error('Invalid horse age')
       }
 
       const profileImageId = await uploadProfileImage(
@@ -159,23 +187,35 @@ function EditHorseForm({ horse }: EditHorseFormProps) {
   }
 
   return (
-    <RouteFormCard
-      formId="horse-form"
-      title="Edit horse"
-      onSubmit={form.handleSubmit(onSubmit)}
-      actions={
-        <RouteFormActions
-          isSubmitting={form.formState.isSubmitting}
-          onReset={() => form.reset()}
-          submitLabel="Update Horse"
-          submittingLabel="Saving..."
+    <>
+      <RouteFormCard
+        formId="horse-form"
+        title="Edit horse"
+        onSubmit={form.handleSubmit(onSubmit)}
+        actions={
+          <RouteFormActions
+            isSubmitting={form.formState.isSubmitting}
+            onReset={() => form.reset()}
+            submitLabel="Update Horse"
+            submittingLabel="Saving..."
+          />
+        }
+      >
+        <HorseFormFields
+          control={form.control}
+          disabled={form.formState.isSubmitting}
         />
-      }
-    >
-      <HorseFormFields
-        control={form.control}
-        disabled={form.formState.isSubmitting}
+      </RouteFormCard>
+
+      <HorseDeletionActions
+        horse={horse}
+        onDeleted={() =>
+          nav({
+            to: '/stables/$stableId/horses',
+            params: { stableId: horse.stableId },
+          })
+        }
       />
-    </RouteFormCard>
+    </>
   )
 }

@@ -17,7 +17,7 @@ export function NoStablesPrompt({
     <DashboardEmptyState
       chrome={chrome}
       title="No stables yet"
-      actions={<ButtonLink to="/stables/create">Create stable</ButtonLink>}
+      actions={<ButtonLink to="/onboarding">Get started</ButtonLink>}
     >
       {children}
     </DashboardEmptyState>

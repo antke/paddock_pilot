@@ -61,7 +61,10 @@ function RouteComponent() {
         description: <p>{data.name} is ready.</p>,
       })
 
-      nav({ to: '/stables/$stableId', params: { stableId: newStableId } })
+      nav({
+        to: '/onboarding',
+        search: { stableId: newStableId },
+      })
     } catch (err) {
       showAppErrorToast()
     }

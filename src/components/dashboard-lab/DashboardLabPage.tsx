@@ -2,6 +2,7 @@ import { NoStablesPrompt } from '#/components/stables/NoStablesPrompt'
 import { LabPageHeader, LabPageShell } from '#/components/lab/LabChrome'
 import { StableCommandCenter } from '#/components/dashboard/command-center/StableCommandCenter'
 import { isDevAuthBypassEnabled } from '#/lib/devAuthBypass'
+import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { api } from 'convex/_generated/api'
@@ -63,9 +64,11 @@ function DashboardLabData({
   events: Array<Doc<'events'>>
   activeStable: Doc<'stables'>
 }) {
+  const { today } = useLocalDateContext()
   const { data: overview } = useSuspenseQuery(
     convexQuery(api.userCareOverview.getForCurrentUser, {
       stableId: activeStable._id,
+      today,
     }),
   )
   const { data: horses } = useSuspenseQuery(

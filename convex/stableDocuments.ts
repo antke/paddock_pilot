@@ -1,10 +1,19 @@
 import { ConvexError, v } from 'convex/values'
 import { stableDocumentInputSchema } from '../shared/stables/stableDocumentSchema'
+import {
+  canManageLinkedRecord,
+  canRemoveLinkedRecord,
+} from '../shared/stables/stableAccess'
 import type { Doc, Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import type { MutationCtx, QueryCtx } from './_generated/server'
 import { assertHasPersonalPro, hasPersonalPro } from './libs/entitlements'
+import { isActiveHorse } from './libs/horseState'
 import { assertCanViewStable, getCurrentUser } from './libs/stablePermissions'
+import {
+  assertStorageObjectCanBeClaimed,
+  deleteStorageObjectIfUnreferenced,
+} from './libs/storageObjects'
 
 type Ctx = QueryCtx | MutationCtx
 
@@ -40,18 +49,36 @@ const validateDocumentInput = (args: {
   return result.data
 }
 
-const canManageStableDocuments = (role: 'owner' | 'member' | 'guest' | undefined) =>
-  role === 'owner' || role === 'member'
-
-const canManageDocument = (
+const canAddDocument = (
   access: Awaited<ReturnType<typeof assertCanViewStable>>,
   horse?: Doc<'horses'> | null,
-) => {
-  return canManageStableDocuments(access.role) || horse?.ownerId === access.userId
-}
+  event?: Doc<'events'> | null,
+) =>
+  canManageLinkedRecord({
+    role: access.role,
+    userId: access.userId,
+    horseOwnerId: horse?.ownerId,
+    eventCreatedBy: event?.createdBy,
+  })
 
-const byCreatedAtDesc = (a: Doc<'stableDocuments'>, b: Doc<'stableDocuments'>) =>
-  b.createdAt - a.createdAt
+const canRemoveDocument = (
+  access: Awaited<ReturnType<typeof assertCanViewStable>>,
+  document: Doc<'stableDocuments'>,
+  horse?: Doc<'horses'> | null,
+  event?: Doc<'events'> | null,
+) =>
+  canRemoveLinkedRecord({
+    role: access.role,
+    userId: access.userId,
+    createdBy: document.createdBy,
+    horseOwnerId: horse?.ownerId,
+    eventCreatedBy: event?.createdBy,
+  })
+
+const byCreatedAtDesc = (
+  a: Doc<'stableDocuments'>,
+  b: Doc<'stableDocuments'>,
+) => b.createdAt - a.createdAt
 
 const assertLinkedRowsBelongToStable = async (
   ctx: Ctx,
@@ -64,7 +91,7 @@ const assertLinkedRowsBelongToStable = async (
     eventId ? ctx.db.get(eventId) : Promise.resolve(null),
   ])
 
-  if (horseId && !horse) throw new ConvexError('Horse not found')
+  if (horseId && !isActiveHorse(horse)) throw new ConvexError('Horse not found')
   if (eventId && !event) throw new ConvexError('Event not found')
   if (horse && horse.stableId !== stableId) {
     throw new ConvexError('Horse must belong to the document stable')
@@ -84,6 +111,7 @@ const enrichDocuments = async (
   const userHasPersonalPro = userId ? await hasPersonalPro(ctx, userId) : false
   const rows = await Promise.all(
     documents.sort(byCreatedAtDesc).map(async (document) => {
+      const { storageId: _storageId, ...publicDocument } = document
       const [horse, event, fileUrl, access] = await Promise.all([
         document.horseId ? ctx.db.get(document.horseId) : Promise.resolve(null),
         document.eventId ? ctx.db.get(document.eventId) : Promise.resolve(null),
@@ -93,17 +121,21 @@ const enrichDocuments = async (
         assertCanViewStable(ctx, document.stableId, userId),
       ])
 
+      if (document.horseId && !isActiveHorse(horse)) return null
+
       return {
-        document,
+        document: publicDocument,
         horseName: horse?.name,
         eventTitle: event?.title,
         fileUrl,
-        canManage: userHasPersonalPro && canManageDocument(access, horse),
+        canManage:
+          userHasPersonalPro &&
+          canRemoveDocument(access, document, horse, event),
       }
     }),
   )
 
-  return rows
+  return rows.filter((row) => row !== null)
 }
 
 export const generateUploadUrl = mutation({
@@ -127,7 +159,7 @@ export const listForStable = query({
 
     return {
       canManageStableDocuments:
-        canManageStableDocuments(access.role) &&
+        access.capabilities.canManageStableDocuments &&
         (await hasPersonalPro(ctx, access.userId)),
       documents: await enrichDocuments(ctx, documents, access.userId),
     }
@@ -138,7 +170,9 @@ export const listForHorse = query({
   args: { horseId: v.id('horses') },
   handler: async (ctx, args) => {
     const horse = await ctx.db.get(args.horseId)
-    if (!horse) return { canManage: false, documents: [] }
+    if (!isActiveHorse(horse)) {
+      return { canManage: false, documents: [] }
+    }
 
     const access = await assertCanViewStable(ctx, horse.stableId)
     const documents = await ctx.db
@@ -148,7 +182,7 @@ export const listForHorse = query({
 
     return {
       canManage:
-        canManageDocument(access, horse) &&
+        canAddDocument(access, horse) &&
         (await hasPersonalPro(ctx, access.userId)),
       documents: await enrichDocuments(ctx, documents, access.userId),
     }
@@ -172,15 +206,27 @@ export const add = mutation({
     await assertHasPersonalPro(ctx, user._id)
     const access = await assertCanViewStable(ctx, args.stableId, user._id)
     const documentInput = validateDocumentInput(args)
-    const { horse } = await assertLinkedRowsBelongToStable(
+    const { horse, event } = await assertLinkedRowsBelongToStable(
       ctx,
       args.stableId,
       args.horseId,
       args.eventId,
     )
 
-    if (!canManageDocument(access, horse)) {
+    if (!canAddDocument(access, horse, event)) {
       throw new ConvexError('Not authorized to manage documents in this stable')
+    }
+    if (args.storageId) {
+      const metadata = await assertStorageObjectCanBeClaimed(ctx, args.storageId)
+      if (documentInput.size !== undefined && metadata.size !== documentInput.size) {
+        throw new ConvexError('Uploaded file size does not match')
+      }
+      if (
+        documentInput.contentType &&
+        metadata.contentType !== documentInput.contentType
+      ) {
+        throw new ConvexError('Uploaded file type does not match')
+      }
     }
 
     return await ctx.db.insert('stableDocuments', {
@@ -208,13 +254,18 @@ export const remove = mutation({
     if (!document) throw new ConvexError('Document not found')
 
     const access = await assertCanViewStable(ctx, document.stableId, user._id)
-    const horse = document.horseId ? await ctx.db.get(document.horseId) : null
+    const [horse, event] = await Promise.all([
+      document.horseId ? ctx.db.get(document.horseId) : Promise.resolve(null),
+      document.eventId ? ctx.db.get(document.eventId) : Promise.resolve(null),
+    ])
 
-    if (!canManageDocument(access, horse)) {
+    if (!canRemoveDocument(access, document, horse, event)) {
       throw new ConvexError('Not authorized to remove this document')
     }
 
     await ctx.db.delete(args.id)
-    if (document.storageId) await ctx.storage.delete(document.storageId)
+    if (document.storageId) {
+      await deleteStorageObjectIfUnreferenced(ctx, document.storageId)
+    }
   },
 })

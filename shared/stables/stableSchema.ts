@@ -70,5 +70,24 @@ export const stableInputSchema = z.object({
   openingHours: optionalText(stableLongTextSchema),
 })
 
+const stableOperationsShape = {
+  contactName: true,
+  contactPhone: true,
+  emergencyPhone: true,
+  openingHours: true,
+  yardRules: true,
+} as const
+
+export const stableOperationsFormSchema = stableFormSchema.pick(
+  stableOperationsShape,
+)
+
+export const stableOperationsInputSchema = stableInputSchema.pick(
+  stableOperationsShape,
+)
+
 export type StableFormSchema = z.infer<typeof stableFormSchema>
 export type StableInput = z.infer<typeof stableInputSchema>
+export type StableOperationsFormSchema = z.infer<
+  typeof stableOperationsFormSchema
+>

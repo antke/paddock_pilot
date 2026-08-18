@@ -5,6 +5,7 @@ import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
+import type { Id } from 'convex/_generated/dataModel'
 
 export const Route = createFileRoute(
   '/stables/_layout/$stableId/horses/$horseId',
@@ -22,6 +23,9 @@ function RouteComponent() {
   const { data: events } = useSuspenseQuery(
     convexQuery(api.events.listForHorse, { horseId }),
   )
+  const { data: permissions } = useSuspenseQuery(
+    convexQuery(api.horses.getPermissions, { id: horseId as Id<'horses'> }),
+  )
 
   if (!horse || horse.stableId !== stableId) {
     return <RouteEntityNotFoundAlert entity="horse" />
@@ -29,7 +33,12 @@ function RouteComponent() {
 
   return (
     <DashboardPage>
-      <HorseDetail stableId={stableId} horse={horse} events={events} />
+      <HorseDetail
+        stableId={stableId}
+        horse={horse}
+        events={events}
+        canManageHorse={permissions?.canManageHorse ?? false}
+      />
       <Outlet />
     </DashboardPage>
   )

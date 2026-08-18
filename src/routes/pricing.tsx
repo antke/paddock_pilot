@@ -1,8 +1,9 @@
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
+import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { Badge } from '#/components/ui/badge'
-import { ButtonLink } from '#/components/ui/button'
+import { ButtonAnchor, ButtonLink } from '#/components/ui/button'
 import { PricingTable } from '@clerk/tanstack-react-start'
 import { createFileRoute } from '@tanstack/react-router'
 import { Component } from 'react'
@@ -12,6 +13,12 @@ const shouldRenderClerkPricing =
   import.meta.env.VITE_CLERK_BILLING_ENABLED === 'true'
 
 export const Route = createFileRoute('/pricing')({
+  validateSearch: (search: Record<string, unknown>): { returnTo?: string } => ({
+    returnTo:
+      typeof search.returnTo === 'string' && search.returnTo.startsWith('/')
+        ? search.returnTo
+        : undefined,
+  }),
   component: PricingPage,
 })
 
@@ -48,6 +55,8 @@ class PricingTableBoundary extends Component<
 }
 
 function PricingPage() {
+  const { returnTo } = Route.useSearch()
+
   return (
     <DashboardPage width="narrow">
       <DashboardPageHeader
@@ -63,6 +72,13 @@ function PricingPage() {
         </PricingTableBoundary>
       ) : (
         <PricingFallback />
+      )}
+      {returnTo && (
+        <DashboardActions align="center">
+          <ButtonAnchor href={returnTo} variant="outline">
+            Return to invitation
+          </ButtonAnchor>
+        </DashboardActions>
       )}
     </DashboardPage>
   )

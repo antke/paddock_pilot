@@ -22,6 +22,9 @@ import {
   CreditCardIcon,
   GearIcon,
   HouseIcon,
+  ListChecksIcon,
+  UserCircleIcon,
+  UsersThreeIcon,
 } from '@phosphor-icons/react'
 import type { Id } from 'convex/_generated/dataModel'
 import { api } from 'convex/_generated/api'
@@ -61,6 +64,11 @@ function SignedInUserControls() {
 
       <UserButton>
         <UserButton.MenuItems>
+          <UserButton.Action
+            label="Your profile"
+            labelIcon={<UserCircleIcon />}
+            onClick={() => navigate({ to: '/profile' })}
+          />
           <UserButton.Action
             label="Manage stables"
             labelIcon={<BuildingsIcon />}
@@ -146,6 +154,28 @@ function StableSwitcher() {
             >
               <HouseIcon aria-hidden="true" />
               Stable overview
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() =>
+                navigate({
+                  to: '/stables/$stableId/members',
+                  params: { stableId: activeStableId },
+                })
+              }
+            >
+              <UsersThreeIcon aria-hidden="true" />
+              Stable people
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() =>
+                navigate({
+                  to: '/stables/$stableId/welcome',
+                  params: { stableId: activeStableId },
+                })
+              }
+            >
+              <ListChecksIcon aria-hidden="true" />
+              Getting started
             </DropdownMenuItem>
             {activeStable?.ownerId === currentUser?._id && (
               <DropdownMenuItem

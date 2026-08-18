@@ -3,6 +3,7 @@ import { stableProviderInputSchema } from '../shared/stables/stableProviderSchem
 import type { Doc } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import {
+  assertCanManageProviders,
   assertCanViewStable,
   getCurrentUser,
 } from './libs/stablePermissions'
@@ -35,21 +36,10 @@ const validateProviderInput = (args: {
   return result.data
 }
 
-const assertCanManageProviders = async (
-  ctx: Parameters<typeof assertCanViewStable>[0],
-  stableId: Doc<'stables'>['_id'],
-  userId: Doc<'users'>['_id'],
+const sortProviders = (
+  a: Doc<'stableProviders'>,
+  b: Doc<'stableProviders'>,
 ) => {
-  const access = await assertCanViewStable(ctx, stableId, userId)
-
-  if (access.role === 'guest') {
-    throw new ConvexError('Not authorized to manage stable providers')
-  }
-
-  return access
-}
-
-const sortProviders = (a: Doc<'stableProviders'>, b: Doc<'stableProviders'>) => {
   const typeSort = a.type.localeCompare(b.type)
 
   if (typeSort !== 0) return typeSort
@@ -67,7 +57,7 @@ export const listForStable = query({
       .collect()
 
     return {
-      canManage: access.role !== 'guest',
+      canManage: access.capabilities.canManageProviders,
       providers: providers.sort(sortProviders),
     }
   },

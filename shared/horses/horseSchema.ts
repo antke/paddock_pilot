@@ -64,7 +64,7 @@ export const horsePhoneSchema = z
 export const horseDateOfBirthSchema = z
   .string()
   .trim()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a valid date.')
+  .regex(/^\d{4}(?:-\d{2}(?:-\d{2})?)?$/, 'Use a valid birth date.')
 
 export const horseFormSchema = z.object({
   name: horseNameSchema,

@@ -10,7 +10,7 @@ type StableBadgeProps = Omit<ComponentProps<typeof Badge>, 'children' | 'size'>
 export const stableMemberRoleLabels = {
   owner: 'Owner',
   member: 'Member',
-  guest: 'Guest',
+  guest: 'Guest (legacy)',
 } satisfies Record<Doc<'stableMembers'>['role'], string>
 
 const stableMemberRoleVariant = {
@@ -62,6 +62,19 @@ export function StableNameBadge({
   return (
     <Badge variant="neutral" {...props}>
       {name}
+    </Badge>
+  )
+}
+
+export function StableSetupStatusBadge({
+  complete,
+  ...props
+}: StableBadgeProps & {
+  complete: boolean
+}) {
+  return (
+    <Badge variant={complete ? 'success' : 'neutral'} {...props}>
+      {complete ? 'Complete' : 'To do'}
     </Badge>
   )
 }

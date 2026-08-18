@@ -1,0 +1,385 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-18T15:39:30Z",
+  "title": "Design System: Paddock Pilot",
+  "extensions": {
+    "colorMeta": {
+      "stable-green": {
+        "role": "primary",
+        "displayName": "Stable Green",
+        "canonical": "#203f2d",
+        "tonalRamp": ["oklch(15% 0.049 157.0)", "oklch(27% 0.049 157.0)", "oklch(39% 0.049 157.0)", "oklch(51% 0.049 157.0)", "oklch(63% 0.049 157.0)", "oklch(75% 0.049 157.0)", "oklch(87% 0.049 157.0)", "oklch(95% 0.049 157.0)"]
+      },
+      "primary-ink": {
+        "role": "neutral",
+        "displayName": "Primary Ink",
+        "canonical": "#fff8e8",
+        "tonalRamp": ["oklch(15% 0.022 87.1)", "oklch(27% 0.022 87.1)", "oklch(39% 0.022 87.1)", "oklch(51% 0.022 87.1)", "oklch(63% 0.022 87.1)", "oklch(75% 0.022 87.1)", "oklch(87% 0.022 87.1)", "oklch(95% 0.022 87.1)"]
+      },
+      "oat-canvas": {
+        "role": "neutral",
+        "displayName": "Oat Canvas",
+        "canonical": "#e4d5be",
+        "tonalRamp": ["oklch(15% 0.035 78.7)", "oklch(27% 0.035 78.7)", "oklch(39% 0.035 78.7)", "oklch(51% 0.035 78.7)", "oklch(63% 0.035 78.7)", "oklch(75% 0.035 78.7)", "oklch(87% 0.035 78.7)", "oklch(95% 0.035 78.7)"]
+      },
+      "near-black-ink": {
+        "role": "neutral",
+        "displayName": "Near-Black Ink",
+        "canonical": "#15110d",
+        "tonalRamp": ["oklch(15% 0.010 67.1)", "oklch(27% 0.010 67.1)", "oklch(39% 0.010 67.1)", "oklch(51% 0.010 67.1)", "oklch(63% 0.010 67.1)", "oklch(75% 0.010 67.1)", "oklch(87% 0.010 67.1)", "oklch(95% 0.010 67.1)"]
+      },
+      "ledger-paper": {
+        "role": "neutral",
+        "displayName": "Ledger Paper",
+        "canonical": "#fff9ed",
+        "tonalRamp": ["oklch(15% 0.017 84.6)", "oklch(27% 0.017 84.6)", "oklch(39% 0.017 84.6)", "oklch(51% 0.017 84.6)", "oklch(63% 0.017 84.6)", "oklch(75% 0.017 84.6)", "oklch(87% 0.017 84.6)", "oklch(95% 0.017 84.6)"]
+      },
+      "ledger-paper-ink": {
+        "role": "neutral",
+        "displayName": "Ledger Paper Ink",
+        "canonical": "#15110d",
+        "tonalRamp": ["oklch(15% 0.010 67.1)", "oklch(27% 0.010 67.1)", "oklch(39% 0.010 67.1)", "oklch(51% 0.010 67.1)", "oklch(63% 0.010 67.1)", "oklch(75% 0.010 67.1)", "oklch(87% 0.010 67.1)", "oklch(95% 0.010 67.1)"]
+      },
+      "saddle-leather": {
+        "role": "secondary",
+        "displayName": "Saddle Leather",
+        "canonical": "#ead2ad",
+        "tonalRamp": ["oklch(15% 0.056 78.6)", "oklch(27% 0.056 78.6)", "oklch(39% 0.056 78.6)", "oklch(51% 0.056 78.6)", "oklch(63% 0.056 78.6)", "oklch(75% 0.056 78.6)", "oklch(87% 0.056 78.6)", "oklch(95% 0.056 78.6)"]
+      },
+      "muted-paper": {
+        "role": "neutral",
+        "displayName": "Muted Paper",
+        "canonical": "#efe1c8",
+        "tonalRamp": ["oklch(15% 0.037 82.2)", "oklch(27% 0.037 82.2)", "oklch(39% 0.037 82.2)", "oklch(51% 0.037 82.2)", "oklch(63% 0.037 82.2)", "oklch(75% 0.037 82.2)", "oklch(87% 0.037 82.2)", "oklch(95% 0.037 82.2)"]
+      },
+      "weathered-ink": {
+        "role": "neutral",
+        "displayName": "Weathered Ink",
+        "canonical": "#5b5145",
+        "tonalRamp": ["oklch(15% 0.023 72.2)", "oklch(27% 0.023 72.2)", "oklch(39% 0.023 72.2)", "oklch(51% 0.023 72.2)", "oklch(63% 0.023 72.2)", "oklch(75% 0.023 72.2)", "oklch(87% 0.023 72.2)", "oklch(95% 0.023 72.2)"]
+      },
+      "sage-wash": {
+        "role": "secondary",
+        "displayName": "Sage Wash",
+        "canonical": "#d7ddc8",
+        "tonalRamp": ["oklch(15% 0.029 120.0)", "oklch(27% 0.029 120.0)", "oklch(39% 0.029 120.0)", "oklch(51% 0.029 120.0)", "oklch(63% 0.029 120.0)", "oklch(75% 0.029 120.0)", "oklch(87% 0.029 120.0)", "oklch(95% 0.029 120.0)"]
+      },
+      "red-clay": {
+        "role": "tertiary",
+        "displayName": "Red Clay",
+        "canonical": "#8e392f",
+        "tonalRamp": ["oklch(15% 0.118 29.1)", "oklch(27% 0.118 29.1)", "oklch(39% 0.118 29.1)", "oklch(51% 0.118 29.1)", "oklch(63% 0.118 29.1)", "oklch(75% 0.118 29.1)", "oklch(87% 0.118 29.1)", "oklch(95% 0.118 29.1)"]
+      },
+      "red-clay-ink": {
+        "role": "neutral",
+        "displayName": "Red Clay Ink",
+        "canonical": "#fff8e8",
+        "tonalRamp": ["oklch(15% 0.022 87.1)", "oklch(27% 0.022 87.1)", "oklch(39% 0.022 87.1)", "oklch(51% 0.022 87.1)", "oklch(63% 0.022 87.1)", "oklch(75% 0.022 87.1)", "oklch(87% 0.022 87.1)", "oklch(95% 0.022 87.1)"]
+      },
+      "wood-rail": {
+        "role": "neutral",
+        "displayName": "Wood Rail",
+        "canonical": "#b69d75",
+        "tonalRamp": ["oklch(15% 0.062 79.2)", "oklch(27% 0.062 79.2)", "oklch(39% 0.062 79.2)", "oklch(51% 0.062 79.2)", "oklch(63% 0.062 79.2)", "oklch(75% 0.062 79.2)", "oklch(87% 0.062 79.2)", "oklch(95% 0.062 79.2)"]
+      },
+      "dark-leather-input": {
+        "role": "neutral",
+        "displayName": "Dark Leather Input",
+        "canonical": "#876f4d",
+        "tonalRamp": ["oklch(15% 0.057 75.8)", "oklch(27% 0.057 75.8)", "oklch(39% 0.057 75.8)", "oklch(51% 0.057 75.8)", "oklch(63% 0.057 75.8)", "oklch(75% 0.057 75.8)", "oklch(87% 0.057 75.8)", "oklch(95% 0.057 75.8)"]
+      },
+      "field-surface": {
+        "role": "neutral",
+        "displayName": "Field Surface",
+        "canonical": "#f1dfc3",
+        "tonalRamp": ["oklch(15% 0.042 79.0)", "oklch(27% 0.042 79.0)", "oklch(39% 0.042 79.0)", "oklch(51% 0.042 79.0)", "oklch(63% 0.042 79.0)", "oklch(75% 0.042 79.0)", "oklch(87% 0.042 79.0)", "oklch(95% 0.042 79.0)"]
+      },
+      "pressed-oat": {
+        "role": "neutral",
+        "displayName": "Pressed Oat",
+        "canonical": "#e0cfb5",
+        "tonalRamp": ["oklch(15% 0.040 78.5)", "oklch(27% 0.040 78.5)", "oklch(39% 0.040 78.5)", "oklch(51% 0.040 78.5)", "oklch(63% 0.040 78.5)", "oklch(75% 0.040 78.5)", "oklch(87% 0.040 78.5)", "oklch(95% 0.040 78.5)"]
+      },
+      "raised-paper": {
+        "role": "neutral",
+        "displayName": "Raised Paper",
+        "canonical": "#f6ead4",
+        "tonalRamp": ["oklch(15% 0.032 82.8)", "oklch(27% 0.032 82.8)", "oklch(39% 0.032 82.8)", "oklch(51% 0.032 82.8)", "oklch(63% 0.032 82.8)", "oklch(75% 0.032 82.8)", "oklch(87% 0.032 82.8)", "oklch(95% 0.032 82.8)"]
+      },
+      "olive-signal": {
+        "role": "secondary",
+        "displayName": "Olive Signal",
+        "canonical": "#68713d",
+        "tonalRamp": ["oklch(15% 0.075 117.1)", "oklch(27% 0.075 117.1)", "oklch(39% 0.075 117.1)", "oklch(51% 0.075 117.1)", "oklch(63% 0.075 117.1)", "oklch(75% 0.075 117.1)", "oklch(87% 0.075 117.1)", "oklch(95% 0.075 117.1)"]
+      },
+      "brass-signal": {
+        "role": "tertiary",
+        "displayName": "Brass Signal",
+        "canonical": "#ad792c",
+        "tonalRamp": ["oklch(15% 0.112 73.1)", "oklch(27% 0.112 73.1)", "oklch(39% 0.112 73.1)", "oklch(51% 0.112 73.1)", "oklch(63% 0.112 73.1)", "oklch(75% 0.112 73.1)", "oklch(87% 0.112 73.1)", "oklch(95% 0.112 73.1)"]
+      },
+      "saddle-brown-signal": {
+        "role": "tertiary",
+        "displayName": "Saddle Brown Signal",
+        "canonical": "#835225",
+        "tonalRamp": ["oklch(15% 0.089 60.6)", "oklch(27% 0.089 60.6)", "oklch(39% 0.089 60.6)", "oklch(51% 0.089 60.6)", "oklch(63% 0.089 60.6)", "oklch(75% 0.089 60.6)", "oklch(87% 0.089 60.6)", "oklch(95% 0.089 60.6)"]
+      },
+      "sidebar-paper": {
+        "role": "neutral",
+        "displayName": "Sidebar Paper",
+        "canonical": "#f3e3ca",
+        "tonalRamp": ["oklch(15% 0.037 79.1)", "oklch(27% 0.037 79.1)", "oklch(39% 0.037 79.1)", "oklch(51% 0.037 79.1)", "oklch(63% 0.037 79.1)", "oklch(75% 0.037 79.1)", "oklch(87% 0.037 79.1)", "oklch(95% 0.037 79.1)"]
+      },
+      "night-oak": {
+        "role": "neutral",
+        "displayName": "Night Oak",
+        "canonical": "#30271f",
+        "tonalRamp": ["oklch(15% 0.020 63.5)", "oklch(27% 0.020 63.5)", "oklch(39% 0.020 63.5)", "oklch(51% 0.020 63.5)", "oklch(63% 0.020 63.5)", "oklch(75% 0.020 63.5)", "oklch(87% 0.020 63.5)", "oklch(95% 0.020 63.5)"]
+      },
+      "warm-night-ink": {
+        "role": "neutral",
+        "displayName": "Warm Night Ink",
+        "canonical": "#f8eddb",
+        "tonalRamp": ["oklch(15% 0.027 80.3)", "oklch(27% 0.027 80.3)", "oklch(39% 0.027 80.3)", "oklch(51% 0.027 80.3)", "oklch(63% 0.027 80.3)", "oklch(75% 0.027 80.3)", "oklch(87% 0.027 80.3)", "oklch(95% 0.027 80.3)"]
+      },
+      "night-card": {
+        "role": "neutral",
+        "displayName": "Night Card",
+        "canonical": "#3a2f24",
+        "tonalRamp": ["oklch(15% 0.025 66.7)", "oklch(27% 0.025 66.7)", "oklch(39% 0.025 66.7)", "oklch(51% 0.025 66.7)", "oklch(63% 0.025 66.7)", "oklch(75% 0.025 66.7)", "oklch(87% 0.025 66.7)", "oklch(95% 0.025 66.7)"]
+      },
+      "night-card-ink": {
+        "role": "neutral",
+        "displayName": "Night Card Ink",
+        "canonical": "#fff6e6",
+        "tonalRamp": ["oklch(15% 0.023 82.1)", "oklch(27% 0.023 82.1)", "oklch(39% 0.023 82.1)", "oklch(51% 0.023 82.1)", "oklch(63% 0.023 82.1)", "oklch(75% 0.023 82.1)", "oklch(87% 0.023 82.1)", "oklch(95% 0.023 82.1)"]
+      },
+      "green-ink": {
+        "role": "neutral",
+        "displayName": "Green Ink",
+        "canonical": "#18251b",
+        "tonalRamp": ["oklch(15% 0.026 151.3)", "oklch(27% 0.026 151.3)", "oklch(39% 0.026 151.3)", "oklch(51% 0.026 151.3)", "oklch(63% 0.026 151.3)", "oklch(75% 0.026 151.3)", "oklch(87% 0.026 151.3)", "oklch(95% 0.026 151.3)"]
+      },
+      "night-saddle": {
+        "role": "secondary",
+        "displayName": "Night Saddle",
+        "canonical": "#5b432e",
+        "tonalRamp": ["oklch(15% 0.047 62.1)", "oklch(27% 0.047 62.1)", "oklch(39% 0.047 62.1)", "oklch(51% 0.047 62.1)", "oklch(63% 0.047 62.1)", "oklch(75% 0.047 62.1)", "oklch(87% 0.047 62.1)", "oklch(95% 0.047 62.1)"]
+      },
+      "night-muted": {
+        "role": "neutral",
+        "displayName": "Night Muted",
+        "canonical": "#443627",
+        "tonalRamp": ["oklch(15% 0.032 68.4)", "oklch(27% 0.032 68.4)", "oklch(39% 0.032 68.4)", "oklch(51% 0.032 68.4)", "oklch(63% 0.032 68.4)", "oklch(75% 0.032 68.4)", "oklch(87% 0.032 68.4)", "oklch(95% 0.032 68.4)"]
+      },
+      "night-muted-ink": {
+        "role": "neutral",
+        "displayName": "Night Muted Ink",
+        "canonical": "#d1bd9c",
+        "tonalRamp": ["oklch(15% 0.050 80.2)", "oklch(27% 0.050 80.2)", "oklch(39% 0.050 80.2)", "oklch(51% 0.050 80.2)", "oklch(63% 0.050 80.2)", "oklch(75% 0.050 80.2)", "oklch(87% 0.050 80.2)", "oklch(95% 0.050 80.2)"]
+      },
+      "night-sage": {
+        "role": "secondary",
+        "displayName": "Night Sage",
+        "canonical": "#4c5130",
+        "tonalRamp": ["oklch(15% 0.051 115.7)", "oklch(27% 0.051 115.7)", "oklch(39% 0.051 115.7)", "oklch(51% 0.051 115.7)", "oklch(63% 0.051 115.7)", "oklch(75% 0.051 115.7)", "oklch(87% 0.051 115.7)", "oklch(95% 0.051 115.7)"]
+      },
+      "pale-clay": {
+        "role": "tertiary",
+        "displayName": "Pale Clay",
+        "canonical": "#edc9be",
+        "tonalRamp": ["oklch(15% 0.044 37.7)", "oklch(27% 0.044 37.7)", "oklch(39% 0.044 37.7)", "oklch(51% 0.044 37.7)", "oklch(63% 0.044 37.7)", "oklch(75% 0.044 37.7)", "oklch(87% 0.044 37.7)", "oklch(95% 0.044 37.7)"]
+      },
+      "deep-clay-ink": {
+        "role": "neutral",
+        "displayName": "Deep Clay Ink",
+        "canonical": "#351713",
+        "tonalRamp": ["oklch(15% 0.049 28.9)", "oklch(27% 0.049 28.9)", "oklch(39% 0.049 28.9)", "oklch(51% 0.049 28.9)", "oklch(63% 0.049 28.9)", "oklch(75% 0.049 28.9)", "oklch(87% 0.049 28.9)", "oklch(95% 0.049 28.9)"]
+      },
+      "light-olive": {
+        "role": "secondary",
+        "displayName": "Light Olive",
+        "canonical": "#aeb47a",
+        "tonalRamp": ["oklch(15% 0.078 113.1)", "oklch(27% 0.078 113.1)", "oklch(39% 0.078 113.1)", "oklch(51% 0.078 113.1)", "oklch(63% 0.078 113.1)", "oklch(75% 0.078 113.1)", "oklch(87% 0.078 113.1)", "oklch(95% 0.078 113.1)"]
+      },
+      "bright-brass": {
+        "role": "tertiary",
+        "displayName": "Bright Brass",
+        "canonical": "#c89642",
+        "tonalRamp": ["oklch(15% 0.117 77.7)", "oklch(27% 0.117 77.7)", "oklch(39% 0.117 77.7)", "oklch(51% 0.117 77.7)", "oklch(63% 0.117 77.7)", "oklch(75% 0.117 77.7)", "oklch(87% 0.117 77.7)", "oklch(95% 0.117 77.7)"]
+      },
+      "warm-copper": {
+        "role": "tertiary",
+        "displayName": "Warm Copper",
+        "canonical": "#d39a61",
+        "tonalRamp": ["oklch(15% 0.101 65.1)", "oklch(27% 0.101 65.1)", "oklch(39% 0.101 65.1)", "oklch(51% 0.101 65.1)", "oklch(63% 0.101 65.1)", "oklch(75% 0.101 65.1)", "oklch(87% 0.101 65.1)", "oklch(95% 0.101 65.1)"]
+      },
+      "night-sidebar": {
+        "role": "neutral",
+        "displayName": "Night Sidebar",
+        "canonical": "#2b241d",
+        "tonalRamp": ["oklch(15% 0.016 67.0)", "oklch(27% 0.016 67.0)", "oklch(39% 0.016 67.0)", "oklch(51% 0.016 67.0)", "oklch(63% 0.016 67.0)", "oklch(75% 0.016 67.0)", "oklch(87% 0.016 67.0)", "oklch(95% 0.016 67.0)"]
+      },
+      "night-sidebar-rail": {
+        "role": "neutral",
+        "displayName": "Night Sidebar Rail",
+        "canonical": "#6f573b",
+        "tonalRamp": ["oklch(15% 0.052 70.3)", "oklch(27% 0.052 70.3)", "oklch(39% 0.052 70.3)", "oklch(51% 0.052 70.3)", "oklch(63% 0.052 70.3)", "oklch(75% 0.052 70.3)", "oklch(87% 0.052 70.3)", "oklch(95% 0.052 70.3)"]
+      },
+      "night-surface": {
+        "role": "neutral",
+        "displayName": "Night Surface",
+        "canonical": "#362b22",
+        "tonalRamp": ["oklch(15% 0.023 61.1)", "oklch(27% 0.023 61.1)", "oklch(39% 0.023 61.1)", "oklch(51% 0.023 61.1)", "oklch(63% 0.023 61.1)", "oklch(75% 0.023 61.1)", "oklch(87% 0.023 61.1)", "oklch(95% 0.023 61.1)"]
+      },
+      "night-raised-paper": {
+        "role": "neutral",
+        "displayName": "Night Raised Paper",
+        "canonical": "#47382a",
+        "tonalRamp": ["oklch(15% 0.031 64.6)", "oklch(27% 0.031 64.6)", "oklch(39% 0.031 64.6)", "oklch(51% 0.031 64.6)", "oklch(63% 0.031 64.6)", "oklch(75% 0.031 64.6)", "oklch(87% 0.031 64.6)", "oklch(95% 0.031 64.6)"]
+      }
+    },
+    "typographyMeta": {
+      "display": {"displayName": "Hero Display", "purpose": "Uppercase hero statements only."},
+      "headline": {"displayName": "Section Headline", "purpose": "Major route and section hierarchy."},
+      "title": {"displayName": "Panel Title", "purpose": "Titled cards and important panels."},
+      "body": {"displayName": "Body", "purpose": "Everyday record copy and explanations."},
+      "control": {"displayName": "Control", "purpose": "Inputs and compact interface controls."},
+      "action": {"displayName": "Action", "purpose": "Buttons and strong interactive labels."},
+      "label": {"displayName": "Label", "purpose": "Uppercase metadata, eyebrows, and compact labels."},
+      "wordmark": {"displayName": "Wordmark", "purpose": "Paddock Pilot brand text only."},
+      "mono": {"displayName": "Technical Reference", "purpose": "Dates, identifiers, tokens, and technical values."}
+    },
+    "shadows": [
+      {"name": "control", "value": "none", "purpose": "Buttons, fields, badges, tabs, menus, and tooltips remain flat."},
+      {"name": "surface", "value": "none", "purpose": "Rows and inset working surfaces use tone and borders for depth."},
+      {"name": "panel", "value": "none", "purpose": "Cards, heroes, and section containers remain flat at rest."}
+    ],
+    "motion": [
+      {"name": "state-fast", "value": "100ms ease", "purpose": "Row, menu, dialog, and overlay state changes."},
+      {"name": "control", "value": "150ms ease", "purpose": "Picker, select, and compact control feedback."},
+      {"name": "disclosure", "value": "200ms ease-out", "purpose": "Height disclosure and indicator rotation."},
+      {"name": "landing-enter", "value": "300ms ease", "purpose": "Short fade and translate entrance on public-page groups."},
+      {"name": "navigation-spatial", "value": "350ms cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Navigation viewport size and position transitions."},
+      {"name": "media-enter", "value": "500ms ease", "purpose": "Reserved for the contextual landing media reveal."},
+      {"name": "reduced-motion", "value": "none", "purpose": "Disable nonessential transforms and transitions when reduced motion is requested."}
+    ],
+    "breakpoints": [
+      {"name": "sm", "value": "640px"},
+      {"name": "md", "value": "768px"},
+      {"name": "lg", "value": "1024px"},
+      {"name": "xl", "value": "1280px"},
+      {"name": "2xl", "value": "1536px"}
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The canonical high-emphasis action.",
+      "html": "<button class=\"ds-btn-primary\">Save changes</button>",
+      "css": ".ds-btn-primary { display:inline-flex; align-items:center; justify-content:center; height:40px; padding:0 16px; border:1px solid var(--primary, #203f2d); border-radius:4px; background:var(--primary, #203f2d); color:var(--primary-foreground, #fff8e8); font:700 14px/20px Manrope, ui-sans-serif, system-ui, sans-serif; transition:background-color 100ms ease, border-color 100ms ease; } .ds-btn-primary:hover { background:color-mix(in oklab, var(--primary, #203f2d) 90%, transparent); } .ds-btn-primary:focus-visible { outline:2px solid color-mix(in oklab, var(--ring, #203f2d) 25%, transparent); outline-offset:2px; } .ds-btn-primary:active { background:color-mix(in oklab, var(--primary, #203f2d) 84%, black); }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "A visible supporting action on a warm working surface.",
+      "html": "<button class=\"ds-btn-outline\">View calendar</button>",
+      "css": ".ds-btn-outline { display:inline-flex; align-items:center; justify-content:center; height:40px; padding:0 16px; border:1px solid var(--border, #b69d75); border-radius:4px; background:var(--surface-elevated, #f6ead4); color:var(--foreground, #15110d); font:700 14px/20px Manrope, ui-sans-serif, system-ui, sans-serif; transition:background-color 100ms ease, border-color 100ms ease; } .ds-btn-outline:hover { border-color:var(--primary, #203f2d); background:color-mix(in oklab, var(--primary, #203f2d) 8%, var(--surface-elevated, #f6ead4)); } .ds-btn-outline:focus-visible { outline:2px solid color-mix(in oklab, var(--ring, #203f2d) 25%, transparent); outline-offset:2px; } .ds-btn-outline:active { background:color-mix(in oklab, var(--primary, #203f2d) 12%, var(--surface-elevated, #f6ead4)); }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "A warm, supporting action with more presence than a ghost control.",
+      "html": "<button class=\"ds-btn-secondary\">Add note</button>",
+      "css": ".ds-btn-secondary { display:inline-flex; align-items:center; justify-content:center; height:40px; padding:0 16px; border:1px solid color-mix(in oklab, var(--border, #b69d75) 86%, transparent); border-radius:4px; background:var(--secondary, #ead2ad); color:var(--secondary-foreground, #15110d); font:700 14px/20px Manrope, ui-sans-serif, system-ui, sans-serif; transition:border-color 100ms ease, filter 100ms ease; } .ds-btn-secondary:hover { border-color:var(--border, #b69d75); filter:saturate(1.04); } .ds-btn-secondary:focus-visible { outline:2px solid color-mix(in oklab, var(--ring, #203f2d) 25%, transparent); outline-offset:2px; } .ds-btn-secondary:active { filter:brightness(.96); }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "The canonical bordered working field.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Provider</span><input class=\"ds-input\" placeholder=\"Search local services\"></label>",
+      "css": ".ds-field { display:grid; gap:8px; color:var(--foreground, #15110d); font-family:Manrope, ui-sans-serif, system-ui, sans-serif; } .ds-field-label { font-size:12px; line-height:16px; font-weight:600; } .ds-input { box-sizing:border-box; width:100%; height:36px; padding:6px 12px; border:1px solid var(--border, #b69d75); border-radius:4px; background:var(--surface-elevated, #f6ead4); color:var(--foreground, #15110d); font:500 14px/20px Manrope, ui-sans-serif, system-ui, sans-serif; transition:border-color 100ms ease, outline-color 100ms ease; } .ds-input::placeholder { color:color-mix(in oklab, var(--muted-foreground, #5b5145) 80%, transparent); } .ds-input:hover { border-color:color-mix(in oklab, var(--primary, #203f2d) 30%, var(--border, #b69d75)); } .ds-input:focus-visible { border-color:var(--ring, #203f2d); outline:2px solid color-mix(in oklab, var(--ring, #203f2d) 25%, transparent); outline-offset:1px; }"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "refersTo": "badge-primary",
+      "description": "A compact semantic status label; variants swap the semantic token, not the geometry.",
+      "html": "<span class=\"ds-badge-success\">Completed</span>",
+      "css": ".ds-badge-success { display:inline-flex; min-height:24px; align-items:center; justify-content:center; padding:2px 10px; border:1px solid color-mix(in oklab, var(--primary, #203f2d) 30%, transparent); border-radius:4px; background:color-mix(in oklab, var(--primary, #203f2d) 10%, transparent); color:var(--primary, #203f2d); font:600 12px/16px Manrope, ui-sans-serif, system-ui, sans-serif; white-space:nowrap; transition:background-color 100ms ease; } .ds-badge-success:hover { background:color-mix(in oklab, var(--primary, #203f2d) 15%, transparent); } .ds-badge-success:focus-visible { outline:3px solid color-mix(in oklab, var(--ring, #203f2d) 30%, transparent); outline-offset:1px; }"
+    },
+    {
+      "name": "Record Card",
+      "kind": "card",
+      "refersTo": "record-row",
+      "description": "The signature scannable row with an optional semantic noticeboard rail.",
+      "html": "<article class=\"ds-record-card\"><span class=\"ds-record-label\">Due today</span><h3 class=\"ds-record-title\">Farrier reset · Juniper</h3><p class=\"ds-record-copy\">Confirm the arrival time and keep the provider details with the visit.</p></article>",
+      "css": ".ds-record-card { display:grid; gap:8px; padding:20px; border:1px solid color-mix(in oklab, var(--border, #b69d75) 86%, transparent); border-left:4px solid var(--chart-3, #ad792c); border-radius:6px; background:var(--surface-elevated, #f6ead4); color:var(--card-foreground, #15110d); font-family:Manrope, ui-sans-serif, system-ui, sans-serif; transition:background-color 100ms ease, border-color 100ms ease; } .ds-record-card:hover { border-color:color-mix(in oklab, var(--primary, #203f2d) 30%, var(--border, #b69d75)); background:var(--card, #fff9ed); } .ds-record-card:focus-within { outline:2px solid color-mix(in oklab, var(--ring, #203f2d) 25%, transparent); outline-offset:1px; } .ds-record-label { color:var(--muted-foreground, #5b5145); font-size:11px; line-height:16px; font-weight:600; text-transform:uppercase; } .ds-record-title { margin:0; font-size:16px; line-height:24px; font-weight:500; } .ds-record-copy { margin:0; color:var(--muted-foreground, #5b5145); font-size:14px; line-height:24px; }"
+    },
+    {
+      "name": "Section Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The canonical framed panel for a major operational group.",
+      "html": "<section class=\"ds-section-card\"><h2 class=\"ds-section-title\">Care overview</h2><p class=\"ds-section-description\">Records that need attention across the yard.</p><div class=\"ds-section-content\">Three reminders due this week</div></section>",
+      "css": ".ds-section-card { display:grid; gap:24px; padding:24px; border:1px solid color-mix(in oklab, var(--border, #b69d75) 86%, transparent); border-radius:10px; background:var(--card, #fff9ed); color:var(--card-foreground, #15110d); } .ds-section-title { margin:0; color:var(--foreground, #15110d); font:900 30px/.92 'Arial Black', 'Avenir Next Condensed', 'Helvetica Neue Condensed', Impact, sans-serif; text-transform:uppercase; letter-spacing:normal; } .ds-section-description { margin:6px 0 0; max-width:48rem; color:var(--muted-foreground, #5b5145); font:600 14px/24px Manrope, ui-sans-serif, system-ui, sans-serif; } .ds-section-content { padding:16px; border:1px solid color-mix(in oklab, var(--border, #b69d75) 86%, transparent); border-radius:6px; background:var(--surface-elevated, #f6ead4); font:400 14px/24px Manrope, ui-sans-serif, system-ui, sans-serif; }"
+    },
+    {
+      "name": "Primary Navigation",
+      "kind": "nav",
+      "description": "A sticky field-surface rail with the friendly serif wordmark and compact active states.",
+      "html": "<nav class=\"ds-nav\"><span class=\"ds-wordmark\">Paddock Pilot</span><div class=\"ds-nav-links\"><a class=\"ds-nav-link ds-nav-link-active\" href=\"#\">Care</a><a class=\"ds-nav-link\" href=\"#\">Calendar</a><a class=\"ds-nav-link\" href=\"#\">Community</a></div></nav>",
+      "css": ".ds-nav { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding:16px; border-bottom:1px solid color-mix(in oklab, var(--border, #b69d75) 86%, transparent); background:color-mix(in oklab, var(--surface, #f1dfc3) 95%, transparent); color:var(--foreground, #15110d); } .ds-wordmark { font:700 24px/1 Georgia, 'Times New Roman', serif; } .ds-nav-links { display:flex; align-items:center; gap:4px; } .ds-nav-link { padding:8px 12px; border-radius:4px; color:inherit; font:700 12px/16px Manrope, ui-sans-serif, system-ui, sans-serif; text-decoration:none; transition:background-color 100ms ease; } .ds-nav-link:hover { background:color-mix(in oklab, var(--primary, #203f2d) 8%, transparent); } .ds-nav-link:focus-visible { outline:2px solid color-mix(in oklab, var(--ring, #203f2d) 25%, transparent); outline-offset:1px; } .ds-nav-link-active { background:color-mix(in oklab, var(--primary, #203f2d) 10%, transparent); }"
+    },
+    {
+      "name": "Section Tabs",
+      "kind": "nav",
+      "refersTo": "tab-active",
+      "description": "A warm segmented group for major working views.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\"><button class=\"ds-tab ds-tab-active\" role=\"tab\" aria-selected=\"true\">Care</button><button class=\"ds-tab\" role=\"tab\">Timeline</button><button class=\"ds-tab\" role=\"tab\">Providers</button></div>",
+      "css": ".ds-tabs { display:inline-flex; flex-wrap:wrap; gap:4px; padding:4px; border:1px solid color-mix(in oklab, var(--border, #b69d75) 86%, transparent); border-radius:10px; background:var(--surface-muted, #e0cfb5); } .ds-tab { height:40px; padding:8px 14px; border:1px solid transparent; border-radius:4px; background:transparent; color:color-mix(in oklab, var(--foreground, #15110d) 65%, transparent); font:900 14px/14px 'Arial Black', 'Avenir Next Condensed', 'Helvetica Neue Condensed', Impact, sans-serif; text-transform:uppercase; transition:background-color 100ms ease, border-color 100ms ease; } .ds-tab:hover { color:var(--foreground, #15110d); } .ds-tab:focus-visible { outline:2px solid color-mix(in oklab, var(--ring, #203f2d) 25%, transparent); outline-offset:1px; } .ds-tab-active { border-color:var(--border, #b69d75); background:var(--surface-elevated, #f6ead4); color:var(--foreground, #15110d); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Tack Room Noticeboard",
+    "overview": "The system should feel like the friendly place in a small yard where the useful details live and the community stays in touch. It combines the approachable social character of a tack-room noticeboard with the order of a yard ledger and the practical confidence of a warm field office. Routine operational data is presented with enough visual character to invite attention, never at the expense of reading speed or clarity.\n\nThe interface is tactile, friendly, and workmanlike. Warm paper layers, clear rails, compact controls, condensed display headings, and contextual photography keep dense records from feeling dry. It remains contemporary and horse-world adjacent without drifting into rustic decoration, antique styling, or enterprise-dashboard sterility.",
+    "keyCharacteristics": [
+      "Warm, mode-aware paper and earth colors rather than clinical white and grey.",
+      "Dense information organized through strong type roles, borders, and tonal layers.",
+      "Friendly community character grounded by practical, accountable workflows.",
+      "Flat surfaces at rest, with depth created by contrast and structure rather than shadows.",
+      "Sparse photography and semantic accent rails used only when they add context or meaning."
+    ],
+    "rules": [
+      {"name": "The Warm Paper Rule", "body": "Build hierarchy with Oat Canvas, Field Surface, Ledger Paper, Pressed Oat, and Raised Paper; plain white and generic cool grey are not default surfaces.", "section": "colors"},
+      {"name": "The Working Green Rule", "body": "Stable Green signals action, selection, focus, or a deliberately branded region; it is not a filler color for arbitrary containers.", "section": "colors"},
+      {"name": "The Semantic Rail Rule", "body": "Use four-pixel left rails on repeated records to communicate primary, warning, danger, or muted meaning without flooding the whole card with color.", "section": "colors"},
+      {"name": "The Noticeboard Headline Rule", "body": "Use condensed black uppercase type for display hierarchy, not for paragraphs, form labels, or ordinary record titles.", "section": "typography"},
+      {"name": "The Natural Copy Rule", "body": "Product copy and data remain in natural case with neutral letter spacing; uppercase is a compact label or display treatment, never a substitute for hierarchy.", "section": "typography"},
+      {"name": "The Shared Rhythm Rule", "body": "Start with `16px`, `24px`, or `32px` gaps and `16px`, `20px`, or `24px` padding; introduce a new measurement only when the component has a real geometric constraint.", "section": "layout"},
+      {"name": "The Work Before Ornament Rule", "body": "Preserve scannable record order, labels, actions, and responsive collapse before adding editorial asymmetry or imagery.", "section": "layout"},
+      {"name": "The Flat-But-Layered Rule", "body": "Separate planes with color, borders, and structure; do not add a shadow to make a component feel finished.", "section": "elevation"},
+      {"name": "The Overlay Exception Rule", "body": "Transient surfaces may use backdrop blur, z-order, and `100ms`–`350ms` fade/scale motion, but they keep the same bordered paper construction.", "section": "elevation"},
+      {"name": "The Small-Corner Rule", "body": "Default to `4px` controls, `6px` rows, and `10px` panels; large soft cards and excessive pill geometry do not belong to the incumbent system.", "section": "shapes"}
+    ],
+    "dos": [
+      "Do use the shared semantic tokens and primitives so light and dark modes preserve the same hierarchy.",
+      "Do make routine events and records attractive through display hierarchy, warm surfaces, concise metadata, and meaningful semantic rails.",
+      "Do preserve dense, scannable information structure and responsive collapse before adding expression.",
+      "Do use contextual horse and yard photography sparingly where it helps users understand place, animal, or workflow.",
+      "Do keep interactions legible with visible hover, focus, selected, disabled, error, loading, and reduced-motion states."
+    ],
+    "donts": [
+      "Don't replace the warm paper system with plain white cards, cool-grey SaaS chrome, gradients used as decoration, or arbitrary new hues.",
+      "Don't add ambient card shadows, glassmorphism, oversized soft corners, or pills where a compact control or row belongs.",
+      "Don't turn horse-world character into antique styling, decorative tack motifs, or visual clutter that competes with the records.",
+      "Don't use condensed uppercase display type for paragraphs, field labels, ordinary record titles, or long navigation strings.",
+      "Don't fabricate local button, card, field, badge, tab, filter, or record-row recipes when a canonical primitive already owns the pattern."
+    ]
+  }
+}

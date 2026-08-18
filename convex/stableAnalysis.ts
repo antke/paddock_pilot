@@ -3,8 +3,17 @@ import type { Doc, Id } from './_generated/dataModel'
 import { query } from './_generated/server'
 import { hasPersonalPro } from './libs/entitlements'
 import { assertCanViewStable } from './libs/stablePermissions'
+import {
+  addDaysToDateKey,
+  resolveTodayDateKey,
+  timestampToDateKey,
+} from './libs/dateKeys'
+import {
+  hasActiveHorse,
+  isActiveHorse,
+  withActiveEventHorseIds,
+} from './libs/horseState'
 
-const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000
 const fourteenDaysInMs = 14 * 24 * 60 * 60 * 1000
 const oneDayInMs = 24 * 60 * 60 * 1000
 
@@ -16,8 +25,6 @@ const careCadenceDays: Record<Doc<'events'>['type'], number> = {
   massage: 90,
   other: 90,
 }
-
-const dateKey = (date: Date) => date.toISOString().slice(0, 10)
 
 const compareEventDateAndTime = (a: Doc<'events'>, b: Doc<'events'>) => {
   const dateSort = a.date.localeCompare(b.date)
@@ -118,6 +125,7 @@ const getStableTimelineSignals = ({
   weightRecords,
   careReminders,
   today,
+  timezoneOffsetMinutes,
 }: {
   horses: Array<Doc<'horses'>>
   healthIssues: Array<Doc<'horseHealthIssues'>>
@@ -126,6 +134,7 @@ const getStableTimelineSignals = ({
   weightRecords: Array<Doc<'horseWeightRecords'>>
   careReminders: Array<Doc<'careReminders'>>
   today: string
+  timezoneOffsetMinutes: number
 }): Array<StableTimelineSignal> => {
   const horsesById = new Map(horses.map((horse) => [horse._id, horse]))
 
@@ -137,7 +146,7 @@ const getStableTimelineSignals = ({
       return {
         id: issue._id,
         kind: 'health',
-        date: dateKey(new Date(issue.notedAt)),
+        date: timestampToDateKey(issue.notedAt, timezoneOffsetMinutes),
         title: issue.title,
         horseId: issue.horseId,
         horseName: horse?.name,
@@ -168,7 +177,7 @@ const getStableTimelineSignals = ({
       return {
         id: log._id,
         kind: 'nutrition',
-        date: dateKey(new Date(log.changedAt)),
+        date: timestampToDateKey(log.changedAt, timezoneOffsetMinutes),
         title: log.summary,
         horseId: log.horseId,
         horseName: horse?.name,
@@ -186,7 +195,7 @@ const getStableTimelineSignals = ({
       return {
         id: record._id,
         kind: 'weight',
-        date: dateKey(new Date(record.measuredAt)),
+        date: timestampToDateKey(record.measuredAt, timezoneOffsetMinutes),
         title: `${record.weight} ${record.unit}`,
         horseId: record.horseId,
         horseName: horse?.name,
@@ -511,7 +520,11 @@ const countHealthIssuesByHorse = (
 }
 
 export const getForStable = query({
-  args: { stableId: v.id('stables') },
+  args: {
+    stableId: v.id('stables'),
+    today: v.optional(v.string()),
+    timezoneOffsetMinutes: v.optional(v.number()),
+  },
   handler: async (ctx, args) => {
     const access = await assertCanViewStable(ctx, args.stableId)
     const hasAccess = await hasPersonalPro(ctx, access.userId)
@@ -525,13 +538,13 @@ export const getForStable = query({
     }
 
     const [
-      horses,
-      events,
-      healthIssues,
-      medicationRecords,
-      nutritionLogs,
-      weightRecords,
-      careReminders,
+      allHorses,
+      allEvents,
+      allHealthIssues,
+      allMedicationRecords,
+      allNutritionLogs,
+      allWeightRecords,
+      allCareReminders,
     ] = await Promise.all([
       ctx.db
         .query('horses')
@@ -564,29 +577,56 @@ export const getForStable = query({
         )
         .collect(),
     ])
+    const horses = allHorses.filter(isActiveHorse)
+    const activeHorseIds = new Set(horses.map((horse) => horse._id))
+    const events = allEvents
+      .filter((event) => hasActiveHorse(event, activeHorseIds))
+      .map((event) => withActiveEventHorseIds(event, activeHorseIds))
+    const healthIssues = allHealthIssues.filter((issue) =>
+      activeHorseIds.has(issue.horseId),
+    )
+    const medicationRecords = allMedicationRecords.filter((record) =>
+      activeHorseIds.has(record.horseId),
+    )
+    const nutritionLogs = allNutritionLogs.filter((log) =>
+      activeHorseIds.has(log.horseId),
+    )
+    const weightRecords = allWeightRecords.filter((record) =>
+      activeHorseIds.has(record.horseId),
+    )
+    const careReminders = allCareReminders.filter(
+      (reminder) => !reminder.horseId || activeHorseIds.has(reminder.horseId),
+    )
     const eventHorseRows = await Promise.all(
       events.map((event) =>
         ctx.db
           .query('eventsHorses')
           .withIndex('by_event_id', (q) => q.eq('eventId', event._id))
-          .collect(),
+          .collect()
+          .then((rows) =>
+            rows.filter((row) => activeHorseIds.has(row.horseId)),
+          ),
       ),
     )
     const eventsById = new Map(events.map((event) => [event._id, event]))
     const horsesById = new Map(horses.map((horse) => [horse._id, horse]))
     const horseProfileImageUrls = new Map(
       await Promise.all(
-        horses.map(async (horse) => [
-          horse._id,
-          horse.profileImageId
-            ? ((await ctx.storage.getUrl(horse.profileImageId)) ?? undefined)
-            : undefined,
-        ] as const),
+        horses.map(
+          async (horse) =>
+            [
+              horse._id,
+              horse.profileImageId
+                ? ((await ctx.storage.getUrl(horse.profileImageId)) ??
+                  undefined)
+                : undefined,
+            ] as const,
+        ),
       ),
     )
 
-    const today = dateKey(new Date())
-    const nextThirtyDays = dateKey(new Date(Date.now() + thirtyDaysInMs))
+    const today = resolveTodayDateKey(args.today)
+    const nextThirtyDays = addDaysToDateKey(today, 30)
     const currentMonth = today.slice(0, 7)
     const activeHealthIssues = healthIssues.filter(
       (issue) => issue.status === 'active',
@@ -683,6 +723,7 @@ export const getForStable = query({
       weightRecords,
       careReminders,
       today,
+      timezoneOffsetMinutes: args.timezoneOffsetMinutes ?? 0,
     })
     const overdueReminders = pendingReminders.filter(
       (reminder) => reminder.dueDate < today,

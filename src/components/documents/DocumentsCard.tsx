@@ -19,7 +19,7 @@ import type { DocumentUploadValues } from './DocumentUploadForm'
 import { formatFileSize } from '#/lib/numberDisplay'
 
 export type DocumentListItem = {
-  document: Doc<'stableDocuments'>
+  document: Omit<Doc<'stableDocuments'>, 'storageId'>
   horseName?: string
   eventTitle?: string
   fileUrl?: string | null

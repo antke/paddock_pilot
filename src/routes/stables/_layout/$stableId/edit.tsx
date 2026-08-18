@@ -5,7 +5,11 @@ import {
   RouteFormActions,
   RouteFormCard,
 } from '#/components/forms/RouteFormCard'
-import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
+import {
+  RouteEntityNotFoundAlert,
+  RouteStatusAlert,
+} from '#/components/layout/RouteStatusAlert'
+import { ButtonLink } from '#/components/ui/button'
 import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { convexQuery } from '@convex-dev/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -26,9 +30,26 @@ function RouteComponent() {
   const { data: stable } = useSuspenseQuery(
     convexQuery(api.stables.get, { id: stableId as Id<'stables'> }),
   )
+  const { data: access } = useSuspenseQuery(
+    convexQuery(api.stables.getAccess, { id: stableId as Id<'stables'> }),
+  )
 
   if (!stable) {
     return <RouteEntityNotFoundAlert entity="stable" />
+  }
+  if (!access.capabilities.canManageStable) {
+    return (
+      <RouteStatusAlert
+        tone="warning"
+        title="Stable details are read-only for you"
+        description="Only the stable owner can update shared stable details and rules."
+        actions={
+          <ButtonLink to="/stables/$stableId" params={{ stableId }}>
+            Return to stable
+          </ButtonLink>
+        }
+      />
+    )
   }
 
   return <EditStableForm key={stable._id} stable={stable} />

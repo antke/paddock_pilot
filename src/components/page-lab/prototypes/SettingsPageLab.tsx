@@ -7,10 +7,37 @@ import {
 } from '#/components/dashboard/DashboardItemCard'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
+import { DashboardLayoutStack } from '#/components/dashboard/DashboardLayoutGrid'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
+import { StableActivityLogCard } from '#/components/stables/StableActivityLogCard'
+import { StableArchiveCard } from '#/components/stables/StableArchiveCard'
+import { StablePersonCard } from '#/components/stables/StablePersonCard'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
+
+const activityEntries = [
+  {
+    _id: 'activity-horse-approved',
+    action: 'event_horse.approved',
+    summary: 'Clover joined Shared vet visit',
+    createdAt: Date.UTC(2026, 7, 5),
+    actor: { firstName: 'Rae', lastName: 'Monroe' },
+  },
+  {
+    _id: 'activity-member-invited',
+    action: 'member_invitation.created',
+    summary: 'june@cedarridge.example',
+    createdAt: Date.UTC(2026, 7, 4),
+    actor: { firstName: 'Mae', lastName: 'Turner' },
+  },
+  {
+    _id: 'activity-stable-updated',
+    action: 'stable.updated',
+    createdAt: Date.UTC(2026, 7, 2),
+    actor: { firstName: 'Mae', lastName: 'Turner' },
+  },
+]
 
 export function SettingsPageLab({ data }: { data: DashboardLabData }) {
   const stable = data.stable
@@ -24,66 +51,72 @@ export function SettingsPageLab({ data }: { data: DashboardLabData }) {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="members">Members</TabsTrigger>
           <TabsTrigger value="providers">Providers</TabsTrigger>
+          <TabsTrigger value="deleted-horses">Deleted horses</TabsTrigger>
+          <TabsTrigger value="activity">Activity log</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
-          <DashboardSectionCard
-            title={stable.name}
-            actions={<Button variant="outline">Edit stable</Button>}
-            contentLayout="twoColumn"
-            contentTextSize="sm"
-          >
-            <DetailDisplayField label="Location" value={stable.location} />
-            <DetailDisplayField label="Owner" value="Mae Turner" />
-            <DetailDisplayField
-              label="Postal address"
-              value={[stable.addressLine1, stable.postcode, stable.country]
-                .filter(Boolean)
-                .join('\n')}
-              span="sm2"
-              multiline
+          <DashboardLayoutStack gap="comfortable">
+            <DashboardSectionCard
+              title={stable.name}
+              actions={<Button variant="outline">Edit stable</Button>}
+              contentLayout="twoColumn"
+              contentTextSize="sm"
+            >
+              <DetailDisplayField label="Location" value={stable.location} />
+              <DetailDisplayField label="Owner" value="Mae Turner" />
+              <DetailDisplayField
+                label="Postal address"
+                value={[stable.addressLine1, stable.postcode, stable.country]
+                  .filter(Boolean)
+                  .join('\n')}
+                span="sm2"
+                multiline
+              />
+              <DetailDisplayField label="Contact" value={stable.contactName} />
+              <DetailDisplayField
+                label="Contact phone"
+                value={stable.contactPhone}
+              />
+              <DetailDisplayField
+                label="Opening hours"
+                value={stable.openingHours}
+                span="sm2"
+                multiline
+              />
+              <DetailDisplayField
+                label="Yard rules"
+                value={stable.yardRules}
+                span="sm2"
+                multiline
+              />
+            </DashboardSectionCard>
+
+            <StableArchiveCard
+              stableName={stable.name}
+              onArchive={() => true}
             />
-            <DetailDisplayField label="Contact" value={stable.contactName} />
-            <DetailDisplayField
-              label="Contact phone"
-              value={stable.contactPhone}
-            />
-            <DetailDisplayField
-              label="Opening hours"
-              value={stable.openingHours}
-              span="sm2"
-              multiline
-            />
-            <DetailDisplayField
-              label="Yard rules"
-              value={stable.yardRules}
-              span="sm2"
-              multiline
-            />
-          </DashboardSectionCard>
+          </DashboardLayoutStack>
         </TabsContent>
 
         <TabsContent value="members">
-          <SettingsListCard
-            title="Members"
-            description="People with access to this stable."
-            actionLabel="Invite member"
+          <SettingsPeopleCard
             records={[
               {
                 title: 'Mae Turner',
                 meta: 'mae@cedarridge.example',
-                badge: 'Owner',
+                role: 'owner',
               },
               {
                 title: 'Rae Monroe',
                 meta: 'Yard manager · (555) 014-0912',
-                badge: 'Manager',
+                role: 'member',
                 canManage: true,
               },
               {
                 title: 'June Hale',
                 meta: 'june@cedarridge.example',
-                badge: 'Member',
+                role: 'member',
                 canManage: true,
               },
             ]}
@@ -117,8 +150,73 @@ export function SettingsPageLab({ data }: { data: DashboardLabData }) {
             ]}
           />
         </TabsContent>
+
+        <TabsContent value="deleted-horses">
+          <DashboardSectionCard
+            title="Deleted horses"
+            description="Recently deleted horses remain recoverable for 14 days."
+          >
+            <DashboardItemRecordCard chrome="soft" density="compact">
+              <DashboardItemCardContent
+                title="Willow"
+                titleSize="sm"
+                meta={
+                  <span>
+                    Deleted 3 days ago · Permanently removed in 11 days
+                  </span>
+                }
+              />
+            </DashboardItemRecordCard>
+          </DashboardSectionCard>
+        </TabsContent>
+
+        <TabsContent value="activity">
+          <StableActivityLogCard entries={activityEntries} />
+        </TabsContent>
       </Tabs>
     </DashboardPage>
+  )
+}
+
+function SettingsPeopleCard({
+  records,
+}: {
+  records: Array<{
+    title: string
+    meta: string
+    role: 'owner' | 'member'
+    canManage?: boolean
+  }>
+}) {
+  return (
+    <DashboardSectionCard
+      title="Members"
+      description="People with access to this stable."
+      actions={<Button variant="secondary">Invite member</Button>}
+    >
+      <DashboardItemList gap="flush">
+        {records.map((record) => (
+          <StablePersonCard
+            key={record.title}
+            name={record.title}
+            role={record.role}
+            meta={<span>{record.meta}</span>}
+            actions={
+              record.canManage ? (
+                <>
+                  <Button type="button" variant="ghost" size="sm">
+                    Edit details
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm">
+                    Remove
+                  </Button>
+                </>
+              ) : undefined
+            }
+          />
+        ))}
+      </DashboardItemList>
+    </DashboardSectionCard>
   )
 }
 

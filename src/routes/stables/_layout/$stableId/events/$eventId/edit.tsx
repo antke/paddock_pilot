@@ -8,7 +8,11 @@ import {
   RouteFormActions,
   RouteFormCard,
 } from '#/components/forms/RouteFormCard'
-import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
+import {
+  RouteEntityNotFoundAlert,
+  RouteStatusAlert,
+} from '#/components/layout/RouteStatusAlert'
+import { ButtonLink } from '#/components/ui/button'
 import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { convexQuery } from '@convex-dev/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -39,9 +43,29 @@ function RouteComponent() {
       stableId: stableId as Id<'stables'>,
     }),
   )
+  const { data: permissions } = useSuspenseQuery(
+    convexQuery(api.events.getPermissions, { id: eventId as Id<'events'> }),
+  )
 
   if (!eventWithHorses || eventWithHorses.event.stableId !== stableId) {
     return <RouteEntityNotFoundAlert entity="event" />
+  }
+  if (!permissions?.canManageEvent) {
+    return (
+      <RouteStatusAlert
+        tone="warning"
+        title="This event is read-only for you"
+        description="Only the stable owner or the member who created this event can edit its shared details."
+        actions={
+          <ButtonLink
+            to="/stables/$stableId/events/$eventId"
+            params={{ stableId, eventId }}
+          >
+            Return to event
+          </ButtonLink>
+        }
+      />
+    )
   }
 
   return (
@@ -75,7 +99,10 @@ function EditEventForm({
   const nav = useNavigate()
   const updateEvent = useMutation(api.events.update)
   const selectedHorseIds = eventHorses
-    .filter((eventHorse) => eventHorse.status !== 'declined')
+    .filter(
+      (eventHorse) =>
+        eventHorse.status !== 'declined' && eventHorse.status !== 'withdrawn',
+    )
     .map((eventHorse) => eventHorse.horseId)
 
   const form = useForm<EventFormInput, unknown, EventFormSchema>({

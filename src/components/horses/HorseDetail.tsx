@@ -31,6 +31,7 @@ type HorseDetailProps = {
   horse: HorseDetailHorse
   events: Array<Doc<'events'>>
   category?: HorseDetailCategory
+  canManageHorse: boolean
 }
 
 export type HorseDetailSectionProps = {
@@ -64,6 +65,7 @@ export function HorseDetail({
   horse,
   events,
   category,
+  canManageHorse,
 }: HorseDetailProps) {
   const { pathname } = useLocation()
   const horseBasePath = `/stables/${stableId}/horses/${horse._id}`
@@ -129,17 +131,19 @@ export function HorseDetail({
               >
                 Care summary
               </DashboardNavigationMenuLink>
-              <DashboardNavigationMenuLink
-                className="font-display text-xs font-bold uppercase tracking-wide"
-                render={
-                  <Link
-                    to="/stables/$stableId/horses/$horseId/edit"
-                    params={{ stableId, horseId: horse._id }}
-                  />
-                }
-              >
-                Edit horse
-              </DashboardNavigationMenuLink>
+              {canManageHorse && (
+                <DashboardNavigationMenuLink
+                  className="font-display text-xs font-bold uppercase tracking-wide"
+                  render={
+                    <Link
+                      to="/stables/$stableId/horses/$horseId/edit"
+                      params={{ stableId, horseId: horse._id }}
+                    />
+                  }
+                >
+                  Edit horse
+                </DashboardNavigationMenuLink>
+              )}
             </DashboardNavigationMenuGroup>
           </DashboardNavigation>
         }

@@ -28,7 +28,9 @@ export function StableBreadcrumbs({ stableId }: StableBreadcrumbsProps) {
   const pathAfterStable = pathname.slice(stableBasePath.length)
   const [feature, entityOrAction] = getStableRouteSegments(pathAfterStable)
   const horseId =
-    feature === 'horses' && entityOrAction !== 'create'
+    feature === 'horses' &&
+    entityOrAction !== 'create' &&
+    entityOrAction !== 'deleted'
       ? entityOrAction
       : undefined
   const eventId =

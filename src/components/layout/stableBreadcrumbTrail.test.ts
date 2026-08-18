@@ -6,6 +6,7 @@ describe('createStableBreadcrumbItems', () => {
     ['', ['Overview']],
     ['/horses', ['Horses']],
     ['/horses/create', ['Horses', 'Add horse']],
+    ['/horses/deleted', ['Horses', 'Deleted horses']],
     ['/horses/horse-1/profile', ['Horses', 'Mistral']],
     ['/horses/horse-1/activity', ['Horses', 'Mistral', 'Activity']],
     ['/horses/horse-1/care-summary', ['Horses', 'Mistral', 'Care summary']],
@@ -17,7 +18,9 @@ describe('createStableBreadcrumbItems', () => {
     ['/reminders', ['Care']],
     ['/documents', ['Documents']],
     ['/analysis', ['Analysis']],
+    ['/members', ['Stable people']],
     ['/settings', ['Settings']],
+    ['/welcome', ['Getting started']],
   ])('creates the expected trail for %s', (path, expectedLabels) => {
     const items = createStableBreadcrumbItems(path, {
       eventTitle: 'Vaccination',

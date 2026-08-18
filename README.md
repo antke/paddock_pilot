@@ -57,6 +57,35 @@ pnpm check
 - Set the `VITE_CONVEX_URL` and `CONVEX_DEPLOYMENT` environment variables in your `.env.local`. (Or run `pnpm dlx convex init` to set them automatically.)
 - Run `pnpm dlx convex dev` to start the Convex server.
 
+## Setting up transactional email
+
+Email is sent from Convex actions through a provider adapter. Without email
+configuration the `console` provider records deliveries as skipped and does not
+contact an external service. Defining a Resend API key alone does not enable
+delivery; `EMAIL_PROVIDER=resend` must be set explicitly.
+
+For Resend, set these variables in the Convex deployment environment:
+
+```text
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=re_...
+RESEND_FROM_EMAIL=Paddock Pilot <notifications@notify.example.com>
+RESEND_WEBHOOK_SECRET=whsec_...
+APP_URL=https://example.com
+```
+
+Verify the sending domain in Resend, then register this Convex HTTP endpoint for
+`email.sent`, `email.delivered`, `email.bounced`, `email.complained`,
+`email.failed`, and `email.suppressed` events:
+
+```text
+https://<your-convex-site>/resend-email-webhook
+```
+
+Use `EMAIL_PROVIDER=console` explicitly when you want local email attempts to be
+recorded without being sent. Failed transient deliveries are retried after 1,
+5, and 30 minutes. Delivery and webhook records are retained for 30 days.
+
 ## Shadcn
 
 Add components using the latest version of [Shadcn](https://ui.shadcn.com/).

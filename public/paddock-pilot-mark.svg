@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">Paddock Pilot</title>
+  <desc id="description">Cream PP monogram on a stable green field.</desc>
+  <rect width="512" height="512" rx="72" fill="#203f2d"/>
+  <rect x="28" y="28" width="456" height="456" rx="52" fill="none" stroke="#ead2ad" stroke-width="12"/>
+  <path d="M118 365V145h92c58 0 94 31 94 82 0 53-37 85-98 85h-31v53h-57Zm57-103h27c31 0 45-11 45-35 0-22-14-33-43-33h-29v68Z" fill="#fff9ed"/>
+  <path d="M286 365V145h80c55 0 89 29 89 77 0 50-35 80-92 80h-22v63h-55Zm55-111h18c28 0 41-10 41-31 0-20-13-29-39-29h-20v60Z" fill="#d7ddc8"/>
+</svg>

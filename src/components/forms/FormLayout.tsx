@@ -42,7 +42,7 @@ export const inlineFormClassName = 'grid gap-5'
 export const compactInlineFormClassName = 'grid gap-4'
 export const tightInlineFormClassName = 'grid gap-3'
 export const inviteInlineFormClassName =
-  'sm:grid-cols-[minmax(0,1fr)_12rem_auto]'
+  'sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start'
 export const formTabsContentClassName = 'flex flex-col gap-4'
 
 export function InlineForm({

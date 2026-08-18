@@ -2,17 +2,16 @@ import type { Doc, Id } from './_generated/dataModel'
 import { query } from './_generated/server'
 import type { QueryCtx } from './_generated/server'
 import { v } from 'convex/values'
+import { addDaysToDateKey, resolveTodayDateKey } from './libs/dateKeys'
 import { getCurrentUser } from './libs/stablePermissions'
+import {
+  hasActiveHorse,
+  isActiveHorse,
+  withActiveEventHorseIds,
+} from './libs/horseState'
+import { hasPersonalPlus } from './libs/entitlements'
 
 const upcomingWindowDays = 14
-
-const todayKey = () => new Date().toISOString().slice(0, 10)
-
-const addDaysKey = (dateKey: string, days: number) => {
-  const date = new Date(`${dateKey}T00:00:00.000Z`)
-  date.setUTCDate(date.getUTCDate() + days)
-  return date.toISOString().slice(0, 10)
-}
 
 const byEventDateAndTime = (a: Doc<'events'>, b: Doc<'events'>) => {
   const dateSort = a.date.localeCompare(b.date)
@@ -42,16 +41,20 @@ const getAccessibleStables = async (ctx: QueryCtx, userId: Id<'users'>) => {
     .query('stableMembers')
     .withIndex('by_user_id', (q) => q.eq('userId', userId))
     .collect()
+  const canUseMemberStables = await hasPersonalPlus(ctx, userId)
   const memberStables = await Promise.all(
-    memberships.map((membership) => ctx.db.get(membership.stableId)),
+    memberships
+      .filter(
+        (membership) => canUseMemberStables && membership.role === 'member',
+      )
+      .map((membership) => ctx.db.get(membership.stableId)),
   )
 
   return [
     ...new Map(
-      [...ownedStables, ...memberStables.filter(isStable)].map((stable) => [
-        stable._id,
-        stable,
-      ]),
+      [...ownedStables, ...memberStables.filter(isStable)]
+        .filter((stable) => stable.archivedAt === undefined)
+        .map((stable) => [stable._id, stable]),
     ).values(),
   ]
 }
@@ -74,11 +77,14 @@ const incrementHorseMetric = (
 }
 
 export const getForCurrentUser = query({
-  args: { stableId: v.optional(v.id('stables')) },
+  args: {
+    stableId: v.optional(v.id('stables')),
+    today: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx)
-    const today = todayKey()
-    const upcomingEnd = addDaysKey(today, upcomingWindowDays)
+    const today = resolveTodayDateKey(args.today)
+    const upcomingEnd = addDaysToDateKey(today, upcomingWindowDays)
     const accessibleStables = await getAccessibleStables(ctx, user._id)
     const stables = args.stableId
       ? accessibleStables.filter((stable) => stable._id === args.stableId)
@@ -114,13 +120,25 @@ export const getForCurrentUser = query({
               .collect(),
           ])
 
+        const activeHorses = horses.filter(isActiveHorse)
+        const activeHorseIds = new Set(activeHorses.map((horse) => horse._id))
+
         return {
           stable,
-          horses,
-          events,
-          reminders,
-          healthIssues,
-          medicationRecords,
+          horses: activeHorses,
+          events: events
+            .filter((event) => hasActiveHorse(event, activeHorseIds))
+            .map((event) => withActiveEventHorseIds(event, activeHorseIds)),
+          reminders: reminders.filter(
+            (reminder) =>
+              !reminder.horseId || activeHorseIds.has(reminder.horseId),
+          ),
+          healthIssues: healthIssues.filter((issue) =>
+            activeHorseIds.has(issue.horseId),
+          ),
+          medicationRecords: medicationRecords.filter((record) =>
+            activeHorseIds.has(record.horseId),
+          ),
         }
       }),
     )
@@ -129,12 +147,16 @@ export const getForCurrentUser = query({
     const horseById = new Map(horses.map((horse) => [horse._id, horse]))
     const horseProfileImageUrls = new Map(
       await Promise.all(
-        horses.map(async (horse) => [
-          horse._id,
-          horse.profileImageId
-            ? ((await ctx.storage.getUrl(horse.profileImageId)) ?? undefined)
-            : undefined,
-        ] as const),
+        horses.map(
+          async (horse) =>
+            [
+              horse._id,
+              horse.profileImageId
+                ? ((await ctx.storage.getUrl(horse.profileImageId)) ??
+                  undefined)
+                : undefined,
+            ] as const,
+        ),
       ),
     )
     const stableById = new Map(stables.map((stable) => [stable._id, stable]))

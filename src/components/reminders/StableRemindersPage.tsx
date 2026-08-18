@@ -18,6 +18,7 @@ import { useMutation, usePaginatedQuery } from 'convex/react'
 import { useCallback, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { formatCountLabel } from '#/lib/numberDisplay'
+import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import { CareRemindersCard } from './CareRemindersCard'
 import type { CareReminderListItem } from './CareRemindersCard'
 import type { CareReminderSubmitData } from './CareReminderForm'
@@ -39,6 +40,7 @@ export function StableRemindersPage({
   stableId,
   chrome = 'cards',
 }: StableRemindersPageProps) {
+  const { today } = useLocalDateContext()
   const { data: stable } = useSuspenseQuery(
     convexQuery(api.stables.get, { id: stableId as Id<'stables'> }),
   )
@@ -72,9 +74,10 @@ export function StableRemindersPage({
   const reminderQueryArgs = useMemo(
     () => ({
       stableId: stableId as Id<'stables'>,
+      today,
       ...getCareReminderListQueryArgs(filtering.queryState),
     }),
-    [filtering.queryState, stableId],
+    [filtering.queryState, stableId, today],
   )
   const paginatedReminders = usePaginatedQuery(
     api.careReminders.listForStablePaginated,

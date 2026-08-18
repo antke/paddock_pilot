@@ -1,14 +1,19 @@
 import { ConvexError, v } from 'convex/values'
 import { eventHorseDetailsInputSchema } from '../shared/events/eventHorseDetailsSchema'
+import {
+  canManageLinkedRecord,
+  canManageOwnedRecord,
+} from '../shared/stables/stableAccess'
 import type { Doc, Id } from './_generated/dataModel'
-import { mutation, query   } from './_generated/server'
-import type {MutationCtx, QueryCtx} from './_generated/server';
+import { mutation, query } from './_generated/server'
+import type { MutationCtx, QueryCtx } from './_generated/server'
 import { assertCanViewStable, getCurrentUser } from './libs/stablePermissions'
+import { isActiveHorse } from './libs/horseState'
 
 type Ctx = MutationCtx | QueryCtx
 
 const isHorse = (horse: Doc<'horses'> | null): horse is Doc<'horses'> => {
-  return horse !== null
+  return isActiveHorse(horse)
 }
 
 const validateDetailsInput = (args: {
@@ -31,13 +36,13 @@ const canManageEventHorse = (
   access: Awaited<ReturnType<typeof assertCanViewStable>>,
   event: Doc<'events'>,
   horse: Doc<'horses'>,
-) => {
-  return (
-    access.role === 'owner' ||
-    event.createdBy === access.userId ||
-    horse.ownerId === access.userId
-  )
-}
+) =>
+  canManageLinkedRecord({
+    role: access.role,
+    userId: access.userId,
+    horseOwnerId: horse.ownerId,
+    eventCreatedBy: event.createdBy,
+  })
 
 const getEventHorseContext = async (ctx: Ctx, id: Id<'eventsHorses'>) => {
   const eventHorse = await ctx.db.get(id)
@@ -49,7 +54,10 @@ const getEventHorseContext = async (ctx: Ctx, id: Id<'eventsHorses'>) => {
   ])
 
   if (!event) throw new ConvexError('Event not found')
-  if (!horse) throw new ConvexError('Horse not found')
+  if (!isActiveHorse(horse)) throw new ConvexError('Horse not found')
+  if (horse.stableId !== event.stableId) {
+    throw new ConvexError('Event horse row belongs to another stable')
+  }
 
   return { eventHorse, event, horse }
 }
@@ -81,7 +89,18 @@ export const listForEvent = query({
           return {
             eventHorse: row,
             horse,
-            canManage: horse ? canManageEventHorse(access, event, horse) : false,
+            canManage:
+              horse && row.status !== 'declined' && row.status !== 'withdrawn'
+                ? canManageEventHorse(access, event, horse)
+                : false,
+            canWithdraw:
+              horse && (row.status === undefined || row.status === 'confirmed')
+                ? canManageOwnedRecord({
+                    role: access.role,
+                    userId: access.userId,
+                    ownerId: horse.ownerId,
+                  })
+                : false,
           }
         })
         .sort((a, b) =>
@@ -106,6 +125,10 @@ export const update = mutation({
     const input = validateDetailsInput(details)
     const { eventHorse, event, horse } = await getEventHorseContext(ctx, id)
     const access = await assertCanViewStable(ctx, event.stableId, user._id)
+
+    if (eventHorse.status === 'declined' || eventHorse.status === 'withdrawn') {
+      throw new ConvexError('Inactive horse participation cannot be updated')
+    }
 
     if (!canManageEventHorse(access, event, horse)) {
       throw new ConvexError('Not authorized to update service details')

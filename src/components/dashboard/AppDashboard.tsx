@@ -17,6 +17,7 @@ import type { Doc } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 import { useEffect, useState } from 'react'
 import { useAppUserState } from '#/components/layout/AppUserStateProvider'
+import { useLocalDateContext } from '#/lib/useLocalDateContext'
 
 type AppDashboardProps = {
   stables: Array<Doc<'stables'>>
@@ -60,9 +61,11 @@ function AppDashboardData({
   stables: Array<Doc<'stables'>>
   events: Array<Doc<'events'>>
 }) {
+  const { today } = useLocalDateContext()
   const { data: overview } = useSuspenseQuery(
     convexQuery(api.userCareOverview.getForCurrentUser, {
       stableId: activeStable._id,
+      today,
     }),
   )
   const { data: horses } = useSuspenseQuery(

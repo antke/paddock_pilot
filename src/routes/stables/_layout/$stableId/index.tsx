@@ -5,6 +5,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
 import type { Doc, Id } from 'convex/_generated/dataModel'
+import { useLocalDateContext } from '#/lib/useLocalDateContext'
 
 export const Route = createFileRoute('/stables/_layout/$stableId/')({
   component: RouteComponent,
@@ -31,6 +32,7 @@ function StableDashboardData({
   stableId: string
   stable: Doc<'stables'>
 }) {
+  const { today } = useLocalDateContext()
   const { data: stables } = useSuspenseQuery(convexQuery(api.stables.list))
   const { data: horses } = useSuspenseQuery(
     convexQuery(api.horses.list, { stableId: stableId as Id<'stables'> }),
@@ -43,6 +45,7 @@ function StableDashboardData({
   const { data: overview } = useSuspenseQuery(
     convexQuery(api.userCareOverview.getForCurrentUser, {
       stableId: stable._id,
+      today,
     }),
   )
 

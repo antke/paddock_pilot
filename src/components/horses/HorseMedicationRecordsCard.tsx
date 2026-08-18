@@ -15,6 +15,7 @@ import {
 import { DashboardMetaList } from '#/components/dashboard/DashboardMetaList'
 import { Button } from '#/components/ui/button'
 import { formatMediumDateKey } from '#/lib/dateDisplay'
+import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { api } from 'convex/_generated/api'
@@ -41,6 +42,7 @@ export function HorseMedicationRecordsCard({
   horse,
   onCreateActionChange,
 }: HorseMedicationRecordsCardProps) {
+  const { today } = useLocalDateContext()
   const { data: records } = useSuspenseQuery(
     convexQuery(api.horseMedicationRecords.listForHorse, {
       horseId: horse._id,
@@ -112,7 +114,7 @@ export function HorseMedicationRecordsCard({
   ) => {
     try {
       setPendingRecordId(record._id)
-      await completeMedicationRecord({ id: record._id })
+      await completeMedicationRecord({ id: record._id, endDate: today })
       showAppSuccessToast({
         title: 'Medication completed',
         description: <p>{record.medicationName} was marked as completed.</p>,

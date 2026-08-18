@@ -1,15 +1,25 @@
 import { ConvexError, v } from 'convex/values'
 import { omit } from 'lodash'
 import { eventInputSchema } from '../shared/events/eventSchema'
-import { internal } from './_generated/api'
 import type { Doc, Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
-import type { MutationCtx } from './_generated/server'
-import {
-  assertCanViewStable,
-  getCurrentUser,
-} from './libs/stablePermissions'
+import type { MutationCtx, QueryCtx } from './_generated/server'
+import { assertCanViewStable, getCurrentUser } from './libs/stablePermissions'
 import { eventFields } from './schema'
+import {
+  canCreateEventForHorseOwners,
+  canManageCreatedRecord,
+  canManageOwnedRecord,
+} from '../shared/stables/stableAccess'
+import { hasPersonalPlus } from './libs/entitlements'
+import {
+  hasActiveHorse,
+  isActiveHorse,
+  withActiveEventHorseIds,
+} from './libs/horseState'
+import { recordStableAudit } from './libs/audit'
+import { getEventChangeNotificationOwnerIds } from '../shared/events/eventNotificationRecipients'
+import { enqueueEmail } from './libs/email/outbox'
 
 const validateEventInput = (args: {
   stableId: Id<'stables'>
@@ -53,7 +63,7 @@ const isEvent = (event: Doc<'events'> | null): event is Doc<'events'> => {
 }
 
 const isHorse = (horse: Doc<'horses'> | null): horse is Doc<'horses'> => {
-  return horse !== null
+  return isActiveHorse(horse)
 }
 
 const isConfirmedEventHorse = (eventHorse: Doc<'eventsHorses'>) => {
@@ -76,6 +86,10 @@ const getStableHorses = async (
 
   const stableHorses = horses.filter(isHorse)
 
+  if (stableHorses.length !== uniqueHorseIds.length) {
+    throw new ConvexError('Horse not found or is in the deleted horses area')
+  }
+
   if (stableHorses.some((horse) => horse.stableId !== stableId)) {
     throw new ConvexError('All horses must belong to the event stable')
   }
@@ -83,8 +97,28 @@ const getStableHorses = async (
   return stableHorses
 }
 
+const filterEventsForActiveHorses = async (
+  ctx: QueryCtx,
+  stableId: Id<'stables'>,
+  events: Array<Doc<'events'>>,
+) => {
+  const horses = await ctx.db
+    .query('horses')
+    .withIndex('by_stable_id', (q) => q.eq('stableId', stableId))
+    .collect()
+  const activeHorseIds = new Set(
+    horses.filter(isActiveHorse).map((horse) => horse._id),
+  )
+
+  return events
+    .filter((event) => hasActiveHorse(event, activeHorseIds))
+    .map((event) => withActiveEventHorseIds(event, activeHorseIds))
+}
+
 const sendEventInvitationEmails = async (
   ctx: MutationCtx,
+  stableId: Id<'stables'>,
+  eventId: Id<'events'>,
   eventTitle: string,
   invitedHorses: Array<Doc<'horses'>>,
 ) => {
@@ -102,23 +136,131 @@ const sendEventInvitationEmails = async (
       const owner = await ctx.db.get(ownerId)
       if (!owner) return
 
-      await ctx.scheduler.runAfter(0, internal.emails.sendEventHorseInvitation, {
-        email: owner.email,
-        eventTitle,
-        horseNames: horses.map((horse) => horse.name),
+      await enqueueEmail(ctx, {
+        recipient: owner.email,
+        relation: { type: 'event', id: eventId },
+        template: {
+          kind: 'event_horse_invitation',
+          eventTitle,
+          horseNames: horses.map((horse) => horse.name),
+          stableId,
+          eventId,
+        },
       })
     }),
   )
 }
 
-const syncConfirmedHorseIds = async (ctx: MutationCtx, eventId: Id<'events'>) => {
+const formatUserName = (user: Doc<'users'>) =>
+  user.preferredName ||
+  [user.firstName, user.lastName].filter(Boolean).join(' ') ||
+  'A stable member'
+
+const notifyEventOrganizerOfParticipation = async (
+  ctx: MutationCtx,
+  input: {
+    event: Doc<'events'>
+    horse: Doc<'horses'>
+    actor: Doc<'users'>
+    status: 'approved' | 'declined' | 'withdrawn'
+  },
+) => {
+  if (input.event.createdBy === input.actor._id) return
+
+  const organizer = await ctx.db.get(input.event.createdBy)
+  if (!organizer || organizer.deletedAt !== undefined) return
+
+  await enqueueEmail(ctx, {
+    recipient: organizer.email,
+    relation: { type: 'event', id: input.event._id },
+    template: {
+      kind: 'event_participation_update',
+      eventTitle: input.event.title,
+      horseName: input.horse.name,
+      actorName: formatUserName(input.actor),
+      status: input.status,
+      stableId: input.event.stableId,
+      eventId: input.event._id,
+    },
+  })
+}
+
+const getMaterialEventChanges = (
+  event: Doc<'events'>,
+  next: ReturnType<typeof validateEventInput>,
+  horsesChanged: boolean,
+) => {
+  const changes: Array<string> = []
+  if (event.title !== next.title) changes.push('Event title changed')
+  if (event.date !== next.date || event.endDate !== next.endDate) {
+    changes.push('Event date changed')
+  }
+  if (event.time !== next.time) changes.push('Event time changed')
+  if (event.location !== next.location) changes.push('Location changed')
+  if ((event.status ?? 'planned') !== (next.status ?? 'planned')) {
+    changes.push('Event status changed')
+  }
+  if (event.providerName !== next.providerName) changes.push('Provider changed')
+  if (horsesChanged) changes.push('Horse participation changed')
+  return changes
+}
+
+const notifyEventParticipantsOfChanges = async (
+  ctx: MutationCtx,
+  input: {
+    event: Doc<'events'>
+    actorUserId: Id<'users'>
+    changes: Array<string>
+    horses: Array<Doc<'horses'>>
+    nextTitle: string
+    excludedOwnerIds?: Set<Id<'users'>>
+  },
+) => {
+  if (input.changes.length === 0) return
+
+  const ownerIds = getEventChangeNotificationOwnerIds({
+    actorUserId: input.actorUserId,
+    horseOwnerIds: input.horses.map((horse) => horse.ownerId),
+    excludedOwnerIds: input.excludedOwnerIds,
+  })
+  const owners = await Promise.all(
+    ownerIds.map((ownerId) => ctx.db.get(ownerId)),
+  )
+
+  await Promise.all(
+    owners.flatMap((owner) =>
+      owner && owner.deletedAt === undefined
+        ? [
+            enqueueEmail(ctx, {
+              recipient: owner.email,
+              relation: { type: 'event', id: input.event._id },
+              template: {
+                kind: 'event_details_changed',
+                eventTitle: input.nextTitle,
+                changes: input.changes,
+                stableId: input.event.stableId,
+                eventId: input.event._id,
+              },
+            }),
+          ]
+        : [],
+    ),
+  )
+}
+
+const syncConfirmedHorseIds = async (
+  ctx: MutationCtx,
+  eventId: Id<'events'>,
+) => {
   const confirmedRows = await ctx.db
     .query('eventsHorses')
     .withIndex('by_event_id', (q) => q.eq('eventId', eventId))
     .collect()
 
   await ctx.db.patch(eventId, {
-    horseIds: confirmedRows.filter(isConfirmedEventHorse).map((row) => row.horseId),
+    horseIds: confirmedRows
+      .filter(isConfirmedEventHorse)
+      .map((row) => row.horseId),
   })
 }
 
@@ -134,20 +276,34 @@ export const list = query({
       .query('stableMembers')
       .withIndex('by_user_id', (q) => q.eq('userId', user._id))
       .collect()
+    const canUseMemberStables = await hasPersonalPlus(ctx, user._id)
+    const memberStables = await Promise.all(
+      memberships
+        .filter(
+          (membership) => canUseMemberStables && membership.role === 'member',
+        )
+        .map((membership) => ctx.db.get(membership.stableId)),
+    )
     const stableIds = [
       ...new Set([
-        ...ownedStables.map((stable) => stable._id),
-        ...memberships.map((membership) => membership.stableId),
+        ...ownedStables
+          .filter((stable) => stable.archivedAt === undefined)
+          .map((stable) => stable._id),
+        ...memberStables.flatMap((stable) =>
+          stable && stable.archivedAt === undefined ? [stable._id] : [],
+        ),
       ]),
     ]
 
     const events = await Promise.all(
-      stableIds.map((stableId) =>
-        ctx.db
+      stableIds.map(async (stableId) => {
+        const stableEvents = await ctx.db
           .query('events')
           .withIndex('by_stable_id', (q) => q.eq('stableId', stableId))
-          .collect(),
-      ),
+          .collect()
+
+        return filterEventsForActiveHorses(ctx, stableId, stableEvents)
+      }),
     )
 
     return events.flat().sort(byEventDateAndTime)
@@ -163,6 +319,26 @@ export const get = query({
     await assertCanViewStable(ctx, event.stableId)
 
     return event
+  },
+})
+
+export const getPermissions = query({
+  args: { id: v.id('events') },
+  handler: async (ctx, args) => {
+    const event = await ctx.db.get(args.id)
+    if (!event) return null
+
+    const access = await assertCanViewStable(ctx, event.stableId)
+
+    return {
+      canManageEvent: canManageCreatedRecord({
+        role: access.role,
+        userId: access.userId,
+        createdBy: event.createdBy,
+      }),
+      canConfirmAnyHorse: access.role === 'owner',
+      role: access.role,
+    }
   },
 })
 
@@ -185,15 +361,26 @@ export const getWithHorses = query({
     const pendingEventHorses = eventHorses.filter(
       (eventHorse) => eventHorse.status === 'invited',
     )
-    const horses = await Promise.all(
-      confirmedEventHorses.map((eventHorse) => ctx.db.get(eventHorse.horseId)),
+    const associatedHorses = await Promise.all(
+      eventHorses.map((eventHorse) => ctx.db.get(eventHorse.horseId)),
+    )
+    const activeHorseIds = new Set(
+      associatedHorses.filter(isHorse).map((horse) => horse._id),
+    )
+    const activeHorsesById = new Map(
+      associatedHorses.filter(isHorse).map((horse) => [horse._id, horse]),
     )
 
     return {
-      event,
-      horses: horses.filter(isHorse),
-      eventHorses,
-      pendingEventHorses,
+      event: withActiveEventHorseIds(event, activeHorseIds),
+      horses: confirmedEventHorses.flatMap((row) => {
+        const horse = activeHorsesById.get(row.horseId)
+        return horse ? [horse] : []
+      }),
+      eventHorses: eventHorses.filter((row) => activeHorseIds.has(row.horseId)),
+      pendingEventHorses: pendingEventHorses.filter((row) =>
+        activeHorseIds.has(row.horseId),
+      ),
     }
   },
 })
@@ -208,7 +395,9 @@ export const listForStable = query({
       .withIndex('by_stable_id_date', (q) => q.eq('stableId', args.stableId))
       .collect()
 
-    return events.sort(byEventDateAndTime)
+    return (await filterEventsForActiveHorses(ctx, args.stableId, events)).sort(
+      byEventDateAndTime,
+    )
   },
 })
 
@@ -219,7 +408,7 @@ export const listForHorse = query({
     if (!horseId) return []
 
     const horse = await ctx.db.get(horseId)
-    if (!horse) return []
+    if (!isActiveHorse(horse)) return []
 
     await assertCanViewStable(ctx, horse.stableId)
 
@@ -251,11 +440,19 @@ export const add = mutation({
     const eventInput = validateEventInput(args)
     const access = await assertCanViewStable(ctx, args.stableId, user._id)
 
-    if (access.role === 'guest') {
-      throw new ConvexError('Not authorized to create events in this stable')
-    }
-
     const horses = await getStableHorses(ctx, args.stableId, args.horseIds)
+
+    if (
+      !canCreateEventForHorseOwners({
+        role: access.role,
+        userId: user._id,
+        horseOwnerIds: horses.map((horse) => horse.ownerId),
+      })
+    ) {
+      throw new ConvexError(
+        'A member-created event must include at least one of their horses',
+      )
+    }
     const confirmedHorses = horses.filter(
       (horse) => access.role === 'owner' || horse.ownerId === user._id,
     )
@@ -308,7 +505,21 @@ export const add = mutation({
       ),
     ])
 
-    await sendEventInvitationEmails(ctx, eventInput.title, invitedHorses)
+    await sendEventInvitationEmails(
+      ctx,
+      args.stableId,
+      eventId,
+      eventInput.title,
+      invitedHorses,
+    )
+    await recordStableAudit(ctx, {
+      stableId: args.stableId,
+      actorUserId: user._id,
+      action: 'event.created',
+      entityType: 'event',
+      entityId: eventId,
+      summary: eventInput.title,
+    })
 
     return eventId
   },
@@ -330,16 +541,54 @@ export const update = mutation({
     const access = await assertCanViewStable(ctx, args.stableId, user._id)
     const canManageAllHorses = access.role === 'owner'
 
-    if (!canManageAllHorses && event.createdBy !== user._id) {
+    if (
+      !canManageCreatedRecord({
+        role: access.role,
+        userId: user._id,
+        createdBy: event.createdBy,
+      })
+    ) {
       throw new ConvexError('Not authorized to update this event')
     }
 
     const horses = await getStableHorses(ctx, args.stableId, args.horseIds)
+
+    if (
+      !canCreateEventForHorseOwners({
+        role: access.role,
+        userId: user._id,
+        horseOwnerIds: horses.map((horse) => horse.ownerId),
+      })
+    ) {
+      throw new ConvexError(
+        'A member-managed event must retain at least one of their horses',
+      )
+    }
     const nextHorseIds = new Set(args.horseIds)
     const existingEventHorses = await ctx.db
       .query('eventsHorses')
       .withIndex('by_event_id', (q) => q.eq('eventId', id))
       .collect()
+    const existingActiveHorseIds = new Set(
+      existingEventHorses
+        .filter(
+          (row) => row.status !== 'declined' && row.status !== 'withdrawn',
+        )
+        .map((row) => row.horseId),
+    )
+    const existingActiveHorses = (
+      await Promise.all(
+        [...existingActiveHorseIds].map((horseId) => ctx.db.get(horseId)),
+      )
+    ).filter(isHorse)
+    const horsesChanged =
+      existingActiveHorseIds.size !== nextHorseIds.size ||
+      [...nextHorseIds].some((horseId) => !existingActiveHorseIds.has(horseId))
+    const materialChanges = getMaterialEventChanges(
+      event,
+      eventInput,
+      horsesChanged,
+    )
     const now = Date.now()
 
     await Promise.all(
@@ -348,15 +597,7 @@ export const update = mutation({
         .map(async (eventHorse) => {
           const horse = await ctx.db.get(eventHorse.horseId)
           if (!horse) return
-
-          if (eventHorse.status === 'declined') {
-            await ctx.db.delete(eventHorse._id)
-            return
-          }
-
-          if (!canManageAllHorses && horse.ownerId !== user._id) {
-            throw new ConvexError('Members can only remove their own horses')
-          }
+          if (horse.deletedAt !== undefined) return
 
           await ctx.db.delete(eventHorse._id)
         }),
@@ -365,43 +606,49 @@ export const update = mutation({
     const invitedHorses: Array<Doc<'horses'>> = []
 
     await Promise.all(
-      horses
-        .map(async (horse) => {
-          const existingEventHorse = existingEventHorses.find(
-            (eventHorse) => eventHorse.horseId === horse._id,
-          )
-          if (existingEventHorse && existingEventHorse.status !== 'declined') {
-            return
-          }
+      horses.map(async (horse) => {
+        const existingEventHorse = existingEventHorses.find(
+          (eventHorse) => eventHorse.horseId === horse._id,
+        )
+        if (
+          existingEventHorse &&
+          existingEventHorse.status !== 'declined' &&
+          existingEventHorse.status !== 'withdrawn'
+        ) {
+          return
+        }
 
-          const isConfirmed = canManageAllHorses || horse.ownerId === user._id
+        const isConfirmed = canManageAllHorses || horse.ownerId === user._id
 
-          if (!isConfirmed) invitedHorses.push(horse)
+        if (!isConfirmed) invitedHorses.push(horse)
 
-          if (existingEventHorse) {
-            await ctx.db.patch(existingEventHorse._id, {
-              status: isConfirmed ? 'confirmed' : 'invited',
-              invitedBy: isConfirmed ? undefined : user._id,
-              approvedBy: isConfirmed ? user._id : undefined,
-              invitedAt: isConfirmed ? undefined : now,
-              approvedAt: isConfirmed ? now : undefined,
-              updatedAt: now,
-            })
-            return
-          }
-
-          await ctx.db.insert('eventsHorses', {
-            eventId: id,
-            horseId: horse._id,
+        if (existingEventHorse) {
+          await ctx.db.patch(existingEventHorse._id, {
             status: isConfirmed ? 'confirmed' : 'invited',
             invitedBy: isConfirmed ? undefined : user._id,
             approvedBy: isConfirmed ? user._id : undefined,
             invitedAt: isConfirmed ? undefined : now,
             approvedAt: isConfirmed ? now : undefined,
-            createdAt: now,
+            declinedAt: undefined,
+            withdrawnBy: undefined,
+            withdrawnAt: undefined,
             updatedAt: now,
           })
-        }),
+          return
+        }
+
+        await ctx.db.insert('eventsHorses', {
+          eventId: id,
+          horseId: horse._id,
+          status: isConfirmed ? 'confirmed' : 'invited',
+          invitedBy: isConfirmed ? undefined : user._id,
+          approvedBy: isConfirmed ? user._id : undefined,
+          invitedAt: isConfirmed ? undefined : now,
+          approvedAt: isConfirmed ? now : undefined,
+          createdAt: now,
+          updatedAt: now,
+        })
+      }),
     )
 
     await ctx.db.patch(id, {
@@ -422,7 +669,32 @@ export const update = mutation({
       recurrence: eventInput.recurrence,
     })
     await syncConfirmedHorseIds(ctx, id)
-    await sendEventInvitationEmails(ctx, eventInput.title, invitedHorses)
+    await sendEventInvitationEmails(
+      ctx,
+      args.stableId,
+      id,
+      eventInput.title,
+      invitedHorses,
+    )
+    await notifyEventParticipantsOfChanges(ctx, {
+      event,
+      actorUserId: user._id,
+      changes: materialChanges,
+      horses: [...horses, ...existingActiveHorses],
+      nextTitle: eventInput.title,
+      excludedOwnerIds: new Set(invitedHorses.map((horse) => horse.ownerId)),
+    })
+    await recordStableAudit(ctx, {
+      stableId: args.stableId,
+      actorUserId: user._id,
+      action: 'event.updated',
+      entityType: 'event',
+      entityId: id,
+      summary:
+        materialChanges.length > 0
+          ? materialChanges.join(', ')
+          : eventInput.title,
+    })
   },
 })
 
@@ -437,9 +709,24 @@ export const approveHorseInvitation = mutation({
     }
 
     const horse = await ctx.db.get(eventHorse.horseId)
-    if (!horse) throw new ConvexError('Horse not found')
-    if (horse.ownerId !== user._id) {
-      throw new ConvexError('Only the horse owner can approve this invitation')
+    if (!isActiveHorse(horse)) throw new ConvexError('Horse not found')
+    const event = await ctx.db.get(eventHorse.eventId)
+    if (!event) throw new ConvexError('Event not found')
+    if (horse.stableId !== event.stableId) {
+      throw new ConvexError('Horse does not belong to the event stable')
+    }
+    const access = await assertCanViewStable(ctx, event.stableId, user._id)
+
+    if (
+      !canManageOwnedRecord({
+        role: access.role,
+        userId: user._id,
+        ownerId: horse.ownerId,
+      })
+    ) {
+      throw new ConvexError(
+        'Only the stable admin or horse owner can approve this invitation',
+      )
     }
 
     const now = Date.now()
@@ -450,6 +737,20 @@ export const approveHorseInvitation = mutation({
       updatedAt: now,
     })
     await syncConfirmedHorseIds(ctx, eventHorse.eventId)
+    await notifyEventOrganizerOfParticipation(ctx, {
+      event,
+      horse,
+      actor: user,
+      status: 'approved',
+    })
+    await recordStableAudit(ctx, {
+      stableId: event.stableId,
+      actorUserId: user._id,
+      action: 'event_horse.approved',
+      entityType: 'eventHorse',
+      entityId: eventHorse._id,
+      summary: `${horse.name} · ${event.title}`,
+    })
   },
 })
 
@@ -464,9 +765,24 @@ export const declineHorseInvitation = mutation({
     }
 
     const horse = await ctx.db.get(eventHorse.horseId)
-    if (!horse) throw new ConvexError('Horse not found')
-    if (horse.ownerId !== user._id) {
-      throw new ConvexError('Only the horse owner can decline this invitation')
+    if (!isActiveHorse(horse)) throw new ConvexError('Horse not found')
+    const event = await ctx.db.get(eventHorse.eventId)
+    if (!event) throw new ConvexError('Event not found')
+    if (horse.stableId !== event.stableId) {
+      throw new ConvexError('Horse does not belong to the event stable')
+    }
+    const access = await assertCanViewStable(ctx, event.stableId, user._id)
+
+    if (
+      !canManageOwnedRecord({
+        role: access.role,
+        userId: user._id,
+        ownerId: horse.ownerId,
+      })
+    ) {
+      throw new ConvexError(
+        'Only the stable admin or horse owner can decline this invitation',
+      )
     }
 
     const now = Date.now()
@@ -474,6 +790,78 @@ export const declineHorseInvitation = mutation({
       status: 'declined',
       declinedAt: now,
       updatedAt: now,
+    })
+    await notifyEventOrganizerOfParticipation(ctx, {
+      event,
+      horse,
+      actor: user,
+      status: 'declined',
+    })
+    await recordStableAudit(ctx, {
+      stableId: event.stableId,
+      actorUserId: user._id,
+      action: 'event_horse.declined',
+      entityType: 'eventHorse',
+      entityId: eventHorse._id,
+      summary: `${horse.name} · ${event.title}`,
+    })
+  },
+})
+
+export const withdrawHorseFromEvent = mutation({
+  args: { eventHorseId: v.id('eventsHorses') },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx)
+    const eventHorse = await ctx.db.get(args.eventHorseId)
+    if (!eventHorse) throw new ConvexError('Event horse row not found')
+    if (!isConfirmedEventHorse(eventHorse)) {
+      throw new ConvexError('Only a confirmed horse can be withdrawn')
+    }
+
+    const [horse, event] = await Promise.all([
+      ctx.db.get(eventHorse.horseId),
+      ctx.db.get(eventHorse.eventId),
+    ])
+    if (!isActiveHorse(horse)) throw new ConvexError('Horse not found')
+    if (!event) throw new ConvexError('Event not found')
+    if (horse.stableId !== event.stableId) {
+      throw new ConvexError('Horse does not belong to the event stable')
+    }
+
+    const access = await assertCanViewStable(ctx, event.stableId, user._id)
+    if (
+      !canManageOwnedRecord({
+        role: access.role,
+        userId: user._id,
+        ownerId: horse.ownerId,
+      })
+    ) {
+      throw new ConvexError(
+        'Only the stable admin or horse owner can withdraw this horse',
+      )
+    }
+
+    const now = Date.now()
+    await ctx.db.patch(eventHorse._id, {
+      status: 'withdrawn',
+      withdrawnBy: user._id,
+      withdrawnAt: now,
+      updatedAt: now,
+    })
+    await syncConfirmedHorseIds(ctx, eventHorse.eventId)
+    await notifyEventOrganizerOfParticipation(ctx, {
+      event,
+      horse,
+      actor: user,
+      status: 'withdrawn',
+    })
+    await recordStableAudit(ctx, {
+      stableId: event.stableId,
+      actorUserId: user._id,
+      action: 'event_horse.withdrawn',
+      entityType: 'eventHorse',
+      entityId: eventHorse._id,
+      summary: `${horse.name} · ${event.title}`,
     })
   },
 })
@@ -486,8 +874,36 @@ export const listPendingHorseInvitations = query({
       .query('horses')
       .withIndex('by_owner_id', (q) => q.eq('ownerId', user._id))
       .collect()
+    const memberships = await ctx.db
+      .query('stableMembers')
+      .withIndex('by_user_id', (q) => q.eq('userId', user._id))
+      .collect()
+    const canUseMemberStables = await hasPersonalPlus(ctx, user._id)
+    const ownedStables = await ctx.db
+      .query('stables')
+      .withIndex('by_owner_id', (q) => q.eq('ownerId', user._id))
+      .collect()
+    const memberStables = await Promise.all(
+      memberships
+        .filter(
+          (membership) => canUseMemberStables && membership.role === 'member',
+        )
+        .map((membership) => ctx.db.get(membership.stableId)),
+    )
+    const accessibleStableIds = new Set([
+      ...ownedStables
+        .filter((stable) => stable.archivedAt === undefined)
+        .map((stable) => stable._id),
+      ...memberStables.flatMap((stable) =>
+        stable && stable.archivedAt === undefined ? [stable._id] : [],
+      ),
+    ])
+    const activeHorses = horses.filter(
+      (horse) =>
+        isActiveHorse(horse) && accessibleStableIds.has(horse.stableId),
+    )
     const invitationRows = await Promise.all(
-      horses.map((horse) =>
+      activeHorses.map((horse) =>
         ctx.db
           .query('eventsHorses')
           .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
@@ -501,7 +917,7 @@ export const listPendingHorseInvitations = query({
     return rows.map((row, index) => ({
       invitation: row,
       event: events[index],
-      horse: horses.find((horse) => horse._id === row.horseId) ?? null,
+      horse: activeHorses.find((horse) => horse._id === row.horseId) ?? null,
     }))
   },
 })

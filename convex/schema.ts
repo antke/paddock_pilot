@@ -1,5 +1,9 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
+import {
+  emailCategories,
+  emailProviderNames,
+} from './libs/email/types'
 
 /**
  * GENERIC
@@ -24,6 +28,15 @@ export const userFields = {
   lastName: v.optional(v.string()),
   email: v.string(),
   photoUrl: v.optional(v.string()),
+  preferredName: v.optional(v.string()),
+  // Private account contact. Stable owners only receive the per-stable phone
+  // stored on stableMembers; there is no implicit fallback between the two.
+  phone: v.optional(v.string()),
+  profileImageId: v.optional(v.id('_storage')),
+  timezone: v.optional(v.string()),
+  profileCompletedAt: v.optional(v.number()),
+  onboardingVersion: v.optional(v.number()),
+  deletedAt: v.optional(v.number()),
   createdAt: v.number(),
   updatedAt: v.number(),
 }
@@ -31,6 +44,7 @@ export const userFields = {
 const userSchema = defineTable({ ...userFields })
   .index('by_clerk_id', ['clerkId'])
   .index('by_email', ['email'])
+  .index('by_profile_image_id', ['profileImageId'])
 
 /**
  * STABLES
@@ -51,9 +65,11 @@ export const stableFields = {
   ownerId: v.id('users'),
 }
 
-const stablesSchema = defineTable({ ...stableFields }).index('by_owner_id', [
-  'ownerId',
-])
+const stablesSchema = defineTable({
+  ...stableFields,
+  archivedAt: v.optional(v.number()),
+  archivedReason: v.optional(v.string()),
+}).index('by_owner_id', ['ownerId'])
 
 /**
  * STABLE MEMBERS
@@ -61,8 +77,12 @@ const stablesSchema = defineTable({ ...stableFields }).index('by_owner_id', [
 export const stableMembersFields = {
   stableId: v.id('stables'),
   userId: v.id('users'),
+  // `owner` and `guest` are retained only for migration compatibility. Runtime
+  // authorization recognizes a member row only when this value is `member`;
+  // the stable's ownerId is the sole source of owner authority.
   role: v.union(v.literal('owner'), v.literal('member'), v.literal('guest')),
   displayNameOverride: v.optional(v.string()),
+  // Contact details intentionally scoped to this user-stable connection.
   phone: v.optional(v.string()),
   emergencyContact: v.optional(v.string()),
 }
@@ -71,6 +91,164 @@ const stableMembersSchema = defineTable({ ...stableMembersFields })
   .index('by_stable_id', ['stableId'])
   .index('by_user_id', ['userId'])
   .index('by_stable_id_user_id', ['stableId', 'userId'])
+
+/**
+ * STABLE ONBOARDING
+ */
+export const stableOnboardingFields = {
+  stableId: v.id('stables'),
+  userId: v.id('users'),
+  role: v.union(v.literal('owner'), v.literal('member')),
+  currentStep: v.string(),
+  completedSteps: v.array(v.string()),
+  deferredSteps: v.array(v.string()),
+  version: v.number(),
+  completedAt: v.optional(v.number()),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+}
+
+const stableOnboardingSchema = defineTable({ ...stableOnboardingFields })
+  .index('by_stable_id', ['stableId'])
+  .index('by_user_id', ['userId'])
+  .index('by_stable_id_user_id', ['stableId', 'userId'])
+
+/**
+ * STABLE AUDIT LOG
+ */
+export const stableAuditLogFields = {
+  stableId: v.id('stables'),
+  actorUserId: v.id('users'),
+  action: v.string(),
+  entityType: v.string(),
+  entityId: v.string(),
+  summary: v.optional(v.string()),
+  createdAt: v.number(),
+}
+
+const stableAuditLogsSchema = defineTable({ ...stableAuditLogFields })
+  .index('by_stable_id', ['stableId'])
+  .index('by_stable_id_created_at', ['stableId', 'createdAt'])
+
+/**
+ * EMAIL DELIVERY
+ */
+export const emailDeliveryProvider = v.union(
+  v.literal(emailProviderNames[0]),
+  v.literal(emailProviderNames[1]),
+)
+
+export const emailDeliveryCategory = v.union(
+  v.literal(emailCategories[0]),
+  v.literal(emailCategories[1]),
+  v.literal(emailCategories[2]),
+  v.literal(emailCategories[3]),
+)
+
+export const emailDeliveryStatus = v.union(
+  v.literal('queued'),
+  v.literal('sending'),
+  v.literal('accepted'),
+  v.literal('delivered'),
+  v.literal('bounced'),
+  v.literal('complained'),
+  v.literal('failed'),
+  v.literal('retryable_failure'),
+  v.literal('skipped'),
+)
+
+export const emailProviderEventStatus = v.union(
+  v.literal('accepted'),
+  v.literal('delivered'),
+  v.literal('bounced'),
+  v.literal('complained'),
+  v.literal('failed'),
+)
+
+export const emailRelation = v.union(
+  v.object({
+    type: v.literal('stableInvitation'),
+    id: v.id('stableInvitations'),
+  }),
+  v.object({ type: v.literal('event'), id: v.id('events') }),
+)
+
+export const emailTemplate = v.union(
+  v.object({
+    kind: v.literal('stable_invitation'),
+    stableName: v.string(),
+    token: v.string(),
+  }),
+  v.object({
+    kind: v.literal('event_horse_invitation'),
+    eventId: v.id('events'),
+    eventTitle: v.string(),
+    horseNames: v.array(v.string()),
+    stableId: v.id('stables'),
+  }),
+  v.object({
+    kind: v.literal('event_participation_update'),
+    actorName: v.string(),
+    eventId: v.id('events'),
+    eventTitle: v.string(),
+    horseName: v.string(),
+    stableId: v.id('stables'),
+    status: v.union(
+      v.literal('approved'),
+      v.literal('declined'),
+      v.literal('withdrawn'),
+    ),
+  }),
+  v.object({
+    kind: v.literal('event_details_changed'),
+    changes: v.array(v.string()),
+    eventId: v.id('events'),
+    eventTitle: v.string(),
+    stableId: v.id('stables'),
+  }),
+)
+
+const emailDeliveriesSchema = defineTable({
+  category: emailDeliveryCategory,
+  recipient: v.string(),
+  provider: v.optional(emailDeliveryProvider),
+  providerMessageId: v.optional(v.string()),
+  idempotencyKey: v.string(),
+  status: emailDeliveryStatus,
+  template: v.optional(emailTemplate),
+  relation: v.optional(emailRelation),
+  // Kept while existing deployments migrate to the typed relation field.
+  relatedEntityType: v.string(),
+  relatedEntityId: v.string(),
+  attempts: v.number(),
+  error: v.optional(v.string()),
+  nextAttemptAt: v.optional(v.number()),
+  providerStatusAt: v.optional(v.number()),
+  deliveredAt: v.optional(v.number()),
+  bouncedAt: v.optional(v.number()),
+  complainedAt: v.optional(v.number()),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+})
+  .index('by_idempotency_key', ['idempotencyKey'])
+  .index('by_provider_message_id', ['provider', 'providerMessageId'])
+  .index('by_related_entity', ['relatedEntityType', 'relatedEntityId'])
+  .index('by_status_next_attempt', ['status', 'nextAttemptAt'])
+  .index('by_status_updated_at', ['status', 'updatedAt'])
+  .index('by_status_created_at', ['status', 'createdAt'])
+
+const emailWebhookEventsSchema = defineTable({
+  provider: emailDeliveryProvider,
+  eventId: v.string(),
+  providerMessageId: v.string(),
+  status: emailProviderEventStatus,
+  occurredAt: v.number(),
+  processedAt: v.optional(v.number()),
+  createdAt: v.number(),
+})
+  .index('by_provider_event_id', ['provider', 'eventId'])
+  .index('by_provider_message_id', ['provider', 'providerMessageId'])
+  .index('by_created_at', ['createdAt'])
 
 /**
  * STABLE PROVIDERS
@@ -131,11 +309,20 @@ const stableDocumentsSchema = defineTable({ ...stableDocumentsFields })
   .index('by_stable_id', ['stableId'])
   .index('by_horse_id', ['horseId'])
   .index('by_event_id', ['eventId'])
+  .index('by_storage_id', ['storageId'])
 
 /**
  * STABLE INVITATIONS
  */
-export const stableInvitationRole = v.union(v.literal('member'), v.literal('guest'))
+export const stableInvitationRole = v.union(
+  v.literal('member'),
+  v.literal('guest'),
+)
+
+// New invitations are member-only. The stored validator temporarily retains
+// `guest` so existing deployments can migrate legacy rows without failing a
+// schema push.
+export const newStableInvitationRole = v.literal('member')
 
 export const stableInvitationStatus = v.union(
   v.literal('pending'),
@@ -143,6 +330,13 @@ export const stableInvitationStatus = v.union(
   v.literal('accepted'),
   v.literal('revoked'),
   v.literal('expired'),
+)
+
+export const stableInvitationDeliveryStatus = v.union(
+  v.literal('queued'),
+  v.literal('sent'),
+  v.literal('failed'),
+  v.literal('skipped'),
 )
 
 export const stableInvitationsFields = {
@@ -157,6 +351,10 @@ export const stableInvitationsFields = {
   updatedAt: v.number(),
   expiresAt: v.number(),
   acceptedAt: v.optional(v.number()),
+  deliveryStatus: v.optional(stableInvitationDeliveryStatus),
+  deliveryError: v.optional(v.string()),
+  deliveryAttempts: v.optional(v.number()),
+  lastSentAt: v.optional(v.number()),
 }
 
 const stableInvitationsSchema = defineTable({ ...stableInvitationsFields })
@@ -179,6 +377,9 @@ export const userSubscriptionStatus = v.union(
   v.literal('past_due'),
   v.literal('canceled'),
   v.literal('incomplete'),
+  v.literal('upcoming'),
+  v.literal('abandoned'),
+  v.literal('ended'),
 )
 
 export const userSubscriptionsFields = {
@@ -187,6 +388,7 @@ export const userSubscriptionsFields = {
   plan: userSubscriptionPlan,
   status: userSubscriptionStatus,
   currentPeriodEnd: v.optional(v.number()),
+  sourceUpdatedAt: v.optional(v.number()),
   createdAt: v.number(),
   updatedAt: v.number(),
 }
@@ -194,6 +396,35 @@ export const userSubscriptionsFields = {
 const userSubscriptionsSchema = defineTable({ ...userSubscriptionsFields })
   .index('by_user_id', ['userId'])
   .index('by_user_id_plan', ['userId', 'plan'])
+
+const pendingUserSubscriptionsSchema = defineTable({
+  clerkUserId: v.string(),
+  clerkSubscriptionId: v.optional(v.string()),
+  plan: userSubscriptionPlan,
+  status: userSubscriptionStatus,
+  currentPeriodEnd: v.optional(v.number()),
+  sourceUpdatedAt: v.number(),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+}).index('by_clerk_user_id_plan', ['clerkUserId', 'plan'])
+
+const pendingProfileUploadsSchema = defineTable({
+  userId: v.id('users'),
+  token: v.string(),
+  createdAt: v.number(),
+})
+  .index('by_token', ['token'])
+  .index('by_user_id', ['userId'])
+  .index('by_created_at', ['createdAt'])
+
+const userStorageObjectsSchema = defineTable({
+  userId: v.id('users'),
+  storageId: v.id('_storage'),
+  kind: v.literal('profile_image'),
+  createdAt: v.number(),
+})
+  .index('by_storage_id', ['storageId'])
+  .index('by_user_id', ['userId'])
 
 /**
  * HORSES
@@ -205,7 +436,9 @@ export const horsesFields = {
   ownerName: v.optional(v.string()),
   age: v.number(),
   breed: v.optional(v.string()),
-  sex: v.optional(v.union(v.literal('mare'), v.literal('gelding'), v.literal('stallion'))),
+  sex: v.optional(
+    v.union(v.literal('mare'), v.literal('gelding'), v.literal('stallion')),
+  ),
   color: v.optional(v.string()),
   height: v.optional(v.string()),
   dateOfBirth: v.optional(v.string()),
@@ -217,7 +450,11 @@ export const horsesFields = {
   dam: v.optional(v.string()),
   discipline: v.optional(v.string()),
   shoeingStatus: v.optional(
-    v.union(v.literal('barefoot'), v.literal('front_shoes'), v.literal('full_set')),
+    v.union(
+      v.literal('barefoot'),
+      v.literal('front_shoes'),
+      v.literal('full_set'),
+    ),
   ),
   dewormingNotes: v.optional(v.string()),
   allergies: v.optional(v.array(v.string())),
@@ -233,9 +470,15 @@ export const horsesFields = {
   profileImageId: v.optional(v.id('_storage')),
 }
 
-const horsesSchema = defineTable({ ...horsesFields })
+const horsesSchema = defineTable({
+  ...horsesFields,
+  deletedAt: v.optional(v.number()),
+  deletedBy: v.optional(v.id('users')),
+})
   .index('by_stable_id', ['stableId'])
   .index('by_owner_id', ['ownerId'])
+  .index('by_deleted_at', ['deletedAt'])
+  .index('by_profile_image_id', ['profileImageId'])
 
 /**
  * HORSE HEALTH ISSUES
@@ -442,6 +685,7 @@ export const eventHorsesFields = {
       v.literal('confirmed'),
       v.literal('invited'),
       v.literal('declined'),
+      v.literal('withdrawn'),
     ),
   ),
   invitedBy: v.optional(v.id('users')),
@@ -449,6 +693,8 @@ export const eventHorsesFields = {
   invitedAt: v.optional(v.number()),
   approvedAt: v.optional(v.number()),
   declinedAt: v.optional(v.number()),
+  withdrawnBy: v.optional(v.id('users')),
+  withdrawnAt: v.optional(v.number()),
   createdAt: v.optional(v.number()),
   updatedAt: v.optional(v.number()),
 }
@@ -505,17 +751,10 @@ export const careRemindersFields = {
 const careRemindersSchema = defineTable({ ...careRemindersFields })
   .index('by_stable_id_due_date', ['stableId', 'dueDate'])
   .index('by_stable_id_status_due_date', ['stableId', 'status', 'dueDate'])
-  .index('by_stable_id_category_due_date', [
-    'stableId',
-    'category',
-    'dueDate',
-  ])
-  .index('by_stable_id_horse_id_due_date', [
-    'stableId',
-    'horseId',
-    'dueDate',
-  ])
+  .index('by_stable_id_category_due_date', ['stableId', 'category', 'dueDate'])
+  .index('by_stable_id_horse_id_due_date', ['stableId', 'horseId', 'dueDate'])
   .index('by_horse_id_due_date', ['horseId', 'dueDate'])
+  .index('by_event_id', ['eventId'])
   .searchIndex('search_title', {
     searchField: 'title',
     filterFields: ['stableId', 'status', 'category'],
@@ -525,10 +764,17 @@ export default defineSchema({
   users: userSchema,
   stables: stablesSchema,
   stableMembers: stableMembersSchema,
+  stableOnboarding: stableOnboardingSchema,
+  stableAuditLogs: stableAuditLogsSchema,
+  emailDeliveries: emailDeliveriesSchema,
+  emailWebhookEvents: emailWebhookEventsSchema,
   stableProviders: stableProvidersSchema,
   stableDocuments: stableDocumentsSchema,
   stableInvitations: stableInvitationsSchema,
   userSubscriptions: userSubscriptionsSchema,
+  pendingUserSubscriptions: pendingUserSubscriptionsSchema,
+  pendingProfileUploads: pendingProfileUploadsSchema,
+  userStorageObjects: userStorageObjectsSchema,
   horses: horsesSchema,
   horseHealthIssues: horseHealthIssuesSchema,
   horseWeightRecords: horseWeightRecordsSchema,

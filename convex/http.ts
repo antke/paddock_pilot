@@ -3,6 +3,10 @@ import type { WebhookEvent } from '@clerk/backend'
 import { httpAction } from './_generated/server'
 import { internal } from './_generated/api'
 import { verifyWebhook } from '@clerk/backend/webhooks'
+import {
+  translateResendWebhook,
+  verifyResendWebhook,
+} from './libs/email/resendWebhook'
 
 const http = httpRouter()
 
@@ -22,16 +26,19 @@ const toSubscriptionStatus = (eventType: string, dataStatus?: string) => {
   if (eventType.endsWith('.pastDue')) return 'past_due' as const
   if (eventType.endsWith('.canceled')) return 'canceled' as const
   if (eventType.endsWith('.incomplete')) return 'incomplete' as const
-  if (eventType.endsWith('.ended')) return 'canceled' as const
+  if (eventType.endsWith('.upcoming')) return 'upcoming' as const
+  if (eventType.endsWith('.abandoned')) return 'abandoned' as const
+  if (eventType.endsWith('.ended')) return 'ended' as const
 
   if (dataStatus === 'active') return 'active' as const
   if (dataStatus === 'past_due' || dataStatus === 'pastDue') {
     return 'past_due' as const
   }
-  if (dataStatus === 'canceled' || dataStatus === 'ended') {
-    return 'canceled' as const
-  }
+  if (dataStatus === 'canceled') return 'canceled' as const
+  if (dataStatus === 'ended') return 'ended' as const
   if (dataStatus === 'incomplete') return 'incomplete' as const
+  if (dataStatus === 'upcoming') return 'upcoming' as const
+  if (dataStatus === 'abandoned') return 'abandoned' as const
 
   return undefined
 }
@@ -41,7 +48,8 @@ const toSubscriptionPlan = (planKey?: string) => {
   if (!normalizedPlanKey) return undefined
 
   if (normalizedPlanKey.includes('personal_pro')) return 'personal_pro' as const
-  if (normalizedPlanKey.includes('personal_plus')) return 'personal_plus' as const
+  if (normalizedPlanKey.includes('personal_plus'))
+    return 'personal_plus' as const
   if (normalizedPlanKey.includes('plus')) return 'personal_plus' as const
   if (normalizedPlanKey.includes('pro')) return 'personal_pro' as const
 
@@ -85,6 +93,8 @@ const getBillingPayload = (event: WebhookEvent) => {
     currentPeriodEnd: toTimestamp(
       data.period_end ?? data.current_period_end ?? subscriptionItem.period_end,
     ),
+    sourceUpdatedAt:
+      toTimestamp(data.updated_at ?? subscriptionItem.updated_at) ?? Date.now(),
   }
 }
 
@@ -135,6 +145,8 @@ const clerkWebhook = httpAction(async (ctx, request) => {
     case 'subscriptionItem.updated':
     case 'subscriptionItem.active':
     case 'subscriptionItem.canceled':
+    case 'subscriptionItem.upcoming':
+    case 'subscriptionItem.abandoned':
     case 'subscriptionItem.ended':
     case 'subscriptionItem.incomplete':
     case 'subscriptionItem.pastDue': {
@@ -147,6 +159,7 @@ const clerkWebhook = httpAction(async (ctx, request) => {
         plan: billingPayload.plan,
         status: billingPayload.status,
         currentPeriodEnd: billingPayload.currentPeriodEnd,
+        sourceUpdatedAt: billingPayload.sourceUpdatedAt,
       })
       break
     }
@@ -159,6 +172,52 @@ http.route({
   path: '/clerk-users-webhook',
   method: 'POST',
   handler: clerkWebhook,
+})
+
+const resendEmailWebhook = httpAction(async (ctx, request) => {
+  const webhookSecret = process.env.RESEND_WEBHOOK_SECRET
+  if (!webhookSecret) {
+    return new Response('Missing RESEND_WEBHOOK_SECRET', { status: 500 })
+  }
+
+  const payload = await request.text()
+  const eventId = request.headers.get('svix-id')
+  const isVerified = await verifyResendWebhook({
+    payload,
+    secret: webhookSecret,
+    headers: {
+      id: eventId,
+      timestamp: request.headers.get('svix-timestamp'),
+      signature: request.headers.get('svix-signature'),
+    },
+  })
+
+  if (!isVerified || !eventId) {
+    return new Response('Invalid webhook signature', { status: 400 })
+  }
+
+  let value: unknown
+  try {
+    value = JSON.parse(payload)
+  } catch {
+    return new Response('Invalid webhook payload', { status: 400 })
+  }
+
+  const event = translateResendWebhook(value, eventId)
+  if (event) {
+    await ctx.runMutation(internal.emailDeliveries.recordProviderEvent, {
+      provider: 'resend',
+      ...event,
+    })
+  }
+
+  return new Response('OK', { status: 200 })
+})
+
+http.route({
+  path: '/resend-email-webhook',
+  method: 'POST',
+  handler: resendEmailWebhook,
 })
 
 export default http

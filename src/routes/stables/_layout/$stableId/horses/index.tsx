@@ -4,6 +4,7 @@ import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCar
 import { HorseList } from '#/components/horses/HorseList'
 import { ButtonLink } from '#/components/ui/button'
 import { createFileRoute } from '@tanstack/react-router'
+import { DashboardActions } from '#/components/dashboard/DashboardActions'
 
 export const Route = createFileRoute('/stables/_layout/$stableId/horses/')({
   component: RouteComponent,
@@ -17,13 +18,22 @@ function RouteComponent() {
       <DashboardPageHeader
         title="Horses"
         actions={
-          <ButtonLink
-            to="/stables/$stableId/horses/create"
-            params={{ stableId }}
-            variant="secondary"
-          >
-            Add horse
-          </ButtonLink>
+          <DashboardActions>
+            <ButtonLink
+              to="/stables/$stableId/horses/deleted"
+              params={{ stableId }}
+              variant="outline"
+            >
+              Deleted horses
+            </ButtonLink>
+            <ButtonLink
+              to="/stables/$stableId/horses/create"
+              params={{ stableId }}
+              variant="secondary"
+            >
+              Add horse
+            </ButtonLink>
+          </DashboardActions>
         }
       />
 

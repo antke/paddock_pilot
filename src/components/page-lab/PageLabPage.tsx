@@ -33,6 +33,7 @@ import {
 import { Field, FieldLabel } from '#/components/ui/field'
 import { Select } from '#/components/ui/select'
 import { isDevAuthBypassEnabled } from '#/lib/devAuthBypass'
+import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Link, Navigate } from '@tanstack/react-router'
@@ -143,9 +144,11 @@ function PageLabData({
   activeStable: Doc<'stables'>
   onActiveStableChange: (stableId: Doc<'stables'>['_id']) => void
 }) {
+  const { today } = useLocalDateContext()
   const { data: overview } = useSuspenseQuery(
     convexQuery(api.userCareOverview.getForCurrentUser, {
       stableId: activeStable._id,
+      today,
     }),
   )
   const { data: horses } = useSuspenseQuery(
@@ -327,9 +330,11 @@ function PageLabReviewSurface({
 }
 
 function AnalysisPageLabData({ data }: { data: DashboardLabData }) {
+  const localDateContext = useLocalDateContext()
   const { data: stableAnalysis } = useSuspenseQuery(
     convexQuery(api.stableAnalysis.getForStable, {
       stableId: data.stable._id,
+      ...localDateContext,
     }),
   )
 

@@ -1,74 +1,244 @@
-import { DashboardActions } from '#/components/dashboard/DashboardActions'
-import { ButtonLink } from '#/components/ui/button'
+import { CalendarCheck, ClipboardText, Horse } from '@phosphor-icons/react'
+
+import { DashboardValueBadge } from '#/components/dashboard/DashboardBadges'
+import { DashboardInlinePanel } from '#/components/dashboard/DashboardInlinePanel'
+import { dashboardItemCardClassName } from '#/components/dashboard/DashboardItemCard'
+import { ButtonAnchor, ButtonLink } from '#/components/ui/button'
+import { TextLabel } from '#/components/ui/text-label'
 import { LandingAppPreview } from './LandingAppPreview'
-import { landingCareItems } from './landingContent'
+import { LandingProductProof } from './LandingProductProof'
 import {
+  landingFaqs,
+  landingOutcomes,
+  landingWorkflowSteps,
+} from './landingContent'
+import {
+  LandingActionRow,
   LandingCopyBlock,
-  LandingCtaSection,
-  LandingFeatureList,
+  LandingEyebrow,
+  LandingFaqList,
   LandingHeroActionStack,
   LandingHeroGrid,
   LandingLead,
+  LandingOutcomeRail,
   LandingPageShell,
-  LandingSplitSection,
+  LandingSection,
   LandingTitle,
 } from './LandingPrimitives'
+
+const workflowIcons = {
+  calendar: CalendarCheck,
+  handoff: ClipboardText,
+  horse: Horse,
+}
 
 export function PublicLandingPage() {
   return (
     <LandingPageShell>
-      <LandingHeroGrid>
-        <LandingHeroActionStack>
-          <LandingCopyBlock width="wide">
-            <LandingTitle as="h1" size="hero">
-              Manage horse care without notebook, whiteboard, and text-message
-              chaos.
-            </LandingTitle>
-            <LandingLead size="hero">
-              Paddock Pilot gives owners and stable admins one shared place for
-              horse records, nutrition notes, health issues, and upcoming care
-              appointments.
-            </LandingLead>
-          </LandingCopyBlock>
+      <div className="grid gap-6">
+        <LandingHeroGrid aria-labelledby="landing-hero-title">
+          <LandingHeroActionStack>
+            <LandingCopyBlock width="wide">
+              <LandingEyebrow>
+                Horse care, without the paper chase
+              </LandingEyebrow>
+              <LandingTitle id="landing-hero-title" as="h1" size="hero">
+                Keep the whole yard on the same page.
+              </LandingTitle>
+              <LandingLead size="hero">
+                Paddock Pilot brings horse records, care reminders, schedules,
+                nutrition notes, and provider details into one calm field office
+                for owners and stable admins.
+              </LandingLead>
+            </LandingCopyBlock>
 
-          <DashboardActions align="start">
-            <ButtonLink to="/sign-up/$">Create account</ButtonLink>
-            <ButtonLink to="/sign-in/$" variant="outline">
-              Sign in
-            </ButtonLink>
-          </DashboardActions>
-        </LandingHeroActionStack>
+            <LandingActionRow>
+              <ButtonLink to="/sign-up/$" size="lg">
+                Create your account
+              </ButtonLink>
+              <ButtonAnchor href="#product-proof" variant="outline" size="lg">
+                See how it works
+              </ButtonAnchor>
+            </LandingActionRow>
 
-        <LandingAppPreview />
-      </LandingHeroGrid>
+            <p className="text-sm text-muted-foreground">
+              Add your stable, then build the first horse profile.
+            </p>
+          </LandingHeroActionStack>
 
-      <LandingSplitSection>
-        <LandingCopyBlock>
-          <LandingTitle>
-            Keep the care details close to the schedule.
+          <LandingAppPreview />
+        </LandingHeroGrid>
+
+        <LandingOutcomeRail items={landingOutcomes} />
+      </div>
+
+      <LandingSection
+        id="product-proof"
+        tone="card"
+        aria-labelledby="product-proof-title"
+      >
+        <LandingCopyBlock width="wide">
+          <LandingEyebrow>Built for the work between visits</LandingEyebrow>
+          <LandingTitle id="product-proof-title">
+            The whole yard, without the whiteboard scramble.
           </LandingTitle>
-          <LandingLead>
-            When a vet, farrier, dentist, or stable admin needs context, the
-            important notes are already connected to the horse and the shared
-            stable calendar.
+          <LandingLead className="max-w-3xl">
+            Start with today’s work, open the horse when you need context, and
+            keep the provider visit connected to both.
           </LandingLead>
         </LandingCopyBlock>
 
-        <LandingFeatureList items={landingCareItems} />
-      </LandingSplitSection>
+        <LandingProductProof />
+      </LandingSection>
 
-      <LandingCtaSection>
-        <LandingTitle className="max-w-2xl" size="cta">
-          Start replacing scattered care notes today.
+      <LandingSection tone="soft" aria-labelledby="workflow-title">
+        <LandingCopyBlock width="wide">
+          <LandingEyebrow>One calm working rhythm</LandingEyebrow>
+          <LandingTitle id="workflow-title">
+            Care moves. The context moves with it.
+          </LandingTitle>
+          <LandingLead className="max-w-3xl">
+            Paddock Pilot follows the real flow of stable care—from planning the
+            work to recording what happened and preparing the next handoff.
+          </LandingLead>
+        </LandingCopyBlock>
+
+        <ol className="grid gap-4 lg:grid-cols-3">
+          {landingWorkflowSteps.map((step) => {
+            const Icon = workflowIcons[step.icon]
+
+            return (
+              <li
+                key={step.label}
+                className={dashboardItemCardClassName({
+                  accent: step.tone,
+                  className: 'grid content-start gap-4 bg-card',
+                })}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <span className="grid size-10 place-items-center rounded-control border border-border-subtle bg-surface-elevated text-primary">
+                    <Icon aria-hidden="true" className="size-5" weight="bold" />
+                  </span>
+                  <TextLabel as="span" className="text-muted-foreground">
+                    {step.label}
+                  </TextLabel>
+                </div>
+                <div className="grid gap-2">
+                  <LandingTitle as="h3" size="panel">
+                    {step.title}
+                  </LandingTitle>
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    {step.description}
+                  </p>
+                </div>
+              </li>
+            )
+          })}
+        </ol>
+      </LandingSection>
+
+      <LandingSection
+        className="gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-start"
+        aria-label="Plans and common questions"
+      >
+        <div className="grid gap-6">
+          <LandingCopyBlock>
+            <LandingEyebrow>A plan for the way you work</LandingEyebrow>
+            <LandingTitle>
+              Choose the field office that fits your stable.
+            </LandingTitle>
+            <LandingLead>
+              Compare the current plans without losing sight of the everyday
+              care work they support.
+            </LandingLead>
+          </LandingCopyBlock>
+
+          <div className="grid gap-3">
+            <DashboardInlinePanel
+              chrome="cards"
+              padding="compact"
+              stack="default"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="font-display text-2xl font-black uppercase leading-none">
+                  Personal Plus
+                </h3>
+                <DashboardValueBadge variant="secondary">
+                  Everyday care
+                </DashboardValueBadge>
+              </div>
+              <p className="text-sm leading-6 text-muted-foreground">
+                Stable member access and horse management for everyday
+                coordination.
+              </p>
+            </DashboardInlinePanel>
+
+            <DashboardInlinePanel
+              chrome="cards"
+              padding="compact"
+              stack="default"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="font-display text-2xl font-black uppercase leading-none">
+                  Personal Pro
+                </h3>
+                <DashboardValueBadge variant="default">
+                  Deeper insight
+                </DashboardValueBadge>
+              </div>
+              <p className="text-sm leading-6 text-muted-foreground">
+                Adds the Analysis Centre, document storage, and printable care
+                summaries.
+              </p>
+            </DashboardInlinePanel>
+          </div>
+
+          <LandingActionRow>
+            <ButtonLink to="/pricing">Compare plans</ButtonLink>
+            <ButtonLink to="/sign-up/$" variant="outline">
+              Create account
+            </ButtonLink>
+          </LandingActionRow>
+        </div>
+
+        <div className="grid gap-6">
+          <LandingCopyBlock>
+            <LandingEyebrow>Before you saddle up</LandingEyebrow>
+            <LandingTitle>Common questions, clear answers.</LandingTitle>
+            <LandingLead>
+              A quick look at what belongs in the system and how shared care
+              works.
+            </LandingLead>
+          </LandingCopyBlock>
+
+          <LandingFaqList items={landingFaqs} />
+        </div>
+      </LandingSection>
+
+      <LandingSection
+        tone="brand"
+        className="justify-items-center gap-5 text-center"
+        aria-labelledby="landing-cta-title"
+      >
+        <LandingEyebrow className="text-primary-foreground/70">
+          Your next clear care decision starts here
+        </LandingEyebrow>
+        <LandingTitle id="landing-cta-title" className="max-w-3xl" size="cta">
+          Put the next care decision within reach.
         </LandingTitle>
         <LandingLead size="brand">
-          Create an account, add a stable, and begin building clear horse care
-          profiles for your yard.
+          Create your stable workspace and start keeping each horse’s schedule,
+          records, and care context together.
         </LandingLead>
-        <ButtonLink to="/sign-up/$" variant="secondary">
-          Get started
-        </ButtonLink>
-      </LandingCtaSection>
+        <LandingActionRow className="justify-center">
+          <ButtonLink to="/sign-up/$" variant="secondary" size="lg">
+            Create your account
+          </ButtonLink>
+          <ButtonLink to="/pricing" variant="outline" size="lg">
+            Compare plans
+          </ButtonLink>
+        </LandingActionRow>
+      </LandingSection>
     </LandingPageShell>
   )
 }

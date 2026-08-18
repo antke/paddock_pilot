@@ -22,6 +22,11 @@ export function HorseDetailPageLab({ data }: HorseDetailPageLabProps) {
   )
 
   return (
-    <HorseDetail stableId={data.stable._id} horse={horse} events={events} />
+    <HorseDetail
+      stableId={data.stable._id}
+      horse={horse}
+      events={events}
+      canManageHorse
+    />
   )
 }

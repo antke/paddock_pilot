@@ -34,6 +34,7 @@ import type { Doc } from 'convex/_generated/dataModel'
 import type { FunctionReturnType } from 'convex/server'
 import { formatShortDateKey } from '#/lib/dateDisplay'
 import { formatCountLabel } from '#/lib/numberDisplay'
+import { useLocalDateContext } from '#/lib/useLocalDateContext'
 
 type UserCareOverview = FunctionReturnType<
   typeof api.userCareOverview.getForCurrentUser
@@ -60,7 +61,8 @@ type DashboardCareOverviewProps = {
 export function DashboardCareOverview({
   stableId,
 }: DashboardCareOverviewProps) {
-  const overviewArgs = stableId ? { stableId } : {}
+  const { today } = useLocalDateContext()
+  const overviewArgs = stableId ? { stableId, today } : { today }
   const { data: overview } = useSuspenseQuery(
     convexQuery(api.userCareOverview.getForCurrentUser, overviewArgs),
   )

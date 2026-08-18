@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { calculateHorseAge, getTodayDateKey } from './horseAge'
+import {
+  calculateHorseAge,
+  composeHorseBirthDate,
+  getTodayDateKey,
+  splitHorseBirthDate,
+} from './horseAge'
 
 describe('calculateHorseAge', () => {
   const asOf = new Date(2026, 6, 23)
@@ -19,6 +24,32 @@ describe('calculateHorseAge', () => {
 
   it('returns undefined for impossible dates', () => {
     expect(calculateHorseAge('2026-02-31', asOf)).toBeUndefined()
+  })
+
+  it('accepts a known birth year without inventing a month or day', () => {
+    expect(calculateHorseAge('2016', asOf)).toBe(10)
+  })
+
+  it('uses a known month without requiring a day', () => {
+    expect(calculateHorseAge('2017-09', asOf)).toBe(8)
+    expect(calculateHorseAge('2017-04', asOf)).toBe(9)
+  })
+})
+
+describe('partial horse birth dates', () => {
+  it('composes and splits year, month and day precision', () => {
+    expect(composeHorseBirthDate({ year: '2016' })).toBe('2016')
+    expect(composeHorseBirthDate({ year: '2016', month: '4' })).toBe(
+      '2016-04',
+    )
+    expect(
+      composeHorseBirthDate({ year: '2016', month: '4', day: '9' }),
+    ).toBe('2016-04-09')
+    expect(splitHorseBirthDate('2016-04')).toEqual({
+      year: '2016',
+      month: '04',
+      day: '',
+    })
   })
 })
 

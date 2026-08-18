@@ -2,20 +2,19 @@ import { ConvexError, v } from 'convex/values'
 import { paginationOptsValidator } from 'convex/server'
 import type { PaginationResult } from 'convex/server'
 import { careReminderInputSchema } from '../shared/reminders/careReminderSchema'
+import { canManageLinkedRecord } from '../shared/stables/stableAccess'
 import type { Doc, Id } from './_generated/dataModel'
-import { mutation, query   } from './_generated/server'
-import type {MutationCtx, QueryCtx} from './_generated/server';
+import { mutation, query } from './_generated/server'
+import type { MutationCtx, QueryCtx } from './_generated/server'
 import {
   careReminderCategory as reminderCategoryValidator,
   careReminderPriority as reminderPriorityValidator,
   careReminderStatus as reminderStatusValidator,
 } from './schema'
-import {
-  assertCanViewStable,
-  getCurrentUser
-  
-} from './libs/stablePermissions'
-import type {StableRole} from './libs/stablePermissions';
+import { assertCanViewStable, getCurrentUser } from './libs/stablePermissions'
+import type { StableRole } from './libs/stablePermissions'
+import { resolveTodayDateKey } from './libs/dateKeys'
+import { isActiveHorse } from './libs/horseState'
 
 const reminderStateFilterValidator = v.union(
   v.literal('overdue'),
@@ -47,20 +46,19 @@ const validateReminderInput = (args: {
 }
 
 const todayTimestamp = () => Date.now()
-const todayDateKey = () => new Date().toISOString().slice(0, 10)
-
-const canManageStableReminder = (role: StableRole | undefined) => {
-  return role === 'owner' || role === 'member'
-}
 
 const canManageReminder = (
-  access: { role: StableRole | undefined; userId: Id<'users'> },
-  reminder: Pick<Doc<'careReminders'>, 'horseId'>,
+  access: { role: StableRole; userId: Id<'users'> },
+  reminder: Pick<Doc<'careReminders'>, 'horseId' | 'eventId'>,
   horse?: Doc<'horses'> | null,
-) => {
-  if (canManageStableReminder(access.role)) return true
-  return Boolean(reminder.horseId && horse?.ownerId === access.userId)
-}
+  event?: Doc<'events'> | null,
+) =>
+  canManageLinkedRecord({
+    role: access.role,
+    userId: access.userId,
+    horseOwnerId: reminder.horseId ? horse?.ownerId : undefined,
+    eventCreatedBy: reminder.eventId ? event?.createdBy : undefined,
+  })
 
 const getReminderContext = async (
   ctx: MutationCtx | QueryCtx,
@@ -113,7 +111,7 @@ const byReminderSort = (a: Doc<'careReminders'>, b: Doc<'careReminders'>) => {
 
 const mapStableReminderListItems = async (
   ctx: QueryCtx,
-  access: { role: StableRole | undefined; userId: Id<'users'> },
+  access: { role: StableRole; userId: Id<'users'> },
   reminders: Array<Doc<'careReminders'>>,
 ): Promise<Array<StableReminderListItem>> => {
   const horses = await Promise.all(
@@ -121,15 +119,24 @@ const mapStableReminderListItems = async (
       reminder.horseId ? ctx.db.get(reminder.horseId) : Promise.resolve(null),
     ),
   )
+  const events = await Promise.all(
+    reminders.map((reminder) =>
+      reminder.eventId ? ctx.db.get(reminder.eventId) : Promise.resolve(null),
+    ),
+  )
 
-  return reminders.map((reminder, index) => {
+  return reminders.flatMap((reminder, index) => {
     const horse = horses[index]
+    const event = events[index]
+    if (reminder.horseId && !isActiveHorse(horse)) return []
 
-    return {
-      reminder,
-      horseName: horse?.name,
-      canManage: canManageReminder(access, reminder, horse),
-    }
+    return [
+      {
+        reminder,
+        horseName: horse?.name,
+        canManage: canManageReminder(access, reminder, horse, event),
+      },
+    ]
   })
 }
 
@@ -141,7 +148,7 @@ type StableReminderListItem = {
 
 const mapStableReminderPage = async (
   ctx: QueryCtx,
-  access: { role: StableRole | undefined; userId: Id<'users'> },
+  access: { role: StableRole; userId: Id<'users'> },
   page: PaginationResult<Doc<'careReminders'>>,
 ): Promise<PaginationResult<StableReminderListItem>> => ({
   ...page,
@@ -154,11 +161,13 @@ export const listForStable = query({
     const access = await assertCanViewStable(ctx, args.stableId)
     const reminders = await ctx.db
       .query('careReminders')
-      .withIndex('by_stable_id_due_date', (q) => q.eq('stableId', args.stableId))
+      .withIndex('by_stable_id_due_date', (q) =>
+        q.eq('stableId', args.stableId),
+      )
       .collect()
 
     return {
-      canManageStableReminders: canManageStableReminder(access.role),
+      canManageStableReminders: access.capabilities.canManageStableReminders,
       reminders: await mapStableReminderListItems(
         ctx,
         access,
@@ -174,7 +183,7 @@ export const getStableReminderPermissions = query({
     const access = await assertCanViewStable(ctx, args.stableId)
 
     return {
-      canManageStableReminders: canManageStableReminder(access.role),
+      canManageStableReminders: access.capabilities.canManageStableReminders,
     }
   },
 })
@@ -187,6 +196,7 @@ export const listForStablePaginated = query({
     stableWideOnly: v.optional(v.boolean()),
     state: v.optional(reminderStateFilterValidator),
     category: v.optional(reminderCategoryValidator),
+    today: v.optional(v.string()),
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
@@ -211,7 +221,7 @@ export const listForStablePaginated = query({
       }
 
       if (args.state === 'overdue') {
-        const today = todayDateKey()
+        const today = resolveTodayDateKey(args.today)
         remindersQuery = remindersQuery.filter((q) =>
           q.and(
             q.eq(q.field('status'), 'pending'),
@@ -244,7 +254,7 @@ export const listForStablePaginated = query({
         )
 
       if (args.state === 'overdue') {
-        const today = todayDateKey()
+        const today = resolveTodayDateKey(args.today)
         remindersQuery = remindersQuery.filter((q) =>
           q.and(
             q.eq(q.field('status'), 'pending'),
@@ -269,7 +279,7 @@ export const listForStablePaginated = query({
     }
 
     if (args.state === 'overdue') {
-      const today = todayDateKey()
+      const today = resolveTodayDateKey(args.today)
       let remindersQuery = ctx.db
         .query('careReminders')
         .withIndex('by_stable_id_status_due_date', (q) =>
@@ -323,7 +333,9 @@ export const listForStablePaginated = query({
 
     const page = await ctx.db
       .query('careReminders')
-      .withIndex('by_stable_id_due_date', (q) => q.eq('stableId', args.stableId))
+      .withIndex('by_stable_id_due_date', (q) =>
+        q.eq('stableId', args.stableId),
+      )
       .paginate(args.paginationOpts)
 
     return mapStableReminderPage(ctx, access, page)
@@ -334,7 +346,9 @@ export const listForHorse = query({
   args: { horseId: v.id('horses') },
   handler: async (ctx, args) => {
     const horse = await ctx.db.get(args.horseId)
-    if (!horse) return { canManage: false, reminders: [] }
+    if (!isActiveHorse(horse)) {
+      return { canManage: false, reminders: [] }
+    }
 
     const access = await assertCanViewStable(ctx, horse.stableId)
     const reminders = await ctx.db
@@ -343,7 +357,11 @@ export const listForHorse = query({
       .collect()
 
     return {
-      canManage: canManageReminder(access, { horseId: horse._id }, horse),
+      canManage: canManageReminder(
+        access,
+        { horseId: horse._id, eventId: undefined },
+        horse,
+      ),
       reminders: reminders.sort(byReminderSort),
     }
   },
@@ -365,14 +383,21 @@ export const add = mutation({
     const user = await getCurrentUser(ctx)
     const access = await assertCanViewStable(ctx, args.stableId, user._id)
     const input = validateReminderInput(args)
-    const { horse } = await assertLinkedRowsBelongToStable(
+    const { horse, event } = await assertLinkedRowsBelongToStable(
       ctx,
       args.stableId,
       args.horseId,
       args.eventId,
     )
 
-    if (!canManageReminder(access, { horseId: args.horseId }, horse)) {
+    if (
+      !canManageReminder(
+        access,
+        { horseId: args.horseId, eventId: args.eventId },
+        horse,
+        event,
+      )
+    ) {
       throw new ConvexError('Not authorized to manage this reminder')
     }
 
@@ -406,10 +431,6 @@ export const addForHorses = mutation({
     const user = await getCurrentUser(ctx)
     const access = await assertCanViewStable(ctx, args.stableId, user._id)
 
-    if (!canManageStableReminder(access.role)) {
-      throw new ConvexError('Not authorized to manage these reminders')
-    }
-
     if (args.horseIds.length === 0) {
       throw new ConvexError('Select at least one horse')
     }
@@ -428,8 +449,19 @@ export const addForHorses = mutation({
       horseIds.map((horseId) => ctx.db.get(horseId)),
     )
 
-    if (horses.some((horse) => !horse || horse.stableId !== args.stableId)) {
+    if (
+      horses.some(
+        (horse) => !isActiveHorse(horse) || horse.stableId !== args.stableId,
+      )
+    ) {
       throw new ConvexError('Horse does not belong to this stable')
+    }
+
+    if (
+      access.role !== 'owner' &&
+      horses.some((horse) => horse?.ownerId !== user._id)
+    ) {
+      throw new ConvexError('Members can only add reminders for their horses')
     }
 
     const now = todayTimestamp()
@@ -468,14 +500,17 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx)
-    const { reminder, horse } = await getReminderContext(ctx, args.id)
+    const { reminder, horse, event } = await getReminderContext(ctx, args.id)
     const access = await assertCanViewStable(ctx, reminder.stableId, user._id)
 
-    if (!canManageReminder(access, reminder, horse)) {
+    if (!canManageReminder(access, reminder, horse, event)) {
       throw new ConvexError('Not authorized to manage this reminder')
     }
 
-    const input = validateReminderInput({ ...args, stableId: reminder.stableId })
+    const input = validateReminderInput({
+      ...args,
+      stableId: reminder.stableId,
+    })
     const nextRows = await assertLinkedRowsBelongToStable(
       ctx,
       reminder.stableId,
@@ -483,7 +518,14 @@ export const update = mutation({
       args.eventId,
     )
 
-    if (!canManageReminder(access, { horseId: args.horseId }, nextRows.horse)) {
+    if (
+      !canManageReminder(
+        access,
+        { horseId: args.horseId, eventId: args.eventId },
+        nextRows.horse,
+        nextRows.event,
+      )
+    ) {
       throw new ConvexError('Not authorized to manage this reminder')
     }
 
@@ -496,7 +538,10 @@ export const update = mutation({
       dueDate: input.dueDate,
       priority: input.priority,
       status: input.status,
-      completedAt: input.status === 'completed' ? (reminder.completedAt ?? Date.now()) : undefined,
+      completedAt:
+        input.status === 'completed'
+          ? (reminder.completedAt ?? Date.now())
+          : undefined,
       updatedAt: Date.now(),
     })
   },
@@ -506,10 +551,10 @@ export const complete = mutation({
   args: { id: v.id('careReminders') },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx)
-    const { reminder, horse } = await getReminderContext(ctx, args.id)
+    const { reminder, horse, event } = await getReminderContext(ctx, args.id)
     const access = await assertCanViewStable(ctx, reminder.stableId, user._id)
 
-    if (!canManageReminder(access, reminder, horse)) {
+    if (!canManageReminder(access, reminder, horse, event)) {
       throw new ConvexError('Not authorized to manage this reminder')
     }
 
@@ -526,10 +571,10 @@ export const dismiss = mutation({
   args: { id: v.id('careReminders') },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx)
-    const { reminder, horse } = await getReminderContext(ctx, args.id)
+    const { reminder, horse, event } = await getReminderContext(ctx, args.id)
     const access = await assertCanViewStable(ctx, reminder.stableId, user._id)
 
-    if (!canManageReminder(access, reminder, horse)) {
+    if (!canManageReminder(access, reminder, horse, event)) {
       throw new ConvexError('Not authorized to manage this reminder')
     }
 
@@ -545,10 +590,10 @@ export const remove = mutation({
   args: { id: v.id('careReminders') },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx)
-    const { reminder, horse } = await getReminderContext(ctx, args.id)
+    const { reminder, horse, event } = await getReminderContext(ctx, args.id)
     const access = await assertCanViewStable(ctx, reminder.stableId, user._id)
 
-    if (!canManageReminder(access, reminder, horse)) {
+    if (!canManageReminder(access, reminder, horse, event)) {
       throw new ConvexError('Not authorized to manage this reminder')
     }
 
