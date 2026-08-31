@@ -24,6 +24,8 @@ import {
 import { createHorseHealthIssueListFilterConfig } from './horseDetailListFilters'
 import type { HorseDetailCreateActionChange } from './useHorseDetailCreateAction'
 import { useHorseDetailCreateAction } from './useHorseDetailCreateAction'
+import { HorseRecordRemoveAction } from './HorseRecordRemoveAction'
+import { horseHealthIssueSeverityLabels } from './horseCareLabels'
 
 type HorseHealthIssuesCardProps = {
   horse: Doc<'horses'>
@@ -121,6 +123,7 @@ export function HorseHealthIssuesCard({
       })
     } catch (err) {
       showAppErrorToast()
+      throw err
     } finally {
       setPendingIssueId(undefined)
     }
@@ -170,18 +173,25 @@ function IssueRow({
   onResolve: (issue: Doc<'horseHealthIssues'>) => Promise<void>
   onRemove: (issue: Doc<'horseHealthIssues'>) => Promise<void>
 }) {
+  const showSeverityBadge = issue.severity === 'high'
+  const showStatusBadge = issue.status === 'resolved'
+
   return (
     <DashboardItemRecordCard
       chrome="cards"
       actionsPlacement="footer"
       actionsClassName="ml-auto"
       actionBadges={
-        <>
-          {issue.severity && (
-            <HealthIssueSeverityBadge severity={issue.severity} />
-          )}
-          <HealthIssueStatusBadge status={issue.status} />
-        </>
+        showSeverityBadge || showStatusBadge ? (
+          <>
+            {showSeverityBadge && (
+              <HealthIssueSeverityBadge severity={issue.severity} />
+            )}
+            {showStatusBadge && (
+              <HealthIssueStatusBadge status={issue.status} />
+            )}
+          </>
+        ) : undefined
       }
       actions={
         canManage ? (
@@ -197,15 +207,12 @@ function IssueRow({
                 Resolve
               </Button>
             )}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
+            <HorseRecordRemoveAction
               disabled={pending}
-              onClick={() => onRemove(issue)}
-            >
-              Remove
-            </Button>
+              title={`Remove ${issue.title}?`}
+              description="This health issue and its history will be removed permanently. This cannot be undone."
+              onConfirm={() => onRemove(issue)}
+            />
           </>
         ) : undefined
       }
@@ -215,6 +222,9 @@ function IssueRow({
         meta={
           <>
             <span>Noted {formatMediumTimestampDate(issue.notedAt)}</span>
+            {issue.severity && issue.severity !== 'high' && (
+              <span>{horseHealthIssueSeverityLabels[issue.severity]}</span>
+            )}
             {issue.resolvedAt && (
               <span>
                 Resolved {formatMediumTimestampDate(issue.resolvedAt)}

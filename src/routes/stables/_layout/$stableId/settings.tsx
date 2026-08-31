@@ -1,8 +1,13 @@
-import { StableSettingsPage } from '#/components/stables/StableSettingsPage'
+import {
+  isStableSettingsTab,
+  StableSettingsPage,
+} from '#/components/stables/StableSettingsPage'
 import type { StableSettingsTab } from '#/components/stables/StableSettingsPage'
+import { RouteQueryErrorAlert } from '#/components/layout/RouteStatusAlert'
 import { convexQuery } from '@convex-dev/react-query'
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useSuspenseQueries } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
+import type { ErrorComponentProps } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 
@@ -13,32 +18,27 @@ export const Route = createFileRoute('/stables/_layout/$stableId/settings')({
     tab: isStableSettingsTab(search.tab) ? search.tab : undefined,
   }),
   component: RouteComponent,
+  errorComponent: StableSettingsError,
 })
 
 function RouteComponent() {
   const { stableId } = Route.useParams()
   const { tab } = Route.useSearch()
 
-  const { data: settings } = useSuspenseQuery(
-    convexQuery(api.stableMembers.listWithUsers, {
-      stableId: stableId as Id<'stables'>,
-    }),
-  )
-  const { data: deletedHorses } = useSuspenseQuery(
-    convexQuery(api.horses.listDeleted, {
-      stableId: stableId as Id<'stables'>,
-    }),
-  )
-  const { data: horses } = useSuspenseQuery(
-    convexQuery(api.horses.list, {
-      stableId: stableId as Id<'stables'>,
-    }),
-  )
-  const { data: auditEntries } = useSuspenseQuery(
-    convexQuery(api.auditLogs.listForStable, {
-      stableId: stableId as Id<'stables'>,
-    }),
-  )
+  const id = stableId as Id<'stables'>
+  const [settingsQuery, deletedHorsesQuery, horsesQuery, auditEntriesQuery] =
+    useSuspenseQueries({
+      queries: [
+        convexQuery(api.stableMembers.listWithUsers, { stableId: id }),
+        convexQuery(api.horses.listDeleted, { stableId: id }),
+        convexQuery(api.horses.list, { stableId: id }),
+        convexQuery(api.auditLogs.listForStable, { stableId: id }),
+      ],
+    })
+  const settings = settingsQuery.data
+  const deletedHorses = deletedHorsesQuery.data
+  const horses = horsesQuery.data
+  const auditEntries = auditEntriesQuery.data
 
   return (
     <StableSettingsPage
@@ -53,12 +53,12 @@ function RouteComponent() {
   )
 }
 
-function isStableSettingsTab(value: unknown): value is StableSettingsTab {
+function StableSettingsError({ reset }: ErrorComponentProps) {
   return (
-    value === 'overview' ||
-    value === 'members' ||
-    value === 'providers' ||
-    value === 'deleted-horses' ||
-    value === 'activity'
+    <RouteQueryErrorAlert
+      reset={reset}
+      title="Stable settings couldn’t load"
+      description="Check your connection, then try again. No stable settings have been changed."
+    />
   )
 }

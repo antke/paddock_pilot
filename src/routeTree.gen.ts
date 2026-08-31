@@ -15,14 +15,17 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PageLabRouteImport } from './routes/page-lab'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as LandingLabRouteImport } from './routes/landing-lab'
 import { Route as DashboardLabRouteImport } from './routes/dashboard-lab'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PageLabIndexRouteImport } from './routes/page-lab/index'
+import { Route as LandingLabIndexRouteImport } from './routes/landing-lab/index'
 import { Route as DashboardLabIndexRouteImport } from './routes/dashboard-lab/index'
 import { Route as StablesLayoutRouteImport } from './routes/stables/_layout'
 import { Route as SignUpSplatRouteImport } from './routes/sign-up.$'
 import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
 import { Route as PageLabPageRouteImport } from './routes/page-lab/$page'
+import { Route as LandingLabVariantRouteImport } from './routes/landing-lab/$variant'
 import { Route as InvitationsTokenRouteImport } from './routes/invitations/$token'
 import { Route as DashboardLabVersionRouteImport } from './routes/dashboard-lab/$version'
 import { Route as StablesLayoutIndexRouteImport } from './routes/stables/_layout/index'
@@ -88,6 +91,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LandingLabRoute = LandingLabRouteImport.update({
+  id: '/landing-lab',
+  path: '/landing-lab',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardLabRoute = DashboardLabRouteImport.update({
   id: '/dashboard-lab',
   path: '/dashboard-lab',
@@ -102,6 +110,11 @@ const PageLabIndexRoute = PageLabIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => PageLabRoute,
+} as any)
+const LandingLabIndexRoute = LandingLabIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LandingLabRoute,
 } as any)
 const DashboardLabIndexRoute = DashboardLabIndexRouteImport.update({
   id: '/',
@@ -127,6 +140,11 @@ const PageLabPageRoute = PageLabPageRouteImport.update({
   id: '/$page',
   path: '/$page',
   getParentRoute: () => PageLabRoute,
+} as any)
+const LandingLabVariantRoute = LandingLabVariantRouteImport.update({
+  id: '/$variant',
+  path: '/$variant',
+  getParentRoute: () => LandingLabRoute,
 } as any)
 const InvitationsTokenRoute = InvitationsTokenRouteImport.update({
   id: '/invitations/$token',
@@ -331,6 +349,7 @@ const StablesLayoutStableIdEventsEventIdEditRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard-lab': typeof DashboardLabRouteWithChildren
+  '/landing-lab': typeof LandingLabRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/page-lab': typeof PageLabRouteWithChildren
   '/pricing': typeof PricingRoute
@@ -339,11 +358,13 @@ export interface FileRoutesByFullPath {
   '/style-lab': typeof StyleLabRoute
   '/dashboard-lab/$version': typeof DashboardLabVersionRoute
   '/invitations/$token': typeof InvitationsTokenRoute
+  '/landing-lab/$variant': typeof LandingLabVariantRoute
   '/page-lab/$page': typeof PageLabPageRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/stables': typeof StablesLayoutRouteWithChildren
   '/dashboard-lab/': typeof DashboardLabIndexRoute
+  '/landing-lab/': typeof LandingLabIndexRoute
   '/page-lab/': typeof PageLabIndexRoute
   '/stables/$stableId': typeof StablesLayoutStableIdRouteWithChildren
   '/stables/create': typeof StablesLayoutCreateRoute
@@ -387,10 +408,12 @@ export interface FileRoutesByTo {
   '/style-lab': typeof StyleLabRoute
   '/dashboard-lab/$version': typeof DashboardLabVersionRoute
   '/invitations/$token': typeof InvitationsTokenRoute
+  '/landing-lab/$variant': typeof LandingLabVariantRoute
   '/page-lab/$page': typeof PageLabPageRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/dashboard-lab': typeof DashboardLabIndexRoute
+  '/landing-lab': typeof LandingLabIndexRoute
   '/page-lab': typeof PageLabIndexRoute
   '/stables/create': typeof StablesLayoutCreateRoute
   '/stables': typeof StablesLayoutIndexRoute
@@ -425,6 +448,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard-lab': typeof DashboardLabRouteWithChildren
+  '/landing-lab': typeof LandingLabRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/page-lab': typeof PageLabRouteWithChildren
   '/pricing': typeof PricingRoute
@@ -433,11 +457,13 @@ export interface FileRoutesById {
   '/style-lab': typeof StyleLabRoute
   '/dashboard-lab/$version': typeof DashboardLabVersionRoute
   '/invitations/$token': typeof InvitationsTokenRoute
+  '/landing-lab/$variant': typeof LandingLabVariantRoute
   '/page-lab/$page': typeof PageLabPageRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/stables/_layout': typeof StablesLayoutRouteWithChildren
   '/dashboard-lab/': typeof DashboardLabIndexRoute
+  '/landing-lab/': typeof LandingLabIndexRoute
   '/page-lab/': typeof PageLabIndexRoute
   '/stables/_layout/$stableId': typeof StablesLayoutStableIdRouteWithChildren
   '/stables/_layout/create': typeof StablesLayoutCreateRoute
@@ -477,6 +503,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/dashboard-lab'
+    | '/landing-lab'
     | '/onboarding'
     | '/page-lab'
     | '/pricing'
@@ -485,11 +512,13 @@ export interface FileRouteTypes {
     | '/style-lab'
     | '/dashboard-lab/$version'
     | '/invitations/$token'
+    | '/landing-lab/$variant'
     | '/page-lab/$page'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/stables'
     | '/dashboard-lab/'
+    | '/landing-lab/'
     | '/page-lab/'
     | '/stables/$stableId'
     | '/stables/create'
@@ -533,10 +562,12 @@ export interface FileRouteTypes {
     | '/style-lab'
     | '/dashboard-lab/$version'
     | '/invitations/$token'
+    | '/landing-lab/$variant'
     | '/page-lab/$page'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/dashboard-lab'
+    | '/landing-lab'
     | '/page-lab'
     | '/stables/create'
     | '/stables'
@@ -570,6 +601,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/dashboard-lab'
+    | '/landing-lab'
     | '/onboarding'
     | '/page-lab'
     | '/pricing'
@@ -578,11 +610,13 @@ export interface FileRouteTypes {
     | '/style-lab'
     | '/dashboard-lab/$version'
     | '/invitations/$token'
+    | '/landing-lab/$variant'
     | '/page-lab/$page'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/stables/_layout'
     | '/dashboard-lab/'
+    | '/landing-lab/'
     | '/page-lab/'
     | '/stables/_layout/$stableId'
     | '/stables/_layout/create'
@@ -621,6 +655,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardLabRoute: typeof DashboardLabRouteWithChildren
+  LandingLabRoute: typeof LandingLabRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
   PageLabRoute: typeof PageLabRouteWithChildren
   PricingRoute: typeof PricingRoute
@@ -677,6 +712,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/landing-lab': {
+      id: '/landing-lab'
+      path: '/landing-lab'
+      fullPath: '/landing-lab'
+      preLoaderRoute: typeof LandingLabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard-lab': {
       id: '/dashboard-lab'
       path: '/dashboard-lab'
@@ -697,6 +739,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/page-lab/'
       preLoaderRoute: typeof PageLabIndexRouteImport
       parentRoute: typeof PageLabRoute
+    }
+    '/landing-lab/': {
+      id: '/landing-lab/'
+      path: '/'
+      fullPath: '/landing-lab/'
+      preLoaderRoute: typeof LandingLabIndexRouteImport
+      parentRoute: typeof LandingLabRoute
     }
     '/dashboard-lab/': {
       id: '/dashboard-lab/'
@@ -732,6 +781,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/page-lab/$page'
       preLoaderRoute: typeof PageLabPageRouteImport
       parentRoute: typeof PageLabRoute
+    }
+    '/landing-lab/$variant': {
+      id: '/landing-lab/$variant'
+      path: '/$variant'
+      fullPath: '/landing-lab/$variant'
+      preLoaderRoute: typeof LandingLabVariantRouteImport
+      parentRoute: typeof LandingLabRoute
     }
     '/invitations/$token': {
       id: '/invitations/$token'
@@ -988,6 +1044,20 @@ const DashboardLabRouteWithChildren = DashboardLabRoute._addFileChildren(
   DashboardLabRouteChildren,
 )
 
+interface LandingLabRouteChildren {
+  LandingLabVariantRoute: typeof LandingLabVariantRoute
+  LandingLabIndexRoute: typeof LandingLabIndexRoute
+}
+
+const LandingLabRouteChildren: LandingLabRouteChildren = {
+  LandingLabVariantRoute: LandingLabVariantRoute,
+  LandingLabIndexRoute: LandingLabIndexRoute,
+}
+
+const LandingLabRouteWithChildren = LandingLabRoute._addFileChildren(
+  LandingLabRouteChildren,
+)
+
 interface PageLabRouteChildren {
   PageLabPageRoute: typeof PageLabPageRoute
   PageLabIndexRoute: typeof PageLabIndexRoute
@@ -1158,6 +1228,7 @@ const StablesLayoutRouteWithChildren = StablesLayoutRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardLabRoute: DashboardLabRouteWithChildren,
+  LandingLabRoute: LandingLabRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
   PageLabRoute: PageLabRouteWithChildren,
   PricingRoute: PricingRoute,

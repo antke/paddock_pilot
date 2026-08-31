@@ -9,7 +9,6 @@ import {
 import type { ReactNode } from 'react'
 import type { FunctionReturnType } from 'convex/server'
 
-import { DashboardPercentBadge } from '#/components/dashboard/DashboardBadges'
 import {
   DashboardItemCardContent,
   DashboardItemLinkCard,
@@ -19,10 +18,11 @@ import {
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { Button, ButtonLink } from '#/components/ui/button'
+import type { ButtonAction } from '#/components/ui/button'
 import { FieldPanel } from '#/components/ui/field'
 import { Progress } from '#/components/ui/progress'
 import type { api } from 'convex/_generated/api'
-import { StableMemberRoleBadge, StableSetupStatusBadge } from './StableBadges'
+import { StableMemberRoleBadge } from './StableBadges'
 import { StableMemberDetailsForm } from './StableMemberDetailsForm'
 
 type Stable = NonNullable<FunctionReturnType<typeof api.stables.get>>
@@ -64,6 +64,7 @@ export function OwnerStableWelcomePage({
       description: 'Contact information, opening hours and yard rules.',
       complete: hasStableDetails,
       actionLabel: hasStableDetails ? 'Review details' : 'Add details',
+      action: hasStableDetails ? ('edit' as const) : ('create' as const),
       to: '/stables/$stableId/edit' as const,
     },
     {
@@ -71,6 +72,7 @@ export function OwnerStableWelcomePage({
       description: 'Create the first horse record for this stable.',
       complete: horseCount > 0,
       actionLabel: horseCount > 0 ? 'View horses' : 'Add horse',
+      action: horseCount > 0 ? undefined : ('create' as const),
       to:
         horseCount > 0
           ? ('/stables/$stableId/horses' as const)
@@ -81,6 +83,7 @@ export function OwnerStableWelcomePage({
       description: 'Invite by email, then track delivery and acceptance.',
       complete: memberCount > 0 || invitationCount > 0,
       actionLabel: memberCount > 0 ? 'Manage members' : 'Invite member',
+      action: memberCount > 0 ? undefined : ('create' as const),
       to: '/stables/$stableId/settings' as const,
       search: { tab: 'members' as const },
     },
@@ -89,6 +92,7 @@ export function OwnerStableWelcomePage({
       description: 'Keep vet, farrier and other service contacts close.',
       complete: providerCount > 0,
       actionLabel: providerCount > 0 ? 'View providers' : 'Add provider',
+      action: providerCount > 0 ? undefined : ('create' as const),
       to: '/stables/$stableId/settings' as const,
       search: { tab: 'providers' as const },
     },
@@ -122,6 +126,7 @@ export function MemberStableWelcomePage({
       customAction: (
         <Button
           type="button"
+          action={isEditingDetails ? undefined : 'edit'}
           variant="outline"
           size="sm"
           onClick={() => setIsEditingDetails((value) => !value)}
@@ -135,6 +140,7 @@ export function MemberStableWelcomePage({
       description: 'Your horses unlock event planning and care records.',
       complete: ownHorseCount > 0,
       actionLabel: ownHorseCount > 0 ? 'View horses' : 'Add your horse',
+      action: ownHorseCount > 0 ? undefined : ('create' as const),
       to:
         ownHorseCount > 0
           ? ('/stables/$stableId/horses' as const)
@@ -192,6 +198,7 @@ export function MemberStableWelcomePage({
 }
 
 type WelcomeStep = {
+  action?: ButtonAction
   title: string
   description: string
   complete: boolean
@@ -219,7 +226,6 @@ function StableWelcomeLayout({
   steps: Array<WelcomeStep>
 }) {
   const completedCount = steps.filter((step) => step.complete).length
-  const completionPercent = Math.round((completedCount / steps.length) * 100)
 
   return (
     <>
@@ -242,12 +248,6 @@ function StableWelcomeLayout({
       <DashboardSectionCard
         title="Getting started"
         description={`${completedCount} of ${steps.length} setup steps complete`}
-        badges={
-          <DashboardPercentBadge
-            value={completionPercent}
-            variant={completedCount === steps.length ? 'success' : 'neutral'}
-          />
-        }
         contentGap="comfortable"
       >
         <Progress
@@ -283,6 +283,7 @@ function WelcomeStepRow({
         to={step.to}
         params={{ stableId }}
         search={step.search}
+        action={step.action}
         variant="outline"
         size="sm"
       >
@@ -291,12 +292,7 @@ function WelcomeStepRow({
     ) : undefined)
 
   return (
-    <DashboardItemRecordCard
-      chrome="soft"
-      density="compact"
-      actionBadges={<StableSetupStatusBadge complete={step.complete} />}
-      actions={action}
-    >
+    <DashboardItemRecordCard chrome="soft" density="compact" actions={action}>
       <DashboardItemCardContent
         title={step.title}
         titleSize="sm"

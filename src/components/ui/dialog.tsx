@@ -18,6 +18,22 @@ function DialogPortal({ ...props }: DialogPrimitive.Portal.Props) {
   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
 }
 
+function DialogViewport({
+  className,
+  ...props
+}: DialogPrimitive.Viewport.Props) {
+  return (
+    <DialogPrimitive.Viewport
+      data-slot="dialog-viewport"
+      className={cn(
+        'fixed inset-0 z-50 flex min-h-full items-start justify-center overflow-y-auto overscroll-contain p-4',
+        className,
+      )}
+      {...props}
+    />
+  )
+}
+
 function DialogClose({ ...props }: DialogPrimitive.Close.Props) {
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
 }
@@ -30,7 +46,7 @@ function DialogOverlay({
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        'fixed inset-0 isolate z-50 bg-foreground/15 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
+        'fixed inset-0 isolate z-50 bg-foreground/15 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 motion-reduce:animate-none motion-reduce:transition-none',
         className,
       )}
       {...props}
@@ -49,31 +65,33 @@ function DialogContent({
   return (
     <DialogPortal>
       <DialogOverlay />
-      <DialogPrimitive.Popup
-        data-slot="dialog-content"
-        className={cn(
-          'app-panel-strong fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 bg-popover p-5 text-sm/relaxed text-popover-foreground duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
-          className,
-        )}
-        {...props}
-      >
-        {children}
-        {showCloseButton && (
-          <DialogPrimitive.Close
-            data-slot="dialog-close"
-            render={
-              <Button
-                variant="ghost"
-                className="absolute top-2 right-2"
-                size="icon-sm"
-              />
-            }
-          >
-            <XIcon />
-            <span className="sr-only">Close</span>
-          </DialogPrimitive.Close>
-        )}
-      </DialogPrimitive.Popup>
+      <DialogViewport>
+        <DialogPrimitive.Popup
+          data-slot="dialog-content"
+          className={cn(
+            'app-panel-strong relative my-auto grid w-full max-w-[calc(100%-2rem)] gap-4 bg-popover p-5 text-sm/relaxed text-popover-foreground duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 motion-reduce:animate-none motion-reduce:transition-none',
+            className,
+          )}
+          {...props}
+        >
+          {children}
+          {showCloseButton && (
+            <DialogPrimitive.Close
+              data-slot="dialog-close"
+              render={
+                <Button
+                  variant="ghost"
+                  className="absolute top-2 right-2"
+                  size="icon-sm"
+                />
+              }
+            >
+              <XIcon />
+              <span className="sr-only">Close</span>
+            </DialogPrimitive.Close>
+          )}
+        </DialogPrimitive.Popup>
+      </DialogViewport>
     </DialogPortal>
   )
 }
@@ -153,4 +171,5 @@ export {
   DialogPortal,
   DialogTitle,
   DialogTrigger,
+  DialogViewport,
 }

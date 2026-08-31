@@ -66,7 +66,7 @@ function AutocompleteContent({
         <AutocompletePrimitive.Popup
           data-slot="autocomplete-content"
           className={cn(
-            'z-50 w-(--anchor-width) min-w-64 origin-(--transform-origin) overflow-hidden rounded-row border border-border bg-popover text-popover-foreground shadow-control duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
+            'z-50 w-(--anchor-width) min-w-64 origin-(--transform-origin) overflow-hidden rounded-row border border-border bg-popover text-popover-foreground shadow-control duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 motion-reduce:animate-none motion-reduce:transition-none',
             className,
           )}
           {...props}
@@ -129,7 +129,7 @@ function AutocompleteGroupLabel({
     <AutocompletePrimitive.GroupLabel
       data-slot="autocomplete-group-label"
       className={cn(
-        'px-4 pt-3 pb-1 text-[0.6875rem] font-bold tracking-[0.12em] text-muted-foreground uppercase',
+        'px-4 pt-3 pb-1 text-xs font-bold tracking-[0.08em] text-muted-foreground uppercase',
         className,
       )}
       {...props}

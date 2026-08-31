@@ -28,8 +28,9 @@ export function DashboardDisplayHeading({
 
   return (
     <Heading
+      data-slot="dashboard-display-heading"
       className={cn(
-        'min-w-0 text-balance font-display font-black uppercase leading-[0.92] tracking-normal',
+        'min-w-0 text-balance font-display font-bold [overflow-wrap:anywhere] uppercase leading-[0.96] tracking-[-0.015em]',
         dashboardDisplayHeadingScaleClassNames[scale],
         className,
       )}

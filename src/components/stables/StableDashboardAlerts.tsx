@@ -1,9 +1,6 @@
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardBadgeList } from '#/components/dashboard/DashboardBadgeList'
-import {
-  DashboardCountBadge,
-  DashboardValueBadge,
-} from '#/components/dashboard/DashboardBadges'
+import { DashboardCountBadge } from '#/components/dashboard/DashboardBadges'
 import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import {
@@ -16,10 +13,7 @@ import { DashboardMetaList } from '#/components/dashboard/DashboardMetaList'
 import { formatEventDate } from '#/components/events/eventDisplay'
 import { EventRow } from '#/components/events/EventRow'
 import { HealthIssueSeverityBadge } from '#/components/horses/HorseCareBadges'
-import {
-  CareReminderCategoryBadge,
-  CareReminderStatusBadge,
-} from '#/components/reminders/CareReminderBadges'
+import { CareReminderStatusBadge } from '#/components/reminders/CareReminderBadges'
 import { stableInvitationStatusLabels } from '#/components/stables/StableInvitationBadges'
 import { formatCommaList, formatConjunctionList } from '#/lib/textDisplay'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
@@ -30,6 +24,7 @@ import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import type { FunctionReturnType } from 'convex/server'
 import { stableInvitationRoleLabels } from 'shared/stableInvitations/invitationSchema'
+import { careReminderCategoryLabels } from 'shared/reminders/careReminderSchema'
 
 type StableDashboardAlerts = FunctionReturnType<
   typeof api.stableDashboardAlerts.getForStable
@@ -61,16 +56,11 @@ export function StableDashboardAlerts({
       today,
     }),
   )
-  const hasAlerts = Object.values(alerts.summary).some((count) => count > 0)
-
   return (
     <DashboardSection
       chrome="cards"
       gap="compact"
       title="Care alerts"
-      badges={
-        hasAlerts && <DashboardValueBadge>Actionable</DashboardValueBadge>
-      }
       description="Quick checks for urgent care, missing details, follow-ups, and upcoming service coordination."
       size="panel"
       descriptionSize="sm"
@@ -123,15 +113,14 @@ export function StableDashboardAlerts({
                   <DashboardItemOpenTitle>
                     {reminder.title}
                   </DashboardItemOpenTitle>
-                  <CareReminderStatusBadge
-                    status="pending"
-                    overdue={reminder.overdue}
-                  />
-                  <CareReminderCategoryBadge category={reminder.category} />
+                  {reminder.overdue && (
+                    <CareReminderStatusBadge status="pending" overdue />
+                  )}
                 </DashboardBadgeList>
                 <DashboardMetaList separator="dot">
                   <span>Due {formatEventDate(reminder.dueDate)}</span>
                   {reminder.horseName && <span>{reminder.horseName}</span>}
+                  <span>{careReminderCategoryLabels[reminder.category]}</span>
                 </DashboardMetaList>
               </DashboardItemOpenLink>
             ))
@@ -292,6 +281,7 @@ export function StableDashboardAlerts({
                   key={invitation.id}
                   to="/stables/$stableId/settings"
                   params={{ stableId }}
+                  search={{ tab: 'members' }}
                   tone={alertRowTone.stable}
                   density="compact"
                 >

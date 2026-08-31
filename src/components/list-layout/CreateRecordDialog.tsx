@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from '#/components/ui/dialog'
 import {
+  RecordDialogBody,
   RecordDialogContent,
   RecordDialogDesktopTrigger,
   RecordDialogFloatingTrigger,
@@ -32,17 +33,21 @@ export function CreateRecordDialog({
   className,
 }: CreateRecordDialogProps) {
   return (
-    <Dialog data-slot="create-record-dialog" open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      data-slot="create-record-dialog"
+      open={open}
+      onOpenChange={onOpenChange}
+    >
       <RecordDialogDesktopTrigger>{triggerLabel}</RecordDialogDesktopTrigger>
       <RecordDialogFloatingTrigger label={triggerLabel} />
 
       <RecordDialogContent className={className}>
-        <DialogHeader>
+        <DialogHeader className="px-6 pt-6 pb-4 md:px-7 md:pt-7">
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
 
-        {children}
+        <RecordDialogBody>{children}</RecordDialogBody>
       </RecordDialogContent>
     </Dialog>
   )

@@ -1,0 +1,376 @@
+.landing-overdrive {
+  isolation: isolate;
+}
+
+.paddock-layered-field {
+  --paddock-layer-a: color-mix(
+    in srgb,
+    var(--secondary) 84%,
+    var(--background)
+  );
+  --paddock-layer-b: color-mix(in srgb, var(--secondary) 82%, var(--card));
+  --paddock-layer-c: color-mix(in srgb, var(--secondary) 88%, var(--primary));
+  --paddock-layer-d: color-mix(in srgb, var(--secondary) 74%, var(--accent));
+  --paddock-layer-e: color-mix(in srgb, var(--secondary) 90%, var(--surface));
+  --paddock-layer-rail: var(--secondary-foreground);
+  --paddock-layer-route: var(--primary);
+}
+
+.dark .paddock-layered-field {
+  --paddock-layer-a: color-mix(
+    in srgb,
+    var(--secondary) 90%,
+    var(--background)
+  );
+  --paddock-layer-b: color-mix(in srgb, var(--secondary) 84%, var(--card));
+  --paddock-layer-c: color-mix(in srgb, var(--secondary) 90%, var(--primary));
+  --paddock-layer-d: color-mix(in srgb, var(--secondary) 82%, var(--accent));
+  --paddock-layer-e: color-mix(in srgb, var(--secondary) 92%, var(--surface));
+}
+
+.paddock-gates-field {
+  --paddock-gates-rail: var(--foreground);
+  --paddock-gates-route: var(--primary);
+}
+
+.paddock-gates-far {
+  --paddock-gates-from-x: -2.5%;
+  --paddock-gates-from-y: -1.2%;
+}
+
+.paddock-gates-near {
+  --paddock-gates-from-x: 2.5%;
+  --paddock-gates-from-y: 1.2%;
+}
+
+.paddock-night-field {
+  --paddock-night-rail: var(--secondary-foreground);
+  --paddock-night-route: var(--primary);
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+}
+
+.dark .paddock-night-field {
+  --paddock-night-rail: var(--foreground);
+  --paddock-night-route: #ddc7a7;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.gathered-convergence,
+.aisle-depth,
+.paddock-layered-field,
+.paddock-gates-field,
+.paddock-night-field,
+.care-cycle-field,
+.gatefold-field {
+  view-timeline-axis: block;
+}
+
+.gathered-from-left,
+.gathered-from-right,
+.gathered-from-top,
+.gathered-from-bottom,
+.aisle-depth img,
+.paddock-layered-route,
+.paddock-gates-far,
+.paddock-gates-near,
+.paddock-night-route,
+.care-cycle-progress,
+.gatefold-left,
+.gatefold-right {
+  animation: none;
+}
+
+@supports (animation-timeline: view()) {
+  .gathered-convergence {
+    view-timeline-name: --gathered;
+  }
+
+  .gathered-from-left,
+  .gathered-from-right,
+  .gathered-from-top,
+  .gathered-from-bottom {
+    animation-name: gathered-arrive;
+    animation-duration: 1ms;
+    animation-fill-mode: both;
+    animation-timing-function: linear;
+    animation-timeline: --gathered;
+    animation-range: entry 5% cover 58%;
+  }
+
+  .gathered-from-left {
+    --gather-x: -8vw;
+    --gather-y: 2rem;
+  }
+
+  .gathered-from-right {
+    --gather-x: 8vw;
+    --gather-y: -1rem;
+  }
+
+  .gathered-from-top {
+    --gather-x: -2vw;
+    --gather-y: -4rem;
+  }
+
+  .gathered-from-bottom {
+    --gather-x: 3vw;
+    --gather-y: 5rem;
+  }
+
+  .aisle-depth {
+    view-timeline-name: --aisle;
+  }
+
+  .aisle-depth img {
+    animation-name: aisle-depth-shift;
+    animation-duration: 1ms;
+    animation-fill-mode: both;
+    animation-timing-function: linear;
+    animation-timeline: --aisle;
+    animation-range: entry 0% exit 100%;
+  }
+
+  .paddock-layered-field {
+    view-timeline-name: --paddock-layered;
+  }
+
+  .paddock-layered-route {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation-name: paddock-layered-draw;
+    animation-duration: 1ms;
+    animation-fill-mode: both;
+    animation-timing-function: linear;
+    animation-timeline: --paddock-layered;
+    animation-range: entry 5% cover 66%;
+  }
+
+  .paddock-gates-field {
+    view-timeline-name: --paddock-gates;
+  }
+
+  .paddock-gates-far,
+  .paddock-gates-near {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation-duration: 1ms;
+    animation-fill-mode: both;
+    animation-timing-function: linear;
+    animation-timeline: --paddock-gates;
+    animation-range: entry 5% cover 64%;
+  }
+
+  .paddock-gates-far {
+    animation-name: paddock-gates-far-open;
+  }
+
+  .paddock-gates-near {
+    animation-name: paddock-gates-near-open;
+  }
+
+  .paddock-night-field {
+    view-timeline-name: --paddock-night;
+  }
+
+  .paddock-night-route {
+    stroke-dasharray: 0.07 0.035;
+    animation-name: paddock-night-survey;
+    animation-duration: 1ms;
+    animation-fill-mode: both;
+    animation-timing-function: linear;
+    animation-timeline: --paddock-night;
+    animation-range: entry 4% cover 68%;
+  }
+
+  .care-cycle-field {
+    view-timeline-name: --care-cycle;
+  }
+
+  .care-cycle-progress {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation-name: route-draw;
+    animation-duration: 1ms;
+    animation-fill-mode: both;
+    animation-timing-function: linear;
+    animation-timeline: --care-cycle;
+    animation-range: entry 0% cover 68%;
+  }
+
+  .gatefold-field {
+    view-timeline-name: --gatefold;
+  }
+
+  .gatefold-left,
+  .gatefold-right {
+    animation-duration: 1ms;
+    animation-fill-mode: both;
+    animation-timing-function: linear;
+    animation-timeline: --gatefold;
+    animation-range: entry 8% cover 65%;
+  }
+
+  .gatefold-left {
+    animation-name: gatefold-left-close;
+  }
+
+  .gatefold-right {
+    animation-name: gatefold-right-close;
+  }
+}
+
+@keyframes gathered-arrive {
+  from {
+    opacity: 0.58;
+    transform: translate(var(--gather-x), var(--gather-y));
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes aisle-depth-shift {
+  from {
+    transform: scale(1.08) translateY(-1.5%);
+  }
+  to {
+    transform: scale(1.02) translateY(1.5%);
+  }
+}
+
+@keyframes paddock-layered-draw {
+  from {
+    opacity: 0.28;
+    stroke-dashoffset: 1;
+  }
+  to {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes paddock-gates-far-open {
+  from {
+    transform: translate(
+      var(--paddock-gates-from-x),
+      var(--paddock-gates-from-y)
+    );
+  }
+  to {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes paddock-gates-near-open {
+  from {
+    transform: translate(
+      var(--paddock-gates-from-x),
+      var(--paddock-gates-from-y)
+    );
+  }
+  to {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes paddock-night-survey {
+  from {
+    opacity: 0.34;
+    stroke-dashoffset: 0.28;
+  }
+  to {
+    opacity: 0.96;
+    stroke-dashoffset: -0.12;
+  }
+}
+
+@keyframes route-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes gatefold-left-close {
+  from {
+    clip-path: inset(0 8% 0 0);
+    transform: translateX(-3%);
+  }
+  to {
+    clip-path: inset(0);
+    transform: translateX(0);
+  }
+}
+
+@keyframes gatefold-right-close {
+  from {
+    clip-path: inset(0 0 0 8%);
+    transform: translateX(3%);
+  }
+  to {
+    clip-path: inset(0);
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 1023px) {
+  .gathered-from-left,
+  .gathered-from-right,
+  .gathered-from-top,
+  .gathered-from-bottom,
+  .aisle-depth img,
+  .gatefold-left,
+  .gatefold-right {
+    animation: none;
+    clip-path: none;
+    transform: none;
+  }
+
+  .paddock-gates-route-track {
+    transform: translateX(43%);
+    transform-box: view-box;
+    transform-origin: center;
+  }
+
+  .paddock-gates-far {
+    --paddock-gates-from-x: -1.1%;
+    --paddock-gates-from-y: -0.5%;
+  }
+
+  .paddock-gates-near {
+    --paddock-gates-from-x: 1.1%;
+    --paddock-gates-from-y: 0.5%;
+  }
+}
+
+@media (max-width: 479px) {
+  .paddock-gates-route-track {
+    transform: translateX(50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-overdrive *,
+  .landing-overdrive *::before,
+  .landing-overdrive *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+
+  .paddock-layered-route,
+  .paddock-night-route,
+  .care-cycle-progress {
+    animation: none !important;
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+
+  .paddock-gates-far,
+  .paddock-gates-near {
+    animation: none !important;
+    transform: none;
+  }
+}

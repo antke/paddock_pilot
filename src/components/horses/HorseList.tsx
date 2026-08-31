@@ -3,44 +3,73 @@ import { useListFiltering } from '#/components/list-filtering/useListFiltering'
 import { HorseCardLink } from './HorseCard'
 import { createHorseListFilterConfig } from './horseListFilters'
 import { NoHorsesPrompt } from './NoHorsesPrompt'
-import { convexQuery } from '@convex-dev/react-query'
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { api } from 'convex/_generated/api'
-import type { Id } from 'convex/_generated/dataModel'
+import type { api } from 'convex/_generated/api'
+import type { FunctionReturnType } from 'convex/server'
 import { isEmpty } from 'lodash'
 import { useMemo } from 'react'
 
 type Props = {
+  horses: ReadonlyArray<HorseListHorse>
   stableId: string
 }
 
-export function HorseList({ stableId }: Props) {
-  const { data: horses } = useSuspenseQuery(
-    convexQuery(api.horses.list, { stableId: stableId as Id<'stables'> }),
-  )
+export type HorseListHorse = FunctionReturnType<typeof api.horses.list>[number]
+
+function getMatchedIdentifier(horse: HorseListHorse, query: string) {
+  const normalizedQuery = query.trim().toLocaleLowerCase()
+
+  if (!normalizedQuery) return undefined
+
+  if (horse.passportNumber?.toLocaleLowerCase().includes(normalizedQuery)) {
+    return { label: 'Passport', value: horse.passportNumber }
+  }
+
+  if (horse.microchipNumber?.toLocaleLowerCase().includes(normalizedQuery)) {
+    return { label: 'Microchip', value: horse.microchipNumber }
+  }
+
+  return undefined
+}
+
+export function HorseList({ horses, stableId }: Props) {
   const filterConfig = useMemo(createHorseListFilterConfig, [])
   const filtering = useListFiltering({ items: horses, config: filterConfig })
 
   if (isEmpty(horses)) {
-    return <NoHorsesPrompt stableId={stableId} />
+    return <NoHorsesPrompt />
   }
 
   return (
     <FilteredDashboardItemList
       config={filterConfig}
       filtering={filtering}
-      gap="comfortable"
+      gap="loose"
+      itemLayout="grid"
       emptyMessage="No horses have been added yet."
       filteredEmptyMessage="No horses match these filters."
       stickyFilters
-      renderItem={(horse) => (
-        <HorseCardLink
-          key={horse._id}
-          horse={horse}
-          stableId={stableId}
-          horseId={horse._id}
-        />
-      )}
+      renderItem={(horse) => {
+        const matchedIdentifier = getMatchedIdentifier(horse, filtering.query)
+
+        return (
+          <HorseCardLink
+            key={horse._id}
+            horse={horse}
+            stableId={stableId}
+            horseId={horse._id}
+            meta={[
+              horse.discipline ? (
+                <span key="discipline">{horse.discipline}</span>
+              ) : undefined,
+              matchedIdentifier ? (
+                <span key="identifier">
+                  {matchedIdentifier.label} {matchedIdentifier.value}
+                </span>
+              ) : undefined,
+            ]}
+          />
+        )
+      }}
     />
   )
 }

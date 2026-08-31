@@ -1,25 +1,16 @@
 import {
   DetailGrid,
-  DetailMetricBlock,
-  DetailNoteBlock,
+  DetailTextBlock,
 } from '#/components/dashboard/DetailBlocks'
-import { DashboardSectionTabGroup } from '#/components/dashboard/DashboardNavigation'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
-import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { HorseCareRemindersCard } from '../reminders/HorseCareRemindersCard'
 import type { HorseDetailSectionProps } from './HorseDetail'
 import { HorseHealthIssuesCard } from './HorseHealthIssuesCard'
+import { HorseDetailSectionTabs } from './HorseDetailSectionTabs'
 
 type CareTab = 'reminders' | 'health'
-
-type CareTabItem = {
-  id: CareTab
-  label: string
-  title: string
-  description: string
-}
 
 const careTabs = [
   {
@@ -34,20 +25,14 @@ const careTabs = [
     title: 'Health issues',
     description: 'Track active and resolved health notes for this horse.',
   },
-] satisfies Array<CareTabItem>
-
-const careTabDetails = {
-  reminders: careTabs[0],
-  health: careTabs[1],
-} satisfies Record<CareTab, CareTabItem>
+] as const
 
 export function HorseCareSection({ horse }: HorseDetailSectionProps) {
   const [activeTab, setActiveTab] = useState<CareTab>('reminders')
   const [headerAction, setHeaderAction] = useState<ReactNode>(null)
-  const activeTabDetails = careTabDetails[activeTab]
 
   return (
-    <DashboardSectionTabGroup
+    <HorseDetailSectionTabs
       activeId={activeTab}
       items={careTabs}
       onSelect={(nextTab) => {
@@ -55,77 +40,77 @@ export function HorseCareSection({ horse }: HorseDetailSectionProps) {
         setHeaderAction(null)
         setActiveTab(nextTab)
       }}
+      actions={headerAction}
     >
-      <DashboardSectionCard
-        title={activeTabDetails.title}
-        description={activeTabDetails.description}
-        actions={headerAction}
-        contentGap="loose"
-      >
-        {activeTab === 'reminders' && (
-          <>
-            {(horse.vetName ||
-              horse.vetPhone ||
-              horse.farrierName ||
-              horse.farrierPhone ||
-              horse.emergencyNotes) && (
-              <DashboardSection
-                chrome="soft"
-                title="Care contacts"
-                as="h3"
-                size="panel"
-                gap="roomy"
-                padding="none"
-              >
-                <DetailGrid breakpoint="xl" columns={4}>
-                  {horse.vetName && (
-                    <CareContact label="Vet" value={horse.vetName} />
-                  )}
-                  {horse.vetPhone && (
-                    <CareContact label="Vet phone" value={horse.vetPhone} />
-                  )}
-                  {horse.farrierName && (
-                    <CareContact label="Farrier" value={horse.farrierName} />
-                  )}
-                  {horse.farrierPhone && (
-                    <CareContact
-                      label="Farrier phone"
-                      value={horse.farrierPhone}
-                    />
-                  )}
-                  {horse.emergencyNotes && (
-                    <DetailNoteBlock label="Emergency notes" span="careWide">
-                      {horse.emergencyNotes}
-                    </DetailNoteBlock>
-                  )}
-                </DetailGrid>
-              </DashboardSection>
-            )}
+      {activeTab === 'reminders' && (
+        <>
+          {(horse.vetName ||
+            horse.vetPhone ||
+            horse.farrierName ||
+            horse.farrierPhone ||
+            horse.emergencyNotes) && (
+            <DashboardSection
+              chrome="soft"
+              title="Care contacts"
+              as="h3"
+              size="panel"
+              gap="compact"
+              padding="compact"
+              tone="reference"
+              className="rounded-row border"
+            >
+              <DetailGrid breakpoint="xl" columns={4} gap="default">
+                {horse.vetName && (
+                  <CareContact label="Vet" value={horse.vetName} />
+                )}
+                {horse.vetPhone && (
+                  <CareContact label="Vet phone" value={horse.vetPhone} />
+                )}
+                {horse.farrierName && (
+                  <CareContact label="Farrier" value={horse.farrierName} />
+                )}
+                {horse.farrierPhone && (
+                  <CareContact
+                    label="Farrier phone"
+                    value={horse.farrierPhone}
+                  />
+                )}
+                {horse.emergencyNotes && (
+                  <DetailTextBlock
+                    label="Emergency notes"
+                    className="sm:col-span-2 xl:col-span-4"
+                  >
+                    {horse.emergencyNotes}
+                  </DetailTextBlock>
+                )}
+              </DetailGrid>
+            </DashboardSection>
+          )}
 
-            <HorseCareRemindersCard
-              horse={horse}
-              onCreateActionChange={setHeaderAction}
-            />
-          </>
-        )}
-
-        {activeTab === 'health' && (
-          <HorseHealthIssuesCard
+          <HorseCareRemindersCard
             horse={horse}
             onCreateActionChange={setHeaderAction}
           />
-        )}
-      </DashboardSectionCard>
-    </DashboardSectionTabGroup>
+        </>
+      )}
+
+      {activeTab === 'health' && (
+        <HorseHealthIssuesCard
+          horse={horse}
+          onCreateActionChange={setHeaderAction}
+        />
+      )}
+    </HorseDetailSectionTabs>
   )
 }
 
 function CareContact({ label, value }: { label: string; value: string }) {
   return (
-    <DetailMetricBlock
+    <DetailTextBlock
       label={label}
-      value={value}
-      valueClassName="text-sm font-medium leading-6 tracking-normal"
-    />
+      bodyClassName="font-medium [overflow-wrap:anywhere]"
+    >
+      {value}
+    </DetailTextBlock>
   )
 }

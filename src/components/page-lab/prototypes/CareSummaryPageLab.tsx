@@ -11,7 +11,6 @@ import {
   PrintSummaryRecordPanel,
   PrintSummarySection,
 } from '#/components/dashboard/PrintSummary'
-import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { calculateHorseAge } from 'shared/horses/horseAge'
 
@@ -24,15 +23,10 @@ export function CareSummaryPageLab({ data }: { data: DashboardLabData }) {
   return (
     <PrintSummaryPage>
       <PrintSummaryHeader
-        title={`${horse.name} care summary`}
+        as="h2"
+        title="Care summary"
         description={`${data.stable.name} · Prepared for care handover`}
-        badges={<Badge variant="outline">Personal Pro</Badge>}
-        actions={
-          <>
-            <Button>Print summary</Button>
-            <Button variant="outline">Back to horse</Button>
-          </>
-        }
+        actions={<Button>Print summary</Button>}
       />
 
       <PrintSummarySection title="Profile and identification">

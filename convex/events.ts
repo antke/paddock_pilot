@@ -11,7 +11,6 @@ import {
   canManageCreatedRecord,
   canManageOwnedRecord,
 } from '../shared/stables/stableAccess'
-import { hasPersonalPlus } from './libs/entitlements'
 import {
   hasActiveHorse,
   isActiveHorse,
@@ -276,12 +275,9 @@ export const list = query({
       .query('stableMembers')
       .withIndex('by_user_id', (q) => q.eq('userId', user._id))
       .collect()
-    const canUseMemberStables = await hasPersonalPlus(ctx, user._id)
     const memberStables = await Promise.all(
       memberships
-        .filter(
-          (membership) => canUseMemberStables && membership.role === 'member',
-        )
+        .filter((membership) => membership.role === 'member')
         .map((membership) => ctx.db.get(membership.stableId)),
     )
     const stableIds = [
@@ -878,16 +874,13 @@ export const listPendingHorseInvitations = query({
       .query('stableMembers')
       .withIndex('by_user_id', (q) => q.eq('userId', user._id))
       .collect()
-    const canUseMemberStables = await hasPersonalPlus(ctx, user._id)
     const ownedStables = await ctx.db
       .query('stables')
       .withIndex('by_owner_id', (q) => q.eq('ownerId', user._id))
       .collect()
     const memberStables = await Promise.all(
       memberships
-        .filter(
-          (membership) => canUseMemberStables && membership.role === 'member',
-        )
+        .filter((membership) => membership.role === 'member')
         .map((membership) => ctx.db.get(membership.stableId)),
     )
     const accessibleStableIds = new Set([

@@ -67,6 +67,7 @@ function FieldGroup({
 }
 
 type FieldPanelGap = 'compact' | 'default'
+type FieldLabelSize = 'compact' | 'default'
 
 const fieldPanelGapClassNames = {
   compact: 'gap-2',
@@ -220,18 +221,25 @@ function FieldContent({ className, ...props }: React.ComponentProps<'div'>) {
 
 function FieldLabel({
   className,
+  htmlFor,
+  id,
   interactive = false,
+  size = 'default',
   width = 'fit',
   ...props
 }: React.ComponentProps<typeof Label> & {
   interactive?: boolean
+  size?: FieldLabelSize
   width?: 'fit' | 'full'
 }) {
   return (
     <Label
       data-slot="field-label"
+      htmlFor={htmlFor}
+      id={id ?? (htmlFor ? `${htmlFor}-label` : undefined)}
       className={cn(
-        'group/field-label peer/field-label flex gap-2 text-sm font-semibold leading-snug group-data-[disabled=true]/field:opacity-50 has-data-checked:border-primary/30 has-data-checked:bg-primary/5 has-[>[data-slot=field]]:rounded-lg has-[>[data-slot=field]]:border *:data-[slot=field]:p-2 dark:has-data-checked:border-primary/20 dark:has-data-checked:bg-primary/10',
+        'group/field-label peer/field-label flex gap-2 font-semibold leading-snug group-data-[disabled=true]/field:opacity-50 has-data-checked:border-primary/30 has-data-checked:bg-primary/5 has-[>[data-slot=field]]:rounded-lg has-[>[data-slot=field]]:border *:data-[slot=field]:p-2 dark:has-data-checked:border-primary/20 dark:has-data-checked:bg-primary/10',
+        size === 'default' ? 'text-sm' : 'text-xs',
         width === 'fit' ? 'w-fit' : 'w-full',
         interactive && 'cursor-pointer',
         'has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col',

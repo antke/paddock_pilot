@@ -1,4 +1,5 @@
-import { FormSection } from '#/components/forms/FormLayout'
+import { FormSection, FormStepHeader } from '#/components/forms/FormLayout'
+import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
 import { FormHelpTooltip } from '#/components/forms/FormHelpTooltip'
 import { HorseSelectionCard } from '#/components/horses/HorseCard'
 import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
@@ -15,6 +16,7 @@ import {
   FieldLabel,
   FieldLabelRow,
   FieldLegend,
+  FieldPanel,
   FieldSet,
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
@@ -22,7 +24,7 @@ import { RadioGroup, RadioGroupItem } from '#/components/ui/radio-group'
 import { Switch } from '#/components/ui/switch'
 import { Textarea } from '#/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group'
-import { cn } from '#/lib/utils'
+import { TextLabel } from '#/components/ui/text-label'
 import type { Id } from 'convex/_generated/dataModel'
 import { useEffect, useState } from 'react'
 import { Controller, useFormState, useWatch } from 'react-hook-form'
@@ -122,25 +124,19 @@ const simpleRecurrencePresetDescriptions = {
 const recurrenceEditorModeOptions = [
   {
     value: 'simple',
-    number: '01',
     label: 'Simple',
     description: 'Use a familiar daily, weekly, or monthly pattern.',
   },
   {
     value: 'advanced',
-    number: '02',
     label: 'Advanced',
     description: 'Control intervals, monthly rules, and when repeats end.',
   },
 ] satisfies Array<{
   value: RecurrenceEditorMode
-  number: string
   label: string
   description: string
 }>
-
-const advancedRecurrenceLabelClassName =
-  'text-xs font-bold text-muted-foreground'
 
 const ordinalLabels = {
   1: '1st',
@@ -508,51 +504,16 @@ function RecurrenceModeSelector({
 }) {
   return (
     <div className="grid gap-2">
-      <span className="text-xs font-bold tracking-[0.08em] text-muted-foreground uppercase">
-        Schedule setup
-      </span>
+      <TextLabel weight="semibold">Schedule setup</TextLabel>
 
-      <div
-        role="radiogroup"
+      <ChoiceButtonGroup
         aria-label="Schedule setup mode"
-        className="grid gap-2 sm:grid-cols-2"
-      >
-        {recurrenceEditorModeOptions.map((option) => {
-          const selected = value === option.value
-
-          return (
-            <button
-              key={option.value}
-              type="button"
-              role="radio"
-              aria-checked={selected}
-              disabled={disabled}
-              className={cn(
-                'app-control-focus app-row app-row-hover grid min-h-20 grid-cols-[auto_1fr] items-start gap-x-3 gap-y-1 bg-card p-4 text-left disabled:pointer-events-none disabled:opacity-50',
-                selected && 'border-primary bg-primary/8',
-              )}
-              onClick={() => onValueChange(option.value)}
-            >
-              <span
-                className={cn(
-                  'row-span-2 grid size-7 place-items-center rounded-control border border-border-subtle bg-surface-muted font-mono text-[0.6875rem] font-semibold text-muted-foreground',
-                  selected &&
-                    'border-primary bg-primary text-primary-foreground',
-                )}
-                aria-hidden="true"
-              >
-                {option.number}
-              </span>
-              <span className="font-display text-base leading-none font-black tracking-[-0.02em] text-foreground uppercase">
-                {option.label}
-              </span>
-              <span className="text-xs leading-relaxed text-muted-foreground">
-                {option.description}
-              </span>
-            </button>
-          )
-        })}
-      </div>
+        disabled={disabled}
+        layout="cards"
+        onValueChange={onValueChange}
+        options={recurrenceEditorModeOptions}
+        value={value}
+      />
     </div>
   )
 }
@@ -795,7 +756,8 @@ export function EventFormFields({
                 />
 
                 <FieldDescription>
-                  Leave blank for a one-day event.
+                  Leave blank for a one-day event. An end date includes that
+                  full day.
                 </FieldDescription>
                 {fieldState.invalid && (
                   <FieldError errors={[fieldState.error]} />
@@ -818,6 +780,10 @@ export function EventFormFields({
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
                 />
+
+                <FieldDescription>
+                  Enter the yard-local time used by your stable.
+                </FieldDescription>
 
                 {fieldState.invalid && (
                   <FieldError errors={[fieldState.error]} />
@@ -1102,16 +1068,14 @@ export function EventFormFields({
                 />
 
                 {recurrenceEditorMode === 'simple' && (
-                  <div className="grid gap-4 rounded-row border border-border-subtle bg-card p-4 sm:p-5">
-                    <div className="grid gap-1 border-b border-border-subtle pb-4">
-                      <span className="font-display text-base leading-none font-black tracking-[-0.02em] text-foreground uppercase">
-                        Choose a repeat pattern
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        Start with a common schedule, then choose weekdays when
-                        needed.
-                      </span>
-                    </div>
+                  <FieldPanel gap="default">
+                    <DashboardInlineHeader
+                      as="h3"
+                      className="border-b border-border-subtle pb-4"
+                      description="Start with a common schedule, then choose weekdays when needed."
+                      title="Choose a repeat pattern"
+                      titleSize="sm"
+                    />
 
                     <Field>
                       <FieldLabelRow>
@@ -1145,7 +1109,7 @@ export function EventFormFields({
                             <span className="text-sm font-bold">
                               {simpleRecurrencePresetLabels[preset]}
                             </span>
-                            <span className="text-[0.6875rem] leading-relaxed opacity-75">
+                            <span className="text-xs leading-relaxed opacity-75">
                               {simpleRecurrencePresetDescriptions[preset]}
                             </span>
                           </ToggleGroupItem>
@@ -1198,37 +1162,26 @@ export function EventFormFields({
                         )}
                       />
                     )}
-                  </div>
+                  </FieldPanel>
                 )}
 
                 {recurrenceEditorMode === 'advanced' && (
-                  <div className="grid gap-4 rounded-row border border-border-subtle bg-card p-4 sm:p-5">
-                    <div className="grid gap-1 border-b border-border-subtle pb-4">
-                      <span className="font-display text-base leading-none font-black tracking-[-0.02em] text-foreground uppercase">
-                        Build a custom schedule
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        Define the repeat pattern first, then decide when it
-                        ends.
-                      </span>
-                    </div>
+                  <FieldPanel gap="default">
+                    <DashboardInlineHeader
+                      as="h3"
+                      className="border-b border-border-subtle pb-4"
+                      description="Define the repeat pattern first, then decide when it ends."
+                      title="Build a custom schedule"
+                      titleSize="sm"
+                    />
 
                     <div className="grid gap-6 lg:grid-cols-2 lg:items-start lg:gap-0">
                       <div className="grid min-w-0 gap-5 lg:pr-6">
-                        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-                          <span
-                            className="row-span-2 grid size-7 place-items-center rounded-control border border-border-subtle bg-surface-muted font-mono text-[0.6875rem] font-semibold text-muted-foreground"
-                            aria-hidden="true"
-                          >
-                            01
-                          </span>
-                          <span className="text-xs font-bold tracking-[0.08em] text-foreground uppercase">
-                            Pattern
-                          </span>
-                          <span className="text-sm text-muted-foreground">
-                            Set the frequency, interval, and applicable days.
-                          </span>
-                        </div>
+                        <FormStepHeader
+                          number={1}
+                          title="Pattern"
+                          description="Set the frequency, interval, and applicable days."
+                        />
 
                         <div className="grid gap-5 md:grid-cols-[max-content_max-content] md:items-start md:justify-start md:gap-x-10">
                           <Controller
@@ -1236,9 +1189,7 @@ export function EventFormFields({
                             control={control}
                             render={({ field: frequencyField, fieldState }) => (
                               <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel
-                                  className={advancedRecurrenceLabelClassName}
-                                >
+                                <FieldLabel size="compact">
                                   Frequency
                                 </FieldLabel>
 
@@ -1451,7 +1402,7 @@ export function EventFormFields({
                                 >
                                   <FieldLabel
                                     htmlFor={intervalField.name}
-                                    className={advancedRecurrenceLabelClassName}
+                                    size="compact"
                                   >
                                     Interval
                                   </FieldLabel>
@@ -1506,11 +1457,7 @@ export function EventFormFields({
                                 control={control}
                                 render={({ field: daysField, fieldState }) => (
                                   <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel
-                                      className={
-                                        advancedRecurrenceLabelClassName
-                                      }
-                                    >
+                                    <FieldLabel size="compact">
                                       Days of week
                                     </FieldLabel>
 
@@ -1566,11 +1513,7 @@ export function EventFormFields({
                                     fieldState,
                                   }) => (
                                     <Field data-invalid={fieldState.invalid}>
-                                      <FieldLabel
-                                        className={
-                                          advancedRecurrenceLabelClassName
-                                        }
-                                      >
+                                      <FieldLabel size="compact">
                                         Repeat by
                                       </FieldLabel>
 
@@ -1701,9 +1644,7 @@ export function EventFormFields({
                                         >
                                           <FieldLabel
                                             htmlFor={dayField.name}
-                                            className={
-                                              advancedRecurrenceLabelClassName
-                                            }
+                                            size="compact"
                                           >
                                             Day of month
                                           </FieldLabel>
@@ -1768,11 +1709,7 @@ export function EventFormFields({
                                           <Field
                                             data-invalid={fieldState.invalid}
                                           >
-                                            <FieldLabel
-                                              className={
-                                                advancedRecurrenceLabelClassName
-                                              }
-                                            >
+                                            <FieldLabel size="compact">
                                               When a month does not have that
                                               date
                                             </FieldLabel>
@@ -1836,11 +1773,7 @@ export function EventFormFields({
                                         <Field
                                           data-invalid={fieldState.invalid}
                                         >
-                                          <FieldLabel
-                                            className={
-                                              advancedRecurrenceLabelClassName
-                                            }
-                                          >
+                                          <FieldLabel size="compact">
                                             Week of month
                                           </FieldLabel>
 
@@ -1896,11 +1829,7 @@ export function EventFormFields({
                                         <Field
                                           data-invalid={fieldState.invalid}
                                         >
-                                          <FieldLabel
-                                            className={
-                                              advancedRecurrenceLabelClassName
-                                            }
-                                          >
+                                          <FieldLabel size="compact">
                                             Weekday
                                           </FieldLabel>
 
@@ -1955,32 +1884,18 @@ export function EventFormFields({
                       </div>
 
                       <div className="grid min-w-0 gap-5 border-t border-border-subtle pt-5 lg:border-t-0 lg:pt-0 lg:pl-6">
-                        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-                          <span
-                            className="row-span-2 grid size-7 place-items-center rounded-control border border-border-subtle bg-surface-muted font-mono text-[0.6875rem] font-semibold text-muted-foreground"
-                            aria-hidden="true"
-                          >
-                            02
-                          </span>
-                          <span className="text-xs font-bold tracking-[0.08em] text-foreground uppercase">
-                            End condition
-                          </span>
-                          <span className="text-sm text-muted-foreground">
-                            Keep the schedule open, stop on a date, or limit the
-                            number of occurrences.
-                          </span>
-                        </div>
+                        <FormStepHeader
+                          number={2}
+                          title="End condition"
+                          description="Keep the schedule open, stop on a date, or limit the number of occurrences."
+                        />
 
                         <Controller
                           name="recurrence.end"
                           control={control}
                           render={({ field: endField, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
-                              <FieldLabel
-                                className={advancedRecurrenceLabelClassName}
-                              >
-                                Ends
-                              </FieldLabel>
+                              <FieldLabel size="compact">Ends</FieldLabel>
 
                               <RadioGroup
                                 value={endField.value?.type ?? 'never'}
@@ -2047,7 +1962,7 @@ export function EventFormFields({
                               <Field data-invalid={fieldState.invalid}>
                                 <FieldLabel
                                   htmlFor="recurrence-end-date"
-                                  className={advancedRecurrenceLabelClassName}
+                                  size="compact"
                                 >
                                   End date
                                 </FieldLabel>
@@ -2086,7 +2001,7 @@ export function EventFormFields({
                               <Field data-invalid={fieldState.invalid}>
                                 <FieldLabel
                                   htmlFor="recurrence-end-count"
-                                  className={advancedRecurrenceLabelClassName}
+                                  size="compact"
                                 >
                                   Occurrences
                                 </FieldLabel>
@@ -2121,18 +2036,16 @@ export function EventFormFields({
                         />
                       </div>
                     </div>
-                  </div>
+                  </FieldPanel>
                 )}
 
                 {recurrencePreview && (
-                  <div className="grid gap-1 border-l-4 border-l-primary py-1 pl-4">
-                    <span className="text-xs font-bold tracking-[0.08em] text-muted-foreground uppercase">
-                      Schedule summary
-                    </span>
+                  <FieldPanel gap="compact">
+                    <TextLabel weight="semibold">Schedule summary</TextLabel>
                     <p className="m-0 text-sm leading-relaxed text-foreground">
                       {recurrencePreview}
                     </p>
-                  </div>
+                  </FieldPanel>
                 )}
               </FieldSet>
             )

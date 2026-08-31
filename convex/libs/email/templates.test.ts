@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  createAccountDeletedEmail,
   createEventDetailsChangedEmail,
+  createStableInvitationAcceptedEmail,
   createStableInvitationEmail,
 } from './templates'
 
@@ -29,5 +31,26 @@ describe('email templates', () => {
 
     expect(email.html).toContain('Vet &amp; dentist')
     expect(email.html).toContain('&lt;North Yard&gt;')
+  })
+
+  it('sanitizes lifecycle subjects and escapes member names', () => {
+    const email = createStableInvitationAcceptedEmail({
+      appUrl: 'https://paddock.example',
+      memberName: '<Alex>\r\nBcc: someone@example.com',
+      stableId: 'stable',
+      stableName: 'Willow\nYard',
+    })
+
+    expect(email.subject).not.toMatch(/[\r\n]/)
+    expect(email.html).toContain('&lt;Alex&gt;')
+    expect(email.html).not.toContain('<Alex>')
+  })
+
+  it('creates a plain account-deletion confirmation without an app link', () => {
+    const email = createAccountDeletedEmail({ displayName: 'Alex' })
+
+    expect(email.category).toBe('account_deleted')
+    expect(email.text).toContain('has been deleted')
+    expect(email.html).not.toContain('href=')
   })
 })

@@ -32,7 +32,7 @@ import {
 } from '#/components/ui/navigation-menu'
 import { Field, FieldLabel } from '#/components/ui/field'
 import { Select } from '#/components/ui/select'
-import { isDevAuthBypassEnabled } from '#/lib/devAuthBypass'
+import { useDevAuthBypassEnabled } from '#/lib/devAuthBypass'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -50,22 +50,26 @@ type PageLabPageProps = {
 
 export function PageLabPage({ pageId }: PageLabPageProps) {
   const page = getPageLabPage(pageId)
+  const devAuthBypassEnabled = useDevAuthBypassEnabled()
+  const [activeFixtureStableId, setActiveFixtureStableId] = useState<
+    Doc<'stables'>['_id']
+  >()
 
-  if (isDevAuthBypassEnabled()) {
+  if (devAuthBypassEnabled) {
     if (!page) {
       return (
         <Navigate to="/page-lab/$page" params={{ page: 'stable-dashboard' }} />
       )
     }
 
-    const data = createDashboardLabFixtureData()
+    const data = createDashboardLabFixtureData(activeFixtureStableId)
 
     return (
       <LabPageShell width="wide">
         <PageLabControls
           pageId={page.id}
           data={data}
-          onActiveStableChange={() => undefined}
+          onActiveStableChange={setActiveFixtureStableId}
         />
 
         <LabPreviewSeparator />
@@ -244,6 +248,8 @@ function PageLabReviewSurface({
   data: DashboardLabData
   allEvents: Array<Doc<'events'>>
 }) {
+  const devAuthBypassEnabled = useDevAuthBypassEnabled()
+
   if (pageId === 'stable-dashboard') {
     return <StableDashboardPageLab data={data} />
   }
@@ -277,7 +283,7 @@ function PageLabReviewSurface({
   }
 
   if (pageId === 'analysis') {
-    if (isDevAuthBypassEnabled()) {
+    if (devAuthBypassEnabled) {
       return (
         <AnalysisCentre
           data={data}

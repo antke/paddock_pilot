@@ -3,11 +3,6 @@ import {
   DetailPrintField,
   DetailPrintListBlock,
 } from '#/components/dashboard/DetailBlocks'
-import {
-  FeatureAccessBackLink,
-  FeatureAccessPrompt,
-} from '#/components/dashboard/FeatureAccessPrompt'
-import { DashboardFeatureBadge } from '#/components/dashboard/DashboardBadges'
 import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
 import { DashboardSectionDivider } from '#/components/dashboard/DashboardSectionCard'
 import {
@@ -17,12 +12,11 @@ import {
   PrintSummaryPage,
   PrintSummaryRecordHeader,
   PrintSummaryRecordPanel,
-  PrintSummaryScreenOnly,
   PrintSummarySection,
 } from '#/components/dashboard/PrintSummary'
 import { calculateHorseAge } from 'shared/horses/horseAge'
 import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
-import { Button, ButtonLink } from '#/components/ui/button'
+import { Button } from '#/components/ui/button'
 import {
   formatMediumDateKey,
   formatMediumTimestampDate,
@@ -54,10 +48,7 @@ const shoeingStatusLabels = {
   full_set: 'Full set',
 } satisfies Record<NonNullable<Doc<'horses'>['shoeingStatus']>, string>
 
-export function HorseCareSummaryPage({
-  stableId,
-  horseId,
-}: HorseCareSummaryPageProps) {
+export function HorseCareSummaryPage({ horseId }: HorseCareSummaryPageProps) {
   const { data: summary } = useSuspenseQuery(
     convexQuery(api.horseCareSummary.getForHorse, { horseId }),
   )
@@ -67,23 +58,6 @@ export function HorseCareSummaryPage({
       <RouteEntityNotFoundAlert
         entity="horse"
         description="This care summary is no longer available."
-      />
-    )
-  }
-
-  if (!summary.hasAccess) {
-    return (
-      <FeatureAccessPrompt
-        title="Care summary is a Personal Pro feature"
-        description="Upgrade to create print-friendly horse summaries for vets, farriers, dentists, and emergency contacts."
-        secondaryAction={
-          <FeatureAccessBackLink
-            to="/stables/$stableId/horses/$horseId"
-            params={{ stableId, horseId }}
-          >
-            Back to horse
-          </FeatureAccessBackLink>
-        }
       />
     )
   }
@@ -100,31 +74,16 @@ export function HorseCareSummaryPage({
   return (
     <PrintSummaryPage>
       <PrintSummaryHeader
-        title={`${horse.name} care summary`}
-        badges={
-          <PrintSummaryScreenOnly>
-            <DashboardFeatureBadge variant="outline">
-              Personal Pro
-            </DashboardFeatureBadge>
-          </PrintSummaryScreenOnly>
-        }
+        as="h2"
+        title="Care summary"
         description={formatMetaText([
           stable.name,
           `Generated ${formatMediumTimestampDate(Date.now())}`,
         ])}
         actions={
-          <>
-            <Button type="button" onClick={() => window.print()}>
-              Print summary
-            </Button>
-            <ButtonLink
-              to="/stables/$stableId/horses/$horseId"
-              params={{ stableId, horseId }}
-              variant="outline"
-            >
-              Back to horse
-            </ButtonLink>
-          </>
+          <Button type="button" onClick={() => window.print()}>
+            Print summary
+          </Button>
         }
       />
 

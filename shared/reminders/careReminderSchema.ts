@@ -56,13 +56,13 @@ export const careReminderFormTargetTypeSchema = z.enum(
 export const careReminderTitleSchema = z
   .string()
   .trim()
-  .min(1, 'Title must have minimum 1 character.')
-  .max(120, 'Title cannot be longer than 120 characters.')
+  .min(1, 'Enter a reminder title.')
+  .max(120, 'Keep the title to 120 characters or fewer.')
 
 export const careReminderDescriptionSchema = z
   .string()
   .trim()
-  .max(1000, 'Description cannot be longer than 1000 characters.')
+  .max(1000, 'Keep notes to 1,000 characters or fewer.')
 
 export const careReminderDueDateSchema = z
   .string()

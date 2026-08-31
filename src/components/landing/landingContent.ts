@@ -126,12 +126,12 @@ export const landingFaqs = [
   {
     question: 'Can stable members use Paddock Pilot too?',
     answer:
-      'Stable member access is available with eligible plans. Access and billing depend on how each person is invited and configured, so review the current plan details before adding collaborators.',
+      'Yes. Stable members can accept an invitation and use the shared stable without a separate subscription. During testing, no payment is required.',
   },
   {
-    question: 'What does Personal Pro add?',
+    question: 'What does Premium add?',
     answer:
-      'Personal Pro adds the Analysis Centre, document storage, and printable care summaries. The Plans page remains the source of truth for current billing and availability.',
+      'The future premium plan adds the Analysis Centre. Documents, printable care summaries, and the rest of the current coordination toolkit remain core features.',
   },
   {
     question: 'Does Paddock Pilot replace veterinary advice?',

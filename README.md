@@ -86,6 +86,24 @@ Use `EMAIL_PROVIDER=console` explicitly when you want local email attempts to be
 recorded without being sent. Failed transient deliveries are retried after 1,
 5, and 30 minutes. Delivery and webhook records are retained for 30 days.
 
+Application-owned lifecycle email currently covers account welcome/deletion,
+stable invitations and acceptance, membership activation/removal, stable
+archival, and event participation/change notifications. Clerk remains
+responsible for authentication and billing emails.
+
+## Testing access and future premium analytics
+
+Stable membership and all operational features are subscription-independent.
+The Analysis Centre is also open while testing. To enforce the future Premium
+boundary later, set this in the Convex deployment environment:
+
+```text
+ENFORCE_PREMIUM_ANALYTICS=true
+```
+
+With enforcement enabled, an active `personal_pro` snapshot is required only
+for the Analysis Centre.
+
 ## Shadcn
 
 Add components using the latest version of [Shadcn](https://ui.shadcn.com/).

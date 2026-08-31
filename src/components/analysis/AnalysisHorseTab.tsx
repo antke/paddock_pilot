@@ -10,14 +10,14 @@ import {
 import { DashboardLayoutStack } from '#/components/dashboard/DashboardLayoutGrid'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import { DashboardSubsection } from '#/components/dashboard/DashboardSectionCard'
-import { DetailKeyValueRow } from '#/components/dashboard/DetailBlocks'
+import {
+  DetailKeyValueList,
+  DetailKeyValueRow,
+} from '#/components/dashboard/DetailBlocks'
 import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
 import { formatEventDate } from '#/components/events/eventDisplay'
 import { EventRow } from '#/components/events/EventRow'
-import {
-  CareReminderCategoryBadge,
-  CareReminderPriorityBadge,
-} from '#/components/reminders/CareReminderBadges'
+import { CareReminderPriorityBadge } from '#/components/reminders/CareReminderBadges'
 import { Badge } from '#/components/ui/badge'
 import { ScrollableList } from '#/components/ui/scrollable-list'
 import { formatMediumTimestampDate } from '#/lib/dateDisplay'
@@ -26,6 +26,7 @@ import { formatMetaText } from '#/lib/textDisplay'
 import { cn } from '#/lib/utils'
 import type { ComponentProps, ReactNode } from 'react'
 import { eventTypeLabels } from 'shared/events/eventSchema'
+import { careReminderCategoryLabels } from 'shared/reminders/careReminderSchema'
 import type { LabTimelineSignal } from './analysisCentreData'
 import type {
   LabHorseCareCadence,
@@ -315,7 +316,7 @@ function HorseHealthOverview({ analysis }: { analysis: LabHorseDeepDive }) {
         titleWeight="semibold"
       />
       {frequency ? (
-        <div className="grid gap-2 text-sm leading-5 text-muted-foreground">
+        <DetailKeyValueList>
           <DetailKeyValueRow
             label="Total records"
             value={frequency.totalCount}
@@ -329,7 +330,7 @@ function HorseHealthOverview({ analysis }: { analysis: LabHorseDeepDive }) {
           {frequency.latestNotedAt ? (
             <p>Noted {formatMediumTimestampDate(frequency.latestNotedAt)}</p>
           ) : null}
-        </div>
+        </DetailKeyValueList>
       ) : (
         <DashboardEmptyState chrome="soft">
           No health issue frequency data for this horse yet.
@@ -774,15 +775,12 @@ function HorseSignalRow({
 function HorseReminderRow({ reminder }: { reminder: HorseReminder }) {
   return (
     <DashboardItemCard chrome="soft" className="grid gap-2">
-      <DashboardInlineHeader
-        title={reminder.title}
-        aside={<CareReminderCategoryBadge category={reminder.category} />}
-        titleWeight="semibold"
-      />
+      <DashboardInlineHeader title={reminder.title} titleWeight="semibold" />
       <DashboardItemBodyText tone="muted">
-        Due {formatEventDate(reminder.dueDate)}
+        Due {formatEventDate(reminder.dueDate)} ·{' '}
+        {careReminderCategoryLabels[reminder.category]}
       </DashboardItemBodyText>
-      {reminder.priority ? (
+      {reminder.priority === 'high' ? (
         <CareReminderPriorityBadge priority={reminder.priority} />
       ) : null}
     </DashboardItemCard>
@@ -819,12 +817,15 @@ function HorseCadenceRow({ item }: { item: LabHorseCareCadence }) {
       <DashboardInlineHeader
         title={eventTypeLabels[item.type]}
         aside={
-          <Badge variant={item.overdue ? 'destructive' : 'outline'}>
-            Every {item.expectedDays} days
-          </Badge>
+          item.overdue ? (
+            <Badge variant="destructive">Overdue</Badge>
+          ) : undefined
         }
         titleWeight="semibold"
       />
+      <DashboardItemBodyText tone="muted">
+        Expected every {item.expectedDays} days.
+      </DashboardItemBodyText>
       {item.daysSinceLast !== undefined ? (
         <DashboardItemBodyText tone="muted">
           Last completed {item.daysSinceLast} days ago.

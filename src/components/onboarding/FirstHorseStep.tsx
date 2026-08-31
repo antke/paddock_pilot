@@ -265,7 +265,7 @@ function BirthPartField({
       control={control}
       render={({ field, fieldState }) => (
         <Field data-invalid={fieldState.invalid}>
-          <FieldLabel htmlFor={field.name} className="text-xs">
+          <FieldLabel htmlFor={field.name} size="compact">
             {label}
           </FieldLabel>
           <Input

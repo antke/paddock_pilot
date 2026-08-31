@@ -1,53 +1,61 @@
 import { StableDashboard } from '#/components/stables/StableDashboard'
-import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
+import {
+  RouteEntityNotFoundAlert,
+  RouteQueryErrorAlert,
+} from '#/components/layout/RouteStatusAlert'
 import { convexQuery } from '@convex-dev/react-query'
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useSuspenseQueries } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
+import type { ErrorComponentProps } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
-import type { Doc, Id } from 'convex/_generated/dataModel'
+import type { Id } from 'convex/_generated/dataModel'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
 
 export const Route = createFileRoute('/stables/_layout/$stableId/')({
   component: RouteComponent,
+  errorComponent: StableDashboardError,
 })
 
 function RouteComponent() {
   const { stableId } = Route.useParams()
-
-  const { data: stable } = useSuspenseQuery(
-    convexQuery(api.stables.get, { id: stableId as Id<'stables'> }),
-  )
+  const stableDocumentId = stableId as Id<'stables'>
+  const { today } = useLocalDateContext()
+  const [
+    { data: stable },
+    { data: stables },
+    { data: horses },
+    { data: events },
+    { data: overview },
+  ] = useSuspenseQueries({
+    queries: [
+      {
+        ...convexQuery(api.stables.get, { id: stableDocumentId }),
+        staleTime: Infinity,
+      },
+      { ...convexQuery(api.stables.list), staleTime: Infinity },
+      {
+        ...convexQuery(api.horses.list, { stableId: stableDocumentId }),
+        staleTime: Infinity,
+      },
+      {
+        ...convexQuery(api.events.listForStable, {
+          stableId: stableDocumentId,
+        }),
+        staleTime: Infinity,
+      },
+      {
+        ...convexQuery(api.userCareOverview.getForCurrentUser, {
+          stableId: stableDocumentId,
+          today,
+        }),
+        staleTime: Infinity,
+      },
+    ],
+  })
 
   if (!stable) {
     return <RouteEntityNotFoundAlert entity="stable" />
   }
-
-  return <StableDashboardData stableId={stableId} stable={stable} />
-}
-
-function StableDashboardData({
-  stableId,
-  stable,
-}: {
-  stableId: string
-  stable: Doc<'stables'>
-}) {
-  const { today } = useLocalDateContext()
-  const { data: stables } = useSuspenseQuery(convexQuery(api.stables.list))
-  const { data: horses } = useSuspenseQuery(
-    convexQuery(api.horses.list, { stableId: stableId as Id<'stables'> }),
-  )
-  const { data: events } = useSuspenseQuery(
-    convexQuery(api.events.listForStable, {
-      stableId: stableId as Id<'stables'>,
-    }),
-  )
-  const { data: overview } = useSuspenseQuery(
-    convexQuery(api.userCareOverview.getForCurrentUser, {
-      stableId: stable._id,
-      today,
-    }),
-  )
 
   return (
     <StableDashboard
@@ -56,6 +64,17 @@ function StableDashboardData({
       horses={horses}
       events={events}
       overview={overview}
+      todayKey={today}
+    />
+  )
+}
+
+function StableDashboardError({ reset }: ErrorComponentProps) {
+  return (
+    <RouteQueryErrorAlert
+      reset={reset}
+      title="The stable noticeboard couldn’t load"
+      description="Check your connection, then try again. Your stable records have not been changed."
     />
   )
 }

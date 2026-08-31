@@ -3,10 +3,7 @@ import { internal } from './_generated/api'
 import type { Doc } from './_generated/dataModel'
 import { internalMutation } from './_generated/server'
 import type { MutationCtx } from './_generated/server'
-import {
-  emailDeliveryProvider,
-  emailProviderEventStatus,
-} from './schema'
+import { emailDeliveryProvider, emailProviderEventStatus } from './schema'
 import {
   emailRetryDelaysMs,
   emailSendingLeaseMs,
@@ -28,11 +25,9 @@ const getProviderStatusPatch = (
   return {
     status,
     providerStatusAt: occurredAt,
-    deliveredAt:
-      status === 'delivered' ? occurredAt : delivery.deliveredAt,
+    deliveredAt: status === 'delivered' ? occurredAt : delivery.deliveredAt,
     bouncedAt: status === 'bounced' ? occurredAt : delivery.bouncedAt,
-    complainedAt:
-      status === 'complained' ? occurredAt : delivery.complainedAt,
+    complainedAt: status === 'complained' ? occurredAt : delivery.complainedAt,
     updatedAt: Date.now(),
   }
 }
@@ -42,11 +37,7 @@ const getInvitationDeliveryState = (
 ) => {
   if (status === 'skipped') return 'skipped' as const
   if (status === 'accepted' || status === 'delivered') return 'sent' as const
-  if (
-    status === 'bounced' ||
-    status === 'complained' ||
-    status === 'failed'
-  ) {
+  if (status === 'bounced' || status === 'complained' || status === 'failed') {
     return 'failed' as const
   }
   return 'queued' as const
@@ -86,14 +77,118 @@ const syncInvitationDelivery = async (
     deliveryStatus: state,
     deliveryError: getInvitationDeliveryError(delivery, state),
     deliveryAttempts: delivery.attempts,
-    lastSentAt:
-      wasAcceptedByProvider
-        ? now
-        : state === 'sent'
-          ? invitation.lastSentAt ?? now
-          : invitation.lastSentAt,
+    lastSentAt: wasAcceptedByProvider
+      ? now
+      : state === 'sent'
+        ? (invitation.lastSentAt ?? now)
+        : invitation.lastSentAt,
     updatedAt: now,
   })
+}
+
+const getDeliverySkipReason = async (
+  ctx: MutationCtx,
+  delivery: Doc<'emailDeliveries'>,
+) => {
+  const template = delivery.template
+  const relation = delivery.relation
+  if (!template) return null
+  if (!relation) return 'Email relation is missing.'
+
+  if (template.kind === 'stable_invitation') {
+    if (relation.type !== 'stableInvitation') {
+      return 'Invitation email relation is invalid.'
+    }
+    const invitation = await ctx.db.get(relation.id)
+    if (!invitation || invitation.token !== template.token) {
+      return 'Invitation link was replaced.'
+    }
+    if (invitation.status !== 'pending') {
+      return 'Invitation is no longer pending.'
+    }
+    if (invitation.expiresAt <= Date.now()) return 'Invitation expired.'
+    const stable = await ctx.db.get(invitation.stableId)
+    if (!stable || stable.archivedAt !== undefined) {
+      return 'Stable is no longer available.'
+    }
+    return null
+  }
+
+  if (
+    template.kind === 'stable_membership_activated' ||
+    template.kind === 'stable_invitation_accepted'
+  ) {
+    if (relation.type !== 'stableInvitation') {
+      return 'Membership email relation is invalid.'
+    }
+    const invitation = await ctx.db.get(relation.id)
+    if (
+      !invitation ||
+      invitation.status !== 'accepted' ||
+      !invitation.acceptedBy
+    ) {
+      return 'Membership is not active.'
+    }
+    const acceptedBy = invitation.acceptedBy
+    const membership = await ctx.db
+      .query('stableMembers')
+      .withIndex('by_stable_id_user_id', (q) =>
+        q.eq('stableId', invitation.stableId).eq('userId', acceptedBy),
+      )
+      .unique()
+    if (membership?.role !== 'member') return 'Membership is not active.'
+    const stable = await ctx.db.get(invitation.stableId)
+    if (!stable || stable.archivedAt !== undefined) {
+      return 'Stable is no longer available.'
+    }
+    return null
+  }
+
+  if (
+    template.kind === 'event_horse_invitation' ||
+    template.kind === 'event_participation_update' ||
+    template.kind === 'event_details_changed'
+  ) {
+    if (relation.type !== 'event' || relation.id !== template.eventId) {
+      return 'Event email relation is invalid.'
+    }
+    const event = await ctx.db.get(relation.id)
+    if (!event || event.stableId !== template.stableId) {
+      return 'Event is no longer available.'
+    }
+    const stable = await ctx.db.get(event.stableId)
+    if (!stable || stable.archivedAt !== undefined) {
+      return 'Stable is no longer available.'
+    }
+    return null
+  }
+
+  if (
+    template.kind === 'stable_membership_removed' ||
+    template.kind === 'stable_archived'
+  ) {
+    if (relation.type !== 'stable') return 'Stable email relation is invalid.'
+    const stable = await ctx.db.get(relation.id)
+    if (!stable) return 'Stable no longer exists.'
+    if (
+      template.kind === 'stable_archived' &&
+      stable.archivedAt === undefined
+    ) {
+      return 'Stable is not archived.'
+    }
+    return null
+  }
+
+  if (relation.type !== 'user') return 'Account email relation is invalid.'
+  const user = await ctx.db.get(relation.id)
+  if (!user) return 'Account no longer exists.'
+  if (template.kind === 'account_welcome' && user.deletedAt !== undefined) {
+    return 'Account is no longer active.'
+  }
+  if (template.kind === 'account_deleted' && user.deletedAt === undefined) {
+    return 'Account deletion is not complete.'
+  }
+  return null
 }
 
 export const prepareSend = internalMutation({
@@ -135,6 +230,27 @@ export const prepareSend = internalMutation({
         updatedAt: now,
       })
       await syncInvitationDelivery(ctx, failedDelivery)
+      return { shouldSend: false as const }
+    }
+
+    const skipReason = await getDeliverySkipReason(ctx, delivery)
+    if (skipReason) {
+      const skippedDelivery: Doc<'emailDeliveries'> = {
+        ...delivery,
+        provider: args.provider,
+        status: 'skipped',
+        error: skipReason,
+        nextAttemptAt: undefined,
+        updatedAt: now,
+      }
+      await ctx.db.patch(delivery._id, {
+        provider: args.provider,
+        status: 'skipped',
+        error: skipReason,
+        nextAttemptAt: undefined,
+        updatedAt: now,
+      })
+      await syncInvitationDelivery(ctx, skippedDelivery)
       return { shouldSend: false as const }
     }
 
@@ -291,11 +407,7 @@ export const recordProviderEvent = internalMutation({
     })
     if (!delivery) return
 
-    const patch = getProviderStatusPatch(
-      delivery,
-      args.status,
-      args.occurredAt,
-    )
+    const patch = getProviderStatusPatch(delivery, args.status, args.occurredAt)
     if (patch) {
       const updatedDelivery: Doc<'emailDeliveries'> = { ...delivery, ...patch }
       await ctx.db.patch(delivery._id, patch)

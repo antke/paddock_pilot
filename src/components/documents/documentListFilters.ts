@@ -10,7 +10,7 @@ import type { StableDocumentType } from 'shared/stables/stableDocumentSchema'
 
 import type { DocumentHorseOption, DocumentListItem } from './DocumentsCard'
 
-export type DocumentListFilterFacetId = 'horse' | 'type' | 'fileState'
+export type DocumentListFilterFacetId = 'scope' | 'type' | 'fileState'
 
 export function createDocumentListFilterConfig({
   horseOptions = [],
@@ -46,15 +46,20 @@ export function createDocumentListFilterConfig({
       ...(horseOptions.length > 0
         ? [
             {
-              id: 'horse' as const,
-              label: 'Horse',
-              allLabel: 'All horses',
-              options: horseOptions.map((horse) => ({
-                value: horse._id,
-                label: horse.name,
-              })),
+              id: 'scope' as const,
+              label: 'Scope',
+              allLabel: 'All documents',
+              options: [
+                { value: 'stable-wide', label: 'Stable-wide' },
+                ...horseOptions.map((horse) => ({
+                  value: horse._id,
+                  label: horse.name,
+                })),
+              ],
               matches: (item: DocumentListItem, selectedValue: string) =>
-                item.document.horseId === selectedValue,
+                selectedValue === 'stable-wide'
+                  ? !item.document.horseId
+                  : item.document.horseId === selectedValue,
             },
           ]
         : []),
@@ -84,8 +89,9 @@ const documentTypeFilterOptions = stableDocumentTypes.map((type) => ({
 })) satisfies ReadonlyArray<ListFilterOption>
 
 const fileStateFilterOptions = [
-  { value: 'uploaded-file', label: 'Uploaded file' },
-  { value: 'metadata-only', label: 'Metadata only' },
+  { value: 'uploaded-file', label: 'File attached' },
+  { value: 'unavailable', label: 'File unavailable' },
+  { value: 'metadata-only', label: 'No file attached' },
 ] satisfies ReadonlyArray<ListFilterOption>
 
 function isStableDocumentType(value: string): value is StableDocumentType {
@@ -93,8 +99,11 @@ function isStableDocumentType(value: string): value is StableDocumentType {
 }
 
 function matchesFileStateFilter(item: DocumentListItem, selectedValue: string) {
-  if (selectedValue === 'uploaded-file') return Boolean(item.fileUrl)
-  if (selectedValue === 'metadata-only') return !item.fileUrl
+  if (selectedValue === 'uploaded-file') return item.fileState === 'available'
+  if (selectedValue === 'unavailable') return item.fileState === 'unavailable'
+  if (selectedValue === 'metadata-only') {
+    return item.fileState === 'metadata-only'
+  }
 
   return false
 }

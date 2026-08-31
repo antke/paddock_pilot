@@ -9,7 +9,7 @@ import type {
   DashboardCommandData,
   DashboardCommandHorse,
 } from './dashboardTypes'
-import { ScrollableList } from '#/components/ui/scrollable-list'
+import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
 
 type HorseRosterCardProps = {
   className?: string
@@ -24,13 +24,12 @@ export function HorseRosterCard({
   visibleItemLimit = 5,
   chrome = 'cards',
 }: HorseRosterCardProps) {
+  const horses = data.horses.slice(0, visibleItemLimit)
+
   return (
     <DashboardSection
       chrome={chrome}
-      className={cn(
-        '@container/horse-roster max-h-[80vh] min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden',
-        className,
-      )}
+      className={cn('@container/horse-roster', className)}
       gap="compact"
       title="Horses"
       size="panel"
@@ -40,8 +39,9 @@ export function HorseRosterCard({
           <ButtonLink
             to="/stables/$stableId/horses/create"
             params={{ stableId: data.stable._id }}
-            variant="secondary"
+            action="create"
             size="sm"
+            className="min-h-11"
           >
             Add horse
           </ButtonLink>
@@ -50,6 +50,7 @@ export function HorseRosterCard({
             params={{ stableId: data.stable._id }}
             variant="outline"
             size="sm"
+            className="min-h-11"
           >
             View all horses
           </ButtonLink>
@@ -57,17 +58,14 @@ export function HorseRosterCard({
       }
     >
       {data.horses.length > 0 ? (
-        <ScrollableList
+        <DashboardItemList
           className="@min-[42rem]/horse-roster:grid-cols-2"
-          fillParent
-          itemCount={data.horses.length}
-          visibleItemLimit={visibleItemLimit}
-          estimatedItemHeightRem={5.5}
+          gap="compact"
         >
-          {data.horses.map((horse) => (
+          {horses.map((horse) => (
             <HorseRosterItem key={horse._id} data={data} horse={horse} />
           ))}
-        </ScrollableList>
+        </DashboardItemList>
       ) : (
         <NoHorsesPrompt stableId={data.stable._id} />
       )}

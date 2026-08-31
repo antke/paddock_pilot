@@ -9,7 +9,7 @@ type DashboardSectionHeaderProps = ComponentProps<typeof DashboardSectionHeader>
 type DashboardSectionGap = 'compact' | 'roomy' | 'default' | 'loose'
 type DashboardSectionPadding = 'default' | 'compact' | 'roomy' | 'none'
 type DashboardSectionSpan = 'lg2' | 'xl2' | 'xl3'
-type DashboardSectionTone = 'default' | 'brand'
+type DashboardSectionTone = 'default' | 'brand' | 'brandQuiet' | 'reference'
 type DashboardSectionContentAlign = 'default' | 'start'
 
 type DashboardSectionProps = Omit<
@@ -63,6 +63,10 @@ const dashboardSectionPaddingClassNames = {
 const dashboardSectionToneClassNames = {
   default: '',
   brand: 'bg-primary text-primary-foreground',
+  brandQuiet:
+    'border-brand-surface-border bg-brand-surface text-brand-surface-foreground [&_[data-slot=text-label]]:text-brand-surface-muted-foreground',
+  reference:
+    'border-border bg-card text-card-foreground [&_[data-slot=dashboard-display-heading]]:text-primary [&_[data-slot=text-label]]:text-primary',
 } satisfies Record<DashboardSectionTone, string>
 
 const dashboardSectionSpanClassNames = {

@@ -253,9 +253,9 @@ export function LandingOutcomeRail({
           <TextLabel as="span" className="text-muted-foreground">
             {item.label}
           </TextLabel>
-          <h2 className="font-display text-xl font-black uppercase leading-none">
+          <LandingTitle as="h2" size="panel">
             {item.title}
-          </h2>
+          </LandingTitle>
           <p className="text-sm leading-6 text-muted-foreground">
             {item.description}
           </p>
@@ -325,7 +325,7 @@ export function LandingFaqList({
     >
       {items.map((item) => (
         <details key={item.question} className="group">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 py-4 font-bold outline-none focus-visible:ring-2 focus-visible:ring-ring/25 [&::-webkit-details-marker]:hidden">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 py-4 font-bold outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
             {item.question}
             <CaretDown
               aria-hidden="true"

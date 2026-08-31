@@ -1,5 +1,4 @@
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
-import { DashboardBadgeList } from '#/components/dashboard/DashboardBadgeList'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import {
@@ -7,22 +6,29 @@ import {
   DashboardItemMediaCard,
 } from '#/components/dashboard/DashboardItemCard'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
-import { Button, ButtonAnchor } from '#/components/ui/button'
+import { ButtonAnchor } from '#/components/ui/button'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
+import { RecordRemoveAction } from '#/components/list-layout/RecordRemoveAction'
 import type { Doc, Id } from 'convex/_generated/dataModel'
 import { useState } from 'react'
 import type { ElementType, ReactNode } from 'react'
-import { DocumentMetadataOnlyBadge, DocumentTypeBadge } from './DocumentBadges'
+import { DocumentFileStateBadge } from './DocumentBadges'
+import { DocumentDownloadAction } from './DocumentDownloadAction'
 import { DocumentPreview } from './DocumentPreview'
 import { DocumentUploadForm } from './DocumentUploadForm'
 import type { DocumentUploadValues } from './DocumentUploadForm'
-import { formatFileSize } from '#/lib/numberDisplay'
+import { formatCountLabel, formatFileSize } from '#/lib/numberDisplay'
+import { formatMediumTimestampDate } from '#/lib/dateDisplay'
+import { formatConjunctionList } from '#/lib/textDisplay'
+import { stableDocumentTypeLabels } from 'shared/stables/stableDocumentSchema'
+import type { StableDocumentFileState } from 'shared/stables/stableDocumentSchema'
 
 export type DocumentListItem = {
   document: Omit<Doc<'stableDocuments'>, 'storageId'>
   horseName?: string
   eventTitle?: string
   fileUrl?: string | null
+  fileState: StableDocumentFileState
   canManage: boolean
 }
 
@@ -40,7 +46,6 @@ type DocumentsCardProps = {
   emptyMessage: ReactNode
   listToolbar?: ReactNode
   chrome?: DashboardChrome
-  rowChrome?: DashboardChrome
   onRemove: (id: Id<'stableDocuments'>) => Promise<void>
 }
 
@@ -92,24 +97,33 @@ export function DocumentsCard({
   emptyMessage,
   listToolbar,
   chrome = 'cards',
-  rowChrome = chrome,
   onRemove,
 }: DocumentsCardProps) {
-  const documentList =
-    documents.length === 0 ? (
-      <DashboardEmptyState chrome={chrome}>{emptyMessage}</DashboardEmptyState>
-    ) : (
-      <DashboardItemList gap="compact">
-        {documents.map((item) => (
-          <DocumentRow
-            key={item.document._id}
-            item={item}
-            chrome={rowChrome}
-            onRemove={onRemove}
-          />
-        ))}
-      </DashboardItemList>
-    )
+  const documentList = (
+    <>
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic>
+        {formatCountLabel(documents.length, 'document')}
+      </p>
+
+      {documents.length === 0 ? (
+        <DashboardEmptyState chrome={chrome}>
+          {emptyMessage}
+        </DashboardEmptyState>
+      ) : (
+        <DashboardItemList gap="compact" role="list">
+          {documents.map((item) => (
+            <div key={item.document._id} role="listitem" className="min-w-0">
+              <DocumentRow
+                item={item}
+                headingLevel={title ? 3 : 2}
+                onRemove={onRemove}
+              />
+            </div>
+          ))}
+        </DashboardItemList>
+      )}
+    </>
+  )
 
   if (chrome === 'soft') {
     return (
@@ -143,39 +157,48 @@ export function DocumentsCard({
 
 function DocumentRow({
   item,
-  chrome,
+  headingLevel,
   onRemove,
 }: {
   item: DocumentListItem
-  chrome: DashboardChrome
+  headingLevel: 2 | 3
   onRemove: (id: Id<'stableDocuments'>) => Promise<void>
 }) {
   const { document } = item
+  const RowHeading = headingLevel === 2 ? 'h2' : 'h3'
 
   return (
     <DashboardItemMediaCard
-      chrome={chrome}
-      media={<DocumentPreview document={document} fileUrl={item.fileUrl} />}
-      title={document.fileName}
-      titleSize="sm"
-      titleClassName="line-clamp-2 break-words"
+      chrome="cards"
+      interactive={false}
+      className="border-border"
+      media={
+        <DocumentPreview
+          document={document}
+          fileUrl={item.fileUrl}
+          fileState={item.fileState}
+        />
+      }
+      title={<RowHeading>{document.fileName}</RowHeading>}
+      titleClassName="line-clamp-none break-words [overflow-wrap:anywhere]"
       meta={
         <>
+          <span>{stableDocumentTypeLabels[document.type]}</span>
           <span>{getDocumentFormatLabel(document)}</span>
           {document.size !== undefined && (
             <span>{formatFileSize(document.size)}</span>
           )}
           {item.horseName && <span>{item.horseName}</span>}
           {item.eventTitle && <span>Linked to {item.eventTitle}</span>}
+          <span>Added {formatMediumTimestampDate(document.createdAt)}</span>
         </>
       }
       metaSeparator="dot"
-      summary={document.notes ?? ''}
+      summary={document.notes || undefined}
       badges={
-        <DashboardBadgeList align="end">
-          <DocumentTypeBadge type={document.type} />
-          {!item.fileUrl && <DocumentMetadataOnlyBadge />}
-        </DashboardBadgeList>
+        item.fileState !== 'available' ? (
+          <DocumentFileStateBadge fileState={item.fileState} />
+        ) : undefined
       }
       badgesClassName="ml-auto shrink-0"
       actions={
@@ -187,24 +210,43 @@ function DocumentRow({
               rel="noreferrer"
               variant="ghost"
               size="sm"
+              aria-label={`Open ${document.fileName} in a new tab`}
             >
-              Open
+              Open file
             </ButtonAnchor>
           )}
+          <DocumentDownloadAction
+            fileName={document.fileName}
+            fileUrl={item.fileUrl}
+            fileState={item.fileState}
+          />
           {item.canManage && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => onRemove(document._id)}
-            >
-              Remove
-            </Button>
+            <RecordRemoveAction
+              title={`Remove “${document.fileName}”?`}
+              description={getRemoveDescription(item)}
+              confirmLabel="Remove document"
+              onConfirm={() => onRemove(document._id)}
+            />
           )}
         </>
       }
     />
   )
+}
+
+function getRemoveDescription(item: DocumentListItem) {
+  const consequences = [
+    item.fileState !== 'metadata-only' ? 'the uploaded file' : undefined,
+    item.horseName ? `the link to ${item.horseName}` : undefined,
+    item.eventTitle ? `the link to ${item.eventTitle}` : undefined,
+  ]
+  const consequenceCopy = formatConjunctionList(consequences)
+
+  if (!consequenceCopy) {
+    return 'This document record will be removed permanently. This cannot be undone.'
+  }
+
+  return `Removing this document also removes ${consequenceCopy} permanently. This cannot be undone.`
 }
 
 function getDocumentFormatLabel(document: Doc<'stableDocuments'>) {
@@ -234,6 +276,7 @@ const documentExtensionLabels: Record<string, string> = {
   jpg: 'JPG',
   pdf: 'PDF',
   png: 'PNG',
+  svg: 'SVG',
   txt: 'TXT',
   webp: 'WEBP',
   xls: 'XLS',
@@ -251,6 +294,7 @@ const documentMimeTypeLabels: Record<string, string> = {
   'image/gif': 'GIF',
   'image/jpeg': 'JPEG',
   'image/png': 'PNG',
+  'image/svg+xml': 'SVG',
   'image/webp': 'WEBP',
   'text/csv': 'CSV',
   'text/plain': 'TXT',

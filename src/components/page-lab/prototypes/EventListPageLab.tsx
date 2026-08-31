@@ -22,7 +22,7 @@ export function EventListPageLab({ data }: EventListPageLabProps) {
           <ButtonLink
             to="/stables/$stableId/events/create"
             params={{ stableId: data.stable._id }}
-            variant="secondary"
+            action="create"
           >
             Add event
           </ButtonLink>

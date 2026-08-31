@@ -1,45 +1,32 @@
-import { DashboardPage } from '#/components/dashboard/DashboardPage'
-import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
-import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
-import { HorseList } from '#/components/horses/HorseList'
-import { ButtonLink } from '#/components/ui/button'
+import { HorseListPage } from '#/components/horses/HorseListPage'
+import { RouteQueryErrorAlert } from '#/components/layout/RouteStatusAlert'
+import { convexQuery } from '@convex-dev/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { DashboardActions } from '#/components/dashboard/DashboardActions'
+import type { ErrorComponentProps } from '@tanstack/react-router'
+import { api } from 'convex/_generated/api'
+import type { Id } from 'convex/_generated/dataModel'
 
 export const Route = createFileRoute('/stables/_layout/$stableId/horses/')({
   component: RouteComponent,
+  errorComponent: HorseListError,
 })
 
 function RouteComponent() {
   const { stableId } = Route.useParams()
+  const { data: horses } = useSuspenseQuery(
+    convexQuery(api.horses.list, { stableId: stableId as Id<'stables'> }),
+  )
 
+  return <HorseListPage horses={horses} stableId={stableId} />
+}
+
+function HorseListError({ reset }: ErrorComponentProps) {
   return (
-    <DashboardPage>
-      <DashboardPageHeader
-        title="Horses"
-        actions={
-          <DashboardActions>
-            <ButtonLink
-              to="/stables/$stableId/horses/deleted"
-              params={{ stableId }}
-              variant="outline"
-            >
-              Deleted horses
-            </ButtonLink>
-            <ButtonLink
-              to="/stables/$stableId/horses/create"
-              params={{ stableId }}
-              variant="secondary"
-            >
-              Add horse
-            </ButtonLink>
-          </DashboardActions>
-        }
-      />
-
-      <DashboardSectionCard contentGap="comfortable">
-        <HorseList stableId={stableId} />
-      </DashboardSectionCard>
-    </DashboardPage>
+    <RouteQueryErrorAlert
+      reset={reset}
+      title="The horse roster couldn’t load"
+      description="Check your connection, then try again. Your horse records have not been changed."
+    />
   )
 }

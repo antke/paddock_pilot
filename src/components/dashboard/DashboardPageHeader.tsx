@@ -1,10 +1,11 @@
-import type { ReactNode } from 'react'
+import type { ElementType, ReactNode } from 'react'
 
 import { cn } from '#/lib/utils'
 import { dashboardHeroClassName } from './dashboardChrome'
 import { DashboardActions } from './DashboardActions'
 import { DashboardBadgeList } from './DashboardBadgeList'
 import { DashboardDisplayHeading } from './DashboardDisplayHeading'
+import { DashboardHeaderRail } from './DashboardHeaderRail'
 
 type DashboardPageHeaderTitleSize = 'default' | 'detail'
 type DashboardPageHeaderDescriptionSize = 'sm' | 'base'
@@ -13,6 +14,7 @@ type DashboardPageHeaderContentLayout = 'center' | 'default' | 'wide'
 
 type DashboardPageHeaderProps = {
   title: ReactNode
+  as?: ElementType
   actions?: ReactNode
   actionsClassName?: string
   badges?: ReactNode
@@ -31,6 +33,7 @@ type DashboardPageHeaderProps = {
 
 export function DashboardPageHeader({
   title,
+  as,
   actions,
   actionsClassName,
   badges,
@@ -48,14 +51,8 @@ export function DashboardPageHeader({
 }: DashboardPageHeaderProps) {
   const contentLayoutClassName = {
     center: 'flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-center',
-    default:
-      'flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between',
-    wide: 'flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between',
-  } satisfies Record<DashboardPageHeaderContentLayout, string>
-  const actionsLayoutClassName = {
-    center: 'shrink-0 sm:justify-end',
-    default: 'shrink-0 sm:justify-end',
-    wide: 'shrink-0 lg:justify-end',
+    default: 'grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-stretch',
+    wide: 'grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-stretch',
   } satisfies Record<DashboardPageHeaderContentLayout, string>
 
   return (
@@ -74,20 +71,16 @@ export function DashboardPageHeader({
         >
           {leading}
 
-          <div className={cn('grid min-w-0 gap-2', headingClassName)}>
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <DashboardDisplayHeading
-                scale={titleSize === 'default' ? 'page' : 'section'}
-                className={titleClassName}
-              >
-                {title}
-              </DashboardDisplayHeading>
-              {badges && (
-                <DashboardBadgeList gap="compact" className="min-w-0">
-                  {badges}
-                </DashboardBadgeList>
-              )}
-            </div>
+          <div
+            className={cn('grid min-w-0 content-start gap-2', headingClassName)}
+          >
+            <DashboardDisplayHeading
+              as={as}
+              scale={titleSize === 'default' ? 'page' : 'section'}
+              className={titleClassName}
+            >
+              {title}
+            </DashboardDisplayHeading>
 
             {description && (
               <p
@@ -106,17 +99,29 @@ export function DashboardPageHeader({
           </div>
         </div>
 
-        {actions && (
-          <DashboardActions
-            align="start"
-            className={cn(
-              actionsLayoutClassName[contentLayout],
-              actionsClassName,
-            )}
-          >
-            {actions}
-          </DashboardActions>
-        )}
+        <DashboardHeaderRail
+          top={
+            badges ? (
+              <DashboardBadgeList
+                align="end"
+                gap="compact"
+                className="max-w-full"
+              >
+                {badges}
+              </DashboardBadgeList>
+            ) : undefined
+          }
+          bottom={
+            actions ? (
+              <DashboardActions
+                align="end"
+                className={cn('max-w-full justify-end', actionsClassName)}
+              >
+                {actions}
+              </DashboardActions>
+            ) : undefined
+          }
+        />
       </div>
     </header>
   )

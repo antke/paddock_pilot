@@ -18,11 +18,19 @@ describe('document list filters', () => {
       createDocumentItem({
         type: 'passport',
         fileUrl: 'https://example.com/passport.pdf',
+        fileState: 'available',
       }),
       createDocumentItem({
         fileName: 'Insurance note',
         type: 'insurance',
         fileUrl: null,
+        fileState: 'metadata-only',
+      }),
+      createDocumentItem({
+        fileName: 'Unavailable report',
+        type: 'vet_report',
+        fileUrl: null,
+        fileState: 'unavailable',
       }),
     ]
 
@@ -40,6 +48,13 @@ describe('document list filters', () => {
         state: { query: '', facets: { fileState: 'metadata-only' } },
       }).map((item) => item.document.fileName),
     ).toEqual(['Insurance note'])
+    expect(
+      filterListItems({
+        items: documents,
+        config,
+        state: { query: '', facets: { fileState: 'unavailable' } },
+      }).map((item) => item.document.fileName),
+    ).toEqual(['Unavailable report'])
   })
 
   it('searches document names, notes, and linked labels', () => {
@@ -68,7 +83,7 @@ describe('document list filters', () => {
     ).toEqual(['Farrier invoice'])
   })
 
-  it('adds a horse facet for stable-level document lists', () => {
+  it('adds a scope facet for stable-level document lists', () => {
     const config = createDocumentListFilterConfig({
       horseOptions: [
         { _id: juniperId, name: 'Juniper' },
@@ -85,21 +100,29 @@ describe('document list filters', () => {
       filterListItems({
         items: documents,
         config,
-        state: { query: '', facets: { horse: mapleId } },
+        state: { query: '', facets: { scope: mapleId } },
       }).map((item) => item.document.fileName),
     ).toEqual(['Maple passport'])
+    expect(
+      filterListItems({
+        items: documents,
+        config,
+        state: { query: '', facets: { scope: 'stable-wide' } },
+      }).map((item) => item.document.fileName),
+    ).toEqual(['Stable insurance'])
   })
 })
 
 function createDocumentItem({
   fileUrl = 'https://example.com/document.pdf',
+  fileState = fileUrl ? 'available' : 'metadata-only',
   horseName,
   eventTitle,
   ...documentOverrides
 }: Partial<Doc<'stableDocuments'>> &
   Pick<
     Partial<DocumentListItem>,
-    'fileUrl' | 'horseName' | 'eventTitle'
+    'fileUrl' | 'fileState' | 'horseName' | 'eventTitle'
   >): DocumentListItem {
   return {
     document: {
@@ -113,6 +136,7 @@ function createDocumentItem({
       ...documentOverrides,
     },
     fileUrl,
+    fileState,
     horseName,
     eventTitle,
     canManage: true,

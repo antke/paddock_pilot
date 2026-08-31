@@ -8,8 +8,8 @@ import { cn } from '#/lib/utils'
 const textLabelVariants = cva('uppercase text-muted-foreground', {
   variants: {
     size: {
-      nano: 'text-[10px]',
-      micro: 'text-[0.68rem]',
+      nano: 'text-xs',
+      micro: 'text-xs',
       xs: 'text-xs',
       sm: 'text-sm',
     },
@@ -19,21 +19,21 @@ const textLabelVariants = cva('uppercase text-muted-foreground', {
       black: 'font-black',
     },
     tracking: {
-      standard: 'tracking-normal',
-      tight: 'tracking-normal',
-      loose: 'tracking-normal',
-      wide: 'tracking-normal',
+      standard: 'tracking-[0.035em]',
+      tight: 'tracking-[0.015em]',
+      loose: 'tracking-[0.06em]',
+      wide: 'tracking-[0.08em]',
       none: '',
     },
   },
   defaultVariants: {
     size: 'xs',
-    weight: 'medium',
+    weight: 'semibold',
     tracking: 'standard',
   },
 })
 
-type TextLabelElement = 'span' | 'div' | 'p' | 'h3' | 'legend'
+type TextLabelElement = 'span' | 'div' | 'p' | 'h3' | 'legend' | 'dt'
 
 type TextLabelProps = HTMLAttributes<HTMLElement> &
   VariantProps<typeof textLabelVariants> & {
@@ -49,6 +49,7 @@ function TextLabel({
   ...props
 }: TextLabelProps) {
   return createElement(as, {
+    'data-slot': 'text-label',
     className: cn(textLabelVariants({ size, weight, tracking }), className),
     ...props,
   })

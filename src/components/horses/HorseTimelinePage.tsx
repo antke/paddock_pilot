@@ -1,21 +1,20 @@
 import { formatEventDateTime } from '#/components/events/eventDisplay'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
-import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import {
   DetailListBlock,
   DetailListGrid,
   DetailTextBlock,
 } from '#/components/dashboard/DetailBlocks'
-import { DashboardItemBodyText } from '#/components/dashboard/DashboardItemCard'
+import {
+  DashboardItemBodyText,
+  DashboardItemList,
+} from '#/components/dashboard/DashboardItemCard'
 import { DashboardMetaList } from '#/components/dashboard/DashboardMetaList'
-import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import {
   EventKindBadge,
   EventStatusBadge,
-  EventTypeBadge,
 } from '#/components/events/EventBadges'
-import { ButtonLink } from '#/components/ui/button'
 import { ActivityTimelineListEntry } from '#/components/timeline/ActivityTimeline'
 import {
   formatMediumDateKey,
@@ -26,19 +25,17 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import type { FunctionReturnType } from 'convex/server'
+import { eventTypeLabels } from 'shared/events/eventSchema'
 import {
-  BodyConditionScoreBadge,
   HealthIssueKindBadge,
   HealthIssueSeverityBadge,
   HealthIssueStatusBadge,
-  MedicationDosageBadge,
-  MedicationFrequencyBadge,
   MedicationRecordKindBadge,
   MedicationRecordStatusBadge,
-  NutritionLogDateBadge,
   NutritionLogKindBadge,
   WeightRecordKindBadge,
 } from './HorseCareBadges'
+import { horseHealthIssueSeverityLabels } from './horseCareLabels'
 
 type HorseTimeline = FunctionReturnType<typeof api.horseTimeline.listForHorse>
 type TimelineEntry = HorseTimeline['entries'][number]
@@ -48,10 +45,7 @@ type HorseTimelinePageProps = {
   horseId: string
 }
 
-export function HorseTimelinePage({
-  stableId,
-  horseId,
-}: HorseTimelinePageProps) {
+export function HorseTimelinePage({ horseId }: HorseTimelinePageProps) {
   const { data: timeline } = useSuspenseQuery(
     convexQuery(api.horseTimeline.listForHorse, {
       horseId: horseId as Id<'horses'>,
@@ -59,45 +53,31 @@ export function HorseTimelinePage({
   )
 
   return (
-    <DashboardPage>
-      <DashboardPageHeader
-        title="Horse timeline"
-        description={
-          timeline.horse
-            ? `Care history for ${timeline.horse.name}.`
-            : 'Care history for this horse.'
-        }
-        actions={
-          <ButtonLink
-            to="/stables/$stableId/horses/$horseId"
-            params={{ stableId, horseId }}
-            variant="outline"
-          >
-            Back to horse
-          </ButtonLink>
-        }
-      />
-
-      <DashboardSectionCard
-        size="panel"
-        contentGap="comfortable"
-      >
-        {timeline.entries.length === 0 ? (
-          <DashboardEmptyState chrome="cards">
-            No timeline entries are available for this horse yet.
-          </DashboardEmptyState>
-        ) : (
-          <div>
-            {timeline.entries.map((entry) => (
-              <TimelineEntryCard
-                key={`${entry.kind}-${entry.id}`}
-                entry={entry}
-              />
-            ))}
-          </div>
-        )}
-      </DashboardSectionCard>
-    </DashboardPage>
+    <DashboardSectionCard
+      title="Timeline"
+      description={
+        timeline.horse
+          ? `A chronological care history for ${timeline.horse.name}.`
+          : 'A chronological care history for this horse.'
+      }
+      size="panel"
+      contentGap="comfortable"
+    >
+      {timeline.entries.length === 0 ? (
+        <DashboardEmptyState chrome="soft" title="No timeline entries yet">
+          Events and care records will appear here as the yard adds them.
+        </DashboardEmptyState>
+      ) : (
+        <DashboardItemList gap="compact">
+          {timeline.entries.map((entry) => (
+            <TimelineEntryCard
+              key={`${entry.kind}-${entry.id}`}
+              entry={entry}
+            />
+          ))}
+        </DashboardItemList>
+      )}
+    </DashboardSectionCard>
   )
 }
 
@@ -132,8 +112,9 @@ function EventTimelineEntry({
       badges={
         <>
           <EventKindBadge />
-          <EventTypeBadge type={entry.eventType} />
-          <EventStatusBadge status={entry.status} />
+          {entry.status !== 'planned' && (
+            <EventStatusBadge status={entry.status} />
+          )}
         </>
       }
       title={entry.title}
@@ -142,6 +123,7 @@ function EventTimelineEntry({
           <span>
             {formatEventDateTime(entry.date, entry.time, entry.endDate)}
           </span>
+          <span>{eventTypeLabels[entry.eventType]}</span>
           {entry.providerName && <span>{entry.providerName}</span>}
         </>
       }
@@ -190,16 +172,21 @@ function HealthIssueTimelineEntry({
       badges={
         <>
           <HealthIssueKindBadge status={entry.status} />
-          {entry.severity && (
+          {entry.severity === 'high' && (
             <HealthIssueSeverityBadge severity={entry.severity} />
           )}
-          <HealthIssueStatusBadge status={entry.status} />
+          {entry.status === 'resolved' && (
+            <HealthIssueStatusBadge status={entry.status} />
+          )}
         </>
       }
       title={entry.title}
       meta={
         <>
           <span>Noted {formatMediumTimestampDate(entry.occurredAt)}</span>
+          {entry.severity && entry.severity !== 'high' && (
+            <span>{horseHealthIssueSeverityLabels[entry.severity]}</span>
+          )}
           {entry.resolvedAt && (
             <span>Resolved {formatMediumTimestampDate(entry.resolvedAt)}</span>
           )}
@@ -218,16 +205,16 @@ function WeightTimelineEntry({
   return (
     <ActivityTimelineListEntry
       accent="muted"
-      badges={
+      badges={<WeightRecordKindBadge />}
+      title={`${entry.weight} ${entry.unit}`}
+      meta={
         <>
-          <WeightRecordKindBadge />
+          <span>Measured {formatMediumTimestampDate(entry.occurredAt)}</span>
           {entry.bodyConditionScore !== undefined && (
-            <BodyConditionScoreBadge score={entry.bodyConditionScore} />
+            <span>BCS {entry.bodyConditionScore}/9</span>
           )}
         </>
       }
-      title={`${entry.weight} ${entry.unit}`}
-      meta={<span>Measured {formatMediumTimestampDate(entry.occurredAt)}</span>}
       description={entry.notes}
     />
   )
@@ -244,10 +231,8 @@ function MedicationTimelineEntry({
       badges={
         <>
           <MedicationRecordKindBadge status={entry.status} />
-          <MedicationRecordStatusBadge status={entry.status} />
-          <MedicationDosageBadge dosage={entry.dosage} />
-          {entry.frequency && (
-            <MedicationFrequencyBadge frequency={entry.frequency} />
+          {entry.status === 'completed' && (
+            <MedicationRecordStatusBadge status={entry.status} />
           )}
         </>
       }
@@ -255,6 +240,8 @@ function MedicationTimelineEntry({
       meta={
         <>
           <span>Started {formatMediumDateKey(entry.startDate)}</span>
+          <span>{entry.dosage}</span>
+          {entry.frequency && <span>{entry.frequency}</span>}
           {entry.endDate && (
             <span>Ended {formatMediumDateKey(entry.endDate)}</span>
           )}
@@ -278,15 +265,9 @@ function NutritionTimelineEntry({
   return (
     <ActivityTimelineListEntry
       accent="primary"
-      badges={
-        <>
-          <NutritionLogKindBadge />
-          <NutritionLogDateBadge
-            dateLabel={formatMediumTimestampDate(entry.occurredAt)}
-          />
-        </>
-      }
+      badges={<NutritionLogKindBadge />}
       title={entry.summary}
+      meta={<span>Logged {formatMediumTimestampDate(entry.occurredAt)}</span>}
       description={entry.notes}
     >
       {entry.feedingRoutineSnapshot && (

@@ -1,10 +1,10 @@
 import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
 import { query } from './_generated/server'
-import { hasPersonalPro } from './libs/entitlements'
 import { assertCanViewStable } from './libs/stablePermissions'
 
-const isEvent = (event: Doc<'events'> | null): event is Doc<'events'> => event !== null
+const isEvent = (event: Doc<'events'> | null): event is Doc<'events'> =>
+  event !== null
 
 const isConfirmedEventHorse = (row: Doc<'eventsHorses'>) =>
   row.status === undefined || row.status === 'confirmed'
@@ -24,16 +24,6 @@ export const getForHorse = query({
     if (!horse) return { horse: null, hasAccess: true as const }
 
     const access = await assertCanViewStable(ctx, horse.stableId)
-    const hasAccess = await hasPersonalPro(ctx, access.userId)
-
-    if (!hasAccess) {
-      return {
-        hasAccess: false as const,
-        requiredPlan: 'personal_pro' as const,
-        stable: access.stable,
-        horse,
-      }
-    }
 
     const [
       healthIssues,
@@ -43,31 +33,31 @@ export const getForHorse = query({
       documents,
       eventRows,
     ] = await Promise.all([
-        ctx.db
-          .query('horseHealthIssues')
-          .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-          .collect(),
-        ctx.db
-          .query('horseMedicationRecords')
-          .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-          .collect(),
-        ctx.db
-          .query('horseWeightRecords')
-          .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-          .collect(),
-        ctx.db
-          .query('horseNutritionLogs')
-          .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-          .collect(),
-        ctx.db
-          .query('stableDocuments')
-          .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-          .collect(),
-        ctx.db
-          .query('eventsHorses')
-          .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-          .collect(),
-      ])
+      ctx.db
+        .query('horseHealthIssues')
+        .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
+        .collect(),
+      ctx.db
+        .query('horseMedicationRecords')
+        .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
+        .collect(),
+      ctx.db
+        .query('horseWeightRecords')
+        .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
+        .collect(),
+      ctx.db
+        .query('horseNutritionLogs')
+        .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
+        .collect(),
+      ctx.db
+        .query('stableDocuments')
+        .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
+        .collect(),
+      ctx.db
+        .query('eventsHorses')
+        .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
+        .collect(),
+    ])
     const confirmedEventRows = eventRows.filter(isConfirmedEventHorse)
     const events = await Promise.all(
       confirmedEventRows.map((row) => ctx.db.get(row.eventId)),

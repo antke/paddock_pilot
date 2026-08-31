@@ -1,7 +1,5 @@
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
-import { DashboardSectionTabGroup } from '#/components/dashboard/DashboardNavigation'
-import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import { EventRow } from '#/components/events/EventRow'
 import {
   getListFilterEmptyMessage,
@@ -16,18 +14,12 @@ import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { HorseDetailSectionProps } from './HorseDetail'
 import { createHorseActivityListFilterConfig } from './horseDetailListFilters'
+import { HorseDetailSectionTabs } from './HorseDetailSectionTabs'
 
 const compactVisibleItemLimit = 5
 const expandedVisibleItemLimit = 12
 
 type ActivityTab = 'upcoming' | 'past'
-
-type ActivityTabItem = {
-  id: ActivityTab
-  label: string
-  title: string
-  description: string
-}
 
 const activityTabs = [
   {
@@ -43,12 +35,7 @@ const activityTabs = [
     title: 'Past events',
     description: 'Completed or earlier activity for this horse.',
   },
-] satisfies Array<ActivityTabItem>
-
-const activityTabDetails = {
-  upcoming: activityTabs[0],
-  past: activityTabs[1],
-} satisfies Record<ActivityTab, ActivityTabItem>
+] as const
 
 export function HorseActivitySection({
   stableId,
@@ -56,7 +43,6 @@ export function HorseActivitySection({
 }: HorseDetailSectionProps) {
   const [activeTab, setActiveTab] = useState<ActivityTab>('upcoming')
   const [pastEventsExpanded, setPastEventsExpanded] = useState(false)
-  const activeTabDetails = activityTabDetails[activeTab]
   const today = getTodayDateKey()
   const upcomingEvents = events
     .filter((event) => event.date >= today)
@@ -75,102 +61,93 @@ export function HorseActivitySection({
   })
 
   return (
-    <DashboardSectionTabGroup
+    <HorseDetailSectionTabs
       activeId={activeTab}
       items={activityTabs}
       onSelect={setActiveTab}
+      actions={
+        <ButtonLink
+          to="/stables/$stableId/events/create"
+          params={{ stableId }}
+          action="create"
+        >
+          Add event
+        </ButtonLink>
+      }
     >
-      <DashboardSection
-        chrome="cards"
-        title={activeTabDetails.title}
-        description={activeTabDetails.description}
-        actions={
-          <ButtonLink
-            to="/stables/$stableId/events/create"
-            params={{ stableId }}
-            variant="secondary"
-          >
-            Add event
-          </ButtonLink>
-        }
-        titleStyle="display"
-      >
-        {activeTab === 'upcoming' ? (
-          <ListFilterLayout
-            controls={
-              <ListFilterControls
-                config={filterConfig}
-                filtering={filtering}
-                hideWhenEmpty
-              />
-            }
-          >
-            <ActivityEventList
-              stableId={stableId}
-              events={filtering.items}
-              emptyTitle={getListFilterEmptyMessage({
-                filtering,
-                emptyMessage: 'No upcoming activity for this horse.',
-                filteredEmptyMessage:
-                  'No upcoming activity matches these filters.',
-              })}
-              emptyDescription={getListFilterEmptyMessage({
-                filtering,
-                emptyMessage:
-                  'Create an event and select this horse to show it here.',
-                filteredEmptyMessage:
-                  'Adjust the search or filters to see more activity.',
-              })}
-              visibleItemLimit={compactVisibleItemLimit}
+      {activeTab === 'upcoming' ? (
+        <ListFilterLayout
+          controls={
+            <ListFilterControls
+              config={filterConfig}
+              filtering={filtering}
+              hideWhenEmpty
             />
-          </ListFilterLayout>
-        ) : (
-          <ListFilterLayout
-            controls={
-              <ListFilterControls
-                config={filterConfig}
-                filtering={filtering}
-                hideWhenEmpty
-              />
-            }
-            actions={
-              filtering.items.length > compactVisibleItemLimit ? (
-                <DashboardActions>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setPastEventsExpanded((expanded) => !expanded)
-                    }
-                  >
-                    {pastEventsExpanded ? 'Compact list' : 'Expand list'}
-                  </Button>
-                </DashboardActions>
-              ) : undefined
-            }
-          >
-            <ActivityEventList
-              stableId={stableId}
-              events={filtering.items}
-              emptyTitle={getListFilterEmptyMessage({
-                filtering,
-                emptyMessage: 'No past events yet.',
-                filteredEmptyMessage: 'No past activity matches these filters.',
-              })}
-              emptyDescription={getListFilterEmptyMessage({
-                filtering,
-                emptyMessage:
-                  'Past activity will appear here once event dates have passed.',
-                filteredEmptyMessage:
-                  'Adjust the search or filters to see more activity.',
-              })}
-              visibleItemLimit={pastEventsVisibleItemLimit}
+          }
+        >
+          <ActivityEventList
+            stableId={stableId}
+            events={filtering.items}
+            emptyTitle={getListFilterEmptyMessage({
+              filtering,
+              emptyMessage: 'No upcoming activity for this horse.',
+              filteredEmptyMessage:
+                'No upcoming activity matches these filters.',
+            })}
+            emptyDescription={getListFilterEmptyMessage({
+              filtering,
+              emptyMessage:
+                'Create an event and select this horse to show it here.',
+              filteredEmptyMessage:
+                'Adjust the search or filters to see more activity.',
+            })}
+            visibleItemLimit={compactVisibleItemLimit}
+          />
+        </ListFilterLayout>
+      ) : (
+        <ListFilterLayout
+          controls={
+            <ListFilterControls
+              config={filterConfig}
+              filtering={filtering}
+              hideWhenEmpty
             />
-          </ListFilterLayout>
-        )}
-      </DashboardSection>
-    </DashboardSectionTabGroup>
+          }
+          actions={
+            filtering.items.length > compactVisibleItemLimit ? (
+              <DashboardActions>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPastEventsExpanded((expanded) => !expanded)}
+                >
+                  {pastEventsExpanded ? 'Compact list' : 'Expand list'}
+                </Button>
+              </DashboardActions>
+            ) : undefined
+          }
+        >
+          <ActivityEventList
+            stableId={stableId}
+            events={filtering.items}
+            emptyTitle={getListFilterEmptyMessage({
+              filtering,
+              emptyMessage: 'No past events yet.',
+              filteredEmptyMessage: 'No past activity matches these filters.',
+            })}
+            emptyDescription={getListFilterEmptyMessage({
+              filtering,
+              emptyMessage:
+                'Past activity will appear here once event dates have passed.',
+              filteredEmptyMessage:
+                'Adjust the search or filters to see more activity.',
+            })}
+            visibleItemLimit={pastEventsVisibleItemLimit}
+          />
+        </ListFilterLayout>
+      )}
+    </HorseDetailSectionTabs>
   )
 }
 
@@ -199,8 +176,8 @@ function ActivityEventList({
 
   return (
     <ScrollableList
-      className="gap-0"
-      estimatedItemHeightRem={7}
+      className="gap-3"
+      estimatedItemHeightRem={7.5}
       itemCount={events.length}
       visibleItemLimit={visibleItemLimit}
     >

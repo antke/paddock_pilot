@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { useAppUserState } from '#/components/layout/AppUserStateProvider'
 import { ButtonLink, buttonVariants } from '#/components/ui/button'
 import { cn } from '#/lib/utils'
-import { isDevAuthBypassEnabled } from '#/lib/devAuthBypass'
+import { useDevAuthBypassEnabled } from '#/lib/devAuthBypass'
 import { Link, useLocation } from '@tanstack/react-router'
 import ClerkHeader from '../integrations/clerk/header-user.tsx'
 import {
@@ -17,16 +17,18 @@ import {
 import ThemeToggle from './ThemeToggle'
 
 export default function Header() {
+  const devAuthBypassEnabled = useDevAuthBypassEnabled()
+
   return (
     <AppHeader>
       <AppHeaderNav aria-label="Primary navigation">
         <AppBrandLink>Paddock Pilot</AppBrandLink>
 
-        <HeaderNavigation />
+        <HeaderNavigation devAuthBypassEnabled={devAuthBypassEnabled} />
 
         <AppHeaderActions>
           <AppHeaderUtilityCluster>
-            <HeaderAccountActions />
+            <HeaderAccountActions devAuthBypassEnabled={devAuthBypassEnabled} />
             <ThemeToggle />
           </AppHeaderUtilityCluster>
         </AppHeaderActions>
@@ -35,8 +37,12 @@ export default function Header() {
   )
 }
 
-function HeaderAccountActions() {
-  if (isDevAuthBypassEnabled()) return <ClerkHeader />
+function HeaderAccountActions({
+  devAuthBypassEnabled,
+}: {
+  devAuthBypassEnabled: boolean
+}) {
+  if (devAuthBypassEnabled) return <ClerkHeader />
 
   return (
     <>
@@ -56,7 +62,11 @@ function HeaderAccountActions() {
   )
 }
 
-function HeaderNavigation() {
+function HeaderNavigation({
+  devAuthBypassEnabled,
+}: {
+  devAuthBypassEnabled: boolean
+}) {
   const { activeStable } = useAppUserState()
 
   const signedInNavigation = activeStable ? (
@@ -72,7 +82,7 @@ function HeaderNavigation() {
 
   return (
     <div className="order-3 flex w-full items-center gap-1 sm:order-none sm:w-auto">
-      {isDevAuthBypassEnabled() ? (
+      {devAuthBypassEnabled ? (
         <>
           <HeaderNavigationLink to="/" exact>
             Home

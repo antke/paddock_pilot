@@ -55,6 +55,15 @@ export const hasPersonalPro = async (ctx: Ctx, userId: Id<'users'>) => {
   return subscription?.plan === 'personal_pro'
 }
 
+export const hasPremiumAnalyticsAccess = async (
+  ctx: Ctx,
+  userId: Id<'users'>,
+) => {
+  if (process.env.ENFORCE_PREMIUM_ANALYTICS !== 'true') return true
+
+  return await hasPersonalPro(ctx, userId)
+}
+
 export const assertHasPersonalPlus = async (ctx: Ctx, userId: Id<'users'>) => {
   if (await hasPersonalPlus(ctx, userId)) return
 

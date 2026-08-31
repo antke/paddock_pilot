@@ -1,7 +1,7 @@
 import { Show, SignInButton, UserButton } from '@clerk/tanstack-react-start'
 
 import { useAppUserState } from '#/components/layout/AppUserStateProvider'
-import { isDevAuthBypassEnabled } from '#/lib/devAuthBypass'
+import { useDevAuthBypassEnabled } from '#/lib/devAuthBypass'
 import { TextLabel } from '#/components/ui/text-label'
 import {
   DropdownMenu,
@@ -31,7 +31,9 @@ import { api } from 'convex/_generated/api'
 import { useQuery } from 'convex/react'
 
 export default function HeaderUser() {
-  if (isDevAuthBypassEnabled()) {
+  const devAuthBypassEnabled = useDevAuthBypassEnabled()
+
+  if (devAuthBypassEnabled) {
     return (
       <TextLabel
         weight="semibold"

@@ -1,11 +1,13 @@
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
+import type { ErrorComponentProps } from '@tanstack/react-router'
 
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { AuthStateSwitch } from '#/components/layout/AuthStateSwitch'
+import { RouteQueryErrorAlert } from '#/components/layout/RouteStatusAlert'
 import { SignedOutRoutePrompt } from '#/components/layout/SignedOutRoutePrompt'
 import { AccountProfileForm } from '#/components/onboarding/AccountProfileForm'
 import { showAppSuccessToast } from '#/components/ui/sonner'
@@ -13,6 +15,7 @@ import { api } from 'convex/_generated/api'
 
 export const Route = createFileRoute('/profile')({
   component: ProfileRoute,
+  errorComponent: ProfileError,
 })
 
 function ProfileRoute() {
@@ -38,16 +41,9 @@ function ProfilePage() {
 
   return (
     <DashboardPage>
-      <DashboardPageHeader
-        title="Your profile"
-        description="Keep one identity across every stable you own or join. Stable-specific emergency details remain with each membership."
-      />
+      <DashboardPageHeader title="Your profile" />
 
-      <DashboardSectionCard
-        title="About you"
-        description="These details help people recognise and contact you across Paddock Pilot."
-        contentGap="comfortable"
-      >
+      <DashboardSectionCard title="Profile details" contentGap="comfortable">
         <AccountProfileForm
           initialValues={{
             displayName: profile.displayName,
@@ -59,5 +55,16 @@ function ProfilePage() {
         />
       </DashboardSectionCard>
     </DashboardPage>
+  )
+}
+
+function ProfileError({ reset }: ErrorComponentProps) {
+  return (
+    <RouteQueryErrorAlert
+      reset={reset}
+      title="Your profile couldn’t load"
+      description="Check your connection, then try again. Your profile has not been changed."
+      width="narrow"
+    />
   )
 }

@@ -2,8 +2,6 @@ import { Badge } from '#/components/ui/badge'
 import { cn } from '#/lib/utils'
 import type { Doc } from 'convex/_generated/dataModel'
 import type { ComponentProps } from 'react'
-import { stableProviderTypeLabels } from 'shared/stables/stableProviderSchema'
-import type { StableProviderType } from 'shared/stables/stableProviderSchema'
 
 type StableBadgeProps = Omit<ComponentProps<typeof Badge>, 'children' | 'size'>
 
@@ -36,45 +34,6 @@ export function StableMemberRoleBadge({
       {...props}
     >
       {stableMemberRoleLabels[role]}
-    </Badge>
-  )
-}
-
-export function StableProviderTypeBadge({
-  type,
-  ...props
-}: StableBadgeProps & {
-  type: StableProviderType
-}) {
-  return (
-    <Badge variant="outline" {...props}>
-      {stableProviderTypeLabels[type]}
-    </Badge>
-  )
-}
-
-export function StableNameBadge({
-  name,
-  ...props
-}: StableBadgeProps & {
-  name: string
-}) {
-  return (
-    <Badge variant="neutral" {...props}>
-      {name}
-    </Badge>
-  )
-}
-
-export function StableSetupStatusBadge({
-  complete,
-  ...props
-}: StableBadgeProps & {
-  complete: boolean
-}) {
-  return (
-    <Badge variant={complete ? 'success' : 'neutral'} {...props}>
-      {complete ? 'Complete' : 'To do'}
     </Badge>
   )
 }

@@ -5,10 +5,7 @@ import {
 import { useListFiltering } from '#/components/list-filtering/useListFiltering'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import {
-  showAppErrorToast,
-  showAppSuccessToast,
-} from '#/components/ui/sonner'
+import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
@@ -122,6 +119,7 @@ const completeWithToast = async (
     })
   } catch (err) {
     showAppErrorToast()
+    throw err
   }
 }
 
@@ -139,6 +137,7 @@ const dismissWithToast = async (
     })
   } catch (err) {
     showAppErrorToast()
+    throw err
   }
 }
 
@@ -156,5 +155,6 @@ const removeWithToast = async (
     })
   } catch (err) {
     showAppErrorToast()
+    throw err
   }
 }

@@ -1,18 +1,17 @@
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
-import { EventRow } from '#/components/events/EventRow'
-import { CareReminderCategoryBadge } from '#/components/reminders/CareReminderBadges'
 import { formatShortDateKey } from '#/lib/dateDisplay'
-import { cn } from '#/lib/utils'
+import { careReminderCategoryLabels } from 'shared/reminders/careReminderSchema'
 import type {
   DashboardCommandChrome,
   DashboardCommandData,
 } from './dashboardTypes'
 import {
   DashboardItemCardContent,
+  DashboardItemList,
   DashboardItemLinkCard,
 } from '#/components/dashboard/DashboardItemCard'
-import { ScrollableList } from '#/components/ui/scrollable-list'
+import { ButtonLink } from '#/components/ui/button'
 
 type PriorityQueueCardProps = {
   className?: string
@@ -28,89 +27,62 @@ export function PriorityQueueCard({
   chrome = 'cards',
 }: PriorityQueueCardProps) {
   const recordChrome = 'soft' as const
-  const rows = [
-    ...data.dueReminders.map((reminder) => ({
-      kind: 'reminder' as const,
-      id: reminder.id,
-      title: reminder.title,
-      meta: `${reminder.overdue ? 'Overdue' : 'Due'} ${formatShortDateKey(reminder.dueDate)}`,
-      badge: <CareReminderCategoryBadge category={reminder.category} />,
-      tone: reminder.overdue ? 'urgent' : 'due',
-      to: '/stables/$stableId/reminders' as const,
-      params: { stableId: reminder.stableId },
-    })),
-    ...data.upcomingEvents.map((event) => ({
-      kind: 'event' as const,
-      id: event.id,
-      event,
-      tone: 'planned',
-    })),
-  ]
+  const reminders = data.dueReminders.slice(0, visibleItemLimit)
 
   return (
     <DashboardSection
       chrome={chrome}
-      className={cn(
-        'max-h-[80vh] min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden',
-        className,
-      )}
+      className={className}
       gap="compact"
       padding={chrome === 'cards' ? 'roomy' : 'default'}
-      title="Priority queue"
+      title="Needs attention"
+      description="Due and overdue care tasks."
+      descriptionSize="sm"
       size="panel"
+      actions={
+        <ButtonLink
+          to="/stables/$stableId/reminders"
+          params={{ stableId: data.stable._id }}
+          variant="outline"
+          size="sm"
+          className="min-h-11"
+        >
+          View reminders
+        </ButtonLink>
+      }
     >
-      {rows.length === 0 ? (
+      {reminders.length === 0 ? (
         <DashboardEmptyState chrome={chrome}>
-          Nothing urgent for this stable.
+          No care tasks need attention.
         </DashboardEmptyState>
       ) : (
-        <ScrollableList
-          estimatedItemHeightRem={5.25}
-          fillParent
-          itemCount={rows.length}
-          visibleItemLimit={visibleItemLimit}
-        >
-          {rows.map((row) => {
-            if (row.kind === 'event') {
-              return (
-                <EventRow
-                  key={`${row.tone}-${row.id}`}
-                  event={{
-                    _id: row.event.id,
-                    stableId: row.event.stableId,
-                    title: row.event.title,
-                    date: row.event.date,
-                    time: row.event.time,
-                    type: row.event.type,
-                    status: 'planned',
-                  }}
-                  accent="primary"
-                  chrome={recordChrome}
-                  horseCount={row.event.horseCount}
-                  variant="compact"
-                />
-              )
-            }
-
-            return (
-              <DashboardItemLinkCard
-                key={`${row.tone}-${row.id}`}
-                to={row.to}
-                params={row.params}
-                accent={row.tone === 'urgent' ? 'danger' : 'warning'}
+        <DashboardItemList gap="compact">
+          {reminders.map((reminder) => (
+            <DashboardItemLinkCard
+              key={reminder.id}
+              to="/stables/$stableId/reminders"
+              params={{ stableId: reminder.stableId }}
+              accent={reminder.overdue ? 'danger' : 'warning'}
+              density="compact"
+              chrome={recordChrome}
+            >
+              <DashboardItemCardContent
+                title={reminder.title}
+                meta={
+                  <>
+                    <span>
+                      {reminder.overdue ? 'Overdue' : 'Due'}{' '}
+                      {formatShortDateKey(reminder.dueDate)}
+                    </span>
+                    <span>{careReminderCategoryLabels[reminder.category]}</span>
+                  </>
+                }
+                metaSeparator="dot"
                 density="compact"
-                chrome={recordChrome}
-              >
-                <DashboardItemCardContent
-                  title={row.title}
-                  meta={row.meta}
-                  density="compact"
-                  badges={row.badge}
-                />
-              </DashboardItemLinkCard>
-            )
-          })}
-        </ScrollableList>
+              />
+            </DashboardItemLinkCard>
+          ))}
+        </DashboardItemList>
       )}
     </DashboardSection>
   )

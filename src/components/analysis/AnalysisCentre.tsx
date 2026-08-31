@@ -1,8 +1,4 @@
 import { DashboardBadgeList } from '#/components/dashboard/DashboardBadgeList'
-import {
-  DashboardFeatureBadge,
-  DashboardValueBadge,
-} from '#/components/dashboard/DashboardBadges'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
 import { DashboardInlinePanel } from '#/components/dashboard/DashboardInlinePanel'
@@ -10,23 +6,23 @@ import {
   DashboardItemCard,
   DashboardItemBodyText,
   DashboardItemFieldsetCard,
+  DashboardItemLinkCard,
+  DashboardItemRecordContent,
 } from '#/components/dashboard/DashboardItemCard'
 import { DashboardLayoutStack } from '#/components/dashboard/DashboardLayoutGrid'
 import { DashboardSectionTabs } from '#/components/dashboard/DashboardNavigation'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
-import { DetailKeyValueRow } from '#/components/dashboard/DetailBlocks'
-import { EventRow } from '#/components/events/EventRow'
-import { HorseCard } from '#/components/horses/HorseCard'
 import {
-  CareReminderCategoryBadge,
-  CareReminderPriorityBadge,
-} from '#/components/reminders/CareReminderBadges'
+  DetailKeyValueList,
+  DetailKeyValueRow,
+} from '#/components/dashboard/DetailBlocks'
+import { EventRow } from '#/components/events/EventRow'
 import { formatEventDate } from '#/components/events/eventDisplay'
 import { Badge } from '#/components/ui/badge'
 import { Checkbox } from '#/components/ui/checkbox'
 import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
-import { Progress } from '#/components/ui/progress'
+import { FieldLabel } from '#/components/ui/field'
 import { ScrollableList } from '#/components/ui/scrollable-list'
 import { TextLabel } from '#/components/ui/text-label'
 import { cn } from '#/lib/utils'
@@ -44,8 +40,6 @@ import { AnalysisHorseTab } from './AnalysisHorseTab'
 import { createAnalysisCentreData } from './analysisCentreData'
 import type {
   LabAnalysis,
-  LabAttentionHorse,
-  LabCompletionCoverage,
   LabTimeline,
   LabTimelineOccurrence,
   LabTimelineSignal,
@@ -68,9 +62,9 @@ import type {
 } from './stableActivityTimelineScale'
 
 type LabEvent = LabAnalysis['upcomingEvents'][number]
-type LabReminder = LabAnalysis['dueReminders'][number]
 type LabHorse = DashboardLabData['horses'][number]
 type StableAnalysis = FunctionReturnType<typeof api.stableAnalysis.getForStable>
+type UnlockedStableAnalysis = Extract<StableAnalysis, { hasAccess: true }>
 type StableEventSeriesKey = Extract<
   LabTimelineSeriesKey,
   'all' | 'completed' | 'planned'
@@ -124,9 +118,22 @@ const stableTimelineScaleOptions = [
 const stableAnalysisTabValue = 'stable'
 const selectedPeriodOccurrenceListVisibleItemLimit = 5
 const selectedPeriodOccurrenceListEstimatedItemHeightRem = 5.25
-const stableActionListClassName = 'xl:h-[37.45rem] xl:content-start'
-const stableActionListVisibleItemLimit = 7
-const stableActionListEstimatedItemHeightRem = 5.35
+const stableAttentionListVisibleItemLimit = 4
+const stableAttentionListEstimatedItemHeightRem = 5.75
+
+type StableAttentionItem = {
+  id: string
+  title: string
+  meta: Array<string>
+  description?: string
+  priority: number
+  date: string
+  accent: 'danger' | 'warning'
+  target:
+    | { kind: 'reminders' }
+    | { kind: 'horse-care'; horseId: string }
+    | { kind: 'event'; eventId: string }
+}
 
 export function AnalysisCentre({
   data,
@@ -143,6 +150,9 @@ export function AnalysisCentre({
     ? stableAnalysis
     : null
   const analysis = createAnalysisCentreData(data, timelineSignals)
+  const stableAttentionItems = unlockedStableAnalysis
+    ? createStableAttentionItems(unlockedStableAnalysis)
+    : []
   const [activeAnalysisTab, setActiveAnalysisTab] = useState(
     stableAnalysisTabValue,
   )
@@ -152,7 +162,7 @@ export function AnalysisCentre({
   const [timelineScale, setTimelineScale] = useState<StableTimelineScale>('day')
   const [visibleSeries, setVisibleSeries] = useState<
     Array<StableEventSeriesKey>
-  >(['all', 'completed', 'planned'])
+  >(['all'])
   const [visibleEventTypes, setVisibleEventTypes] = useState<Array<EventType>>([
     ...eventTypes,
   ])
@@ -208,15 +218,14 @@ export function AnalysisCentre({
   )
   const handleSeriesToggle = useCallback((seriesKey: StableEventSeriesKey) => {
     setVisibleSeries((currentSeries) => {
-      const nextSeries = currentSeries.includes(seriesKey)
-        ? currentSeries.filter((key) => key !== seriesKey)
-        : [...currentSeries, seriesKey]
+      if (seriesKey === 'all') return ['all']
 
-      if (nextSeries.length === 0) return currentSeries
+      const specificSeries = currentSeries.filter((key) => key !== 'all')
+      const nextSeries = specificSeries.includes(seriesKey)
+        ? specificSeries.filter((key) => key !== seriesKey)
+        : [...specificSeries, seriesKey]
 
-      return stableTimelineSeriesOptions
-        .map((option) => option.key)
-        .filter((key) => nextSeries.includes(key))
+      return nextSeries.length > 0 ? nextSeries : ['all']
     })
   }, [])
   const handleEventTypeToggle = useCallback((eventType: EventType) => {
@@ -233,11 +242,7 @@ export function AnalysisCentre({
 
   return (
     <div className="grid gap-8">
-      <AnalysisHero
-        urgentCount={analysis.summary.urgentCount}
-        eventCount={analysis.timeline.totalEventCount}
-        signalCount={analysis.timeline.totalSignalCount}
-      />
+      <DashboardPageHeader title="Analysis Centre" />
 
       <div className="grid gap-3">
         <DashboardSectionTabs
@@ -269,18 +274,8 @@ export function AnalysisCentre({
               stableId={data.stable._id}
               span="xl3"
             />
-            <StableWatchlistPanel
-              items={analysis.horsesNeedingAttention}
-              span="xl2"
-            />
-            <ActionQueuePanel
-              reminders={analysis.dueReminders}
-              events={analysis.upcomingEvents}
-              stableId={data.stable._id}
-            />
-            <DocumentationGapsPanel
-              events={analysis.completionNotesNeeded}
-              coverage={analysis.completionCoverage}
+            <StableNeedsAttentionPanel
+              items={stableAttentionItems}
               stableId={data.stable._id}
               span="xl3"
             />
@@ -296,40 +291,6 @@ export function AnalysisCentre({
         )}
       </div>
     </div>
-  )
-}
-
-function AnalysisHero({
-  urgentCount,
-  eventCount,
-  signalCount,
-}: {
-  urgentCount: number
-  eventCount: number
-  signalCount: number
-}) {
-  return (
-    <DashboardPageHeader
-      title="Analysis Centre"
-      badges={<DashboardFeatureBadge>Personal Pro</DashboardFeatureBadge>}
-      actions={
-        <DashboardBadgeList>
-          <DashboardValueBadge>
-            {formatCountLabel(eventCount, 'event block')}
-          </DashboardValueBadge>
-          <DashboardValueBadge>
-            {formatCountLabel(signalCount, 'event')}
-          </DashboardValueBadge>
-          <DashboardValueBadge
-            variant={urgentCount > 0 ? 'destructive' : 'secondary'}
-          >
-            {urgentCount > 0
-              ? formatCountLabel(urgentCount, 'urgent event')
-              : 'All clear'}
-          </DashboardValueBadge>
-        </DashboardBadgeList>
-      }
-    />
   )
 }
 
@@ -509,14 +470,11 @@ function TimelineSeriesControls({
 }) {
   return (
     <DashboardItemFieldsetCard
+      aria-label="Timeline blocks"
       chrome="soft"
       density="compact"
       className={cn('grid gap-3 p-3 md:p-4', className)}
     >
-      <TextLabel as="legend" weight="semibold">
-        Show blocks
-      </TextLabel>
-
       <div className="grid gap-x-5 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
         {stableTimelineSeriesOptions.map((option) => {
           const active = visibleSeries.includes(option.key)
@@ -541,21 +499,21 @@ function TimelineSeriesControls({
                   }
                 }}
               />
-              <label
+              <FieldLabel
                 htmlFor={checkboxId}
+                interactive={!isLastActiveSeries}
+                width="full"
                 className={cn(
-                  'flex min-w-0 cursor-pointer items-center gap-2',
-                  isLastActiveSeries && 'cursor-default',
+                  'min-w-0 items-center gap-2',
+                  isLastActiveSeries && 'cursor-default opacity-70',
                 )}
               >
                 <TimelineSeriesMarker
                   visual={option.visual}
                   color={option.color}
                 />
-                <span className="truncate text-sm font-semibold leading-5">
-                  {option.label}
-                </span>
-              </label>
+                <span className="truncate">{option.label}</span>
+              </FieldLabel>
             </div>
           )
         })}
@@ -575,14 +533,11 @@ function TimelineEventTypeControls({
 }) {
   return (
     <DashboardItemFieldsetCard
+      aria-label="Timeline event categories"
       chrome="soft"
       density="compact"
       className={cn('grid gap-3 p-3 md:p-4', className)}
     >
-      <TextLabel as="legend" weight="semibold">
-        Event categories
-      </TextLabel>
-
       <div className="grid gap-x-5 gap-y-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {stableTimelineEventTypeOptions.map((option) => {
           const active = visibleEventTypes.includes(option.type)
@@ -607,18 +562,18 @@ function TimelineEventTypeControls({
                   }
                 }}
               />
-              <label
+              <FieldLabel
                 htmlFor={checkboxId}
+                interactive={!isLastActiveType}
+                width="full"
                 className={cn(
-                  'flex min-w-0 cursor-pointer items-center gap-2',
-                  isLastActiveType && 'cursor-default',
+                  'min-w-0 items-center gap-2',
+                  isLastActiveType && 'cursor-default opacity-70',
                 )}
               >
                 <TimelineEventTypeIcon type={option.type} />
-                <span className="truncate text-sm font-semibold leading-5">
-                  {eventTypeLabels[option.type]}
-                </span>
-              </label>
+                <span className="truncate">{eventTypeLabels[option.type]}</span>
+              </FieldLabel>
             </div>
           )
         })}
@@ -842,7 +797,7 @@ function TimelinePeriodBreakdown({
           title={period.scale === 'day' ? 'Day mix' : 'Period mix'}
           titleWeight="semibold"
         />
-        <div className="grid gap-2 text-sm leading-5 text-muted-foreground">
+        <DetailKeyValueList>
           <DetailKeyValueRow label="Blocks" value={period.allEventCount} />
           <DetailKeyValueRow
             label="Completed"
@@ -860,7 +815,7 @@ function TimelinePeriodBreakdown({
               valueClassName="font-semibold text-destructive"
             />
           )}
-        </div>
+        </DetailKeyValueList>
       </DashboardItemCard>
 
       <TimelineSignalDigest period={period} />
@@ -983,66 +938,51 @@ function TimelineOccurrenceRow({
       stableId={stableId}
       chrome="soft"
       horseCount={event.horseIds.length}
-      supplementalBadges={
-        occurrence.isRecurring || occurrence.durationDays > 1 ? (
-          <>
-            {occurrence.durationDays > 1 && (
-              <Badge variant="secondary">
-                {formatCountLabel(occurrence.durationDays, 'day')}
-              </Badge>
-            )}
-            {occurrence.isRecurring && (
-              <Badge variant="secondary">Repeats</Badge>
-            )}
-            {(startsBeforePeriod || endsAfterPeriod) && (
-              <Badge variant="outline">
-                Continues through this {getTimelineScaleUnitLabel(period.scale)}
-              </Badge>
-            )}
-          </>
-        ) : undefined
-      }
-      supplementalMeta={[providerDetails ?? 'Provider details missing']}
+      supplementalMeta={[
+        occurrence.durationDays > 1
+          ? formatCountLabel(occurrence.durationDays, 'day')
+          : undefined,
+        occurrence.isRecurring ? 'Repeats' : undefined,
+        startsBeforePeriod || endsAfterPeriod
+          ? `Continues through this ${getTimelineScaleUnitLabel(period.scale)}`
+          : undefined,
+        providerDetails ?? 'Provider details missing',
+      ]}
       variant="summary"
     />
   )
 }
 
-function StableWatchlistPanel({
+function StableNeedsAttentionPanel({
   items,
+  stableId,
   className,
   span,
 }: {
-  items: Array<LabAttentionHorse>
+  items: Array<StableAttentionItem>
+  stableId: DashboardLabData['stable']['_id']
   className?: string
   span?: ComponentProps<typeof DashboardSection>['span']
 }) {
   return (
     <AnalysisPanel
-      title="Stable watchlist"
-      description="Collective view of horses creating the clearest care pressure across the stable. Open a horse tab for the underlying health, medication, and progress detail."
-      action={
-        <Badge variant="outline">
-          {formatCountLabel(items.length, 'horse')}
-        </Badge>
-      }
+      title="Needs attention"
+      description="Overdue care, high-severity issues, and missing follow-up notes that need a decision."
       className={className}
       span={span}
     >
       {items.length === 0 ? (
         <DashboardEmptyState chrome="soft">
-          No active health issues, medication records, or overdue reminders
-          found.
+          No urgent actions or missing follow-up notes.
         </DashboardEmptyState>
       ) : (
         <AnalysisList
           itemCount={items.length}
-          visibleItemLimit={stableActionListVisibleItemLimit}
-          estimatedItemHeightRem={stableActionListEstimatedItemHeightRem}
-          className={stableActionListClassName}
+          visibleItemLimit={stableAttentionListVisibleItemLimit}
+          estimatedItemHeightRem={stableAttentionListEstimatedItemHeightRem}
         >
-          {items.map((horse) => (
-            <HorseAttentionRow key={horse.horseId} horse={horse} />
+          {items.map((item) => (
+            <StableAttentionRow key={item.id} item={item} stableId={stableId} />
           ))}
         </AnalysisList>
       )}
@@ -1050,251 +990,164 @@ function StableWatchlistPanel({
   )
 }
 
-function HorseAttentionRow({ horse }: { horse: LabAttentionHorse }) {
-  return (
-    <HorseCard
-      horse={{
-        name: horse.horseName,
-        ownerName: horse.ownerName,
-        breed: horse.breed,
-      }}
-      badges={
+function StableAttentionRow({
+  item,
+  stableId,
+}: {
+  item: StableAttentionItem
+  stableId: DashboardLabData['stable']['_id']
+}) {
+  const content = (
+    <DashboardItemRecordContent
+      title={item.title}
+      titleTone="open"
+      meta={
         <>
-          {horse.highIssueCount > 0 && (
-            <Badge variant="destructive">
-              {formatCountLabel(horse.highIssueCount, 'high issue')}
-            </Badge>
-          )}
-          {horse.activeIssueCount > 0 && (
-            <Badge variant="destructive">
-              {formatCountLabel(horse.activeIssueCount, 'active issue')}
-            </Badge>
-          )}
-          {horse.activeMedicationCount > 0 && (
-            <Badge variant="secondary">
-              {formatCountLabel(
-                horse.activeMedicationCount,
-                'active medication',
-              )}
-            </Badge>
-          )}
-          {horse.overdueReminderCount > 0 && (
-            <Badge variant="destructive">
-              {formatCountLabel(horse.overdueReminderCount, 'overdue reminder')}
-            </Badge>
-          )}
+          {item.meta.map((value) => (
+            <span key={value}>{value}</span>
+          ))}
         </>
       }
-      meta={
-        horse.missingProfileFields.length > 0 ? (
-          <span>Also missing {horse.missingProfileFields.join(', ')}</span>
-        ) : undefined
-      }
+      description={item.description}
+      descriptionClassName="max-w-3xl text-foreground"
     />
   )
-}
+  const className = 'hover:bg-surface-elevated active:bg-primary/10'
 
-function ActionQueuePanel({
-  reminders,
-  events,
-  stableId,
-  className,
-}: {
-  reminders: Array<LabReminder>
-  events: Array<LabEvent>
-  stableId: DashboardLabData['stable']['_id']
-  className?: string
-}) {
-  const itemCount = reminders.length + events.length
+  if (item.target.kind === 'horse-care') {
+    return (
+      <DashboardItemLinkCard
+        to="/stables/$stableId/horses/$horseId/care"
+        params={{ stableId, horseId: item.target.horseId }}
+        accent={item.accent}
+        chrome="cards"
+        density="compact"
+        className={className}
+      >
+        {content}
+      </DashboardItemLinkCard>
+    )
+  }
+
+  if (item.target.kind === 'event') {
+    return (
+      <DashboardItemLinkCard
+        to="/stables/$stableId/events/$eventId"
+        params={{ stableId, eventId: item.target.eventId }}
+        accent={item.accent}
+        chrome="cards"
+        density="compact"
+        className={className}
+      >
+        {content}
+      </DashboardItemLinkCard>
+    )
+  }
 
   return (
-    <AnalysisPanel
-      title="Action queue"
-      description="Stable-wide due reminders first, followed by the nearest planned care blocks."
-      action={
-        <DashboardValueBadge>
-          {formatCountLabel(itemCount, 'item')}
-        </DashboardValueBadge>
-      }
+    <DashboardItemLinkCard
+      to="/stables/$stableId/reminders"
+      params={{ stableId }}
+      accent={item.accent}
+      chrome="cards"
+      density="compact"
       className={className}
     >
-      {itemCount === 0 ? (
-        <DashboardEmptyState chrome="soft">
-          No due reminders or planned events in the next 30 days.
-        </DashboardEmptyState>
-      ) : (
-        <AnalysisList
-          itemCount={itemCount}
-          visibleItemLimit={stableActionListVisibleItemLimit}
-          estimatedItemHeightRem={stableActionListEstimatedItemHeightRem}
-          className={stableActionListClassName}
-        >
-          {reminders.map((reminder) => (
-            <ReminderRow key={reminder.id} reminder={reminder} />
-          ))}
-          {events.map((event) => (
-            <ActionQueueEventRow
-              key={event._id}
-              event={event}
-              stableId={stableId}
-            />
-          ))}
-        </AnalysisList>
-      )}
-    </AnalysisPanel>
+      {content}
+    </DashboardItemLinkCard>
   )
 }
 
-function ReminderRow({ reminder }: { reminder: LabReminder }) {
-  return (
-    <DashboardItemCard chrome="soft" className="grid gap-2">
-      <DashboardInlineHeader
-        as="h3"
-        title={reminder.title}
-        aside={<CareReminderCategoryBadge category={reminder.category} />}
-        titleWeight="semibold"
-      />
-      <DashboardItemBodyText tone="muted">
-        Due {formatEventDate(reminder.dueDate)}
-        {reminder.horseName ? ` · ${reminder.horseName}` : ''}
-      </DashboardItemBodyText>
-      {reminder.priority && (
-        <CareReminderPriorityBadge priority={reminder.priority} />
-      )}
-    </DashboardItemCard>
-  )
-}
+function createStableAttentionItems(
+  stableAnalysis: UnlockedStableAnalysis,
+): Array<StableAttentionItem> {
+  const urgentSignals = stableAnalysis.timelineSignals
+    .filter((signal) => signal.urgent)
+    .map((signal): StableAttentionItem => {
+      const isReminder = signal.kind === 'reminder'
+      const isOverdueReminder = isReminder && signal.date < stableAnalysis.today
 
-function ActionQueueEventRow({
-  event,
-  stableId,
-}: {
-  event: LabEvent
-  stableId: DashboardLabData['stable']['_id']
-}) {
-  return (
-    <EventRow
-      event={event}
-      stableId={stableId}
-      chrome="soft"
-      horseCount={event.horseIds.length}
-      supplementalMeta={['Planned care block']}
-      variant="summary"
-    />
-  )
-}
-
-function DocumentationGapsPanel({
-  events,
-  coverage,
-  stableId,
-  className,
-  span,
-}: {
-  events: Array<LabEvent>
-  coverage: LabCompletionCoverage
-  stableId: DashboardLabData['stable']['_id']
-  className?: string
-  span?: ComponentProps<typeof DashboardSection>['span']
-}) {
-  return (
-    <AnalysisPanel
-      title="Documentation gaps"
-      description="Completed stable care that still needs aftercare notes. Provider contact is left out here until required provider rules are defined."
-      action={
-        <Badge variant={events.length > 0 ? 'destructive' : 'secondary'}>
-          {formatCountLabel(events.length, 'gap')}
-        </Badge>
+      return {
+        id: `${signal.kind}:${signal.id}`,
+        title: signal.title,
+        meta: [
+          signal.horseName,
+          isReminder
+            ? `Due ${formatEventDate(signal.date)}`
+            : formatEventDate(signal.date),
+        ].filter((value): value is string => Boolean(value)),
+        description: isReminder
+          ? isOverdueReminder
+            ? 'This care reminder is overdue.'
+            : 'This care reminder has high priority.'
+          : 'This active health issue has high severity.',
+        priority: isOverdueReminder ? 0 : signal.kind === 'health' ? 1 : 2,
+        date: signal.date,
+        accent:
+          isOverdueReminder || signal.kind === 'health' ? 'danger' : 'warning',
+        target:
+          signal.kind === 'health' && signal.horseId
+            ? { kind: 'horse-care', horseId: String(signal.horseId) }
+            : { kind: 'reminders' },
       }
-      className={className}
-      span={span}
-    >
-      <div className="grid gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <DocumentationCoverageSummary coverage={coverage} />
-        {events.length === 0 ? (
-          <DashboardEmptyState chrome="soft">
-            All completed events have aftercare notes.
-          </DashboardEmptyState>
-        ) : (
-          <AnalysisList
-            itemCount={events.length}
-            visibleItemLimit={5}
-            estimatedItemHeightRem={5.25}
-          >
-            {events.map((event) => (
-              <DocumentationEventRow
-                key={event._id}
-                event={event}
-                stableId={stableId}
-              />
-            ))}
-          </AnalysisList>
-        )}
-      </div>
-    </AnalysisPanel>
-  )
-}
+    })
 
-function DocumentationCoverageSummary({
-  coverage,
-}: {
-  coverage: LabCompletionCoverage
-}) {
-  const hasCompletedCare = coverage.completedEventCount > 0
+  const overdueCare = stableAnalysis.careCadence
+    .filter((item) => item.overdue)
+    .map(
+      (item): StableAttentionItem => ({
+        id: `cadence:${item.horseId}:${item.type}`,
+        title: `${eventTypeLabels[item.type]} care is overdue`,
+        meta: [
+          item.horseName,
+          item.lastCompletedDate
+            ? `Last completed ${formatEventDate(item.lastCompletedDate)}`
+            : undefined,
+        ].filter((value): value is string => Boolean(value)),
+        description: `The usual interval is ${formatCountLabel(item.expectedDays, 'day')}.`,
+        priority: 3,
+        date: item.lastCompletedDate ?? '',
+        accent: 'warning',
+        target: { kind: 'horse-care', horseId: String(item.horseId) },
+      }),
+    )
 
-  return (
-    <DashboardItemCard chrome="soft" className="grid content-start gap-3">
-      <DashboardInlineHeader
-        title="Completion notes"
-        titleWeight="semibold"
-        aside={
-          hasCompletedCare ? (
-            <Badge
-              variant={
-                coverage.eventNoteCoveragePercent < 75
-                  ? 'destructive'
-                  : 'secondary'
-              }
-            >
-              {coverage.eventNoteCoveragePercent}%
-            </Badge>
-          ) : (
-            <Badge variant="outline">No completed care</Badge>
-          )
-        }
-      />
-      <DashboardItemBodyText tone="muted">
-        {hasCompletedCare
-          ? `${coverage.eventsWithNotesCount}/${coverage.completedEventCount} completed events documented`
-          : 'Coverage is shown once at least one event has been completed.'}
-      </DashboardItemBodyText>
-      {hasCompletedCare ? (
-        <Progress
-          value={coverage.eventNoteCoveragePercent}
-          label="Completion note coverage"
-        />
-      ) : null}
-    </DashboardItemCard>
+  const missingEventNotes = stableAnalysis.completionNotesNeeded.map(
+    (event): StableAttentionItem => ({
+      id: `event-notes:${event._id}`,
+      title: `${event.title} needs follow-up notes`,
+      meta: [formatEventDate(event.date)],
+      description: 'The completed event has no aftercare notes.',
+      priority: 4,
+      date: event.date,
+      accent: 'warning',
+      target: { kind: 'event', eventId: String(event._id) },
+    }),
   )
-}
 
-function DocumentationEventRow({
-  event,
-  stableId,
-}: {
-  event: LabEvent
-  stableId: DashboardLabData['stable']['_id']
-}) {
-  return (
-    <EventRow
-      event={event}
-      stableId={stableId}
-      chrome="soft"
-      horseCount={event.horseIds.length}
-      supplementalBadges={<Badge variant="destructive">Notes needed</Badge>}
-      variant="summary"
-    />
+  const missingHorseOutcomes = stableAnalysis.horseOutcomeNotesNeeded.map(
+    (outcome): StableAttentionItem => ({
+      id: `horse-outcome:${outcome.id}`,
+      title: `${outcome.horseName} needs an outcome note`,
+      meta: [outcome.eventTitle, formatEventDate(outcome.eventDate)],
+      description:
+        'This horse has no recorded outcome for the completed event.',
+      priority: 5,
+      date: outcome.eventDate,
+      accent: 'warning',
+      target: { kind: 'event', eventId: String(outcome.eventId) },
+    }),
   )
+
+  return [
+    ...urgentSignals,
+    ...overdueCare,
+    ...missingEventNotes,
+    ...missingHorseOutcomes,
+  ].sort((a, b) => {
+    if (a.priority !== b.priority) return a.priority - b.priority
+    return a.date.localeCompare(b.date)
+  })
 }
 
 function getSelectedTimelinePeriod(

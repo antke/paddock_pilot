@@ -10,6 +10,7 @@ import {
   getCurrentUser,
 } from './libs/stablePermissions'
 import { recordStableAudit } from './libs/audit'
+import { queueMembershipRemovedEmail } from './libs/email/notifications'
 
 const validateMemberDetailsInput = (args: {
   displayNameOverride?: string
@@ -217,6 +218,7 @@ export const remove = mutation({
     if (membership.userId === stable.ownerId) {
       throw new ConvexError('Stable owner cannot be removed')
     }
+    const member = await ctx.db.get(membership.userId)
 
     const ownedHorse = await ctx.db
       .query('horses')
@@ -240,6 +242,9 @@ export const remove = mutation({
       entityId: membership._id,
       summary: `Removed member ${membership.userId}`,
     })
+    if (member) {
+      await queueMembershipRemovedEmail(ctx, { member, membership, stable })
+    }
   },
 })
 
@@ -261,6 +266,7 @@ export const removeWithHorseReassignment = mutation({
     if (membership.userId === stable.ownerId) {
       throw new ConvexError('Stable owner cannot be removed')
     }
+    const member = await ctx.db.get(membership.userId)
 
     const horses = await ctx.db
       .query('horses')
@@ -303,6 +309,9 @@ export const removeWithHorseReassignment = mutation({
           ? `Removed member and reassigned ${horses.length} horse${horses.length === 1 ? '' : 's'}`
           : `Removed member ${membership.userId}`,
     })
+    if (member) {
+      await queueMembershipRemovedEmail(ctx, { member, membership, stable })
+    }
 
     return { reassignedHorseCount: horses.length }
   },

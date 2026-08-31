@@ -77,7 +77,7 @@ function FirstStableOnboarding() {
             >
               Open {stables[0].name}
             </ButtonLink>
-            <ButtonLink to="/profile" variant="outline">
+            <ButtonLink to="/profile" action="edit" variant="outline">
               Edit profile
             </ButtonLink>
           </>

@@ -5,6 +5,11 @@ import type { MutationCtx } from './_generated/server'
 import { getUserFromIdentity, requireAuth } from './libs/auth'
 import { reconcilePendingSubscriptions } from './userSubscriptions'
 import { deleteStorageObjectIfUnreferenced } from './libs/storageObjects'
+import {
+  queueAccountDeletedEmail,
+  queueAccountWelcomeEmail,
+  queueStableArchivedEmails,
+} from './libs/email/notifications'
 
 export const getCurrentIdentity = query({
   args: {},
@@ -54,7 +59,10 @@ export const ensureCurrentUser = mutation({
       updatedAt: now,
     })
     const user = await ctx.db.get(userId)
-    if (user) await reconcilePendingSubscriptions(ctx, user)
+    if (user) {
+      await reconcilePendingSubscriptions(ctx, user)
+      await queueAccountWelcomeEmail(ctx, user)
+    }
 
     return userId
   },
@@ -97,7 +105,10 @@ export const upsertUser = internalMutation({
       updatedAt: now,
     })
     const user = await ctx.db.get(userId)
-    if (user) await reconcilePendingSubscriptions(ctx, user)
+    if (user) {
+      await reconcilePendingSubscriptions(ctx, user)
+      await queueAccountWelcomeEmail(ctx, user)
+    }
     return userId
   },
 })
@@ -137,11 +148,13 @@ export const deleteUser = internalMutation({
     if (!user || user.deletedAt !== undefined) return
 
     const now = Date.now()
+    await queueAccountDeletedEmail(ctx, user)
     const ownedStables = await ctx.db
       .query('stables')
       .withIndex('by_owner_id', (q) => q.eq('ownerId', user._id))
       .collect()
     for (const stable of ownedStables) {
+      await queueStableArchivedEmails(ctx, stable)
       await archiveOwnedStable(ctx, stable._id, now)
     }
 

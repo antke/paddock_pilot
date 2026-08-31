@@ -1,6 +1,5 @@
 import { Badge } from '#/components/ui/badge'
 import { attentionLevelBadgeVariant } from '#/components/dashboard/semanticBadgeVariants'
-import { formatCountLabel } from '#/lib/numberDisplay'
 import { CheckIcon, ClockIcon } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
 import type { ComponentProps } from 'react'
@@ -133,64 +132,10 @@ export function WeightRecordKindBadge(props: CareBadgeProps) {
   )
 }
 
-export function BodyConditionScoreBadge({
-  score,
-  ...props
-}: CareBadgeProps & {
-  score: number
-}) {
-  return (
-    <Badge variant="outline" {...props}>
-      BCS {score}/9
-    </Badge>
-  )
-}
-
 export function NutritionLogKindBadge(props: CareBadgeProps) {
   return (
     <Badge variant="secondary" {...props}>
       Nutrition change
-    </Badge>
-  )
-}
-
-export function NutritionLogDateBadge({
-  dateLabel,
-  ...props
-}: CareBadgeProps & {
-  dateLabel: string
-}) {
-  return (
-    <Badge variant="outline" {...props}>
-      {dateLabel}
-    </Badge>
-  )
-}
-
-export function MedicationDosageBadge({
-  dosage,
-  variant = 'outline',
-  ...props
-}: CareBadgeProps & {
-  dosage: string
-  variant?: ComponentProps<typeof Badge>['variant']
-}) {
-  return (
-    <Badge variant={variant} {...props}>
-      {dosage}
-    </Badge>
-  )
-}
-
-export function MedicationFrequencyBadge({
-  frequency,
-  ...props
-}: CareBadgeProps & {
-  frequency: string
-}) {
-  return (
-    <Badge variant="outline" {...props}>
-      {frequency}
     </Badge>
   )
 }
@@ -208,19 +153,6 @@ export function HorseHighIssueCountBadge({
   )
 }
 
-export function HorseActiveIssueCountBadge({
-  count,
-  ...props
-}: CareBadgeProps & {
-  count: number
-}) {
-  return (
-    <Badge variant="destructive" {...props}>
-      {formatCountLabel(count, 'active issue')}
-    </Badge>
-  )
-}
-
 export function HorseOverdueReminderCountBadge({
   count,
   ...props
@@ -230,19 +162,6 @@ export function HorseOverdueReminderCountBadge({
   return (
     <Badge variant="warning" {...props}>
       {count} overdue
-    </Badge>
-  )
-}
-
-export function HorseActiveMedicationCountBadge({
-  count,
-  ...props
-}: CareBadgeProps & {
-  count: number
-}) {
-  return (
-    <Badge variant="secondary" {...props}>
-      {count} medication
     </Badge>
   )
 }

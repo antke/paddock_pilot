@@ -1,6 +1,7 @@
 import { createLink } from '@tanstack/react-router'
 import { forwardRef } from 'react'
 import type { ComponentProps } from 'react'
+import { Button } from '#/components/ui/button'
 
 import {
   calendarDayCellClassName,
@@ -10,19 +11,15 @@ import {
   calendarEventChipClassName,
   calendarEventChipMetaClassName,
   calendarEventChipTitleClassName,
-  calendarEventPopoverClassName,
-  calendarEventPopoverDescriptionClassName,
-  calendarEventPopoverHeaderClassName,
-  calendarEventPopoverTextClassName,
-  calendarEventPopoverTitleClassName,
   calendarGridClassName,
-  calendarMutedPillClassName,
+  calendarMoreEventsButtonClassName,
   calendarShellClassName,
   calendarWeekdayCellClassName,
   calendarWeekdayRowClassName,
 } from './EventCalendarChrome'
 
 type CalendarDayCellProps = ComponentProps<'div'> & {
+  isSelected?: boolean
   isToday?: boolean
   muted?: boolean
 }
@@ -32,6 +29,13 @@ type CalendarDayNumberProps = ComponentProps<'span'> & {
 }
 
 type CalendarEventChipProps = ComponentProps<'div'>
+
+type CalendarMoreEventsButtonProps = Omit<
+  ComponentProps<typeof Button>,
+  'className'
+> & {
+  className?: string
+}
 
 export function CalendarShell({ className, ...props }: ComponentProps<'div'>) {
   return (
@@ -81,6 +85,7 @@ export function CalendarGrid({ className, ...props }: ComponentProps<'div'>) {
 
 export function CalendarDayCell({
   className,
+  isSelected,
   isToday,
   muted,
   ...props
@@ -88,7 +93,12 @@ export function CalendarDayCell({
   return (
     <div
       data-slot="calendar-day-cell"
-      className={calendarDayCellClassName({ className, isToday, muted })}
+      className={calendarDayCellClassName({
+        className,
+        isSelected,
+        isToday,
+        muted,
+      })}
       {...props}
     />
   )
@@ -121,6 +131,22 @@ export function CalendarDayNumber({
   )
 }
 
+export function CalendarMoreEventsButton({
+  className,
+  ...props
+}: CalendarMoreEventsButtonProps) {
+  return (
+    <Button
+      type="button"
+      variant="subtle"
+      size="sm"
+      data-slot="calendar-more-events-button"
+      className={calendarMoreEventsButtonClassName(className)}
+      {...props}
+    />
+  )
+}
+
 export function CalendarDayEventList({
   className,
   ...props
@@ -129,19 +155,6 @@ export function CalendarDayEventList({
     <div
       data-slot="calendar-day-event-list"
       className={calendarDayEventListClassName(className)}
-      {...props}
-    />
-  )
-}
-
-export function CalendarMutedPill({
-  className,
-  ...props
-}: ComponentProps<'p'>) {
-  return (
-    <p
-      data-slot="calendar-muted-pill"
-      className={calendarMutedPillClassName(className)}
       {...props}
     />
   )
@@ -161,9 +174,7 @@ const CalendarEventChipLinkAnchor = forwardRef<
   )
 })
 
-export const CalendarEventChipLink = createLink(
-  CalendarEventChipLinkAnchor,
-)
+export const CalendarEventChipLink = createLink(CalendarEventChipLinkAnchor)
 
 export function CalendarEventChip({
   className,
@@ -199,71 +210,6 @@ export function CalendarEventChipMeta({
     <span
       data-slot="calendar-event-chip-meta"
       className={calendarEventChipMetaClassName(className)}
-      {...props}
-    />
-  )
-}
-
-export function CalendarEventPopover({
-  className,
-  ...props
-}: ComponentProps<'div'>) {
-  return (
-    <div
-      data-slot="calendar-event-popover"
-      className={calendarEventPopoverClassName(className)}
-      {...props}
-    />
-  )
-}
-
-export function CalendarEventPopoverHeader({
-  className,
-  ...props
-}: ComponentProps<'div'>) {
-  return (
-    <div
-      data-slot="calendar-event-popover-header"
-      className={calendarEventPopoverHeaderClassName(className)}
-      {...props}
-    />
-  )
-}
-
-export function CalendarEventPopoverTitle({
-  className,
-  ...props
-}: ComponentProps<'p'>) {
-  return (
-    <p
-      data-slot="calendar-event-popover-title"
-      className={calendarEventPopoverTitleClassName(className)}
-      {...props}
-    />
-  )
-}
-
-export function CalendarEventPopoverText({
-  className,
-  ...props
-}: ComponentProps<'p'>) {
-  return (
-    <p
-      data-slot="calendar-event-popover-text"
-      className={calendarEventPopoverTextClassName(className)}
-      {...props}
-    />
-  )
-}
-
-export function CalendarEventPopoverDescription({
-  className,
-  ...props
-}: ComponentProps<'p'>) {
-  return (
-    <p
-      data-slot="calendar-event-popover-description"
-      className={calendarEventPopoverDescriptionClassName(className)}
       {...props}
     />
   )

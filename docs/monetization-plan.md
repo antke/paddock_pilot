@@ -6,7 +6,22 @@ Paddock Pilot is a horse and stable management platform: a shared workspace for 
 
 The long-term product can support both individual horse owners and stable/team workspaces. For launch, monetization should start with personal subscriptions only.
 
-## Recommended starting model
+## Current testing decision
+
+The first pilot stable is not charged and every owner and member can use all
+available functionality. Core stable participation must never depend on a
+Personal Plus entitlement.
+
+If billing is introduced after testing, use two tiers:
+
+- **Core:** every current operational feature except the Analysis Centre.
+- **Premium:** Core plus the complete Analysis Centre.
+
+`personal_plus` remains in stored subscription data as a compatibility name for
+the future Core plan; `personal_pro` represents Premium. Only the Analysis
+Centre may enforce the Premium entitlement.
+
+## Previous recommended starting model
 
 Start with a **personal subscription model**, while keeping the product architecture ready for future stable-level billing.
 

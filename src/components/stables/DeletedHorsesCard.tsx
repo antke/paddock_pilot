@@ -24,6 +24,7 @@ import { Button } from '#/components/ui/button'
 import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { formatMediumTimestampDate } from '#/lib/dateDisplay'
 import type { StableSettingsData } from './stableSettingsTypes'
+import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react'
 
 export function DeletedHorsesCard({
   horses,
@@ -48,7 +49,7 @@ export function DeletedHorsesCard({
       title="Deleted horses"
       description="Restore a horse before its permanent deletion date. After 14 days it becomes eligible for final removal."
     >
-      <DashboardItemList gap="flush">
+      <DashboardItemList gap="compact">
         {horses.map((horse) => (
           <DeletedHorseRow key={horse._id} horse={horse} />
         ))}
@@ -102,8 +103,9 @@ function DeletedHorseRow({
 
   return (
     <DashboardItemRecordCard
-      chrome="soft"
+      chrome="cards"
       density="compact"
+      interactive={false}
       actions={
         <>
           <Button
@@ -111,8 +113,10 @@ function DeletedHorseRow({
             size="sm"
             variant="outline"
             disabled={pendingAction !== undefined}
+            aria-busy={pendingAction === 'restore' || undefined}
             onClick={onRestore}
           >
+            <ArrowCounterClockwiseIcon aria-hidden="true" />
             {pendingAction === 'restore' ? 'Restoring...' : 'Restore'}
           </Button>
 
@@ -120,7 +124,13 @@ function DeletedHorseRow({
             <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
               <AlertDialogTrigger
                 render={
-                  <Button type="button" size="sm" variant="destructive" />
+                  <Button
+                    type="button"
+                    action="delete"
+                    size="sm"
+                    variant="destructive"
+                    disabled={pendingAction !== undefined}
+                  />
                 }
               >
                 Delete permanently
@@ -140,8 +150,10 @@ function DeletedHorseRow({
                     Cancel
                   </AlertDialogCancel>
                   <AlertDialogAction
+                    action="delete"
                     variant="destructive"
                     disabled={pendingAction !== undefined}
+                    aria-busy={pendingAction === 'delete' || undefined}
                     onClick={onPermanentlyDelete}
                   >
                     {pendingAction === 'delete'

@@ -220,5 +220,6 @@ const runReminderActionWithToast = async (
     })
   } catch (err) {
     showAppErrorToast()
+    throw err
   }
 }

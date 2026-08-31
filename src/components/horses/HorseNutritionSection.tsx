@@ -1,5 +1,3 @@
-import { DashboardSectionTabGroup } from '#/components/dashboard/DashboardNavigation'
-import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { HorseMedicationRecordsCard } from './HorseMedicationRecordsCard'
@@ -7,15 +5,9 @@ import type { HorseDetailSectionProps } from './HorseDetail'
 import { HorseNutritionCard } from './HorseNutritionCard'
 import { HorseNutritionLogsCard } from './HorseNutritionLogsCard'
 import { HorseWeightRecordsCard } from './HorseWeightRecordsCard'
+import { HorseDetailSectionTabs } from './HorseDetailSectionTabs'
 
 type NutritionTab = 'nutrition' | 'weight' | 'medication'
-
-type NutritionTabItem = {
-  id: NutritionTab
-  label: string
-  title: string
-  description: string
-}
 
 const nutritionTabs = [
   {
@@ -37,21 +29,14 @@ const nutritionTabs = [
     title: 'Medication',
     description: 'Manage active and historical medication records.',
   },
-] satisfies Array<NutritionTabItem>
-
-const nutritionTabDetails = {
-  nutrition: nutritionTabs[0],
-  weight: nutritionTabs[1],
-  medication: nutritionTabs[2],
-} satisfies Record<NutritionTab, NutritionTabItem>
+] as const
 
 export function HorseNutritionSection({ horse }: HorseDetailSectionProps) {
   const [activeTab, setActiveTab] = useState<NutritionTab>('nutrition')
   const [headerAction, setHeaderAction] = useState<ReactNode>(null)
-  const activeTabDetails = nutritionTabDetails[activeTab]
 
   return (
-    <DashboardSectionTabGroup
+    <HorseDetailSectionTabs
       activeId={activeTab}
       items={nutritionTabs}
       onSelect={(nextTab) => {
@@ -59,37 +44,31 @@ export function HorseNutritionSection({ horse }: HorseDetailSectionProps) {
         setHeaderAction(null)
         setActiveTab(nextTab)
       }}
+      actions={headerAction}
     >
-      <DashboardSectionCard
-        title={activeTabDetails.title}
-        description={activeTabDetails.description}
-        actions={headerAction}
-        contentGap="loose"
-      >
-        {activeTab === 'nutrition' && (
-          <>
-            <HorseNutritionCard horse={horse} showHeader={false} />
-            <HorseNutritionLogsCard
-              horse={horse}
-              onCreateActionChange={setHeaderAction}
-            />
-          </>
-        )}
-
-        {activeTab === 'weight' && (
-          <HorseWeightRecordsCard
+      {activeTab === 'nutrition' && (
+        <>
+          <HorseNutritionCard horse={horse} showHeader={false} />
+          <HorseNutritionLogsCard
             horse={horse}
             onCreateActionChange={setHeaderAction}
           />
-        )}
+        </>
+      )}
 
-        {activeTab === 'medication' && (
-          <HorseMedicationRecordsCard
-            horse={horse}
-            onCreateActionChange={setHeaderAction}
-          />
-        )}
-      </DashboardSectionCard>
-    </DashboardSectionTabGroup>
+      {activeTab === 'weight' && (
+        <HorseWeightRecordsCard
+          horse={horse}
+          onCreateActionChange={setHeaderAction}
+        />
+      )}
+
+      {activeTab === 'medication' && (
+        <HorseMedicationRecordsCard
+          horse={horse}
+          onCreateActionChange={setHeaderAction}
+        />
+      )}
+    </HorseDetailSectionTabs>
   )
 }

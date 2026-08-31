@@ -7,7 +7,6 @@ import {
 import type { Doc, Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import type { MutationCtx, QueryCtx } from './_generated/server'
-import { assertHasPersonalPro, hasPersonalPro } from './libs/entitlements'
 import { isActiveHorse } from './libs/horseState'
 import { assertCanViewStable, getCurrentUser } from './libs/stablePermissions'
 import {
@@ -108,7 +107,6 @@ const enrichDocuments = async (
   documents: Array<Doc<'stableDocuments'>>,
   userId?: Id<'users'>,
 ) => {
-  const userHasPersonalPro = userId ? await hasPersonalPro(ctx, userId) : false
   const rows = await Promise.all(
     documents.sort(byCreatedAtDesc).map(async (document) => {
       const { storageId: _storageId, ...publicDocument } = document
@@ -128,9 +126,12 @@ const enrichDocuments = async (
         horseName: horse?.name,
         eventTitle: event?.title,
         fileUrl,
-        canManage:
-          userHasPersonalPro &&
-          canRemoveDocument(access, document, horse, event),
+        fileState: document.storageId
+          ? fileUrl
+            ? ('available' as const)
+            : ('unavailable' as const)
+          : ('metadata-only' as const),
+        canManage: canRemoveDocument(access, document, horse, event),
       }
     }),
   )
@@ -141,8 +142,7 @@ const enrichDocuments = async (
 export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
-    const user = await getCurrentUser(ctx)
-    await assertHasPersonalPro(ctx, user._id)
+    await getCurrentUser(ctx)
 
     return await ctx.storage.generateUploadUrl()
   },
@@ -158,9 +158,7 @@ export const listForStable = query({
       .collect()
 
     return {
-      canManageStableDocuments:
-        access.capabilities.canManageStableDocuments &&
-        (await hasPersonalPro(ctx, access.userId)),
+      canManageStableDocuments: access.capabilities.canManageStableDocuments,
       documents: await enrichDocuments(ctx, documents, access.userId),
     }
   },
@@ -181,9 +179,7 @@ export const listForHorse = query({
       .collect()
 
     return {
-      canManage:
-        canAddDocument(access, horse) &&
-        (await hasPersonalPro(ctx, access.userId)),
+      canManage: canAddDocument(access, horse),
       documents: await enrichDocuments(ctx, documents, access.userId),
     }
   },
@@ -203,7 +199,6 @@ export const add = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx)
-    await assertHasPersonalPro(ctx, user._id)
     const access = await assertCanViewStable(ctx, args.stableId, user._id)
     const documentInput = validateDocumentInput(args)
     const { horse, event } = await assertLinkedRowsBelongToStable(
@@ -217,8 +212,14 @@ export const add = mutation({
       throw new ConvexError('Not authorized to manage documents in this stable')
     }
     if (args.storageId) {
-      const metadata = await assertStorageObjectCanBeClaimed(ctx, args.storageId)
-      if (documentInput.size !== undefined && metadata.size !== documentInput.size) {
+      const metadata = await assertStorageObjectCanBeClaimed(
+        ctx,
+        args.storageId,
+      )
+      if (
+        documentInput.size !== undefined &&
+        metadata.size !== documentInput.size
+      ) {
         throw new ConvexError('Uploaded file size does not match')
       }
       if (
@@ -249,7 +250,6 @@ export const remove = mutation({
   args: { id: v.id('stableDocuments') },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx)
-    await assertHasPersonalPro(ctx, user._id)
     const document = await ctx.db.get(args.id)
     if (!document) throw new ConvexError('Document not found')
 

@@ -1,7 +1,7 @@
 import { NoStablesPrompt } from '#/components/stables/NoStablesPrompt'
 import { LabPageHeader, LabPageShell } from '#/components/lab/LabChrome'
 import { StableCommandCenter } from '#/components/dashboard/command-center/StableCommandCenter'
-import { isDevAuthBypassEnabled } from '#/lib/devAuthBypass'
+import { useDevAuthBypassEnabled } from '#/lib/devAuthBypass'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -11,7 +11,9 @@ import { createDashboardLabData } from './dashboardLabData'
 import { createDashboardLabFixtureData } from './dashboardLabFixtures'
 
 export function DashboardLabPage() {
-  if (isDevAuthBypassEnabled()) {
+  const devAuthBypassEnabled = useDevAuthBypassEnabled()
+
+  if (devAuthBypassEnabled) {
     return <DashboardLabFixturePage />
   }
 

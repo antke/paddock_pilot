@@ -1,7 +1,6 @@
 import { StableEventsCalendar } from '#/components/stables/StableEventsCalendar'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
-import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { ButtonLink } from '#/components/ui/button'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -32,15 +31,11 @@ function RouteComponent() {
           <ButtonLink
             to="/stables/$stableId/events/create"
             params={{ stableId }}
-            variant="secondary"
+            action="create"
           >
             Add event
           </ButtonLink>
         }
-      />
-
-      <DashboardSectionCard
-        title={`${events.length} scheduled events`}
       />
 
       <StableEventsCalendar events={events} />

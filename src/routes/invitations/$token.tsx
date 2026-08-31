@@ -180,43 +180,10 @@ function SignedInInvitation({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const returnTo = getInvitationPath(token)
 
-  if (!preview.viewer) {
-    return (
-      <RouteStatusAlert
-        tone="muted"
-        title="Preparing your account"
-        description="Your account is signed in. We are finishing the Paddock Pilot profile needed to review this invitation."
-      />
-    )
-  }
-
-  if (preview.status !== 'pending') {
-    return <InvitationStatus preview={preview} returnTo={returnTo} />
-  }
-
-  if (!preview.viewer.emailMatches) {
-    return (
-      <RouteStatusAlert
-        tone="warning"
-        title="This invitation belongs to another email"
-        description={`Sign in with ${preview.emailHint} to accept it. Your current account has not been given access.`}
-        actions={
-          <SignOutButton redirectUrl={returnTo}>
-            <Button type="button" variant="outline">
-              Switch account
-            </Button>
-          </SignOutButton>
-        }
-      />
-    )
-  }
-
   const onAccept = async () => {
     try {
       setIsSubmitting(true)
       const result = await acceptInvitation({ token })
-
-      if (result.status === 'accepted_pending_subscription') return
 
       showAppSuccessToast({
         title: `Welcome to ${preview.stableName}`,
@@ -236,14 +203,48 @@ function SignedInInvitation({
     }
   }
 
+  if (!preview.viewer) {
+    return (
+      <RouteStatusAlert
+        tone="muted"
+        title="Preparing your account"
+        description="Your account is signed in. We are finishing the Paddock Pilot profile needed to review this invitation."
+      />
+    )
+  }
+
+  if (preview.status !== 'pending') {
+    return (
+      <InvitationStatus
+        preview={preview}
+        returnTo={returnTo}
+        onActivate={onAccept}
+        isSubmitting={isSubmitting}
+      />
+    )
+  }
+
+  if (!preview.viewer.emailMatches) {
+    return (
+      <RouteStatusAlert
+        tone="warning"
+        title="This invitation belongs to another email"
+        description={`Sign in with ${preview.emailHint} to accept it. Your current account has not been given access.`}
+        actions={
+          <SignOutButton redirectUrl={returnTo}>
+            <Button type="button" variant="outline">
+              Switch account
+            </Button>
+          </SignOutButton>
+        }
+      />
+    )
+  }
+
   return (
     <RouteStatusAlert
       title="Ready to join"
-      description={
-        preview.viewer.hasRequiredPlan
-          ? 'Accepting gives you member access to the stable and its shared records.'
-          : 'You can accept now. Stable access activates after choosing Personal Plus or Personal Pro.'
-      }
+      description="Accepting gives you member access to the stable and its shared records. No subscription or payment is required during testing."
       actions={
         <Button type="button" disabled={isSubmitting} onClick={onAccept}>
           {isSubmitting ? 'Accepting...' : 'Accept invitation'}
@@ -256,9 +257,13 @@ function SignedInInvitation({
 function InvitationStatus({
   preview,
   returnTo,
+  onActivate,
+  isSubmitting,
 }: {
   preview: FoundInvitationPreview
   returnTo?: string
+  onActivate?: () => void | Promise<void>
+  isSubmitting?: boolean
 }) {
   if (preview.status === 'expired') {
     return (
@@ -303,12 +308,14 @@ function InvitationStatus({
     return (
       <RouteStatusAlert
         tone="warning"
-        title="Membership is waiting for a plan"
-        description="Your place is saved. Choose Personal Plus or Personal Pro and this stable will activate automatically."
+        title="Finish activating your membership"
+        description="Subscriptions are no longer required for stable access. Activate this previously accepted invitation to continue."
         actions={
-          <ButtonLink to="/pricing" search={{ returnTo: returnTo ?? '/' }}>
-            Choose plan
-          </ButtonLink>
+          onActivate ? (
+            <Button type="button" disabled={isSubmitting} onClick={onActivate}>
+              {isSubmitting ? 'Activating...' : 'Activate membership'}
+            </Button>
+          ) : undefined
         }
       />
     )

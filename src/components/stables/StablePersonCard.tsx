@@ -27,8 +27,9 @@ export function StablePersonCard({
 }: StablePersonCardProps) {
   return (
     <DashboardItemRecordCard
-      chrome="soft"
+      chrome="cards"
       density="compact"
+      interactive={false}
       actionBadges={<StableMemberRoleBadge role={role} />}
       actions={actions}
       footer={footer}

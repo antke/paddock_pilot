@@ -34,7 +34,7 @@ describe('authenticated account and stable security flows', () => {
     await expect(asNewUser.query(api.stables.list)).resolves.toEqual([])
   })
 
-  it('requires an effective paid plan for member access but not owner access', async () => {
+  it('keeps stable member access independent of subscription state', async () => {
     const fixture = await t.run(async (ctx) => {
       const now = Date.now()
       const ownerId = await ctx.db.insert('users', {
@@ -73,7 +73,15 @@ describe('authenticated account and stable security flows', () => {
       t.withIdentity(identity('member')).query(api.stables.get, {
         id: fixture.stableId,
       }),
-    ).rejects.toThrow('Not authorized')
+    ).resolves.toMatchObject({ name: 'Willow Yard' })
+    await expect(
+      t
+        .withIdentity(identity('member'))
+        .query(api.stableAnalysis.getForStable, {
+          stableId: fixture.stableId,
+          today: '2026-08-28',
+        }),
+    ).resolves.toMatchObject({ hasAccess: true })
 
     await t.run(async (ctx) => {
       const now = Date.now()
@@ -105,7 +113,7 @@ describe('authenticated account and stable security flows', () => {
       t.withIdentity(identity('member')).query(api.stables.get, {
         id: fixture.stableId,
       }),
-    ).rejects.toThrow('Not authorized')
+    ).resolves.toMatchObject({ name: 'Willow Yard' })
   })
 
   it('patches only operational stable details and keeps the mutation owner-only', async () => {
@@ -423,10 +431,10 @@ describe('authenticated account and stable security flows', () => {
       id: fixture.duplicateDocumentId,
     })
     const preserved = await t.run(async (ctx) => ({
-      file: await ctx.storage.get(fixture.storageId),
+      fileExists: Boolean(await ctx.storage.get(fixture.storageId)),
       original: await ctx.db.get(fixture.originalDocumentId),
     }))
-    expect(preserved.file).not.toBeNull()
+    expect(preserved.fileExists).toBe(true)
     expect(preserved.original?._id).toBe(fixture.originalDocumentId)
 
     const listed = await asOwner.query(api.stableDocuments.listForStable, {
@@ -584,7 +592,7 @@ describe('authenticated account and stable security flows', () => {
     ).resolves.toBeNull()
   })
 
-  it('activates a plan-gated stable invitation after billing arrives', async () => {
+  it('activates a stable invitation without billing', async () => {
     const asOwner = t.withIdentity(identity('invite-owner'))
     const asMember = t.withIdentity(
       identity('invited-member', 'invited@example.com'),
@@ -603,15 +611,7 @@ describe('authenticated account and stable security flows', () => {
 
     await expect(
       asMember.mutation(api.stableInvitations.accept, { token }),
-    ).resolves.toMatchObject({ status: 'accepted_pending_subscription' })
-    await expect(asMember.query(api.stables.list)).resolves.toEqual([])
-
-    await t.mutation(internal.userSubscriptions.upsertForClerkUser, {
-      clerkUserId: 'invited-member',
-      plan: 'personal_plus',
-      status: 'active',
-      sourceUpdatedAt: Date.now(),
-    })
+    ).resolves.toMatchObject({ status: 'accepted' })
 
     await expect(asMember.query(api.stables.list)).resolves.toMatchObject([
       { _id: stableId },
@@ -623,6 +623,29 @@ describe('authenticated account and stable security flows', () => {
       role: 'member',
       currentStep: 'stable-introduction',
     })
+    const lifecycleEmails = await t.run(async (ctx) => {
+      const invitation = await ctx.db
+        .query('stableInvitations')
+        .withIndex('by_token', (q) => q.eq('token', token))
+        .unique()
+      if (!invitation) throw new Error('Invitation fixture missing')
+
+      return await ctx.db
+        .query('emailDeliveries')
+        .withIndex('by_related_entity', (q) =>
+          q
+            .eq('relatedEntityType', 'stableInvitation')
+            .eq('relatedEntityId', invitation._id),
+        )
+        .collect()
+    })
+    expect(lifecycleEmails.map((delivery) => delivery.category)).toEqual(
+      expect.arrayContaining([
+        'stable_invitation',
+        'stable_membership_activated',
+        'stable_invitation_accepted',
+      ]),
+    )
   })
 
   it('rejects malformed stable invitation emails in the mutation', async () => {

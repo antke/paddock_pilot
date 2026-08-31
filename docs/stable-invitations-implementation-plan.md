@@ -1,5 +1,12 @@
 # Stable Invitations and Member Permissions Plan
 
+> **Decision update (August 2026):** stable participation is no longer gated by
+> a personal subscription. Invitations activate membership immediately after
+> acceptance. The `accepted_pending_subscription` state and Personal Plus
+> checks remain only for migration compatibility with existing data. During the
+> testing phase every feature is available without billing. If monetization is
+> enabled later, only the Analysis Centre is planned as a premium feature.
+
 ## Goal
 
 Support stable invitations so an admin can invite stable members while keeping billing personal, permissions safe, and event participation explicit.

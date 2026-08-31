@@ -2,6 +2,8 @@ import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
+import { DashboardLayoutGrid } from '#/components/dashboard/DashboardLayoutGrid'
+import { DetailTextBlock } from '#/components/dashboard/DetailBlocks'
 import { Badge } from '#/components/ui/badge'
 import { ButtonAnchor, ButtonLink } from '#/components/ui/button'
 import { PricingTable } from '@clerk/tanstack-react-start'
@@ -60,8 +62,8 @@ function PricingPage() {
   return (
     <DashboardPage width="narrow">
       <DashboardPageHeader
-        title="Choose your plan"
-        description="Personal Plus unlocks stable member access and horse management. Personal Pro adds the premium Analysis Centre, printable care summaries, and document storage."
+        title="Plans"
+        description="Stable operations are available to every member during testing. When billing launches, the premium plan will add the Analysis Centre; all other current features remain part of the core product."
         className="text-center"
         contentLayout="center"
         headingClassName="justify-items-center"
@@ -87,18 +89,14 @@ function PricingPage() {
 function PricingFallback() {
   return (
     <DashboardSectionCard
-      title="Personal Pro"
-      description="The billing table is not available in this environment. Use this preview to keep the pricing page aligned with the app design while billing is configured."
-      badges={<Badge variant="secondary">Preview</Badge>}
+      title="Testing access"
+      description="Billing is not enabled in this environment. Testers can use every current Paddock Pilot feature without choosing a plan or entering payment details."
+      badges={<Badge variant="secondary">Included</Badge>}
       contentGap="comfortable"
       contentTextSize="sm"
-      footer={
-        <ButtonLink to="/sign-up/$" variant="secondary">
-          Start setup
-        </ButtonLink>
-      }
+      footer={<ButtonLink to="/sign-up/$">Start setup</ButtonLink>}
     >
-      <div className="grid gap-4 sm:grid-cols-3">
+      <DashboardLayoutGrid variant="thirdsCompact">
         {[
           ['Care records', 'Track reminders, visits, notes, and outcomes.'],
           ['Stable team', 'Coordinate owners, providers, and members.'],
@@ -107,12 +105,16 @@ function PricingFallback() {
             'Review care gaps, cadence, and printable summaries.',
           ],
         ].map(([title, description]) => (
-          <div key={title} className="grid gap-1">
-            <p className="font-semibold text-foreground">{title}</p>
-            <p className="text-muted-foreground">{description}</p>
-          </div>
+          <DetailTextBlock
+            key={title}
+            label={title}
+            labelProps={{ weight: 'semibold' }}
+            bodyClassName="text-muted-foreground"
+          >
+            {description}
+          </DetailTextBlock>
         ))}
-      </div>
+      </DashboardLayoutGrid>
     </DashboardSectionCard>
   )
 }

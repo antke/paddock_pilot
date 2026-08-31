@@ -1,15 +1,14 @@
 import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
-import { DashboardPage } from '#/components/dashboard/DashboardPage'
-import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
+import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import {
+  EventKindBadge,
   EventStatusBadge,
-  EventTypeBadge,
 } from '#/components/events/EventBadges'
 import { formatEventDateTime } from '#/components/events/eventDisplay'
 import { ActivityTimelineListEntry } from '#/components/timeline/ActivityTimeline'
 import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
+import { eventTypeLabels } from 'shared/events/eventSchema'
 
 export function TimelinePageLab({ data }: { data: DashboardLabData }) {
   const horse = data.horses[0]
@@ -18,73 +17,67 @@ export function TimelinePageLab({ data }: { data: DashboardLabData }) {
   )
 
   return (
-    <DashboardPage>
-      <DashboardPageHeader
-        title="Horse timeline"
-        description={`Care history for ${horse?.name ?? 'this horse'}.`}
-        actions={<Button variant="outline">Back to horse</Button>}
-      />
+    <DashboardSectionCard
+      title="Timeline"
+      description={`A chronological care history for ${horse?.name ?? 'this horse'}.`}
+      size="panel"
+      contentGap="comfortable"
+    >
+      <DashboardItemList gap="compact">
+        <ActivityTimelineListEntry
+          accent="warning"
+          title="Phenylbutazone"
+          meta={
+            <>
+              <span>Started 8 Jul 2026</span>
+              <span>1 sachet</span>
+              <span>Twice daily</span>
+              <span>Dr. Halley Morse</span>
+            </>
+          }
+          description="Short course following the lameness assessment."
+          badges={<Badge variant="warning">Medication</Badge>}
+        />
 
-      <DashboardSectionCard
-        size="panel"
-        contentGap="comfortable"
-      >
-        <div>
+        {horseEvents.map((event) => (
           <ActivityTimelineListEntry
-            accent="warning"
-            title="Phenylbutazone"
+            key={event._id}
+            accent={event.status === 'completed' ? 'muted' : 'primary'}
+            title={event.title}
             meta={
               <>
-                <span>Started 8 Jul 2026</span>
-                <span>Dr. Halley Morse</span>
+                <span>
+                  {formatEventDateTime(event.date, event.time, event.endDate)}
+                </span>
+                <span>{eventTypeLabels[event.type]}</span>
+                {event.providerName && <span>{event.providerName}</span>}
               </>
             }
-            description="Short course following the lameness assessment."
+            description={event.description ?? event.notesAfterCompletion}
             badges={
               <>
-                <Badge variant="warning">Medication</Badge>
-                <Badge variant="outline">Active</Badge>
+                <EventKindBadge />
+                {event.status && event.status !== 'planned' && (
+                  <EventStatusBadge status={event.status} />
+                )}
               </>
             }
           />
+        ))}
 
-          {horseEvents.map((event) => (
-            <ActivityTimelineListEntry
-              key={event._id}
-              accent={event.status === 'completed' ? 'muted' : 'primary'}
-              title={event.title}
-              meta={
-                <>
-                  <span>
-                    {formatEventDateTime(event.date, event.time, event.endDate)}
-                  </span>
-                  {event.providerName && <span>{event.providerName}</span>}
-                </>
-              }
-              description={event.description ?? event.notesAfterCompletion}
-              badges={
-                <>
-                  <EventTypeBadge type={event.type} />
-                  <EventStatusBadge status={event.status ?? 'planned'} />
-                </>
-              }
-            />
-          ))}
-
-          <ActivityTimelineListEntry
-            accent="muted"
-            title="548 kg"
-            meta={<span>Measured 28 Jun 2026</span>}
-            description="Weight steady after the spring feed transition."
-            badges={
-              <>
-                <Badge variant="secondary">Weight</Badge>
-                <Badge variant="outline">BCS 5/9</Badge>
-              </>
-            }
-          />
-        </div>
-      </DashboardSectionCard>
-    </DashboardPage>
+        <ActivityTimelineListEntry
+          accent="muted"
+          title="548 kg"
+          meta={
+            <>
+              <span>Measured 28 Jun 2026</span>
+              <span>BCS 5/9</span>
+            </>
+          }
+          description="Weight steady after the spring feed transition."
+          badges={<Badge variant="secondary">Weight</Badge>}
+        />
+      </DashboardItemList>
+    </DashboardSectionCard>
   )
 }

@@ -1,4 +1,8 @@
-import { formatDateKey, formatShortWeekdayDate } from '#/lib/dateDisplay'
+import {
+  dateKeyToDate,
+  formatDateKey,
+  formatShortWeekdayDate,
+} from '#/lib/dateDisplay'
 import type {
   DashboardCommandData,
   DashboardCommandEvent,
@@ -13,12 +17,14 @@ export function createDashboardCommandData({
   events,
   horses,
   overview,
+  todayKey,
 }: {
   stable: DashboardCommandStable
   stables: Array<DashboardCommandStable>
   events: Array<DashboardCommandEvent>
   horses: Array<DashboardCommandHorse>
   overview: DashboardCommandOverview
+  todayKey: string
 }): DashboardCommandData {
   const stableEvents = events
     .filter((event) => event.stableId === stable._id)
@@ -27,8 +33,7 @@ export function createDashboardCommandData({
       if (dateSort !== 0) return dateSort
       return a.time.localeCompare(b.time)
     })
-  const today = new Date()
-  const todayKey = formatDateKey(today)
+  const today = dateKeyToDate(todayKey)
   const weekDays = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(today)
     date.setDate(today.getDate() + index)

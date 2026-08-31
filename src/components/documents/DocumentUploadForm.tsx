@@ -115,7 +115,7 @@ export function DocumentUploadForm({
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Horse</FieldLabel>
+            <FieldLabel htmlFor={field.name}>Horse (optional)</FieldLabel>
                 <Select
                   {...field}
                   id={field.name}
@@ -143,7 +143,7 @@ export function DocumentUploadForm({
         control={form.control}
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>Notes</FieldLabel>
+            <FieldLabel htmlFor={field.name}>Notes (optional)</FieldLabel>
             <Textarea
               {...field}
               id={field.name}
@@ -159,7 +159,8 @@ export function DocumentUploadForm({
       <FormSubmitActions
         isSubmitting={form.formState.isSubmitting}
         submitLabel="Add document"
-        submittingLabel="Saving..."
+        submittingLabel="Uploading…"
+        sticky
       />
     </InlineForm>
   )
@@ -209,11 +210,13 @@ function DocumentFileField({
     <Controller
       name="file"
       control={control}
-      render={({ field: { value, onChange, ...field }, fieldState }) => (
+      render={({ field: { value, onChange, ref, ...field }, fieldState }) => (
         <FileUploadField
           {...field}
           id={field.name}
-          label="File"
+          label="File (required)"
+          controlRef={ref}
+          required
           disabled={disabled}
           errors={fieldState.invalid ? [fieldState.error] : undefined}
           files={value ?? null}

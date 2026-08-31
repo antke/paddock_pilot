@@ -6,7 +6,7 @@ import type { VariantProps } from 'class-variance-authority'
 import { cn } from '#/lib/utils.ts'
 
 const badgeVariants = cva(
-  'group/badge inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-control border border-transparent font-semibold whitespace-nowrap transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/30 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3!',
+  'group/badge inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-control border border-transparent font-semibold whitespace-nowrap transition-[background-color,border-color,color,box-shadow] duration-150 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3!',
   {
     variants: {
       variant: {
@@ -14,12 +14,12 @@ const badgeVariants = cva(
         secondary:
           'bg-secondary text-secondary-foreground [a]:hover:bg-secondary',
         destructive:
-          'bg-destructive/10 text-destructive focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-destructive/20',
+          'bg-destructive/10 text-destructive focus-visible:ring-destructive dark:bg-destructive/20 [a]:hover:bg-destructive/20',
         success:
           'border-primary/30 bg-primary/10 text-primary dark:border-primary/40 dark:bg-primary/15 dark:text-primary',
         warning:
-          'border-chart-3/35 bg-chart-3/15 text-chart-4 dark:border-chart-3/45 dark:bg-chart-3/15 dark:text-chart-3',
-        info: 'border-chart-2/35 bg-chart-2/12 text-chart-2 dark:border-chart-2/45 dark:bg-chart-2/15 dark:text-chart-2',
+          'border-status-warning/40 bg-status-warning-surface text-status-warning',
+        info: 'border-status-info/40 bg-status-info-surface text-status-info',
         neutral:
           'border-border-subtle bg-surface-muted text-muted-foreground dark:bg-surface-muted',
         filter:
@@ -33,8 +33,8 @@ const badgeVariants = cva(
       size: {
         default: 'min-h-6 px-2.5 py-0.5 text-xs',
         chip: 'min-h-6 px-2.5 py-1 text-xs',
-        micro: 'min-h-4 px-1.5 py-0 text-[0.62rem] leading-4 tracking-normal',
-        count: 'size-5 min-h-5 rounded-full p-0 text-[0.625rem] leading-none',
+        micro: 'min-h-5 px-1.5 py-0 text-xs leading-4 tracking-normal',
+        count: 'min-h-5 min-w-5 rounded-full px-1.5 py-0 text-xs leading-none',
       },
     },
     defaultVariants: {

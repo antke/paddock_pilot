@@ -1,7 +1,7 @@
 import { v } from 'convex/values'
 import type { Doc, Id } from './_generated/dataModel'
 import { query } from './_generated/server'
-import { hasPersonalPro } from './libs/entitlements'
+import { hasPremiumAnalyticsAccess } from './libs/entitlements'
 import { assertCanViewStable } from './libs/stablePermissions'
 import {
   addDaysToDateKey,
@@ -527,7 +527,7 @@ export const getForStable = query({
   },
   handler: async (ctx, args) => {
     const access = await assertCanViewStable(ctx, args.stableId)
-    const hasAccess = await hasPersonalPro(ctx, access.userId)
+    const hasAccess = await hasPremiumAnalyticsAccess(ctx, access.userId)
 
     if (!hasAccess) {
       return {
@@ -736,6 +736,7 @@ export const getForStable = query({
     return {
       hasAccess: true as const,
       stable: access.stable,
+      today,
       summary: {
         horseCount: horses.length,
         activeHealthIssueCount: activeHealthIssues.length,

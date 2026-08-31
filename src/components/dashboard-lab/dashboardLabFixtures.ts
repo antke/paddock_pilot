@@ -17,12 +17,23 @@ const juniperId = 'lab-horse-juniper' as Id<'horses'>
 const atlasId = 'lab-horse-atlas' as Id<'horses'>
 const meadowId = 'lab-horse-meadow' as Id<'horses'>
 
-export function createDashboardLabFixtureData(): DashboardLabData {
+export function createDashboardLabFixtureData(
+  activeStableId: Id<'stables'> = stableId,
+): DashboardLabData {
   const stables = createFixtureStables()
-  const stable = stables[0]
-  const horses = createFixtureHorses()
-  const events = createFixtureEvents()
-  const overview = createFixtureOverview({ events })
+  const stable =
+    stables.find((candidate) => candidate._id === activeStableId) ?? stables[0]
+  const horses = createFixtureHorses().filter(
+    (horse) => horse.stableId === stable._id,
+  )
+  const events = createFixtureEvents().filter(
+    (event) => event.stableId === stable._id,
+  )
+  const overview = createFixtureOverview({
+    activeStableId: stable._id,
+    events,
+    horseCount: horses.length,
+  })
 
   return createDashboardLabData({
     stable,
@@ -83,6 +94,8 @@ function createFixtureHorses(): Array<DashboardLabHorse> {
       vetPhone: '(555) 014-3300',
       farrierName: 'Ben Carter',
       farrierPhone: '(555) 014-1902',
+      passportNumber: 'GBR-PP-4412',
+      microchipNumber: '985141000441200',
       shoeingStatus: 'front_shoes',
     }),
     createFixtureHorse({
@@ -246,9 +259,13 @@ function createFixtureEvent({
 }
 
 function createFixtureOverview({
+  activeStableId,
   events,
+  horseCount,
 }: {
+  activeStableId: Id<'stables'>
   events: Array<DashboardLabEvent>
+  horseCount: number
 }): DashboardLabOverview {
   const dueReminders: DashboardLabOverview['dueReminders'] = [
     {
@@ -275,7 +292,7 @@ function createFixtureOverview({
       priority: 'medium',
       overdue: false,
     },
-  ]
+  ].filter((reminder) => reminder.stableId === activeStableId)
   const upcomingEvents = events
     .filter((event) => (event.status ?? 'planned') === 'planned')
     .map((event) => ({
@@ -289,16 +306,51 @@ function createFixtureOverview({
       horseCount: event.horseIds.length,
     }))
 
+  const attentionHorses: DashboardLabOverview['attentionHorses'] = [
+    {
+      horseId: juniperId,
+      horseName: 'Juniper',
+      ownerName: 'Mae Turner',
+      breed: 'Dutch Warmblood',
+      profileImageUrl: undefined,
+      stableId,
+      stableName: 'Cedar Ridge Barn',
+      activeIssueCount: 1,
+      highIssueCount: 1,
+      activeMedicationCount: 0,
+      overdueReminderCount: 1,
+    },
+    {
+      horseId: atlasId,
+      horseName: 'Atlas',
+      ownerName: 'Mae Turner',
+      breed: 'Irish Sport Horse',
+      profileImageUrl: undefined,
+      stableId,
+      stableName: 'Cedar Ridge Barn',
+      activeIssueCount: 0,
+      highIssueCount: 0,
+      activeMedicationCount: 1,
+      overdueReminderCount: 0,
+    },
+  ].filter((horse) => horse.stableId === activeStableId)
+
   return {
     summary: {
       stableCount: 2,
-      horseCount: 3,
+      horseCount,
       upcomingEventCount: upcomingEvents.length,
       dueReminderCount: dueReminders.length,
       overdueReminderCount: dueReminders.filter((reminder) => reminder.overdue)
         .length,
-      highSeverityIssueCount: 1,
-      activeMedicationCount: 1,
+      highSeverityIssueCount: attentionHorses.reduce(
+        (count, horse) => count + horse.highIssueCount,
+        0,
+      ),
+      activeMedicationCount: attentionHorses.reduce(
+        (count, horse) => count + horse.activeMedicationCount,
+        0,
+      ),
     },
     stableSummaries: [
       {
@@ -316,9 +368,9 @@ function createFixtureOverview({
         stableId: annexStableId,
         stableName: 'North Pasture Annex',
         location: 'Rhinebeck, NY',
-        horseCount: 4,
-        upcomingEventCount: 1,
-        dueReminderCount: 1,
+        horseCount: 0,
+        upcomingEventCount: 0,
+        dueReminderCount: 0,
         overdueReminderCount: 0,
         highSeverityIssueCount: 0,
         activeMedicationCount: 0,
@@ -326,34 +378,7 @@ function createFixtureOverview({
     ],
     dueReminders,
     upcomingEvents,
-    attentionHorses: [
-      {
-        horseId: juniperId,
-        horseName: 'Juniper',
-        ownerName: 'Mae Turner',
-        breed: 'Dutch Warmblood',
-        profileImageUrl: undefined,
-        stableId,
-        stableName: 'Cedar Ridge Barn',
-        activeIssueCount: 1,
-        highIssueCount: 1,
-        activeMedicationCount: 0,
-        overdueReminderCount: 1,
-      },
-      {
-        horseId: atlasId,
-        horseName: 'Atlas',
-        ownerName: 'Mae Turner',
-        breed: 'Irish Sport Horse',
-        profileImageUrl: undefined,
-        stableId,
-        stableName: 'Cedar Ridge Barn',
-        activeIssueCount: 0,
-        highIssueCount: 0,
-        activeMedicationCount: 1,
-        overdueReminderCount: 0,
-      },
-    ],
+    attentionHorses,
   }
 }
 

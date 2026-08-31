@@ -14,6 +14,7 @@ type StableDashboardProps = {
   horses: Array<DashboardCommandHorse>
   events: Array<DashboardCommandEvent>
   overview: DashboardCommandOverview
+  todayKey: string
 }
 
 export function StableDashboard({
@@ -22,6 +23,7 @@ export function StableDashboard({
   horses,
   events,
   overview,
+  todayKey,
 }: StableDashboardProps) {
   const data = createDashboardCommandData({
     stable,
@@ -29,6 +31,7 @@ export function StableDashboard({
     horses,
     events,
     overview,
+    todayKey,
   })
 
   return (

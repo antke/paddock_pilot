@@ -77,6 +77,7 @@ function AppDashboardData({
     events,
     horses,
     overview,
+    todayKey: today,
   })
 
   return (

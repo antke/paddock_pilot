@@ -11,18 +11,23 @@ import {
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { Button } from '#/components/ui/button'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
-import { formatMediumDateKey } from '#/lib/dateDisplay'
+import { RecordRemoveAction } from '#/components/list-layout/RecordRemoveAction'
+import { Spinner } from '#/components/ui/spinner'
+import { formatCountLabel } from '#/lib/numberDisplay'
+import { CheckIcon, XIcon } from '@phosphor-icons/react'
 import type { Doc } from 'convex/_generated/dataModel'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ElementType, ReactNode } from 'react'
+import { careReminderCategoryLabels } from 'shared/reminders/careReminderSchema'
 import {
-  CareReminderCategoryBadge,
   CareReminderPriorityBadge,
   CareReminderStatusBadge,
 } from './CareReminderBadges'
 import { CareReminderForm } from './CareReminderForm'
 import type { CareReminderSubmitData } from './CareReminderForm'
+import { getCareReminderDueLabel } from './careReminderDisplay'
 import {
+  getCareReminderDueState,
   getCareReminderRecordAccent,
   isCareReminderOverdue,
 } from './careReminderState'
@@ -113,8 +118,8 @@ export function CareRemindersCard({
           open={isCreateOpen}
           onOpenChange={setIsCreateOpen}
           triggerLabel="Add reminder"
-          title="Create reminder"
-          description="Add a care reminder without losing your place in the list."
+          title="Add care reminder"
+          description="Choose who it applies to, what needs doing, and when."
         >
           {form}
         </CreateRecordDialog>
@@ -140,9 +145,19 @@ export function CareRemindersCard({
     ) : null
 
   const reminderList = (
-    <DashboardItemList>
+    <DashboardItemList gap="loose">
       {!showHeader && inlineCreateDialog}
       {listToolbar}
+      {!isLoading && (
+        <p
+          className="sr-only"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {formatCountLabel(reminders.length, 'reminder')} shown
+        </p>
+      )}
       {isLoading ? (
         <DashboardLoadingState label={loadingLabel} />
       ) : reminders.length === 0 ? (
@@ -150,16 +165,19 @@ export function CareRemindersCard({
           {emptyMessage}
         </DashboardEmptyState>
       ) : (
-        reminders.map((item) => (
-          <ReminderRow
-            key={item.reminder._id}
-            item={item}
-            onComplete={onComplete}
-            onDismiss={onDismiss}
-            onRemove={onRemove}
-            chrome={chrome}
-          />
-        ))
+        <DashboardItemList role="list">
+          {reminders.map((item) => (
+            <div key={item.reminder._id} role="listitem" className="min-w-0">
+              <ReminderRow
+                item={item}
+                onComplete={onComplete}
+                onDismiss={onDismiss}
+                onRemove={onRemove}
+                chrome={chrome}
+              />
+            </div>
+          ))}
+        </DashboardItemList>
       )}
       {listFooter}
     </DashboardItemList>
@@ -211,20 +229,51 @@ function ReminderRow({
 }) {
   const { reminder } = item
   const overdue = isCareReminderOverdue(reminder)
+  const dueState = getCareReminderDueState(reminder)
+  const showPriorityBadge = reminder.priority === 'high'
+  const showStatusBadge = overdue || reminder.status !== 'pending'
+  const [pendingAction, setPendingAction] = useState<
+    'complete' | 'dismiss' | null
+  >(null)
+  const isUpdating = pendingAction !== null
+
+  const runStatusAction = async (
+    action: 'complete' | 'dismiss',
+    callback: (careReminder: Doc<'careReminders'>) => Promise<void>,
+  ) => {
+    if (isUpdating) return
+
+    try {
+      setPendingAction(action)
+      await callback(reminder)
+    } catch {
+      // The mutation owner reports the error.
+    } finally {
+      setPendingAction(null)
+    }
+  }
 
   return (
     <DashboardItemRecordCard
       accent={getCareReminderRecordAccent(reminder)}
       chrome={chrome}
+      interactive={false}
       actionsPlacement="footer"
       actionsClassName="ml-auto"
       actionBadges={
-        <>
-          {reminder.priority && (
-            <CareReminderPriorityBadge priority={reminder.priority} />
-          )}
-          <CareReminderStatusBadge status={reminder.status} overdue={overdue} />
-        </>
+        showPriorityBadge || showStatusBadge ? (
+          <>
+            {showPriorityBadge && (
+              <CareReminderPriorityBadge priority={reminder.priority} />
+            )}
+            {showStatusBadge && (
+              <CareReminderStatusBadge
+                status={reminder.status}
+                overdue={overdue}
+              />
+            )}
+          </>
+        ) : undefined
       }
       actions={
         item.canManage ? (
@@ -234,43 +283,66 @@ function ReminderRow({
                 <Button
                   type="button"
                   size="sm"
-                  variant="ghost"
-                  onClick={() => onComplete(reminder)}
+                  disabled={isUpdating}
+                  aria-busy={pendingAction === 'complete' || undefined}
+                  onClick={() => void runStatusAction('complete', onComplete)}
                 >
-                  Complete
+                  {pendingAction === 'complete' ? (
+                    <Spinner aria-hidden={true} />
+                  ) : (
+                    <CheckIcon data-icon="inline-start" weight="bold" />
+                  )}
+                  {pendingAction === 'complete' ? 'Completing…' : 'Complete'}
                 </Button>
                 <Button
                   type="button"
                   size="sm"
                   variant="ghost"
-                  onClick={() => onDismiss(reminder)}
+                  disabled={isUpdating}
+                  aria-busy={pendingAction === 'dismiss' || undefined}
+                  onClick={() => void runStatusAction('dismiss', onDismiss)}
                 >
-                  Dismiss
+                  {pendingAction === 'dismiss' ? (
+                    <Spinner aria-hidden={true} />
+                  ) : (
+                    <XIcon data-icon="inline-start" weight="bold" />
+                  )}
+                  {pendingAction === 'dismiss' ? 'Dismissing…' : 'Dismiss'}
                 </Button>
               </>
             )}
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() => onRemove(reminder)}
-            >
-              Remove
-            </Button>
+            <RecordRemoveAction
+              title={`Remove “${reminder.title}”?`}
+              description="This permanently removes the reminder and cannot be undone."
+              confirmLabel="Remove reminder"
+              disabled={isUpdating}
+              onConfirm={() => onRemove(reminder)}
+            />
           </>
         ) : undefined
       }
     >
       <DashboardItemRecordContent
         title={reminder.title}
-        titleBadges={<CareReminderCategoryBadge category={reminder.category} />}
         meta={
           <>
-            <span>Due {formatMediumDateKey(reminder.dueDate)}</span>
+            <span
+              className={
+                dueState === 'overdue'
+                  ? 'font-semibold text-destructive'
+                  : dueState === 'today' || dueState === 'soon'
+                    ? 'font-semibold text-foreground'
+                    : undefined
+              }
+            >
+              {getCareReminderDueLabel(reminder)}
+            </span>
             {item.horseName && <span>{item.horseName}</span>}
+            <span>{careReminderCategoryLabels[reminder.category]}</span>
           </>
         }
         description={reminder.description}
+        descriptionClassName="max-w-3xl text-foreground"
       />
     </DashboardItemRecordCard>
   )

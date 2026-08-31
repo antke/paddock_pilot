@@ -37,7 +37,7 @@ export function DashboardHeroContent({
   return (
     <div
       className={cn(
-        'grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start',
+        'grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-stretch',
         className,
       )}
       {...props}
@@ -67,10 +67,7 @@ export function DashboardHeroActions({
 }: DashboardHeroActionsProps) {
   return (
     <div
-      className={cn(
-        'grid gap-3 justify-items-start lg:justify-items-end',
-        className,
-      )}
+      className={cn('grid justify-items-end gap-3 self-stretch', className)}
       {...props}
     />
   )

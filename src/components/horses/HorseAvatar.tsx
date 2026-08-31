@@ -1,4 +1,5 @@
 import { cn } from '#/lib/utils'
+import { useState } from 'react'
 
 type HorseAvatarSize = 'sm' | 'md' | 'lg'
 
@@ -27,6 +28,11 @@ export function HorseAvatar({
   size = 'md',
   className,
 }: HorseAvatarProps) {
+  const fallbackInitial = Array.from(name.trim())[0]?.toLocaleUpperCase() ?? '?'
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null)
+  const hasUsableImage =
+    Boolean(profileImageUrl) && failedImageUrl !== profileImageUrl
+
   return (
     <div
       data-slot="horse-avatar"
@@ -36,20 +42,24 @@ export function HorseAvatar({
         className,
       )}
     >
-      {profileImageUrl ? (
+      {hasUsableImage ? (
         <img
-          src={profileImageUrl}
-          alt={`${name} profile`}
+          src={profileImageUrl ?? undefined}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onError={() => setFailedImageUrl(profileImageUrl ?? null)}
           className="size-full object-cover"
         />
       ) : (
         <div
+          aria-hidden="true"
           className={cn(
             'flex size-full items-center justify-center font-semibold text-muted-foreground',
             fallbackClassName[size],
           )}
         >
-          {name.charAt(0).toUpperCase()}
+          {fallbackInitial}
         </div>
       )}
     </div>

@@ -14,6 +14,7 @@ import { stableProviderInputSchema } from '../shared/stables/stableProviderSchem
 import type { Id } from './_generated/dataModel'
 import { internalMutation } from './_generated/server'
 import type { MutationCtx } from './_generated/server'
+import { deleteStorageObjectIfUnreferenced } from './libs/storageObjects'
 import { getCurrentUser } from './libs/stablePermissions'
 
 const confirmSeed = 'seed-demo-data'
@@ -107,6 +108,68 @@ const parseSeed = <T>(
     `${label}: ${result.error.issues[0]?.message ?? 'Invalid seed data'}`,
   )
 }
+
+const createSeedDocumentFile = (fileName: string, notes?: string) => {
+  const pdfText = [fileName, notes ?? 'Paddock Pilot demo document']
+    .flatMap((line) => wrapSeedPdfText(line))
+    .map(escapeSeedPdfText)
+  const contentLines = pdfText.map(
+    (line, index) => `${index === 0 ? '' : 'T*\n'}(${line}) Tj`,
+  )
+  const content = [
+    'BT',
+    '/F1 16 Tf',
+    '72 720 Td',
+    '18 TL',
+    ...contentLines,
+    'ET',
+  ].join('\n')
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>',
+    `<< /Length ${content.length} >>\nstream\n${content}\nendstream`,
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+  ]
+  let pdf = '%PDF-1.4\n'
+  const objectOffsets: Array<number> = []
+
+  objects.forEach((object, index) => {
+    objectOffsets.push(pdf.length)
+    pdf += `${index + 1} 0 obj\n${object}\nendobj\n`
+  })
+
+  const xrefOffset = pdf.length
+  pdf += `xref\n0 ${objects.length + 1}\n`
+  pdf += '0000000000 65535 f \n'
+  pdf += objectOffsets
+    .map((offset) => `${String(offset).padStart(10, '0')} 00000 n \n`)
+    .join('')
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\n`
+  pdf += `startxref\n${xrefOffset}\n%%EOF\n`
+
+  return new Blob([pdf], { type: 'application/pdf' })
+}
+
+const wrapSeedPdfText = (value: string) => {
+  const words = value.replace(/\s+/g, ' ').trim().split(' ')
+  const lines: Array<string> = []
+
+  words.forEach((word) => {
+    const current = lines.at(-1)
+
+    if (!current || `${current} ${word}`.length > 72) {
+      lines.push(word)
+    } else {
+      lines[lines.length - 1] = `${current} ${word}`
+    }
+  })
+
+  return lines.length > 0 ? lines : ['Paddock Pilot demo document']
+}
+
+const escapeSeedPdfText = (value: string) =>
+  value.replace(/[^\x20-\x7e]/g, '?').replace(/([\\()])/g, '\\$1')
 
 const upsertDemoUser = async (
   ctx: MutationCtx,
@@ -229,6 +292,14 @@ const resetStableRows = async (ctx: MutationCtx, stableId: Id<'stables'>) => {
     ),
   )
 
+  const documentStorageIds = [
+    ...new Set(
+      documents.flatMap((document) =>
+        document.storageId ? [document.storageId] : [],
+      ),
+    ),
+  ]
+
   await Promise.all([
     ...eventHorseRows.flat().map((row) => ctx.db.delete(row._id)),
     ...events.map((event) => ctx.db.delete(event._id)),
@@ -243,6 +314,12 @@ const resetStableRows = async (ctx: MutationCtx, stableId: Id<'stables'>) => {
     ...documents.map((document) => ctx.db.delete(document._id)),
     ...invitations.map((invitation) => ctx.db.delete(invitation._id)),
   ])
+
+  await Promise.all(
+    documentStorageIds.map((storageId) =>
+      deleteStorageObjectIfUnreferenced(ctx, storageId),
+    ),
+  )
 }
 
 const upsertDemoStable = async (ctx: MutationCtx, ownerId: Id<'users'>) => {
@@ -822,16 +899,14 @@ const seedDocuments = async (
       type: 'passport' as const,
       fileName: 'Juniper Star passport scan.pdf',
       contentType: 'application/pdf',
-      size: 482_000,
-      notes: 'Seed metadata placeholder for passport storage workflow.',
+      notes: 'Demo passport identity record for document workflow checks.',
     },
     {
       stableId,
       horseId: horseIds[0],
       type: 'vaccination' as const,
-      fileName: 'Juniper vaccination proof.jpg',
-      contentType: 'image/jpeg',
-      size: 214_000,
+      fileName: 'Juniper vaccination proof.pdf',
+      contentType: 'application/pdf',
       notes: 'Annual booster proof to keep ready for yard moves or shows.',
     },
     {
@@ -840,8 +915,7 @@ const seedDocuments = async (
       type: 'insurance' as const,
       fileName: 'Copper Field insurance schedule.pdf',
       contentType: 'application/pdf',
-      size: 391_000,
-      notes: 'Policy summary placeholder for emergency admin checks.',
+      notes: 'Policy summary for emergency administration checks.',
     },
     {
       stableId,
@@ -849,8 +923,7 @@ const seedDocuments = async (
       type: 'other' as const,
       fileName: 'Demo yard emergency plan.pdf',
       contentType: 'application/pdf',
-      size: 128_000,
-      notes: 'Stable-wide metadata placeholder for document directory testing.',
+      notes: 'Stable-wide emergency plan for document directory testing.',
     },
     ...Array.from({ length: 20 }, (_, index) => {
       const type = pickSeedValue(
@@ -874,7 +947,6 @@ const seedDocuments = async (
         type,
         fileName: `${horseId ? 'Horse' : 'Stable'} demo ${type.replace('_', ' ')} document ${index + 1}.pdf`,
         contentType: 'application/pdf',
-        size: 140_000 + index * 12_500,
         notes: `Generated document ${index + 1} for document list density, category filters, and stable-wide/horse-linked rows.`,
       }
     }),
@@ -882,21 +954,23 @@ const seedDocuments = async (
   const now = Date.now()
 
   await Promise.all(
-    documentInputs.map((document) => {
+    documentInputs.map(async (document) => {
       const input = parseSeed(
         stableDocumentInputSchema.safeParse(document),
         'Stable document seed',
       )
+      const file = createSeedDocumentFile(input.fileName, input.notes)
+      const storageId = await ctx.storage.store(file)
 
       return ctx.db.insert('stableDocuments', {
         stableId,
         horseId: document.horseId,
         eventId: undefined,
-        storageId: undefined,
+        storageId,
         type: input.type,
         fileName: input.fileName,
-        contentType: input.contentType,
-        size: input.size,
+        contentType: file.type,
+        size: file.size,
         notes: input.notes,
         createdBy: ownerId,
         createdAt: now,

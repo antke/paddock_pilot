@@ -683,7 +683,7 @@ accessInstructions
 parkingInstructions
 ```
 
-### Roadmap slice 6: Richer Personal Pro analysis
+### Roadmap slice 6: Richer Premium analysis
 
 Use the structured data above to make the premium analysis centre more valuable.
 
@@ -701,9 +701,12 @@ Future insights:
 
 Potential premium split:
 
-- Basic users: profile data, active health issues, stable schedule, simple dashboard alerts.
-- Personal Plus: shared stable participation, richer horse management, invitations.
-- Personal Pro: analysis centre, care export, historical trend views, advanced reminders, and cross-stable summaries.
+- Core users: the complete stable coordination product, including profiles,
+  care records, documents, printable care summaries, schedules, reminders,
+  invitations, and shared stable participation.
+- Premium users: the Analysis Centre and its future analytical views.
+- During testing, premium enforcement remains disabled so the pilot stable can
+  exercise every feature without a subscription.
 
 ## Implementation order
 
@@ -726,7 +729,7 @@ Next recommended implementation order after the completed first pass:
 7. Add care export / vet summary.
 8. Add provider/contact directory.
 9. Add extra horse and stable profile details.
-10. Expand the Personal Pro analysis centre using the new structured data.
+10. Expand the Premium analysis centre using the new structured data.
 
 ## File and architecture notes
 
@@ -799,4 +802,5 @@ For the first implementation pass:
 - Should nutrition recommended/avoid items be simple string lists, or should each item later have notes and severity?
 - Should passport number be shown prominently on the horse detail page or only inside an expanded details section?
 - Should cost tracking be included in event details now, or postponed until expense tracking is planned properly?
-- Which analytics features should be part of Personal Plus versus a future Personal Pro tier?
+- Which analytical views belong in the initial Premium launch versus a later
+  Premium expansion?

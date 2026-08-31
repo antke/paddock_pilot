@@ -16,7 +16,7 @@ type StableInvitationDeliveryStatus = NonNullable<
 
 export const stableInvitationStatusLabels = {
   pending: 'Pending',
-  accepted_pending_subscription: 'Accepted, pending subscription',
+  accepted_pending_subscription: 'Accepted, ready to activate',
   accepted: 'Accepted',
   revoked: 'Revoked',
   expired: 'Expired',

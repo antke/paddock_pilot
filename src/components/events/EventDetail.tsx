@@ -1,13 +1,13 @@
 import {
   DetailField,
-  DetailGrid,
   DetailPanel,
   DetailPanelGrid,
-  DetailStack,
+  DetailSummaryField,
+  DetailSummaryGrid,
 } from '#/components/dashboard/DetailBlocks'
 import { DashboardEntityHero } from '#/components/dashboard/DashboardEntityHero'
+import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
-import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { ButtonLink } from '#/components/ui/button'
 import { HorseCardLink } from '#/components/horses/HorseCard'
@@ -15,11 +15,7 @@ import type { Doc } from 'convex/_generated/dataModel'
 import { eventStatusLabels } from 'shared/events/eventSchema'
 import type { EventStatus } from 'shared/events/eventSchema'
 import { formatCurrencyAmount } from '#/lib/numberDisplay'
-import {
-  EventRecurringBadge,
-  EventStatusBadge,
-  EventTypeBadge,
-} from './EventBadges'
+import { EventStatusBadge } from './EventBadges'
 import {
   formatEventDateRange,
   formatEventType,
@@ -33,6 +29,7 @@ type EventDetailProps = {
   event: Doc<'events'>
   horses: Array<Doc<'horses'>>
   canManageEvent: boolean
+  showServiceDetails?: boolean
 }
 
 export function EventDetail({
@@ -40,6 +37,7 @@ export function EventDetail({
   event,
   horses,
   canManageEvent,
+  showServiceDetails = true,
 }: EventDetailProps) {
   const recurrenceSummary = formatRecurrence(event.recurrence)
   const eventStatus: EventStatus = event.status ?? 'planned'
@@ -51,28 +49,27 @@ export function EventDetail({
   )
 
   return (
-    <DashboardPage>
+    <>
       <DashboardEntityHero
         title={event.title}
         leading={
           <EventDateBadge date={event.date} time={event.time} variant="hero" />
         }
         badges={
-          <>
-            <EventTypeBadge type={event.type} />
+          eventStatus !== 'planned' ? (
             <EventStatusBadge status={eventStatus} />
-            {recurrenceSummary && <EventRecurringBadge />}
-          </>
+          ) : undefined
         }
         actions={
           canManageEvent ? (
-          <ButtonLink
-            to="/stables/$stableId/events/$eventId/edit"
-            params={{ stableId, eventId: event._id }}
-            variant="outline"
-          >
-            Edit event
-          </ButtonLink>
+            <ButtonLink
+              to="/stables/$stableId/events/$eventId/edit"
+              params={{ stableId, eventId: event._id }}
+              action="edit"
+              variant="outline"
+            >
+              Edit event
+            </ButtonLink>
           ) : undefined
         }
       />
@@ -81,114 +78,85 @@ export function EventDetail({
         <DetailPanelGrid
           className={hasProviderDetails ? 'gap-3' : 'gap-3 lg:grid-cols-1'}
         >
-          <DetailPanel title="Overview" variant="emphasis">
-            <DetailGrid className="gap-2.5">
-              <DetailField
-                framed
+          <DetailPanel as="h2" title="Overview" variant="emphasis">
+            <DetailSummaryGrid>
+              <DetailSummaryField
                 label="Date"
                 value={formatEventDateRange(event.date, event.endDate)}
-                variant="emphasis"
               />
-              <DetailField
-                framed
-                label="Time"
-                value={event.time}
-                variant="emphasis"
-              />
-              <DetailField
-                framed
+              <DetailSummaryField label="Time" value={event.time} />
+              <DetailSummaryField
                 label="Type"
                 value={formatEventType(event.type)}
-                variant="emphasis"
               />
-              <DetailField
-                framed
+              <DetailSummaryField
                 label="Status"
                 value={eventStatusLabels[eventStatus]}
-                variant="emphasis"
               />
               {event.location && (
-                <DetailField
-                  framed
-                  label="Location"
-                  value={event.location}
-                  variant="emphasis"
-                />
+                <DetailSummaryField label="Location" value={event.location} />
               )}
               {recurrenceSummary && (
-                <DetailField
-                  framed
+                <DetailSummaryField
                   label="Recurrence"
                   value={recurrenceSummary}
-                  variant="emphasis"
                 />
               )}
               {event.description && (
-                <DetailField
-                  framed
+                <DetailSummaryField
                   label="Description"
                   value={event.description}
-                  valueClassName="font-medium"
                   multiline
                   span="sm2"
-                  variant="emphasis"
                 />
               )}
-            </DetailGrid>
+            </DetailSummaryGrid>
           </DetailPanel>
 
           {hasProviderDetails && (
-            <DetailPanel title="Provider and cost" variant="emphasis">
-              <DetailStack className="gap-2.5">
+            <DetailPanel as="h2" title="Provider and cost" variant="emphasis">
+              <DetailSummaryGrid className="lg:grid-cols-1">
                 {event.providerName && (
-                  <DetailField
-                    framed
+                  <DetailSummaryField
                     label="Provider"
                     value={event.providerName}
-                    variant="emphasis"
                   />
                 )}
                 {event.providerPhone && (
-                  <DetailField
-                    framed
+                  <DetailSummaryField
                     label="Provider phone"
                     value={event.providerPhone}
-                    variant="emphasis"
                   />
                 )}
                 {event.totalCost !== undefined && (
-                  <DetailField
-                    framed
+                  <DetailSummaryField
                     label="Total cost"
                     value={formatCurrencyAmount(event.totalCost)}
-                    variant="emphasis"
                   />
                 )}
                 {event.costPerHorse !== undefined && (
-                  <DetailField
-                    framed
+                  <DetailSummaryField
                     label="Cost per horse"
                     value={formatCurrencyAmount(event.costPerHorse)}
-                    variant="emphasis"
                   />
                 )}
-              </DetailStack>
+              </DetailSummaryGrid>
             </DetailPanel>
           )}
 
           {event.notesAfterCompletion && (
             <DetailPanel
+              as="h2"
               title="Completion"
               span={hasProviderDetails ? 'lg2' : undefined}
               variant="emphasis"
             >
               <DetailField
-                framed
+                indent={false}
                 label="Completion notes"
                 value={event.notesAfterCompletion}
-                valueClassName="font-medium"
                 multiline
-                variant="emphasis"
+                variant="readable"
               />
             </DetailPanel>
           )}
@@ -200,19 +168,27 @@ export function EventDetail({
         size="panel"
         contentGap="comfortable"
       >
-        <DashboardItemList gap="comfortable">
-          {horses.map((horse) => (
-            <HorseCardLink
-              key={horse._id}
-              horse={horse}
-              stableId={stableId}
-              horseId={horse._id}
-            />
-          ))}
-        </DashboardItemList>
+        {horses.length === 0 ? (
+          <DashboardEmptyState chrome="soft" spacing="flush">
+            No horses are attached to this event.
+          </DashboardEmptyState>
+        ) : (
+          <DashboardItemList gap="comfortable">
+            {horses.map((horse) => (
+              <HorseCardLink
+                key={horse._id}
+                horse={horse}
+                stableId={stableId}
+                horseId={horse._id}
+              />
+            ))}
+          </DashboardItemList>
+        )}
       </DashboardSectionCard>
 
-      <EventHorseServiceDetailsCard eventId={event._id} />
-    </DashboardPage>
+      {showServiceDetails && (
+        <EventHorseServiceDetailsCard eventId={event._id} />
+      )}
+    </>
   )
 }

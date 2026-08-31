@@ -16,7 +16,8 @@ import {
 } from '#/components/dashboard/DashboardInlinePanel'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import { formatCountLabel } from '#/lib/numberDisplay'
-import { useEffect, useRef, useState } from 'react'
+import { cn } from '#/lib/utils'
+import { useId, useState } from 'react'
 import { EventRow } from '#/components/events/EventRow'
 import type {
   DashboardCommandChrome,
@@ -25,32 +26,36 @@ import type {
 } from './dashboardTypes'
 
 type MiniCalendarCardProps = {
+  className?: string
   data: DashboardCommandData
-  layout?: 'wide' | 'compact'
   showSelectedDay?: boolean
   showInlineEvents?: boolean
   chrome?: DashboardCommandChrome
 }
 
 export function MiniCalendarCard({
+  className,
   data,
-  layout = 'wide',
   showSelectedDay = true,
   showInlineEvents = false,
   chrome = 'cards',
 }: MiniCalendarCardProps) {
-  const [selectedDayKey, setSelectedDayKey] = useState(data.weekDays[0]?.key)
-  const selectedDay =
-    data.weekDays.find((day) => day.key === selectedDayKey) ?? data.weekDays[0]
-  const isCompact = layout === 'compact'
+  const [selectedDayKey, setSelectedDayKey] = useState<string>()
+  const selectedDay = data.weekDays.find((day) => day.key === selectedDayKey)
   const controlChrome = chrome
+  const calendarId = useId()
+  const mobilePanelId = `${calendarId}-mobile-selected-day`
+  const desktopPanelId = `${calendarId}-desktop-selected-day`
 
   return (
     <DashboardSection
+      className={className}
       chrome={chrome}
       gap="compact"
       padding={chrome === 'cards' ? 'roomy' : 'default'}
       title="Next 7 days"
+      description="Select a day to see what’s planned."
+      descriptionSize="sm"
       size="panel"
       titleStyle="display"
     >
@@ -69,72 +74,108 @@ export function MiniCalendarCard({
           ))}
         </div>
       ) : (
-        <>
-          <div
-            data-slot="calendar-week-grid"
-            className={calendarWeekGridClassName({ isCompact })}
-          >
-            {data.weekDays.map((day, index) => (
+        <div
+          data-slot="calendar-week-grid"
+          role="group"
+          aria-label="Seven-day schedule"
+          className={calendarWeekGridClassName({ isCompact: true })}
+        >
+          {data.weekDays.map((day, index) => {
+            const isSelected = selectedDayKey === day.key
+            const controlId = `${calendarId}-day-${day.key}-button`
+
+            return (
               <div
                 key={day.key}
                 data-slot="calendar-week-day-column"
-                className={calendarWeekDayColumnClassName()}
+                className={calendarWeekDayColumnClassName('min-w-0')}
               >
                 <DashboardInlinePanelButton
+                  id={controlId}
                   data-slot="calendar-week-day-button"
-                  onClick={() => setSelectedDayKey(day.key)}
+                  onClick={() =>
+                    setSelectedDayKey((currentDayKey) =>
+                      currentDayKey === day.key ? undefined : day.key,
+                    )
+                  }
+                  aria-controls={
+                    showSelectedDay && isSelected
+                      ? `${mobilePanelId} ${desktopPanelId}`
+                      : undefined
+                  }
+                  aria-current={index === 0 ? 'date' : undefined}
+                  aria-expanded={showSelectedDay ? isSelected : undefined}
+                  aria-pressed={isSelected}
                   chrome={controlChrome}
                   className={calendarWeekDayButtonClassName({
                     chrome: controlChrome,
-                    className: 'bg-card',
-                    isCompact,
-                    isExpanded: selectedDay?.key === day.key,
-                    isSelected: selectedDay?.key === day.key,
+                    className: cn(
+                      'bg-card lg:min-h-28 lg:grid-cols-1 lg:content-between lg:items-stretch lg:gap-2',
+                      showSelectedDay &&
+                        isSelected &&
+                        'rounded-b-none lg:rounded-b-row',
+                    ),
+                    isCompact: true,
+                    isSelected,
                     isToday: index === 0,
-                    showSelectedDay,
                   })}
                 >
                   <span
                     data-slot="calendar-week-day-label"
-                    className={calendarWeekDayLabelClassName({ isCompact })}
+                    className={calendarWeekDayLabelClassName({
+                      isCompact: true,
+                      className: 'lg:order-none',
+                    })}
                   >
                     {day.label}
                   </span>
                   <span
                     data-slot="calendar-week-day-number"
-                    className={calendarWeekDayNumberClassName({ isCompact })}
+                    className={calendarWeekDayNumberClassName({
+                      isCompact: true,
+                      className: 'lg:order-none',
+                    })}
                   >
                     {day.day}
                   </span>
                   <span
                     data-slot="calendar-week-day-meta"
-                    className={calendarWeekDayMetaClassName({ isCompact })}
+                    className={calendarWeekDayMetaClassName({
+                      isCompact: true,
+                      className:
+                        'lg:order-none lg:justify-self-start lg:text-left',
+                    })}
                   >
                     {day.eventCount === 0
                       ? 'Clear'
                       : formatCountLabel(day.eventCount, 'event')}
                   </span>
                 </DashboardInlinePanelButton>
-                {showSelectedDay && isCompact && (
+                {showSelectedDay && isSelected && (
                   <SelectedDayPanel
+                    id={mobilePanelId}
+                    labelledBy={controlId}
                     day={day}
                     chrome={controlChrome}
-                    isExpanded={selectedDay?.key === day.key}
                     className="bg-card"
+                    wrapperClassName="lg:hidden"
                   />
                 )}
               </div>
-            ))}
-          </div>
-          {showSelectedDay && !isCompact && selectedDay && (
+            )
+          })}
+
+          {showSelectedDay && selectedDay && (
             <SelectedDayPanel
+              id={desktopPanelId}
+              labelledBy={`${calendarId}-day-${selectedDay.key}-button`}
               day={selectedDay}
               chrome={controlChrome}
-              isExpanded={true}
-              className="mt-2 rounded-row bg-card"
+              className="bg-card lg:mt-2 lg:rounded-row"
+              wrapperClassName="hidden lg:col-span-7 lg:grid"
             />
           )}
-        </>
+        </div>
       )}
     </DashboardSection>
   )
@@ -209,80 +250,52 @@ function DayColumn({
 }
 
 function SelectedDayPanel({
+  id,
+  labelledBy,
   day,
   chrome,
-  isExpanded,
   className,
+  wrapperClassName,
 }: {
+  id: string
+  labelledBy: string
   day: DashboardCommandDay
   chrome: DashboardCommandChrome
-  isExpanded: boolean
   className?: string
+  wrapperClassName?: string
 }) {
-  const contentRef = useRef<HTMLDivElement>(null)
-  const [contentHeight, setContentHeight] = useState(0)
-
-  useEffect(() => {
-    const content = contentRef.current
-    if (!content) return undefined
-
-    const updateHeight = () => {
-      const styles = window.getComputedStyle(content)
-      const verticalMargins =
-        Number.parseFloat(styles.marginTop) +
-        Number.parseFloat(styles.marginBottom)
-
-      setContentHeight(
-        Math.ceil(content.getBoundingClientRect().height + verticalMargins),
-      )
-    }
-
-    updateHeight()
-
-    const resizeObserver = new ResizeObserver(updateHeight)
-    resizeObserver.observe(content)
-
-    return () => resizeObserver.disconnect()
-  }, [])
-
   return (
     <div
+      id={id}
       data-slot="calendar-selected-day-panel"
-      aria-hidden={!isExpanded}
-      className={`app-height-collapse overflow-hidden ${
-        isExpanded ? 'opacity-100' : 'opacity-0'
-      }`}
-      style={{
-        gridTemplateRows:
-          isExpanded && contentHeight > 0 ? `${contentHeight}px` : '0px',
-      }}
+      role="region"
+      aria-labelledby={labelledBy}
+      aria-live="polite"
+      className={wrapperClassName}
     >
-      <div className="min-h-0 overflow-hidden" inert={!isExpanded}>
-        <div
-          ref={contentRef}
-          className={calendarSelectedDayPanelClassName({
-            chrome,
-            className,
-          })}
-        >
-          {day.events.length === 0 ? (
-            <DashboardEmptyState chrome={chrome} className="bg-card">
-              Nothing planned for this day.
-            </DashboardEmptyState>
-          ) : (
-            <DashboardItemList>
-              {day.events.map((event) => (
-                <EventRow
-                  key={event._id}
-                  event={event}
-                  chrome={chrome}
-                  className="bg-card"
-                  variant="contextual"
-                />
-              ))}
-            </DashboardItemList>
-          )}
-        </div>
+      <div
+        className={calendarSelectedDayPanelClassName({
+          chrome,
+          className,
+        })}
+      >
+        {day.events.length === 0 ? (
+          <DashboardEmptyState chrome={chrome} className="bg-card">
+            Nothing planned for this day.
+          </DashboardEmptyState>
+        ) : (
+          <DashboardItemList>
+            {day.events.map((event) => (
+              <EventRow
+                key={event._id}
+                event={event}
+                chrome={chrome}
+                className="bg-card"
+                variant="contextual"
+              />
+            ))}
+          </DashboardItemList>
+        )}
       </div>
     </div>
   )

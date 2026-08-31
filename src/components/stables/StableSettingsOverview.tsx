@@ -48,6 +48,7 @@ export function StableSettingsOverview({
           <ButtonLink
             to="/stables/$stableId/edit"
             params={{ stableId: stable._id }}
+            action="edit"
             variant="outline"
           >
             Edit stable

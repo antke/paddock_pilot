@@ -3,7 +3,6 @@ import {
   CaretDownIcon,
   CheckIcon,
   ClockIcon,
-  PlusIcon,
   XIcon,
 } from '@phosphor-icons/react'
 
@@ -36,12 +35,15 @@ import {
 import { DashboardLoadingState } from '#/components/dashboard/DashboardLoadingState'
 import { DashboardMetaList } from '#/components/dashboard/DashboardMetaList'
 import { DashboardSectionTabGroup } from '#/components/dashboard/DashboardNavigation'
+import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import {
   DashboardSectionCard,
   DashboardSubsection,
 } from '#/components/dashboard/DashboardSectionCard'
 import { DashboardTablePanel } from '#/components/dashboard/DashboardTable'
+import { DocumentDownloadAction } from '#/components/documents/DocumentDownloadAction'
 import {
+  DetailField,
   DetailGrid,
   DetailIconList,
   DetailPanelGrid,
@@ -57,7 +59,7 @@ import {
   CalendarEventChipMeta,
   CalendarEventChipTitle,
   CalendarGrid,
-  CalendarMutedPill,
+  CalendarMoreEventsButton,
   CalendarShell,
   CalendarWeekdayCell,
   CalendarWeekdayRow,
@@ -65,7 +67,7 @@ import {
 import { EventDateBadge } from '#/components/events/EventDateBadge'
 import { FileUploadField } from '#/components/forms/FileUploadField'
 import { FormHelpTooltip } from '#/components/forms/FormHelpTooltip'
-import { InlineForm } from '#/components/forms/FormLayout'
+import { FormStepHeader, InlineForm } from '#/components/forms/FormLayout'
 import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
 import {
   HorseCardLink,
@@ -73,11 +75,13 @@ import {
 } from '#/components/horses/HorseCard'
 import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
+import { RecordRemoveAction } from '#/components/list-layout/RecordRemoveAction'
 import { ListFilterBar } from '#/components/list-filtering/ListFilterBar'
 import { OnboardingStepper } from '#/components/onboarding/OnboardingStepper'
+import { StableCardLink } from '#/components/stables/StableCard'
 import { StablePersonCard } from '#/components/stables/StablePersonCard'
+import { StableProviderCard } from '#/components/stables/StableProviderCard'
 import {
-  CareReminderCategoryBadge,
   CareReminderPriorityBadge,
   CareReminderStatusBadge,
 } from '#/components/reminders/CareReminderBadges'
@@ -113,8 +117,19 @@ import {
   ActivityTimelineWindowHandle,
 } from '#/components/timeline/ActivityTimeline'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '#/components/ui/alert-dialog'
 import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
+import { Button, ButtonAnchor } from '#/components/ui/button'
 import { Checkbox } from '#/components/ui/checkbox'
 import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
 import {
@@ -129,6 +144,7 @@ import {
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGrid,
   FieldHeader,
   FieldHeaderContent,
@@ -166,6 +182,7 @@ import type {
   CareReminderPriority,
   CareReminderStatus,
 } from 'shared/reminders/careReminderSchema'
+import { careReminderCategoryLabels } from 'shared/reminders/careReminderSchema'
 
 type ReminderTone = 'overdue' | 'today' | 'upcoming'
 
@@ -190,6 +207,7 @@ const palette = [
   ['Rail', '--border'],
   ['Ink', '--foreground'],
   ['Green', '--primary'],
+  ['Quiet green', '--brand-surface'],
   ['Leather', '--secondary'],
   ['Brass', '--chart-3'],
   ['Clay', '--destructive'],
@@ -212,16 +230,16 @@ const principles = [
 
 const typographyFamilies = [
   {
-    name: 'Product sans',
+    name: 'Product sans · Manrope Variable',
     token: 'font-sans',
     className: 'font-sans',
     sample: 'Paddock operations and everyday interface copy',
     use: 'Default application UI, controls, records, descriptions, and data.',
   },
   {
-    name: 'Display condensed',
+    name: 'Display condensed · Barlow Condensed',
     token: 'font-display',
-    className: 'font-display font-black uppercase',
+    className: 'font-display font-bold uppercase tracking-[-0.015em]',
     sample: 'FIELD OFFICE',
     use: 'Hero, page, section, and panel display headings only.',
   },
@@ -265,12 +283,6 @@ const typographyWeights = [
 ] as const
 
 const typographySizes = [
-  { token: 'text-[0.62rem]', value: '9.92px', className: 'text-[0.62rem]' },
-  { token: 'text-[0.625rem]', value: '10px', className: 'text-[0.625rem]' },
-  { token: 'text-[10px]', value: '10px', className: 'text-[10px]' },
-  { token: 'text-[0.68rem]', value: '10.88px', className: 'text-[0.68rem]' },
-  { token: 'text-[0.7rem]', value: '11.2px', className: 'text-[0.7rem]' },
-  { token: 'text-[0.72rem]', value: '11.52px', className: 'text-[0.72rem]' },
   { token: 'text-xs', value: '12px', className: 'text-xs' },
   { token: 'text-sm', value: '14px', className: 'text-sm' },
   { token: 'text-base', value: '16px', className: 'text-base' },
@@ -286,7 +298,7 @@ const typographySizes = [
 
 const typographyLineHeights = [
   { token: 'leading-none', value: '1' },
-  { token: 'leading-[0.92]', value: '0.92' },
+  { token: 'leading-[0.96]', value: '0.96' },
   { token: 'leading-tight', value: '1.25' },
   { token: 'leading-snug', value: '1.375' },
   { token: 'leading-normal', value: '1.5' },
@@ -308,44 +320,45 @@ const typographyRoles = [
     role: 'Hero display title',
     owner: 'DashboardHeroTitle',
     recipe:
-      'font-display text-5xl sm:text-6xl lg:text-7xl font-black uppercase leading-[0.92]',
+      'font-display text-5xl sm:text-6xl lg:text-7xl font-bold uppercase leading-[0.96] tracking-[-0.015em]',
     className:
-      'font-display text-5xl font-black uppercase leading-[0.92] sm:text-6xl lg:text-7xl',
+      'font-display text-5xl font-bold uppercase leading-[0.96] tracking-[-0.015em] sm:text-6xl lg:text-7xl',
     sample: 'Stable HQ',
   },
   {
     role: 'Page display title',
     owner: 'DashboardPageHeader',
     recipe:
-      'font-display text-4xl sm:text-5xl font-black uppercase leading-[0.92]',
+      'font-display text-4xl sm:text-5xl font-bold uppercase leading-[0.96] tracking-[-0.015em]',
     className:
-      'font-display text-4xl font-black uppercase leading-[0.92] sm:text-5xl',
+      'font-display text-4xl font-bold uppercase leading-[0.96] tracking-[-0.015em] sm:text-5xl',
     sample: 'Horses',
   },
   {
     role: 'Section title',
     owner: 'DashboardSectionHeader · section',
     recipe:
-      'font-display text-3xl sm:text-4xl font-black uppercase leading-[0.92]',
+      'font-display text-3xl sm:text-4xl font-bold uppercase leading-[0.96] tracking-[-0.015em]',
     className:
-      'font-display text-3xl font-black uppercase leading-[0.92] sm:text-4xl',
+      'font-display text-3xl font-bold uppercase leading-[0.96] tracking-[-0.015em] sm:text-4xl',
     sample: 'Care overview',
   },
   {
     role: 'Panel title',
     owner: 'DashboardSectionHeader · panel',
     recipe:
-      'font-display text-2xl sm:text-3xl font-black uppercase leading-[0.92]',
+      'font-display text-2xl sm:text-3xl font-bold uppercase leading-[0.96] tracking-[-0.015em]',
     className:
-      'font-display text-2xl font-black uppercase leading-[0.92] sm:text-3xl',
+      'font-display text-2xl font-bold uppercase leading-[0.96] tracking-[-0.015em] sm:text-3xl',
     sample: 'Horses needing attention',
   },
   {
     role: 'Nested heading',
     owner: 'DashboardInlineHeader / DashboardSubsection',
-    recipe: 'font-display text-lg font-black uppercase leading-[0.95]',
+    recipe:
+      'font-display text-lg font-bold uppercase leading-none tracking-[-0.01em]',
     className:
-      'font-display text-lg font-black uppercase leading-[0.95] tracking-normal',
+      'font-display text-lg font-bold uppercase leading-none tracking-[-0.01em]',
     sample: 'Provider and cost',
   },
   {
@@ -400,8 +413,8 @@ const typographyRoles = [
   {
     role: 'Micro metadata',
     owner: 'DashboardMetaList · micro',
-    recipe: 'text-[0.68rem] font-medium leading-4',
-    className: 'text-[0.68rem] font-medium leading-4 text-muted-foreground',
+    recipe: 'text-xs font-medium leading-4',
+    className: 'text-xs font-medium leading-4 text-muted-foreground',
     sample: 'UPDATED 12 MIN AGO',
   },
   {
@@ -448,10 +461,10 @@ const componentInventory = [
   {
     group: 'Route state',
     canonical:
-      'AuthStateSwitch, DashboardLoadingState, RoutePending, Spinner, RouteStatusAlert, RouteEntityNotFoundAlert, and SignedOutRoutePrompt',
+      'AuthStateSwitch, DashboardLoadingState, RoutePending, Spinner, RouteStatusAlert, RouteQueryErrorAlert, RouteEntityNotFoundAlert, and SignedOutRoutePrompt',
     use: 'Signed-in/out route branches, Clerk loading fallbacks, suspense pending states, sign-in prompts, not-found route states',
     status: 'Canonical',
-    rule: 'Use AuthStateSwitch for Clerk loading/loaded branches, DashboardLoadingState for reusable loading surfaces, RoutePending for route-level suspense chrome, Spinner for loading glyphs and animation, RouteEntityNotFoundAlert for stable, horse, and event not-found states, RouteStatusAlert with its tone, width, description, and actions props for custom not-found/error states with shared neutral alert chrome, narrow route messages, and action-row spacing, and SignedOutRoutePrompt for sign-in prompts before adding route-local status markup, local border-left alert classes, local max-width recipes, repeated not-found copy, direct animate-spin icons, or direct Clerk loading branches.',
+    rule: 'Use AuthStateSwitch for Clerk loading/loaded branches, DashboardLoadingState for reusable loading surfaces, RoutePending for route-level suspense chrome, Spinner for loading glyphs and animation, RouteEntityNotFoundAlert for stable, horse, and event not-found states, RouteQueryErrorAlert for retryable suspense-query failures, RouteStatusAlert with its tone, width, description, and actions props for custom not-found/error states with shared neutral alert chrome, narrow route messages, and action-row spacing, and SignedOutRoutePrompt for sign-in prompts before adding route-local status markup, local border-left alert classes, local max-width recipes, repeated retry logic, repeated not-found copy, direct animate-spin icons, or direct Clerk loading branches.',
   },
   {
     group: 'Gated features',
@@ -463,10 +476,10 @@ const componentInventory = [
   {
     group: 'Section headers',
     canonical:
-      'DashboardSection, DashboardLayoutGrid, DashboardLayoutStack, DashboardSectionHeader, DashboardSectionCard, DashboardSectionDivider, DashboardSubsection, DashboardPageHeader, and DashboardInlineHeader',
+      'DashboardSection, DashboardLayoutGrid, DashboardLayoutStack, DashboardSectionHeader, DashboardHeaderRail, DashboardSectionCard, DashboardSectionDivider, DashboardSubsection, DashboardPageHeader, and DashboardInlineHeader',
     use: 'Dashboard sections, list panels, tab sections, nested headings, card headers with actions',
     status: 'Canonical',
-    rule: 'Use DashboardSection with its gap, padding, tone, chrome, contentAlign, and span props for dashboard, detail, tab, brand CTA, public app-style panel shells, and section placement before adding local app-panel, border, radius, fill, gap, col-span, padding, or content-alignment recipes; every titled DashboardSectionCard inherits the canonical display-style panel title by default, and card-like DashboardSection compositions must use size="panel" rather than a compact UI heading; reserve DashboardInlineHeader and DashboardSubsection typography for nested record, lane, or inset-surface headings only; reserve semantic accent rails for repeated DashboardItemCard records, where they communicate record type or urgency; use DashboardSection padding values, including roomy, for command-center emphasis before adding feature-local border or padding overrides; use DashboardLayoutGrid variants for equal, sidebar, split, splitWide, thirds, thirdsCompact, quarters, alert-column, and command-center section body compositions before adding local responsive grid recipes; use DashboardLayoutStack for repeated vertical page, column, and rail stacks before adding local grid gap wrappers; keep direct ui/Card, CardHeader, CardContent, CardFooter, and Separator usage inside DashboardSectionCard and DashboardSectionDivider; use DashboardSectionCard contentLayout for block, form-stack, two-column, and split-rail card bodies, contentGap for Card header/body/footer rhythm, contentTextSize for compact card bodies, and width for full-width card placement before adding local contentClassName layout, gap, text-size, or width recipes; use DashboardSectionDivider for card section breaks, DashboardSubsection for repeated compact heading-plus-content blocks inside cards or sections, DashboardSectionHeader and DashboardPageHeader contentLayout/descriptionSize/descriptionWidth plus shared badge-cluster handling for standard headers, and DashboardInlineHeader with its gap, descriptionSize, and aside badge-cluster handling for standalone compact headings before adding local header markup.',
+    rule: 'Use DashboardSection with its gap, padding, tone, chrome, contentAlign, and span props for dashboard, detail, tab, brand CTA, public app-style panel shells, and section placement before adding local app-panel, border, radius, fill, gap, col-span, padding, or content-alignment recipes; use tone="reference" for common non-interactive reference groups so they keep a neutral structural border while Stable Green strengthens only the title and labels; reserve tone="brandQuiet" for rare urgent handover or emergency callouts and pair it only with the inverse brand-surface foreground tokens; every titled DashboardSectionCard inherits the canonical display-style panel title by default, and card-like DashboardSection compositions must use size="panel" rather than a compact UI heading; reserve DashboardInlineHeader and DashboardSubsection typography for nested record, lane, or inset-surface headings only; reserve semantic accent rails for repeated DashboardItemCard records, where they communicate record type or urgency; use DashboardSection padding values, including roomy, for command-center emphasis before adding feature-local border or padding overrides; use DashboardLayoutGrid variants for equal, sidebar, split, splitWide, thirds, thirdsCompact, quarters, alert-column, and command-center section body compositions before adding local responsive grid recipes; use DashboardLayoutStack for repeated vertical page, column, and rail stacks before adding local grid gap wrappers; keep direct ui/Card, CardHeader, CardContent, CardFooter, and Separator usage inside DashboardSectionCard and DashboardSectionDivider; use DashboardSectionCard contentLayout for block, form-stack, two-column, and split-rail card bodies, contentGap for Card header/body/footer rhythm, contentTextSize for compact card bodies, and width for full-width card placement before adding local contentClassName layout, gap, text-size, or width recipes; use DashboardSectionDivider for card section breaks, DashboardSubsection for repeated compact heading-plus-content blocks inside cards or sections, and DashboardSectionHeader and DashboardPageHeader contentLayout/descriptionSize/descriptionWidth for standard headers. Their shared DashboardHeaderRail keeps titles and descriptions on the left and anchors a lone badge or action to the top-right card inset; when both are present, badges stay top-right and actions occupy the bottom-right of the header. Narrow layouts stack the rail after the main content while keeping it right-aligned. Use DashboardInlineHeader with its gap, descriptionSize, and aside badge-cluster handling for standalone compact headings before adding local header markup.',
   },
   {
     group: 'Typography labels',
@@ -482,7 +495,7 @@ const componentInventory = [
       'ui/Badge, DashboardBadgeList, DashboardBadges, EventBadges, CareReminderBadges, DocumentBadges, HorseBadges, HorseCareBadges, StableBadges, and StableInvitationBadges',
     use: 'Status, priority, category, type, role, horse/stable entity labels, counts, and invitation-state chips',
     status: 'Canonical',
-    rule: 'Use DashboardBadgeList for badge cluster spacing and alignment, DashboardBadges for generic count, value, percentage, and premium/plan labels, domain badge wrappers for labels and variants tied to schema values or named entities, and reserve raw Badge usage for specimen swatches and truly one-off neutral tags.',
+    rule: 'Use DashboardBadgeList for badge cluster spacing and alignment, DashboardBadges for generic count, value, percentage, and premium/plan labels, domain badge wrappers for exceptional schema states and access labels, and reserve raw Badge usage for specimen swatches and truly one-off neutral tags. Never add an eyebrow above a heading. Facts such as type, category, dosage, frequency, shoeing, stable name, horse name, and routine default state belong in metadata or detail fields; badges are reserved for actionable attention, exceptional state, access, selection, a necessary mixed-record kind, or a count that changes a decision. Remove repeated plan, category, and status chips when the surrounding context already explains them, and keep ordinary cards to one kind badge plus one exceptional state badge whenever possible.',
   },
   {
     group: 'Actions',
@@ -490,7 +503,7 @@ const componentInventory = [
       'ui/Button, ui/ButtonLink, ui/ActionGroup, DashboardActions, DashboardPageHeader action slots, DashboardSectionHeader action slots, DialogFooter, AlertDialogFooter, FormSubmitActions, and FormSubmitButtons',
     use: 'Primary CTAs, secondary links, row action groups, form footers, icon buttons, badge/action clusters',
     status: 'Canonical',
-    rule: 'Keep ordinary button appearance inside ui/Button and buttonVariants, including subtle low-emphasis controls and chip-icon remove buttons; keep low-level action-row and footer spacing in ActionGroup; use DashboardActions for dashboard/header/card and public CTA action rows, including its width prop for full-width footers, DialogFooter and AlertDialogFooter for modal footers, FormSubmitActions for wrapped inline or dialog submit/cancel rows, FormSubmitButtons for compact inline submit pairs inside existing layouts, and toast action buttons routed through buttonVariants. Specialized interactive geometry, such as timeline cells, scrub handles, calendar day cells, and drag targets, should stay in its domain primitive owner rather than feature files.',
+    rule: 'Keep ordinary button appearance and semantic action icons inside ui/Button and buttonVariants, including subtle low-emphasis controls and chip-icon remove buttons. Set action="create" on controls that open add/create forms, action="edit" on controls that open edit forms, and action="delete" on destructive delete/remove controls; the shared primitive supplies the canonical plus, pen, or trash icon and spacing. Do not add these icons to ordinary navigation or form submit buttons merely because their copy contains the same verb. The default primary action uses a Ledger Paper fill with a Stable Green border and label; neutral outline is secondary, while solid is reserved for rare conversion or floating create actions. Green component borders therefore communicate interactivity and must not be reused as ordinary card structure. Keep low-level action-row and footer spacing in ActionGroup; use DashboardActions for dashboard/header/card and public CTA action rows, including its width prop for full-width footers, DialogFooter and AlertDialogFooter for modal footers, FormSubmitActions for wrapped inline or dialog submit/cancel rows, FormSubmitButtons for compact inline submit pairs inside existing layouts, and toast action buttons routed through buttonVariants. Specialized interactive geometry, such as timeline cells, scrub handles, calendar day cells, and drag targets, should stay in its domain primitive owner rather than feature files.',
   },
   {
     group: 'Search and filters',
@@ -498,7 +511,7 @@ const componentInventory = [
       'FilteredDashboardItemList, ListFilterLayout, ListFilterControls, getListFilterEmptyMessage, ListFilterBar, ListFilterChips, ListFilterPanel, and ListLoadMoreFooter',
     use: 'Reminders, documents, horse detail records, internal review specimens',
     status: 'Canonical',
-    rule: 'Use FilteredDashboardItemList for filtered DashboardItemList sections that only need controls, filtered-empty copy, and row rendering; use ListFilterLayout with ListFilterControls when the list owner has custom split empty title/description, scroll windows, expansion actions, card-level toolbar slots, or paginated loading footers; use useListFiltering/useListQueryState for filtered state, pass hideWhenEmpty when local filtering knows totalCount, and use getListFilterEmptyMessage for no-data versus no-results empty copy outside FilteredDashboardItemList; use ListLoadMoreFooter for paginated list footers; keep first-page loading as an explicit list loading state instead of an emptyMessage string; keep ListFilterBar direct usage for controlled specimens and primitive internals only; search surface, expandable filter panel, active chip label/value typography, chip-row spacing through ActionGroup, remove buttons, clear-action styling, loading-more affordance, and filtered-empty policy all belong in the list-filtering primitives.',
+    rule: 'Use FilteredDashboardItemList for filtered DashboardItemList sections that only need controls, polite result announcements, list semantics, filtered-empty copy, and row rendering; use its itemLayout option when a card collection benefits from a responsive two-column grid, keeping controls and empty states full width. Use ListFilterLayout with ListFilterControls when the list owner has custom split empty title/description, scroll windows, expansion actions, card-level toolbar slots, or paginated loading footers; use useListFiltering/useListQueryState for filtered state, pass hideWhenEmpty when local filtering knows totalCount, and use getListFilterEmptyMessage for no-data versus no-results empty copy outside FilteredDashboardItemList; use ListLoadMoreFooter for paginated list footers; keep first-page loading as an explicit list loading state instead of an emptyMessage string; keep ListFilterBar direct usage for controlled specimens and primitive internals only. Parent list gaps own the space around filters, and sticky filters activate only at wide layouts where the app header no longer wraps; search surface, expandable filter panel, active chip label/value typography, chip-row spacing through ActionGroup, remove buttons, clear-action styling, loading-more affordance, and filtered-empty policy all belong in the list-filtering primitives.',
   },
   {
     group: 'Record cards and rows',
@@ -506,7 +519,7 @@ const componentInventory = [
       'DashboardItemCard helpers, DashboardItemList, DashboardItemCard, DashboardItemLinkCard, DashboardItemRecordCard, DashboardItemRecordFooter, DashboardItemMediaCard, DashboardItemActionRow, DashboardItemActionColumn, DashboardItemActions, DashboardItemCardContent, DashboardItemRecordContent, dashboard item text helpers, DashboardInlineHeader, DashboardMetaList, and DashboardSectionCard for framed panels',
     use: 'Care reminders, documents, horses, providers, events, alerts, health, medication, nutrition, timeline',
     status: 'Canonical',
-    rule: 'Keep row stacks, plain item shells, route-link item shells, content-plus-action record cards, preview/media rows, full-width row footers, open/link rows, selected row state, list content alignment, row density, record title sizing, open-row title hover treatment through titleTone, compact item title sizing, inline header title size/weight, title/meta/badge layout, metadata spacing, badge cluster layout through DashboardBadgeList, centered side actions, horizontal bottom-left footer actions through actionsPlacement, compact metadata separators through DashboardMetaList, and description/body text, including muted body tone, in DashboardItemCard helpers before adding local row markup, hover-title classes, selected background/border recipes, alignment classes, text color classes, or padding overrides. Use density="compact" on DashboardItemRecordCard and DashboardItemOpenLink for dense lists. Specialized timeline, calendar, date marker, avatar, filter, and overlay geometry should stay in their own primitive owners instead of feature files.',
+    rule: 'Keep row stacks, plain item shells, route-link item shells, content-plus-action record cards, preview/media rows, full-width row footers, open/link rows, selected row state, list content alignment, row density, record title sizing, open-row title hover treatment through titleTone, compact item title sizing, inline header title size/weight, title/meta layout, metadata spacing, top-right badge clusters through DashboardBadgeList, bottom-right side and media actions, right-aligned wrapping footer actions through actionsPlacement, compact metadata separators through DashboardMetaList, and description/body text, including muted body tone, in DashboardItemCard helpers before adding local row markup, hover-title classes, selected background/border recipes, alignment classes, text color classes, or padding overrides. Footer record actions wrap instead of becoming a hidden horizontal strip, and exceptional badge clusters move ahead of long record copy on narrow layouts. Set interactive={false} whenever a record has no row-level link or selection action. Semantic rails belong only to real urgency, status, or record-kind distinctions; ordinary upcoming records use the neutral Wood Rail boundary. DashboardItemLinkCard owns block, full-width, full-height link geometry so its border and paper surface remain intact inside semantic list wrappers and responsive grids. Use density="compact" on DashboardItemRecordCard and DashboardItemOpenLink for dense lists. Specialized timeline, calendar, date marker, avatar, filter, and overlay geometry should stay in their own primitive owners instead of feature files.',
   },
   {
     group: 'Tables and matrices',
@@ -535,25 +548,25 @@ const componentInventory = [
     group: 'Calendars and date grids',
     canonical:
       'EventCalendar primitives, EventCalendarChrome helpers, StableEventsCalendar, and MiniCalendarCard',
-    use: 'Month calendars, mini dashboard calendars, day cells, event chips, event popovers, hidden-count pills',
+    use: 'Month calendars, narrow monthly agendas, mini dashboard calendars, day cells, direct event links, selected-day disclosures, and hidden-count notices',
     status: 'Canonical',
-    rule: 'Keep route month calendars in StableEventsCalendar, compact dashboard week calendars in MiniCalendarCard, visual month-grid pieces in EventCalendar primitives, and class recipes for cells, chips, selected-day panels, and week-day states in EventCalendarChrome. Feature files should not add local calendar grid, day-cell, event-chip, or selected-day style recipes.',
+    rule: 'Keep route month calendars in StableEventsCalendar, compact dashboard week calendars in MiniCalendarCard, visual month-grid pieces in EventCalendar primitives, and class recipes for cells, chips, selected-day panels, and week-day states in EventCalendarChrome. Full month grids become date-led agendas below the medium breakpoint so event titles and times remain readable instead of compressing into seven unusable columns. Calendar event chips are direct links; dense days use CalendarMoreEventsButton to disclose a keyboard-operable, programmatically related selected-day agenda rather than hiding records behind an inert count or hover-only preview. Project recurring and multi-day records into the visible month through the shared occurrence model so the Calendar remains an operational truth across date boundaries. Compact seven-day schedules use a touch- and keyboard-friendly horizontal strip below the large breakpoint, then resolve to a seven-column grid when every day has enough usable width. Feature files should not add local calendar grid, day-cell, event-chip, scroll-strip, or selected-day style recipes.',
   },
   {
     group: 'Entity media',
     canonical:
-      'UserAvatar, StablePersonCard, HorseAvatar, HorseCard, HorseCardLink, HorseSelectionCard, DocumentPreview, DashboardItemRecordCard, and DashboardItemMediaCard for entity row shells',
-    use: 'Stable people, member management, horse rows, rosters, profile headers, document previews, full-row horse links, and horse selection grids',
+      'UserAvatar, StableCardLink, StablePersonCard, StableProviderCard, HorseAvatar, HorseCard, HorseCardLink, HorseSelectionCard, DocumentPreview, DocumentDownloadAction, DashboardItemRecordCard, and DashboardItemMediaCard for entity row shells',
+    use: 'Stable links, stable people, provider directories, member management, horse rows, rosters, profile headers, document previews, full-row horse links, and horse selection grids',
     status: 'Canonical',
-    rule: 'Use UserAvatar for account photos and initial fallbacks, and StablePersonCard for owner/member identity rows in both roster and management contexts. Use HorseAvatar for horse image and initial fallback frames, HorseCard for static horse identity cards, HorseCardLink whenever a horse card opens its detail page, and HorseSelectionCard for full-card selection with outline feedback. Horse collections always use the rounded bordered card treatment with card spacing; borderless line rows and chrome overrides are not supported. Horse links must make the whole card clickable and must not add a separate open button. Use DocumentPreview for uploaded document image/file fallback frames, DashboardItemRecordCard for content-plus-action entity row shells, and DashboardItemMediaCard for preview/media rows instead of local image/fallback, title-hover, selection-outline, icon-button, or row action recipes.',
+    rule: 'Use UserAvatar for account photos and initial fallbacks, StableCardLink for whole-row stable navigation, StablePersonCard for owner/member identity rows in both roster and management contexts, and StableProviderCard for provider directory rows in production and review routes. Use HorseAvatar for decorative horse thumbnails with lazy loading, failed-image fallback, and Unicode-safe initials; use HorseCard for static horse identity cards, HorseCardLink whenever a horse card opens its detail page, and HorseSelectionCard for full-card selection with outline feedback. Entity collections always use the rounded bordered card treatment with card spacing; borderless line rows and chrome overrides are not supported. Stable and horse links must make the whole card clickable and must not add a separate open button. Use DocumentPreview for uploaded document image/file fallback frames; it trusts the explicit file-availability state, uses MIME truth before filename inference, and replaces failed image previews with the canonical unavailable-file fallback. DocumentDownloadAction owns the green-bordered primary file action, filename-preserving downloads, stable pending width, duplicate-action prevention, pending feedback, and recoverable errors. Keep its Download slot directly before the tinted destructive Remove action for every document row while Open remains a quiet ghost action: available files expose the working control to every viewer independently of record-management permission, while missing or unavailable files retain a disabled control whose reason is exposed through the shared Tooltip. Use DashboardItemRecordCard for content-plus-action entity row shells, and DashboardItemMediaCard for preview/media rows instead of local image/fallback, title-hover, selection-outline, icon-button, or row action recipes. Document rows keep a visible Wood Rail boundary, a base-size filename, full-contrast notes, and muted treatment only for compact format, type, size, added date, and relationship metadata.',
   },
   {
     group: 'Detail and metric blocks',
     canonical:
-      'DashboardMetric, DashboardMetricStrip, DashboardInlinePanel, DashboardInlinePanelButton, DashboardInlinePanelLink, PrintSummary primitives, DetailGrid, DetailPanelGrid, DetailStack, DetailSummaryGrid, DetailMetricBlock, DetailPanel, DetailField, DetailPrintField, DetailPrintListBlock, DetailKeyValueRow, DetailTextBlock, DetailListBlock, DetailIconList, DetailListGrid, DetailNoteBlock, DashboardEmptyState, NoStablesPrompt, and NoHorsesPrompt',
+      'DashboardMetric, DashboardMetricStrip, DashboardInlinePanel, DashboardInlinePanelButton, DashboardInlinePanelLink, PrintSummary primitives, DetailGrid, DetailPanelGrid, DetailStack, DetailSummaryGrid, DetailMetricBlock, DetailPanel, DetailField, DetailPrintField, DetailPrintListBlock, DetailKeyValueList, DetailKeyValueRow, DetailTextBlock, DetailListBlock, DetailIconList, DetailListGrid, DetailNoteBlock, DashboardEmptyState, NoStablesPrompt, and NoHorsesPrompt',
     use: 'Analysis metrics, profile panels, care contacts, timeline entries, nested detail blocks, labeled notes, labeled lists, empty states, first-run stable prompts, horse empty states',
     status: 'Canonical',
-    rule: 'Use DashboardMetricStrip with DashboardMetric for summary strips; use DashboardInlinePanel and its button/link variants with stack, tight/compact padding, textSize, and tone props for inset feature panels and highlighted action panels, DetailGrid, DetailPanelGrid, DetailStack, DetailSummaryGrid, and detail block components for labeled values, summary/divided rows, compact key/value rows, grouped panel layouts, detail sub-stacks, printable fields and lists, prose notes, labeled lists, semantic icon lists, paired list grids, framed empty states, and DashboardEmptyState spacing for bare inline fallbacks before dropping to dashboardInlinePanelClassName. Use DetailMetricBlock size="compact" for dense metric cells before adding local metric grid or value margin overrides. Use DetailField, DetailDisplayField, DetailSummaryField, DetailPanel, and DetailNoteBlock span props for known detail-grid spanning before adding local col-span utilities. Use PrintSummaryPage, PrintSummaryHeader, PrintSummarySection, PrintSummaryEmptyState, PrintSummaryRecordPanel, PrintSummaryRecordHeader, PrintSummaryBodyText, and PrintSummaryScreenOnly for print-friendly routes before adding local print chrome classes; use DetailPrintField and DetailPrintListBlock for print-friendly field and list content before adding local print label or bullet-list recipes. Use DetailKeyValueRow valueTone, DetailIconList iconTone, and detailToneTextClassNames for semantic detail values/icons instead of raw red/green utilities. Keep dashboardInlinePanelClassName inside primitive or specialized owner files only. Use DetailPanel gap before adding local grouped-panel spacing. Use NoStablesPrompt default copy for shared first-run stable CTAs unless the route needs contextual dashboard copy, and use NoHorsesPrompt with stableId for shared horse-empty states and add-horse CTAs.',
+    rule: 'Use DashboardMetricStrip with DashboardMetric for true summary metrics; ordinary profile facts belong together in a DetailPanel and DetailGrid instead of a separate metric-card strip. Use DashboardInlinePanel and its button/link variants with stack, tight/compact padding, textSize, and tone props for inset feature panels and highlighted action panels, DetailGrid, DetailPanelGrid, DetailStack, DetailSummaryGrid, and detail block components for labeled values, summary/divided rows, compact key/value rows, grouped panel layouts, detail sub-stacks, printable fields and lists, prose notes, labeled lists, semantic icon lists, paired list grids, framed empty states, and DashboardEmptyState spacing for bare inline fallbacks before dropping to dashboardInlinePanelClassName. Use DetailField variant="readable" for core reference facts so labels stay at 14px semibold with full-size values; reserve the smaller default label role for genuinely secondary metadata. Use DetailMetricBlock size="compact" for dense metric cells before adding local metric grid or value margin overrides. Use DetailField, DetailDisplayField, DetailSummaryField, DetailPanel, and DetailNoteBlock span props for known detail-grid spanning before adding local col-span utilities. Use PrintSummaryPage, PrintSummaryHeader, PrintSummarySection, PrintSummaryEmptyState, PrintSummaryRecordPanel, PrintSummaryRecordHeader, PrintSummaryBodyText, and PrintSummaryScreenOnly for print-friendly routes before adding local print chrome classes; use DetailPrintField and DetailPrintListBlock for print-friendly field and list content before adding local print label or bullet-list recipes. Use DetailKeyValueRow valueTone, DetailIconList iconTone, and detailToneTextClassNames for semantic detail values/icons instead of raw red/green utilities. Keep dashboardInlinePanelClassName inside primitive or specialized owner files only. Use DetailPanel gap before adding local grouped-panel spacing. Use NoStablesPrompt default copy for shared first-run stable CTAs unless the route needs contextual dashboard copy, and use NoHorsesPrompt with stableId for shared horse-empty states and add-horse CTAs.',
   },
   {
     group: 'Charts and planning rails',
@@ -569,23 +582,23 @@ const componentInventory = [
       'ui/Badge variants, size variants, DashboardBadgeList, DashboardBadges, EventBadges, HorseBadges, HorseCareBadges, CareReminderBadges, DocumentBadges, StableBadges, and StableInvitationBadges',
     use: 'Priority, status, category, counts, plan labels, provider type, reminder category/priority/status, event type/status/recurrence, health issue severity/status, medication status',
     status: 'Canonical',
-    rule: 'Keep color semantics, compact row labels, counters, and micro tags inside Badge; use semanticBadgeVariants for shared severity/attention mappings, DashboardBadgeList props for wrap spacing and alignment, DashboardBadges for generic counts, values, percentages, and plan labels, CareReminderBadges for reminder labels, EventBadges for event labels, HorseBadges for horse entity/count labels, HorseCareBadges for health, medication, weight, nutrition, or timeline labels, DocumentBadges for document labels, and StableBadges or StableInvitationBadges for stable-domain labels before adding local badge maps or badge cluster classes.',
+    rule: 'Keep color semantics, compact row labels, counters, and micro tags inside Badge; use semanticBadgeVariants for shared severity/attention mappings, DashboardBadgeList props for wrap spacing and alignment, DashboardBadges for generic counts, values, percentages, and plan labels, CareReminderBadges for exceptional reminder state, EventBadges for exceptional event state or mixed-timeline kind, HorseCareBadges for actionable care state, DocumentBadges for the explicit unavailable-file and no-file-attached states, and StableBadges or StableInvitationBadges for access and invitation state before adding local badge maps or badge cluster classes. Omit routine planned, pending, active, low, and medium state chips when the surrounding list already establishes that context.',
   },
   {
     group: 'Tabs and segmented nav',
     canonical:
-      'ui/Tabs, DashboardNavigation, DashboardNavigationLinkItem, DashboardNavigationMenuGroup, DashboardNavigationMenuLink, DashboardNavigationMenuButton, DashboardSectionTabs, DashboardSectionTabGroup, NavigationMenuButtonLink, ToggleGroup',
+      'ui/Tabs, StableSettingsLayout, DashboardNavigation, DashboardNavigationLinkItem, DashboardNavigationMenuGroup, DashboardNavigationMenuLink, DashboardNavigationMenuButton, DashboardSectionTabs, DashboardSectionTabGroup, HorseDetailSectionTabs, NavigationMenuButtonLink, ToggleGroup',
     use: 'Horse detail sections, settings, forms, care/timeline/notes/providers',
     status: 'Canonical',
-    rule: 'Use DashboardSectionTabGroup for tabs paired with a dashboard section, DashboardSectionTabs for standalone minor-section switches, DashboardNavigation with DashboardNavigationLinkItem variant section for persistent major route tabs, and TabsList variant section for major page or form sections. Reserve default Tabs for compact mode switches such as Simple and Advanced. Use DashboardNavigation align and alignMode props for responsive or always-end placement, DashboardNavigationMenuGroup with contentWidth plus DashboardNavigationMenuLink or DashboardNavigationMenuButton for dropdown navigation shells, and ToggleGroup with its wrap prop for compact choices; keep list wrapping, menu widths, alignment, and segmented chrome out of route files.',
+    rule: 'Use StableSettingsLayout for the canonical, URL-addressable settings tab rail; use DashboardSectionTabGroup for tabs paired with a dashboard section, HorseDetailSectionTabs for the repeated titled Activity, Care, and Nutrition subsections, DashboardSectionTabs for standalone minor-section switches, DashboardNavigation with DashboardNavigationLinkItem variant section for persistent major route tabs, and TabsList variant section for major page or form sections. Persistent navigation belongs on a separate rail below page or entity identity, exposes the active destination in the URL, and scrolls as one line when it cannot fit rather than wrapping into an ambiguous second row. Reserve default Tabs for compact mode switches such as Simple and Advanced. Use DashboardNavigation align and alignMode props for responsive or always-end placement, DashboardNavigationMenuGroup with contentWidth plus DashboardNavigationMenuLink or DashboardNavigationMenuButton for dropdown navigation shells, and ToggleGroup with its wrap prop for compact choices; keep list wrapping, menu widths, alignment, and segmented chrome out of route files.',
   },
   {
     group: 'Forms',
     canonical:
-      'RouteFormCard, RouteFormActions, InlineForm, FormGroup, FormSection, FormTabsContent, SelectableCardField, SelectableCardCheckbox, SelectableCardLabel, DashboardInlineForm, DashboardInlineField, CreateRecordDialog, RecordDialog primitives, Field, FieldGroup, FieldGrid, FieldPanel, FieldDescription, FieldLabelRow, FieldHeader, FieldHeaderContent, FieldOptionGroup, FieldInlineControl, FieldInlineText, FileUploadField, Input, Select, Textarea, Checkbox, RadioGroup, ChoiceButtonGroup, FormSubmitActions, and FormSubmitButtons',
+      'RouteFormCard, RouteFormActions, InlineForm, FormGroup, FormSection, FormStepHeader, FormTabsContent, SelectableCardField, SelectableCardCheckbox, SelectableCardLabel, DashboardInlineForm, DashboardInlineField, CreateRecordDialog, RecordDialog primitives, Field, FieldGroup, FieldGrid, FieldPanel, FieldDescription, FieldLabelRow, FieldHeader, FieldHeaderContent, FieldOptionGroup, FieldInlineControl, FieldInlineText, FileUploadField, Input, Select, Textarea, Checkbox, RadioGroup, ChoiceButtonGroup, FormSubmitActions, and FormSubmitButtons',
     use: 'Stable, horse, event, provider, reminder, document workflows',
     status: 'Canonical',
-    rule: 'Use RouteFormCard for create/edit routes, including its contentGap prop for route-form body rhythm, RouteFormActions for page form footers, and InlineForm or DashboardInlineForm for embedded forms. Split a manageable form into always-visible FormGroup sections; reserve animated FormSection accordions for forms whose field count is genuinely difficult to scan, and keep the first or most essential section open. Use InlineForm layout for known compact inline compositions, FormTabsContent only when the content represents genuinely separate views rather than sequential form data, SelectableCardField, SelectableCardCheckbox, and SelectableCardLabel for generic checkbox/radio rows that wrap a full card, and HorseSelectionCard for horse pickers so selection is represented by the card outline rather than an adjacent control. Use CreateRecordDialog with RecordDialog primitives for dialog create flows, FieldGroup with its gap prop for vertical field stacks, FieldGrid for responsive field columns, FieldPanel with its gap prop for inset form groups, FieldDescription for block helper copy, FieldLabel width and interactive props for full-width clickable labels, FieldLabelRow for labels paired with help or tooltip controls, FieldHeader and FieldHeaderContent for fieldset legends or labels paired with an aside badge/action, FieldOptionGroup for wrapped radio or checkbox option clusters, FieldInlineControl for compact input-prefix-suffix rows, FieldInlineText for muted inline prefixes and suffixes, Input width and Textarea minHeight for control sizing, FileUploadField for file inputs with optional help, DashboardInlineField for selectable rows, and FormSubmitActions or FormSubmitButtons for cancel/submit rows before adding local grid, spacing, dialog sizing, helper-text classes, label/help flex rows, field-header flex rows, option-cluster flex rows, inline-control flex rows, file-input field recipes, compact input width recipes, control-size recipes, or floating-trigger recipes.',
+    rule: 'Use RouteFormCard for create/edit routes, including its contentGap prop for route-form body rhythm, stickyActions for long page forms, and embedded mode when a persistent entity shell already owns the page heading; use RouteFormActions for page form footers, including resetConfirmation before discarding meaningful edits, and InlineForm or DashboardInlineForm for embedded forms. Split a manageable form into always-visible FormGroup sections; reserve animated FormSection accordions for forms whose field count is genuinely difficult to scan, keep the first or most essential section open, and use FormStepHeader for numbered substeps inside a larger form section. Use InlineForm layout for known compact inline compositions, FormTabsContent only when the content represents genuinely separate views rather than sequential form data, SelectableCardField, SelectableCardCheckbox, and SelectableCardLabel for generic checkbox/radio rows that wrap a full card, and HorseSelectionCard for horse pickers so selection is represented by the card outline rather than an adjacent control. Use CreateRecordDialog with RecordDialog primitives for dialog create flows, and use FormSubmitActions sticky for long scrolling dialog forms so completion remains reachable without inventing a feature-local footer. Use FieldGroup with its gap prop for vertical field stacks, FieldGrid for responsive field columns, FieldPanel with its gap prop for inset form groups, FieldDescription for block helper copy, FieldLabel size, width, and interactive props for compact or full-width clickable labels, FieldLabelRow for labels paired with help or tooltip controls, FieldHeader and FieldHeaderContent for fieldset legends or labels paired with an aside badge/action, FieldOptionGroup for wrapped radio or checkbox option clusters, FieldInlineControl for compact input-prefix-suffix rows, FieldInlineText for muted inline prefixes and suffixes, Input width and Textarea minHeight for control sizing, FileUploadField for file inputs with optional help and the same rounded selected-file surface as the empty drop zone, ChoiceButtonGroup layout="cards" for descriptive two-way choices, DashboardInlineField for selectable rows, and FormSubmitActions or FormSubmitButtons for cancel/submit rows before adding local grid, spacing, dialog sizing, helper-text classes, label/help flex rows, field-header flex rows, option-cluster flex rows, inline-control flex rows, file-input field recipes, compact input width recipes, control-size recipes, or floating-trigger recipes.',
   },
   {
     group: 'Feedback and overlays',
@@ -593,7 +606,7 @@ const componentInventory = [
       'Dialog, DialogHeader, DialogTitle, DialogDescription, CreateRecordDialog, RecordDialog primitives, AlertDialog, DropdownMenu, Tooltip, Alert, Sonner, Spinner, showAppSuccessToast, showAppErrorToast, and showAppValidationToast',
     use: 'Create flows, destructive confirms, upload states, toast feedback',
     status: 'Canonical',
-    rule: 'Use dialog title and description typography from the dialog primitive rather than local heading classes; use CreateRecordDialog and RecordDialog primitives for record-create trigger/content chrome; use Alert for inline feedback, DropdownMenu and Tooltip for transient controls, the local Toaster for feedback chrome, toast placement, action styling, and Spinner-powered loading icons, showAppSuccessToast for operation success feedback, showAppErrorToast for mutation or operation failures, and showAppValidationToast for form validation messages before adding repeated toast.success/toast.error copy.',
+    rule: 'Use dialog title and description typography from the dialog primitive rather than local heading classes; use CreateRecordDialog and RecordDialog primitives for record-create trigger/content chrome; use RecordRemoveAction for ordinary record deletion so confirmation copy, pending state, retry behaviour, and destructive icons stay canonical; destructive and discard actions require an AlertDialog confirmation, whose canonical viewport cap keeps every consequence and action reachable at short heights; use Alert for inline feedback, DropdownMenu and Tooltip for transient controls, the local Toaster for feedback chrome, toast placement, action styling, and Spinner-powered loading icons, showAppSuccessToast for operation success feedback, showAppErrorToast for mutation or operation failures, and showAppValidationToast for form validation messages before adding repeated toast.success/toast.error copy.',
   },
 ] satisfies Array<{
   group: string
@@ -718,8 +731,7 @@ function GuidelineHeader() {
         </div>
 
         <DashboardActions align="start">
-          <Button type="button">
-            <PlusIcon data-icon="inline-start" weight="bold" />
+          <Button type="button" action="create">
             Primary action
           </Button>
           <Button type="button" variant="outline">
@@ -780,6 +792,37 @@ function FoundationSection() {
               </DashboardInlinePanel>
             ))}
           </DetailGrid>
+
+          <DashboardSection
+            chrome="soft"
+            tone="reference"
+            title="Reference information surface"
+            description="Common reference groups stay on Ledger Paper with a neutral Wood Rail border. Stable Green strengthens the internal hierarchy without turning the whole card into an accent block."
+            size="panel"
+            padding="compact"
+            className="rounded-row border"
+          >
+            <DetailGrid columns={3} gap="default">
+              <DetailField
+                indent={false}
+                label="Vet"
+                value="Dr Priya Shah"
+                variant="readable"
+              />
+              <DetailField
+                indent={false}
+                label="Vet phone"
+                value="+44 7700 900401"
+                variant="readable"
+              />
+              <DetailField
+                indent={false}
+                label="Availability"
+                value="Weekdays until 18:00"
+                variant="readable"
+              />
+            </DetailGrid>
+          </DashboardSection>
 
           <DetailPanelGrid variant="equal">
             <DashboardInlinePanel stack="compact" textSize="sm">
@@ -915,7 +958,7 @@ function TypographyInventorySection() {
 
       <DashboardSectionCard
         title="Complete size scale"
-        description={`${typographySizes.length} size utilities were found in application source. The six sub-xs values are specialist microcopy sizes; the standard scale carries the main hierarchy.`}
+        description={`${typographySizes.length} supported sizes carry the interface hierarchy. Product text starts at 12px; smaller geometry belongs to icons and marks, not copy.`}
         contentGap="compact"
       >
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -976,7 +1019,7 @@ function TypographyInventorySection() {
 
         <DashboardSectionCard
           title="Case and tracking"
-          description="The source uses natural case for product copy and uppercase for compact labels or display headings. Letter spacing stays neutral."
+          description="The source uses natural case for product copy and restrained role-specific tracking for compact labels and display headings."
           contentGap="compact"
         >
           <DashboardItemCard density="compact" className="grid gap-2">
@@ -995,7 +1038,7 @@ function TypographyInventorySection() {
               Uppercase UI label
             </TextLabel>
             <code className="font-mono text-xs text-muted-foreground">
-              TextLabel · uppercase · tracking-normal
+              TextLabel · uppercase · tracking-[0.035em]
             </code>
           </DashboardItemCard>
           <DashboardItemCard density="compact" className="grid gap-2">
@@ -1003,7 +1046,7 @@ function TypographyInventorySection() {
               Uppercase display
             </DashboardDisplayHeading>
             <code className="font-mono text-xs text-muted-foreground">
-              font-display · font-black · uppercase · leading-[0.92]
+              font-display · font-bold · uppercase · leading-[0.96]
             </code>
           </DashboardItemCard>
           <DashboardItemCard density="compact" className="grid gap-2">
@@ -1069,9 +1112,14 @@ function ComponentSpecimens() {
             Buttons
           </TextLabel>
           <DashboardActions align="start">
-            <Button type="button">Default</Button>
-            <Button type="button" variant="outline">
-              Outline
+            <Button type="button" action="create">
+              Add record
+            </Button>
+            <Button type="button" variant="solid">
+              Primary solid
+            </Button>
+            <Button type="button" action="edit" variant="outline">
+              Edit details
             </Button>
             <Button type="button" variant="secondary">
               Secondary
@@ -1082,10 +1130,35 @@ function ComponentSpecimens() {
             <Button type="button" variant="subtle">
               Subtle
             </Button>
-            <Button type="button" variant="destructive">
-              Destructive
+            <Button type="button" action="delete" variant="destructive">
+              Delete record
+            </Button>
+            <Button type="button" disabled>
+              Disabled
             </Button>
           </DashboardActions>
+          <DashboardInlinePanel chrome="soft" padding="tight">
+            <DashboardInlineHeader
+              title="Loading and long labels"
+              description="Shared buttons preserve their state and readable label when work is pending or translated copy grows."
+              descriptionSize="xs"
+              titleWeight="semibold"
+            />
+            <InlineForm onSubmit={(event) => event.preventDefault()}>
+              <DashboardActions align="start">
+                <Button type="button" action="create" variant="outline">
+                  Add a vaccination reminder for every horse
+                </Button>
+              </DashboardActions>
+              <FormSubmitActions
+                isSubmitting
+                submitLabel="Save care record"
+                submittingLabel="Saving care record"
+                cancelLabel="Keep editing"
+                onCancel={() => undefined}
+              />
+            </InlineForm>
+          </DashboardInlinePanel>
           <DashboardInlinePanel
             chrome="soft"
             padding="tight"
@@ -1104,10 +1177,45 @@ function ComponentSpecimens() {
                 <XIcon weight="bold" aria-hidden={true} />
                 <span className="sr-only">Remove filter</span>
               </Button>
-              <Button type="button" variant="secondary" size="fab">
-                <PlusIcon weight="bold" aria-hidden={true} />
+              <Button type="button" action="create" variant="solid" size="fab">
                 <span className="sr-only">Floating create action</span>
               </Button>
+            </DashboardActions>
+          </DashboardInlinePanel>
+          <DashboardInlinePanel chrome="soft" padding="tight">
+            <DashboardInlineHeader
+              title="Document action hierarchy"
+              description="Keep Open quiet, make Download the green-bordered primary file action, and reserve the tinted destructive treatment for Remove. Disabled downloads retain their slot and expose the reason in a tooltip."
+              descriptionSize="xs"
+              titleWeight="semibold"
+            />
+            <DashboardActions align="start">
+              <ButtonAnchor
+                href="data:text/plain;charset=utf-8,Paddock%20Pilot%20document%20specimen"
+                target="_blank"
+                rel="noreferrer"
+                variant="ghost"
+                size="sm"
+              >
+                Open file
+              </ButtonAnchor>
+              <DocumentDownloadAction
+                fileName="care-plan.txt"
+                fileState="available"
+                fileUrl="data:text/plain;charset=utf-8,Paddock%20Pilot%20document%20specimen"
+              />
+              <RecordRemoveAction
+                title="Remove document?"
+                description="This specimen demonstrates the canonical destructive action beside Download."
+                confirmLabel="Remove document"
+                onConfirm={async () => undefined}
+              />
+            </DashboardActions>
+            <DashboardActions align="start">
+              <DocumentDownloadAction
+                fileName="metadata-only-record.pdf"
+                fileState="metadata-only"
+              />
             </DashboardActions>
           </DashboardInlinePanel>
         </div>
@@ -1173,7 +1281,14 @@ function ComponentSpecimens() {
             </CalendarWeekdayRow>
             <CalendarGrid>
               {[
-                { day: 18, events: [['Hoof trim', '09:30']] },
+                {
+                  day: 18,
+                  events: [
+                    ['Hoof trim', '09:30'],
+                    ['Vet recheck', '11:00'],
+                    ['Arena booking', '15:30'],
+                  ],
+                },
                 { day: 19, events: [] },
                 { day: 20, events: [['Dentist', '13:00']] },
                 { day: 21, events: [] },
@@ -1193,14 +1308,19 @@ function ComponentSpecimens() {
                     )}
                   </CalendarDayHeader>
                   <CalendarDayEventList>
-                    {events.map(([title, time]) => (
+                    {events.slice(0, 2).map(([title, time]) => (
                       <CalendarEventChip key={title}>
                         <CalendarEventChipTitle>{title}</CalendarEventChipTitle>
                         <CalendarEventChipMeta>{time}</CalendarEventChipMeta>
                       </CalendarEventChip>
                     ))}
-                    {events.length === 0 && (
-                      <CalendarMutedPill>Clear</CalendarMutedPill>
+                    {events.length > 2 && (
+                      <CalendarMoreEventsButton
+                        aria-label={`${events.length - 2} additional event`}
+                        disabled
+                      >
+                        +{events.length - 2} more
+                      </CalendarMoreEventsButton>
                     )}
                   </CalendarDayEventList>
                 </CalendarDayCell>
@@ -1406,13 +1526,31 @@ function ComponentSpecimens() {
                 <option value="overdue">Overdue</option>
               </Select>
             </Field>
+            <Field data-invalid={true}>
+              <FieldLabel htmlFor="guideline-invalid-provider">
+                Service provider
+              </FieldLabel>
+              <Input
+                id="guideline-invalid-provider"
+                value=""
+                readOnly
+                aria-invalid={true}
+                aria-describedby="guideline-invalid-provider-error"
+                placeholder="Enter a provider name"
+              />
+              <FieldError id="guideline-invalid-provider-error">
+                Enter the vet, farrier, or service name so members know who to
+                contact.
+              </FieldError>
+            </Field>
           </FieldGrid>
           <FileUploadField
             id="guideline-file"
             name="guideline-file"
-            label="Profile file"
+            label="Document file (required)"
             help="Use FileUploadField for file inputs with optional help copy."
             accept="image/*,.pdf"
+            required
             disabled
             onFilesChange={() => {}}
           />
@@ -1433,14 +1571,30 @@ function ComponentSpecimens() {
               inside an existing card.
             </p>
           </FieldPanel>
-          <FieldOptionGroup>
-            {['Mare', 'Gelding', 'Stallion'].map((option) => (
-              <Field key={option} orientation="horizontal">
-                <span className="size-4 rounded-full border border-input bg-card" />
-                <FieldLabel>{option}</FieldLabel>
-              </Field>
-            ))}
-          </FieldOptionGroup>
+          <FieldPanel gap="compact">
+            <FormStepHeader
+              number={1}
+              title="Pattern"
+              description="Numbered substeps keep complex form sections easy to scan."
+            />
+          </FieldPanel>
+          <RadioGroup defaultValue="mare" aria-label="Horse sex">
+            <FieldOptionGroup>
+              {['Mare', 'Gelding', 'Stallion'].map((option) => {
+                const value = option.toLowerCase()
+                const id = `guideline-sex-${value}`
+
+                return (
+                  <Field key={option} orientation="horizontal">
+                    <RadioGroupItem id={id} value={value} />
+                    <FieldLabel htmlFor={id} interactive>
+                      {option}
+                    </FieldLabel>
+                  </Field>
+                )
+              })}
+            </FieldOptionGroup>
+          </RadioGroup>
         </div>
 
         <FeedbackOverlaySpecimen
@@ -1453,6 +1607,12 @@ function ComponentSpecimens() {
             Entity media
           </TextLabel>
           <div className="grid gap-2">
+            <StableCardLink
+              stableId="stable-guideline"
+              name="Cedar Ridge"
+              location="North yard"
+              meta={[<span key="horses">8 horses</span>]}
+            />
             <StablePersonCard
               name="Avery Stone"
               role="member"
@@ -1466,6 +1626,7 @@ function ComponentSpecimens() {
               }}
               stableId="stable-guideline"
               horseId="horse-maple"
+              meta="Western"
             />
             <HorseSelectionCard
               id="guideline-horse-juniper"
@@ -1476,6 +1637,18 @@ function ComponentSpecimens() {
               }}
               checked
               onCheckedChange={() => undefined}
+            />
+            <StableProviderCard
+              provider={{
+                name: 'Dr. Halley Morse',
+                phone: '(555) 014-3300',
+                type: 'vet',
+              }}
+              actions={
+                <Button type="button" action="edit" variant="ghost" size="sm">
+                  Edit
+                </Button>
+              }
             />
           </div>
         </div>
@@ -1682,6 +1855,8 @@ function FeedbackOverlaySpecimen({
   dialogOpen: boolean
   onDialogOpenChange: (open: boolean) => void
 }) {
+  const [destructiveDialogOpen, setDestructiveDialogOpen] = useState(false)
+
   return (
     <div className="grid gap-3">
       <TextLabel as="p" size="sm" weight="black" tracking="none">
@@ -1805,6 +1980,39 @@ function FeedbackOverlaySpecimen({
             />
           </InlineForm>
         </CreateRecordDialog>
+
+        <AlertDialog
+          open={destructiveDialogOpen}
+          onOpenChange={setDestructiveDialogOpen}
+        >
+          <AlertDialogTrigger
+            render={
+              <Button type="button" action="delete" variant="destructive" />
+            }
+          >
+            Remove care record
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remove this care record?</AlertDialogTitle>
+              <AlertDialogDescription>
+                The yard team will lose the treatment notes and completion
+                history. This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Keep record</AlertDialogCancel>
+              <AlertDialogAction
+                type="button"
+                action="delete"
+                variant="destructive"
+                onClick={() => setDestructiveDialogOpen(false)}
+              >
+                Remove record
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   )
@@ -1913,13 +2121,23 @@ function PrimitiveControlSpecimen() {
             </FieldGrid>
 
             <Field>
-              <FieldLabel>Visit status</FieldLabel>
+              <FieldLabel size="compact">Visit status</FieldLabel>
               <ChoiceButtonGroup
                 value={visitStatus}
                 options={[
-                  { value: 'planned', label: 'Planned' },
-                  { value: 'completed', label: 'Completed' },
+                  {
+                    value: 'planned',
+                    label: 'Planned',
+                    description:
+                      'Keep the visit visible in the shared schedule.',
+                  },
+                  {
+                    value: 'completed',
+                    label: 'Completed',
+                    description: 'Record the visit as finished for the yard.',
+                  },
                 ]}
+                layout="cards"
                 onValueChange={setVisitStatus}
               />
             </Field>
@@ -1983,8 +2201,7 @@ function CareTemplateSection() {
         title="Care Card Template"
         description="Keep the current care-card layout. The style comes from shared rows, badges, and buttons so every detail screen can inherit the same treatment."
         actions={
-          <Button type="button">
-            <PlusIcon data-icon="inline-start" weight="bold" />
+          <Button type="button" action="create">
             Add reminder
           </Button>
         }
@@ -2007,22 +2224,32 @@ function ReminderRow({ reminder }: { reminder: ReminderSpecimen }) {
   const accent = {
     overdue: 'danger',
     today: 'warning',
-    upcoming: 'primary',
+    upcoming: 'none',
   } satisfies Record<ReminderTone, DashboardItemAccent>
+  const showPriorityBadge = reminder.priority === 'high'
+  const showStatusBadge =
+    reminder.tone === 'overdue' || reminder.status !== 'pending'
 
   return (
     <DashboardItemRecordCard
       accent={accent[reminder.tone]}
+      interactive={false}
       actionsPlacement="footer"
       actionsClassName="ml-auto"
       actionBadges={
-        <>
-          <CareReminderPriorityBadge priority={reminder.priority} />
-          <CareReminderStatusBadge
-            status={reminder.status}
-            overdue={reminder.tone === 'overdue'}
-          />
-        </>
+        showPriorityBadge || showStatusBadge ? (
+          <>
+            {showPriorityBadge && (
+              <CareReminderPriorityBadge priority={reminder.priority} />
+            )}
+            {showStatusBadge && (
+              <CareReminderStatusBadge
+                status={reminder.status}
+                overdue={reminder.tone === 'overdue'}
+              />
+            )}
+          </>
+        ) : undefined
       }
       actions={
         <>
@@ -2034,9 +2261,12 @@ function ReminderRow({ reminder }: { reminder: ReminderSpecimen }) {
             <ClockIcon data-icon="inline-start" weight="bold" />
             Dismiss
           </Button>
-          <Button type="button" variant="ghost" size="sm">
-            Remove
-          </Button>
+          <RecordRemoveAction
+            title={`Remove “${reminder.title}”?`}
+            description="This permanently removes the reminder and cannot be undone."
+            confirmLabel="Remove reminder"
+            onConfirm={async () => undefined}
+          />
         </>
       }
       footer={
@@ -2050,23 +2280,18 @@ function ReminderRow({ reminder }: { reminder: ReminderSpecimen }) {
     >
       <DashboardItemRecordContent
         title={reminder.title}
-        titleBadges={
-          <CareReminderCategoryBadge
-            category={reminder.category}
-            className="w-fit"
-          />
-        }
         meta={
           <>
             <span>{reminder.due}</span>
             <span>{reminder.horse}</span>
             <span>{reminder.owner}</span>
+            <span>{careReminderCategoryLabels[reminder.category]}</span>
           </>
         }
         metaSeparator="slash"
         metaClassName="font-semibold"
         description={reminder.description}
-        descriptionClassName="max-w-3xl"
+        descriptionClassName="max-w-3xl text-foreground"
       />
     </DashboardItemRecordCard>
   )

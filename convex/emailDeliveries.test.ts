@@ -229,4 +229,31 @@ describe('email delivery state', () => {
     const invitation = await t.run((ctx) => ctx.db.get(invitationId))
     expect(invitation?.deliveryStatus).toBe('queued')
   })
+
+  it('skips a queued invitation after it is revoked', async () => {
+    const { deliveryId, invitationId } = await seedInvitationDelivery()
+    await t.run(async (ctx) => {
+      await ctx.db.patch(invitationId, {
+        status: 'revoked',
+        updatedAt: now,
+      })
+    })
+
+    await expect(
+      t.mutation(internal.emailDeliveries.prepareSend, {
+        deliveryId,
+        provider: 'resend',
+      }),
+    ).resolves.toEqual({ shouldSend: false })
+
+    const [delivery, invitation] = await t.run(async (ctx) =>
+      Promise.all([ctx.db.get(deliveryId), ctx.db.get(invitationId)]),
+    )
+    expect(delivery).toMatchObject({
+      status: 'skipped',
+      error: 'Invitation is no longer pending.',
+      attempts: 0,
+    })
+    expect(invitation?.deliveryStatus).toBe('skipped')
+  })
 })

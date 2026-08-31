@@ -105,8 +105,8 @@ function RouteComponent() {
         <RouteFormActions
           isSubmitting={form.formState.isSubmitting}
           onReset={() => form.reset()}
-          submitLabel="Create Event"
-          submittingLabel="Creating..."
+          submitLabel="Create event"
+          submittingLabel="Creating…"
         />
       }
     >

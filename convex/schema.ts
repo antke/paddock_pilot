@@ -1,9 +1,6 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
-import {
-  emailCategories,
-  emailProviderNames,
-} from './libs/email/types'
+import { emailCategories, emailProviderNames } from './libs/email/types'
 
 /**
  * GENERIC
@@ -143,6 +140,12 @@ export const emailDeliveryCategory = v.union(
   v.literal(emailCategories[1]),
   v.literal(emailCategories[2]),
   v.literal(emailCategories[3]),
+  v.literal(emailCategories[4]),
+  v.literal(emailCategories[5]),
+  v.literal(emailCategories[6]),
+  v.literal(emailCategories[7]),
+  v.literal(emailCategories[8]),
+  v.literal(emailCategories[9]),
 )
 
 export const emailDeliveryStatus = v.union(
@@ -171,6 +174,8 @@ export const emailRelation = v.union(
     id: v.id('stableInvitations'),
   }),
   v.object({ type: v.literal('event'), id: v.id('events') }),
+  v.object({ type: v.literal('stable'), id: v.id('stables') }),
+  v.object({ type: v.literal('user'), id: v.id('users') }),
 )
 
 export const emailTemplate = v.union(
@@ -206,6 +211,33 @@ export const emailTemplate = v.union(
     eventTitle: v.string(),
     stableId: v.id('stables'),
   }),
+  v.object({
+    kind: v.literal('stable_membership_activated'),
+    stableId: v.id('stables'),
+    stableName: v.string(),
+  }),
+  v.object({
+    kind: v.literal('stable_invitation_accepted'),
+    memberName: v.string(),
+    stableId: v.id('stables'),
+    stableName: v.string(),
+  }),
+  v.object({
+    kind: v.literal('stable_membership_removed'),
+    stableName: v.string(),
+  }),
+  v.object({
+    kind: v.literal('stable_archived'),
+    stableName: v.string(),
+  }),
+  v.object({
+    kind: v.literal('account_welcome'),
+    displayName: v.string(),
+  }),
+  v.object({
+    kind: v.literal('account_deleted'),
+    displayName: v.string(),
+  }),
 )
 
 const emailDeliveriesSchema = defineTable({
@@ -214,6 +246,7 @@ const emailDeliveriesSchema = defineTable({
   provider: v.optional(emailDeliveryProvider),
   providerMessageId: v.optional(v.string()),
   idempotencyKey: v.string(),
+  dedupeKey: v.optional(v.string()),
   status: emailDeliveryStatus,
   template: v.optional(emailTemplate),
   relation: v.optional(emailRelation),
@@ -231,6 +264,7 @@ const emailDeliveriesSchema = defineTable({
   updatedAt: v.number(),
 })
   .index('by_idempotency_key', ['idempotencyKey'])
+  .index('by_dedupe_key', ['dedupeKey'])
   .index('by_provider_message_id', ['provider', 'providerMessageId'])
   .index('by_related_entity', ['relatedEntityType', 'relatedEntityId'])
   .index('by_status_next_attempt', ['status', 'nextAttemptAt'])
@@ -354,11 +388,14 @@ export const stableInvitationsFields = {
   deliveryStatus: v.optional(stableInvitationDeliveryStatus),
   deliveryError: v.optional(v.string()),
   deliveryAttempts: v.optional(v.number()),
+  deliveryRequests: v.optional(v.number()),
+  lastDeliveryQueuedAt: v.optional(v.number()),
   lastSentAt: v.optional(v.number()),
 }
 
 const stableInvitationsSchema = defineTable({ ...stableInvitationsFields })
   .index('by_stable_id', ['stableId'])
+  .index('by_stable_id_created_at', ['stableId', 'createdAt'])
   .index('by_email_status', ['email', 'status'])
   .index('by_token', ['token'])
   .index('by_accepted_by_status', ['acceptedBy', 'status'])

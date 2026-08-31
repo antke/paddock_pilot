@@ -1,5 +1,5 @@
 import { cn } from '#/lib/utils'
-import { getDateBadgeParts } from '#/lib/dateDisplay'
+import { formatMediumDateKey, getDateBadgeParts } from '#/lib/dateDisplay'
 import { TextLabel } from '#/components/ui/text-label'
 
 type EventDateBadgeVariant = 'compact' | 'rail' | 'hero'
@@ -22,8 +22,10 @@ export function EventDateBadge({
   const dateBadge = getDateBadgeParts(date)
 
   return (
-    <div
+    <time
       data-slot="event-date-badge"
+      dateTime={time ? `${date}T${time}` : date}
+      aria-label={`${formatMediumDateKey(date)}${time ? ` at ${time}` : ''}`}
       className={cn(
         'grid shrink-0 justify-items-center text-center',
         variant === 'compact' && 'app-row min-w-14 rounded-control px-2 py-1',
@@ -61,6 +63,6 @@ export function EventDateBadge({
           {time}
         </TextLabel>
       )}
-    </div>
+    </time>
   )
 }

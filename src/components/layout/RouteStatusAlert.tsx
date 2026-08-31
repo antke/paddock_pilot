@@ -2,7 +2,9 @@ import type { ComponentProps, ReactNode } from 'react'
 
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
+import { Button } from '#/components/ui/button'
 import { cn } from '#/lib/utils'
+import { useQueryErrorResetBoundary } from '@tanstack/react-query'
 
 type RouteStatusAlertProps = Omit<ComponentProps<typeof Alert>, 'children'> & {
   title: ReactNode
@@ -24,6 +26,13 @@ type RouteEntityNotFoundAlertProps = Omit<
 > & {
   entity: RouteEntityNotFoundAlertEntity
   description?: ReactNode
+}
+
+type RouteQueryErrorAlertProps = Pick<
+  RouteStatusAlertProps,
+  'description' | 'title' | 'width'
+> & {
+  reset: () => void
 }
 
 const routeStatusAlertToneClassNames = {
@@ -97,6 +106,34 @@ export function RouteEntityNotFoundAlert({
         `This ${entity} does not exist or is no longer available.`
       }
       {...props}
+    />
+  )
+}
+
+export function RouteQueryErrorAlert({
+  description,
+  reset,
+  title,
+  width,
+}: RouteQueryErrorAlertProps) {
+  const queryErrorResetBoundary = useQueryErrorResetBoundary()
+
+  const retry = () => {
+    queryErrorResetBoundary.reset()
+    reset()
+  }
+
+  return (
+    <RouteStatusAlert
+      title={title}
+      description={description}
+      tone="danger"
+      width={width}
+      actions={
+        <Button type="button" onClick={retry} className="min-h-11">
+          Try again
+        </Button>
+      }
     />
   )
 }

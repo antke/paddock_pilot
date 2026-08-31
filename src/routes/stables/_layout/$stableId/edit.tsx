@@ -7,14 +7,16 @@ import {
 } from '#/components/forms/RouteFormCard'
 import {
   RouteEntityNotFoundAlert,
+  RouteQueryErrorAlert,
   RouteStatusAlert,
 } from '#/components/layout/RouteStatusAlert'
 import { ButtonLink } from '#/components/ui/button'
 import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { convexQuery } from '@convex-dev/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useSuspenseQueries } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import type { ErrorComponentProps } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
 import type { Doc, Id } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
@@ -22,17 +24,21 @@ import { useForm } from 'react-hook-form'
 
 export const Route = createFileRoute('/stables/_layout/$stableId/edit')({
   component: RouteComponent,
+  errorComponent: EditStableError,
 })
 
 function RouteComponent() {
   const { stableId } = Route.useParams()
 
-  const { data: stable } = useSuspenseQuery(
-    convexQuery(api.stables.get, { id: stableId as Id<'stables'> }),
-  )
-  const { data: access } = useSuspenseQuery(
-    convexQuery(api.stables.getAccess, { id: stableId as Id<'stables'> }),
-  )
+  const id = stableId as Id<'stables'>
+  const [stableQuery, accessQuery] = useSuspenseQueries({
+    queries: [
+      convexQuery(api.stables.get, { id }),
+      convexQuery(api.stables.getAccess, { id }),
+    ],
+  })
+  const stable = stableQuery.data
+  const access = accessQuery.data
 
   if (!stable) {
     return <RouteEntityNotFoundAlert entity="stable" />
@@ -104,12 +110,22 @@ function EditStableForm({ stable }: EditStableFormProps) {
     <RouteFormCard
       formId="stable-form"
       title="Edit stable"
+      sectionTitle="Stable details"
+      stickyActions
       onSubmit={form.handleSubmit(onSubmit)}
       actions={
         <RouteFormActions
           isSubmitting={form.formState.isSubmitting}
+          disabled={!form.formState.isDirty}
           onReset={() => form.reset()}
-          submitLabel="Update Stable"
+          resetLabel="Discard changes"
+          resetConfirmation={{
+            title: 'Discard your changes?',
+            description:
+              'The form will return to the last saved stable details.',
+            confirmLabel: 'Discard changes',
+          }}
+          submitLabel="Update stable"
           submittingLabel="Saving..."
         />
       }
@@ -119,5 +135,15 @@ function EditStableForm({ stable }: EditStableFormProps) {
         disabled={form.formState.isSubmitting}
       />
     </RouteFormCard>
+  )
+}
+
+function EditStableError({ reset }: ErrorComponentProps) {
+  return (
+    <RouteQueryErrorAlert
+      reset={reset}
+      title="The stable form couldn’t load"
+      description="Check your connection, then try again. Stable details have not been changed."
+    />
   )
 }

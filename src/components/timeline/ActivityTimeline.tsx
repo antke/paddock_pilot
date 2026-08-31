@@ -322,9 +322,12 @@ export function ActivityTimelineListEntry({
     <div
       data-slot="activity-timeline-list-entry"
       data-accent={accent}
-      className="grid grid-cols-[1.25rem_minmax(0,1fr)] border-t border-border-subtle first:border-t-0"
+      className="grid grid-cols-[1.5rem_minmax(0,1fr)] overflow-hidden rounded-row border border-border bg-surface-elevated"
     >
-      <div className="relative flex justify-center" aria-hidden={true}>
+      <div
+        className="relative flex justify-center bg-surface-muted/65"
+        aria-hidden={true}
+      >
         <span className="absolute inset-y-0 w-px bg-border" />
         <span
           className={cn(
@@ -338,7 +341,7 @@ export function ActivityTimelineListEntry({
         />
       </div>
 
-      <div className="grid gap-2 py-4 pl-3">
+      <div className="grid min-w-0 gap-2 p-4 sm:p-5">
         {badges && <DashboardBadgeList>{badges}</DashboardBadgeList>}
         <DashboardItemRecordContent titleSize="dense" {...props}>
           {children}
@@ -455,7 +458,7 @@ export function ActivityTimelineWindowHandle({
       data-slot="activity-timeline-window-handle"
       type="button"
       className={cn(
-        'absolute inset-y-1 w-2 cursor-ew-resize rounded-full bg-primary/45 hover:bg-primary/65',
+        'absolute inset-y-1 z-10 w-2 cursor-ew-resize rounded-full bg-primary/45 outline-none after:absolute after:-inset-x-[18px] after:-inset-y-1 hover:bg-primary/65 focus-visible:ring-2 focus-visible:ring-ring',
         edge === 'start' ? 'left-1' : 'right-1',
         className,
       )}
@@ -473,7 +476,7 @@ export function ActivityTimelineWindowDrag({
       data-slot="activity-timeline-window-drag"
       type="button"
       className={cn(
-        'absolute inset-y-0 left-4 right-4 cursor-grab active:cursor-grabbing',
+        'absolute inset-y-0 left-4 right-4 cursor-grab rounded-control outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing',
         className,
       )}
       {...props}

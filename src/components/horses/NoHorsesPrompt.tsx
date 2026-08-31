@@ -22,6 +22,7 @@ export function NoHorsesPrompt({
           <ButtonLink
             to="/stables/$stableId/horses/create"
             params={{ stableId }}
+            action="create"
           >
             Add horse
           </ButtonLink>

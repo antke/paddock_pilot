@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { createRef } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { FileUploadField } from './FileUploadField'
@@ -8,6 +9,28 @@ import { FileUploadField } from './FileUploadField'
 afterEach(cleanup)
 
 describe('FileUploadField', () => {
+  it('keeps the native input out of tab order and exposes the visible control ref', () => {
+    const controlRef = createRef<HTMLButtonElement>()
+    const { container } = render(
+      <FileUploadField
+        id="document"
+        label="File (required)"
+        required
+        controlRef={controlRef}
+        onFilesChange={() => undefined}
+      />,
+    )
+    const input = container.querySelector<HTMLInputElement>('input[type=file]')
+    const dropzone = screen.getByRole('button', {
+      name: /drop a file here or browse/i,
+    })
+
+    expect(input?.tabIndex).toBe(-1)
+    expect(input?.required).toBe(false)
+    expect(dropzone.getAttribute('aria-required')).toBe('true')
+    expect(controlRef.current).toBe(dropzone)
+  })
+
   it('shows a selected image as an attachment and allows removing it', () => {
     const onFilesChange = vi.fn()
     const { container } = render(

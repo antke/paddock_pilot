@@ -2,6 +2,7 @@ import type { Id } from '../_generated/dataModel'
 import type { MutationCtx } from '../_generated/server'
 import { ensureStableOnboarding } from './onboarding'
 import { recordStableAudit } from './audit'
+import { queueMembershipActivatedEmails } from './email/notifications'
 
 export async function activateAcceptedInvitationsForUser(
   ctx: MutationCtx,
@@ -14,6 +15,8 @@ export async function activateAcceptedInvitationsForUser(
     )
     .collect()
   const now = Date.now()
+  const user = await ctx.db.get(userId)
+  if (!user || user.deletedAt !== undefined) return
 
   for (const invitation of invitations) {
     if (invitation.role !== 'member') continue
@@ -54,6 +57,11 @@ export async function activateAcceptedInvitationsForUser(
       entityType: 'stableInvitation',
       entityId: invitation._id,
       summary: invitation.email,
+    })
+    await queueMembershipActivatedEmails(ctx, {
+      invitation,
+      member: user,
+      stable,
     })
   }
 }

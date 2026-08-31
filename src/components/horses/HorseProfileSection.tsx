@@ -1,7 +1,6 @@
 import {
   DetailField,
   DetailGrid,
-  DetailMetricBlock,
   DetailNoteBlock,
   DetailPanel,
   DetailPanelGrid,
@@ -22,76 +21,136 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
     horse.microchipNumber ||
     horse.insuranceProvider ||
     horse.insurancePolicyNumber
-  const hasAtGlanceDetails =
-    horse.color || horse.discipline || horse.dateOfBirth
   const hasBreedingDetails = horse.sire || horse.dam || horse.shoeingStatus
   const hasCareNotes = horse.allergies?.length || horse.dewormingNotes
+  const ageLabel = typeof age === 'number' ? `${age}` : 'Not recorded'
 
   return (
-    <DashboardSectionCard size="panel" contentGap="loose">
-      <DetailGrid columns={4}>
-        <DetailMetricBlock label="Age" value={`${age}`} />
-        {horse.breed && <DetailMetricBlock label="Breed" value={horse.breed} />}
-        {horse.sex && (
-          <DetailMetricBlock label="Sex" value={sexLabels[horse.sex]} />
-        )}
-        {horse.height && (
-          <DetailMetricBlock label="Height" value={horse.height} />
-        )}
-      </DetailGrid>
+    <DashboardSectionCard title="Profile" size="panel" contentGap="loose">
+      <DetailPanelGrid variant="equal">
+        <DetailPanel title="At a glance" span="lg2">
+          <DetailGrid columns={4} gap="default">
+            <DetailField
+              indent={false}
+              label="Age"
+              value={ageLabel}
+              variant="readable"
+            />
+            {horse.breed && (
+              <DetailField
+                indent={false}
+                label="Breed"
+                value={horse.breed}
+                variant="readable"
+              />
+            )}
+            {horse.sex && (
+              <DetailField
+                indent={false}
+                label="Sex"
+                value={sexLabels[horse.sex]}
+                variant="readable"
+              />
+            )}
+            {horse.height && (
+              <DetailField
+                indent={false}
+                label="Height"
+                value={horse.height}
+                variant="readable"
+              />
+            )}
+            {horse.color && (
+              <DetailField
+                indent={false}
+                label="Color"
+                value={horse.color}
+                variant="readable"
+              />
+            )}
+            {horse.discipline && (
+              <DetailField
+                indent={false}
+                label="Discipline"
+                value={horse.discipline}
+                variant="readable"
+              />
+            )}
+            {horse.dateOfBirth && (
+              <DetailField
+                indent={false}
+                label="Date of birth"
+                value={horse.dateOfBirth}
+                variant="readable"
+              />
+            )}
+          </DetailGrid>
+        </DetailPanel>
 
-      <DetailPanelGrid>
-        {hasAtGlanceDetails && (
-          <DetailPanel title="At a glance">
-            <DetailGrid>
-              {horse.color && <DetailField label="Color" value={horse.color} />}
-              {horse.discipline && (
-                <DetailField label="Discipline" value={horse.discipline} />
+        {hasRegistrationDetails && (
+          <DetailPanel title="Identification">
+            <DetailGrid gap="default">
+              {horse.passportNumber && (
+                <DetailField
+                  indent={false}
+                  label="Passport number"
+                  value={horse.passportNumber}
+                  variant="readable"
+                />
               )}
-              {horse.dateOfBirth && (
-                <DetailField label="Date of birth" value={horse.dateOfBirth} />
+              {horse.microchipNumber && (
+                <DetailField
+                  indent={false}
+                  label="Microchip"
+                  value={horse.microchipNumber}
+                  variant="readable"
+                />
+              )}
+              {horse.insuranceProvider && (
+                <DetailField
+                  indent={false}
+                  label="Insurance"
+                  value={horse.insuranceProvider}
+                  variant="readable"
+                />
+              )}
+              {horse.insurancePolicyNumber && (
+                <DetailField
+                  indent={false}
+                  label="Insurance policy"
+                  value={horse.insurancePolicyNumber}
+                  variant="readable"
+                />
               )}
             </DetailGrid>
           </DetailPanel>
         )}
 
-        {hasRegistrationDetails && (
-          <DetailPanel title="Identification">
-            <DetailStack>
-              {horse.passportNumber && (
-                <DetailField
-                  label="Passport number"
-                  value={horse.passportNumber}
-                />
-              )}
-              {horse.microchipNumber && (
-                <DetailField label="Microchip" value={horse.microchipNumber} />
-              )}
-              {horse.insuranceProvider && (
-                <DetailField
-                  label="Insurance"
-                  value={horse.insuranceProvider}
-                />
-              )}
-              {horse.insurancePolicyNumber && (
-                <DetailField
-                  label="Insurance policy"
-                  value={horse.insurancePolicyNumber}
-                />
-              )}
-            </DetailStack>
-          </DetailPanel>
-        )}
-
         {hasBreedingDetails && (
-          <DetailPanel title="Lineage & routine">
-            <DetailGrid>
-              {horse.sire && <DetailField label="Sire" value={horse.sire} />}
-              {horse.dam && <DetailField label="Dam" value={horse.dam} />}
+          <DetailPanel title="Lineage and routine">
+            <DetailGrid gap="default">
+              {horse.sire && (
+                <DetailField
+                  indent={false}
+                  label="Sire"
+                  value={horse.sire}
+                  variant="readable"
+                />
+              )}
+              {horse.dam && (
+                <DetailField
+                  indent={false}
+                  label="Dam"
+                  value={horse.dam}
+                  variant="readable"
+                />
+              )}
               {horse.shoeingStatus && (
                 <DetailField
+                  indent={false}
                   label="Shoeing status"
                   value={shoeingStatusLabels[horse.shoeingStatus]}
+                  variant="readable"
                 />
               )}
             </DetailGrid>
@@ -103,7 +162,13 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
             <DetailStack gap="loose">
               {horse.allergies?.length ? (
                 <DetailStack gap="compact">
-                  <TextLabel>Allergies</TextLabel>
+                  <TextLabel
+                    size="sm"
+                    weight="semibold"
+                    className="text-primary"
+                  >
+                    Allergies
+                  </TextLabel>
                   <DashboardBadgeList>
                     {horse.allergies.map((allergy) => (
                       <HorseAllergyBadge key={allergy} allergy={allergy} />

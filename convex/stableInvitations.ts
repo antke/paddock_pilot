@@ -7,7 +7,6 @@ import { stableInvitationSchema } from '../shared/stableInvitations/invitationSc
 import type { Doc, Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import type { MutationCtx } from './_generated/server'
-import { hasPersonalPlus } from './libs/entitlements'
 import { getUserFromIdentity } from './libs/auth'
 import { ensureStableOnboarding } from './libs/onboarding'
 import {
@@ -17,8 +16,12 @@ import {
 import { newStableInvitationRole } from './schema'
 import { recordStableAudit } from './libs/audit'
 import { enqueueEmail } from './libs/email/outbox'
+import { queueMembershipActivatedEmails } from './libs/email/notifications'
 
 const INVITATION_TTL_MS = 1000 * 60 * 60 * 24 * 14
+const INVITATION_RESEND_COOLDOWN_MS = 60 * 1000
+const MAX_INVITATIONS_PER_STABLE_PER_HOUR = 20
+const MAX_DELIVERY_REQUESTS_PER_INVITATION = 10
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase()
 
@@ -31,6 +34,7 @@ const queueInvitationEmail = async (
   stableName: string,
 ) => {
   await enqueueEmail(ctx, {
+    dedupeKey: `stable-invitation:${invitation._id}:${invitation.token}`,
     recipient: invitation.email,
     relation: { type: 'stableInvitation', id: invitation._id },
     template: {
@@ -106,7 +110,6 @@ export const preview = query({
         ? {
             emailMatches: normalizeEmail(viewer.email) === invitation.email,
             isAcceptedByViewer: invitation.acceptedBy === viewer._id,
-            hasRequiredPlan: await hasPersonalPlus(ctx, viewer._id),
           }
         : null,
     }
@@ -133,6 +136,22 @@ export const create = mutation({
 
     const email = normalizeEmail(input.data.email)
     const now = Date.now()
+
+    const recentInvitationCount = (
+      await ctx.db
+        .query('stableInvitations')
+        .withIndex('by_stable_id_created_at', (q) =>
+          q
+            .eq('stableId', args.stableId)
+            .gte('createdAt', now - 60 * 60 * 1000),
+        )
+        .take(MAX_INVITATIONS_PER_STABLE_PER_HOUR)
+    ).length
+    if (recentInvitationCount >= MAX_INVITATIONS_PER_STABLE_PER_HOUR) {
+      throw new ConvexError(
+        'Too many invitations were created recently. Try again later.',
+      )
+    }
 
     const existingUser = await ctx.db
       .query('users')
@@ -180,6 +199,8 @@ export const create = mutation({
       expiresAt: now + INVITATION_TTL_MS,
       deliveryStatus: 'queued',
       deliveryAttempts: 0,
+      deliveryRequests: 1,
+      lastDeliveryQueuedAt: now,
     })
 
     const invitation = await ctx.db.get(invitationId)
@@ -217,6 +238,17 @@ export const resend = mutation({
     }
 
     const now = Date.now()
+    const lastQueuedAt = invitation.lastDeliveryQueuedAt ?? invitation.createdAt
+    if (now - lastQueuedAt < INVITATION_RESEND_COOLDOWN_MS) {
+      throw new ConvexError('Wait a minute before resending this invitation')
+    }
+    if (
+      (invitation.deliveryRequests ?? 1) >= MAX_DELIVERY_REQUESTS_PER_INVITATION
+    ) {
+      throw new ConvexError(
+        'This invitation has reached its resend limit. Revoke it and create a new invitation.',
+      )
+    }
     const token = crypto.randomUUID()
     await ctx.db.patch(invitation._id, {
       status: 'pending',
@@ -225,6 +257,8 @@ export const resend = mutation({
       updatedAt: now,
       deliveryStatus: 'queued',
       deliveryError: undefined,
+      deliveryRequests: (invitation.deliveryRequests ?? 1) + 1,
+      lastDeliveryQueuedAt: now,
     })
 
     const refreshedInvitation = await ctx.db.get(invitation._id)
@@ -290,12 +324,15 @@ export const accept = mutation({
         'This invitation uses a role that is no longer supported',
       )
     }
-    if (invitation.status !== 'pending') {
+    const isLegacyPendingActivation =
+      invitation.status === 'accepted_pending_subscription' &&
+      invitation.acceptedBy === user._id
+    if (invitation.status !== 'pending' && !isLegacyPendingActivation) {
       throw new ConvexError('Invitation is no longer pending')
     }
 
     const now = Date.now()
-    if (invitation.expiresAt < now) {
+    if (invitation.status === 'pending' && invitation.expiresAt < now) {
       await ctx.db.patch(invitation._id, {
         status: 'expired',
         updatedAt: now,
@@ -312,52 +349,6 @@ export const accept = mutation({
       invitation.stableId,
       user._id,
     )
-
-    if (existingMembership?.role === 'member') {
-      await ensureStableOnboarding(ctx, {
-        stableId: invitation.stableId,
-        userId: user._id,
-        role: 'member',
-      })
-      await ctx.db.patch(invitation._id, {
-        status: 'accepted',
-        acceptedBy: user._id,
-        acceptedAt: now,
-        updatedAt: now,
-      })
-      await recordStableAudit(ctx, {
-        stableId: invitation.stableId,
-        actorUserId: user._id,
-        action: 'member_invitation.accepted',
-        entityType: 'stableInvitation',
-        entityId: invitation._id,
-        summary: invitation.email,
-      })
-
-      return { status: 'accepted' as const, stableId: invitation.stableId }
-    }
-
-    if (!(await hasPersonalPlus(ctx, user._id))) {
-      await ctx.db.patch(invitation._id, {
-        status: 'accepted_pending_subscription',
-        acceptedBy: user._id,
-        acceptedAt: now,
-        updatedAt: now,
-      })
-      await recordStableAudit(ctx, {
-        stableId: invitation.stableId,
-        actorUserId: user._id,
-        action: 'member_invitation.accepted_pending_plan',
-        entityType: 'stableInvitation',
-        entityId: invitation._id,
-        summary: invitation.email,
-      })
-
-      return {
-        status: 'accepted_pending_subscription' as const,
-        stableId: invitation.stableId,
-      }
-    }
 
     if (existingMembership) {
       await ctx.db.patch(existingMembership._id, { role: 'member' })
@@ -378,7 +369,7 @@ export const accept = mutation({
     await ctx.db.patch(invitation._id, {
       status: 'accepted',
       acceptedBy: user._id,
-      acceptedAt: now,
+      acceptedAt: invitation.acceptedAt ?? now,
       updatedAt: now,
     })
     await recordStableAudit(ctx, {
@@ -388,6 +379,11 @@ export const accept = mutation({
       entityType: 'stableInvitation',
       entityId: invitation._id,
       summary: invitation.email,
+    })
+    await queueMembershipActivatedEmails(ctx, {
+      invitation,
+      member: user,
+      stable,
     })
 
     return { status: 'accepted' as const, stableId: invitation.stableId }

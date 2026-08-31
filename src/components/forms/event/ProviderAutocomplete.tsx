@@ -10,6 +10,7 @@ import {
   AutocompleteList,
   AutocompleteRoot,
 } from '#/components/ui/autocomplete'
+import { Badge } from '#/components/ui/badge'
 import { Input } from '#/components/ui/input'
 import { cn } from '#/lib/utils'
 import { stableProviderTypeLabels } from 'shared/stables/stableProviderSchema'
@@ -128,7 +129,7 @@ export function ProviderAutocomplete({
                 >
                   <span
                     aria-hidden="true"
-                    className="flex size-8 items-center justify-center rounded-full border border-border-subtle bg-surface-muted font-mono text-[0.6875rem] font-bold text-foreground"
+                    className="flex size-8 items-center justify-center rounded-full border border-border-subtle bg-surface-muted font-mono text-xs font-bold text-foreground"
                   >
                     {getProviderInitials(provider.name)}
                   </span>
@@ -143,9 +144,9 @@ export function ProviderAutocomplete({
                   </span>
 
                   <span className="flex items-center gap-2">
-                    <span className="rounded-full border border-border-subtle bg-surface-muted px-2 py-1 text-[0.6875rem] font-bold tracking-wide text-muted-foreground uppercase">
+                    <Badge variant="neutral" size="micro">
                       {stableProviderTypeLabels[provider.type]}
-                    </span>
+                    </Badge>
                     <CheckIcon
                       aria-hidden="true"
                       className={cn(

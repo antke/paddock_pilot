@@ -11,7 +11,7 @@ function RouteComponent() {
 
   return (
     <Navigate
-      to="/stables/$stableId/horses/$horseId/nutrition"
+      to="/stables/$stableId/horses/$horseId/care"
       params={{ stableId, horseId }}
     />
   )

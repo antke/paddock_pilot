@@ -26,6 +26,7 @@ export function HorseDetailPageLab({ data }: HorseDetailPageLabProps) {
       stableId={data.stable._id}
       horse={horse}
       events={events}
+      category="profile"
       canManageHorse
     />
   )

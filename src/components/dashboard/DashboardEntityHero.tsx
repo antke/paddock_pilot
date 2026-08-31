@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { cn } from '#/lib/utils'
 import type { DashboardChrome } from './dashboardChrome'
 import { DashboardBadgeList } from './DashboardBadgeList'
+import { DashboardHeaderRail } from './DashboardHeaderRail'
 import {
   DashboardHeroActions,
   DashboardHeroContent,
@@ -55,7 +56,6 @@ export function DashboardEntityHero({
             {leading}
             <DashboardHeroText>
               <DashboardHeroTitle>{title}</DashboardHeroTitle>
-              {badges && <DashboardBadgeList>{badges}</DashboardBadgeList>}
               {description && (
                 <p className="max-w-3xl text-sm font-medium leading-6 text-muted-foreground md:text-base">
                   {description}
@@ -64,7 +64,18 @@ export function DashboardEntityHero({
             </DashboardHeroText>
           </div>
 
-          {actions && <DashboardHeroActions>{actions}</DashboardHeroActions>}
+          <DashboardHeaderRail
+            top={
+              badges ? (
+                <DashboardBadgeList align="end">{badges}</DashboardBadgeList>
+              ) : undefined
+            }
+            bottom={
+              actions ? (
+                <DashboardHeroActions>{actions}</DashboardHeroActions>
+              ) : undefined
+            }
+          />
         </DashboardHeroContent>
 
         {media}

@@ -20,7 +20,7 @@ function RouteComponent() {
           <ButtonLink
             to="/stables/$stableId/events/create"
             params={{ stableId }}
-            variant="secondary"
+            action="create"
           >
             Add event
           </ButtonLink>

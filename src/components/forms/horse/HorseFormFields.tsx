@@ -984,9 +984,9 @@ function BirthDatePartInput({
 }) {
   return (
     <div className="grid gap-1.5">
-      <label htmlFor={id} className="text-xs font-medium text-muted-foreground">
+      <FieldLabel htmlFor={id} size="compact" className="text-muted-foreground">
         {label}
-      </label>
+      </FieldLabel>
       <Input
         id={id}
         ref={inputRef}

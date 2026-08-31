@@ -69,13 +69,12 @@ export function StableInviteForm({
         control={form.control}
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel className="sr-only" htmlFor={field.name}>
-              Email address
-            </FieldLabel>
+            <FieldLabel htmlFor={field.name}>Email address</FieldLabel>
             <Input
               {...field}
               id={field.name}
               type="email"
+              autoComplete="email"
               placeholder="member@example.com"
               disabled={form.formState.isSubmitting}
               aria-invalid={fieldState.invalid}

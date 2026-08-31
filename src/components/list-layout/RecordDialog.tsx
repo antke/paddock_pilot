@@ -4,7 +4,6 @@ import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { Button } from '#/components/ui/button'
 import { DialogContent, DialogTrigger } from '#/components/ui/dialog'
 import { cn } from '#/lib/utils'
-import { PlusIcon } from '@phosphor-icons/react'
 
 type RecordDialogDesktopTriggerProps = {
   children: ReactNode
@@ -18,8 +17,11 @@ export function RecordDialogDesktopTrigger({
   children,
 }: RecordDialogDesktopTriggerProps) {
   return (
-    <DashboardActions data-slot="record-dialog-desktop-trigger" className="hidden sm:flex">
-      <DialogTrigger render={<Button type="button" variant="secondary" />}>
+    <DashboardActions
+      data-slot="record-dialog-desktop-trigger"
+      className="hidden sm:flex"
+    >
+      <DialogTrigger render={<Button type="button" action="create" />}>
         {children}
       </DialogTrigger>
     </DashboardActions>
@@ -35,14 +37,14 @@ export function RecordDialogFloatingTrigger({
       render={
         <Button
           type="button"
-          variant="secondary"
+          action="create"
+          variant="solid"
           size="fab"
           className="fixed right-5 bottom-5 z-40 sm:hidden"
           aria-label={label}
         />
       }
     >
-      <PlusIcon className="size-6" weight="bold" aria-hidden={true} />
       <span className="sr-only">{label}</span>
     </DialogTrigger>
   )
@@ -56,7 +58,23 @@ export function RecordDialogContent({
     <DialogContent
       data-slot="record-dialog-content"
       className={cn(
-        'max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-panel p-6 sm:max-w-2xl md:p-7',
+        'grid max-h-[calc(100dvh-1rem)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-panel p-0 sm:max-h-[calc(100dvh-2rem)] sm:max-w-2xl',
+        className,
+      )}
+      {...props}
+    />
+  )
+}
+
+export function RecordDialogBody({
+  className,
+  ...props
+}: ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="record-dialog-body"
+      className={cn(
+        'min-h-0 overflow-y-auto overscroll-contain px-6 pb-6 [scrollbar-gutter:stable] md:px-7 md:pb-7',
         className,
       )}
       {...props}

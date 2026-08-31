@@ -2,7 +2,6 @@ import { MedicationRecordForm } from '#/components/horses/MedicationRecordForm'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { FilteredDashboardItemList } from '#/components/list-filtering/FilteredDashboardItemList'
 import { useListFiltering } from '#/components/list-filtering/useListFiltering'
-import { DashboardBadgeList } from '#/components/dashboard/DashboardBadgeList'
 import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
 import { DashboardInlinePanel } from '#/components/dashboard/DashboardInlinePanel'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
@@ -23,15 +22,12 @@ import type { Doc } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 import { useCallback, useMemo, useState } from 'react'
 import type { MedicationRecordFormSchema } from 'shared/horses/medicationRecordSchema'
-import {
-  MedicationDosageBadge,
-  MedicationFrequencyBadge,
-  MedicationRecordStatusBadge,
-} from './HorseCareBadges'
+import { MedicationRecordStatusBadge } from './HorseCareBadges'
 import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { createHorseMedicationRecordListFilterConfig } from './horseDetailListFilters'
 import type { HorseDetailCreateActionChange } from './useHorseDetailCreateAction'
 import { useHorseDetailCreateAction } from './useHorseDetailCreateAction'
+import { HorseRecordRemoveAction } from './HorseRecordRemoveAction'
 
 type HorseMedicationRecordsCardProps = {
   horse: Doc<'horses'>
@@ -138,6 +134,7 @@ export function HorseMedicationRecordsCard({
       })
     } catch (err) {
       showAppErrorToast()
+      throw err
     } finally {
       setPendingRecordId(undefined)
     }
@@ -214,23 +211,15 @@ function MedicationRecordSummary({
         description={record.reason}
         titleClassName="tracking-normal"
         titleWeight="semibold"
-        aside={
-          <DashboardBadgeList>
-            <MedicationDosageBadge dosage={record.dosage} variant="default" />
-            {record.frequency && (
-              <MedicationFrequencyBadge frequency={record.frequency} />
-            )}
-          </DashboardBadgeList>
-        }
       />
-      {(record.startDate || record.prescribedBy) && (
-        <DashboardMetaList separator="dot">
-          {record.startDate && (
-            <span>Started {formatMediumDateKey(record.startDate)}</span>
-          )}
-          {record.prescribedBy && <span>{record.prescribedBy}</span>}
-        </DashboardMetaList>
-      )}
+      <DashboardMetaList separator="dot">
+        <span>{record.dosage}</span>
+        {record.frequency && <span>{record.frequency}</span>}
+        {record.startDate && (
+          <span>Started {formatMediumDateKey(record.startDate)}</span>
+        )}
+        {record.prescribedBy && <span>{record.prescribedBy}</span>}
+      </DashboardMetaList>
     </DashboardInlinePanel>
   )
 }
@@ -253,7 +242,11 @@ function MedicationRecordRow({
       chrome="cards"
       actionsPlacement="footer"
       actionsClassName="ml-auto"
-      actionBadges={<MedicationRecordStatusBadge status={record.status} />}
+      actionBadges={
+        record.status === 'completed' ? (
+          <MedicationRecordStatusBadge status={record.status} />
+        ) : undefined
+      }
       actions={
         canManage ? (
           <>
@@ -268,15 +261,12 @@ function MedicationRecordRow({
                 Complete
               </Button>
             )}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
+            <HorseRecordRemoveAction
               disabled={pending}
-              onClick={() => onRemove(record)}
-            >
-              Remove
-            </Button>
+              title={`Remove ${record.medicationName}?`}
+              description="This medication record will be removed from the horse history permanently. This cannot be undone."
+              onConfirm={() => onRemove(record)}
+            />
           </>
         ) : undefined
       }
@@ -284,17 +274,11 @@ function MedicationRecordRow({
       <DashboardItemRecordContent
         title={record.medicationName}
         titleSize="dense"
-        titleBadges={
-          <DashboardBadgeList gap="compact">
-            <MedicationDosageBadge dosage={record.dosage} />
-            {record.frequency && (
-              <MedicationFrequencyBadge frequency={record.frequency} />
-            )}
-          </DashboardBadgeList>
-        }
         meta={
           <>
             <span>Started {formatMediumDateKey(record.startDate)}</span>
+            <span>{record.dosage}</span>
+            {record.frequency && <span>{record.frequency}</span>}
             {record.endDate && (
               <span>Ended {formatMediumDateKey(record.endDate)}</span>
             )}

@@ -47,6 +47,7 @@ export function StableArchiveCard({
           <AlertDialogTrigger
             render={<Button type="button" variant="destructive" />}
           >
+            <ArchiveBoxIcon aria-hidden="true" />
             Archive stable
           </AlertDialogTrigger>
           <AlertDialogContent>
@@ -68,8 +69,10 @@ export function StableArchiveCard({
               <AlertDialogAction
                 variant="destructive"
                 disabled={isArchiving}
+                aria-busy={isArchiving || undefined}
                 onClick={handleArchive}
               >
+                <ArchiveBoxIcon aria-hidden="true" />
                 {isArchiving ? 'Archiving...' : 'Archive stable'}
               </AlertDialogAction>
             </AlertDialogFooter>

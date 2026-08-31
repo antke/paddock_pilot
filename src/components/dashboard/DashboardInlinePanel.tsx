@@ -71,7 +71,7 @@ function dashboardInlinePanelClasses({
       dashboardInlinePanelPaddingClassNames[padding],
       dashboardInlinePanelTextSizeClassNames[textSize],
       interactive &&
-        'transition-colors hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50',
+        'transition-colors hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50',
       dashboardInlinePanelToneClassNames[tone],
       className,
     ),

@@ -4,6 +4,7 @@ import { cn } from '#/lib/utils'
 import { DashboardActions } from './DashboardActions'
 import { DashboardBadgeList } from './DashboardBadgeList'
 import { DashboardDisplayHeading } from './DashboardDisplayHeading'
+import { DashboardHeaderRail } from './DashboardHeaderRail'
 
 type DashboardSectionHeaderSize = 'compact' | 'panel' | 'section' | 'page'
 type DashboardSectionHeaderDescriptionSize = 'default' | 'sm'
@@ -48,43 +49,40 @@ export function DashboardSectionHeader({
 
   return (
     <header
+      data-slot="dashboard-section-header"
       className={cn(
-        'flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between',
+        'grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-stretch',
         className,
       )}
     >
-      <div className={cn('grid min-w-0 gap-1.5', headingClassName)}>
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          {usesDisplayTitle ? (
-            <DashboardDisplayHeading
-              as={Heading}
-              scale={
-                size === 'page'
-                  ? 'page'
-                  : size === 'section'
-                    ? 'section'
-                    : 'panel'
-              }
-              className={titleClassName}
-            >
-              {title}
-            </DashboardDisplayHeading>
-          ) : (
-            <Heading
-              className={cn(
-                'min-w-0 text-lg font-semibold leading-tight tracking-normal',
-                titleClassName,
-              )}
-            >
-              {title}
-            </Heading>
-          )}
-          {badges && (
-            <DashboardBadgeList gap="compact" className="min-w-0">
-              {badges}
-            </DashboardBadgeList>
-          )}
-        </div>
+      <div
+        data-slot="dashboard-section-header-main"
+        className={cn('grid min-w-0 content-start gap-1.5', headingClassName)}
+      >
+        {usesDisplayTitle ? (
+          <DashboardDisplayHeading
+            as={Heading}
+            scale={
+              size === 'page'
+                ? 'page'
+                : size === 'section'
+                  ? 'section'
+                  : 'panel'
+            }
+            className={titleClassName}
+          >
+            {title}
+          </DashboardDisplayHeading>
+        ) : (
+          <Heading
+            className={cn(
+              'min-w-0 text-lg font-semibold leading-tight tracking-normal',
+              titleClassName,
+            )}
+          >
+            {title}
+          </Heading>
+        )}
 
         {description && (
           <p
@@ -103,14 +101,29 @@ export function DashboardSectionHeader({
         )}
       </div>
 
-      {actions && (
-        <DashboardActions
-          align="start"
-          className={cn('sm:shrink-0 sm:justify-end', actionsClassName)}
-        >
-          {actions}
-        </DashboardActions>
-      )}
+      <DashboardHeaderRail
+        top={
+          badges ? (
+            <DashboardBadgeList
+              align="end"
+              gap="compact"
+              className="max-w-full"
+            >
+              {badges}
+            </DashboardBadgeList>
+          ) : undefined
+        }
+        bottom={
+          actions ? (
+            <DashboardActions
+              align="end"
+              className={cn('max-w-full justify-end', actionsClassName)}
+            >
+              {actions}
+            </DashboardActions>
+          ) : undefined
+        }
+      />
     </header>
   )
 }

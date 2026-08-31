@@ -70,10 +70,16 @@ export const stableDocumentInputSchema = z.object({
 export const stableDocumentFormSchema = z.object({
   horseId: z.string(),
   type: stableDocumentTypeSchema,
-  file: z.custom<FileList>().optional(),
+  file: z
+    .custom<FileList>()
+    .refine((files) => files?.length > 0, 'Choose a file to upload.'),
   fileName: documentFileNameSchema,
   notes: documentNotesSchema,
 })
 
 export type StableDocumentFormSchema = z.infer<typeof stableDocumentFormSchema>
 export type StableDocumentType = (typeof stableDocumentTypes)[number]
+export type StableDocumentFileState =
+  | 'available'
+  | 'unavailable'
+  | 'metadata-only'

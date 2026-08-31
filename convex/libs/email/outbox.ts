@@ -5,16 +5,27 @@ import type { EmailRelation, EmailTemplate } from './types'
 export const enqueueEmail = async (
   ctx: MutationCtx,
   input: {
+    dedupeKey?: string
     recipient: string
     relation: EmailRelation
     template: EmailTemplate
   },
 ) => {
+  if (input.dedupeKey) {
+    const existingDelivery = await ctx.db
+      .query('emailDeliveries')
+      .withIndex('by_dedupe_key', (q) => q.eq('dedupeKey', input.dedupeKey))
+      .unique()
+
+    if (existingDelivery) return existingDelivery._id
+  }
+
   const now = Date.now()
   const deliveryId = await ctx.db.insert('emailDeliveries', {
     category: input.template.kind,
     recipient: input.recipient,
     idempotencyKey: crypto.randomUUID(),
+    dedupeKey: input.dedupeKey,
     status: 'queued',
     template: input.template,
     relation: input.relation,

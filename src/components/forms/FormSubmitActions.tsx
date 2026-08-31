@@ -2,12 +2,16 @@ import type { ComponentProps } from 'react'
 
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { Button } from '#/components/ui/button'
+import { Spinner } from '#/components/ui/spinner'
+import { cn } from '#/lib/utils'
 
 type FormSubmitActionsProps = Omit<
   ComponentProps<typeof DashboardActions>,
   'children'
 > &
-  FormSubmitButtonsProps
+  FormSubmitButtonsProps & {
+    sticky?: boolean
+  }
 
 type FormSubmitButtonsProps = {
   isSubmitting: boolean
@@ -25,10 +29,20 @@ export function FormSubmitActions({
   onCancel,
   cancelLabel = 'Cancel',
   disabled = false,
+  sticky = false,
+  className,
   ...props
 }: FormSubmitActionsProps) {
   return (
-    <DashboardActions data-slot="form-submit-actions" {...props}>
+    <DashboardActions
+      data-slot="form-submit-actions"
+      className={cn(
+        sticky &&
+          'sticky -bottom-6 z-10 -mx-6 -mb-6 border-t border-border-subtle bg-popover/95 px-6 py-4 supports-backdrop-filter:backdrop-blur-sm md:-bottom-7 md:-mx-7 md:-mb-7 md:px-7',
+        className,
+      )}
+      {...props}
+    >
       <FormSubmitButtons
         cancelLabel={cancelLabel}
         disabled={disabled}
@@ -64,7 +78,12 @@ export function FormSubmitButtons({
         </Button>
       )}
 
-      <Button type="submit" disabled={actionDisabled}>
+      <Button
+        type="submit"
+        disabled={actionDisabled}
+        aria-busy={isSubmitting || undefined}
+      >
+        {isSubmitting && <Spinner aria-hidden={true} />}
         {isSubmitting ? submittingLabel : submitLabel}
       </Button>
     </div>

@@ -24,7 +24,7 @@ from:
 2. stable role (`owner` or `member`);
 3. relationship to the record (horse owner, event creator, invitee, or
    uploader); and
-4. plan entitlement, where a feature is subscription-gated.
+4. the Premium entitlement for the Analysis Centre, once billing is enabled.
 
 Permissions are enforced on the server. The UI should hide or disable
 unavailable actions, but UI checks are not authorization.
@@ -110,13 +110,13 @@ three horses, they may accept one and decline the other two.
 | View stable-wide reminders                   |                All |   View | Members need visibility of stable operations.                                                            |
 | Create/update/complete stable-wide reminders |                All |     No | Examples: yard closure, inspection, or shared maintenance.                                               |
 | Manage horse reminders                       |                All |    Own | Member manages reminders for their own horses.                                                           |
-| View stable and horse documents              |                All |   View | Subject to the product plan entitlement.                                                                 |
+| View stable and horse documents              |                All |   View | Documents are part of the core product and are not subscription-gated.                                   |
 | Add documents                                |                All |    Own | Member may add documents for their horse or an event they created; stable-wide documents are owner-only. |
 | Update/delete documents                      |                All |    Own | Member may change only documents they uploaded within their allowed scope.                               |
 | View service-provider directory              |                All |   View | Vet, farrier, dentist, physio, saddler, and other shared contacts.                                       |
 | Add/update/delete service providers          |                All |     No | Shared reference data is owner-managed.                                                                  |
-| View stable analysis                         |                All |   View | Members may see stable-level operational aggregates.                                                     |
-| View horse analysis                          |                All |   View | All horse data is visible in the MVP; write permissions remain ownership-scoped.                         |
+| View stable analysis                         |                All |   View | Open during testing; this is the only planned Premium boundary when billing is enabled.                  |
+| View horse analysis                          |                All |   View | Open during testing; write permissions remain ownership-scoped.                                          |
 | Export all stable data                       |                All |     No | Bulk export can expose every member's records.                                                           |
 
 ## Cross-cutting rules
@@ -127,8 +127,10 @@ three horses, they may accept one and decline the other two.
 - `horse.ownerId` is the source of truth for horse-scoped authority.
 - `event.createdBy` is the source of truth for organiser authority.
 - Record creator and horse owner are separate concepts; store both where needed.
-- Subscription checks and permission checks are cumulative: the user must pass
-  both.
+- Stable access and operational permissions never depend on a subscription.
+- During testing, the Analysis Centre is also open to everyone. When Premium
+  enforcement is deliberately enabled, its entitlement check remains
+  cumulative with the normal stable permission check.
 - Hiding a button is a usability measure. The corresponding server mutation
   must perform the same permission check.
 - Prefer named capabilities such as `canManageStable`,

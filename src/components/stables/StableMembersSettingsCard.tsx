@@ -82,7 +82,7 @@ export function StableMembersSettingsCard({
       contentGap="loose"
     >
       <DashboardSubsection title="Current members" gap="compact">
-        <DashboardItemList gap="flush">
+        <DashboardItemList gap="compact">
           {members.map((member) => {
             const membership = member.membership
             const editableMembership =
@@ -108,6 +108,7 @@ export function StableMembersSettingsCard({
                     <>
                       <Button
                         type="button"
+                        action="edit"
                         variant="ghost"
                         size="sm"
                         onClick={() =>
@@ -214,7 +215,9 @@ function RemoveMemberButton({
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger
-        render={<Button type="button" variant="ghost" size="sm" />}
+        render={
+          <Button type="button" action="delete" variant="ghost" size="sm" />
+        }
       >
         Remove
       </AlertDialogTrigger>
@@ -262,8 +265,10 @@ function RemoveMemberButton({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isRemoving}>Cancel</AlertDialogCancel>
           <AlertDialogAction
+            action="delete"
             variant="destructive"
             disabled={isRemoving || (horses.length > 0 && !reassignToUserId)}
+            aria-busy={isRemoving || undefined}
             onClick={onRemove}
           >
             {isRemoving ? 'Removing...' : 'Remove member'}

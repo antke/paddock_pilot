@@ -16,7 +16,7 @@ import { ListFilterChips } from './ListFilterChips'
 import type { ListFilterChip } from './ListFilterChips'
 import { ListFilterPanel } from './ListFilterPanel'
 
-const listFilterBarClassName = 'app-panel mb-2 p-3 sm:p-4'
+const listFilterBarClassName = 'app-panel p-3 sm:p-4'
 const listFilterHeaderClassName =
   'grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3'
 
@@ -60,7 +60,7 @@ export function ListFilterBar<TFacetId extends string = string>({
       data-sticky={sticky || undefined}
       className={cn(
         listFilterBarClassName,
-        sticky && 'sticky top-36 z-30 sm:top-24',
+        sticky && 'lg:sticky lg:top-24 lg:z-30',
         className,
       )}
     >

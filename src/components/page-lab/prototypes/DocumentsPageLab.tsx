@@ -10,6 +10,7 @@ import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTy
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import type { Doc, Id } from 'convex/_generated/dataModel'
+import type { StableDocumentFileState } from 'shared/stables/stableDocumentSchema'
 import { useMemo } from 'react'
 
 type LabHorseOption = {
@@ -27,6 +28,8 @@ type LabDocumentInput = {
   horse?: LabHorseOption
   event?: Doc<'events'>
   fileUrl?: string
+  fileState?: StableDocumentFileState
+  canManage?: boolean
 }
 
 export function DocumentsPageLab({ data }: { data: DashboardLabData }) {
@@ -64,7 +67,6 @@ export function DocumentsPageLab({ data }: { data: DashboardLabData }) {
         }
         listToolbar={listToolbar}
         chrome="cards"
-        rowChrome="soft"
         onRemove={async () => undefined}
       />
     </DashboardPage>
@@ -115,6 +117,7 @@ function createLabDocuments(
       fileName: `${data.stable.name} insurance summary`,
       notes:
         'Metadata-only reminder to upload the renewed cover note before the policy review.',
+      fileState: 'metadata-only',
     },
     {
       id: 'farrier-note',
@@ -126,6 +129,37 @@ function createLabDocuments(
         'Shoeing notes from the latest reset, including next-cycle recommendations.',
       horse: secondaryHorse ?? primaryHorse,
       fileUrl: '#document-farrier',
+    },
+    {
+      id: 'image-reference',
+      type: 'other',
+      fileName: 'Paddock Pilot reference mark.svg',
+      contentType: 'image/svg+xml',
+      size: 18_000,
+      notes: 'Image-file specimen for the canonical document preview path.',
+      fileUrl: '/paddock-pilot-mark.svg',
+    },
+    {
+      id: 'unavailable-scan',
+      type: 'vet_report',
+      fileName: 'Juniper.follow-up.scan.FINAL.PNG',
+      contentType: 'image/png',
+      size: 3_240_000,
+      notes:
+        'The record remains visible while the uploaded file is unavailable.',
+      horse: primaryHorse,
+      fileState: 'unavailable',
+    },
+    {
+      id: 'long-file-name',
+      type: 'dental',
+      fileName:
+        'Annual dental examination and follow-up recommendations for the next routine visit.pdf',
+      contentType: 'application/pdf',
+      size: 640_000,
+      horse: primaryHorse,
+      fileUrl: '#document-dental',
+      canManage: false,
     },
   ]
 
@@ -139,7 +173,9 @@ function createLabDocuments(
     horseName: input.horse?.name,
     eventTitle: input.event?.title,
     fileUrl: input.fileUrl,
-    canManage: true,
+    fileState:
+      input.fileState ?? (input.fileUrl ? 'available' : 'metadata-only'),
+    canManage: input.canManage ?? true,
   }))
 }
 

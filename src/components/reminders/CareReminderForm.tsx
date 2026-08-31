@@ -358,7 +358,7 @@ export function CareReminderForm({
       />
 
       <Field data-invalid={!!errors.description}>
-        <FieldLabel htmlFor="description">Notes</FieldLabel>
+        <FieldLabel htmlFor="description">Notes (optional)</FieldLabel>
         <Textarea
           id="description"
           placeholder="What should be remembered or checked?"
@@ -373,6 +373,7 @@ export function CareReminderForm({
         isSubmitting={isSubmitting}
         submitLabel={submitLabel}
         submittingLabel="Adding..."
+        sticky={presentation === 'plain'}
       />
     </DashboardInlineForm>
   )

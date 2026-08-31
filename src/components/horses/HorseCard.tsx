@@ -45,7 +45,8 @@ type HorseSelectionCardProps = HorseCardBaseProps & {
   value?: string
 }
 
-export const horseCardSurfaceClassName = 'bg-card dark:bg-card'
+export const horseCardSurfaceClassName =
+  'border-border bg-card dark:border-border dark:bg-card'
 
 export function HorseCardContent({
   horse,
@@ -119,7 +120,7 @@ export function HorseCardLink({
       density="compact"
       className={cn(
         horseCardSurfaceClassName,
-        'active:bg-primary/10',
+        'hover:bg-surface-elevated active:bg-primary/10',
         className,
       )}
     >
@@ -168,7 +169,7 @@ export function HorseSelectionCard({
         data-selected={checked || undefined}
         className={cn(
           horseCardSurfaceClassName,
-          'cursor-pointer active:bg-primary/5 peer-focus-visible:ring-2 peer-focus-visible:ring-ring/40 peer-focus-visible:outline-none',
+          'cursor-pointer active:bg-primary/5 peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:outline-none',
           checked && 'border-primary ring-1 ring-primary',
           invalid && 'border-destructive/70 ring-2 ring-destructive/20',
           disabled && 'cursor-not-allowed opacity-50',

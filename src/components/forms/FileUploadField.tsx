@@ -33,6 +33,7 @@ type FileUploadFieldProps = Omit<
 > & {
   errors?: Array<{ message?: string } | undefined>
   files?: FileList | null
+  controlRef?: Ref<HTMLButtonElement>
   help?: ReactNode
   helpLabel?: string
   inputRef?: Ref<HTMLInputElement>
@@ -47,12 +48,14 @@ type FileUploadFieldProps = Omit<
 export function FileUploadField({
   errors,
   files,
+  controlRef,
   help,
   helpLabel,
   inputRef,
   kind = 'file',
   label,
   onFilesChange,
+  required = false,
   uploadDescription,
   uploadLabel,
   width = 'default',
@@ -138,7 +141,7 @@ export function FileUploadField({
 
       {selectedFile ? (
         <Attachment
-          state={invalid ? 'error' : 'idle'}
+          state={invalid ? 'error' : 'done'}
           className={cn(
             'w-full flex-nowrap',
             width === 'default' ? 'max-w-xl' : 'max-w-none',
@@ -175,6 +178,7 @@ export function FileUploadField({
             </AttachmentAction>
           </AttachmentActions>
           <AttachmentTrigger
+            ref={controlRef}
             type="button"
             aria-label={`Replace ${selectedFile.name}`}
             aria-invalid={invalid}
@@ -184,19 +188,21 @@ export function FileUploadField({
         </Attachment>
       ) : (
         <button
+          ref={controlRef}
           type="button"
           data-slot="file-upload-dropzone"
           data-dragging={dragging}
           className={cn(
             'group/dropzone flex w-full items-center gap-4 rounded-control border border-dashed border-border bg-surface-elevated/35 p-3 text-left outline-none transition-colors',
             width === 'default' ? 'max-w-xl' : 'max-w-none',
-            'hover:border-primary/60 hover:bg-primary/5 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25',
+            'hover:border-primary/60 hover:bg-primary/5 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring',
             'data-[dragging=true]:border-primary data-[dragging=true]:bg-primary/10',
             'disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-surface-muted disabled:opacity-60',
             'aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20',
             className,
           )}
           aria-invalid={invalid}
+          aria-required={required || undefined}
           disabled={props.disabled}
           onClick={openFilePicker}
           onDragEnter={(event) => {
@@ -211,7 +217,7 @@ export function FileUploadField({
           }}
           onDrop={handleDrop}
         >
-          <span className="flex size-16 shrink-0 items-center justify-center rounded-control border border-border-subtle bg-card text-primary transition-transform group-data-[dragging=true]/dropzone:scale-105">
+          <span className="flex size-16 shrink-0 items-center justify-center rounded-control border border-border-subtle bg-card text-primary transition-transform group-data-[dragging=true]/dropzone:scale-105 motion-reduce:transition-none">
             {kind === 'image' ? (
               <ImageSquareIcon
                 className="size-7"
@@ -247,8 +253,10 @@ export function FileUploadField({
         {...props}
         ref={setInputRef}
         type="file"
+        tabIndex={-1}
         className="sr-only"
         aria-invalid={invalid}
+        aria-required={required || undefined}
         onChange={(event) => selectFiles(event.target.files)}
       />
 

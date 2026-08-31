@@ -31,9 +31,10 @@ import type { FunctionReturnType } from 'convex/server'
 import { useState } from 'react'
 import type { EventHorseDetailsFormSchema } from 'shared/events/eventHorseDetailsSchema'
 import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
-import { EventCostShareBadge, EventHorseStatusBadge } from './EventBadges'
+import { EventHorseStatusBadge } from './EventBadges'
 import { EventHorseServiceDetailsForm } from './EventHorseServiceDetailsForm'
 import { cn } from '#/lib/utils'
+import { formatCurrencyAmount } from '#/lib/numberDisplay'
 
 type EventHorseDetails = FunctionReturnType<
   typeof api.eventHorseDetails.listForEvent
@@ -160,6 +161,7 @@ function EventHorseServiceRow({
             {canManage && (
               <Button
                 type="button"
+                action={hasDetails ? 'edit' : 'create'}
                 variant="outline"
                 size="sm"
                 onClick={onEdit}
@@ -234,12 +236,14 @@ function EventHorseServiceRow({
       <HorseCardContent
         horse={horse ?? { name: 'Unknown horse' }}
         badges={
-          <>
+          eventHorse.status && eventHorse.status !== 'confirmed' ? (
             <EventHorseStatusBadge status={eventHorse.status} />
-            {eventHorse.costShare !== undefined && (
-              <EventCostShareBadge costShare={eventHorse.costShare} />
-            )}
-          </>
+          ) : undefined
+        }
+        meta={
+          eventHorse.costShare !== undefined
+            ? `Cost ${formatCurrencyAmount(eventHorse.costShare)}`
+            : undefined
         }
       />
     </DashboardItemRecordCard>

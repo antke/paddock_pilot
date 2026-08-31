@@ -12,7 +12,8 @@ import type {
   EventStatus,
   EventType,
 } from 'shared/events/eventSchema'
-import { EventStatusBadge, EventTypeBadge } from './EventBadges'
+import { eventTypeLabels } from 'shared/events/eventSchema'
+import { EventStatusBadge } from './EventBadges'
 import { EventDateBadge } from './EventDateBadge'
 import { formatEventDateTime, formatRecurrence } from './eventDisplay'
 
@@ -40,6 +41,7 @@ type EventRowProps = {
   className?: string
   density?: EventRowDensity
   horseCount?: number
+  leadingLabel?: string
   selected?: boolean
   showLocation?: boolean
   showRecurrence?: boolean
@@ -64,6 +66,7 @@ export function EventRow({
   className,
   density,
   horseCount,
+  leadingLabel,
   selected = false,
   showLocation = true,
   showRecurrence = true,
@@ -86,7 +89,7 @@ export function EventRow({
       aria-current={selected ? 'page' : undefined}
       className={cn(
         'active:bg-primary/10 motion-reduce:transition-none',
-        chrome === 'soft' && 'border border-transparent',
+        chrome === 'soft' && 'border border-border-subtle bg-surface-elevated',
         className,
       )}
     >
@@ -94,6 +97,7 @@ export function EventRow({
         event={event}
         density={resolvedDensity}
         horseCount={horseCount}
+        leadingLabel={leadingLabel}
         showLocation={showLocation}
         showRecurrence={showRecurrence}
         showStatus={showStatus}
@@ -109,6 +113,7 @@ function EventRowContent({
   event,
   density,
   horseCount,
+  leadingLabel,
   showLocation,
   showRecurrence,
   showStatus,
@@ -119,6 +124,7 @@ function EventRowContent({
   event: EventRowEvent
   density: EventRowDensity
   horseCount?: number
+  leadingLabel?: string
   showLocation: boolean
   showRecurrence: boolean
   showStatus: boolean
@@ -126,7 +132,7 @@ function EventRowContent({
   supplementalMeta: Array<string | null | undefined>
   variant: EventRowVariant
 }) {
-  const leading = getLeading(event, variant, density)
+  const leading = getLeading(event, variant, density, leadingLabel)
   const metaItems = getMetaItems({
     event,
     horseCount,
@@ -135,6 +141,10 @@ function EventRowContent({
     supplementalMeta,
     variant,
   })
+  const statusBadge =
+    showStatus && event.status && event.status !== 'planned' ? (
+      <EventStatusBadge status={event.status} />
+    ) : null
 
   return (
     <div
@@ -147,18 +157,28 @@ function EventRowContent({
       {leading}
 
       <div className="min-w-0">
-        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
-          <span className="line-clamp-2 min-w-0 basis-40 flex-1 text-sm font-semibold leading-5 transition-colors group-hover/open:text-primary sm:line-clamp-1 motion-reduce:transition-none">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+          <span
+            className={cn(
+              'line-clamp-2 min-w-0 font-semibold transition-colors group-hover/open:text-primary motion-reduce:transition-none',
+              density === 'compact'
+                ? 'text-sm leading-5'
+                : 'text-base leading-6',
+            )}
+          >
             {event.title}
           </span>
 
-          <DashboardBadgeList align="end" gap="compact" className="shrink-0">
-            <EventTypeBadge type={event.type} />
-            {showStatus && (
-              <EventStatusBadge status={event.status ?? 'planned'} />
-            )}
-            {supplementalBadges}
-          </DashboardBadgeList>
+          {(statusBadge || supplementalBadges) && (
+            <DashboardBadgeList
+              align="end"
+              gap="compact"
+              className="shrink-0 justify-self-end"
+            >
+              {statusBadge}
+              {supplementalBadges}
+            </DashboardBadgeList>
+          )}
         </div>
 
         {metaItems.length > 0 && (
@@ -169,7 +189,10 @@ function EventRowContent({
             size={density === 'compact' ? 'xs' : 'sm'}
           >
             {metaItems.map((item, index) => (
-              <span key={`${index}-${item}`} className="whitespace-nowrap">
+              <span
+                key={`${index}-${item}`}
+                className="max-w-full [overflow-wrap:anywhere]"
+              >
                 {item}
               </span>
             ))}
@@ -184,9 +207,16 @@ function getLeading(
   event: EventRowEvent,
   variant: EventRowVariant,
   density: EventRowDensity,
+  leadingLabel?: string,
 ): ReactNode {
   if (variant === 'agenda') {
-    return <EventDateBadge date={event.date} time={event.time} />
+    return (
+      <EventDateBadge
+        date={event.date}
+        time={event.time}
+        variant={density === 'comfortable' ? 'rail' : 'compact'}
+      />
+    )
   }
 
   if (variant === 'contextual') {
@@ -200,7 +230,7 @@ function getLeading(
             : 'min-w-16 px-2 py-3 text-sm',
         )}
       >
-        {event.time}
+        {leadingLabel ?? event.time}
       </span>
     )
   }
@@ -228,6 +258,7 @@ function getMetaItems({
     : null
 
   return [
+    eventTypeLabels[event.type],
     variant === 'compact' || variant === 'summary'
       ? formatEventDateTime(event.date, event.time, event.endDate)
       : null,

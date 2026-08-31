@@ -4,6 +4,7 @@ import {
   Outlet,
   Scripts,
   createRootRoute,
+  useLocation,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import Footer from '../components/Footer'
@@ -15,6 +16,7 @@ import { ButtonLink } from '#/components/ui/button'
 import { Toaster } from '#/components/ui/sonner'
 import { TooltipProvider } from '#/components/ui/tooltip'
 import { AppUserStateProvider } from '#/components/layout/AppUserStateProvider'
+import { isLandingLabPath } from '#/lib/landingLab'
 import {
   SITE_DESCRIPTION,
   SITE_SOCIAL_IMAGE,
@@ -121,6 +123,9 @@ function NotFoundPage() {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const { pathname } = useLocation()
+  const isLandingLab = isLandingLabPath(pathname)
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -130,33 +135,40 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
       <body className={appBodyClassName}>
         <ConvexProviderWithClerk>
-          <AppUserStateProvider>
+          {isLandingLab ? (
             <TooltipProvider>
-              <AppShell>
-                <Header />
-
-                <PageLayout>{children}</PageLayout>
-
-                <Footer />
-              </AppShell>
-
+              {children}
               <Toaster />
-
-              {import.meta.env.DEV ? (
-                <TanStackDevtools
-                  config={{
-                    position: 'bottom-right',
-                  }}
-                  plugins={[
-                    {
-                      name: 'TanStack Router',
-                      render: <TanStackRouterDevtoolsPanel />,
-                    },
-                  ]}
-                />
-              ) : null}
             </TooltipProvider>
-          </AppUserStateProvider>
+          ) : (
+            <AppUserStateProvider>
+              <TooltipProvider>
+                <AppShell>
+                  <Header />
+
+                  <PageLayout>{children}</PageLayout>
+
+                  <Footer />
+                </AppShell>
+
+                <Toaster />
+
+                {import.meta.env.DEV ? (
+                  <TanStackDevtools
+                    config={{
+                      position: 'bottom-right',
+                    }}
+                    plugins={[
+                      {
+                        name: 'TanStack Router',
+                        render: <TanStackRouterDevtoolsPanel />,
+                      },
+                    ]}
+                  />
+                ) : null}
+              </TooltipProvider>
+            </AppUserStateProvider>
+          )}
         </ConvexProviderWithClerk>
         <Scripts />
       </body>

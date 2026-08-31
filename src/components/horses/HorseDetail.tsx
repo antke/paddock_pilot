@@ -6,8 +6,10 @@ import {
 } from '#/components/dashboard/DashboardNavigation'
 import { DashboardEntityHero } from '#/components/dashboard/DashboardEntityHero'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
+import { formatMetaText } from '#/lib/textDisplay'
 import { Link, useLocation } from '@tanstack/react-router'
 import type { Doc } from 'convex/_generated/dataModel'
+import type { ReactNode } from 'react'
 import { HorseActivitySection } from './HorseActivitySection'
 import { HorseCareSection } from './HorseCareSection'
 import { HorseDocumentsSection } from './HorseDocumentsSection'
@@ -32,6 +34,7 @@ type HorseDetailProps = {
   events: Array<Doc<'events'>>
   category?: HorseDetailCategory
   canManageHorse: boolean
+  children?: ReactNode
 }
 
 export type HorseDetailSectionProps = {
@@ -66,19 +69,27 @@ export function HorseDetail({
   events,
   category,
   canManageHorse,
+  children,
 }: HorseDetailProps) {
   const { pathname } = useLocation()
   const horseBasePath = `/stables/${stableId}/horses/${horse._id}`
   const pathAfterHorse = pathname.slice(horseBasePath.length)
   const activeCategory = category ?? getHorseDetailCategory(pathAfterHorse)
-  const moreSectionActive = ['/timeline', '/care-summary', '/edit'].includes(
-    pathAfterHorse,
+  const moreSectionActive = ['/timeline', '/care-summary', '/edit'].some(
+    (path) => pathAfterHorse.startsWith(path),
   )
+  const heroDescription = formatMetaText([
+    horse.ownerName ? `Owner: ${horse.ownerName}` : undefined,
+    horse.breed,
+    horse.sex ? sexLabels[horse.sex] : undefined,
+  ])
 
   return (
     <DashboardPage>
       <DashboardEntityHero
+        className="print:hidden"
         title={horse.name}
+        description={heroDescription || undefined}
         leading={
           <HorseAvatar
             name={horse.name}
@@ -86,8 +97,13 @@ export function HorseDetail({
             size="lg"
           />
         }
-        actions={
-          <DashboardNavigation align="end" inset={false}>
+      >
+        <div className="min-w-0 border-t border-border-subtle pt-4">
+          <DashboardNavigation
+            ariaLabel={`${horse.name} sections`}
+            inset={false}
+            overflow="scroll"
+          >
             {categoryItems.map((item) => (
               <DashboardNavigationLinkItem
                 key={item.id}
@@ -107,10 +123,11 @@ export function HorseDetail({
               active={moreSectionActive}
               label="More"
               contentWidth="sm"
-              triggerClassName="h-10 px-3.5 font-display text-sm font-black uppercase leading-none tracking-normal"
+              variant="section"
             >
               <DashboardNavigationMenuLink
-                className="font-display text-xs font-bold uppercase tracking-wide"
+                active={pathAfterHorse.startsWith('/timeline')}
+                variant="section"
                 render={
                   <Link
                     to="/stables/$stableId/horses/$horseId/timeline"
@@ -121,7 +138,8 @@ export function HorseDetail({
                 Timeline
               </DashboardNavigationMenuLink>
               <DashboardNavigationMenuLink
-                className="font-display text-xs font-bold uppercase tracking-wide"
+                active={pathAfterHorse.startsWith('/care-summary')}
+                variant="section"
                 render={
                   <Link
                     to="/stables/$stableId/horses/$horseId/care-summary"
@@ -133,7 +151,8 @@ export function HorseDetail({
               </DashboardNavigationMenuLink>
               {canManageHorse && (
                 <DashboardNavigationMenuLink
-                  className="font-display text-xs font-bold uppercase tracking-wide"
+                  active={pathAfterHorse.startsWith('/edit')}
+                  variant="section"
                   render={
                     <Link
                       to="/stables/$stableId/horses/$horseId/edit"
@@ -146,8 +165,8 @@ export function HorseDetail({
               )}
             </DashboardNavigationMenuGroup>
           </DashboardNavigation>
-        }
-      />
+        </div>
+      </DashboardEntityHero>
 
       {activeCategory === 'profile' && (
         <HorseProfileSection
@@ -180,6 +199,7 @@ export function HorseDetail({
           events={events}
         />
       )}
+      {!activeCategory && children}
     </DashboardPage>
   )
 }

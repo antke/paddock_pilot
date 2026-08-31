@@ -1,4 +1,3 @@
-import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { HorseDetail } from '#/components/horses/HorseDetail'
 import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
 import { convexQuery } from '@convex-dev/react-query'
@@ -32,14 +31,13 @@ function RouteComponent() {
   }
 
   return (
-    <DashboardPage>
-      <HorseDetail
-        stableId={stableId}
-        horse={horse}
-        events={events}
-        canManageHorse={permissions?.canManageHorse ?? false}
-      />
+    <HorseDetail
+      stableId={stableId}
+      horse={horse}
+      events={events}
+      canManageHorse={permissions?.canManageHorse ?? false}
+    >
       <Outlet />
-    </DashboardPage>
+    </HorseDetail>
   )
 }

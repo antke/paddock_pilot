@@ -31,7 +31,6 @@ import {
 } from 'shared/stableInvitations/invitationState'
 import {
   StableInvitationDeliveryStatusBadge,
-  StableInvitationRoleBadge,
   StableInvitationStatusBadge,
 } from './StableInvitationBadges'
 
@@ -103,7 +102,7 @@ export function StableInvitationsList({
   }
 
   return (
-    <DashboardItemList gap="flush">
+    <DashboardItemList gap="compact">
       {invitations.map((invitation) => {
         const status = getEffectiveInvitationStatus({
           status: invitation.status,
@@ -116,11 +115,11 @@ export function StableInvitationsList({
         return (
           <DashboardItemRecordCard
             key={invitation._id}
-            chrome="soft"
+            chrome="cards"
             density="compact"
+            interactive={false}
             actionBadges={
               <>
-                <StableInvitationRoleBadge role={invitation.role} />
                 <StableInvitationStatusBadge status={status} />
                 {invitation.deliveryStatus && (
                   <StableInvitationDeliveryStatusBadge
@@ -138,6 +137,7 @@ export function StableInvitationsList({
                       variant="ghost"
                       size="sm"
                       disabled={isPending}
+                      aria-busy={isPending || undefined}
                       onClick={() => copyInvitation(invitation.token)}
                     >
                       Copy link
@@ -149,6 +149,7 @@ export function StableInvitationsList({
                       variant="ghost"
                       size="sm"
                       disabled={isPending}
+                      aria-busy={isPending || undefined}
                       onClick={() => onResend(invitation)}
                     >
                       {pendingAction?.type === 'resend' && isPending
@@ -165,6 +166,7 @@ export function StableInvitationsList({
                             variant="ghost"
                             size="sm"
                             disabled={isPending}
+                            aria-busy={isPending || undefined}
                           />
                         }
                       >
@@ -188,6 +190,7 @@ export function StableInvitationsList({
                           <AlertDialogAction
                             variant="destructive"
                             disabled={isPending}
+                            aria-busy={isPending || undefined}
                             onClick={() => onRevoke(invitation)}
                           >
                             {pendingAction?.type === 'revoke' && isPending

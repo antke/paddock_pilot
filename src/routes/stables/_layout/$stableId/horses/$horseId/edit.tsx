@@ -190,14 +190,16 @@ function EditHorseForm({ horse }: EditHorseFormProps) {
     <>
       <RouteFormCard
         formId="horse-form"
-        title="Edit horse"
+        title="Edit horse profile"
+        embedded
         onSubmit={form.handleSubmit(onSubmit)}
         actions={
           <RouteFormActions
             isSubmitting={form.formState.isSubmitting}
             onReset={() => form.reset()}
-            submitLabel="Update Horse"
-            submittingLabel="Saving..."
+            resetLabel="Reset form"
+            submitLabel="Save changes"
+            submittingLabel="Saving changes…"
           />
         }
       >

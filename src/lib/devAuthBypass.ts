@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from 'react'
+
 export function isDevFixtureRoute(pathname: string) {
   return (
     pathname === '/style-lab' ||
@@ -23,5 +25,21 @@ export function isDevAuthBypassEnabled() {
     new URLSearchParams(window.location.search).get('devAuthBypass') ===
       'true' ||
     window.localStorage.getItem('paddockPilot.devAuthBypass') === 'true'
+  )
+}
+
+function subscribeToDevAuthBypass() {
+  return () => undefined
+}
+
+function getServerDevAuthBypassSnapshot() {
+  return false
+}
+
+export function useDevAuthBypassEnabled() {
+  return useSyncExternalStore(
+    subscribeToDevAuthBypass,
+    isDevAuthBypassEnabled,
+    getServerDevAuthBypassSnapshot,
   )
 }

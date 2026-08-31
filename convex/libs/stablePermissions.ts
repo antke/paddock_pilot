@@ -10,7 +10,6 @@ import type {
   StableCapabilities,
   StableRole,
 } from '../../shared/stables/stableAccess'
-import { hasPersonalPlus } from './entitlements'
 
 type Ctx = MutationCtx | QueryCtx
 
@@ -47,8 +46,7 @@ export const getStableMembership = async (
     )
     .unique()
 
-  const hasActiveMemberAccess =
-    membership?.role === 'member' && (await hasPersonalPlus(ctx, userId))
+  const hasActiveMemberAccess = membership?.role === 'member'
 
   return {
     stable,

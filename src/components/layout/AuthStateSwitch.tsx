@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { ClerkLoaded, ClerkLoading, Show } from '@clerk/tanstack-react-start'
 
-import { isDevAuthBypassEnabled } from '#/lib/devAuthBypass'
+import { useDevAuthBypassEnabled } from '#/lib/devAuthBypass'
 import { RoutePending } from './RoutePending'
 
 type AuthStateSwitchProps = {
@@ -15,7 +15,9 @@ export function AuthStateSwitch({
   signedOut,
   loading = <RoutePending />,
 }: AuthStateSwitchProps) {
-  if (isDevAuthBypassEnabled()) {
+  const devAuthBypassEnabled = useDevAuthBypassEnabled()
+
+  if (devAuthBypassEnabled) {
     return <>{signedIn}</>
   }
 

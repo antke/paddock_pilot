@@ -13,19 +13,15 @@ import {
 } from '#/components/dashboard/DashboardItemCard'
 import { DashboardMetaList } from '#/components/dashboard/DashboardMetaList'
 import { EventRow } from '#/components/events/EventRow'
-import { HorseNameBadge } from '#/components/horses/HorseBadges'
 import { HorseCardLink } from '#/components/horses/HorseCard'
 import {
-  HorseActiveMedicationCountBadge,
   HorseHighIssueCountBadge,
   HorseOverdueReminderCountBadge,
 } from '#/components/horses/HorseCareBadges'
 import {
-  CareReminderCategoryBadge,
   CareReminderPriorityBadge,
   CareReminderStatusBadge,
 } from '#/components/reminders/CareReminderBadges'
-import { StableNameBadge } from '#/components/stables/StableBadges'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import type { ComponentProps } from 'react'
@@ -35,6 +31,7 @@ import type { FunctionReturnType } from 'convex/server'
 import { formatShortDateKey } from '#/lib/dateDisplay'
 import { formatCountLabel } from '#/lib/numberDisplay'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
+import { careReminderCategoryLabels } from 'shared/reminders/careReminderSchema'
 
 type UserCareOverview = FunctionReturnType<
   typeof api.userCareOverview.getForCurrentUser
@@ -170,20 +167,16 @@ function DueReminderCard({ reminders }: { reminders: ReminderItem[] }) {
                     overdue={reminder.overdue}
                   />
                 )}
-                {reminder.priority && (
+                {reminder.priority === 'high' && (
                   <CareReminderPriorityBadge priority={reminder.priority} />
                 )}
               </DashboardBadgeList>
-              <DashboardMetaList size="xs">
+              <DashboardMetaList size="xs" separator="dot">
                 <span>Due {formatShortDateKey(reminder.dueDate)}</span>
+                <span>{careReminderCategoryLabels[reminder.category]}</span>
+                <span>{reminder.stableName}</span>
+                {reminder.horseName && <span>{reminder.horseName}</span>}
               </DashboardMetaList>
-              <DashboardBadgeList gap="compact">
-                <CareReminderCategoryBadge category={reminder.category} />
-                <StableNameBadge name={reminder.stableName} />
-                {reminder.horseName && (
-                  <HorseNameBadge name={reminder.horseName} />
-                )}
-              </DashboardBadgeList>
             </DashboardItemOpenLink>
           ))
         )}
@@ -279,18 +272,23 @@ function AttentionHorseCard({ horses }: { horses: AttentionHorseItem[] }) {
                       count={horse.overdueReminderCount}
                     />
                   )}
-                  {horse.activeMedicationCount > 0 && (
-                    <HorseActiveMedicationCountBadge
-                      count={horse.activeMedicationCount}
-                    />
-                  )}
-                  <StableNameBadge name={horse.stableName} />
                 </>
               }
               meta={
-                <span>
-                  {formatCountLabel(horse.activeIssueCount, 'active issue')}
-                </span>
+                <>
+                  <span>{horse.stableName}</span>
+                  <span>
+                    {formatCountLabel(horse.activeIssueCount, 'active issue')}
+                  </span>
+                  {horse.activeMedicationCount > 0 && (
+                    <span>
+                      {formatCountLabel(
+                        horse.activeMedicationCount,
+                        'active medication',
+                      )}
+                    </span>
+                  )}
+                </>
               }
             />
           ))

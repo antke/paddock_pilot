@@ -2,13 +2,13 @@ import {
   CalendarCheckIcon,
   CheckCircleIcon,
   HorseIcon,
-  PencilSimpleIcon,
   UsersThreeIcon,
 } from '@phosphor-icons/react'
 import type { Doc } from 'convex/_generated/dataModel'
 import type { ReactNode } from 'react'
 
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
+import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
 import {
   DashboardItemCardContent,
   DashboardItemList,
@@ -17,6 +17,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
 import { FieldPanel } from '#/components/ui/field'
+import { TextLabel } from '#/components/ui/text-label'
 import type { OnboardingRole, OnboardingStepId } from './onboardingSteps'
 
 type Profile = {
@@ -78,37 +79,51 @@ export function OnboardingReviewStep({
           <ReviewField
             label="Stable name"
             value={stable.name}
-            onEdit={role === 'owner' ? () => onEdit('stable-basics') : undefined}
+            onEdit={
+              role === 'owner' ? () => onEdit('stable-basics') : undefined
+            }
           />
           <ReviewField
             label="Location"
             value={stable.location}
-            onEdit={role === 'owner' ? () => onEdit('stable-basics') : undefined}
+            onEdit={
+              role === 'owner' ? () => onEdit('stable-basics') : undefined
+            }
           />
           <ReviewField
             label="Primary contact"
             value={stable.contactName || 'Not added'}
-            onEdit={role === 'owner' ? () => onEdit('stable-operations') : undefined}
+            onEdit={
+              role === 'owner' ? () => onEdit('stable-operations') : undefined
+            }
           />
           <ReviewField
             label="Contact phone"
             value={stable.contactPhone || 'Not added'}
-            onEdit={role === 'owner' ? () => onEdit('stable-operations') : undefined}
+            onEdit={
+              role === 'owner' ? () => onEdit('stable-operations') : undefined
+            }
           />
           <ReviewField
             label="Emergency phone"
             value={stable.emergencyPhone || 'Not added'}
-            onEdit={role === 'owner' ? () => onEdit('stable-operations') : undefined}
+            onEdit={
+              role === 'owner' ? () => onEdit('stable-operations') : undefined
+            }
           />
           <ReviewField
             label="Opening hours"
             value={stable.openingHours || 'Not added'}
-            onEdit={role === 'owner' ? () => onEdit('stable-operations') : undefined}
+            onEdit={
+              role === 'owner' ? () => onEdit('stable-operations') : undefined
+            }
           />
           <ReviewField
             label="Yard rules"
             value={stable.yardRules || 'Not added'}
-            onEdit={role === 'owner' ? () => onEdit('stable-operations') : undefined}
+            onEdit={
+              role === 'owner' ? () => onEdit('stable-operations') : undefined
+            }
           />
         </ReviewSection>
 
@@ -179,11 +194,17 @@ function formatBirthDate(dateOfBirth?: string) {
   return dateOfBirth
 }
 
-function ReviewSection({ children, title }: { children: ReactNode; title: string }) {
+function ReviewSection({
+  children,
+  title,
+}: {
+  children: ReactNode
+  title: string
+}) {
   return (
     <FieldPanel className="overflow-hidden p-0">
       <div className="border-b border-border-subtle bg-surface-muted px-4 py-3">
-        <h3 className="text-sm font-semibold">{title}</h3>
+        <DashboardInlineHeader as="h3" title={title} titleSize="sm" />
       </div>
       <dl>{children}</dl>
     </FieldPanel>
@@ -201,18 +222,19 @@ function ReviewField({
 }) {
   return (
     <div className="grid min-h-14 grid-cols-[minmax(7rem,0.7fr)_minmax(0,1fr)_auto] items-center gap-3 border-b border-border-subtle px-4 py-3 last:border-b-0">
-      <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
-      <dd className="min-w-0 whitespace-pre-wrap text-sm font-medium">{value}</dd>
+      <TextLabel as="dt">{label}</TextLabel>
+      <dd className="min-w-0 whitespace-pre-wrap text-sm font-medium">
+        {value}
+      </dd>
       {onEdit && (
         <Button
           type="button"
+          action="edit"
           variant="ghost"
           size="icon-sm"
           aria-label={`Edit ${label.toLowerCase()}`}
           onClick={onEdit}
-        >
-          <PencilSimpleIcon aria-hidden="true" />
-        </Button>
+        />
       )}
     </div>
   )
@@ -263,7 +285,11 @@ function NextSteps({ role }: { role: OnboardingRole }) {
   return (
     <DashboardItemList gap="compact">
       {items.map((item) => (
-        <DashboardItemRecordCard key={item.title} chrome="soft" density="compact">
+        <DashboardItemRecordCard
+          key={item.title}
+          chrome="soft"
+          density="compact"
+        >
           <DashboardItemCardContent
             leading={
               <span className="text-primary [&_svg]:size-5" aria-hidden="true">

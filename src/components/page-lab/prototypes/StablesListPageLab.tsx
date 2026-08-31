@@ -1,13 +1,10 @@
-import {
-  DashboardItemCardContent,
-  DashboardItemList,
-  DashboardItemLinkCard,
-} from '#/components/dashboard/DashboardItemCard'
+import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { ButtonLink } from '#/components/ui/button'
+import { StableCardLink } from '#/components/stables/StableCard'
 import type { Doc } from 'convex/_generated/dataModel'
 import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
 
@@ -48,35 +45,28 @@ export function StablesListPageLab({
     <DashboardPage>
       <DashboardPageHeader
         title="All stables"
-        actions={<ButtonLink to="/stables/create">Create stable</ButtonLink>}
+        actions={
+          <ButtonLink to="/stables/create" action="create">
+            Create stable
+          </ButtonLink>
+        }
       />
 
       <DashboardSectionCard contentGap="comfortable">
         <DashboardItemList gap="flush">
           {stableSummaries.map(({ stable, eventCount, nextEvent }) => (
-            <DashboardItemLinkCard
+            <StableCardLink
               key={stable._id}
-              to="/stables/$stableId"
-              params={{ stableId: stable._id }}
-              chrome="soft"
-              className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
-            >
-              <DashboardItemCardContent
-                title={stable.name}
-                metaSeparator="dot"
-                meta={
-                  <>
-                    <span>{stable.location}</span>
-                    <span>{eventCount} events</span>
-                    {nextEvent && <span>Next: {nextEvent.title}</span>}
-                  </>
-                }
-              />
-
-              <span className="text-sm font-semibold text-primary transition-colors group-hover/dashboard-item:text-foreground">
-                Open stable
-              </span>
-            </DashboardItemLinkCard>
+              stableId={stable._id}
+              name={stable.name}
+              location={stable.location}
+              meta={[
+                <span key="events">{eventCount} events</span>,
+                nextEvent ? (
+                  <span key="next-event">Next: {nextEvent.title}</span>
+                ) : null,
+              ]}
+            />
           ))}
         </DashboardItemList>
       </DashboardSectionCard>

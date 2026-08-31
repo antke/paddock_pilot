@@ -41,7 +41,7 @@ function LockedAnalysis() {
       <DashboardPageHeader title="Analysis Centre" />
 
       <FeatureAccessPrompt
-        title="Analysis Centre is a Personal Pro feature"
+        title="Analysis Centre is a Premium feature"
         description="Upgrade to spot care gaps, health trends, missing follow-up notes, and upcoming service load across the stable."
       />
     </DashboardPage>

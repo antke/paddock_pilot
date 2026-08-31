@@ -3,12 +3,8 @@ import { attentionLevelBadgeVariant } from '#/components/dashboard/semanticBadge
 import { CheckIcon, ClockIcon, WarningIcon, XIcon } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
 import type { ComponentProps } from 'react'
-import {
-  careReminderCategoryLabels,
-  careReminderPriorityLabels,
-} from 'shared/reminders/careReminderSchema'
+import { careReminderPriorityLabels } from 'shared/reminders/careReminderSchema'
 import type {
-  CareReminderCategory,
   CareReminderPriority,
   CareReminderStatus,
 } from 'shared/reminders/careReminderSchema'
@@ -33,19 +29,6 @@ const careReminderStatusIcon = {
   completed: CheckIcon,
   dismissed: XIcon,
 } satisfies Record<CareReminderStatus, Icon>
-
-export function CareReminderCategoryBadge({
-  category,
-  ...props
-}: CareReminderBadgeProps & {
-  category: CareReminderCategory
-}) {
-  return (
-    <Badge variant="neutral" {...props}>
-      {careReminderCategoryLabels[category]}
-    </Badge>
-  )
-}
 
 export function CareReminderPriorityBadge({
   priority,

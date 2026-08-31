@@ -21,6 +21,11 @@ type FormGroupProps = Omit<ComponentProps<'section'>, 'title'> & {
   description?: ReactNode
   title: ReactNode
 }
+type FormStepHeaderProps = Omit<ComponentProps<'div'>, 'title'> & {
+  description?: ReactNode
+  number: number
+  title: ReactNode
+}
 type SelectableCardFieldProps = ComponentProps<typeof Field>
 type SelectableCardCheckboxProps = ComponentProps<typeof Checkbox>
 type SelectableCardLabelProps = ComponentProps<typeof FieldLabel>
@@ -96,7 +101,7 @@ export function FormGroup({
         <h3
           className={cn(
             dashboardNestedHeadingClassName,
-            'text-lg leading-[0.95]',
+            'text-lg leading-none',
           )}
         >
           {title}
@@ -109,6 +114,38 @@ export function FormGroup({
       </div>
       <div className="grid gap-4">{children}</div>
     </section>
+  )
+}
+
+export function FormStepHeader({
+  className,
+  description,
+  number,
+  title,
+  ...props
+}: FormStepHeaderProps) {
+  return (
+    <div
+      data-slot="form-step-header"
+      className={cn(
+        'grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1',
+        className,
+      )}
+      {...props}
+    >
+      <span
+        className="row-span-2 grid size-7 place-items-center rounded-control border border-border-subtle bg-surface-muted font-mono text-xs font-semibold text-muted-foreground"
+        aria-hidden="true"
+      >
+        {String(number).padStart(2, '0')}
+      </span>
+      <span className="text-xs font-bold text-foreground uppercase">
+        {title}
+      </span>
+      {description && (
+        <span className="text-sm text-muted-foreground">{description}</span>
+      )}
+    </div>
   )
 }
 
@@ -211,7 +248,7 @@ export function FormSection({
           <span
             className={cn(
               dashboardNestedHeadingClassName,
-              'text-lg leading-[0.95]',
+              'text-lg leading-none',
             )}
           >
             {title}

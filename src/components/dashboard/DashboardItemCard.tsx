@@ -62,9 +62,7 @@ export type DashboardItemRecordContentProps = {
   meta?: ReactNode
   metaClassName?: string
   metaSeparator?: ComponentProps<typeof DashboardMetaList>['separator']
-  titleBadges?: ReactNode
   titleClassName?: string
-  titleGroupClassName?: string
   titleSize?: DashboardItemRecordTitleSize
   titleTone?: DashboardItemRecordTitleTone
 }
@@ -165,7 +163,7 @@ export const dashboardItemActionColumnClassName =
   'grid gap-4 sm:min-w-max sm:self-stretch sm:justify-items-end sm:justify-self-end'
 
 export const dashboardItemActionButtonsClassName =
-  'flex w-fit max-w-full min-w-0 flex-row flex-nowrap justify-start self-start overflow-x-auto [&>*]:shrink-0'
+  'flex w-fit max-w-full min-w-0 flex-row flex-wrap justify-end self-start [&>*]:shrink-0'
 
 export const dashboardItemDescriptionClassName =
   'whitespace-pre-wrap text-sm leading-6 text-muted-foreground'
@@ -199,7 +197,7 @@ export const dashboardItemDenseRecordTitleClassName = cn(
 )
 
 export const dashboardItemSummaryClassName =
-  'line-clamp-2 min-h-8 whitespace-pre-line text-sm leading-6 text-muted-foreground'
+  'line-clamp-3 min-h-8 whitespace-pre-line text-sm leading-6 text-foreground sm:line-clamp-2'
 
 export const dashboardItemOpenTitleClassName = cn(
   'text-sm font-semibold transition-colors group-hover/open:text-primary',
@@ -257,7 +255,7 @@ export function dashboardItemOpenRowClassName({
 
 export function DashboardItemActions({
   align = 'start',
-  wrap = false,
+  wrap = true,
   className,
   placement = 'start',
   ...props
@@ -269,7 +267,7 @@ export function DashboardItemActions({
       data-dashboard-item-actions=""
       className={cn(
         dashboardItemActionButtonsClassName,
-        placement === 'end' && 'sm:justify-self-end',
+        placement === 'end' && 'justify-self-end',
         className,
       )}
       {...props}
@@ -398,9 +396,8 @@ export function DashboardItemActionColumn({
     <div
       className={cn(
         dashboardItemActionColumnClassName,
-        badges
-          ? 'sm:content-between sm:[&>[data-dashboard-item-actions]]:mt-auto'
-          : 'sm:content-center',
+        badges ? 'sm:content-between' : 'sm:content-end',
+        'sm:[&>[data-dashboard-item-actions]]:mt-auto',
         className,
       )}
     >
@@ -461,7 +458,12 @@ export function DashboardItemRecordCard({
         <DashboardItemActionColumn
           badges={actionBadges}
           badgesClassName={actionBadgesClassName}
-          className={actionColumnClassName}
+          className={cn(
+            actionsPlacement === 'footer' &&
+              actionBadges &&
+              '-order-1 justify-items-end sm:order-none',
+            actionColumnClassName,
+          )}
         >
           {actionsPlacement === 'side' && actions && (
             <DashboardItemActions className={actionsClassName}>
@@ -533,7 +535,7 @@ const DashboardItemLinkCardAnchor = forwardRef<
         density,
         interactive: true,
         selected,
-        className,
+        className: cn('block h-full w-full', className),
       })}
       {...props}
     >
@@ -542,9 +544,7 @@ const DashboardItemLinkCardAnchor = forwardRef<
   )
 })
 
-export const DashboardItemLinkCard = createLink(
-  DashboardItemLinkCardAnchor,
-)
+export const DashboardItemLinkCard = createLink(DashboardItemLinkCardAnchor)
 
 const DashboardItemOpenLinkAnchor = forwardRef<
   HTMLAnchorElement,
@@ -565,9 +565,7 @@ const DashboardItemOpenLinkAnchor = forwardRef<
   )
 })
 
-export const DashboardItemOpenLink = createLink(
-  DashboardItemOpenLinkAnchor,
-)
+export const DashboardItemOpenLink = createLink(DashboardItemOpenLinkAnchor)
 
 export function DashboardItemMediaCard({
   accent = 'none',
@@ -629,7 +627,11 @@ export function DashboardItemMediaCard({
             </p>
           )}
 
-          {actions && <DashboardItemActions>{actions}</DashboardItemActions>}
+          {actions && (
+            <DashboardItemActions placement="end">
+              {actions}
+            </DashboardItemActions>
+          )}
         </div>
       </div>
     </div>
@@ -645,9 +647,7 @@ export function DashboardItemRecordContent({
   meta,
   metaClassName,
   metaSeparator = 'dot',
-  titleBadges,
   titleClassName,
-  titleGroupClassName,
   titleSize = 'default',
   titleTone = 'default',
 }: DashboardItemRecordContentProps) {
@@ -668,14 +668,7 @@ export function DashboardItemRecordContent({
 
   return (
     <div className={cn('grid min-w-0 gap-3', className)}>
-      {titleBadges ? (
-        <div className={cn('grid gap-2', titleGroupClassName)}>
-          {titleNode}
-          {titleBadges}
-        </div>
-      ) : (
-        titleNode
-      )}
+      {titleNode}
 
       {meta && (
         <DashboardMetaList separator={metaSeparator} className={metaClassName}>
@@ -715,7 +708,7 @@ export function dashboardItemCardClassName({
   className?: string
 } = {}) {
   return cn(
-    'group/dashboard-item group/open no-underline transition-colors hover:no-underline hover:[&_a]:no-underline hover:[&_h3]:no-underline hover:[&_[data-slot=card-title]]:no-underline',
+    'group/dashboard-item group/open no-underline transition-[background-color,border-color,color,box-shadow] duration-150 hover:no-underline hover:[&_a]:no-underline hover:[&_h3]:no-underline hover:[&_[data-slot=card-title]]:no-underline',
     chrome === 'cards' && 'app-row text-card-foreground',
     chrome === 'soft' && 'rounded-row bg-surface text-card-foreground',
     density === 'compact' ? 'p-4' : 'p-5',
@@ -726,7 +719,7 @@ export function dashboardItemCardClassName({
     accent === 'muted' && 'border-l-muted-foreground/35',
     interactive &&
       cn(
-        'focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:outline-none',
+        'focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none',
         chrome === 'cards' &&
           'hover:border-primary/30 hover:bg-card hover:text-foreground',
         chrome === 'soft' &&
@@ -760,10 +753,14 @@ export function DashboardItemCardContent({
   return (
     <div
       className={cn(
-        'grid min-w-0 items-center gap-3',
-        hasLeading && hasBadges && 'grid-cols-[auto_minmax(0,1fr)_auto]',
+        'grid min-w-0 items-center gap-2 sm:gap-3',
+        hasLeading &&
+          hasBadges &&
+          'grid-cols-[auto_minmax(0,1fr)] sm:grid-cols-[auto_minmax(0,1fr)_auto]',
         hasLeading && !hasBadges && 'grid-cols-[auto_minmax(0,1fr)]',
-        !hasLeading && hasBadges && 'grid-cols-[minmax(0,1fr)_auto]',
+        !hasLeading &&
+          hasBadges &&
+          'grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto]',
         !hasLeading && !hasBadges && 'grid-cols-1',
         className,
       )}
@@ -773,7 +770,7 @@ export function DashboardItemCardContent({
       <div className="min-w-0">
         <div
           className={cn(
-            'line-clamp-1 font-semibold',
+            'line-clamp-2 break-words font-semibold',
             dashboardItemCardTitleSizeClassNames[titleSize],
             titleTone === 'open'
               ? dashboardItemOpenTitleClassName
@@ -798,7 +795,13 @@ export function DashboardItemCardContent({
       {badges && (
         <DashboardBadgeList
           align="end"
-          className={cn('shrink-0', badgesClassName)}
+          className={cn(
+            'max-w-full shrink-0',
+            hasLeading &&
+              hasBadges &&
+              'col-span-2 justify-self-end sm:col-span-1 sm:justify-self-auto',
+            badgesClassName,
+          )}
         >
           {badges}
         </DashboardBadgeList>

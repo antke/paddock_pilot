@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { IdentificationCardIcon, PencilSimpleIcon } from '@phosphor-icons/react'
+import { IdentificationCardIcon } from '@phosphor-icons/react'
 import type { FunctionReturnType } from 'convex/server'
 
 import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
@@ -11,9 +11,8 @@ import {
   DetailSummaryField,
 } from '#/components/dashboard/DetailBlocks'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
-import { Button } from '#/components/ui/button'
+import { Button, ButtonLink } from '#/components/ui/button'
 import { FieldPanel } from '#/components/ui/field'
-import { formatCountLabel } from '#/lib/numberDisplay'
 import type { api } from 'convex/_generated/api'
 import { StableMemberRoleBadge } from './StableBadges'
 import { StableMemberDetailsForm } from './StableMemberDetailsForm'
@@ -42,18 +41,14 @@ export function StableMembersPage({
   return (
     <>
       <DashboardPageHeader
-        title="Stable people"
-        description={`Everyone currently connected to ${stable.name}. Contact and emergency details stay private to you and the stable owner.`}
+        title="Members"
+        description={`Everyone currently connected to ${stable.name}. Your contact and emergency details are visible only to you and the stable owner.`}
         badges={<StableMemberRoleBadge role={access.role} />}
       />
 
       <DashboardLayoutGrid variant="sidebar">
-        <DashboardSectionCard
-          title={formatCountLabel(people.length, 'person')}
-          description="The active owner and members of this stable."
-          contentGap="compact"
-        >
-          <DashboardItemList gap="flush">
+        <DashboardSectionCard title="Stable directory" contentGap="compact">
+          <DashboardItemList gap="compact">
             {people.map((person) => {
               const name = formatPersonName(person)
 
@@ -80,11 +75,11 @@ export function StableMembersPage({
             myDetails && !isEditingDetails ? (
               <Button
                 type="button"
+                action="edit"
                 variant="outline"
                 size="sm"
                 onClick={() => setIsEditingDetails(true)}
               >
-                <PencilSimpleIcon />
                 Edit details
               </Button>
             ) : undefined
@@ -120,9 +115,18 @@ export function StableMembersPage({
               <IdentificationCardIcon />
               <AlertTitle>Stable owner access</AlertTitle>
               <AlertDescription>
-                Owners can invite and remove members from Stable settings.
-                Member contact details are available there when operational
-                access is needed.
+                <span>
+                  Invite members, update their details, and manage access from
+                  Stable settings.
+                </span>
+                <ButtonLink
+                  to="/stables/$stableId/settings"
+                  params={{ stableId: stable._id }}
+                  search={{ tab: 'members' }}
+                  size="sm"
+                >
+                  Manage members
+                </ButtonLink>
               </AlertDescription>
             </Alert>
           )}

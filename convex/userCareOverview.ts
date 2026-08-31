@@ -9,7 +9,6 @@ import {
   isActiveHorse,
   withActiveEventHorseIds,
 } from './libs/horseState'
-import { hasPersonalPlus } from './libs/entitlements'
 
 const upcomingWindowDays = 14
 
@@ -41,12 +40,9 @@ const getAccessibleStables = async (ctx: QueryCtx, userId: Id<'users'>) => {
     .query('stableMembers')
     .withIndex('by_user_id', (q) => q.eq('userId', userId))
     .collect()
-  const canUseMemberStables = await hasPersonalPlus(ctx, userId)
   const memberStables = await Promise.all(
     memberships
-      .filter(
-        (membership) => canUseMemberStables && membership.role === 'member',
-      )
+      .filter((membership) => membership.role === 'member')
       .map((membership) => ctx.db.get(membership.stableId)),
   )
 

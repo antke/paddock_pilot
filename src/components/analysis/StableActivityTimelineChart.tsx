@@ -31,6 +31,11 @@ import {
 } from '#/components/timeline/ActivityTimeline'
 import { Badge } from '#/components/ui/badge'
 import { TextLabel, textLabelVariants } from '#/components/ui/text-label'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
 import { dateKeyToDate, getTodayDateKey } from '#/lib/dateDisplay'
 import { formatCountLabel } from '#/lib/numberDisplay'
 import { cn } from '#/lib/utils'
@@ -49,7 +54,10 @@ import type {
   LabTimelineSignalKind,
 } from './analysisCentreData'
 import type { Icon } from '@phosphor-icons/react'
-import type { PointerEvent as ReactPointerEvent } from 'react'
+import type {
+  KeyboardEvent as ReactKeyboardEvent,
+  PointerEvent as ReactPointerEvent,
+} from 'react'
 import type { EventType } from 'shared/events/eventSchema'
 import type {
   StableTimelinePeriod,
@@ -482,28 +490,48 @@ function TimelinePeriodActivityIcons({
   return (
     <ActivityTimelineActivitySummary title={activitySummary}>
       <span className="sr-only">{activitySummary}</span>
-      {period.eventTypeCounts.map((item) => (
-        <Badge
-          key={item.type}
-          aria-hidden="true"
-          variant="neutral"
-          size="micro"
-        >
-          <TimelineEventTypeIcon type={item.type} className="size-3.5" />
-          {item.count}
-        </Badge>
-      ))}
-      {period.signalKindCounts.map((item) => (
-        <Badge
-          key={item.kind}
-          aria-hidden="true"
-          variant="neutral"
-          size="micro"
-        >
-          <TimelineSignalKindIcon kind={item.kind} />
-          {item.count}
-        </Badge>
-      ))}
+      {period.eventTypeCounts.map((item) => {
+        const label = eventTypeLabels[item.type]
+
+        return (
+          <Tooltip key={item.type}>
+            <TooltipTrigger
+              render={
+                <Badge
+                  variant="neutral"
+                  size="micro"
+                  aria-label={`${label}: ${item.count}`}
+                />
+              }
+            >
+              <TimelineEventTypeIcon type={item.type} className="size-3.5" />
+              {item.count}
+            </TooltipTrigger>
+            <TooltipContent>{label}</TooltipContent>
+          </Tooltip>
+        )
+      })}
+      {period.signalKindCounts.map((item) => {
+        const label = timelineSignalKindLabels[item.kind]
+
+        return (
+          <Tooltip key={item.kind}>
+            <TooltipTrigger
+              render={
+                <Badge
+                  variant="neutral"
+                  size="micro"
+                  aria-label={`${label}: ${item.count}`}
+                />
+              }
+            >
+              <TimelineSignalKindIcon kind={item.kind} />
+              {item.count}
+            </TooltipTrigger>
+            <TooltipContent>{label}</TooltipContent>
+          </Tooltip>
+        )
+      })}
     </ActivityTimelineActivitySummary>
   )
 }
@@ -645,11 +673,60 @@ function TimelineOverviewNavigator({
     window.addEventListener('pointerup', handlePointerUp)
   }
 
+  const handleWindowKeyDown = (
+    mode: 'move' | 'start' | 'end',
+    event: ReactKeyboardEvent<HTMLButtonElement>,
+  ) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+
+    event.preventDefault()
+    const direction = event.key === 'ArrowLeft' ? -1 : 1
+    const step = Math.max(1 / Math.max(periods.length, 1), 0.02)
+    const initialLeft = windowMetrics.leftRatio
+    const initialWidth = windowMetrics.widthRatio
+    const initialRight = initialLeft + initialWidth
+
+    if (mode === 'move') {
+      const nextLeft = clamp(
+        initialLeft + direction * step,
+        0,
+        1 - initialWidth,
+      )
+      onScrollRatioChange(getScrollRatioFromWindow(nextLeft, initialWidth))
+      return
+    }
+
+    if (mode === 'start') {
+      const nextLeft = clamp(
+        initialLeft + direction * step,
+        0,
+        initialRight - 0.08,
+      )
+      const nextWidth = initialRight - nextLeft
+      onResizeVisibleWindow(
+        getScrollRatioFromWindow(nextLeft, nextWidth),
+        nextWidth,
+      )
+      return
+    }
+
+    const nextRight = clamp(
+      initialRight + direction * step,
+      initialLeft + 0.08,
+      1,
+    )
+    const nextWidth = nextRight - initialLeft
+    onResizeVisibleWindow(
+      getScrollRatioFromWindow(initialLeft, nextWidth),
+      nextWidth,
+    )
+  }
+
   return (
     <ActivityTimelineOverviewPanel>
       <DashboardInlineHeader
         title="Timeline overview"
-        description="Drag the window to move through the calendar; resize its edges to show more or fewer periods."
+        description="Drag the window or use its arrow-key controls to move and resize the visible calendar."
         aside={<Badge variant="neutral">{periods.length} periods</Badge>}
         titleClassName={textLabelVariants({
           size: 'xs',
@@ -692,15 +769,21 @@ function TimelineOverviewNavigator({
           <ActivityTimelineWindowHandle
             edge="start"
             aria-label="Resize visible timeline start"
+            aria-keyshortcuts="ArrowLeft ArrowRight"
+            onKeyDown={(event) => handleWindowKeyDown('start', event)}
             onPointerDown={(event) => handlePointerDown('start', event)}
           />
           <ActivityTimelineWindowDrag
             aria-label="Move visible timeline window"
+            aria-keyshortcuts="ArrowLeft ArrowRight"
+            onKeyDown={(event) => handleWindowKeyDown('move', event)}
             onPointerDown={(event) => handlePointerDown('move', event)}
           />
           <ActivityTimelineWindowHandle
             edge="end"
             aria-label="Resize visible timeline end"
+            aria-keyshortcuts="ArrowLeft ArrowRight"
+            onKeyDown={(event) => handleWindowKeyDown('end', event)}
             onPointerDown={(event) => handlePointerDown('end', event)}
           />
         </ActivityTimelineWindow>

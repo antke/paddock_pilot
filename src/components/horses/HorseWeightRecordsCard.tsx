@@ -12,7 +12,6 @@ import {
   DashboardItemRecordCard,
   DashboardItemRecordContent,
 } from '#/components/dashboard/DashboardItemCard'
-import { Button } from '#/components/ui/button'
 import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { TextLabel } from '#/components/ui/text-label'
 import {
@@ -29,6 +28,7 @@ import type { WeightRecordFormSchema } from 'shared/horses/weightRecordSchema'
 import { createHorseWeightRecordListFilterConfig } from './horseDetailListFilters'
 import type { HorseDetailCreateActionChange } from './useHorseDetailCreateAction'
 import { useHorseDetailCreateAction } from './useHorseDetailCreateAction'
+import { HorseRecordRemoveAction } from './HorseRecordRemoveAction'
 
 type HorseWeightRecordsCardProps = {
   horse: Doc<'horses'>
@@ -116,6 +116,7 @@ export function HorseWeightRecordsCard({
       })
     } catch (err) {
       showAppErrorToast()
+      throw err
     } finally {
       setPendingRecordId(undefined)
     }
@@ -211,15 +212,12 @@ function WeightRecordRow({
       actionsClassName="ml-auto"
       actions={
         canManage ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
+          <HorseRecordRemoveAction
             disabled={pending}
-            onClick={() => onRemove(record)}
-          >
-            Remove
-          </Button>
+            title="Remove this weight record?"
+            description={`The measurement from ${formatMediumTimestampDate(record.measuredAt)} will be removed permanently. This cannot be undone.`}
+            onConfirm={() => onRemove(record)}
+          />
         ) : undefined
       }
     >

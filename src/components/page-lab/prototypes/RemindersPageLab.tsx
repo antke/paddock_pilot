@@ -63,7 +63,7 @@ export function RemindersPageLab({ data }: RemindersPageLabProps) {
         priority: 'medium',
         status: 'pending',
       }),
-      canManage: true,
+      canManage: false,
     },
     {
       reminder: createLabReminder({

@@ -159,6 +159,7 @@ export function DetailMetricBlock({
 }
 
 type DetailPanelProps = {
+  as?: ElementType
   title: ReactNode
   children: ReactNode
   className?: string
@@ -181,6 +182,7 @@ const detailSpanClassNames = {
 } satisfies Record<DetailSpan, string>
 
 export function DetailPanel({
+  as: Heading = 'h3',
   title,
   children,
   className,
@@ -199,14 +201,14 @@ export function DetailPanel({
         className,
       )}
     >
-      <TextLabel
-        as="h3"
-        size="sm"
-        weight={variant === 'emphasis' ? 'black' : 'semibold'}
-        className={cn(variant === 'emphasis' && 'text-base text-foreground')}
+      <Heading
+        className={cn(
+          'font-display text-lg font-bold uppercase leading-none tracking-[-0.01em] text-primary',
+          variant === 'emphasis' && 'text-xl',
+        )}
       >
         {title}
-      </TextLabel>
+      </Heading>
       {children}
     </DashboardInlinePanel>
   )
@@ -223,7 +225,7 @@ type DetailFieldProps = {
   multiline?: boolean
   span?: DetailSpan
   valueClassName?: string
-  variant?: 'default' | 'emphasis' | 'summary'
+  variant?: 'default' | 'emphasis' | 'readable' | 'summary'
 }
 
 type DetailDisplayFieldProps = Omit<
@@ -259,6 +261,8 @@ export function DetailField({
         className={cn(
           'text-xs text-muted-foreground',
           variant === 'emphasis' && 'text-base font-bold text-foreground/80',
+          variant === 'readable' &&
+            'text-sm font-semibold leading-5 text-primary',
           variant === 'summary' && 'text-sm',
           labelClassName,
         )}
@@ -269,6 +273,8 @@ export function DetailField({
         className={cn(
           'text-sm font-medium leading-6',
           variant === 'emphasis' && 'text-lg font-semibold leading-7',
+          variant === 'readable' &&
+            'text-base font-semibold leading-6 text-foreground',
           variant === 'summary' && 'font-normal',
           multiline && 'whitespace-pre-line',
           valueClassName,
@@ -422,6 +428,22 @@ type DetailKeyValueRowProps = {
   labelClassName?: string
   valueTone?: DetailTone
   valueClassName?: string
+}
+
+export function DetailKeyValueList({
+  className,
+  ...props
+}: ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="detail-key-value-list"
+      className={cn(
+        'grid gap-2 text-sm leading-5 text-muted-foreground',
+        className,
+      )}
+      {...props}
+    />
+  )
 }
 
 export function DetailKeyValueRow({
@@ -589,9 +611,11 @@ export function DetailNoteBlock({
         className,
       )}
     >
-      <TextLabel>{label}</TextLabel>
+      <TextLabel size="sm" weight="semibold" className="text-primary">
+        {label}
+      </TextLabel>
       <DashboardInlinePanel
-        className={cn('whitespace-pre-wrap text-sm leading-6', bodyClassName)}
+        className={cn('whitespace-pre-wrap text-base leading-7', bodyClassName)}
       >
         {children}
       </DashboardInlinePanel>

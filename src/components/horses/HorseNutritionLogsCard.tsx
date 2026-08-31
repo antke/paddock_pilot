@@ -12,7 +12,6 @@ import {
   DashboardItemRecordCard,
   DashboardItemRecordContent,
 } from '#/components/dashboard/DashboardItemCard'
-import { Button } from '#/components/ui/button'
 import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import {
   dateKeyToTimestamp,
@@ -28,6 +27,7 @@ import type { NutritionLogFormSchema } from 'shared/horses/nutritionLogSchema'
 import { createHorseNutritionLogListFilterConfig } from './horseDetailListFilters'
 import type { HorseDetailCreateActionChange } from './useHorseDetailCreateAction'
 import { useHorseDetailCreateAction } from './useHorseDetailCreateAction'
+import { HorseRecordRemoveAction } from './HorseRecordRemoveAction'
 
 type HorseNutritionLogsCardProps = {
   horse: Doc<'horses'>
@@ -110,6 +110,7 @@ export function HorseNutritionLogsCard({
       })
     } catch (err) {
       showAppErrorToast()
+      throw err
     } finally {
       setPendingLogId(undefined)
     }
@@ -163,15 +164,12 @@ function NutritionLogRow({
       actionsClassName="ml-auto"
       actions={
         canManage ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
+          <HorseRecordRemoveAction
             disabled={pending}
-            onClick={() => onRemove(log)}
-          >
-            Remove
-          </Button>
+            title={`Remove ${log.summary}?`}
+            description="This nutrition change will be removed from the horse history permanently. This cannot be undone."
+            onConfirm={() => onRemove(log)}
+          />
         ) : undefined
       }
     >

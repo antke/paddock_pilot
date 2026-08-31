@@ -57,10 +57,12 @@ export function HorseDeletionActions({
       description="Use the 14-day deleted horses area for recoverable mistakes. Permanent deletion cannot be undone."
       contentGap="compact"
     >
-      <DashboardActions align="start">
+      <DashboardActions align="end">
         <AlertDialog open={softDeleteOpen} onOpenChange={setSoftDeleteOpen}>
           <AlertDialogTrigger
-            render={<Button type="button" variant="outline" />}
+            render={
+              <Button type="button" action="delete" variant="destructive" />
+            }
           >
             Move to deleted horses
           </AlertDialogTrigger>
@@ -79,6 +81,7 @@ export function HorseDeletionActions({
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
+                action="delete"
                 variant="destructive"
                 disabled={isDeleting}
                 onClick={runDelete}

@@ -25,10 +25,12 @@ export function calendarGridClassName(className?: string) {
 }
 
 export function calendarDayCellClassName({
+  isSelected = false,
   isToday = false,
   muted = false,
   className,
 }: {
+  isSelected?: boolean
   isToday?: boolean
   muted?: boolean
   className?: string
@@ -37,6 +39,14 @@ export function calendarDayCellClassName({
     'min-h-28 border-r border-b border-border-subtle last:border-r-0',
     muted ? 'bg-surface-muted' : 'bg-surface-elevated p-2.5',
     isToday && 'bg-primary/8 ring-1 ring-inset ring-primary/25',
+    isSelected && 'bg-primary/10 ring-2 ring-inset ring-primary/35',
+    className,
+  )
+}
+
+export function calendarMoreEventsButtonClassName(className?: string) {
+  return cn(
+    'app-control-focus h-auto min-h-8 w-full justify-start rounded-control border-0 bg-surface-muted px-2 py-1 text-left text-xs font-semibold text-muted-foreground hover:bg-primary/10 hover:text-foreground focus-visible:outline-none',
     className,
   )
 }
@@ -61,7 +71,7 @@ export function calendarDayEventListClassName(className?: string) {
 
 export function calendarEventChipClassName(className?: string) {
   return cn(
-    'app-row group/event grid gap-0.5 border-primary/20 bg-card px-2 py-1.5 text-left text-[0.72rem] text-foreground hover:border-primary/40 hover:bg-primary/10 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:outline-none',
+    'app-row group/event grid gap-0.5 border-primary/20 bg-card px-2 py-1.5 text-left text-xs text-foreground hover:border-primary/40 hover:bg-primary/10 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
     className,
   )
 }
@@ -72,13 +82,6 @@ export function calendarEventChipTitleClassName(className?: string) {
 
 export function calendarEventChipMetaClassName(className?: string) {
   return cn('truncate text-muted-foreground', className)
-}
-
-export function calendarMutedPillClassName(className?: string) {
-  return cn(
-    'app-row rounded-control border-0 bg-surface-muted px-2 py-1 text-[0.7rem] font-medium text-muted-foreground',
-    className,
-  )
 }
 
 export function calendarWeekGridClassName({
@@ -95,12 +98,15 @@ export function calendarWeekGridClassName({
     variant === 'columns' && 'gap-3 md:grid-cols-7',
     variant === 'selectable' && 'gap-2',
     variant === 'selectable' && !isCompact && 'md:grid-cols-7',
+    variant === 'selectable' &&
+      isCompact &&
+      'grid-flow-col auto-cols-[minmax(16rem,1fr)] snap-x snap-mandatory overflow-x-auto overscroll-x-contain pb-2 lg:grid-flow-row lg:auto-cols-auto lg:grid-cols-7 lg:snap-none lg:overflow-visible lg:pb-0',
     className,
   )
 }
 
 export function calendarWeekDayColumnClassName(className?: string) {
-  return cn('grid content-start', className)
+  return cn('grid snap-start content-start', className)
 }
 
 export function calendarWeekDayPanelClassName({
@@ -187,29 +193,6 @@ export function calendarWeekDayMetaClassName({
     isCompact && 'order-3 justify-self-end',
     className,
   )
-}
-
-export function calendarEventPopoverClassName(className?: string) {
-  return cn(
-    'app-panel-strong z-50 grid w-72 origin-(--transform-origin) gap-3 p-5 text-sm text-popover-foreground outline-none data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95',
-    className,
-  )
-}
-
-export function calendarEventPopoverHeaderClassName(className?: string) {
-  return cn('grid gap-1', className)
-}
-
-export function calendarEventPopoverTitleClassName(className?: string) {
-  return cn('font-semibold tracking-normal', className)
-}
-
-export function calendarEventPopoverTextClassName(className?: string) {
-  return cn('text-muted-foreground', className)
-}
-
-export function calendarEventPopoverDescriptionClassName(className?: string) {
-  return cn('line-clamp-3 text-muted-foreground', className)
 }
 
 export function calendarSelectedDayPanelClassName({

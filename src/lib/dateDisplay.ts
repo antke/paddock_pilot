@@ -41,6 +41,11 @@ const timeFormatter = new Intl.DateTimeFormat(dateDisplayLocale, {
   hour12: false,
 })
 
+const mediumDateTimeFormatter = new Intl.DateTimeFormat(dateDisplayLocale, {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+})
+
 export function dateKeyToDate(dateKey: string) {
   return new Date(`${dateKey}T00:00:00`)
 }
@@ -102,6 +107,10 @@ export function formatShortMonthYearDateKey(dateKey: string) {
 
 export function formatMediumTimestampDate(timestamp: number) {
   return mediumDateFormatter.format(new Date(timestamp))
+}
+
+export function formatMediumTimestampDateTime(timestamp: number) {
+  return mediumDateTimeFormatter.format(new Date(timestamp))
 }
 
 export function formatTime(date: Date) {

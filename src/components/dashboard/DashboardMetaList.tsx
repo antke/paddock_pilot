@@ -23,7 +23,7 @@ const dashboardMetaListGapClassNames = {
 } satisfies Record<DashboardMetaListGap, string>
 
 const dashboardMetaListSizeClassNames = {
-  micro: 'text-[0.68rem] font-medium leading-4',
+  micro: 'text-xs font-medium leading-4',
   xs: 'text-xs',
   sm: 'text-sm',
 } satisfies Record<DashboardMetaListSize, string>

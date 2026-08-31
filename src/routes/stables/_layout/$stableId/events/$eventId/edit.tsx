@@ -174,8 +174,8 @@ function EditEventForm({
         <RouteFormActions
           isSubmitting={form.formState.isSubmitting}
           onReset={() => form.reset()}
-          submitLabel="Update Event"
-          submittingLabel="Saving..."
+          submitLabel="Update event"
+          submittingLabel="Saving…"
         />
       }
     >

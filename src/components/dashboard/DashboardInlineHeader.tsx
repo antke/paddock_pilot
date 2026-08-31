@@ -26,7 +26,7 @@ type DashboardInlineHeaderProps = {
 export const dashboardInlineHeaderClassName =
   'flex min-w-0 flex-wrap items-center justify-between'
 export const dashboardNestedHeadingClassName =
-  'min-w-0 font-display font-black uppercase tracking-normal'
+  'min-w-0 font-display font-bold uppercase tracking-[-0.01em]'
 
 const dashboardInlineHeaderGapClassNames = {
   default: 'gap-2',
@@ -40,14 +40,14 @@ const dashboardInlineHeaderDescriptionSizeClassNames = {
 } satisfies Record<DashboardInlineHeaderDescriptionSize, string>
 
 const dashboardInlineHeaderTitleSizeClassNames = {
-  default: 'text-lg leading-[0.95]',
+  default: 'text-lg leading-none',
   sm: 'text-sm',
-  lg: 'text-lg leading-[0.95]',
+  lg: 'text-lg leading-none',
 } satisfies Record<DashboardInlineHeaderTitleSize, string>
 
 const dashboardInlineHeaderTitleWeightClassNames = {
-  medium: 'font-black',
-  semibold: 'font-black',
+  medium: 'font-bold',
+  semibold: 'font-bold',
 } satisfies Record<DashboardInlineHeaderTitleWeight, string>
 
 export function DashboardInlineHeader({

@@ -18,10 +18,12 @@ type DashboardNavigationMenuContentWidth = 'auto' | 'sm' | 'md'
 type DashboardNavigationProps = {
   align?: DashboardNavigationAlign
   alignMode?: DashboardNavigationAlignMode
+  ariaLabel?: string
   children: ReactNode
   className?: string
   inset?: boolean
   listClassName?: string
+  overflow?: 'scroll' | 'wrap'
 }
 
 type DashboardSectionTabItem<TTabId extends string> = {
@@ -40,7 +42,7 @@ type DashboardSectionTabsProps<TTabId extends string> = Omit<
 
 type DashboardSectionTabGroupProps<TTabId extends string> = Pick<
   DashboardNavigationProps,
-  'align' | 'inset'
+  'align' | 'ariaLabel' | 'inset'
 > &
   Omit<ComponentProps<'div'>, 'children' | 'onSelect'> & {
     activeId: TTabId
@@ -65,11 +67,15 @@ type DashboardNavigationMenuGroupProps = {
   contentWidth?: DashboardNavigationMenuContentWidth
   label: ReactNode
   triggerClassName?: string
+  variant?: 'default' | 'section'
 }
 
 type DashboardNavigationMenuLinkProps = ComponentProps<
   typeof NavigationMenuLink
->
+> & {
+  active?: boolean
+  variant?: 'default' | 'section'
+}
 
 type DashboardNavigationMenuButtonProps = ComponentProps<
   typeof NavigationMenuButtonLink
@@ -86,10 +92,12 @@ const dashboardNavigationMenuContentWidthClassNames = {
 export function DashboardNavigation({
   align = 'start',
   alignMode = 'responsive',
+  ariaLabel,
   children,
   className,
   inset = true,
   listClassName,
+  overflow = 'wrap',
 }: DashboardNavigationProps) {
   const alignEnd = align === 'end'
   const alignAlways = alignEnd && alignMode === 'always'
@@ -97,8 +105,9 @@ export function DashboardNavigation({
 
   return (
     <NavigationMenu
+      aria-label={ariaLabel}
       className={cn(
-        'justify-start',
+        'min-w-0 max-w-full justify-start',
         alignAlways && 'ml-auto justify-end',
         alignResponsive && 'lg:justify-end',
         inset && 'px-1',
@@ -108,6 +117,8 @@ export function DashboardNavigation({
       <NavigationMenuList
         className={cn(
           dashboardNavigationListClassName,
+          overflow === 'scroll' &&
+            'max-w-full flex-nowrap justify-start overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:thin]',
           alignAlways && 'justify-end',
           alignResponsive && 'lg:justify-end',
           listClassName,
@@ -121,17 +132,19 @@ export function DashboardNavigation({
 
 export function DashboardSectionTabs<TTabId extends string>({
   activeId,
+  ariaLabel = 'Section views',
   items,
   onSelect,
   ...navigationProps
 }: DashboardSectionTabsProps<TTabId>) {
   return (
-    <DashboardNavigation {...navigationProps}>
+    <DashboardNavigation ariaLabel={ariaLabel} {...navigationProps}>
       {items.map((item) => (
         <NavigationMenuItem key={item.id}>
           <NavigationMenuButtonLink
             data-active={activeId === item.id || undefined}
-            className="h-11 px-3.5 py-2.5 font-display text-sm font-black uppercase leading-none tracking-normal sm:px-5"
+            aria-pressed={activeId === item.id}
+            className="h-11 shrink-0 px-3.5 py-2.5 font-display text-sm font-bold whitespace-nowrap uppercase leading-none tracking-[0.025em] sm:px-5"
             onClick={() => onSelect(item.id)}
           >
             {item.label}
@@ -152,9 +165,10 @@ export function DashboardNavigationLinkItem({
     <NavigationMenuItem>
       <NavigationMenuLink
         data-active={active || undefined}
+        aria-current={active ? 'page' : undefined}
         className={cn(
           variant === 'section' &&
-            'h-10 px-3.5 font-display text-sm font-black uppercase leading-none tracking-normal',
+            'h-10 shrink-0 px-3.5 font-display text-sm font-bold whitespace-nowrap uppercase leading-none tracking-[0.025em]',
           className,
         )}
         {...props}
@@ -170,12 +184,17 @@ export function DashboardNavigationMenuGroup({
   contentWidth = 'auto',
   label,
   triggerClassName,
+  variant = 'default',
 }: DashboardNavigationMenuGroupProps) {
   return (
     <NavigationMenuItem>
       <NavigationMenuTrigger
         data-active={active || undefined}
-        className={triggerClassName}
+        className={cn(
+          variant === 'section' &&
+            'h-10 shrink-0 px-3.5 font-display text-sm font-bold whitespace-nowrap uppercase leading-none tracking-[0.025em]',
+          triggerClassName,
+        )}
       >
         {label}
       </NavigationMenuTrigger>
@@ -194,10 +213,25 @@ export function DashboardNavigationMenuGroup({
   )
 }
 
-export function DashboardNavigationMenuLink(
-  props: DashboardNavigationMenuLinkProps,
-) {
-  return <NavigationMenuLink closeOnClick {...props} />
+export function DashboardNavigationMenuLink({
+  active,
+  className,
+  variant = 'default',
+  ...props
+}: DashboardNavigationMenuLinkProps) {
+  return (
+    <NavigationMenuLink
+      closeOnClick
+      data-active={active || undefined}
+      aria-current={active ? 'page' : undefined}
+      className={cn(
+        variant === 'section' &&
+          'font-display text-xs font-bold uppercase tracking-[0.025em]',
+        className,
+      )}
+      {...props}
+    />
+  )
 }
 
 export function DashboardNavigationMenuButton(
@@ -209,6 +243,7 @@ export function DashboardNavigationMenuButton(
 export function DashboardSectionTabGroup<TTabId extends string>({
   activeId,
   align,
+  ariaLabel,
   children,
   className,
   inset,
@@ -223,6 +258,7 @@ export function DashboardSectionTabGroup<TTabId extends string>({
       <DashboardSectionTabs
         activeId={activeId}
         align={align}
+        ariaLabel={ariaLabel}
         inset={inset}
         items={items}
         listClassName={tabsListClassName}

@@ -14,7 +14,6 @@ import {
   FieldError,
   FieldGrid,
   FieldLabel,
-  FieldPanel,
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { showAppErrorToast } from '#/components/ui/sonner'
@@ -97,18 +96,20 @@ export function AccountProfileForm({
       data-slot="account-profile-form"
       onSubmit={form.handleSubmit(onSubmit)}
     >
-      <FieldPanel className="grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
+      <div className="grid gap-4 border-b border-border-subtle pb-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
         <UserAvatar
           name={form.watch('preferredName') || initialValues.displayName}
           photoUrl={initialValues.profileImageUrl}
         />
         <div className="grid gap-1">
-          <p className="font-semibold">Your Paddock Pilot profile</p>
+          <p className="font-semibold">
+            {form.watch('preferredName') || initialValues.displayName}
+          </p>
           <FieldDescription>
-            This identity follows you across every stable you own or join.
+            Shared across every stable you own or join.
           </FieldDescription>
         </div>
-      </FieldPanel>
+      </div>
 
       <FieldGrid>
         <Controller
@@ -144,9 +145,6 @@ export function AccountProfileForm({
                 aria-invalid={fieldState.invalid}
                 disabled={form.formState.isSubmitting}
               />
-              <FieldDescription>
-                You can add or change this later from your profile.
-              </FieldDescription>
             </Field>
           )}
         />
@@ -163,7 +161,7 @@ export function AccountProfileForm({
             label="Profile image"
             uploadLabel="Add a profile image"
             uploadDescription="A photo helps other stable members recognise you."
-            help="Optional. You can add or replace it later from your profile."
+            help="Optional."
             errors={fieldState.error ? [fieldState.error] : undefined}
             files={field.value}
             onFilesChange={field.onChange}

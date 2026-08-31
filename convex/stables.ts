@@ -14,8 +14,8 @@ import {
   getCurrentUser,
 } from './libs/stablePermissions'
 import { ensureStableOnboarding } from './libs/onboarding'
-import { hasPersonalPlus } from './libs/entitlements'
 import { recordStableAudit } from './libs/audit'
+import { queueStableArchivedEmails } from './libs/email/notifications'
 
 const isStable = (stable: Doc<'stables'> | null): stable is Doc<'stables'> =>
   stable !== null
@@ -55,8 +55,6 @@ export const list = query({
       .withIndex('by_owner_id', (q) => q.eq('ownerId', user._id))
       .order('desc')
       .collect()
-    const canUseMemberStables = await hasPersonalPlus(ctx, user._id)
-
     const memberships = await ctx.db
       .query('stableMembers')
       .withIndex('by_user_id', (q) => q.eq('userId', user._id))
@@ -64,9 +62,7 @@ export const list = query({
 
     const memberStables = await Promise.all(
       memberships
-        .filter(
-          (membership) => canUseMemberStables && membership.role === 'member',
-        )
+        .filter((membership) => membership.role === 'member')
         .map((membership) => ctx.db.get(membership.stableId)),
     )
 
@@ -236,6 +232,7 @@ export const remove = mutation({
       entityId: args.id,
       summary: stable.name,
     })
+    await queueStableArchivedEmails(ctx, stable)
   },
 })
 

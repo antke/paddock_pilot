@@ -54,7 +54,7 @@ export function StableFormFields({ control, disabled = false }: Props) {
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Address</FieldLabel>
+                <FieldLabel htmlFor={field.name}>Location</FieldLabel>
 
                 <Input
                   {...field}
@@ -62,7 +62,7 @@ export function StableFormFields({ control, disabled = false }: Props) {
                   type="text"
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
-                  placeholder="Sunshine Street 123"
+                  placeholder="Town, area, or familiar yard location"
                   autoComplete="off"
                 />
 

@@ -53,7 +53,7 @@ export function PublicLandingPage() {
             </LandingCopyBlock>
 
             <LandingActionRow>
-              <ButtonLink to="/sign-up/$" size="lg">
+              <ButtonLink to="/sign-up/$" variant="solid" size="lg">
                 Create your account
               </ButtonLink>
               <ButtonAnchor href="#product-proof" variant="outline" size="lg">
@@ -143,13 +143,11 @@ export function PublicLandingPage() {
       >
         <div className="grid gap-6">
           <LandingCopyBlock>
-            <LandingEyebrow>A plan for the way you work</LandingEyebrow>
-            <LandingTitle>
-              Choose the field office that fits your stable.
-            </LandingTitle>
+            <LandingEyebrow>Simple plans, when billing begins</LandingEyebrow>
+            <LandingTitle>Core coordination stays complete.</LandingTitle>
             <LandingLead>
-              Compare the current plans without losing sight of the everyday
-              care work they support.
+              During testing, every feature is included. Later, only the
+              Analysis Centre will sit in the premium tier.
             </LandingLead>
           </LandingCopyBlock>
 
@@ -160,16 +158,16 @@ export function PublicLandingPage() {
               stack="default"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="font-display text-2xl font-black uppercase leading-none">
-                  Personal Plus
-                </h3>
+                <LandingTitle as="h3" size="panel">
+                  Core
+                </LandingTitle>
                 <DashboardValueBadge variant="secondary">
                   Everyday care
                 </DashboardValueBadge>
               </div>
               <p className="text-sm leading-6 text-muted-foreground">
-                Stable member access and horse management for everyday
-                coordination.
+                Stable access, horse management, documents, care summaries,
+                events, and reminders for everyday coordination.
               </p>
             </DashboardInlinePanel>
 
@@ -179,16 +177,16 @@ export function PublicLandingPage() {
               stack="default"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="font-display text-2xl font-black uppercase leading-none">
-                  Personal Pro
-                </h3>
+                <LandingTitle as="h3" size="panel">
+                  Premium
+                </LandingTitle>
                 <DashboardValueBadge variant="default">
                   Deeper insight
                 </DashboardValueBadge>
               </div>
               <p className="text-sm leading-6 text-muted-foreground">
-                Adds the Analysis Centre, document storage, and printable care
-                summaries.
+                Adds the Analysis Centre for deeper stable-wide care and
+                activity insight.
               </p>
             </DashboardInlinePanel>
           </div>

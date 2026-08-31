@@ -5,6 +5,12 @@ export const emailCategories = [
   'event_horse_invitation',
   'event_participation_update',
   'event_details_changed',
+  'stable_membership_activated',
+  'stable_invitation_accepted',
+  'stable_membership_removed',
+  'stable_archived',
+  'account_welcome',
+  'account_deleted',
 ] as const
 
 export const emailProviderNames = ['console', 'resend'] as const
@@ -15,6 +21,8 @@ export type EmailProviderName = (typeof emailProviderNames)[number]
 export type EmailRelation =
   | { type: 'stableInvitation'; id: Id<'stableInvitations'> }
   | { type: 'event'; id: Id<'events'> }
+  | { type: 'stable'; id: Id<'stables'> }
+  | { type: 'user'; id: Id<'users'> }
 
 export type EmailTemplate =
   | {
@@ -45,6 +53,33 @@ export type EmailTemplate =
       eventTitle: string
       stableId: Id<'stables'>
     }
+  | {
+      kind: 'stable_membership_activated'
+      stableId: Id<'stables'>
+      stableName: string
+    }
+  | {
+      kind: 'stable_invitation_accepted'
+      memberName: string
+      stableId: Id<'stables'>
+      stableName: string
+    }
+  | {
+      kind: 'stable_membership_removed'
+      stableName: string
+    }
+  | {
+      kind: 'stable_archived'
+      stableName: string
+    }
+  | {
+      kind: 'account_welcome'
+      displayName: string
+    }
+  | {
+      kind: 'account_deleted'
+      displayName: string
+    }
 
 export type EmailMessage = {
   category: EmailCategory
@@ -63,7 +98,7 @@ export type EmailDeliveryResult = {
 
 export interface EmailProvider {
   readonly name: EmailProviderName
-  send(message: EmailMessage): Promise<EmailDeliveryResult>
+  send: (message: EmailMessage) => Promise<EmailDeliveryResult>
 }
 
 export class EmailProviderError extends Error {
@@ -89,6 +124,5 @@ export const getEmailErrorDetails = (error: unknown) => ({
     error instanceof EmailProviderError
       ? error.safeMessage
       : 'The email provider did not accept this message.',
-  retryable:
-    error instanceof EmailProviderError ? error.retryable : true,
+  retryable: error instanceof EmailProviderError ? error.retryable : true,
 })
