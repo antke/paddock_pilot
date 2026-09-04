@@ -7,7 +7,6 @@ import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
 import { SignedOutRoutePrompt } from '#/components/layout/SignedOutRoutePrompt'
 import { OnboardingPage } from '#/components/onboarding/OnboardingPage'
 import { api } from 'convex/_generated/api'
-import type { Id } from 'convex/_generated/dataModel'
 
 type OnboardingSearch = {
   stableId?: string
@@ -72,5 +71,5 @@ function StableOnboardingGate({ stableId }: { stableId: string }) {
     )
   }
 
-  return <OnboardingPage stableId={resolvedStableId as Id<'stables'>} />
+  return <OnboardingPage stableId={resolvedStableId} />
 }

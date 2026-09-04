@@ -14,7 +14,7 @@ import { ButtonLink } from '#/components/ui/button'
 import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { convexQuery } from '@convex-dev/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useSuspenseQueries } from '@tanstack/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import type { ErrorComponentProps } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
@@ -31,14 +31,12 @@ function RouteComponent() {
   const { stableId } = Route.useParams()
 
   const id = stableId as Id<'stables'>
-  const [stableQuery, accessQuery] = useSuspenseQueries({
-    queries: [
-      convexQuery(api.stables.get, { id }),
-      convexQuery(api.stables.getAccess, { id }),
-    ],
-  })
-  const stable = stableQuery.data
-  const access = accessQuery.data
+  const { data: stable } = useSuspenseQuery(
+    convexQuery(api.stables.get, { id }),
+  )
+  const { data: access } = useSuspenseQuery(
+    convexQuery(api.stables.getAccess, { id }),
+  )
 
   if (!stable) {
     return <RouteEntityNotFoundAlert entity="stable" />

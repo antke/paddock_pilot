@@ -17,6 +17,55 @@ To build this application for production:
 pnpm build
 ```
 
+## Deploying to Vercel
+
+Vercel can deploy this TanStack Start application directly through Nitro; no
+Next.js conversion or custom output directory is required. The repository pins
+Node 24 and identifies the framework in `vercel.json`.
+
+1. Create a production Convex deployment and generate a production deploy key
+   with the `deployment:deploy` permission.
+2. Import this repository in Vercel. Keep the repository build command; it runs
+   `pnpm build:vercel`, deploys the Convex functions, injects
+   `VITE_CONVEX_URL`, and then builds the TanStack application.
+3. Add these Vercel environment variables for Production:
+
+   ```text
+   ENABLE_EXPERIMENTAL_COREPACK=1
+   CONVEX_DEPLOY_KEY=prod:...
+   VITE_CLERK_PUBLISHABLE_KEY=pk_...
+   CLERK_SECRET_KEY=sk_...
+   VITE_SITE_URL=https://app.example.com
+   ```
+
+   `VITE_POSTHOG_KEY` and `VITE_POSTHOG_HOST` remain optional. Do not add
+   Resend credentials to Vercel; email delivery runs inside Convex.
+
+4. Set the production Convex environment before testing authenticated flows:
+
+   ```text
+   CLERK_FRONTEND_API_URL=https://...
+   CLERK_WEBHOOK_SECRET=whsec_...
+   EMAIL_PROVIDER=console
+   APP_URL=https://app.example.com
+   ```
+
+5. Configure the Clerk webhook to send user lifecycle events to
+   `https://<your-convex-site>/clerk-users-webhook`. Configure the production
+   application domain in Clerk as well. Use a real custom application domain
+   for authenticated testing instead of relying on the generated
+   `*.vercel.app` address.
+
+Preview deployments need a Convex preview deploy key and their own Clerk/Convex
+environment strategy. Until that is configured, scope `CONVEX_DEPLOY_KEY` to
+Production only.
+
+Run the local release gate before pushing:
+
+```bash
+pnpm verify
+```
+
 ## Testing
 
 This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:

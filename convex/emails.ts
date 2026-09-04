@@ -2,12 +2,8 @@ import { v } from 'convex/values'
 import { internal } from './_generated/api'
 import { internalAction } from './_generated/server'
 import { getConfiguredEmailProvider } from './libs/email/provider'
-import {
-  EmailProviderError,
-  getEmailErrorDetails,
-  type EmailMessage,
-  type EmailProvider,
-} from './libs/email/types'
+import { EmailProviderError, getEmailErrorDetails } from './libs/email/types'
+import type { EmailMessage, EmailProvider } from './libs/email/types'
 import { createEmailContent, getAppUrl } from './libs/email/templates'
 
 const getConfiguredAppUrl = (provider: EmailProvider) => {

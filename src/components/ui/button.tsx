@@ -101,7 +101,7 @@ type ButtonAnchorProps = ComponentProps<'a'> &
   ButtonActionProps
 
 const ButtonAnchor = forwardRef<HTMLAnchorElement, ButtonAnchorProps>(
-  function ButtonAnchor(
+  function ButtonAnchorRender(
     {
       action,
       children,
@@ -129,7 +129,7 @@ const ButtonAnchor = forwardRef<HTMLAnchorElement, ButtonAnchorProps>(
 const ButtonLinkAnchor = forwardRef<
   HTMLAnchorElement,
   ComponentProps<'a'> & VariantProps<typeof buttonVariants> & ButtonActionProps
->(function ButtonLinkAnchor(
+>(function ButtonLinkAnchorRender(
   {
     action,
     children,

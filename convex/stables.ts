@@ -6,7 +6,7 @@ import {
 import { mutation, query } from './_generated/server'
 import { stableFields } from './schema'
 import { getUserFromIdentity, requireAuth } from './libs/auth'
-import type { Doc, Id } from './_generated/dataModel'
+import type { Doc } from './_generated/dataModel'
 import { omit } from 'lodash'
 import {
   assertCanManageStable,
@@ -244,7 +244,7 @@ export const getWithOwner = query({
     const stable = await ctx.db.get(args.id)
     if (!stable) return null
 
-    const owner = await ctx.db.get(stable.ownerId as Id<'users'>)
+    const owner = await ctx.db.get(stable.ownerId)
 
     return {
       stable,

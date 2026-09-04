@@ -9,91 +9,61 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as StyleLabRouteImport } from './routes/style-lab'
-import { Route as RssDotxmlRouteImport } from './routes/rss[.]xml'
-import { Route as ProfileRouteImport } from './routes/profile'
-import { Route as PricingRouteImport } from './routes/pricing'
-import { Route as PageLabRouteImport } from './routes/page-lab'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
-import { Route as LandingLabRouteImport } from './routes/landing-lab'
-import { Route as DashboardLabRouteImport } from './routes/dashboard-lab'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as PageLabIndexRouteImport } from './routes/page-lab/index'
-import { Route as LandingLabIndexRouteImport } from './routes/landing-lab/index'
+import { Route as DashboardLabRouteImport } from './routes/dashboard-lab'
+import { Route as LandingLabRouteImport } from './routes/landing-lab'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as PageLabRouteImport } from './routes/page-lab'
+import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as RssDotxmlRouteImport } from './routes/rss[.]xml'
+import { Route as StyleLabRouteImport } from './routes/style-lab'
 import { Route as DashboardLabIndexRouteImport } from './routes/dashboard-lab/index'
-import { Route as StablesLayoutRouteImport } from './routes/stables/_layout'
-import { Route as SignUpSplatRouteImport } from './routes/sign-up.$'
-import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
-import { Route as PageLabPageRouteImport } from './routes/page-lab/$page'
-import { Route as LandingLabVariantRouteImport } from './routes/landing-lab/$variant'
-import { Route as InvitationsTokenRouteImport } from './routes/invitations/$token'
 import { Route as DashboardLabVersionRouteImport } from './routes/dashboard-lab/$version'
+import { Route as InvitationsTokenRouteImport } from './routes/invitations/$token'
+import { Route as LandingLabIndexRouteImport } from './routes/landing-lab/index'
+import { Route as LandingLabVariantRouteImport } from './routes/landing-lab/$variant'
+import { Route as PageLabIndexRouteImport } from './routes/page-lab/index'
+import { Route as PageLabPageRouteImport } from './routes/page-lab/$page'
+import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
+import { Route as SignUpSplatRouteImport } from './routes/sign-up.$'
+import { Route as StablesLayoutRouteImport } from './routes/stables/_layout'
 import { Route as StablesLayoutIndexRouteImport } from './routes/stables/_layout/index'
-import { Route as StablesLayoutCreateRouteImport } from './routes/stables/_layout/create'
 import { Route as StablesLayoutStableIdRouteImport } from './routes/stables/_layout/$stableId'
+import { Route as StablesLayoutCreateRouteImport } from './routes/stables/_layout/create'
 import { Route as StablesLayoutStableIdIndexRouteImport } from './routes/stables/_layout/$stableId/index'
-import { Route as StablesLayoutStableIdWelcomeRouteImport } from './routes/stables/_layout/$stableId/welcome'
-import { Route as StablesLayoutStableIdSettingsRouteImport } from './routes/stables/_layout/$stableId/settings'
-import { Route as StablesLayoutStableIdRemindersRouteImport } from './routes/stables/_layout/$stableId/reminders'
-import { Route as StablesLayoutStableIdMembersRouteImport } from './routes/stables/_layout/$stableId/members'
-import { Route as StablesLayoutStableIdHorsesRouteImport } from './routes/stables/_layout/$stableId/horses'
-import { Route as StablesLayoutStableIdEventsRouteImport } from './routes/stables/_layout/$stableId/events'
-import { Route as StablesLayoutStableIdEditRouteImport } from './routes/stables/_layout/$stableId/edit'
-import { Route as StablesLayoutStableIdDocumentsRouteImport } from './routes/stables/_layout/$stableId/documents'
 import { Route as StablesLayoutStableIdAnalysisRouteImport } from './routes/stables/_layout/$stableId/analysis'
-import { Route as StablesLayoutStableIdHorsesIndexRouteImport } from './routes/stables/_layout/$stableId/horses/index'
+import { Route as StablesLayoutStableIdDocumentsRouteImport } from './routes/stables/_layout/$stableId/documents'
+import { Route as StablesLayoutStableIdEditRouteImport } from './routes/stables/_layout/$stableId/edit'
+import { Route as StablesLayoutStableIdEventsRouteImport } from './routes/stables/_layout/$stableId/events'
+import { Route as StablesLayoutStableIdHorsesRouteImport } from './routes/stables/_layout/$stableId/horses'
+import { Route as StablesLayoutStableIdMembersRouteImport } from './routes/stables/_layout/$stableId/members'
+import { Route as StablesLayoutStableIdRemindersRouteImport } from './routes/stables/_layout/$stableId/reminders'
+import { Route as StablesLayoutStableIdSettingsRouteImport } from './routes/stables/_layout/$stableId/settings'
+import { Route as StablesLayoutStableIdWelcomeRouteImport } from './routes/stables/_layout/$stableId/welcome'
 import { Route as StablesLayoutStableIdEventsIndexRouteImport } from './routes/stables/_layout/$stableId/events/index'
-import { Route as StablesLayoutStableIdHorsesDeletedRouteImport } from './routes/stables/_layout/$stableId/horses/deleted'
-import { Route as StablesLayoutStableIdHorsesCreateRouteImport } from './routes/stables/_layout/$stableId/horses/create'
-import { Route as StablesLayoutStableIdHorsesHorseIdRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId'
-import { Route as StablesLayoutStableIdEventsCreateRouteImport } from './routes/stables/_layout/$stableId/events/create'
-import { Route as StablesLayoutStableIdEventsCalendarRouteImport } from './routes/stables/_layout/$stableId/events/calendar'
 import { Route as StablesLayoutStableIdEventsEventIdRouteImport } from './routes/stables/_layout/$stableId/events/$eventId'
-import { Route as StablesLayoutStableIdHorsesHorseIdIndexRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/index'
-import { Route as StablesLayoutStableIdHorsesHorseIdTimelineRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/timeline'
-import { Route as StablesLayoutStableIdHorsesHorseIdProfileRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/profile'
-import { Route as StablesLayoutStableIdHorsesHorseIdNutritionRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/nutrition'
-import { Route as StablesLayoutStableIdHorsesHorseIdHealthRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/health'
-import { Route as StablesLayoutStableIdHorsesHorseIdEditRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/edit'
-import { Route as StablesLayoutStableIdHorsesHorseIdDocumentsRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/documents'
-import { Route as StablesLayoutStableIdHorsesHorseIdCareSummaryRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/care-summary'
-import { Route as StablesLayoutStableIdHorsesHorseIdCareRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/care'
-import { Route as StablesLayoutStableIdHorsesHorseIdActivityRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/activity'
+import { Route as StablesLayoutStableIdEventsCalendarRouteImport } from './routes/stables/_layout/$stableId/events/calendar'
+import { Route as StablesLayoutStableIdEventsCreateRouteImport } from './routes/stables/_layout/$stableId/events/create'
+import { Route as StablesLayoutStableIdHorsesIndexRouteImport } from './routes/stables/_layout/$stableId/horses/index'
+import { Route as StablesLayoutStableIdHorsesHorseIdRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId'
+import { Route as StablesLayoutStableIdHorsesCreateRouteImport } from './routes/stables/_layout/$stableId/horses/create'
+import { Route as StablesLayoutStableIdHorsesDeletedRouteImport } from './routes/stables/_layout/$stableId/horses/deleted'
 import { Route as StablesLayoutStableIdEventsEventIdEditRouteImport } from './routes/stables/_layout/$stableId/events/$eventId/edit'
+import { Route as StablesLayoutStableIdHorsesHorseIdIndexRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/index'
+import { Route as StablesLayoutStableIdHorsesHorseIdActivityRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/activity'
+import { Route as StablesLayoutStableIdHorsesHorseIdCareRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/care'
+import { Route as StablesLayoutStableIdHorsesHorseIdCareSummaryRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/care-summary'
+import { Route as StablesLayoutStableIdHorsesHorseIdDocumentsRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/documents'
+import { Route as StablesLayoutStableIdHorsesHorseIdEditRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/edit'
+import { Route as StablesLayoutStableIdHorsesHorseIdHealthRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/health'
+import { Route as StablesLayoutStableIdHorsesHorseIdNutritionRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/nutrition'
+import { Route as StablesLayoutStableIdHorsesHorseIdProfileRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/profile'
+import { Route as StablesLayoutStableIdHorsesHorseIdTimelineRouteImport } from './routes/stables/_layout/$stableId/horses/$horseId/timeline'
 
-const StyleLabRoute = StyleLabRouteImport.update({
-  id: '/style-lab',
-  path: '/style-lab',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RssDotxmlRoute = RssDotxmlRouteImport.update({
-  id: '/rss.xml',
-  path: '/rss.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileRoute = ProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PricingRoute = PricingRouteImport.update({
-  id: '/pricing',
-  path: '/pricing',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PageLabRoute = PageLabRouteImport.update({
-  id: '/page-lab',
-  path: '/page-lab',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LandingLabRoute = LandingLabRouteImport.update({
-  id: '/landing-lab',
-  path: '/landing-lab',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardLabRoute = DashboardLabRouteImport.update({
@@ -101,29 +71,79 @@ const DashboardLabRoute = DashboardLabRouteImport.update({
   path: '/dashboard-lab',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const LandingLabRoute = LandingLabRouteImport.update({
+  id: '/landing-lab',
+  path: '/landing-lab',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PageLabIndexRoute = PageLabIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => PageLabRoute,
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const LandingLabIndexRoute = LandingLabIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => LandingLabRoute,
+const PageLabRoute = PageLabRouteImport.update({
+  id: '/page-lab',
+  path: '/page-lab',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RssDotxmlRoute = RssDotxmlRouteImport.update({
+  id: '/rss.xml',
+  path: '/rss.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StyleLabRoute = StyleLabRouteImport.update({
+  id: '/style-lab',
+  path: '/style-lab',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardLabIndexRoute = DashboardLabIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DashboardLabRoute,
 } as any)
-const StablesLayoutRoute = StablesLayoutRouteImport.update({
-  id: '/stables/_layout',
-  path: '/stables',
+const DashboardLabVersionRoute = DashboardLabVersionRouteImport.update({
+  id: '/$version',
+  path: '/$version',
+  getParentRoute: () => DashboardLabRoute,
+} as any)
+const InvitationsTokenRoute = InvitationsTokenRouteImport.update({
+  id: '/invitations/$token',
+  path: '/invitations/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LandingLabIndexRoute = LandingLabIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LandingLabRoute,
+} as any)
+const LandingLabVariantRoute = LandingLabVariantRouteImport.update({
+  id: '/$variant',
+  path: '/$variant',
+  getParentRoute: () => LandingLabRoute,
+} as any)
+const PageLabIndexRoute = PageLabIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PageLabRoute,
+} as any)
+const PageLabPageRoute = PageLabPageRouteImport.update({
+  id: '/$page',
+  path: '/$page',
+  getParentRoute: () => PageLabRoute,
+} as any)
+const SignInSplatRoute = SignInSplatRouteImport.update({
+  id: '/sign-in/$',
+  path: '/sign-in/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignUpSplatRoute = SignUpSplatRouteImport.update({
@@ -131,44 +151,24 @@ const SignUpSplatRoute = SignUpSplatRouteImport.update({
   path: '/sign-up/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SignInSplatRoute = SignInSplatRouteImport.update({
-  id: '/sign-in/$',
-  path: '/sign-in/$',
+const StablesLayoutRoute = StablesLayoutRouteImport.update({
+  id: '/stables/_layout',
+  path: '/stables',
   getParentRoute: () => rootRouteImport,
-} as any)
-const PageLabPageRoute = PageLabPageRouteImport.update({
-  id: '/$page',
-  path: '/$page',
-  getParentRoute: () => PageLabRoute,
-} as any)
-const LandingLabVariantRoute = LandingLabVariantRouteImport.update({
-  id: '/$variant',
-  path: '/$variant',
-  getParentRoute: () => LandingLabRoute,
-} as any)
-const InvitationsTokenRoute = InvitationsTokenRouteImport.update({
-  id: '/invitations/$token',
-  path: '/invitations/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardLabVersionRoute = DashboardLabVersionRouteImport.update({
-  id: '/$version',
-  path: '/$version',
-  getParentRoute: () => DashboardLabRoute,
 } as any)
 const StablesLayoutIndexRoute = StablesLayoutIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => StablesLayoutRoute,
 } as any)
-const StablesLayoutCreateRoute = StablesLayoutCreateRouteImport.update({
-  id: '/create',
-  path: '/create',
-  getParentRoute: () => StablesLayoutRoute,
-} as any)
 const StablesLayoutStableIdRoute = StablesLayoutStableIdRouteImport.update({
   id: '/$stableId',
   path: '/$stableId',
+  getParentRoute: () => StablesLayoutRoute,
+} as any)
+const StablesLayoutCreateRoute = StablesLayoutCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
   getParentRoute: () => StablesLayoutRoute,
 } as any)
 const StablesLayoutStableIdIndexRoute =
@@ -177,46 +177,10 @@ const StablesLayoutStableIdIndexRoute =
     path: '/',
     getParentRoute: () => StablesLayoutStableIdRoute,
   } as any)
-const StablesLayoutStableIdWelcomeRoute =
-  StablesLayoutStableIdWelcomeRouteImport.update({
-    id: '/welcome',
-    path: '/welcome',
-    getParentRoute: () => StablesLayoutStableIdRoute,
-  } as any)
-const StablesLayoutStableIdSettingsRoute =
-  StablesLayoutStableIdSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => StablesLayoutStableIdRoute,
-  } as any)
-const StablesLayoutStableIdRemindersRoute =
-  StablesLayoutStableIdRemindersRouteImport.update({
-    id: '/reminders',
-    path: '/reminders',
-    getParentRoute: () => StablesLayoutStableIdRoute,
-  } as any)
-const StablesLayoutStableIdMembersRoute =
-  StablesLayoutStableIdMembersRouteImport.update({
-    id: '/members',
-    path: '/members',
-    getParentRoute: () => StablesLayoutStableIdRoute,
-  } as any)
-const StablesLayoutStableIdHorsesRoute =
-  StablesLayoutStableIdHorsesRouteImport.update({
-    id: '/horses',
-    path: '/horses',
-    getParentRoute: () => StablesLayoutStableIdRoute,
-  } as any)
-const StablesLayoutStableIdEventsRoute =
-  StablesLayoutStableIdEventsRouteImport.update({
-    id: '/events',
-    path: '/events',
-    getParentRoute: () => StablesLayoutStableIdRoute,
-  } as any)
-const StablesLayoutStableIdEditRoute =
-  StablesLayoutStableIdEditRouteImport.update({
-    id: '/edit',
-    path: '/edit',
+const StablesLayoutStableIdAnalysisRoute =
+  StablesLayoutStableIdAnalysisRouteImport.update({
+    id: '/analysis',
+    path: '/analysis',
     getParentRoute: () => StablesLayoutStableIdRoute,
   } as any)
 const StablesLayoutStableIdDocumentsRoute =
@@ -225,52 +189,52 @@ const StablesLayoutStableIdDocumentsRoute =
     path: '/documents',
     getParentRoute: () => StablesLayoutStableIdRoute,
   } as any)
-const StablesLayoutStableIdAnalysisRoute =
-  StablesLayoutStableIdAnalysisRouteImport.update({
-    id: '/analysis',
-    path: '/analysis',
+const StablesLayoutStableIdEditRoute =
+  StablesLayoutStableIdEditRouteImport.update({
+    id: '/edit',
+    path: '/edit',
     getParentRoute: () => StablesLayoutStableIdRoute,
   } as any)
-const StablesLayoutStableIdHorsesIndexRoute =
-  StablesLayoutStableIdHorsesIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => StablesLayoutStableIdHorsesRoute,
+const StablesLayoutStableIdEventsRoute =
+  StablesLayoutStableIdEventsRouteImport.update({
+    id: '/events',
+    path: '/events',
+    getParentRoute: () => StablesLayoutStableIdRoute,
+  } as any)
+const StablesLayoutStableIdHorsesRoute =
+  StablesLayoutStableIdHorsesRouteImport.update({
+    id: '/horses',
+    path: '/horses',
+    getParentRoute: () => StablesLayoutStableIdRoute,
+  } as any)
+const StablesLayoutStableIdMembersRoute =
+  StablesLayoutStableIdMembersRouteImport.update({
+    id: '/members',
+    path: '/members',
+    getParentRoute: () => StablesLayoutStableIdRoute,
+  } as any)
+const StablesLayoutStableIdRemindersRoute =
+  StablesLayoutStableIdRemindersRouteImport.update({
+    id: '/reminders',
+    path: '/reminders',
+    getParentRoute: () => StablesLayoutStableIdRoute,
+  } as any)
+const StablesLayoutStableIdSettingsRoute =
+  StablesLayoutStableIdSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => StablesLayoutStableIdRoute,
+  } as any)
+const StablesLayoutStableIdWelcomeRoute =
+  StablesLayoutStableIdWelcomeRouteImport.update({
+    id: '/welcome',
+    path: '/welcome',
+    getParentRoute: () => StablesLayoutStableIdRoute,
   } as any)
 const StablesLayoutStableIdEventsIndexRoute =
   StablesLayoutStableIdEventsIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => StablesLayoutStableIdEventsRoute,
-  } as any)
-const StablesLayoutStableIdHorsesDeletedRoute =
-  StablesLayoutStableIdHorsesDeletedRouteImport.update({
-    id: '/deleted',
-    path: '/deleted',
-    getParentRoute: () => StablesLayoutStableIdHorsesRoute,
-  } as any)
-const StablesLayoutStableIdHorsesCreateRoute =
-  StablesLayoutStableIdHorsesCreateRouteImport.update({
-    id: '/create',
-    path: '/create',
-    getParentRoute: () => StablesLayoutStableIdHorsesRoute,
-  } as any)
-const StablesLayoutStableIdHorsesHorseIdRoute =
-  StablesLayoutStableIdHorsesHorseIdRouteImport.update({
-    id: '/$horseId',
-    path: '/$horseId',
-    getParentRoute: () => StablesLayoutStableIdHorsesRoute,
-  } as any)
-const StablesLayoutStableIdEventsCreateRoute =
-  StablesLayoutStableIdEventsCreateRouteImport.update({
-    id: '/create',
-    path: '/create',
-    getParentRoute: () => StablesLayoutStableIdEventsRoute,
-  } as any)
-const StablesLayoutStableIdEventsCalendarRoute =
-  StablesLayoutStableIdEventsCalendarRouteImport.update({
-    id: '/calendar',
-    path: '/calendar',
     getParentRoute: () => StablesLayoutStableIdEventsRoute,
   } as any)
 const StablesLayoutStableIdEventsEventIdRoute =
@@ -279,58 +243,52 @@ const StablesLayoutStableIdEventsEventIdRoute =
     path: '/$eventId',
     getParentRoute: () => StablesLayoutStableIdEventsRoute,
   } as any)
+const StablesLayoutStableIdEventsCalendarRoute =
+  StablesLayoutStableIdEventsCalendarRouteImport.update({
+    id: '/calendar',
+    path: '/calendar',
+    getParentRoute: () => StablesLayoutStableIdEventsRoute,
+  } as any)
+const StablesLayoutStableIdEventsCreateRoute =
+  StablesLayoutStableIdEventsCreateRouteImport.update({
+    id: '/create',
+    path: '/create',
+    getParentRoute: () => StablesLayoutStableIdEventsRoute,
+  } as any)
+const StablesLayoutStableIdHorsesIndexRoute =
+  StablesLayoutStableIdHorsesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => StablesLayoutStableIdHorsesRoute,
+  } as any)
+const StablesLayoutStableIdHorsesHorseIdRoute =
+  StablesLayoutStableIdHorsesHorseIdRouteImport.update({
+    id: '/$horseId',
+    path: '/$horseId',
+    getParentRoute: () => StablesLayoutStableIdHorsesRoute,
+  } as any)
+const StablesLayoutStableIdHorsesCreateRoute =
+  StablesLayoutStableIdHorsesCreateRouteImport.update({
+    id: '/create',
+    path: '/create',
+    getParentRoute: () => StablesLayoutStableIdHorsesRoute,
+  } as any)
+const StablesLayoutStableIdHorsesDeletedRoute =
+  StablesLayoutStableIdHorsesDeletedRouteImport.update({
+    id: '/deleted',
+    path: '/deleted',
+    getParentRoute: () => StablesLayoutStableIdHorsesRoute,
+  } as any)
+const StablesLayoutStableIdEventsEventIdEditRoute =
+  StablesLayoutStableIdEventsEventIdEditRouteImport.update({
+    id: '/edit',
+    path: '/edit',
+    getParentRoute: () => StablesLayoutStableIdEventsEventIdRoute,
+  } as any)
 const StablesLayoutStableIdHorsesHorseIdIndexRoute =
   StablesLayoutStableIdHorsesHorseIdIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
-  } as any)
-const StablesLayoutStableIdHorsesHorseIdTimelineRoute =
-  StablesLayoutStableIdHorsesHorseIdTimelineRouteImport.update({
-    id: '/timeline',
-    path: '/timeline',
-    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
-  } as any)
-const StablesLayoutStableIdHorsesHorseIdProfileRoute =
-  StablesLayoutStableIdHorsesHorseIdProfileRouteImport.update({
-    id: '/profile',
-    path: '/profile',
-    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
-  } as any)
-const StablesLayoutStableIdHorsesHorseIdNutritionRoute =
-  StablesLayoutStableIdHorsesHorseIdNutritionRouteImport.update({
-    id: '/nutrition',
-    path: '/nutrition',
-    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
-  } as any)
-const StablesLayoutStableIdHorsesHorseIdHealthRoute =
-  StablesLayoutStableIdHorsesHorseIdHealthRouteImport.update({
-    id: '/health',
-    path: '/health',
-    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
-  } as any)
-const StablesLayoutStableIdHorsesHorseIdEditRoute =
-  StablesLayoutStableIdHorsesHorseIdEditRouteImport.update({
-    id: '/edit',
-    path: '/edit',
-    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
-  } as any)
-const StablesLayoutStableIdHorsesHorseIdDocumentsRoute =
-  StablesLayoutStableIdHorsesHorseIdDocumentsRouteImport.update({
-    id: '/documents',
-    path: '/documents',
-    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
-  } as any)
-const StablesLayoutStableIdHorsesHorseIdCareSummaryRoute =
-  StablesLayoutStableIdHorsesHorseIdCareSummaryRouteImport.update({
-    id: '/care-summary',
-    path: '/care-summary',
-    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
-  } as any)
-const StablesLayoutStableIdHorsesHorseIdCareRoute =
-  StablesLayoutStableIdHorsesHorseIdCareRouteImport.update({
-    id: '/care',
-    path: '/care',
     getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
   } as any)
 const StablesLayoutStableIdHorsesHorseIdActivityRoute =
@@ -339,11 +297,53 @@ const StablesLayoutStableIdHorsesHorseIdActivityRoute =
     path: '/activity',
     getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
   } as any)
-const StablesLayoutStableIdEventsEventIdEditRoute =
-  StablesLayoutStableIdEventsEventIdEditRouteImport.update({
+const StablesLayoutStableIdHorsesHorseIdCareRoute =
+  StablesLayoutStableIdHorsesHorseIdCareRouteImport.update({
+    id: '/care',
+    path: '/care',
+    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
+  } as any)
+const StablesLayoutStableIdHorsesHorseIdCareSummaryRoute =
+  StablesLayoutStableIdHorsesHorseIdCareSummaryRouteImport.update({
+    id: '/care-summary',
+    path: '/care-summary',
+    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
+  } as any)
+const StablesLayoutStableIdHorsesHorseIdDocumentsRoute =
+  StablesLayoutStableIdHorsesHorseIdDocumentsRouteImport.update({
+    id: '/documents',
+    path: '/documents',
+    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
+  } as any)
+const StablesLayoutStableIdHorsesHorseIdEditRoute =
+  StablesLayoutStableIdHorsesHorseIdEditRouteImport.update({
     id: '/edit',
     path: '/edit',
-    getParentRoute: () => StablesLayoutStableIdEventsEventIdRoute,
+    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
+  } as any)
+const StablesLayoutStableIdHorsesHorseIdHealthRoute =
+  StablesLayoutStableIdHorsesHorseIdHealthRouteImport.update({
+    id: '/health',
+    path: '/health',
+    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
+  } as any)
+const StablesLayoutStableIdHorsesHorseIdNutritionRoute =
+  StablesLayoutStableIdHorsesHorseIdNutritionRouteImport.update({
+    id: '/nutrition',
+    path: '/nutrition',
+    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
+  } as any)
+const StablesLayoutStableIdHorsesHorseIdProfileRoute =
+  StablesLayoutStableIdHorsesHorseIdProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
+  } as any)
+const StablesLayoutStableIdHorsesHorseIdTimelineRoute =
+  StablesLayoutStableIdHorsesHorseIdTimelineRouteImport.update({
+    id: '/timeline',
+    path: '/timeline',
+    getParentRoute: () => StablesLayoutStableIdHorsesHorseIdRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -670,53 +670,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/style-lab': {
-      id: '/style-lab'
-      path: '/style-lab'
-      fullPath: '/style-lab'
-      preLoaderRoute: typeof StyleLabRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/rss.xml': {
-      id: '/rss.xml'
-      path: '/rss.xml'
-      fullPath: '/rss.xml'
-      preLoaderRoute: typeof RssDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pricing': {
-      id: '/pricing'
-      path: '/pricing'
-      fullPath: '/pricing'
-      preLoaderRoute: typeof PricingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/page-lab': {
-      id: '/page-lab'
-      path: '/page-lab'
-      fullPath: '/page-lab'
-      preLoaderRoute: typeof PageLabRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/landing-lab': {
-      id: '/landing-lab'
-      path: '/landing-lab'
-      fullPath: '/landing-lab'
-      preLoaderRoute: typeof LandingLabRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard-lab': {
@@ -726,26 +684,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardLabRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/landing-lab': {
+      id: '/landing-lab'
+      path: '/landing-lab'
+      fullPath: '/landing-lab'
+      preLoaderRoute: typeof LandingLabRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/page-lab/': {
-      id: '/page-lab/'
-      path: '/'
-      fullPath: '/page-lab/'
-      preLoaderRoute: typeof PageLabIndexRouteImport
-      parentRoute: typeof PageLabRoute
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/landing-lab/': {
-      id: '/landing-lab/'
-      path: '/'
-      fullPath: '/landing-lab/'
-      preLoaderRoute: typeof LandingLabIndexRouteImport
-      parentRoute: typeof LandingLabRoute
+    '/page-lab': {
+      id: '/page-lab'
+      path: '/page-lab'
+      fullPath: '/page-lab'
+      preLoaderRoute: typeof PageLabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rss.xml': {
+      id: '/rss.xml'
+      path: '/rss.xml'
+      fullPath: '/rss.xml'
+      preLoaderRoute: typeof RssDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/style-lab': {
+      id: '/style-lab'
+      path: '/style-lab'
+      fullPath: '/style-lab'
+      preLoaderRoute: typeof StyleLabRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/dashboard-lab/': {
       id: '/dashboard-lab/'
@@ -754,11 +740,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardLabIndexRouteImport
       parentRoute: typeof DashboardLabRoute
     }
-    '/stables/_layout': {
-      id: '/stables/_layout'
-      path: '/stables'
-      fullPath: '/stables'
-      preLoaderRoute: typeof StablesLayoutRouteImport
+    '/dashboard-lab/$version': {
+      id: '/dashboard-lab/$version'
+      path: '/$version'
+      fullPath: '/dashboard-lab/$version'
+      preLoaderRoute: typeof DashboardLabVersionRouteImport
+      parentRoute: typeof DashboardLabRoute
+    }
+    '/invitations/$token': {
+      id: '/invitations/$token'
+      path: '/invitations/$token'
+      fullPath: '/invitations/$token'
+      preLoaderRoute: typeof InvitationsTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/landing-lab/': {
+      id: '/landing-lab/'
+      path: '/'
+      fullPath: '/landing-lab/'
+      preLoaderRoute: typeof LandingLabIndexRouteImport
+      parentRoute: typeof LandingLabRoute
+    }
+    '/landing-lab/$variant': {
+      id: '/landing-lab/$variant'
+      path: '/$variant'
+      fullPath: '/landing-lab/$variant'
+      preLoaderRoute: typeof LandingLabVariantRouteImport
+      parentRoute: typeof LandingLabRoute
+    }
+    '/page-lab/': {
+      id: '/page-lab/'
+      path: '/'
+      fullPath: '/page-lab/'
+      preLoaderRoute: typeof PageLabIndexRouteImport
+      parentRoute: typeof PageLabRoute
+    }
+    '/page-lab/$page': {
+      id: '/page-lab/$page'
+      path: '/$page'
+      fullPath: '/page-lab/$page'
+      preLoaderRoute: typeof PageLabPageRouteImport
+      parentRoute: typeof PageLabRoute
+    }
+    '/sign-in/$': {
+      id: '/sign-in/$'
+      path: '/sign-in/$'
+      fullPath: '/sign-in/$'
+      preLoaderRoute: typeof SignInSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sign-up/$': {
@@ -768,53 +796,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignUpSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sign-in/$': {
-      id: '/sign-in/$'
-      path: '/sign-in/$'
-      fullPath: '/sign-in/$'
-      preLoaderRoute: typeof SignInSplatRouteImport
+    '/stables/_layout': {
+      id: '/stables/_layout'
+      path: '/stables'
+      fullPath: '/stables'
+      preLoaderRoute: typeof StablesLayoutRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/page-lab/$page': {
-      id: '/page-lab/$page'
-      path: '/$page'
-      fullPath: '/page-lab/$page'
-      preLoaderRoute: typeof PageLabPageRouteImport
-      parentRoute: typeof PageLabRoute
-    }
-    '/landing-lab/$variant': {
-      id: '/landing-lab/$variant'
-      path: '/$variant'
-      fullPath: '/landing-lab/$variant'
-      preLoaderRoute: typeof LandingLabVariantRouteImport
-      parentRoute: typeof LandingLabRoute
-    }
-    '/invitations/$token': {
-      id: '/invitations/$token'
-      path: '/invitations/$token'
-      fullPath: '/invitations/$token'
-      preLoaderRoute: typeof InvitationsTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard-lab/$version': {
-      id: '/dashboard-lab/$version'
-      path: '/$version'
-      fullPath: '/dashboard-lab/$version'
-      preLoaderRoute: typeof DashboardLabVersionRouteImport
-      parentRoute: typeof DashboardLabRoute
     }
     '/stables/_layout/': {
       id: '/stables/_layout/'
       path: '/'
       fullPath: '/stables/'
       preLoaderRoute: typeof StablesLayoutIndexRouteImport
-      parentRoute: typeof StablesLayoutRoute
-    }
-    '/stables/_layout/create': {
-      id: '/stables/_layout/create'
-      path: '/create'
-      fullPath: '/stables/create'
-      preLoaderRoute: typeof StablesLayoutCreateRouteImport
       parentRoute: typeof StablesLayoutRoute
     }
     '/stables/_layout/$stableId': {
@@ -824,67 +817,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StablesLayoutStableIdRouteImport
       parentRoute: typeof StablesLayoutRoute
     }
+    '/stables/_layout/create': {
+      id: '/stables/_layout/create'
+      path: '/create'
+      fullPath: '/stables/create'
+      preLoaderRoute: typeof StablesLayoutCreateRouteImport
+      parentRoute: typeof StablesLayoutRoute
+    }
     '/stables/_layout/$stableId/': {
       id: '/stables/_layout/$stableId/'
       path: '/'
       fullPath: '/stables/$stableId/'
       preLoaderRoute: typeof StablesLayoutStableIdIndexRouteImport
-      parentRoute: typeof StablesLayoutStableIdRoute
-    }
-    '/stables/_layout/$stableId/welcome': {
-      id: '/stables/_layout/$stableId/welcome'
-      path: '/welcome'
-      fullPath: '/stables/$stableId/welcome'
-      preLoaderRoute: typeof StablesLayoutStableIdWelcomeRouteImport
-      parentRoute: typeof StablesLayoutStableIdRoute
-    }
-    '/stables/_layout/$stableId/settings': {
-      id: '/stables/_layout/$stableId/settings'
-      path: '/settings'
-      fullPath: '/stables/$stableId/settings'
-      preLoaderRoute: typeof StablesLayoutStableIdSettingsRouteImport
-      parentRoute: typeof StablesLayoutStableIdRoute
-    }
-    '/stables/_layout/$stableId/reminders': {
-      id: '/stables/_layout/$stableId/reminders'
-      path: '/reminders'
-      fullPath: '/stables/$stableId/reminders'
-      preLoaderRoute: typeof StablesLayoutStableIdRemindersRouteImport
-      parentRoute: typeof StablesLayoutStableIdRoute
-    }
-    '/stables/_layout/$stableId/members': {
-      id: '/stables/_layout/$stableId/members'
-      path: '/members'
-      fullPath: '/stables/$stableId/members'
-      preLoaderRoute: typeof StablesLayoutStableIdMembersRouteImport
-      parentRoute: typeof StablesLayoutStableIdRoute
-    }
-    '/stables/_layout/$stableId/horses': {
-      id: '/stables/_layout/$stableId/horses'
-      path: '/horses'
-      fullPath: '/stables/$stableId/horses'
-      preLoaderRoute: typeof StablesLayoutStableIdHorsesRouteImport
-      parentRoute: typeof StablesLayoutStableIdRoute
-    }
-    '/stables/_layout/$stableId/events': {
-      id: '/stables/_layout/$stableId/events'
-      path: '/events'
-      fullPath: '/stables/$stableId/events'
-      preLoaderRoute: typeof StablesLayoutStableIdEventsRouteImport
-      parentRoute: typeof StablesLayoutStableIdRoute
-    }
-    '/stables/_layout/$stableId/edit': {
-      id: '/stables/_layout/$stableId/edit'
-      path: '/edit'
-      fullPath: '/stables/$stableId/edit'
-      preLoaderRoute: typeof StablesLayoutStableIdEditRouteImport
-      parentRoute: typeof StablesLayoutStableIdRoute
-    }
-    '/stables/_layout/$stableId/documents': {
-      id: '/stables/_layout/$stableId/documents'
-      path: '/documents'
-      fullPath: '/stables/$stableId/documents'
-      preLoaderRoute: typeof StablesLayoutStableIdDocumentsRouteImport
       parentRoute: typeof StablesLayoutStableIdRoute
     }
     '/stables/_layout/$stableId/analysis': {
@@ -894,53 +838,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StablesLayoutStableIdAnalysisRouteImport
       parentRoute: typeof StablesLayoutStableIdRoute
     }
-    '/stables/_layout/$stableId/horses/': {
-      id: '/stables/_layout/$stableId/horses/'
-      path: '/'
-      fullPath: '/stables/$stableId/horses/'
-      preLoaderRoute: typeof StablesLayoutStableIdHorsesIndexRouteImport
-      parentRoute: typeof StablesLayoutStableIdHorsesRoute
+    '/stables/_layout/$stableId/documents': {
+      id: '/stables/_layout/$stableId/documents'
+      path: '/documents'
+      fullPath: '/stables/$stableId/documents'
+      preLoaderRoute: typeof StablesLayoutStableIdDocumentsRouteImport
+      parentRoute: typeof StablesLayoutStableIdRoute
+    }
+    '/stables/_layout/$stableId/edit': {
+      id: '/stables/_layout/$stableId/edit'
+      path: '/edit'
+      fullPath: '/stables/$stableId/edit'
+      preLoaderRoute: typeof StablesLayoutStableIdEditRouteImport
+      parentRoute: typeof StablesLayoutStableIdRoute
+    }
+    '/stables/_layout/$stableId/events': {
+      id: '/stables/_layout/$stableId/events'
+      path: '/events'
+      fullPath: '/stables/$stableId/events'
+      preLoaderRoute: typeof StablesLayoutStableIdEventsRouteImport
+      parentRoute: typeof StablesLayoutStableIdRoute
+    }
+    '/stables/_layout/$stableId/horses': {
+      id: '/stables/_layout/$stableId/horses'
+      path: '/horses'
+      fullPath: '/stables/$stableId/horses'
+      preLoaderRoute: typeof StablesLayoutStableIdHorsesRouteImport
+      parentRoute: typeof StablesLayoutStableIdRoute
+    }
+    '/stables/_layout/$stableId/members': {
+      id: '/stables/_layout/$stableId/members'
+      path: '/members'
+      fullPath: '/stables/$stableId/members'
+      preLoaderRoute: typeof StablesLayoutStableIdMembersRouteImport
+      parentRoute: typeof StablesLayoutStableIdRoute
+    }
+    '/stables/_layout/$stableId/reminders': {
+      id: '/stables/_layout/$stableId/reminders'
+      path: '/reminders'
+      fullPath: '/stables/$stableId/reminders'
+      preLoaderRoute: typeof StablesLayoutStableIdRemindersRouteImport
+      parentRoute: typeof StablesLayoutStableIdRoute
+    }
+    '/stables/_layout/$stableId/settings': {
+      id: '/stables/_layout/$stableId/settings'
+      path: '/settings'
+      fullPath: '/stables/$stableId/settings'
+      preLoaderRoute: typeof StablesLayoutStableIdSettingsRouteImport
+      parentRoute: typeof StablesLayoutStableIdRoute
+    }
+    '/stables/_layout/$stableId/welcome': {
+      id: '/stables/_layout/$stableId/welcome'
+      path: '/welcome'
+      fullPath: '/stables/$stableId/welcome'
+      preLoaderRoute: typeof StablesLayoutStableIdWelcomeRouteImport
+      parentRoute: typeof StablesLayoutStableIdRoute
     }
     '/stables/_layout/$stableId/events/': {
       id: '/stables/_layout/$stableId/events/'
       path: '/'
       fullPath: '/stables/$stableId/events/'
       preLoaderRoute: typeof StablesLayoutStableIdEventsIndexRouteImport
-      parentRoute: typeof StablesLayoutStableIdEventsRoute
-    }
-    '/stables/_layout/$stableId/horses/deleted': {
-      id: '/stables/_layout/$stableId/horses/deleted'
-      path: '/deleted'
-      fullPath: '/stables/$stableId/horses/deleted'
-      preLoaderRoute: typeof StablesLayoutStableIdHorsesDeletedRouteImport
-      parentRoute: typeof StablesLayoutStableIdHorsesRoute
-    }
-    '/stables/_layout/$stableId/horses/create': {
-      id: '/stables/_layout/$stableId/horses/create'
-      path: '/create'
-      fullPath: '/stables/$stableId/horses/create'
-      preLoaderRoute: typeof StablesLayoutStableIdHorsesCreateRouteImport
-      parentRoute: typeof StablesLayoutStableIdHorsesRoute
-    }
-    '/stables/_layout/$stableId/horses/$horseId': {
-      id: '/stables/_layout/$stableId/horses/$horseId'
-      path: '/$horseId'
-      fullPath: '/stables/$stableId/horses/$horseId'
-      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdRouteImport
-      parentRoute: typeof StablesLayoutStableIdHorsesRoute
-    }
-    '/stables/_layout/$stableId/events/create': {
-      id: '/stables/_layout/$stableId/events/create'
-      path: '/create'
-      fullPath: '/stables/$stableId/events/create'
-      preLoaderRoute: typeof StablesLayoutStableIdEventsCreateRouteImport
-      parentRoute: typeof StablesLayoutStableIdEventsRoute
-    }
-    '/stables/_layout/$stableId/events/calendar': {
-      id: '/stables/_layout/$stableId/events/calendar'
-      path: '/calendar'
-      fullPath: '/stables/$stableId/events/calendar'
-      preLoaderRoute: typeof StablesLayoutStableIdEventsCalendarRouteImport
       parentRoute: typeof StablesLayoutStableIdEventsRoute
     }
     '/stables/_layout/$stableId/events/$eventId': {
@@ -950,67 +908,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StablesLayoutStableIdEventsEventIdRouteImport
       parentRoute: typeof StablesLayoutStableIdEventsRoute
     }
+    '/stables/_layout/$stableId/events/calendar': {
+      id: '/stables/_layout/$stableId/events/calendar'
+      path: '/calendar'
+      fullPath: '/stables/$stableId/events/calendar'
+      preLoaderRoute: typeof StablesLayoutStableIdEventsCalendarRouteImport
+      parentRoute: typeof StablesLayoutStableIdEventsRoute
+    }
+    '/stables/_layout/$stableId/events/create': {
+      id: '/stables/_layout/$stableId/events/create'
+      path: '/create'
+      fullPath: '/stables/$stableId/events/create'
+      preLoaderRoute: typeof StablesLayoutStableIdEventsCreateRouteImport
+      parentRoute: typeof StablesLayoutStableIdEventsRoute
+    }
+    '/stables/_layout/$stableId/horses/': {
+      id: '/stables/_layout/$stableId/horses/'
+      path: '/'
+      fullPath: '/stables/$stableId/horses/'
+      preLoaderRoute: typeof StablesLayoutStableIdHorsesIndexRouteImport
+      parentRoute: typeof StablesLayoutStableIdHorsesRoute
+    }
+    '/stables/_layout/$stableId/horses/$horseId': {
+      id: '/stables/_layout/$stableId/horses/$horseId'
+      path: '/$horseId'
+      fullPath: '/stables/$stableId/horses/$horseId'
+      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdRouteImport
+      parentRoute: typeof StablesLayoutStableIdHorsesRoute
+    }
+    '/stables/_layout/$stableId/horses/create': {
+      id: '/stables/_layout/$stableId/horses/create'
+      path: '/create'
+      fullPath: '/stables/$stableId/horses/create'
+      preLoaderRoute: typeof StablesLayoutStableIdHorsesCreateRouteImport
+      parentRoute: typeof StablesLayoutStableIdHorsesRoute
+    }
+    '/stables/_layout/$stableId/horses/deleted': {
+      id: '/stables/_layout/$stableId/horses/deleted'
+      path: '/deleted'
+      fullPath: '/stables/$stableId/horses/deleted'
+      preLoaderRoute: typeof StablesLayoutStableIdHorsesDeletedRouteImport
+      parentRoute: typeof StablesLayoutStableIdHorsesRoute
+    }
+    '/stables/_layout/$stableId/events/$eventId/edit': {
+      id: '/stables/_layout/$stableId/events/$eventId/edit'
+      path: '/edit'
+      fullPath: '/stables/$stableId/events/$eventId/edit'
+      preLoaderRoute: typeof StablesLayoutStableIdEventsEventIdEditRouteImport
+      parentRoute: typeof StablesLayoutStableIdEventsEventIdRoute
+    }
     '/stables/_layout/$stableId/horses/$horseId/': {
       id: '/stables/_layout/$stableId/horses/$horseId/'
       path: '/'
       fullPath: '/stables/$stableId/horses/$horseId/'
       preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdIndexRouteImport
-      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
-    }
-    '/stables/_layout/$stableId/horses/$horseId/timeline': {
-      id: '/stables/_layout/$stableId/horses/$horseId/timeline'
-      path: '/timeline'
-      fullPath: '/stables/$stableId/horses/$horseId/timeline'
-      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdTimelineRouteImport
-      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
-    }
-    '/stables/_layout/$stableId/horses/$horseId/profile': {
-      id: '/stables/_layout/$stableId/horses/$horseId/profile'
-      path: '/profile'
-      fullPath: '/stables/$stableId/horses/$horseId/profile'
-      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdProfileRouteImport
-      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
-    }
-    '/stables/_layout/$stableId/horses/$horseId/nutrition': {
-      id: '/stables/_layout/$stableId/horses/$horseId/nutrition'
-      path: '/nutrition'
-      fullPath: '/stables/$stableId/horses/$horseId/nutrition'
-      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdNutritionRouteImport
-      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
-    }
-    '/stables/_layout/$stableId/horses/$horseId/health': {
-      id: '/stables/_layout/$stableId/horses/$horseId/health'
-      path: '/health'
-      fullPath: '/stables/$stableId/horses/$horseId/health'
-      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdHealthRouteImport
-      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
-    }
-    '/stables/_layout/$stableId/horses/$horseId/edit': {
-      id: '/stables/_layout/$stableId/horses/$horseId/edit'
-      path: '/edit'
-      fullPath: '/stables/$stableId/horses/$horseId/edit'
-      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdEditRouteImport
-      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
-    }
-    '/stables/_layout/$stableId/horses/$horseId/documents': {
-      id: '/stables/_layout/$stableId/horses/$horseId/documents'
-      path: '/documents'
-      fullPath: '/stables/$stableId/horses/$horseId/documents'
-      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdDocumentsRouteImport
-      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
-    }
-    '/stables/_layout/$stableId/horses/$horseId/care-summary': {
-      id: '/stables/_layout/$stableId/horses/$horseId/care-summary'
-      path: '/care-summary'
-      fullPath: '/stables/$stableId/horses/$horseId/care-summary'
-      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdCareSummaryRouteImport
-      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
-    }
-    '/stables/_layout/$stableId/horses/$horseId/care': {
-      id: '/stables/_layout/$stableId/horses/$horseId/care'
-      path: '/care'
-      fullPath: '/stables/$stableId/horses/$horseId/care'
-      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdCareRouteImport
       parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
     }
     '/stables/_layout/$stableId/horses/$horseId/activity': {
@@ -1020,12 +971,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdActivityRouteImport
       parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
     }
-    '/stables/_layout/$stableId/events/$eventId/edit': {
-      id: '/stables/_layout/$stableId/events/$eventId/edit'
+    '/stables/_layout/$stableId/horses/$horseId/care': {
+      id: '/stables/_layout/$stableId/horses/$horseId/care'
+      path: '/care'
+      fullPath: '/stables/$stableId/horses/$horseId/care'
+      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdCareRouteImport
+      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
+    }
+    '/stables/_layout/$stableId/horses/$horseId/care-summary': {
+      id: '/stables/_layout/$stableId/horses/$horseId/care-summary'
+      path: '/care-summary'
+      fullPath: '/stables/$stableId/horses/$horseId/care-summary'
+      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdCareSummaryRouteImport
+      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
+    }
+    '/stables/_layout/$stableId/horses/$horseId/documents': {
+      id: '/stables/_layout/$stableId/horses/$horseId/documents'
+      path: '/documents'
+      fullPath: '/stables/$stableId/horses/$horseId/documents'
+      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdDocumentsRouteImport
+      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
+    }
+    '/stables/_layout/$stableId/horses/$horseId/edit': {
+      id: '/stables/_layout/$stableId/horses/$horseId/edit'
       path: '/edit'
-      fullPath: '/stables/$stableId/events/$eventId/edit'
-      preLoaderRoute: typeof StablesLayoutStableIdEventsEventIdEditRouteImport
-      parentRoute: typeof StablesLayoutStableIdEventsEventIdRoute
+      fullPath: '/stables/$stableId/horses/$horseId/edit'
+      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdEditRouteImport
+      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
+    }
+    '/stables/_layout/$stableId/horses/$horseId/health': {
+      id: '/stables/_layout/$stableId/horses/$horseId/health'
+      path: '/health'
+      fullPath: '/stables/$stableId/horses/$horseId/health'
+      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdHealthRouteImport
+      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
+    }
+    '/stables/_layout/$stableId/horses/$horseId/nutrition': {
+      id: '/stables/_layout/$stableId/horses/$horseId/nutrition'
+      path: '/nutrition'
+      fullPath: '/stables/$stableId/horses/$horseId/nutrition'
+      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdNutritionRouteImport
+      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
+    }
+    '/stables/_layout/$stableId/horses/$horseId/profile': {
+      id: '/stables/_layout/$stableId/horses/$horseId/profile'
+      path: '/profile'
+      fullPath: '/stables/$stableId/horses/$horseId/profile'
+      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdProfileRouteImport
+      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
+    }
+    '/stables/_layout/$stableId/horses/$horseId/timeline': {
+      id: '/stables/_layout/$stableId/horses/$horseId/timeline'
+      path: '/timeline'
+      fullPath: '/stables/$stableId/horses/$horseId/timeline'
+      preLoaderRoute: typeof StablesLayoutStableIdHorsesHorseIdTimelineRouteImport
+      parentRoute: typeof StablesLayoutStableIdHorsesHorseIdRoute
     }
   }
 }

@@ -84,7 +84,7 @@ function createEvent(
   date: string,
   time: string,
   overrides: Partial<StableDashboardEvent> = {},
-) {
+): StableDashboardEvent {
   return {
     _id: id as Id<'events'>,
     _creationTime: 0,
@@ -96,5 +96,5 @@ function createEvent(
     type: 'other',
     title: id,
     ...overrides,
-  } as StableDashboardEvent
+  }
 }

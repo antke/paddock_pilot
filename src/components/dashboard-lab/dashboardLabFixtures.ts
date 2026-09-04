@@ -267,32 +267,34 @@ function createFixtureOverview({
   events: Array<DashboardLabEvent>
   horseCount: number
 }): DashboardLabOverview {
-  const dueReminders: DashboardLabOverview['dueReminders'] = [
-    {
-      id: 'lab-reminder-lameness' as Id<'careReminders'>,
-      stableId,
-      stableName: 'Cedar Ridge Barn',
-      horseId: juniperId,
-      horseName: 'Juniper',
-      title: 'Recheck lameness notes after turnout',
-      dueDate: dateKeyFromOffset(-1),
-      category: 'vet',
-      priority: 'high',
-      overdue: true,
-    },
-    {
-      id: 'lab-reminder-supplements' as Id<'careReminders'>,
-      stableId,
-      stableName: 'Cedar Ridge Barn',
-      horseId: atlasId,
-      horseName: 'Atlas',
-      title: 'Order senior supplement refill',
-      dueDate: dateKeyFromOffset(2),
-      category: 'nutrition',
-      priority: 'medium',
-      overdue: false,
-    },
-  ].filter((reminder) => reminder.stableId === activeStableId)
+  const dueReminders = (
+    [
+      {
+        id: 'lab-reminder-lameness' as Id<'careReminders'>,
+        stableId,
+        stableName: 'Cedar Ridge Barn',
+        horseId: juniperId,
+        horseName: 'Juniper',
+        title: 'Recheck lameness notes after turnout',
+        dueDate: dateKeyFromOffset(-1),
+        category: 'vet',
+        priority: 'high',
+        overdue: true,
+      },
+      {
+        id: 'lab-reminder-supplements' as Id<'careReminders'>,
+        stableId,
+        stableName: 'Cedar Ridge Barn',
+        horseId: atlasId,
+        horseName: 'Atlas',
+        title: 'Order senior supplement refill',
+        dueDate: dateKeyFromOffset(2),
+        category: 'nutrition',
+        priority: 'medium',
+        overdue: false,
+      },
+    ] satisfies DashboardLabOverview['dueReminders']
+  ).filter((reminder) => reminder.stableId === activeStableId)
   const upcomingEvents = events
     .filter((event) => (event.status ?? 'planned') === 'planned')
     .map((event) => ({

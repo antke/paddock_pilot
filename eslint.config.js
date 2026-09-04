@@ -21,7 +21,11 @@ export default [
       'prettier.config.js',
       '.content-collections/generated/**',
       'convex/_generated/**',
+      '.nitro/**',
       '.output/**',
+      '.tanstack/**',
+      '.vercel/**',
+      '.vinxi/**',
     ],
   },
 ]

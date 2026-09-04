@@ -1,0 +1,11 @@
+allowBuilds:
+  '@clerk/shared': false
+  core-js: false
+  esbuild: true
+  msw: false
+  protobufjs: false
+  unrs-resolver: true
+minimumReleaseAgeExclude:
+  - nitro-nightly@3.0.1-20260901-102404-5d83475c
+overrides:
+  ws: ^8.21.0

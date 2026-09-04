@@ -10,7 +10,6 @@ import {
   Field,
   FieldDescription,
   FieldError,
-  FieldGrid,
   FieldLabel,
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
@@ -132,7 +131,12 @@ export function FirstHorseStep({
       if (age === undefined) throw new Error('Invalid horse age')
 
       if (horse) {
-        await updateHorse({ id: horse._id, name: values.name, dateOfBirth, age })
+        await updateHorse({
+          id: horse._id,
+          name: values.name,
+          dateOfBirth,
+          age,
+        })
       } else {
         await addHorse({ stableId, name: values.name, dateOfBirth, age })
       }

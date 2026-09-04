@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite'
 import { devtools } from '@tanstack/devtools-vite'
 import contentCollections from '@content-collections/vite'
-import tsconfigPaths from 'vite-tsconfig-paths'
 
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 
@@ -16,17 +15,12 @@ const appPlugins = [
   devtools({ eventBusConfig: { enabled: shouldEnableDevtoolsEventBus } }),
   nitro({ rollupConfig: { external: [/^@sentry\//] } }),
   contentCollections(),
-  tsconfigPaths({ projects: ['./tsconfig.json'] }),
   tailwindcss(),
   tanstackStart(),
   viteReact(),
 ]
 
-const testPlugins = [
-  tsconfigPaths({ projects: ['./tsconfig.json'] }),
-  tailwindcss(),
-  viteReact(),
-]
+const testPlugins = [tailwindcss(), viteReact()]
 
 const echartsOptimizedDependencies = [
   'echarts/core',
@@ -37,6 +31,9 @@ const echartsOptimizedDependencies = [
 
 const config = defineConfig(({ mode }) => ({
   plugins: mode === 'test' ? testPlugins : appPlugins,
+  resolve: {
+    tsconfigPaths: true,
+  },
   optimizeDeps: {
     include: echartsOptimizedDependencies,
   },

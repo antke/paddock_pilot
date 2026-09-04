@@ -29,7 +29,7 @@ var blog = defineCollection({
   }
 });
 var content_collections_default = defineConfig({
-  collections: [blog]
+  content: [blog]
 });
 export {
   content_collections_default as default

@@ -1,5 +1,5 @@
 import { convexQuery } from '@convex-dev/react-query'
-import { useSuspenseQueries } from '@tanstack/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import type { ErrorComponentProps } from '@tanstack/react-router'
 import type { Id } from 'convex/_generated/dataModel'
@@ -19,19 +19,18 @@ export const Route = createFileRoute('/stables/_layout/$stableId/members')({
 function RouteComponent() {
   const { stableId } = Route.useParams()
   const id = stableId as Id<'stables'>
-  const [stableQuery, accessQuery, peopleQuery, myDetailsQuery] =
-    useSuspenseQueries({
-      queries: [
-        convexQuery(api.stables.get, { id }),
-        convexQuery(api.stables.getAccess, { id }),
-        convexQuery(api.stableMembers.listByStable, { stableId: id }),
-        convexQuery(api.stableMembers.getMyDetails, { stableId: id }),
-      ],
-    })
-  const stable = stableQuery.data
-  const access = accessQuery.data
-  const people = peopleQuery.data
-  const myDetails = myDetailsQuery.data
+  const { data: stable } = useSuspenseQuery(
+    convexQuery(api.stables.get, { id }),
+  )
+  const { data: access } = useSuspenseQuery(
+    convexQuery(api.stables.getAccess, { id }),
+  )
+  const { data: people } = useSuspenseQuery(
+    convexQuery(api.stableMembers.listByStable, { stableId: id }),
+  )
+  const { data: myDetails } = useSuspenseQuery(
+    convexQuery(api.stableMembers.getMyDetails, { stableId: id }),
+  )
 
   if (!stable) return <RouteEntityNotFoundAlert entity="stable" />
 

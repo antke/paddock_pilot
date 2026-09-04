@@ -27,7 +27,9 @@ export type StableSettingsData = {
   }>
   invitations: Array<Doc<'stableInvitations'>>
   horses: Array<Doc<'horses'>>
-  deletedHorses: Array<Doc<'horses'> & { purgeAt: number }>
+  deletedHorses: Array<
+    Doc<'horses'> & { purgeAt: number; canPermanentlyDelete: boolean }
+  >
   auditEntries: Array<StableAuditEntry>
 }
 

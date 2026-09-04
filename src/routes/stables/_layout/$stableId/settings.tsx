@@ -5,7 +5,7 @@ import {
 import type { StableSettingsTab } from '#/components/stables/StableSettingsPage'
 import { RouteQueryErrorAlert } from '#/components/layout/RouteStatusAlert'
 import { convexQuery } from '@convex-dev/react-query'
-import { useSuspenseQueries } from '@tanstack/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import type { ErrorComponentProps } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
@@ -26,19 +26,18 @@ function RouteComponent() {
   const { tab } = Route.useSearch()
 
   const id = stableId as Id<'stables'>
-  const [settingsQuery, deletedHorsesQuery, horsesQuery, auditEntriesQuery] =
-    useSuspenseQueries({
-      queries: [
-        convexQuery(api.stableMembers.listWithUsers, { stableId: id }),
-        convexQuery(api.horses.listDeleted, { stableId: id }),
-        convexQuery(api.horses.list, { stableId: id }),
-        convexQuery(api.auditLogs.listForStable, { stableId: id }),
-      ],
-    })
-  const settings = settingsQuery.data
-  const deletedHorses = deletedHorsesQuery.data
-  const horses = horsesQuery.data
-  const auditEntries = auditEntriesQuery.data
+  const { data: settings } = useSuspenseQuery(
+    convexQuery(api.stableMembers.listWithUsers, { stableId: id }),
+  )
+  const { data: deletedHorses } = useSuspenseQuery(
+    convexQuery(api.horses.listDeleted, { stableId: id }),
+  )
+  const { data: horses } = useSuspenseQuery(
+    convexQuery(api.horses.list, { stableId: id }),
+  )
+  const { data: auditEntries } = useSuspenseQuery(
+    convexQuery(api.auditLogs.listForStable, { stableId: id }),
+  )
 
   return (
     <StableSettingsPage

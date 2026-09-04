@@ -48,7 +48,7 @@ describe('DocumentDownloadAction', () => {
     })
     let activatedLink: HTMLAnchorElement | undefined
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(
-      function recordDownload() {
+      function recordDownload(this: HTMLAnchorElement) {
         activatedLink = this
       },
     )

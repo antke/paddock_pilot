@@ -163,7 +163,7 @@ export function CalendarDayEventList({
 const CalendarEventChipLinkAnchor = forwardRef<
   HTMLAnchorElement,
   ComponentProps<'a'>
->(function CalendarEventChipLinkAnchor({ className, ...props }, ref) {
+>(function CalendarEventChipLinkAnchorRender({ className, ...props }, ref) {
   return (
     <a
       ref={ref}

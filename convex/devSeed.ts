@@ -11,9 +11,10 @@ import { stableInputSchema } from '../shared/stables/stableSchema'
 import { stableDocumentInputSchema } from '../shared/stables/stableDocumentSchema'
 import { stableMemberDetailsInputSchema } from '../shared/stables/stableMemberSchema'
 import { stableProviderInputSchema } from '../shared/stables/stableProviderSchema'
+import { internal } from './_generated/api'
 import type { Id } from './_generated/dataModel'
-import { internalMutation } from './_generated/server'
-import type { MutationCtx } from './_generated/server'
+import { internalAction, internalMutation } from './_generated/server'
+import type { ActionCtx, MutationCtx } from './_generated/server'
 import { deleteStorageObjectIfUnreferenced } from './libs/storageObjects'
 import { getCurrentUser } from './libs/stablePermissions'
 
@@ -546,12 +547,7 @@ const seedProviders = async (
     ].map(([type, name, phone, email], index) => ({
       stableId,
       type: type as
-        | 'vet'
-        | 'farrier'
-        | 'dentist'
-        | 'physio'
-        | 'saddler'
-        | 'other',
+        'vet' | 'farrier' | 'dentist' | 'physio' | 'saddler' | 'other',
       name,
       phone,
       email,
@@ -887,7 +883,7 @@ const seedHorses = async (
 }
 
 const seedDocuments = async (
-  ctx: MutationCtx,
+  ctx: ActionCtx,
   stableId: Id<'stables'>,
   ownerId: Id<'users'>,
   horseIds: Array<Id<'horses'>>,
@@ -951,7 +947,7 @@ const seedDocuments = async (
       }
     }),
   ]
-  const now = Date.now()
+  const createdAt = Date.now()
 
   await Promise.all(
     documentInputs.map(async (document) => {
@@ -962,22 +958,54 @@ const seedDocuments = async (
       const file = createSeedDocumentFile(input.fileName, input.notes)
       const storageId = await ctx.storage.store(file)
 
-      return ctx.db.insert('stableDocuments', {
-        stableId,
-        horseId: document.horseId,
-        eventId: undefined,
-        storageId,
-        type: input.type,
-        fileName: input.fileName,
-        contentType: file.type,
-        size: file.size,
-        notes: input.notes,
-        createdBy: ownerId,
-        createdAt: now,
-      })
+      try {
+        return await ctx.runMutation(internal.devSeed.insertSeedDocument, {
+          stableId,
+          horseId: document.horseId,
+          storageId,
+          type: input.type,
+          fileName: input.fileName,
+          contentType: file.type,
+          size: file.size,
+          notes: input.notes,
+          createdBy: ownerId,
+          createdAt,
+        })
+      } catch (error) {
+        await ctx.storage.delete(storageId)
+        throw error
+      }
     }),
   )
 }
+
+export const insertSeedDocument = internalMutation({
+  args: {
+    stableId: v.id('stables'),
+    horseId: v.optional(v.id('horses')),
+    storageId: v.id('_storage'),
+    type: v.union(
+      v.literal('passport'),
+      v.literal('vaccination'),
+      v.literal('insurance'),
+      v.literal('vet_report'),
+      v.literal('farrier'),
+      v.literal('dental'),
+      v.literal('other'),
+    ),
+    fileName: v.string(),
+    contentType: v.string(),
+    size: v.number(),
+    notes: v.optional(v.string()),
+    createdBy: v.id('users'),
+    createdAt: v.number(),
+  },
+  handler: async (ctx, args) =>
+    ctx.db.insert('stableDocuments', {
+      ...args,
+      eventId: undefined,
+    }),
+})
 
 const seedHealthIssues = async (
   ctx: MutationCtx,
@@ -2086,11 +2114,13 @@ const upsertPersonalProForUser = async (
  * - pending/completed care reminders across categories and priorities
  * - Personal Pro analysis inputs
  */
-export const seedDemoStable = internalMutation({
-  args: {
-    confirm: v.literal(confirmSeed),
-    ownerEmail: v.optional(v.string()),
-  },
+const seedDemoStableArgs = {
+  confirm: v.literal(confirmSeed),
+  ownerEmail: v.optional(v.string()),
+}
+
+export const prepareDemoStable = internalMutation({
+  args: seedDemoStableArgs,
   handler: async (ctx, args) => {
     if (process.env.DEV_SEED_ENABLED !== 'true') {
       throw new ConvexError('Set DEV_SEED_ENABLED=true before running dev seed')
@@ -2110,13 +2140,30 @@ export const seedDemoStable = internalMutation({
 
     await Promise.all([
       seedHealthIssues(ctx, stableId, user._id, horseIds),
-      seedDocuments(ctx, stableId, user._id, horseIds),
       seedWeightRecords(ctx, stableId, user._id, horseIds),
       seedMedicationRecords(ctx, stableId, user._id, horseIds),
       seedNutritionLogs(ctx, stableId, user._id, horseIds),
       seedEvents(ctx, stableId, user._id, horseIds),
       seedCareReminders(ctx, stableId, user._id, horseIds),
     ])
+
+    return { stableId, ownerId: user._id, horseIds }
+  },
+})
+
+export const seedDemoStable = internalAction({
+  args: seedDemoStableArgs,
+  handler: async (ctx, args): Promise<{ stableId: Id<'stables'> }> => {
+    if (process.env.DEV_SEED_ENABLED !== 'true') {
+      throw new ConvexError('Set DEV_SEED_ENABLED=true before running dev seed')
+    }
+
+    const { stableId, ownerId, horseIds } = await ctx.runMutation(
+      internal.devSeed.prepareDemoStable,
+      args,
+    )
+
+    await seedDocuments(ctx, stableId, ownerId, horseIds)
 
     return { stableId }
   },

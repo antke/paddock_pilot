@@ -33,5 +33,5 @@ const blog = defineCollection({
 })
 
 export default defineConfig({
-  collections: [blog],
+  content: [blog],
 })

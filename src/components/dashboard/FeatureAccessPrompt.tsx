@@ -40,10 +40,8 @@ export function FeatureAccessPrompt({
 const FeatureAccessBackLinkAnchor = forwardRef<
   HTMLAnchorElement,
   Omit<ComponentProps<typeof ButtonAnchor>, 'variant'>
->(function FeatureAccessBackLinkAnchor(props, ref) {
+>(function FeatureAccessBackLinkAnchorRender(props, ref) {
   return <ButtonAnchor ref={ref} variant="outline" {...props} />
 })
 
-export const FeatureAccessBackLink = createLink(
-  FeatureAccessBackLinkAnchor,
-)
+export const FeatureAccessBackLink = createLink(FeatureAccessBackLinkAnchor)

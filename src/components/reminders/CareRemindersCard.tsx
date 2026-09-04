@@ -263,9 +263,7 @@ function ReminderRow({
       actionBadges={
         showPriorityBadge || showStatusBadge ? (
           <>
-            {showPriorityBadge && (
-              <CareReminderPriorityBadge priority={reminder.priority} />
-            )}
+            {showPriorityBadge && <CareReminderPriorityBadge priority="high" />}
             {showStatusBadge && (
               <CareReminderStatusBadge
                 status={reminder.status}

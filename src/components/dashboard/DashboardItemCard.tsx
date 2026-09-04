@@ -9,11 +9,7 @@ import { DashboardMetaList } from './DashboardMetaList'
 
 type DashboardItemCardDensity = 'comfortable' | 'compact'
 export type DashboardItemAccent =
-  | 'none'
-  | 'primary'
-  | 'warning'
-  | 'danger'
-  | 'muted'
+  'none' | 'primary' | 'warning' | 'danger' | 'muted'
 type DashboardItemOpenRowTone = 'primary' | 'warning' | 'danger' | 'muted'
 type DashboardItemCardTitleSize = 'default' | 'sm'
 type DashboardItemCardTitleTone = 'default' | 'open'
@@ -511,7 +507,7 @@ export function DashboardItemRecordFooter({
 const DashboardItemLinkCardAnchor = forwardRef<
   HTMLAnchorElement,
   DashboardItemLinkCardProps
->(function DashboardItemLinkCardAnchor(
+>(function DashboardItemLinkCardAnchorRender(
   {
     accent = 'none',
     children,
@@ -549,7 +545,7 @@ export const DashboardItemLinkCard = createLink(DashboardItemLinkCardAnchor)
 const DashboardItemOpenLinkAnchor = forwardRef<
   HTMLAnchorElement,
   DashboardItemOpenLinkProps
->(function DashboardItemOpenLinkAnchor(
+>(function DashboardItemOpenLinkAnchorRender(
   { children, className, density, tone = 'primary', ...props },
   ref,
 ) {

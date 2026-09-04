@@ -20,7 +20,6 @@ import type { ReactNode } from 'react'
 import { formatCountLabel } from '#/lib/numberDisplay'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import { CareRemindersCard } from './CareRemindersCard'
-import type { CareReminderListItem } from './CareRemindersCard'
 import type { CareReminderSubmitData } from './CareReminderForm'
 import {
   createCareReminderListFilterConfig,
@@ -149,7 +148,7 @@ export function StableRemindersPage({
 
       <DashboardSectionCard contentGap="loose">
         <CareRemindersCard
-          reminders={paginatedReminders.results as Array<CareReminderListItem>}
+          reminders={paginatedReminders.results}
           canAddReminder={permissions.canManageStableReminders}
           horseOptions={horseOptions}
           chrome={chrome}

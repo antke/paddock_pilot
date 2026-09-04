@@ -1,6 +1,7 @@
 import { consoleEmailProvider } from './providers/console'
 import { createResendEmailProvider } from './providers/resend'
-import { EmailProviderError, type EmailProvider } from './types'
+import { EmailProviderError } from './types'
+import type { EmailProvider } from './types'
 
 export type EmailProviderEnvironment = {
   EMAIL_PROVIDER?: string

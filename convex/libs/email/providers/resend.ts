@@ -1,8 +1,8 @@
-import {
-  EmailProviderError,
-  type EmailDeliveryResult,
-  type EmailMessage,
-  type EmailProvider,
+import { EmailProviderError } from '../types'
+import type {
+  EmailDeliveryResult,
+  EmailMessage,
+  EmailProvider,
 } from '../types'
 
 type ResendProviderOptions = {

@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import { getConfiguredEmailProvider } from './provider'
 import { createResendEmailProvider } from './providers/resend'
-import { EmailProviderError, type EmailMessage } from './types'
+import { EmailProviderError } from './types'
+import type { EmailMessage } from './types'
 
 const message: EmailMessage = {
   category: 'stable_invitation',

@@ -134,7 +134,7 @@ export function DashboardInlinePanelButton({
 const DashboardInlinePanelLinkAnchor = forwardRef<
   HTMLAnchorElement,
   DashboardInlinePanelLinkProps
->(function DashboardInlinePanelLinkAnchor(
+>(function DashboardInlinePanelLinkAnchorRender(
   {
     chrome = 'soft',
     className,

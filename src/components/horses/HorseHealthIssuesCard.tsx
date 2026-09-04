@@ -184,9 +184,7 @@ function IssueRow({
       actionBadges={
         showSeverityBadge || showStatusBadge ? (
           <>
-            {showSeverityBadge && (
-              <HealthIssueSeverityBadge severity={issue.severity} />
-            )}
+            {showSeverityBadge && <HealthIssueSeverityBadge severity="high" />}
             {showStatusBadge && (
               <HealthIssueStatusBadge status={issue.status} />
             )}
