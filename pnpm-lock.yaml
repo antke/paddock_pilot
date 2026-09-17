@@ -22,7 +22,7 @@ importers:
         version: 1.5.9(@tanstack/react-router@1.170.32(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@tanstack/react-start@1.168.49(crossws@0.4.12(srvx@0.12.7))(esbuild@0.28.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rolldown@1.2.6)(rollup@4.63.1)(supports-color@7.2.0)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.0)))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@convex-dev/react-query':
         specifier: 0.1.0
-        version: 0.1.0(@tanstack/react-query@5.102.8(react@19.2.8))(convex@1.33.1(react@19.2.8))
+        version: 0.1.0(@tanstack/react-query@5.102.8(react@19.2.8))(convex@1.46.0(@clerk/react@6.14.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8))
       '@fontsource-variable/geist-mono':
         specifier: ^5.3.0
         version: 5.3.0
@@ -75,8 +75,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       convex:
-        specifier: 1.33.1
-        version: 1.33.1(react@19.2.8)
+        specifier: 1.46.0
+        version: 1.46.0(@clerk/react@6.14.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
       echarts:
         specifier: ^6.1.0
         version: 6.1.0
@@ -158,7 +158,7 @@ importers:
         version: 6.1.1(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.0))
       convex-test:
         specifier: 0.0.54
-        version: 0.0.54(convex@1.33.1(react@19.2.8))
+        version: 0.0.54(convex@1.46.0(@clerk/react@6.14.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8))
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2
@@ -2629,18 +2629,21 @@ packages:
     peerDependencies:
       convex: ^1.32.0
 
-  convex@1.33.1:
-    resolution: {integrity: sha512-mRhR1XqZPLhgJsUepecM/kOgQVRCWKJtHHtyEX/XYY4zmzfItG0D1GNh5fjNEkuO5+72X4PCkzbEFA6327rxog==}
-    engines: {node: '>=18.0.0', npm: '>=7.0.0'}
+  convex@1.46.0:
+    resolution: {integrity: sha512-dhBwDQTZDOhi5SUGAX17EWNehCdNq6/UFrSL0eLZuGfMkdsQbCVWVRZCzbZ5CF+/pgvoGxtApbEoTSipqL4JTw==}
+    engines: {node: '>=20.0.0', npm: '>=7.0.0'}
     hasBin: true
     peerDependencies:
       '@auth0/auth0-react': ^2.0.1
       '@clerk/clerk-react': ^4.12.8 || ^5.0.0
+      '@clerk/react': ^6.4.3
       react: ^18.0.0 || ^19.0.0-0 || ^19.0.0
     peerDependenciesMeta:
       '@auth0/auth0-react':
         optional: true
       '@clerk/clerk-react':
+        optional: true
+      '@clerk/react':
         optional: true
       react:
         optional: true
@@ -5483,10 +5486,10 @@ snapshots:
       '@content-collections/integrations': 0.5.0(@content-collections/core@0.15.2(typescript@5.9.3))
       vite: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.0)
 
-  '@convex-dev/react-query@0.1.0(@tanstack/react-query@5.102.8(react@19.2.8))(convex@1.33.1(react@19.2.8))':
+  '@convex-dev/react-query@0.1.0(@tanstack/react-query@5.102.8(react@19.2.8))(convex@1.46.0(@clerk/react@6.14.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8))':
     dependencies:
       '@tanstack/react-query': 5.102.8(react@19.2.8)
-      convex: 1.33.1(react@19.2.8)
+      convex: 1.46.0(@clerk/react@6.14.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
 
   '@csstools/color-helpers@6.1.1': {}
 
@@ -7296,16 +7299,17 @@ snapshots:
 
   convert-source-map@2.0.0: {}
 
-  convex-test@0.0.54(convex@1.33.1(react@19.2.8)):
+  convex-test@0.0.54(convex@1.46.0(@clerk/react@6.14.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)):
     dependencies:
-      convex: 1.33.1(react@19.2.8)
+      convex: 1.46.0(@clerk/react@6.14.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
 
-  convex@1.33.1(react@19.2.8):
+  convex@1.46.0(@clerk/react@6.14.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8):
     dependencies:
       esbuild: 0.27.0
       prettier: 3.9.6
       ws: 8.21.3
     optionalDependencies:
+      '@clerk/react': 6.14.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react: 19.2.8
     transitivePeerDependencies:
       - bufferutil

@@ -43,7 +43,7 @@
     "@types/lodash": "^4.17.25",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "convex": "1.33.1",
+    "convex": "1.46.0",
     "echarts": "^6.1.0",
     "lodash": "^4.18.1",
     "lucide-react": "^1.38.0",
