@@ -7,6 +7,7 @@ export type EmailProviderEnvironment = {
   EMAIL_PROVIDER?: string
   RESEND_API_KEY?: string
   RESEND_FROM_EMAIL?: string
+  RESEND_REPLY_TO_EMAIL?: string
 }
 
 export const getConfiguredEmailProvider = (
@@ -36,6 +37,7 @@ export const getConfiguredEmailProvider = (
       apiKey: environment.RESEND_API_KEY,
       fetcher,
       from: environment.RESEND_FROM_EMAIL,
+      replyTo: environment.RESEND_REPLY_TO_EMAIL?.trim() || undefined,
     })
   }
 

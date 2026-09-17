@@ -9,6 +9,7 @@ type ResendProviderOptions = {
   apiKey: string
   fetcher?: typeof fetch
   from: string
+  replyTo?: string
   timeoutMs?: number
 }
 
@@ -41,6 +42,7 @@ export const createResendEmailProvider = ({
   apiKey,
   fetcher = fetch,
   from,
+  replyTo,
   timeoutMs = 15_000,
 }: ResendProviderOptions): EmailProvider => ({
   name: 'resend',
@@ -60,6 +62,7 @@ export const createResendEmailProvider = ({
           subject: message.subject,
           html: message.html,
           text: message.text,
+          ...(replyTo ? { reply_to: replyTo } : {}),
           tags: [{ name: 'category', value: message.category }],
         }),
         signal: AbortSignal.timeout(timeoutMs),

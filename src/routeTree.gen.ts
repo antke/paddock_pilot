@@ -23,6 +23,7 @@ import { Route as DashboardLabVersionRouteImport } from './routes/dashboard-lab/
 import { Route as InvitationsTokenRouteImport } from './routes/invitations/$token'
 import { Route as LandingLabIndexRouteImport } from './routes/landing-lab/index'
 import { Route as LandingLabVariantRouteImport } from './routes/landing-lab/$variant'
+import { Route as LandingLabCountryStudyRouteImport } from './routes/landing-lab/country-study'
 import { Route as PageLabIndexRouteImport } from './routes/page-lab/index'
 import { Route as PageLabPageRouteImport } from './routes/page-lab/$page'
 import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
@@ -129,6 +130,11 @@ const LandingLabIndexRoute = LandingLabIndexRouteImport.update({
 const LandingLabVariantRoute = LandingLabVariantRouteImport.update({
   id: '/$variant',
   path: '/$variant',
+  getParentRoute: () => LandingLabRoute,
+} as any)
+const LandingLabCountryStudyRoute = LandingLabCountryStudyRouteImport.update({
+  id: '/country-study',
+  path: '/country-study',
   getParentRoute: () => LandingLabRoute,
 } as any)
 const PageLabIndexRoute = PageLabIndexRouteImport.update({
@@ -359,6 +365,7 @@ export interface FileRoutesByFullPath {
   '/dashboard-lab/$version': typeof DashboardLabVersionRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/landing-lab/$variant': typeof LandingLabVariantRoute
+  '/landing-lab/country-study': typeof LandingLabCountryStudyRoute
   '/page-lab/$page': typeof PageLabPageRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
@@ -409,6 +416,7 @@ export interface FileRoutesByTo {
   '/dashboard-lab/$version': typeof DashboardLabVersionRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/landing-lab/$variant': typeof LandingLabVariantRoute
+  '/landing-lab/country-study': typeof LandingLabCountryStudyRoute
   '/page-lab/$page': typeof PageLabPageRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
@@ -458,6 +466,7 @@ export interface FileRoutesById {
   '/dashboard-lab/$version': typeof DashboardLabVersionRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/landing-lab/$variant': typeof LandingLabVariantRoute
+  '/landing-lab/country-study': typeof LandingLabCountryStudyRoute
   '/page-lab/$page': typeof PageLabPageRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
@@ -513,6 +522,7 @@ export interface FileRouteTypes {
     | '/dashboard-lab/$version'
     | '/invitations/$token'
     | '/landing-lab/$variant'
+    | '/landing-lab/country-study'
     | '/page-lab/$page'
     | '/sign-in/$'
     | '/sign-up/$'
@@ -563,6 +573,7 @@ export interface FileRouteTypes {
     | '/dashboard-lab/$version'
     | '/invitations/$token'
     | '/landing-lab/$variant'
+    | '/landing-lab/country-study'
     | '/page-lab/$page'
     | '/sign-in/$'
     | '/sign-up/$'
@@ -611,6 +622,7 @@ export interface FileRouteTypes {
     | '/dashboard-lab/$version'
     | '/invitations/$token'
     | '/landing-lab/$variant'
+    | '/landing-lab/country-study'
     | '/page-lab/$page'
     | '/sign-in/$'
     | '/sign-up/$'
@@ -766,6 +778,13 @@ declare module '@tanstack/react-router' {
       path: '/$variant'
       fullPath: '/landing-lab/$variant'
       preLoaderRoute: typeof LandingLabVariantRouteImport
+      parentRoute: typeof LandingLabRoute
+    }
+    '/landing-lab/country-study': {
+      id: '/landing-lab/country-study'
+      path: '/country-study'
+      fullPath: '/landing-lab/country-study'
+      preLoaderRoute: typeof LandingLabCountryStudyRouteImport
       parentRoute: typeof LandingLabRoute
     }
     '/page-lab/': {
@@ -1046,11 +1065,13 @@ const DashboardLabRouteWithChildren = DashboardLabRoute._addFileChildren(
 
 interface LandingLabRouteChildren {
   LandingLabVariantRoute: typeof LandingLabVariantRoute
+  LandingLabCountryStudyRoute: typeof LandingLabCountryStudyRoute
   LandingLabIndexRoute: typeof LandingLabIndexRoute
 }
 
 const LandingLabRouteChildren: LandingLabRouteChildren = {
   LandingLabVariantRoute: LandingLabVariantRoute,
+  LandingLabCountryStudyRoute: LandingLabCountryStudyRoute,
   LandingLabIndexRoute: LandingLabIndexRoute,
 }
 

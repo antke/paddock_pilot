@@ -119,6 +119,7 @@ For Resend, set these variables in the Convex deployment environment:
 EMAIL_PROVIDER=resend
 RESEND_API_KEY=re_...
 RESEND_FROM_EMAIL=Paddock Pilot <notifications@notify.example.com>
+RESEND_REPLY_TO_EMAIL=support@example.com
 RESEND_WEBHOOK_SECRET=whsec_...
 APP_URL=https://example.com
 ```

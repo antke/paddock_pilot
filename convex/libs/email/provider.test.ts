@@ -47,6 +47,7 @@ describe('email providers', () => {
       apiKey: 're_test',
       fetcher,
       from: 'Paddock Pilot <notifications@example.com>',
+      replyTo: 'support@example.com',
     })
 
     await expect(provider.send(message)).resolves.toEqual({
@@ -68,6 +69,7 @@ describe('email providers', () => {
     const request = fetcher.mock.calls[0]?.[1]
     expect(JSON.parse(String(request?.body))).toMatchObject({
       from: 'Paddock Pilot <notifications@example.com>',
+      reply_to: 'support@example.com',
       to: message.to,
       subject: message.subject,
       tags: [{ name: 'category', value: 'stable_invitation' }],

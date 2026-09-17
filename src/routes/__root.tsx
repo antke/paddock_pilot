@@ -7,10 +7,8 @@ import {
   useLocation,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import Footer from '../components/Footer'
-import Header from '../components/Header'
-import { AppShell, appBodyClassName } from '#/components/layout/AppShell'
-import { PageLayout } from '#/components/layout/PageLayout'
+import { appBodyClassName } from '#/components/layout/AppShell'
+import { ApplicationRouteShell } from '#/components/layout/ApplicationRouteShell'
 import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
 import { ButtonLink } from '#/components/ui/button'
 import { Toaster } from '#/components/ui/sonner'
@@ -143,13 +141,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           ) : (
             <AppUserStateProvider>
               <TooltipProvider>
-                <AppShell>
-                  <Header />
-
-                  <PageLayout>{children}</PageLayout>
-
-                  <Footer />
-                </AppShell>
+                <ApplicationRouteShell pathname={pathname}>
+                  {children}
+                </ApplicationRouteShell>
 
                 <Toaster />
 

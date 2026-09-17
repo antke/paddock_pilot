@@ -9,6 +9,8 @@ const rawControlOwners = new Set([
   'components/forms/FileUploadField.tsx',
   'components/forms/FormLayout.tsx',
   'components/horses/HorseCard.tsx',
+  // The public care example owns its scoped, accessible status controls.
+  'components/landing/CountryLandingHero.tsx',
   'components/onboarding/OnboardingStepper.tsx',
   'components/timeline/ActivityTimeline.tsx',
 ])

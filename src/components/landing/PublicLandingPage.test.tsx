@@ -1,53 +1,73 @@
 // @vitest-environment jsdom
-
 import type { ComponentProps } from 'react'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PublicLandingPage } from './PublicLandingPage'
 
-vi.mock('#/components/ui/button', () => ({
-  ButtonAnchor: (props: ComponentProps<'a'>) => <a {...props} />,
-  ButtonLink: ({
-    size,
-    to,
-    variant,
-    ...props
-  }: ComponentProps<'a'> & {
-    size?: string
-    to: string
-    variant?: string
-  }) => {
-    void size
-    void variant
-    return <a href={to} {...props} />
-  },
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({ to, ...props }: ComponentProps<'a'> & { to: string }) => (
+    <a href={to} {...props} />
+  ),
 }))
-
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.unstubAllEnvs()
+})
 
 describe('PublicLandingPage', () => {
-  it('presents a complete and auditable product story', () => {
-    const { container } = render(<PublicLandingPage />)
-
+  it('connects the shared-care story and example to working account routes', () => {
+    render(<PublicLandingPage />)
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
+    expect(screen.getByRole('main').id).toBe('country-main')
     expect(
-      screen.getByRole('heading', {
-        name: 'The whole yard, without the whiteboard scramble.',
-      }),
+      screen.getByText(/No more searching through old messages/),
     ).toBeTruthy()
+    for (const link of screen.getAllByRole('link', {
+      name: /Create (your )?account/,
+    })) {
+      expect(link.getAttribute('href')).toBe('/sign-up/$')
+    }
     expect(
-      screen.getAllByRole('link', { name: 'Create your account' }),
-    ).toHaveLength(2)
-    expect(screen.getAllByRole('link', { name: 'Compare plans' })).toHaveLength(
-      2,
-    )
-    expect(container.querySelectorAll('figure')).toHaveLength(4)
-    expect(container.querySelectorAll('figcaption')).toHaveLength(4)
-    expect(container.querySelectorAll('details')).toHaveLength(5)
-
-    const copy = container.textContent?.toLowerCase() ?? ''
-    expect(copy).not.toContain('free trial')
-    expect(copy).not.toContain('no card')
-    expect(copy).not.toContain('cancel anytime')
+      screen.getByRole('link', { name: 'Plans' }).getAttribute('href'),
+    ).toBe('/pricing')
+    fireEvent.click(screen.getByRole('button', { name: 'Planned' }))
+    expect(screen.getByText('Sam Taylor, farrier.')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Completed' }))
+    expect(
+      screen.getByText('Trim completed. Next visit to be arranged.'),
+    ).toBeTruthy()
+  })
+  it('removes rejected filler and screenshot galleries without inventing commercial proof', () => {
+    const { container } = render(<PublicLandingPage />)
+    const copy = container.textContent ?? ''
+    for (const removed of [
+      'For small stable owners and members.',
+      'One record, there for the next person.',
+      'Notes after completion',
+      'free trial',
+      'trusted by',
+      'cancel anytime',
+    ]) {
+      expect(copy.toLowerCase()).not.toContain(removed.toLowerCase())
+    }
+    expect(
+      container.querySelector('img[src="/landing/stable-command-center.png"]'),
+    ).toBeNull()
+    expect(
+      container.querySelector('img[src="/landing/horse-record.png"]'),
+    ).toBeNull()
+    expect(
+      container.querySelector('img[src="/landing/provider-visit.png"]'),
+    ).toBeNull()
+    expect(screen.getByText('Example')).toBeTruthy()
+  })
+  it('uses the requested invitation without testing-payment copy', () => {
+    render(<PublicLandingPage />)
+    expect(
+      screen.getByText(
+        'Create your stable, add your horse and invite your friends.',
+      ),
+    ).toBeTruthy()
+    expect(screen.queryByText(/no payment is required/)).toBeNull()
   })
 })
