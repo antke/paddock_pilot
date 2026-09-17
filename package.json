@@ -12,12 +12,14 @@
   "scripts": {
     "dev": "vite dev --port 9090",
     "build": "vite build",
-    "build:vercel": "convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --cmd 'pnpm build'",
+    "build:vercel": "convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --cmd 'pnpm build:smoke'",
+    "build:smoke": "NITRO_PRESET=vercel vite build && pnpm test:smoke",
     "preview": "vite preview",
     "email:preview": "node scripts/preview-emails.mjs",
     "test": "vitest run --passWithNoTests",
+    "test:smoke": "node scripts/smoke-production.mjs",
     "typecheck": "tsc --noEmit",
-    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
+    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm build:smoke",
     "lint": "eslint",
     "format": "prettier --check .",
     "check": "prettier --write . && eslint --fix"

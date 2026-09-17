@@ -26,8 +26,8 @@ Node 24 and identifies the framework in `vercel.json`.
 1. Create a production Convex deployment and generate a production deploy key
    with the `deployment:deploy` permission.
 2. Import this repository in Vercel. Keep the repository build command; it runs
-   `pnpm build:vercel`, deploys the Convex functions, injects
-   `VITE_CONVEX_URL`, and then builds the TanStack application.
+   `pnpm build:vercel`: Convex injects `VITE_CONVEX_URL`, runs the Vercel-format
+   application build and SSR smoke test, then deploys the Convex functions.
 3. Add these Vercel environment variables for Production:
 
    ```text
@@ -72,6 +72,21 @@ Run the local release gate before pushing:
 ```bash
 pnpm verify
 ```
+
+The release gate includes `pnpm build:smoke`, which builds with the Vercel preset
+and invokes the emitted server handler for anonymous requests to `/`, `/sign-in`,
+`/sign-up`, and `/pricing`. It requires HTTP 200 and complete HTML with application
+scripts, including a cold first request and a repeated landing-page request.
+Run `pnpm test:smoke` to recheck an existing Vercel build. Local checks read
+`.env.local` without overriding existing environment variables; CI uses the
+configured Clerk keys. No real users, cookies, invitations, or writes are involved.
+These checks cover server rendering, not browser hydration or signed-in flows.
+
+Nitro's final server bundle intentionally inlines dynamic imports to avoid a
+cross-chunk initialization cycle that left Clerk's internal provider undefined.
+Browser-side route splitting remains enabled. Keep the runtime smoke check when
+upgrading Nitro/Vite or revisiting this workaround: compilation alone did not
+detect the failure.
 
 ## Testing
 

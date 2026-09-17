@@ -13,7 +13,13 @@ const shouldEnableDevtoolsEventBus =
 
 const appPlugins = [
   devtools({ eventBusConfig: { enabled: shouldEnableDevtoolsEventBus } }),
-  nitro({ rollupConfig: { external: [/^@sentry\//] } }),
+  nitro({
+    // Keep the server module graph together: splitting Clerk's provider across
+    // circular SSR chunks can capture an undefined export during initialization.
+    // This does not disable Vite's browser-side route/code splitting.
+    inlineDynamicImports: true,
+    rollupConfig: { external: [/^@sentry\//] },
+  }),
   contentCollections(),
   tailwindcss(),
   tanstackStart(),
