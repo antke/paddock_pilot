@@ -80,6 +80,9 @@ function FirstStableOnboarding() {
             <ButtonLink to="/profile" action="edit" variant="outline">
               Edit profile
             </ButtonLink>
+            <ButtonLink to="/stables/create" variant="outline">
+              Create my own stable
+            </ButtonLink>
           </>
         }
       />

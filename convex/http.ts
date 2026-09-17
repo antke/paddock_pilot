@@ -124,6 +124,9 @@ const clerkWebhook = httpAction(async (ctx, request) => {
       await ctx.runMutation(internal.users.upsertUser, {
         clerkId: id,
         email: primaryEmail?.email_address ?? '',
+        verifiedEmails: email_addresses
+          .filter((email) => email.verification?.status === 'verified')
+          .map((email) => email.email_address),
         firstName: first_name ?? '',
         lastName: last_name ?? '',
         photoUrl: image_url || undefined,

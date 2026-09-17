@@ -18,6 +18,7 @@ export const stableInvitationStatusLabels = {
   pending: 'Pending',
   accepted_pending_subscription: 'Accepted, ready to activate',
   accepted: 'Accepted',
+  declined: 'Declined',
   revoked: 'Revoked',
   expired: 'Expired',
 } satisfies Record<StableInvitationStatus, string>
@@ -26,6 +27,7 @@ const stableInvitationStatusVariant = {
   pending: 'info',
   accepted_pending_subscription: 'warning',
   accepted: 'success',
+  declined: 'neutral',
   revoked: 'neutral',
   expired: 'neutral',
 } satisfies Record<

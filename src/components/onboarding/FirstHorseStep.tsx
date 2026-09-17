@@ -175,47 +175,54 @@ export function FirstHorseStep({
         )}
       />
 
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(8rem,1fr)] lg:items-start">
-        <Field>
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(8rem,1fr)] lg:gap-y-2">
+        <Field className="lg:row-span-2 lg:grid lg:grid-rows-subgrid">
           <FieldLabel>Birth date</FieldLabel>
-          <div className="grid grid-cols-3 gap-2">
-            <BirthPartField
-              control={form.control}
-              name="birthYear"
-              label="Year"
-              placeholder="2016"
-              maxLength={4}
-              disabled={form.formState.isSubmitting}
-            />
-            <BirthPartField
-              control={form.control}
-              name="birthMonth"
-              label="Month"
-              placeholder="MM"
-              maxLength={2}
-              disabled={form.formState.isSubmitting || !birthYear}
-            />
-            <BirthPartField
-              control={form.control}
-              name="birthDay"
-              label="Day"
-              placeholder="DD"
-              maxLength={2}
-              disabled={form.formState.isSubmitting || !birthMonth}
-            />
+          <div className="grid content-start gap-2">
+            <div className="grid grid-cols-3 gap-2">
+              <BirthPartField
+                control={form.control}
+                name="birthYear"
+                label="Year"
+                placeholder="2016"
+                maxLength={4}
+                disabled={form.formState.isSubmitting}
+              />
+              <BirthPartField
+                control={form.control}
+                name="birthMonth"
+                label="Month"
+                placeholder="MM"
+                maxLength={2}
+                disabled={form.formState.isSubmitting || !birthYear}
+              />
+              <BirthPartField
+                control={form.control}
+                name="birthDay"
+                label="Day"
+                placeholder="DD"
+                maxLength={2}
+                disabled={form.formState.isSubmitting || !birthMonth}
+              />
+            </div>
+            <FieldDescription>
+              The year is required when using a birth date. Month and day are
+              optional.
+            </FieldDescription>
           </div>
-          <FieldDescription>
-            The year is required when using a birth date. Month and day are
-            optional.
-          </FieldDescription>
         </Field>
 
         <Controller
           name="age"
           control={form.control}
           render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Or current age</FieldLabel>
+            <Field
+              className="lg:col-start-2 lg:row-start-2"
+              data-invalid={fieldState.invalid}
+            >
+              <FieldLabel htmlFor={field.name} size="compact">
+                Or current age
+              </FieldLabel>
               <Input
                 {...field}
                 id={field.name}

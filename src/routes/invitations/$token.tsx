@@ -17,7 +17,7 @@ import {
   SignOutButton,
   SignUpButton,
 } from '@clerk/tanstack-react-start'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
 import { useMutation, useQuery } from 'convex/react'
 import { useState } from 'react'
@@ -127,7 +127,11 @@ function SignedOutInvitation({
 }) {
   const returnTo = getInvitationPath(token)
 
-  if (preview.status === 'expired' || preview.status === 'revoked') {
+  if (
+    preview.status === 'expired' ||
+    preview.status === 'revoked' ||
+    preview.status === 'declined'
+  ) {
     return <InvitationStatus preview={preview} />
   }
 
@@ -176,22 +180,19 @@ function SignedInInvitation({
   preview: FoundInvitationPreview
 }) {
   const acceptInvitation = useMutation(api.stableInvitations.accept)
-  const navigate = useNavigate()
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const declineInvitation = useMutation(api.stableInvitations.decline)
+  const [pendingAction, setPendingAction] = useState<'accept' | 'decline'>()
+  const isSubmitting = pendingAction !== undefined
   const returnTo = getInvitationPath(token)
 
   const onAccept = async () => {
     try {
-      setIsSubmitting(true)
-      const result = await acceptInvitation({ token })
+      setPendingAction('accept')
+      await acceptInvitation({ token })
 
       showAppSuccessToast({
         title: `Welcome to ${preview.stableName}`,
         description: <p>Your stable membership is active.</p>,
-      })
-      await navigate({
-        to: '/onboarding',
-        search: { stableId: result.stableId },
       })
     } catch {
       showAppErrorToast({
@@ -199,7 +200,19 @@ function SignedInInvitation({
         description: <p>Refresh the invitation and try again.</p>,
       })
     } finally {
-      setIsSubmitting(false)
+      setPendingAction(undefined)
+    }
+  }
+
+  const onDecline = async () => {
+    try {
+      setPendingAction('decline')
+      await declineInvitation({ token })
+      showAppSuccessToast({ title: 'Invitation declined' })
+    } catch {
+      showAppErrorToast({ title: 'Could not decline invitation' })
+    } finally {
+      setPendingAction(undefined)
     }
   }
 
@@ -225,6 +238,20 @@ function SignedInInvitation({
   }
 
   if (!preview.viewer.emailMatches) {
+    if (!preview.viewer.hasEmail) {
+      return (
+        <RouteStatusAlert
+          tone="warning"
+          title="Your account email is not available yet"
+          description="We couldn’t confirm a verified email for your signed-in account. Verify your email in your account settings, then refresh this page."
+          actions={
+            <Button type="button" onClick={() => window.location.reload()}>
+              Refresh account
+            </Button>
+          }
+        />
+      )
+    }
     return (
       <RouteStatusAlert
         tone="warning"
@@ -244,11 +271,23 @@ function SignedInInvitation({
   return (
     <RouteStatusAlert
       title="Ready to join"
-      description="Accepting gives you member access to the stable and its shared records. No subscription or payment is required during testing."
+      description="Accept to join this stable and access its shared records, or decline. You can create your own stable after either choice."
       actions={
-        <Button type="button" disabled={isSubmitting} onClick={onAccept}>
-          {isSubmitting ? 'Accepting...' : 'Accept invitation'}
-        </Button>
+        <>
+          <Button type="button" disabled={isSubmitting} onClick={onAccept}>
+            {pendingAction === 'accept' ? 'Accepting...' : 'Accept invitation'}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isSubmitting}
+            onClick={onDecline}
+          >
+            {pendingAction === 'decline'
+              ? 'Declining...'
+              : 'Decline invitation'}
+          </Button>
+        </>
       }
     />
   )
@@ -265,6 +304,25 @@ function InvitationStatus({
   onActivate?: () => void | Promise<void>
   isSubmitting?: boolean
 }) {
+  if (preview.status === 'declined') {
+    return (
+      <RouteStatusAlert
+        title="Invitation declined"
+        description="This invitation no longer grants access to the stable. You can continue with your account or create a stable of your own."
+        actions={
+          preview.viewer?.isDeclinedByViewer ? (
+            <>
+              <ButtonLink to="/">Continue</ButtonLink>
+              <ButtonLink to="/stables/create" variant="outline">
+                Create my own stable
+              </ButtonLink>
+            </>
+          ) : undefined
+        }
+      />
+    )
+  }
+
   if (preview.status === 'expired') {
     return (
       <RouteStatusAlert
@@ -344,11 +402,19 @@ function InvitationStatus({
     return (
       <RouteStatusAlert
         title="You are already a member"
-        description={`Your access to ${preview.stableName} is active.`}
+        description={`Your access to ${preview.stableName} is active. Continue to this stable, or create one of your own.`}
         actions={
-          <ButtonLink to="/onboarding" search={{ stableId: preview.stableId }}>
-            Continue setup
-          </ButtonLink>
+          <>
+            <ButtonLink
+              to="/onboarding"
+              search={{ stableId: preview.stableId }}
+            >
+              Continue to {preview.stableName}
+            </ButtonLink>
+            <ButtonLink to="/stables/create" variant="outline">
+              Create my own stable
+            </ButtonLink>
+          </>
         }
       />
     )

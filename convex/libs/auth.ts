@@ -1,5 +1,6 @@
 import { ConvexError } from 'convex/values'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
+import type { Doc } from '../_generated/dataModel'
 
 export const requireAuth = async (ctx: MutationCtx | QueryCtx) => {
   const identity = await ctx.auth.getUserIdentity()
@@ -19,4 +20,19 @@ export const getUserFromIdentity = async (ctx: MutationCtx | QueryCtx) => {
     .unique()
 
   return user?.deletedAt === undefined ? user : null
+}
+
+export const getInvitationEmails = async (
+  ctx: MutationCtx | QueryCtx,
+  user: Doc<'users'>,
+) => {
+  const identity = await requireAuth(ctx)
+  const identityEmail = identity.email?.trim().toLowerCase()
+  const emails =
+    user.verifiedEmails ?? (identityEmail ? [identityEmail] : [user.email])
+
+  return [...new Set(emails.map((email) => email.trim().toLowerCase()))].filter(
+    (email) =>
+      email && !(email === identityEmail && identity.emailVerified === false),
+  )
 }

@@ -46,9 +46,16 @@ Node 24 and identifies the framework in `vercel.json`.
    ```text
    CLERK_FRONTEND_API_URL=https://...
    CLERK_WEBHOOK_SECRET=whsec_...
+   CLERK_SECRET_KEY=sk_...
    EMAIL_PROVIDER=console
    APP_URL=https://app.example.com
    ```
+
+   Use the secret key for the same Clerk instance as the frontend. Convex uses
+   it to refresh the signed-in account's verified email addresses before
+   checking invitations, including older profiles with missing or stale email
+   data. The key stays on the server. Without it, synchronization falls back
+   to the authenticated JWT email and the existing webhook profile.
 
 5. Configure the Clerk webhook to send user lifecycle events to
    `https://<your-convex-site>/clerk-users-webhook`. Configure the production

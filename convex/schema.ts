@@ -24,6 +24,7 @@ export const userFields = {
   firstName: v.string(),
   lastName: v.optional(v.string()),
   email: v.string(),
+  verifiedEmails: v.optional(v.array(v.string())),
   photoUrl: v.optional(v.string()),
   preferredName: v.optional(v.string()),
   // Private account contact. Stable owners only receive the per-stable phone
@@ -362,6 +363,7 @@ export const stableInvitationStatus = v.union(
   v.literal('pending'),
   v.literal('accepted_pending_subscription'),
   v.literal('accepted'),
+  v.literal('declined'),
   v.literal('revoked'),
   v.literal('expired'),
 )
@@ -381,6 +383,8 @@ export const stableInvitationsFields = {
   token: v.string(),
   invitedBy: v.id('users'),
   acceptedBy: v.optional(v.id('users')),
+  declinedBy: v.optional(v.id('users')),
+  declinedAt: v.optional(v.number()),
   createdAt: v.number(),
   updatedAt: v.number(),
   expiresAt: v.number(),

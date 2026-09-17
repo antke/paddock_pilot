@@ -2,6 +2,7 @@ export type StableInvitationStatus =
   | 'pending'
   | 'accepted_pending_subscription'
   | 'accepted'
+  | 'declined'
   | 'revoked'
   | 'expired'
 

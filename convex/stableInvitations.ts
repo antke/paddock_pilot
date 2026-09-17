@@ -7,7 +7,7 @@ import { stableInvitationSchema } from '../shared/stableInvitations/invitationSc
 import type { Doc, Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import type { MutationCtx } from './_generated/server'
-import { getUserFromIdentity } from './libs/auth'
+import { getInvitationEmails, getUserFromIdentity } from './libs/auth'
 import { ensureStableOnboarding } from './libs/onboarding'
 import {
   assertCanManageMembers,
@@ -71,6 +71,44 @@ export const listForStable = query({
   },
 })
 
+export const listForCurrentUser = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getUserFromIdentity(ctx)
+    if (!user) return []
+    const emails = await getInvitationEmails(ctx, user)
+    const invitations = (
+      await Promise.all(
+        emails.map((email) =>
+          ctx.db
+            .query('stableInvitations')
+            .withIndex('by_email_status', (q) =>
+              q.eq('email', email).eq('status', 'pending'),
+            )
+            .collect(),
+        ),
+      )
+    ).flat()
+    const pending = await Promise.all(
+      invitations
+        .filter(
+          (invitation) =>
+            invitation.role === 'member' && invitation.expiresAt >= Date.now(),
+        )
+        .map(async (invitation) => {
+          const stable = await ctx.db.get(invitation.stableId)
+          if (!stable || stable.archivedAt !== undefined) return null
+          return { token: invitation.token, createdAt: invitation.createdAt }
+        }),
+    )
+    return pending
+      .filter((invitation) => invitation !== null)
+      .sort(
+        (a, b) => a.createdAt - b.createdAt || a.token.localeCompare(b.token),
+      )
+  },
+})
+
 export const preview = query({
   args: { token: v.string() },
   handler: async (ctx, args) => {
@@ -95,6 +133,7 @@ export const preview = query({
       status: invitation.status,
       expiresAt: invitation.expiresAt,
     })
+    const viewerEmails = viewer ? await getInvitationEmails(ctx, viewer) : []
 
     return {
       state: 'found' as const,
@@ -108,8 +147,12 @@ export const preview = query({
       expiresAt: invitation.expiresAt,
       viewer: viewer
         ? {
-            emailMatches: normalizeEmail(viewer.email) === invitation.email,
+            emailMatches: viewerEmails.includes(
+              normalizeEmail(invitation.email),
+            ),
+            hasEmail: viewerEmails.length > 0,
             isAcceptedByViewer: invitation.acceptedBy === viewer._id,
+            isDeclinedByViewer: invitation.declinedBy === viewer._id,
           }
         : null,
     }
@@ -340,7 +383,11 @@ export const accept = mutation({
       throw new ConvexError('Invitation has expired')
     }
 
-    if (normalizeEmail(user.email) !== invitation.email) {
+    if (
+      !(await getInvitationEmails(ctx, user)).includes(
+        normalizeEmail(invitation.email),
+      )
+    ) {
       throw new ConvexError('Sign in with the invited email to accept')
     }
 
@@ -387,5 +434,45 @@ export const accept = mutation({
     })
 
     return { status: 'accepted' as const, stableId: invitation.stableId }
+  },
+})
+
+export const decline = mutation({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx)
+    const invitation = await ctx.db
+      .query('stableInvitations')
+      .withIndex('by_token', (q) => q.eq('token', args.token))
+      .unique()
+    if (!invitation) throw new ConvexError('Invitation not found')
+    if (
+      !(await getInvitationEmails(ctx, user)).includes(
+        normalizeEmail(invitation.email),
+      )
+    ) {
+      throw new ConvexError('Sign in with the invited email to decline')
+    }
+    if (invitation.status !== 'pending' || invitation.expiresAt < Date.now()) {
+      throw new ConvexError('Invitation is no longer pending')
+    }
+    const stable = await ctx.db.get(invitation.stableId)
+    if (!stable || stable.archivedAt !== undefined) {
+      throw new ConvexError('This stable is no longer available')
+    }
+    await ctx.db.patch(invitation._id, {
+      status: 'declined',
+      declinedBy: user._id,
+      declinedAt: Date.now(),
+      updatedAt: Date.now(),
+    })
+    await recordStableAudit(ctx, {
+      stableId: invitation.stableId,
+      actorUserId: user._id,
+      action: 'member_invitation.declined',
+      entityType: 'stableInvitation',
+      entityId: invitation._id,
+      summary: invitation.email,
+    })
   },
 })

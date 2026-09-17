@@ -1,7 +1,8 @@
 import { Navigate, useLocation } from '@tanstack/react-router'
+import { useAuth } from '@clerk/tanstack-react-start'
 import { api } from 'convex/_generated/api'
 import type { Doc, Id } from 'convex/_generated/dataModel'
-import { useConvexAuth, useMutation, useQuery } from 'convex/react'
+import { useAction, useConvexAuth, useQuery } from 'convex/react'
 import {
   createContext,
   useCallback,
@@ -13,6 +14,8 @@ import {
 import type { ReactNode } from 'react'
 
 import { RoutePending } from './RoutePending'
+import { RouteStatusAlert } from './RouteStatusAlert'
+import { Button } from '#/components/ui/button'
 
 const ACTIVE_STABLE_STORAGE_KEY = 'paddockPilot.activeStableId'
 
@@ -28,12 +31,24 @@ const AppUserStateContext = createContext<AppUserState | null>(null)
 
 export function AppUserStateProvider({ children }: { children: ReactNode }) {
   const { pathname } = useLocation()
+  const { userId: clerkUserId } = useAuth()
   const { isAuthenticated, isLoading: isLoadingAuth } = useConvexAuth()
+  const identity = useQuery(
+    api.users.getCurrentIdentity,
+    isAuthenticated ? {} : 'skip',
+  )
   const currentUser = useQuery(
     api.users.getCurrentUser,
     isAuthenticated ? {} : 'skip',
   )
-  const ensureCurrentUser = useMutation(api.users.ensureCurrentUser)
+  const syncCurrentUser = useAction(api.users.syncCurrentUser)
+  const [syncedUserId, setSyncedUserId] = useState<string>()
+  const [syncError, setSyncError] = useState(false)
+  const [syncAttempt, setSyncAttempt] = useState(0)
+  const pendingInvitations = useQuery(
+    api.stableInvitations.listForCurrentUser,
+    currentUser && syncedUserId === clerkUserId ? {} : 'skip',
+  )
   const queriedStables = useQuery(api.stables.list, currentUser ? {} : 'skip')
   const nextIncompleteStable = useQuery(
     api.onboarding.getNextIncompleteStable,
@@ -45,17 +60,18 @@ export function AppUserStateProvider({ children }: { children: ReactNode }) {
   >(readStoredStableId)
 
   useEffect(() => {
-    if (!isAuthenticated || currentUser !== null) return
+    setSyncedUserId(undefined)
+    setSyncError(false)
+    if (!isAuthenticated || !clerkUserId || identity?.subject !== clerkUserId)
+      return
 
     let cancelled = false
-    let retryId: number | undefined
     const bootstrapUser = async () => {
       try {
-        await ensureCurrentUser()
+        await syncCurrentUser()
+        if (!cancelled) setSyncedUserId(clerkUserId)
       } catch {
-        if (!cancelled) {
-          retryId = window.setTimeout(() => void bootstrapUser(), 2_000)
-        }
+        if (!cancelled) setSyncError(true)
       }
     }
 
@@ -63,9 +79,14 @@ export function AppUserStateProvider({ children }: { children: ReactNode }) {
 
     return () => {
       cancelled = true
-      if (retryId !== undefined) window.clearTimeout(retryId)
     }
-  }, [currentUser, ensureCurrentUser, isAuthenticated])
+  }, [
+    clerkUserId,
+    identity?.subject,
+    syncCurrentUser,
+    isAuthenticated,
+    syncAttempt,
+  ])
 
   const routeStableId = getRouteStableId(pathname)
   const activeStable =
@@ -130,16 +151,47 @@ export function AppUserStateProvider({ children }: { children: ReactNode }) {
           ? { stableId: nextIncompleteStable.stableId }
           : undefined
       : undefined
+  const checkInvitations =
+    isAuthenticated && currentUser && !isInvitationExemptPath(pathname)
+  const invitationRedirect = checkInvitations
+    ? pendingInvitations?.[0]
+    : undefined
   const stableSetupPending = Boolean(
     isAuthenticated &&
-      currentUser &&
-      !isStableSetupExemptPath(pathname) &&
-      (queriedStables === undefined || nextIncompleteStable === undefined),
+    currentUser &&
+    !isStableSetupExemptPath(pathname) &&
+    (queriedStables === undefined || nextIncompleteStable === undefined),
+  )
+  const accountPending = Boolean(
+    clerkUserId &&
+    (isLoadingAuth ||
+      !isAuthenticated ||
+      syncedUserId !== clerkUserId ||
+      currentUser?.clerkId !== clerkUserId),
   )
 
   return (
     <AppUserStateContext.Provider value={value}>
-      {stableSetupPending ? (
+      {syncError && clerkUserId ? (
+        <RouteStatusAlert
+          title="Could not prepare your account"
+          description="We couldn’t refresh your account details. Try again to review invitations and continue."
+          actions={
+            <Button onClick={() => setSyncAttempt((attempt) => attempt + 1)}>
+              Try again
+            </Button>
+          }
+        />
+      ) : accountPending ||
+        (checkInvitations && pendingInvitations === undefined) ? (
+        <RoutePending />
+      ) : invitationRedirect ? (
+        <Navigate
+          to="/invitations/$token"
+          params={{ token: invitationRedirect.token }}
+          replace
+        />
+      ) : stableSetupPending ? (
         <RoutePending />
       ) : onboardingRedirect ? (
         <Navigate
@@ -161,7 +213,14 @@ function isStableSetupExemptPath(pathname: string) {
     '/pricing',
     '/sign-in',
     '/sign-up',
+    '/stables/create',
   ].some((path) => pathname === path || pathname.startsWith(path))
+}
+
+function isInvitationExemptPath(pathname: string) {
+  return ['/invitations/', '/pricing', '/sign-in', '/sign-up'].some(
+    (path) => pathname === path || pathname.startsWith(path),
+  )
 }
 
 export function useAppUserState() {

@@ -63,12 +63,20 @@ export function StableInviteForm({
   })
 
   return (
-    <InlineForm gap="compact" layout="invite" onSubmit={onSubmit}>
+    <InlineForm
+      gap="compact"
+      layout="invite"
+      className="sm:gap-y-2"
+      onSubmit={onSubmit}
+    >
       <Controller
         name="email"
         control={form.control}
         render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
+          <Field
+            className="sm:row-span-3 sm:grid sm:grid-rows-subgrid"
+            data-invalid={fieldState.invalid}
+          >
             <FieldLabel htmlFor={field.name}>Email address</FieldLabel>
             <Input
               {...field}
@@ -84,11 +92,13 @@ export function StableInviteForm({
         )}
       />
 
-      <FormSubmitButtons
-        isSubmitting={form.formState.isSubmitting}
-        submitLabel="Invite"
-        submittingLabel="Inviting..."
-      />
+      <div className="grid sm:col-start-2 sm:row-start-2">
+        <FormSubmitButtons
+          isSubmitting={form.formState.isSubmitting}
+          submitLabel="Invite"
+          submittingLabel="Inviting..."
+        />
+      </div>
     </InlineForm>
   )
 }

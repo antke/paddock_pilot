@@ -14,6 +14,7 @@
     "build": "vite build",
     "build:vercel": "convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --cmd 'pnpm build'",
     "preview": "vite preview",
+    "email:preview": "node scripts/preview-emails.mjs",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
     "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",

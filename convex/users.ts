@@ -1,6 +1,8 @@
 import { ConvexError, v } from 'convex/values'
+import { createClerkClient } from '@clerk/backend'
 import type { Id } from './_generated/dataModel'
-import { internalMutation, mutation, query } from './_generated/server'
+import { action, internalMutation, mutation, query } from './_generated/server'
+import { api, internal } from './_generated/api'
 import type { MutationCtx } from './_generated/server'
 import { getUserFromIdentity, requireAuth } from './libs/auth'
 import { reconcilePendingSubscriptions } from './userSubscriptions'
@@ -44,7 +46,14 @@ export const ensureCurrentUser = mutation({
       throw new ConvexError('This account has been deleted')
     }
     if (existingUser) {
-      await reconcilePendingSubscriptions(ctx, existingUser)
+      const email = identity.email?.trim().toLowerCase()
+      if (email && email !== existingUser.email) {
+        await ctx.db.patch(existingUser._id, { email, updatedAt: Date.now() })
+      }
+      await reconcilePendingSubscriptions(ctx, {
+        ...existingUser,
+        email: email || existingUser.email,
+      })
       return existingUser._id
     }
 
@@ -68,10 +77,46 @@ export const ensureCurrentUser = mutation({
   },
 })
 
+// Read the authenticated account from Clerk, never an email supplied by the browser.
+// This also repairs profiles created before the Clerk webhook arrived or when
+// the Convex JWT template did not include an email claim.
+export const syncCurrentUser = action({
+  args: {},
+  handler: async (ctx): Promise<Id<'users'>> => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new ConvexError('User not authenticated')
+
+    const secretKey = process.env.CLERK_SECRET_KEY
+    if (!secretKey) {
+      return await ctx.runMutation(api.users.ensureCurrentUser, {})
+    }
+
+    const clerkUser = await createClerkClient({ secretKey }).users.getUser(
+      identity.subject,
+    )
+    const primaryEmail = clerkUser.emailAddresses.find(
+      (email) => email.id === clerkUser.primaryEmailAddressId,
+    )
+    const userId = await ctx.runMutation(internal.users.upsertUser, {
+      clerkId: identity.subject,
+      email: primaryEmail?.emailAddress ?? '',
+      verifiedEmails: clerkUser.emailAddresses
+        .filter((email) => email.verification?.status === 'verified')
+        .map((email) => email.emailAddress),
+      firstName: clerkUser.firstName ?? '',
+      lastName: clerkUser.lastName ?? undefined,
+      photoUrl: clerkUser.imageUrl || undefined,
+    })
+    if (!userId) throw new ConvexError('This account has been deleted')
+    return userId
+  },
+})
+
 export const upsertUser = internalMutation({
   args: {
     clerkId: v.string(),
     email: v.string(),
+    verifiedEmails: v.optional(v.array(v.string())),
     firstName: v.string(),
     lastName: v.optional(v.string()),
     photoUrl: v.optional(v.string()),
@@ -88,6 +133,11 @@ export const upsertUser = internalMutation({
 
       await ctx.db.patch(existingUser._id, {
         email: args.email.trim().toLowerCase(),
+        ...(args.verifiedEmails !== undefined && {
+          verifiedEmails: args.verifiedEmails.map((email) =>
+            email.trim().toLowerCase(),
+          ),
+        }),
         firstName: args.firstName,
         lastName: args.lastName,
         photoUrl: args.photoUrl,
@@ -101,6 +151,9 @@ export const upsertUser = internalMutation({
     const userId = await ctx.db.insert('users', {
       ...args,
       email: args.email.trim().toLowerCase(),
+      verifiedEmails: args.verifiedEmails?.map((email) =>
+        email.trim().toLowerCase(),
+      ),
       createdAt: now,
       updatedAt: now,
     })
@@ -221,6 +274,7 @@ export const deleteUser = internalMutation({
 
     await ctx.db.patch(user._id, {
       email: `deleted-${user._id}@deleted.invalid`,
+      verifiedEmails: [],
       firstName: 'Deleted',
       lastName: 'user',
       photoUrl: undefined,
