@@ -1,5 +1,10 @@
 import { ArrowLeftIcon, SparkleIcon } from '@phosphor-icons/react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import {
+  OnboardingPendingContext,
+  OnboardingTransitionError,
+} from './onboardingAsync'
 
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
@@ -12,6 +17,9 @@ import type { OnboardingStep } from './OnboardingStepper'
 
 type OnboardingLayoutProps = {
   children: ReactNode
+  pending?: boolean
+  transitionError?: string
+  onRetry?: () => void
   description: ReactNode
   optional?: boolean
   onBack?: () => void
@@ -24,6 +32,9 @@ type OnboardingLayoutProps = {
 
 export function OnboardingLayout({
   children,
+  pending = false,
+  transitionError,
+  onRetry,
   description,
   optional = false,
   onBack,
@@ -33,6 +44,17 @@ export function OnboardingLayout({
   steps,
   title,
 }: OnboardingLayoutProps) {
+  const [childPending, setChildPending] = useState(false)
+  const sectionRef = useRef<HTMLDivElement>(null)
+  const previousTitle = useRef(title)
+  useEffect(() => {
+    if (previousTitle.current !== title) {
+      previousTitle.current = title
+      sectionRef.current?.focus()
+    }
+  }, [title])
+  const busy = pending || childPending
+  const blocked = busy || Boolean(transitionError)
   return (
     <DashboardPage width="narrow">
       <DashboardPageHeader
@@ -40,7 +62,12 @@ export function OnboardingLayout({
         description={pageDescription}
         actions={
           onBack ? (
-            <Button type="button" variant="outline" onClick={onBack}>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={blocked}
+              onClick={onBack}
+            >
               <ArrowLeftIcon aria-hidden="true" />
               Back
             </Button>
@@ -48,15 +75,36 @@ export function OnboardingLayout({
         }
       />
 
-      <OnboardingStepper steps={steps} onStepSelect={onStepSelect} />
+      <OnboardingStepper
+        steps={steps}
+        onStepSelect={blocked ? undefined : onStepSelect}
+      />
 
       <DashboardSectionCard
+        ref={sectionRef}
+        tabIndex={-1}
+        role="region"
+        aria-label={typeof title === 'string' ? title : 'Current setup step'}
         title={title}
         description={description}
         badges={optional ? <Badge variant="secondary">Optional</Badge> : null}
         contentGap="comfortable"
       >
-        {children}
+        {busy && (
+          <p role="status" className="text-sm text-muted-foreground">
+            {pending ? 'Continuing…' : 'Saving…'}
+          </p>
+        )}
+        <OnboardingTransitionError
+          message={transitionError}
+          onRetry={onRetry}
+          pending={pending}
+        />
+        <OnboardingPendingContext.Provider value={setChildPending}>
+          <fieldset disabled={blocked} aria-busy={busy} className="min-w-0">
+            {children}
+          </fieldset>
+        </OnboardingPendingContext.Provider>
       </DashboardSectionCard>
     </DashboardPage>
   )
@@ -64,7 +112,7 @@ export function OnboardingLayout({
 
 export function OnboardingLaterNote({ children }: { children: ReactNode }) {
   return (
-    <Alert className="border-primary/20 bg-primary/5">
+    <Alert role="note">
       <SparkleIcon aria-hidden="true" />
       <AlertTitle>You can do this later</AlertTitle>
       <AlertDescription>{children}</AlertDescription>

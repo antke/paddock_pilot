@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 type ScrollableListProps = {
+  ariaLabel?: string
   children: ReactNode
   itemCount: number
   visibleItemLimit?: number
@@ -13,6 +14,7 @@ type ScrollableListProps = {
 
 function ScrollableList({
   children,
+  ariaLabel = 'Scrollable list',
   itemCount,
   visibleItemLimit = 5,
   estimatedItemHeightRem = 4.25,
@@ -59,6 +61,15 @@ function ScrollableList({
     updateScrollState()
   }, [children, updateScrollState])
 
+  useEffect(() => {
+    const viewport = viewportRef.current
+    if (!viewport || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(updateScrollState)
+    observer.observe(viewport)
+    if (viewport.firstElementChild) observer.observe(viewport.firstElementChild)
+    return () => observer.disconnect()
+  }, [updateScrollState])
+
   return (
     <div
       data-slot="scrollable-list"
@@ -71,12 +82,15 @@ function ScrollableList({
       <div
         data-slot="scrollable-list-viewport"
         ref={viewportRef}
+        role={usesViewportConstraint ? 'region' : undefined}
+        aria-label={usesViewportConstraint ? ariaLabel : undefined}
+        tabIndex={usesViewportConstraint ? 0 : undefined}
         onScroll={updateScrollState}
         className={cn(
-          'grid content-start gap-2',
+          'app-record-list grid content-start gap-1',
           fillParent && 'h-full min-h-0',
           usesViewportConstraint &&
-            'overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+            'overflow-y-auto outline-none focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring/25 [scrollbar-width:thin]',
           className,
         )}
         style={

@@ -58,7 +58,7 @@ export function DashboardPageHeader({
   return (
     <header
       data-slot="dashboard-page-header"
-      className={cn(dashboardHeroClassName('cards'), className)}
+      className={cn(dashboardHeroClassName('flat'), className)}
     >
       <div
         className={cn(contentLayoutClassName[contentLayout], contentClassName)}

@@ -7,7 +7,8 @@ import { Select } from '#/components/ui/select'
 import { Textarea } from '#/components/ui/textarea'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Id } from 'convex/_generated/dataModel'
-import { useEffect } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
+import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Controller, useForm } from 'react-hook-form'
 import type { Control } from 'react-hook-form'
 import {
@@ -17,10 +18,7 @@ import {
 } from 'shared/stables/stableDocumentSchema'
 import type { StableDocumentFormSchema } from 'shared/stables/stableDocumentSchema'
 
-export type DocumentUploadValues = Omit<
-  StableDocumentFormSchema,
-  'horseId'
-> & {
+export type DocumentUploadValues = Omit<StableDocumentFormSchema, 'horseId'> & {
   horseId?: string
 }
 
@@ -33,13 +31,19 @@ type DocumentUploadFormProps = {
   horseOptions?: Array<HorseOption>
   fixedHorseId?: Id<'horses'>
   onSubmit: (values: DocumentUploadValues) => Promise<void>
+  onPendingChange?: (pending: boolean) => void
 }
 
 export function DocumentUploadForm({
   horseOptions = [],
   fixedHorseId,
   onSubmit,
+  onPendingChange,
 }: DocumentUploadFormProps) {
+  const formId = useId()
+  const pending = useRef(false)
+  const [isPending, setIsPending] = useState(false)
+  const [failed, setFailed] = useState(false)
   const form = useForm<StableDocumentFormSchema>({
     resolver: zodResolver(stableDocumentFormSchema),
     mode: 'onTouched',
@@ -63,23 +67,46 @@ export function DocumentUploadForm({
   }, [form, selectedFile])
 
   const submit = async (values: StableDocumentFormSchema) => {
-    await onSubmit({
-      ...values,
-      horseId: (fixedHorseId ?? values.horseId) || undefined,
-    })
-    form.reset({
-      horseId: fixedHorseId ?? '',
-      type: values.type,
-      fileName: '',
-      notes: '',
-    })
+    if (pending.current) return
+    pending.current = true
+    setIsPending(true)
+    setFailed(false)
+    onPendingChange?.(true)
+    try {
+      await onSubmit({
+        ...values,
+        horseId: (fixedHorseId ?? values.horseId) || undefined,
+      })
+      form.reset({
+        horseId: fixedHorseId ?? '',
+        type: values.type,
+        file: undefined,
+        fileName: '',
+        notes: '',
+      })
+    } catch {
+      setFailed(true)
+    } finally {
+      pending.current = false
+      setIsPending(false)
+      onPendingChange?.(false)
+    }
   }
 
   return (
     <InlineForm onSubmit={form.handleSubmit(submit)}>
+      {failed && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            Could not add this document. Your file and details are still here.
+            Please try again.
+          </AlertDescription>
+        </Alert>
+      )}
       <DocumentFileField
+        formId={formId}
         control={form.control}
-        disabled={form.formState.isSubmitting}
+        disabled={form.formState.isSubmitting || isPending}
       />
 
       <FieldGrid>
@@ -88,23 +115,36 @@ export function DocumentUploadForm({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Document name</FieldLabel>
+              <FieldLabel htmlFor={`${formId}-${field.name}`}>
+                Document name
+              </FieldLabel>
               <Input
                 {...field}
-                id={field.name}
-                disabled={form.formState.isSubmitting}
+                id={`${formId}-${field.name}`}
+                disabled={form.formState.isSubmitting || isPending}
                 aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid
+                    ? `${formId}-${field.name}-error`
+                    : undefined
+                }
                 placeholder="Passport scan"
                 autoComplete="off"
               />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && (
+                <FieldError
+                  id={`${formId}-${field.name}-error`}
+                  errors={[fieldState.error]}
+                />
+              )}
             </Field>
           )}
         />
 
         <DocumentTypeField
+          formId={formId}
           control={form.control}
-          disabled={form.formState.isSubmitting}
+          disabled={form.formState.isSubmitting || isPending}
         />
       </FieldGrid>
 
@@ -115,12 +155,19 @@ export function DocumentUploadForm({
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>Horse (optional)</FieldLabel>
+                <FieldLabel htmlFor={`${formId}-${field.name}`}>
+                  Horse (optional)
+                </FieldLabel>
                 <Select
                   {...field}
-                  id={field.name}
-                  disabled={form.formState.isSubmitting}
+                  id={`${formId}-${field.name}`}
+                  disabled={form.formState.isSubmitting || isPending}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid
+                      ? `${formId}-${field.name}-error`
+                      : undefined
+                  }
                 >
                   <option value="">Stable-wide document</option>
                   {horseOptions.map((horse) => (
@@ -130,7 +177,10 @@ export function DocumentUploadForm({
                   ))}
                 </Select>
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id={`${formId}-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -143,21 +193,31 @@ export function DocumentUploadForm({
         control={form.control}
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>Notes (optional)</FieldLabel>
+            <FieldLabel htmlFor={`${formId}-${field.name}`}>
+              Notes (optional)
+            </FieldLabel>
             <Textarea
               {...field}
-              id={field.name}
-              disabled={form.formState.isSubmitting}
+              id={`${formId}-${field.name}`}
+              disabled={form.formState.isSubmitting || isPending}
               aria-invalid={fieldState.invalid}
+              aria-describedby={
+                fieldState.invalid ? `${formId}-${field.name}-error` : undefined
+              }
               placeholder="Expiry dates, what the document proves, or when it was last checked"
             />
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            {fieldState.invalid && (
+              <FieldError
+                id={`${formId}-${field.name}-error`}
+                errors={[fieldState.error]}
+              />
+            )}
           </Field>
         )}
       />
 
       <FormSubmitActions
-        isSubmitting={form.formState.isSubmitting}
+        isSubmitting={form.formState.isSubmitting || isPending}
         submitLabel="Add document"
         submittingLabel="Uploading…"
         sticky
@@ -167,9 +227,11 @@ export function DocumentUploadForm({
 }
 
 function DocumentTypeField({
+  formId,
   control,
   disabled,
 }: {
+  formId: string
   control: Control<StableDocumentFormSchema>
   disabled: boolean
 }) {
@@ -179,12 +241,15 @@ function DocumentTypeField({
       control={control}
       render={({ field, fieldState }) => (
         <Field data-invalid={fieldState.invalid}>
-          <FieldLabel htmlFor={field.name}>Type</FieldLabel>
+          <FieldLabel htmlFor={`${formId}-${field.name}`}>Type</FieldLabel>
           <Select
             {...field}
-            id={field.name}
+            id={`${formId}-${field.name}`}
             disabled={disabled}
             aria-invalid={fieldState.invalid}
+            aria-describedby={
+              fieldState.invalid ? `${formId}-${field.name}-error` : undefined
+            }
           >
             {stableDocumentTypes.map((type) => (
               <option key={type} value={type}>
@@ -192,7 +257,12 @@ function DocumentTypeField({
               </option>
             ))}
           </Select>
-          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          {fieldState.invalid && (
+            <FieldError
+              id={`${formId}-${field.name}-error`}
+              errors={[fieldState.error]}
+            />
+          )}
         </Field>
       )}
     />
@@ -200,9 +270,11 @@ function DocumentTypeField({
 }
 
 function DocumentFileField({
+  formId,
   control,
   disabled,
 }: {
+  formId: string
   control: Control<StableDocumentFormSchema>
   disabled: boolean
 }) {
@@ -213,7 +285,7 @@ function DocumentFileField({
       render={({ field: { value, onChange, ref, ...field }, fieldState }) => (
         <FileUploadField
           {...field}
-          id={field.name}
+          id={`${formId}-${field.name}`}
           label="File (required)"
           controlRef={ref}
           required

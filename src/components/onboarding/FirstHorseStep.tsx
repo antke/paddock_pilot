@@ -2,6 +2,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from 'convex/react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
+import { useId } from 'react'
+import { useOnboardingSave, OnboardingSaveError } from './onboardingAsync'
 import type { Doc, Id } from 'convex/_generated/dataModel'
 
 import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
@@ -11,9 +13,9 @@ import {
   FieldDescription,
   FieldError,
   FieldLabel,
+  FieldLegend,
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
-import { showAppErrorToast } from '#/components/ui/sonner'
 import { api } from 'convex/_generated/api'
 import {
   calculateHorseAge,
@@ -86,23 +88,61 @@ const firstHorseSchema = z
     }
   })
 
-type FirstHorseValues = z.infer<typeof firstHorseSchema>
+export type FirstHorseValues = z.infer<typeof firstHorseSchema>
 
-export function FirstHorseStep({
-  horse,
-  stableId,
-  onDeferred,
-  onSaved,
-  cancelLabel = 'Do this later',
-}: {
+type FirstHorseStepProps = {
   horse?: Doc<'horses'>
   stableId: Id<'stables'>
   onDeferred: () => void | Promise<void>
   onSaved: () => void | Promise<void>
   cancelLabel?: string
-}) {
+}
+export type FirstHorseSaveValues = {
+  name: string
+  age: number
+  dateOfBirth?: string
+}
+export function FirstHorseStep(props: FirstHorseStepProps) {
   const addHorse = useMutation(api.horses.add)
   const updateHorse = useMutation(api.horses.updateOnboardingBasics)
+  return (
+    <FirstHorseStepView
+      {...props}
+      onSave={async (values) => {
+        if (props.horse) await updateHorse({ id: props.horse._id, ...values })
+        else await addHorse({ stableId: props.stableId, ...values })
+      }}
+    />
+  )
+}
+export function FirstHorseStepView({
+  horse,
+  onDeferred,
+  onSaved,
+  cancelLabel = 'Do this later',
+  onSave,
+}: FirstHorseStepProps & {
+  onSave: (values: FirstHorseSaveValues) => Promise<void>
+}) {
+  const formId = useId()
+  const save = useOnboardingSave({
+    onSave: async (values: FirstHorseValues) => {
+      const dateOfBirth = composeHorseBirthDate({
+        year: values.birthYear,
+        month: values.birthMonth,
+        day: values.birthDay,
+      })
+      const age = dateOfBirth
+        ? calculateHorseAge(dateOfBirth)
+        : Number(values.age)
+      if (age === undefined) throw new Error('Invalid horse age')
+      await onSave({ name: values.name, dateOfBirth, age })
+    },
+    onSaved,
+    failureMessage: horse
+      ? 'Could not update the horse. Your entries are still here. Try again.'
+      : 'Could not add the horse. Your entries are still here. Try again.',
+  })
   const birthDate = splitHorseBirthDate(horse?.dateOfBirth)
   const form = useForm<FirstHorseValues>({
     resolver: zodResolver(firstHorseSchema),
@@ -118,38 +158,9 @@ export function FirstHorseStep({
   const birthYear = form.watch('birthYear')
   const birthMonth = form.watch('birthMonth')
 
-  const onSubmit = async (values: FirstHorseValues) => {
-    try {
-      const dateOfBirth = composeHorseBirthDate({
-        year: values.birthYear,
-        month: values.birthMonth,
-        day: values.birthDay,
-      })
-      const age = dateOfBirth
-        ? calculateHorseAge(dateOfBirth)
-        : Number(values.age)
-      if (age === undefined) throw new Error('Invalid horse age')
-
-      if (horse) {
-        await updateHorse({
-          id: horse._id,
-          name: values.name,
-          dateOfBirth,
-          age,
-        })
-      } else {
-        await addHorse({ stableId, name: values.name, dateOfBirth, age })
-      }
-      await onSaved()
-    } catch {
-      showAppErrorToast({
-        title: horse ? 'Could not update the horse' : 'Could not add the horse',
-      })
-    }
-  }
-
   return (
-    <InlineForm onSubmit={form.handleSubmit(onSubmit)}>
+    <InlineForm onSubmit={form.handleSubmit(save.run)}>
+      <OnboardingSaveError message={save.error} />
       <OnboardingLaterNote>
         Start with the essentials. You can add care routines, health history,
         identification and documents from the horse’s profile whenever you’re
@@ -161,23 +172,33 @@ export function FirstHorseStep({
         control={form.control}
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>Horse name</FieldLabel>
+            <FieldLabel htmlFor={`${formId}-${field.name}`}>
+              Horse name
+            </FieldLabel>
             <Input
               {...field}
-              id={field.name}
+              id={`${formId}-${field.name}`}
               placeholder="Maple"
               autoComplete="off"
               aria-invalid={fieldState.invalid}
-              disabled={form.formState.isSubmitting}
+              aria-describedby={
+                fieldState.invalid ? `${formId}-${field.name}-error` : undefined
+              }
+              disabled={save.pending || save.acknowledged}
             />
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            {fieldState.invalid && (
+              <FieldError
+                id={`${formId}-${field.name}-error`}
+                errors={[fieldState.error]}
+              />
+            )}
           </Field>
         )}
       />
 
       <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(8rem,1fr)] lg:gap-y-2">
-        <Field className="lg:row-span-2 lg:grid lg:grid-rows-subgrid">
-          <FieldLabel>Birth date</FieldLabel>
+        <fieldset className="grid gap-3 lg:row-span-2 lg:grid-rows-subgrid">
+          <FieldLegend>Birth date</FieldLegend>
           <div className="grid content-start gap-2">
             <div className="grid grid-cols-3 gap-2">
               <BirthPartField
@@ -186,7 +207,7 @@ export function FirstHorseStep({
                 label="Year"
                 placeholder="2016"
                 maxLength={4}
-                disabled={form.formState.isSubmitting}
+                disabled={save.pending || save.acknowledged}
               />
               <BirthPartField
                 control={form.control}
@@ -194,7 +215,7 @@ export function FirstHorseStep({
                 label="Month"
                 placeholder="MM"
                 maxLength={2}
-                disabled={form.formState.isSubmitting || !birthYear}
+                disabled={save.pending || save.acknowledged || !birthYear}
               />
               <BirthPartField
                 control={form.control}
@@ -202,7 +223,7 @@ export function FirstHorseStep({
                 label="Day"
                 placeholder="DD"
                 maxLength={2}
-                disabled={form.formState.isSubmitting || !birthMonth}
+                disabled={save.pending || save.acknowledged || !birthMonth}
               />
             </div>
             <FieldDescription>
@@ -210,7 +231,7 @@ export function FirstHorseStep({
               optional.
             </FieldDescription>
           </div>
-        </Field>
+        </fieldset>
 
         <Controller
           name="age"
@@ -220,24 +241,34 @@ export function FirstHorseStep({
               className="lg:col-start-2 lg:row-start-2"
               data-invalid={fieldState.invalid}
             >
-              <FieldLabel htmlFor={field.name} size="compact">
+              <FieldLabel htmlFor={`${formId}-${field.name}`} size="compact">
                 Or current age
               </FieldLabel>
               <Input
                 {...field}
-                id={field.name}
+                id={`${formId}-${field.name}`}
                 type="number"
                 inputMode="numeric"
                 min={0}
                 max={100}
                 placeholder="10"
                 aria-invalid={fieldState.invalid}
-                disabled={form.formState.isSubmitting}
+                aria-describedby={
+                  fieldState.invalid
+                    ? `${formId}-${field.name}-error`
+                    : undefined
+                }
+                disabled={save.pending || save.acknowledged}
               />
               <FieldDescription>
                 If both are entered, the birth date is used.
               </FieldDescription>
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && (
+                <FieldError
+                  id={`${formId}-${field.name}-error`}
+                  errors={[fieldState.error]}
+                />
+              )}
             </Field>
           )}
         />
@@ -245,10 +276,16 @@ export function FirstHorseStep({
 
       <FormSubmitActions
         align="end"
-        isSubmitting={form.formState.isSubmitting}
+        isSubmitting={save.pending}
         onCancel={onDeferred}
         cancelLabel={cancelLabel}
-        submitLabel={horse ? 'Save horse details' : 'Add horse and continue'}
+        submitLabel={
+          save.acknowledged
+            ? 'Continue without saving again'
+            : horse
+              ? 'Save horse details'
+              : 'Add horse and continue'
+        }
         submittingLabel="Saving..."
       />
     </InlineForm>
@@ -270,25 +307,34 @@ function BirthPartField({
   maxLength: number
   disabled: boolean
 }) {
+  const formId = useId()
   return (
     <Controller
       name={name}
       control={control}
       render={({ field, fieldState }) => (
         <Field data-invalid={fieldState.invalid}>
-          <FieldLabel htmlFor={field.name} size="compact">
+          <FieldLabel htmlFor={`${formId}-${field.name}`} size="compact">
             {label}
           </FieldLabel>
           <Input
             {...field}
-            id={field.name}
+            id={`${formId}-${field.name}`}
             inputMode="numeric"
             maxLength={maxLength}
             placeholder={placeholder}
             aria-invalid={fieldState.invalid}
+            aria-describedby={
+              fieldState.invalid ? `${formId}-${field.name}-error` : undefined
+            }
             disabled={disabled}
           />
-          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          {fieldState.invalid && (
+            <FieldError
+              id={`${formId}-${field.name}-error`}
+              errors={[fieldState.error]}
+            />
+          )}
         </Field>
       )}
     />

@@ -7,7 +7,12 @@ import {
 import { DashboardEntityHero } from '#/components/dashboard/DashboardEntityHero'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { formatMetaText } from '#/lib/textDisplay'
-import { Link, useLocation } from '@tanstack/react-router'
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useSearch,
+} from '@tanstack/react-router'
 import type { Doc } from 'convex/_generated/dataModel'
 import type { ReactNode } from 'react'
 import { HorseActivitySection } from './HorseActivitySection'
@@ -16,17 +21,15 @@ import { HorseDocumentsSection } from './HorseDocumentsSection'
 import { HorseNutritionSection } from './HorseNutritionSection'
 import { HorseProfileSection } from './HorseProfileSection'
 import { HorseAvatar } from './HorseAvatar'
+import { ButtonLink } from '#/components/ui/button'
+import { parseHorseCareSearch } from './horseCareSearch'
 
 export type HorseDetailHorse = Doc<'horses'> & {
   profileImageUrl?: string | null
 }
 
 export type HorseDetailCategory =
-  | 'profile'
-  | 'activity'
-  | 'care'
-  | 'nutrition'
-  | 'documents'
+  'profile' | 'activity' | 'care' | 'nutrition' | 'documents'
 
 type HorseDetailProps = {
   stableId: string
@@ -72,11 +75,14 @@ export function HorseDetail({
   children,
 }: HorseDetailProps) {
   const { pathname } = useLocation()
+  const search = useSearch({ strict: false })
+  const navigate = useNavigate()
+  const { careView } = parseHorseCareSearch(search)
   const horseBasePath = `/stables/${stableId}/horses/${horse._id}`
   const pathAfterHorse = pathname.slice(horseBasePath.length)
   const activeCategory = category ?? getHorseDetailCategory(pathAfterHorse)
-  const moreSectionActive = ['/timeline', '/care-summary', '/edit'].some(
-    (path) => pathAfterHorse.startsWith(path),
+  const moreSectionActive = ['/timeline', '/care-summary'].some((path) =>
+    pathAfterHorse.startsWith(path),
   )
   const heroDescription = formatMetaText([
     horse.ownerName ? `Owner: ${horse.ownerName}` : undefined,
@@ -90,6 +96,17 @@ export function HorseDetail({
         className="print:hidden"
         title={horse.name}
         description={heroDescription || undefined}
+        actions={
+          canManageHorse && !pathAfterHorse.startsWith('/edit') ? (
+            <ButtonLink
+              to="/stables/$stableId/horses/$horseId/edit"
+              params={{ stableId, horseId: horse._id }}
+              variant="outline"
+            >
+              Edit horse
+            </ButtonLink>
+          ) : undefined
+        }
         leading={
           <HorseAvatar
             name={horse.name}
@@ -149,20 +166,6 @@ export function HorseDetail({
               >
                 Care summary
               </DashboardNavigationMenuLink>
-              {canManageHorse && (
-                <DashboardNavigationMenuLink
-                  active={pathAfterHorse.startsWith('/edit')}
-                  variant="section"
-                  render={
-                    <Link
-                      to="/stables/$stableId/horses/$horseId/edit"
-                      params={{ stableId, horseId: horse._id }}
-                    />
-                  }
-                >
-                  Edit horse
-                </DashboardNavigationMenuLink>
-              )}
             </DashboardNavigationMenuGroup>
           </DashboardNavigation>
         </div>
@@ -183,7 +186,20 @@ export function HorseDetail({
         />
       )}
       {activeCategory === 'care' && (
-        <HorseCareSection stableId={stableId} horse={horse} events={events} />
+        <HorseCareSection
+          stableId={stableId}
+          horse={horse}
+          events={events}
+          activeTab={careView === 'health' ? 'health' : 'reminders'}
+          onTabChange={(tab) => {
+            void navigate({
+              to: '/stables/$stableId/horses/$horseId/care',
+              params: { stableId, horseId: horse._id },
+              search: tab === 'health' ? { careView: 'health' } : {},
+              replace: true,
+            })
+          }}
+        />
       )}
       {activeCategory === 'nutrition' && (
         <HorseNutritionSection

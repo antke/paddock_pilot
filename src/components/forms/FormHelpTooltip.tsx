@@ -5,6 +5,7 @@ import {
   TooltipTrigger,
 } from '#/components/ui/tooltip'
 import type { ReactNode } from 'react'
+import { useState } from 'react'
 
 type FormHelpTooltipProps = {
   label: string
@@ -12,9 +13,13 @@ type FormHelpTooltipProps = {
 }
 
 export function FormHelpTooltip({ label, children }: FormHelpTooltipProps) {
+  const [open, setOpen] = useState(false)
+
   return (
-    <Tooltip>
+    <Tooltip open={open} onOpenChange={setOpen}>
       <TooltipTrigger
+        closeOnClick={false}
+        onClick={() => setOpen(true)}
         render={
           <Button
             type="button"

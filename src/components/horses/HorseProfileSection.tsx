@@ -1,3 +1,4 @@
+import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import {
   DetailField,
   DetailGrid,
@@ -7,7 +8,6 @@ import {
   DetailStack,
 } from '#/components/dashboard/DetailBlocks'
 import { DashboardBadgeList } from '#/components/dashboard/DashboardBadgeList'
-import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { TextLabel } from '#/components/ui/text-label'
 import { calculateHorseAge } from 'shared/horses/horseAge'
 import { HorseAllergyBadge } from './HorseBadges'
@@ -26,10 +26,10 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
   const ageLabel = typeof age === 'number' ? `${age}` : 'Not recorded'
 
   return (
-    <DashboardSectionCard title="Profile" size="panel" contentGap="loose">
+    <DashboardSection aria-label="Horse profile">
       <DetailPanelGrid variant="equal">
-        <DetailPanel title="At a glance" span="lg2">
-          <DetailGrid columns={4} gap="default">
+        <DetailPanel as="h2" title="At a glance" span="lg2">
+          <DetailGrid columns={4} mobileColumns={2} gap="default">
             <DetailField
               indent={false}
               label="Age"
@@ -88,7 +88,7 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
         </DetailPanel>
 
         {hasRegistrationDetails && (
-          <DetailPanel title="Identification">
+          <DetailPanel as="h2" title="Identification">
             <DetailGrid gap="default">
               {horse.passportNumber && (
                 <DetailField
@@ -127,7 +127,7 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
         )}
 
         {hasBreedingDetails && (
-          <DetailPanel title="Lineage and routine">
+          <DetailPanel as="h2" title="Lineage and routine">
             <DetailGrid gap="default">
               {horse.sire && (
                 <DetailField
@@ -158,7 +158,7 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
         )}
 
         {hasCareNotes && (
-          <DetailPanel title="Notes" span="lg2">
+          <DetailPanel as="h2" title="Notes" span="lg2">
             <DetailStack gap="loose">
               {horse.allergies?.length ? (
                 <DetailStack gap="compact">
@@ -185,6 +185,6 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
           </DetailPanel>
         )}
       </DetailPanelGrid>
-    </DashboardSectionCard>
+    </DashboardSection>
   )
 }

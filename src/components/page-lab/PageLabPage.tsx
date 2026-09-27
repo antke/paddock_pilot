@@ -1,12 +1,31 @@
+import { StableLayoutPageLab } from './prototypes/StableLayoutPageLab'
+import { RouteRecoveryPageLab } from './prototypes/RouteRecoveryPageLab'
+import { HorseRecordsPageLab } from './prototypes/HorseRecordsPageLab'
+import { OnboardingPageLab } from './prototypes/OnboardingPageLab'
+import { ProfilePageLab } from './prototypes/ProfilePageLab'
+import { PricingPageLab } from './prototypes/PricingPageLab'
+import { InvitationsPageLab } from './prototypes/InvitationsPageLab'
+import { HeaderPageLab } from './prototypes/HeaderPageLab'
+import { HorseActivityPageLab } from './prototypes/HorseActivityPageLab'
+import { MembersSettingsPageLab } from '#/components/page-lab/prototypes/MembersSettingsPageLab'
+import { MembersDirectoryPageLab } from '#/components/page-lab/prototypes/MembersDirectoryPageLab'
+import { DeletedHorsesPageLab } from '#/components/page-lab/prototypes/DeletedHorsesPageLab'
+import { StableWelcomePageLab } from '#/components/page-lab/prototypes/StableWelcomePageLab'
+import { StableFormPageLab } from '#/components/page-lab/prototypes/StableFormPageLab'
+import { ProvidersPageLab } from '#/components/page-lab/prototypes/ProvidersPageLab'
+import { EventServiceNotesPageLab } from '#/components/page-lab/prototypes/EventServiceNotesPageLab'
 import { StableDashboardPageLab } from '#/components/page-lab/prototypes/StableDashboardPageLab'
 import { StablesListPageLab } from '#/components/page-lab/prototypes/StablesListPageLab'
 import { HorseListPageLab } from '#/components/page-lab/prototypes/HorseListPageLab'
 import { HorseDetailPageLab } from '#/components/page-lab/prototypes/HorseDetailPageLab'
+import { HorseFormPageLab } from '#/components/page-lab/prototypes/HorseFormPageLab'
 import { EventListPageLab } from '#/components/page-lab/prototypes/EventListPageLab'
 import { EventDetailPageLab } from '#/components/page-lab/prototypes/EventDetailPageLab'
 import { RemindersPageLab } from '#/components/page-lab/prototypes/RemindersPageLab'
 import { DocumentsPageLab } from '#/components/page-lab/prototypes/DocumentsPageLab'
-import { AnalysisCentre } from '#/components/analysis/AnalysisCentre'
+import { StableAnalysisPageView } from '#/components/analysis/StableAnalysisPage'
+import { AnalysisPageLab } from './prototypes/AnalysisPageLab'
+import { HorseInvitationsPageLab } from './prototypes/HorseInvitationsPageLab'
 import { SettingsPageLab } from '#/components/page-lab/prototypes/SettingsPageLab'
 import { FormsPageLab } from '#/components/page-lab/prototypes/FormsPageLab'
 import { CalendarPageLab } from '#/components/page-lab/prototypes/CalendarPageLab'
@@ -51,9 +70,8 @@ type PageLabPageProps = {
 export function PageLabPage({ pageId }: PageLabPageProps) {
   const page = getPageLabPage(pageId)
   const devAuthBypassEnabled = useDevAuthBypassEnabled()
-  const [activeFixtureStableId, setActiveFixtureStableId] = useState<
-    Doc<'stables'>['_id']
-  >()
+  const [activeFixtureStableId, setActiveFixtureStableId] =
+    useState<Doc<'stables'>['_id']>()
 
   if (devAuthBypassEnabled) {
     if (!page) {
@@ -75,11 +93,7 @@ export function PageLabPage({ pageId }: PageLabPageProps) {
         <LabPreviewSeparator />
 
         <div>
-          <PageLabReviewSurface
-            pageId={page.id}
-            data={data}
-            allEvents={data.events}
-          />
+          <PageLabReviewSurface pageId={page.id} data={data} />
         </div>
       </LabPageShell>
     )
@@ -177,7 +191,7 @@ function PageLabData({
       <LabPreviewSeparator />
 
       <div>
-        <PageLabReviewSurface pageId={pageId} data={data} allEvents={events} />
+        <PageLabReviewSurface pageId={pageId} data={data} />
       </div>
     </LabPageShell>
   )
@@ -242,20 +256,35 @@ function PageLabNavigation({ activePageId }: { activePageId: PageLabPageId }) {
 function PageLabReviewSurface({
   pageId,
   data,
-  allEvents,
 }: {
   pageId: PageLabPageId
   data: DashboardLabData
-  allEvents: Array<Doc<'events'>>
 }) {
   const devAuthBypassEnabled = useDevAuthBypassEnabled()
+
+  if (pageId === 'route-recovery') return <RouteRecoveryPageLab />
+  if (pageId === 'onboarding') return <OnboardingPageLab data={data} />
+  if (pageId === 'profile') return <ProfilePageLab />
+  if (pageId === 'pricing') return <PricingPageLab />
+  if (pageId === 'invitations') return <InvitationsPageLab data={data} />
+  if (pageId === 'header') return <HeaderPageLab />
 
   if (pageId === 'stable-dashboard') {
     return <StableDashboardPageLab data={data} />
   }
 
+  if (pageId === 'deleted-horses') return <DeletedHorsesPageLab data={data} />
+  if (pageId === 'stable-welcome') return <StableWelcomePageLab data={data} />
+  if (pageId === 'members-settings')
+    return <MembersSettingsPageLab data={data} />
+  if (pageId === 'members-directory')
+    return <MembersDirectoryPageLab data={data} />
+  if (pageId === 'stable-form') return <StableFormPageLab data={data} />
+  if (pageId === 'stable-layout') return <StableLayoutPageLab />
+  if (pageId === 'providers') return <ProvidersPageLab data={data} />
+
   if (pageId === 'stables-list') {
-    return <StablesListPageLab data={data} allEvents={allEvents} />
+    return <StablesListPageLab data={data} />
   }
 
   if (pageId === 'horse-list') {
@@ -266,8 +295,21 @@ function PageLabReviewSurface({
     return <HorseDetailPageLab data={data} />
   }
 
+  if (pageId === 'horse-records') return <HorseRecordsPageLab data={data} />
+  if (pageId === 'horse-invitations')
+    return <HorseInvitationsPageLab data={data} />
+  if (pageId === 'horse-activity') return <HorseActivityPageLab data={data} />
+
+  if (pageId === 'horse-form') {
+    return <HorseFormPageLab data={data} />
+  }
+
   if (pageId === 'event-list') {
     return <EventListPageLab data={data} />
+  }
+
+  if (pageId === 'event-service-notes') {
+    return <EventServiceNotesPageLab data={data} />
   }
 
   if (pageId === 'event-detail') {
@@ -284,16 +326,7 @@ function PageLabReviewSurface({
 
   if (pageId === 'analysis') {
     if (devAuthBypassEnabled) {
-      return (
-        <AnalysisCentre
-          data={data}
-          stableAnalysis={{
-            hasAccess: false,
-            requiredPlan: 'personal_pro',
-            stable: data.stable,
-          }}
-        />
-      )
+      return <AnalysisPageLab data={data} />
     }
 
     return <AnalysisPageLabData data={data} />
@@ -344,5 +377,5 @@ function AnalysisPageLabData({ data }: { data: DashboardLabData }) {
     }),
   )
 
-  return <AnalysisCentre data={data} stableAnalysis={stableAnalysis} />
+  return <StableAnalysisPageView data={data} analysis={stableAnalysis} />
 }

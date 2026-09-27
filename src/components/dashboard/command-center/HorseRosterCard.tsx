@@ -22,7 +22,7 @@ export function HorseRosterCard({
   className,
   data,
   visibleItemLimit = 5,
-  chrome = 'cards',
+  chrome = 'soft',
 }: HorseRosterCardProps) {
   const horses = data.horses.slice(0, visibleItemLimit)
 
@@ -58,10 +58,7 @@ export function HorseRosterCard({
       }
     >
       {data.horses.length > 0 ? (
-        <DashboardItemList
-          className="@min-[42rem]/horse-roster:grid-cols-2"
-          gap="compact"
-        >
+        <DashboardItemList gap="compact">
           {horses.map((horse) => (
             <HorseRosterItem key={horse._id} data={data} horse={horse} />
           ))}

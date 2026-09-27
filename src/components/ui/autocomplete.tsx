@@ -30,7 +30,7 @@ function AutocompleteInput({
       />
       <AutocompletePrimitive.Trigger
         aria-label={triggerLabel}
-        className="app-control-focus group/autocomplete-trigger absolute top-1/2 right-1 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-transparent text-foreground/80 transition-[background-color,color,transform] duration-150 outline-none hover:bg-primary/18 hover:text-foreground active:scale-95 active:bg-primary/24 disabled:pointer-events-none disabled:opacity-50 data-popup-open:text-foreground motion-reduce:transition-none"
+        className="app-control-focus group/autocomplete-trigger absolute top-1/2 right-1 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-transparent text-foreground/80 transition-[background-color,color,transform] duration-150 outline-none hover:bg-surface-muted hover:text-foreground active:scale-95 active:bg-surface-muted disabled:pointer-events-none disabled:opacity-50 data-popup-open:text-foreground motion-reduce:transition-none"
       >
         <CaretDownIcon
           aria-hidden="true"
@@ -100,7 +100,7 @@ function AutocompleteItem({
     <AutocompletePrimitive.Item
       data-slot="autocomplete-item"
       className={cn(
-        'cursor-pointer rounded-control border border-transparent px-3 py-2.5 outline-none transition-colors select-none data-disabled:pointer-events-none data-disabled:opacity-50 data-highlighted:border-primary/20 data-highlighted:bg-primary/8',
+        'cursor-pointer rounded-control border border-transparent px-3 py-2.5 outline-none transition-colors select-none data-disabled:pointer-events-none data-disabled:opacity-50 data-highlighted:border-selection data-highlighted:bg-selection-surface data-highlighted:text-selection',
         className,
       )}
       {...props}
@@ -129,7 +129,7 @@ function AutocompleteGroupLabel({
     <AutocompletePrimitive.GroupLabel
       data-slot="autocomplete-group-label"
       className={cn(
-        'px-4 pt-3 pb-1 text-xs font-bold tracking-[0.08em] text-muted-foreground uppercase',
+        'px-4 pt-3 pb-1 text-sm font-semibold text-muted-foreground',
         className,
       )}
       {...props}

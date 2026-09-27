@@ -32,19 +32,6 @@ export function HorseCareRemindersCard({
   const completeReminder = useMutation(api.careReminders.complete)
   const dismissReminder = useMutation(api.careReminders.dismiss)
   const removeReminder = useMutation(api.careReminders.remove)
-  const reminders: Array<CareReminderListItem> = data.reminders.map(
-    (reminder) => ({
-      reminder,
-      horseName: horse.name,
-      canManage: data.canManage,
-    }),
-  )
-  const filterConfig = useMemo(createHorseCareReminderListFilterConfig, [])
-  const filtering = useListFiltering({
-    items: reminders,
-    config: filterConfig,
-  })
-
   const onAdd = useCallback(
     async (values: CareReminderSubmitData) => {
       try {
@@ -76,11 +63,55 @@ export function HorseCareRemindersCard({
   )
 
   return (
+    <HorseCareRemindersView
+      horse={horse}
+      records={data.reminders}
+      canManage={data.canManage}
+      onAdd={onAdd}
+      onComplete={(reminder) => completeWithToast(completeReminder, reminder)}
+      onDismiss={(reminder) => dismissWithToast(dismissReminder, reminder)}
+      onRemove={(reminder) => removeWithToast(removeReminder, reminder)}
+      onCreateActionChange={onCreateActionChange}
+    />
+  )
+}
+
+type HorseCareRemindersViewProps = HorseCareRemindersCardProps & {
+  records: Array<Doc<'careReminders'>>
+  canManage: boolean
+  onAdd: (values: CareReminderSubmitData) => Promise<void>
+  onComplete: (record: Doc<'careReminders'>) => Promise<void>
+  onDismiss: (record: Doc<'careReminders'>) => Promise<void>
+  onRemove: (record: Doc<'careReminders'>) => Promise<void>
+}
+
+export function HorseCareRemindersView({
+  horse,
+  records,
+  canManage,
+  onAdd,
+  onComplete,
+  onDismiss,
+  onRemove,
+  onCreateActionChange,
+}: HorseCareRemindersViewProps) {
+  const reminders: Array<CareReminderListItem> = records.map((reminder) => ({
+    reminder,
+    horseName: horse.name,
+    canManage: canManage,
+  }))
+  const filterConfig = useMemo(createHorseCareReminderListFilterConfig, [])
+  const filtering = useListFiltering({
+    items: reminders,
+    config: filterConfig,
+  })
+
+  return (
     <CareRemindersCard
       title="Care reminders"
       description="Track due checks, reviews, and follow-ups for this horse."
       reminders={filtering.items}
-      canAddReminder={data.canManage}
+      canAddReminder={canManage}
       fixedHorseId={horse._id}
       emptyMessage={getListFilterEmptyMessage({
         filtering,
@@ -95,11 +126,12 @@ export function HorseCareRemindersCard({
         />
       }
       onAdd={onAdd}
-      onComplete={(reminder) => completeWithToast(completeReminder, reminder)}
-      onDismiss={(reminder) => dismissWithToast(dismissReminder, reminder)}
-      onRemove={(reminder) => removeWithToast(removeReminder, reminder)}
-      chrome="cards"
+      onComplete={onComplete}
+      onDismiss={onDismiss}
+      onRemove={onRemove}
+      chrome="flat"
       showHeader={false}
+      recordHeadingLevel={3}
       onCreateActionChange={onCreateActionChange}
     />
   )

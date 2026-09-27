@@ -1,5 +1,6 @@
+import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
 import { ArchiveBoxIcon } from '@phosphor-icons/react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import {
@@ -27,13 +28,22 @@ export function StableArchiveCard({
 }: StableArchiveCardProps) {
   const [open, setOpen] = useState(false)
   const [isArchiving, setIsArchiving] = useState(false)
+  const [archiveFailed, setArchiveFailed] = useState(false)
+  const pending = useRef(false)
 
   const handleArchive = async () => {
+    if (pending.current) return
+    pending.current = true
+    setArchiveFailed(false)
     try {
       setIsArchiving(true)
       const archived = await onArchive()
       if (archived) setOpen(false)
+      else setArchiveFailed(true)
+    } catch {
+      setArchiveFailed(true)
     } finally {
+      pending.current = false
       setIsArchiving(false)
     }
   }
@@ -43,7 +53,14 @@ export function StableArchiveCard({
       title="Archive stable"
       description="Archive this stable when the team should no longer have access. Its records are preserved, but restoration currently requires support."
       actions={
-        <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialog
+          open={open}
+          onOpenChange={(nextOpen) => {
+            if (pending.current) return
+            setOpen(nextOpen)
+            if (nextOpen) setArchiveFailed(false)
+          }}
+        >
           <AlertDialogTrigger
             render={<Button type="button" variant="destructive" />}
           >
@@ -62,6 +79,13 @@ export function StableArchiveCard({
                 cannot currently be undone inside the app.
               </AlertDialogDescription>
             </AlertDialogHeader>
+            {archiveFailed && (
+              <RouteStatusAlert
+                tone="danger"
+                title="Could not archive the stable"
+                description="Archiving was not confirmed. Try again or cancel to keep this page open."
+              />
+            )}
             <AlertDialogFooter>
               <AlertDialogCancel disabled={isArchiving}>
                 Cancel

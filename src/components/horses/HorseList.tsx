@@ -5,7 +5,6 @@ import { createHorseListFilterConfig } from './horseListFilters'
 import { NoHorsesPrompt } from './NoHorsesPrompt'
 import type { api } from 'convex/_generated/api'
 import type { FunctionReturnType } from 'convex/server'
-import { isEmpty } from 'lodash'
 import { useMemo } from 'react'
 
 type Props = {
@@ -35,17 +34,13 @@ export function HorseList({ horses, stableId }: Props) {
   const filterConfig = useMemo(createHorseListFilterConfig, [])
   const filtering = useListFiltering({ items: horses, config: filterConfig })
 
-  if (isEmpty(horses)) {
-    return <NoHorsesPrompt />
-  }
-
   return (
     <FilteredDashboardItemList
       config={filterConfig}
       filtering={filtering}
       gap="loose"
-      itemLayout="grid"
       emptyMessage="No horses have been added yet."
+      emptyState={<NoHorsesPrompt />}
       filteredEmptyMessage="No horses match these filters."
       stickyFilters
       renderItem={(horse) => {

@@ -90,12 +90,12 @@ export default function CareCycle({ theme = 'light' }: LandingLabVariantProps) {
             </div>
           </div>
 
-          <div className="relative z-10 mt-10 grid gap-7 border-t border-current/30 pt-8 lg:mt-0 lg:block lg:border-t-0 lg:pt-0">
+          <div className="relative z-10 mt-10 grid gap-7 border-t border-current/30 pt-8 lg:static lg:mt-0 lg:block lg:border-t-0 lg:pt-0">
             {landingLabContent.capabilities.map((capability, index) => (
               <h2
                 key={capability.id}
                 id={`cycle-${capability.id}`}
-                className={`${cyclePlacements[index]} max-w-[12ch] font-display text-4xl leading-[0.9] font-bold tracking-[-0.025em] text-balance uppercase sm:text-5xl lg:absolute lg:max-w-[9ch] lg:text-[clamp(2.5rem,3vw,3.5rem)]`}
+                className={`${cyclePlacements[index]} max-w-[12ch] font-display text-4xl leading-[0.9] font-bold tracking-[-0.025em] text-balance break-normal uppercase [overflow-wrap:normal] sm:text-5xl lg:absolute lg:text-[clamp(2.5rem,3vw,3.5rem)]`}
               >
                 {capability.title}
               </h2>

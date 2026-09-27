@@ -1,3 +1,4 @@
+import { compareWeightRecordsNewestFirst } from 'shared/horses/weightRecordOrder'
 import { WeightRecordForm } from '#/components/horses/WeightRecordForm'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { FilteredDashboardItemList } from '#/components/list-filtering/FilteredDashboardItemList'
@@ -23,7 +24,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import type { WeightRecordFormSchema } from 'shared/horses/weightRecordSchema'
 import { createHorseWeightRecordListFilterConfig } from './horseDetailListFilters'
 import type { HorseDetailCreateActionChange } from './useHorseDetailCreateAction'
@@ -47,16 +48,6 @@ export function HorseWeightRecordsCard({
   )
   const addWeightRecord = useMutation(api.horseWeightRecords.add)
   const removeWeightRecord = useMutation(api.horseWeightRecords.remove)
-  const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [pendingRecordId, setPendingRecordId] = useState<string>()
-  const canManage = permissions.canManage
-  const latestRecord = records[0]
-  const filterConfig = useMemo(createHorseWeightRecordListFilterConfig, [])
-  const filtering = useListFiltering({
-    items: records,
-    config: filterConfig,
-  })
-
   const onAddWeightRecord = useCallback(
     async (data: WeightRecordFormSchema) => {
       try {
@@ -73,7 +64,6 @@ export function HorseWeightRecordsCard({
           title: 'Weight record added',
           description: <p>{horse.name}'s weight history was updated.</p>,
         })
-        setIsCreateOpen(false)
       } catch (err) {
         showAppErrorToast()
         throw err
@@ -82,28 +72,8 @@ export function HorseWeightRecordsCard({
     [addWeightRecord, horse._id, horse.name],
   )
 
-  const createDialog = useMemo(
-    () =>
-      canManage ? (
-        <CreateRecordDialog
-          open={isCreateOpen}
-          onOpenChange={setIsCreateOpen}
-          triggerLabel="Add weight"
-          title="Add weight"
-          description="Record a weight measurement without losing your place in the list."
-        >
-          <WeightRecordForm onSubmit={onAddWeightRecord} />
-        </CreateRecordDialog>
-      ) : null,
-    [canManage, isCreateOpen, onAddWeightRecord],
-  )
-  const inlineCreateDialog = onCreateActionChange ? null : createDialog
-
-  useHorseDetailCreateAction(createDialog, onCreateActionChange)
-
   const onRemoveWeightRecord = async (record: Doc<'horseWeightRecords'>) => {
     try {
-      setPendingRecordId(record._id)
       await removeWeightRecord({ id: record._id })
       showAppSuccessToast({
         title: 'Weight record removed',
@@ -117,10 +87,92 @@ export function HorseWeightRecordsCard({
     } catch (err) {
       showAppErrorToast()
       throw err
-    } finally {
-      setPendingRecordId(undefined)
     }
   }
+
+  return (
+    <HorseWeightRecordsView
+      key={horse._id}
+      horse={horse}
+      records={records}
+      canManage={permissions.canManage}
+      onAdd={onAddWeightRecord}
+      onRemove={onRemoveWeightRecord}
+      onCreateActionChange={onCreateActionChange}
+    />
+  )
+}
+
+export function HorseWeightRecordsView({
+  horse,
+  records,
+  canManage,
+  onAdd,
+  onRemove,
+  onCreateActionChange,
+}: HorseWeightRecordsCardProps & {
+  records: Array<Doc<'horseWeightRecords'>>
+  canManage: boolean
+  onAdd: (values: WeightRecordFormSchema) => Promise<void>
+  onRemove: (record: Doc<'horseWeightRecords'>) => Promise<void>
+}) {
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const creating = useRef(false)
+  const region = useRef<HTMLElement>(null)
+  const onPendingChange = useCallback((pending: boolean) => {
+    creating.current = pending
+    setIsCreating(pending)
+  }, [])
+  const addAndClose = useCallback(
+    async (values: WeightRecordFormSchema) => {
+      await onAdd(values)
+      setIsCreateOpen(false)
+    },
+    [onAdd],
+  )
+  const orderedRecords = useMemo(
+    () => [...records].sort(compareWeightRecordsNewestFirst),
+    [records],
+  )
+  const latestRecord = orderedRecords[0]
+  const filterConfig = useMemo(createHorseWeightRecordListFilterConfig, [])
+  const filtering = useListFiltering({
+    items: orderedRecords,
+    config: filterConfig,
+  })
+  const createDialog = useMemo(
+    () =>
+      canManage ? (
+        <CreateRecordDialog
+          open={isCreateOpen}
+          onOpenChange={(open) => {
+            if (!creating.current) setIsCreateOpen(open)
+          }}
+          isPending={isCreating}
+          triggerLabel="Add weight"
+          title="Add weight"
+          description="Record a weight measurement without losing your place in the list."
+        >
+          <WeightRecordForm
+            key={horse._id}
+            onSubmit={addAndClose}
+            onPendingChange={onPendingChange}
+          />
+        </CreateRecordDialog>
+      ) : null,
+    [
+      canManage,
+      horse._id,
+      isCreateOpen,
+      isCreating,
+      addAndClose,
+      onPendingChange,
+    ],
+  )
+  const inlineCreateDialog = onCreateActionChange ? null : createDialog
+
+  useHorseDetailCreateAction(createDialog, onCreateActionChange)
 
   const recordList = (
     <FilteredDashboardItemList
@@ -133,8 +185,8 @@ export function HorseWeightRecordsCard({
           key={record._id}
           record={record}
           canManage={canManage}
-          pending={pendingRecordId === record._id}
-          onRemove={onRemoveWeightRecord}
+          onRemove={onRemove}
+          removalFocusTarget={() => region.current}
         />
       )}
     />
@@ -148,14 +200,43 @@ export function HorseWeightRecordsCard({
     </>
   )
 
-  if (onCreateActionChange) return content
+  if (onCreateActionChange)
+    return (
+      <div
+        ref={(element) => {
+          region.current = element
+        }}
+        role="group"
+        aria-label="Weight records"
+        tabIndex={-1}
+        className="grid gap-6"
+      >
+        {content}
+      </div>
+    )
 
-  return <DashboardSection chrome="cards">{content}</DashboardSection>
+  return (
+    <DashboardSection
+      ref={(element) => {
+        region.current = element
+      }}
+      role="group"
+      aria-label="Weight records"
+      tabIndex={-1}
+    >
+      {content}
+    </DashboardSection>
+  )
 }
 
 function LatestWeightRecord({ record }: { record: Doc<'horseWeightRecords'> }) {
   return (
-    <DashboardInlinePanel stack="default" textSize="sm">
+    <DashboardInlinePanel
+      chrome="flat"
+      padding="none"
+      stack="default"
+      textSize="sm"
+    >
       <TextLabel as="div">Latest record</TextLabel>
       <DetailGrid columns={3}>
         <LatestWeightMetric
@@ -197,23 +278,24 @@ function LatestWeightMetric({
 function WeightRecordRow({
   record,
   canManage,
-  pending,
+  removalFocusTarget,
   onRemove,
 }: {
   record: Doc<'horseWeightRecords'>
   canManage: boolean
-  pending: boolean
+  removalFocusTarget: () => HTMLElement | null
   onRemove: (record: Doc<'horseWeightRecords'>) => Promise<void>
 }) {
   return (
     <DashboardItemRecordCard
-      chrome="cards"
+      interactive={false}
+      chrome="flat"
       actionsPlacement="footer"
       actionsClassName="ml-auto"
       actions={
         canManage ? (
           <HorseRecordRemoveAction
-            disabled={pending}
+            removalFocusTarget={removalFocusTarget}
             title="Remove this weight record?"
             description={`The measurement from ${formatMediumTimestampDate(record.measuredAt)} will be removed permanently. This cannot be undone.`}
             onConfirm={() => onRemove(record)}

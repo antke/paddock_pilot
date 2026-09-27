@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useState } from 'react'
 
 import type {
   ListFilterSelectedFacets,
@@ -31,7 +32,13 @@ export function ListFilterControls<TFacetId extends string = string>({
   hideWhenEmpty = false,
   sticky = false,
 }: ListFilterControlsProps<TFacetId>) {
-  if (hideWhenEmpty && filtering.totalCount === 0) {
+  const [hasFocusWithin, setHasFocusWithin] = useState(false)
+  if (
+    hideWhenEmpty &&
+    filtering.totalCount === 0 &&
+    !filtering.isFiltering &&
+    !hasFocusWithin
+  ) {
     return null
   }
 
@@ -46,6 +53,7 @@ export function ListFilterControls<TFacetId extends string = string>({
       isFiltering={filtering.isFiltering}
       className={className}
       sticky={sticky}
+      onFocusWithinChange={setHasFocusWithin}
     />
   )
 }

@@ -17,6 +17,7 @@ export function PrintSummaryPage({
 }: ComponentProps<typeof DashboardPage>) {
   return (
     <DashboardPage
+      data-print-summary=""
       className={cn('print:block print:text-black', className)}
       {...props}
     />
@@ -24,6 +25,7 @@ export function PrintSummaryPage({
 }
 
 export function PrintSummaryHeader({
+  className,
   actionsClassName,
   contentClassName,
   descriptionClassName,
@@ -31,6 +33,7 @@ export function PrintSummaryHeader({
 }: ComponentProps<typeof DashboardPageHeader>) {
   return (
     <DashboardPageHeader
+      className={cn('print-summary-header', className)}
       actionsClassName={cn('print:hidden', actionsClassName)}
       contentClassName={cn('print:block', contentClassName)}
       descriptionClassName={cn('print:text-black', descriptionClassName)}
@@ -46,10 +49,8 @@ export function PrintSummarySection({
 }: ComponentProps<typeof DashboardSectionCard>) {
   return (
     <DashboardSectionCard
-      className={cn(
-        'print:break-inside-avoid print:border-black/30 print:shadow-none',
-        className,
-      )}
+      data-print-summary-section=""
+      className={cn('print:border-black/30 print:shadow-none', className)}
       contentTextSize={contentTextSize}
       {...props}
     />
@@ -79,6 +80,7 @@ export function PrintSummaryRecordPanel({
 }: ComponentProps<typeof DashboardInlinePanel>) {
   return (
     <DashboardInlinePanel
+      data-print-summary-record=""
       className={cn('print:border print:border-black/30', className)}
       {...props}
     />
@@ -86,11 +88,13 @@ export function PrintSummaryRecordPanel({
 }
 
 export function PrintSummaryRecordHeader({
+  className,
   descriptionClassName,
   ...props
 }: ComponentProps<typeof DashboardInlineHeader>) {
   return (
     <DashboardInlineHeader
+      className={cn('print-summary-record-header', className)}
       descriptionClassName={cn('print:text-black/70', descriptionClassName)}
       {...props}
     />
@@ -101,7 +105,13 @@ export function PrintSummaryBodyText({
   className,
   ...props
 }: PrintSummaryBodyTextProps) {
-  return <p className={cn('whitespace-pre-wrap', className)} {...props} />
+  return (
+    <p
+      data-print-summary-body=""
+      className={cn('whitespace-pre-wrap', className)}
+      {...props}
+    />
+  )
 }
 
 export function PrintSummaryScreenOnly({

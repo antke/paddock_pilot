@@ -10,7 +10,7 @@ import { ButtonAnchor } from '#/components/ui/button'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { RecordRemoveAction } from '#/components/list-layout/RecordRemoveAction'
 import type { Doc, Id } from 'convex/_generated/dataModel'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { ElementType, ReactNode } from 'react'
 import { DocumentFileStateBadge } from './DocumentBadges'
 import { DocumentDownloadAction } from './DocumentDownloadAction'
@@ -63,6 +63,8 @@ export function DocumentUploadDialog({
   onAdd,
 }: DocumentUploadDialogProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const uploading = useRef(false)
 
   if (!canAddDocument) return null
 
@@ -74,7 +76,10 @@ export function DocumentUploadDialog({
   return (
     <CreateRecordDialog
       open={isCreateOpen}
-      onOpenChange={setIsCreateOpen}
+      onOpenChange={(open) => {
+        if (!uploading.current) setIsCreateOpen(open)
+      }}
+      isPending={isUploading}
       triggerLabel="Add document"
       title="Add document"
       description="Upload paperwork without losing your place in the document list."
@@ -83,6 +88,10 @@ export function DocumentUploadDialog({
         horseOptions={horseOptions}
         fixedHorseId={fixedHorseId}
         onSubmit={onAddFromDialog}
+        onPendingChange={(pending) => {
+          uploading.current = pending
+          setIsUploading(pending)
+        }}
       />
     </CreateRecordDialog>
   )
@@ -96,9 +105,10 @@ export function DocumentsCard({
   documents,
   emptyMessage,
   listToolbar,
-  chrome = 'cards',
+  chrome = 'soft',
   onRemove,
 }: DocumentsCardProps) {
+  const section = useRef<HTMLElement>(null)
   const documentList = (
     <>
       <p className="sr-only" role="status" aria-live="polite" aria-atomic>
@@ -117,6 +127,7 @@ export function DocumentsCard({
                 item={item}
                 headingLevel={title ? 3 : 2}
                 onRemove={onRemove}
+                removalFocusTarget={() => section.current}
               />
             </div>
           ))}
@@ -128,6 +139,12 @@ export function DocumentsCard({
   if (chrome === 'soft') {
     return (
       <DashboardSection
+        ref={(element) => {
+          section.current = element
+        }}
+        role="group"
+        aria-label={title ?? 'Documents'}
+        tabIndex={-1}
         chrome="soft"
         as={as}
         title={title}
@@ -142,6 +159,12 @@ export function DocumentsCard({
 
   return (
     <DashboardSectionCard
+      ref={(element) => {
+        section.current = element
+      }}
+      role="group"
+      aria-label={title ?? 'Documents'}
+      tabIndex={-1}
       as={as}
       title={title}
       description={description}
@@ -159,9 +182,11 @@ function DocumentRow({
   item,
   headingLevel,
   onRemove,
+  removalFocusTarget,
 }: {
   item: DocumentListItem
   headingLevel: 2 | 3
+  removalFocusTarget: () => HTMLElement | null
   onRemove: (id: Id<'stableDocuments'>) => Promise<void>
 }) {
   const { document } = item
@@ -169,9 +194,8 @@ function DocumentRow({
 
   return (
     <DashboardItemMediaCard
-      chrome="cards"
+      chrome="flat"
       interactive={false}
-      className="border-border"
       media={
         <DocumentPreview
           document={document}
@@ -226,6 +250,7 @@ function DocumentRow({
               description={getRemoveDescription(item)}
               confirmLabel="Remove document"
               onConfirm={() => onRemove(document._id)}
+              removalFocusTarget={removalFocusTarget}
             />
           )}
         </>

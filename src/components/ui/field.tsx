@@ -98,10 +98,7 @@ type FieldGridBreakpoint = 'sm' | 'md' | 'lg'
 type FieldGridColumns = 2 | 3 | 4
 type FieldGridGap = 'compact' | 'default'
 type FieldGridTemplate =
-  | 'equal'
-  | 'trailing-sm'
-  | 'trailing-md'
-  | 'trailing-auto'
+  'equal' | 'trailing-sm' | 'trailing-md' | 'trailing-auto'
 
 const fieldGridColumnClassNames = {
   sm: {
@@ -400,20 +397,22 @@ function FieldError({
       return null
     }
 
-    const uniqueErrors = [
-      ...new Map(errors.map((error) => [error?.message, error])).values(),
+    const messages = [
+      ...new Set(
+        errors.flatMap((error) =>
+          error?.message?.trim() ? [error.message] : [],
+        ),
+      ),
     ]
 
-    if (uniqueErrors?.length == 1) {
-      return uniqueErrors[0]?.message
-    }
+    if (!messages.length) return null
+    if (messages.length === 1) return messages[0]
 
     return (
       <ul className="ml-4 flex list-disc flex-col gap-1">
-        {uniqueErrors.map(
-          (error, index) =>
-            error?.message && <li key={index}>{error.message}</li>,
-        )}
+        {messages.map((message) => (
+          <li key={message}>{message}</li>
+        ))}
       </ul>
     )
   }, [children, errors])

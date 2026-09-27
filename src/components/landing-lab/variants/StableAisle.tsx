@@ -1,5 +1,9 @@
 import { landingLabContent } from '../landingLabContent'
-import { LandingLabActions, LandingLabPageFrame } from '../LandingLabPrimitives'
+import {
+  LandingLabActions,
+  LandingLabCapabilityHeading,
+  LandingLabPageFrame,
+} from '../LandingLabPrimitives'
 import type { LandingLabVariantProps } from '../LandingLabPrimitives'
 
 const aislePlacements = [
@@ -73,13 +77,13 @@ export default function StableAisle({
           {landingLabContent.capabilities.map((capability, index) => (
             <article
               key={capability.id}
-              className={`${aislePlacements[index]} grid content-center border-b border-border px-5 py-12 sm:px-8 sm:py-16 lg:min-h-[50svh] lg:px-10 lg:py-14 xl:px-14 ${
+              className={`@container ${aislePlacements[index]} grid content-center border-b border-border px-5 py-12 sm:px-8 sm:py-16 lg:min-h-[50svh] lg:px-10 lg:py-14 xl:px-14 ${
                 index === 1 || index === 3 ? 'bg-surface' : 'bg-card'
               }`}
             >
-              <h2 className="max-w-[12ch] font-display text-[clamp(3rem,6vw,5.5rem)] leading-[0.88] font-bold tracking-[-0.03em] text-balance uppercase">
+              <LandingLabCapabilityHeading>
                 {capability.title}
-              </h2>
+              </LandingLabCapabilityHeading>
               <p className="mt-6 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
                 {capability.description}
               </p>

@@ -77,6 +77,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       style={
         {
+          fontFamily: 'var(--font-sans)',
           '--normal-bg': 'var(--popover)',
           '--normal-text': 'var(--popover-foreground)',
           '--normal-border': 'var(--border)',
@@ -99,6 +100,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         } as React.CSSProperties
       }
       toastOptions={{
+        style: { paddingInlineEnd: '4rem', minHeight: '4rem' },
         classNames: {
           toast:
             'border-border bg-popover text-popover-foreground shadow-control [&_[data-description]]:text-popover-foreground/80 [&_[data-title]]:text-popover-foreground',
@@ -107,7 +109,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           actionButton: buttonVariants({ variant: 'default', size: 'xs' }),
           cancelButton: buttonVariants({ variant: 'outline', size: 'xs' }),
           closeButton:
-            'border-border bg-surface-elevated text-foreground/70 hover:bg-primary/8 hover:text-foreground',
+            'top-2! start-auto! end-2! size-11! transform-none! border-border bg-surface-elevated text-foreground/70 hover:bg-primary/8 hover:text-foreground',
         },
       }}
       {...props}

@@ -3,6 +3,7 @@ import { ClerkProvider, useAuth } from '@clerk/tanstack-react-start'
 import { ConvexQueryClient } from '@convex-dev/react-query'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ConvexProviderWithClerk } from 'convex/react-clerk'
+import { clerkAppearance } from './appearance'
 
 const CONVEX_URL = import.meta.env.VITE_CONVEX_URL
 if (!CONVEX_URL) throw new Error('Add your Convex URL to the .env.local file')
@@ -28,7 +29,10 @@ export default function ConvexClerkProvider({
   children: React.ReactNode
 }) {
   return (
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+    <ClerkProvider
+      publishableKey={PUBLISHABLE_KEY}
+      appearance={clerkAppearance}
+    >
       <QueryClientProvider client={queryClient}>
         <ConvexProviderWithClerk
           client={convexQueryClient.convexClient}

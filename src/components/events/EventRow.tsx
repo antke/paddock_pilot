@@ -89,7 +89,6 @@ export function EventRow({
       aria-current={selected ? 'page' : undefined}
       className={cn(
         'active:bg-primary/10 motion-reduce:transition-none',
-        chrome === 'soft' && 'border border-border-subtle bg-surface-elevated',
         className,
       )}
     >

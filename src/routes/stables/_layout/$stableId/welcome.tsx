@@ -1,3 +1,4 @@
+import { getEffectiveInvitationStatus } from 'shared/stableInvitations/invitationState'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
@@ -59,7 +60,16 @@ function OwnerWelcomeData({
       memberCount={
         settings.members.filter((person) => person.role === 'member').length
       }
-      invitationCount={settings.invitations.length}
+      invitationCount={
+        settings.invitations.filter(
+          (invitation) =>
+            getEffectiveInvitationStatus({
+              status: invitation.status,
+              expiresAt: invitation.expiresAt,
+              now: Date.now(),
+            }) === 'pending',
+        ).length
+      }
       providerCount={providers.providers.length}
     />
   )

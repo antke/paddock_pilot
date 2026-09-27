@@ -1,7 +1,7 @@
 import z from 'zod'
 
-const stableNamePattern = /^[a-zA-Z0-9 .,'#&/-]+$/
-const stableLocationPattern = /^[a-zA-Z0-9 .,'#&/-]+$/
+const stableNamePattern = /^[\p{L}\p{M}\p{N} .,'’#&/\p{Pd}]+$/u
+const stableLocationPattern = /^[\p{L}\p{M}\p{N} .,'’#&/\p{Pd}]+$/u
 
 export const stableNameSchema = z
   .string()
@@ -13,9 +13,9 @@ export const stableNameSchema = z
 export const stableLocationSchema = z
   .string()
   .trim()
-  .min(3, 'Address must have at least 3 characters.')
-  .max(50, 'Address cannot be longer than 50 characters.')
-  .regex(stableLocationPattern, 'Address contains unsupported characters.')
+  .min(3, 'Location must have at least 3 characters.')
+  .max(50, 'Location cannot be longer than 50 characters.')
+  .regex(stableLocationPattern, 'Location contains unsupported characters.')
 
 export const stableDescriptionSchema = z
   .string()

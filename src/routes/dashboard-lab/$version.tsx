@@ -7,12 +7,13 @@ export const Route = createFileRoute('/dashboard-lab/$version')({
 })
 
 function DashboardLabRoute() {
+  const { version } = Route.useParams()
   return (
     <LabRouteBoundary
       signedOutTitle="Sign in to try the dashboard lab"
       signedOutDescription="The dashboard lab uses your active stable data."
     >
-      <DashboardLabPage />
+      <DashboardLabPage version={version} />
     </LabRouteBoundary>
   )
 }

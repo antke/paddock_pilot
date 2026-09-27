@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
 import { useMutation } from 'convex/react'
@@ -6,7 +7,7 @@ import { DetailDisplayField } from '#/components/dashboard/DetailBlocks'
 import { DashboardLayoutStack } from '#/components/dashboard/DashboardLayoutGrid'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { ButtonLink } from '#/components/ui/button'
-import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
+import { showAppSuccessToast } from '#/components/ui/sonner'
 import { formatLineText } from '#/lib/textDisplay'
 import { StableArchiveCard } from './StableArchiveCard'
 import { formatStableUserName } from './stableSettingsTypes'
@@ -18,13 +19,6 @@ export function StableSettingsOverview({
 }: Pick<StableSettingsData, 'stable' | 'owner'>) {
   const archiveStable = useMutation(api.stables.remove)
   const navigate = useNavigate()
-  const postalAddress = [
-    stable.addressLine1,
-    stable.addressLine2,
-    stable.postcode,
-    stable.country,
-  ].filter(Boolean)
-
   const onArchive = async () => {
     try {
       await archiveStable({ id: stable._id })
@@ -32,27 +26,53 @@ export function StableSettingsOverview({
         title: 'Stable archived',
         description: <p>{stable.name} is no longer available to members.</p>,
       })
-      await navigate({ to: '/stables' })
+      void navigate({ to: '/stables' })
       return true
     } catch {
-      showAppErrorToast({ title: 'Could not archive the stable' })
       return false
     }
   }
+
+  return (
+    <StableSettingsOverviewContent
+      stable={stable}
+      owner={owner}
+      onArchive={onArchive}
+    />
+  )
+}
+
+export function StableSettingsOverviewContent({
+  stable,
+  owner,
+  onArchive,
+  editAction,
+}: Pick<StableSettingsData, 'stable' | 'owner'> & {
+  onArchive: () => boolean | Promise<boolean>
+  editAction?: ReactNode
+}) {
+  const postalAddress = [
+    stable.addressLine1,
+    stable.addressLine2,
+    stable.postcode,
+    stable.country,
+  ].filter(Boolean)
 
   return (
     <DashboardLayoutStack gap="comfortable">
       <DashboardSectionCard
         title={stable.name}
         actions={
-          <ButtonLink
-            to="/stables/$stableId/edit"
-            params={{ stableId: stable._id }}
-            action="edit"
-            variant="outline"
-          >
-            Edit stable
-          </ButtonLink>
+          editAction ?? (
+            <ButtonLink
+              to="/stables/$stableId/edit"
+              params={{ stableId: stable._id }}
+              action="edit"
+              variant="outline"
+            >
+              Edit stable
+            </ButtonLink>
+          )
         }
         contentLayout="twoColumn"
         contentTextSize="sm"

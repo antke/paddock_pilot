@@ -50,6 +50,7 @@ type DashboardItemFieldsetCardProps = ComponentProps<'fieldset'> & {
 }
 
 export type DashboardItemRecordContentProps = {
+  headingLevel?: 1 | 2 | 3 | 4 | 5 | 6
   title: ReactNode
   children?: ReactNode
   className?: string
@@ -148,9 +149,9 @@ type DashboardItemListProps = ComponentProps<'div'> & {
 }
 
 export const dashboardItemActionGridClassName =
-  'grid gap-4 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-stretch'
+  'grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-stretch'
 
-export const dashboardItemListClassName = 'grid gap-3'
+export const dashboardItemListClassName = 'app-record-list grid gap-1'
 
 export const dashboardItemActionRowClassName =
   'grid sm:grid-cols-[minmax(0,1fr)_auto]'
@@ -231,7 +232,6 @@ export function DashboardItemBodyText({
 
 export function dashboardItemOpenRowClassName({
   density = 'comfortable',
-  tone = 'primary',
   className,
 }: {
   density?: DashboardItemCardDensity
@@ -239,12 +239,8 @@ export function dashboardItemOpenRowClassName({
   className?: string
 } = {}) {
   return cn(
-    'group/open grid gap-2 rounded-row border-l-4 bg-transparent no-underline transition-colors hover:bg-primary/5 hover:no-underline focus-visible:no-underline',
-    density === 'compact' ? 'p-4' : 'p-5',
-    tone === 'primary' && 'border-l-primary/45',
-    tone === 'warning' && 'border-l-chart-3',
-    tone === 'danger' && 'border-l-destructive/45',
-    tone === 'muted' && 'border-l-muted-foreground/30',
+    'app-record group/open grid gap-2 no-underline transition-colors app-record-hover hover:no-underline focus-visible:no-underline',
+    density === 'compact' && 'app-record-compact',
     className,
   )
 }
@@ -282,9 +278,9 @@ export function DashboardItemList({
     <div
       data-slot="dashboard-item-list"
       className={cn(
-        'grid',
-        gap === 'comfortable' && 'gap-3',
-        gap === 'compact' && 'gap-2',
+        'app-record-list grid',
+        gap === 'comfortable' && 'gap-1',
+        gap === 'compact' && 'gap-1',
         gap === 'flush' && 'gap-0',
         gap === 'loose' && 'gap-4',
         contentAlign === 'start' && 'content-start',
@@ -300,7 +296,7 @@ export function DashboardItemList({
 export function DashboardItemCard({
   accent = 'none',
   children,
-  chrome = 'cards',
+  chrome = 'flat',
   className,
   density,
   interactive,
@@ -330,7 +326,7 @@ export function DashboardItemCard({
 export function DashboardItemFieldsetCard({
   accent = 'none',
   children,
-  chrome = 'cards',
+  chrome = 'flat',
   className,
   density,
   interactive,
@@ -421,7 +417,7 @@ export function DashboardItemRecordCard({
   actionsClassName,
   actionsPlacement = 'side',
   children,
-  chrome = 'cards',
+  chrome = 'flat',
   className,
   density,
   footer,
@@ -511,7 +507,7 @@ const DashboardItemLinkCardAnchor = forwardRef<
   {
     accent = 'none',
     children,
-    chrome = 'cards',
+    chrome = 'flat',
     className,
     density,
     selected,
@@ -568,7 +564,7 @@ export function DashboardItemMediaCard({
   actions,
   badges,
   badgesClassName,
-  chrome = 'cards',
+  chrome = 'flat',
   className,
   contentClassName,
   density,
@@ -635,6 +631,7 @@ export function DashboardItemMediaCard({
 }
 
 export function DashboardItemRecordContent({
+  headingLevel = 3,
   title,
   children,
   className,
@@ -647,8 +644,9 @@ export function DashboardItemRecordContent({
   titleSize = 'default',
   titleTone = 'default',
 }: DashboardItemRecordContentProps) {
+  const Heading = `h${headingLevel}` as const
   const titleNode = (
-    <h3
+    <Heading
       className={cn(
         titleTone === 'open'
           ? dashboardItemOpenTitleClassName
@@ -659,7 +657,7 @@ export function DashboardItemRecordContent({
       )}
     >
       {title}
-    </h3>
+    </Heading>
   )
 
   return (
@@ -689,10 +687,9 @@ export function DashboardItemRecordContent({
 }
 
 export function dashboardItemCardClassName({
-  accent = 'none',
   density = 'comfortable',
   interactive = false,
-  chrome = 'cards',
+  chrome = 'flat',
   selected = false,
   className,
 }: {
@@ -704,25 +701,19 @@ export function dashboardItemCardClassName({
   className?: string
 } = {}) {
   return cn(
-    'group/dashboard-item group/open no-underline transition-[background-color,border-color,color,box-shadow] duration-150 hover:no-underline hover:[&_a]:no-underline hover:[&_h3]:no-underline hover:[&_[data-slot=card-title]]:no-underline',
+    'group/dashboard-item group/open no-underline transition-[background-color,border-color,color,box-shadow] duration-150 motion-reduce:transition-none hover:no-underline hover:[&_a]:no-underline hover:[&_h3]:no-underline hover:[&_[data-slot=card-title]]:no-underline',
+    'app-record text-foreground',
     chrome === 'cards' && 'app-row text-card-foreground',
-    chrome === 'soft' && 'rounded-row bg-surface text-card-foreground',
-    density === 'compact' ? 'p-4' : 'p-5',
-    accent !== 'none' && 'border-l-4',
-    accent === 'primary' && 'border-l-primary/70',
-    accent === 'warning' && 'border-l-chart-3',
-    accent === 'danger' && 'border-l-destructive/65',
-    accent === 'muted' && 'border-l-muted-foreground/35',
+    density === 'compact' && 'app-record-compact',
     interactive &&
       cn(
         'focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none',
+        chrome !== 'cards' && 'app-record-hover',
         chrome === 'cards' &&
           'hover:border-primary/30 hover:bg-card hover:text-foreground',
-        chrome === 'soft' &&
-          'hover:border-primary/25 hover:bg-surface-elevated hover:text-foreground',
       ),
     selected &&
-      'border-primary/45 bg-primary/10 text-foreground ring-1 ring-primary/25',
+      'border-selection bg-selection-surface text-selection ring-1 ring-selection/25 hover:bg-selection-surface',
     className,
   )
 }

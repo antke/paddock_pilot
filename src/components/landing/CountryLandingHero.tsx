@@ -2,6 +2,7 @@ import { useId, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 
+import '@fontsource-variable/manrope'
 import './countryLanding.css'
 
 export type CountryComposition = 'journal' | 'open-yard'

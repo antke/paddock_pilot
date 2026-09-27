@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 import Footer from '../Footer'
 import Header from '../Header'
-import { AppShell } from './AppShell'
+import { AppShell, AppSkipLink } from './AppShell'
 import { AuthStateSwitch } from './AuthStateSwitch'
 import { PageLayout } from './PageLayout'
 
@@ -17,6 +17,7 @@ export function ApplicationRouteShell({
 }: ApplicationRouteShellProps) {
   const appShell = (
     <AppShell>
+      <AppSkipLink />
       <Header />
       <PageLayout>{children}</PageLayout>
       <Footer />

@@ -66,7 +66,7 @@ export function DashboardCareOverview({
 
   return (
     <DashboardSection
-      chrome="cards"
+      chrome="soft"
       gap="compact"
       title="Care command centre"
       description="Reminders, attention items, and upcoming care for the selected stable."
@@ -145,7 +145,7 @@ function DueReminderCard({ reminders }: { reminders: ReminderItem[] }) {
     >
       <DashboardItemList gap="compact">
         {reminders.length === 0 ? (
-          <DashboardEmptyState chrome="cards">
+          <DashboardEmptyState chrome="soft">
             No reminders due in the next 14 days.
           </DashboardEmptyState>
         ) : (
@@ -201,7 +201,7 @@ function UpcomingEventCard({ events }: { events: EventItem[] }) {
     >
       <DashboardItemList gap="compact">
         {events.length === 0 ? (
-          <DashboardEmptyState chrome="cards">
+          <DashboardEmptyState chrome="soft">
             No planned events in the next 14 days.
           </DashboardEmptyState>
         ) : (
@@ -247,7 +247,7 @@ function AttentionHorseCard({ horses }: { horses: AttentionHorseItem[] }) {
     >
       <DashboardItemList gap="compact">
         {horses.length === 0 ? (
-          <DashboardEmptyState chrome="cards">
+          <DashboardEmptyState chrome="soft">
             No horse-level attention items right now.
           </DashboardEmptyState>
         ) : (

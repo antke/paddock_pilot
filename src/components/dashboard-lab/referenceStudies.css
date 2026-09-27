@@ -1,0 +1,500 @@
+/* Reference exploration only. The production system keeps its current contract. */
+.reference-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.reference-picker a {
+  min-height: 44px;
+}
+.reference-picker [aria-current='page'] {
+  border-color: var(--selection);
+  background: var(--selection-surface);
+  color: var(--selection);
+}
+.reference-explanation {
+  display: grid;
+  gap: 8px;
+  max-width: 80ch;
+}
+.reference-explanation h2 {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+.reference-explanation p {
+  line-height: 1.5;
+}
+.reference-matrix summary {
+  cursor: pointer;
+  color: var(--primary);
+  width: fit-content;
+  padding: 8px 0;
+}
+.reference-matrix table {
+  width: 100%;
+  font-size: 0.9375rem;
+  border-collapse: collapse;
+}
+.reference-matrix caption {
+  text-align: left;
+  padding: 12px 0;
+  color: var(--muted-foreground);
+}
+.reference-matrix th,
+.reference-matrix td {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.reference-matrix summary:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+}
+.reference-surface {
+  --ref-inset: 24px;
+  --ref-row: 16px;
+  --ref-gap: 24px;
+  --ref-canvas: var(--background);
+  padding: 24px;
+  border-radius: 12px;
+  background: var(--ref-canvas);
+  min-width: 0;
+}
+.reference-surface[data-canvas='oat'] {
+  --ref-canvas: var(--surface-muted);
+}
+.reference-surface[data-canvas='warm'] {
+  --ref-canvas: var(--surface);
+}
+.reference-surface[data-density='compact'] {
+  --ref-inset: 20px;
+  --ref-row: 10px;
+  --ref-gap: 20px;
+}
+.reference-surface .study-layout,
+.reference-surface .study-main {
+  gap: var(--ref-gap);
+}
+.reference-surface .study-section {
+  padding: var(--ref-inset);
+  gap: 16px;
+  border: 1px solid var(--border-subtle);
+  background: var(--card);
+}
+.reference-surface[data-canvas='oat'] .study-section {
+  border-color: transparent;
+}
+.reference-surface .study-section > [data-slot='dashboard-section-header'] h2 {
+  font-size: 1.5rem;
+}
+.reference-surface [data-slot='dashboard-item-card'] {
+  padding: var(--ref-row) 8px;
+}
+.reference-surface [data-slot='dashboard-item-card']:hover {
+  background: var(--surface-muted);
+}
+.reference-surface[data-headers='wash']
+  .study-section
+  > [data-slot='dashboard-section-header'] {
+  margin: calc(-1 * var(--ref-inset)) calc(-1 * var(--ref-inset)) 0;
+  padding: 16px var(--ref-inset);
+  background: color-mix(in oklab, var(--surface-muted) 55%, var(--card));
+  border-radius: 12px 12px 0 0;
+}
+.reference-surface[data-headers='rule']
+  .study-section
+  > [data-slot='dashboard-section-header'] {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.reference-surface[data-emphasis='heading']
+  .study-attention
+  > [data-slot='dashboard-section-header']
+  h2 {
+  color: var(--status-warning);
+}
+.reference-surface[data-rows='lanes']
+  [data-slot='dashboard-item-card']:nth-child(even) {
+  background: var(--surface);
+}
+.reference-surface[data-rows='lanes'] [data-slot='dashboard-item-card']:hover {
+  background: var(--surface-muted);
+}
+.reference-urgent {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  border-radius: 12px;
+  background: var(--status-warning-surface);
+  color: var(--status-warning);
+}
+.reference-urgent strong {
+  font-size: 1.0625rem;
+}
+.reference-urgent p {
+  margin-top: 4px;
+}
+.reference-surface[data-layout='sheet'] .study-main {
+  background: var(--card);
+  padding: var(--ref-inset);
+  border-radius: 12px;
+  gap: 32px;
+}
+.reference-surface[data-layout='sheet'] .study-main .study-section {
+  border: 0;
+  padding: 0;
+}
+.reference-care-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0 24px;
+}
+.reference-care-heading h2 {
+  font-family: var(--font-serif);
+  font-size: 1.875rem;
+  font-weight: 600;
+}
+.reference-care-heading p {
+  color: var(--muted-foreground);
+  margin-top: 4px;
+}
+.reference-care-section {
+  padding: var(--ref-inset);
+  border-radius: 12px;
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+}
+.reference-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  align-items: end;
+  padding-bottom: 16px;
+}
+.reference-toolbar label {
+  display: grid;
+  flex: 1 1 320px;
+  gap: 8px;
+  font-weight: 700;
+}
+.reference-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+  font-size: 0.9375rem;
+  color: var(--primary);
+}
+.reference-notice:empty {
+  display: none;
+}
+.reference-groups {
+  display: grid;
+  gap: 32px;
+}
+.reference-group-title {
+  /* impeccable-disable-next-line design-system-font-size: canonical nested heading size is 18px in DESIGN.md. */
+  font-size: 1.125rem;
+  font-weight: 700;
+  padding: 12px 0;
+}
+.reference-group-title span {
+  margin-left: 8px;
+  color: var(--muted-foreground);
+  font-size: 0.9375rem;
+  font-weight: 400;
+}
+.reference-records {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.reference-record {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 20px;
+  padding: var(--ref-row) 12px;
+  border-radius: 8px;
+}
+.reference-record:has(.reference-anchor) {
+  grid-template-columns: 44px 88px minmax(0, 1fr) auto;
+}
+.reference-anchor {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  color: var(--foreground);
+  background: var(--surface-muted);
+  font-weight: 700;
+}
+.reference-date {
+  display: grid;
+  gap: 4px;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+}
+.reference-date time {
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+  font-size: 0.9375rem;
+}
+.reference-record-body {
+  min-width: 0;
+}
+.reference-record-body h4 {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.reference-meta {
+  color: var(--muted-foreground);
+  font-size: 0.9375rem;
+  margin-top: 4px;
+}
+.reference-meta span {
+  margin-inline: 4px;
+}
+.reference-note {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  margin-top: 8px;
+  max-width: 70ch;
+}
+.reference-record-actions {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.reference-overdue {
+  color: var(--status-warning);
+  background: var(--status-warning-surface);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+.reference-record[data-completed='true'] .reference-date {
+  color: var(--primary);
+}
+.reference-surface[data-rows='lanes'] .reference-record:nth-child(even) {
+  background: var(--surface);
+}
+.reference-surface[data-rows='ledger'] .reference-record {
+  border-bottom: 1px solid var(--border-subtle);
+  border-radius: 0;
+  padding-inline: 0;
+}
+.reference-surface[data-rows='cards'] .reference-care-section {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.reference-surface[data-rows='cards'] .reference-toolbar {
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--card);
+  margin-bottom: 20px;
+}
+.reference-surface[data-rows='cards'] .reference-records {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.reference-surface[data-rows='cards'] .reference-record {
+  grid-template-columns: 1fr auto;
+  padding: 24px;
+  border-radius: 12px;
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  gap: 16px;
+}
+.reference-surface[data-rows='cards'] .reference-record-body {
+  grid-column: 1 / -1;
+}
+.reference-surface[data-rows='cards'] .reference-record-actions {
+  grid-column: 1 / -1;
+  justify-content: space-between;
+}
+.reference-empty {
+  padding: 40px 16px;
+  text-align: center;
+}
+.reference-empty h3 {
+  font-size: 1.5rem;
+  font-family: var(--font-serif);
+}
+.reference-empty p {
+  color: var(--muted-foreground);
+  margin-top: 8px;
+}
+@media (min-width: 1100px) {
+  .reference-surface[data-layout='priority'] .study-layout {
+    grid-template-columns: minmax(340px, 1fr) minmax(0, 1.5fr);
+  }
+  .reference-surface[data-layout='agenda'] .study-main,
+  .reference-surface[data-layout='directory'] .study-main {
+    display: contents;
+  }
+  .reference-surface[data-layout='agenda'] .study-layout {
+    grid-template-columns: minmax(0, 1.4fr) minmax(340px, 1fr);
+    grid-template-areas: 'today today' 'week week' 'horses attention';
+  }
+  .reference-surface[data-layout='directory'] .study-layout {
+    grid-template-columns: minmax(0, 1.4fr) minmax(340px, 1fr);
+    grid-template-areas: 'horses today' 'horses week' 'attention attention';
+  }
+  .reference-surface[data-layout='agenda'] .study-today,
+  .reference-surface[data-layout='directory'] .study-today {
+    grid-area: today;
+  }
+  .reference-surface[data-layout='agenda'] .study-week,
+  .reference-surface[data-layout='directory'] .study-week {
+    grid-area: week;
+  }
+  .reference-surface[data-layout='agenda'] .study-horses,
+  .reference-surface[data-layout='directory'] .study-horses {
+    grid-area: horses;
+  }
+  .reference-surface[data-layout='agenda'] .study-attention,
+  .reference-surface[data-layout='directory'] .study-attention {
+    grid-area: attention;
+  }
+  .reference-surface[data-layout='directory'] .study-attention {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .reference-surface[data-layout='directory']
+    .study-attention
+    > [data-slot='dashboard-section-header'] {
+    grid-column: 1 / -1;
+  }
+  .reference-surface[data-layout='directory']
+    .study-horses
+    [data-slot='dashboard-item-list'] {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 800px) {
+  .reference-surface {
+    padding: 16px;
+    --ref-inset: 20px;
+  }
+  .reference-record,
+  .reference-record:has(.reference-anchor) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+  .reference-anchor {
+    display: none;
+  }
+  .reference-date {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    grid-column: 1 / -1;
+  }
+  .reference-record-body {
+    grid-column: 1 / -1;
+  }
+  .reference-record-actions {
+    grid-column: 1 / -1;
+    justify-content: start;
+  }
+  .reference-urgent {
+    flex-wrap: wrap;
+  }
+  .reference-surface[data-rows='cards'] .reference-records {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 639px) {
+  .reference-surface {
+    padding: 12px;
+    --ref-inset: 16px;
+  }
+  .reference-surface .study-section {
+    padding: var(--ref-inset);
+  }
+  .reference-care-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+  .reference-surface .study-horses [data-slot='dashboard-item-list'] {
+    grid-template-columns: 1fr;
+  }
+  .reference-picker a {
+    flex: 1 1 145px;
+    justify-content: start;
+  }
+}
+
+.reference-surface[data-rows='cards'] .reference-record-actions button {
+  margin-left: auto;
+}
+
+@media (min-width: 1100px) {
+  .reference-surface[data-layout='directory'] .study-attention > .grid + .grid {
+    margin-top: 0;
+  }
+  .reference-surface[data-layout='directory'] .study-attention > p {
+    grid-column: 2;
+  }
+}
+
+/* The consolidated candidate keeps the attention groups independently contained. */
+.reference-surface[data-reference-study='candidate'] .candidate-attention {
+  display: grid;
+  align-content: start;
+  gap: var(--ref-gap);
+  min-width: 0;
+}
+.reference-surface[data-reference-study='candidate']
+  .study-care
+  > [data-slot='dashboard-section-header'] {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+.reference-surface[data-reference-study='candidate']
+  .study-care
+  > [data-slot='dashboard-section-header']
+  > :last-child {
+  justify-self: start;
+}
+.reference-surface[data-reference-study='candidate']
+  .study-horses
+  [data-slot='dashboard-item-list'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+.reference-surface[data-reference-study='candidate'] .reference-record {
+  border: 1px solid transparent;
+}
+.reference-surface[data-reference-study='candidate']
+  .reference-record:has([data-slot='record-details'][open]) {
+  background: var(--card);
+  border-color: var(--border);
+  padding-block: 20px;
+}
+.reference-baseline {
+  min-width: 0;
+}
+.reference-baseline .reference-care-section {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.reference-baseline .reference-records {
+  gap: 12px;
+}

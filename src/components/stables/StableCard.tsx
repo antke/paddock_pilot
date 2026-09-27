@@ -28,7 +28,7 @@ export function StableCardLink({
     <DashboardItemLinkCard
       to="/stables/$stableId"
       params={{ stableId }}
-      chrome="soft"
+      chrome="flat"
       density="compact"
     >
       <DashboardItemCardContent

@@ -28,7 +28,7 @@ export function DashboardEntityHero({
   actions,
   badges,
   children,
-  chrome = 'cards',
+  chrome = 'flat',
   className,
   description,
   leading,

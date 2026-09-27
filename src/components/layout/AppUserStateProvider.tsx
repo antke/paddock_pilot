@@ -14,8 +14,7 @@ import {
 import type { ReactNode } from 'react'
 
 import { RoutePending } from './RoutePending'
-import { RouteStatusAlert } from './RouteStatusAlert'
-import { Button } from '#/components/ui/button'
+import { AccountRecovery } from './AccountRecovery'
 
 const ACTIVE_STABLE_STORAGE_KEY = 'paddockPilot.activeStableId'
 
@@ -28,6 +27,7 @@ type AppUserState = {
 }
 
 const AppUserStateContext = createContext<AppUserState | null>(null)
+const AppUserGateContext = createContext<ReactNode>(null)
 
 export function AppUserStateProvider({ children }: { children: ReactNode }) {
   const { pathname } = useLocation()
@@ -43,7 +43,9 @@ export function AppUserStateProvider({ children }: { children: ReactNode }) {
   )
   const syncCurrentUser = useAction(api.users.syncCurrentUser)
   const [syncedUserId, setSyncedUserId] = useState<string>()
-  const [syncError, setSyncError] = useState(false)
+  const [syncStatus, setSyncStatus] = useState<
+    'pending' | 'retrying' | 'error' | 'ready'
+  >('pending')
   const [syncAttempt, setSyncAttempt] = useState(0)
   const pendingInvitations = useQuery(
     api.stableInvitations.listForCurrentUser,
@@ -61,17 +63,29 @@ export function AppUserStateProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setSyncedUserId(undefined)
-    setSyncError(false)
-    if (!isAuthenticated || !clerkUserId || identity?.subject !== clerkUserId)
+    if (!isAuthenticated || !clerkUserId || identity?.subject !== clerkUserId) {
+      setSyncStatus('pending')
       return
+    }
+    setSyncStatus((status) => (status === 'error' ? 'retrying' : 'pending'))
 
     let cancelled = false
+    // A stalled connection must not leave the account gate spinning forever.
+    const timeout = window.setTimeout(() => {
+      cancelled = true
+      setSyncStatus('error')
+    }, 20_000)
     const bootstrapUser = async () => {
       try {
         await syncCurrentUser()
-        if (!cancelled) setSyncedUserId(clerkUserId)
+        if (!cancelled) {
+          setSyncedUserId(clerkUserId)
+          setSyncStatus('ready')
+        }
       } catch {
-        if (!cancelled) setSyncError(true)
+        if (!cancelled) setSyncStatus('error')
+      } finally {
+        window.clearTimeout(timeout)
       }
     }
 
@@ -79,6 +93,7 @@ export function AppUserStateProvider({ children }: { children: ReactNode }) {
 
     return () => {
       cancelled = true
+      window.clearTimeout(timeout)
     }
   }, [
     clerkUserId,
@@ -170,40 +185,45 @@ export function AppUserStateProvider({ children }: { children: ReactNode }) {
       currentUser?.clerkId !== clerkUserId),
   )
 
+  const gate =
+    (syncStatus === 'error' || syncStatus === 'retrying') && clerkUserId ? (
+      <AccountRecovery
+        isRetrying={syncStatus === 'retrying'}
+        retryFailed={syncAttempt > 0 && syncStatus === 'error'}
+        onRetry={() => setSyncAttempt((attempt) => attempt + 1)}
+      />
+    ) : accountPending ||
+      (checkInvitations && pendingInvitations === undefined) ? (
+      <RoutePending />
+    ) : invitationRedirect ? (
+      <Navigate
+        to="/invitations/$token"
+        params={{ token: invitationRedirect.token }}
+        replace
+      />
+    ) : stableSetupPending ? (
+      <RoutePending />
+    ) : onboardingRedirect ? (
+      <Navigate
+        to="/onboarding"
+        search={{ stableId: onboardingRedirect.stableId }}
+        replace
+      />
+    ) : null
+
   return (
     <AppUserStateContext.Provider value={value}>
-      {syncError && clerkUserId ? (
-        <RouteStatusAlert
-          title="Could not prepare your account"
-          description="We couldn’t refresh your account details. Try again to review invitations and continue."
-          actions={
-            <Button onClick={() => setSyncAttempt((attempt) => attempt + 1)}>
-              Try again
-            </Button>
-          }
-        />
-      ) : accountPending ||
-        (checkInvitations && pendingInvitations === undefined) ? (
-        <RoutePending />
-      ) : invitationRedirect ? (
-        <Navigate
-          to="/invitations/$token"
-          params={{ token: invitationRedirect.token }}
-          replace
-        />
-      ) : stableSetupPending ? (
-        <RoutePending />
-      ) : onboardingRedirect ? (
-        <Navigate
-          to="/onboarding"
-          search={{ stableId: onboardingRedirect.stableId }}
-          replace
-        />
-      ) : (
-        children
-      )}
+      <AppUserGateContext.Provider value={gate}>
+        {children}
+      </AppUserGateContext.Provider>
     </AppUserStateContext.Provider>
   )
+}
+
+/** Gate route content inside the shell so navigation and account controls survive. */
+export function AppUserStateGate({ children }: { children: ReactNode }) {
+  const gate = useContext(AppUserGateContext)
+  return gate ?? children
 }
 
 function isStableSetupExemptPath(pathname: string) {

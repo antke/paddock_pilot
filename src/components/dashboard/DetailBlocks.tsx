@@ -3,6 +3,7 @@ import type { ComponentProps, ElementType, ReactNode } from 'react'
 import { cn } from '#/lib/utils'
 import { TextLabel } from '#/components/ui/text-label'
 import { DashboardInlinePanel } from './DashboardInlinePanel'
+import type { DashboardChrome } from './dashboardChrome'
 
 type TextLabelOptions = Pick<
   ComponentProps<typeof TextLabel>,
@@ -29,6 +30,7 @@ type DetailGridProps = ComponentProps<'div'> & {
   breakpoint?: DetailGridBreakpoint
   columns?: DetailGridColumns
   gap?: DetailGridGap
+  mobileColumns?: 1 | 2
 }
 
 type DetailPanelGridProps = ComponentProps<'div'> & {
@@ -65,12 +67,14 @@ export function DetailGrid({
   className,
   columns = 2,
   gap = 'compact',
+  mobileColumns = 1,
   ...props
 }: DetailGridProps) {
   return (
     <div
       className={cn(
-        'grid',
+        'grid min-w-0',
+        mobileColumns === 2 && 'grid-cols-2',
         gap === 'compact' ? 'gap-3' : 'gap-4',
         detailGridColumnClassNames[columns][breakpoint],
         className,
@@ -166,6 +170,7 @@ type DetailPanelProps = {
   gap?: 'compact' | 'default'
   span?: DetailSpan
   variant?: 'default' | 'emphasis'
+  chrome?: DashboardChrome
 }
 
 const detailPanelGapClassNames = {
@@ -189,12 +194,21 @@ export function DetailPanel({
   gap = 'default',
   span,
   variant = 'default',
+  chrome = 'flat',
 }: DetailPanelProps) {
   return (
     <DashboardInlinePanel
-      padding={variant === 'emphasis' ? 'compact' : 'default'}
+      chrome={chrome}
+      padding={
+        chrome === 'flat'
+          ? 'none'
+          : variant === 'emphasis'
+            ? 'compact'
+            : 'default'
+      }
       className={cn(
-        'grid content-start',
+        'grid min-w-0 content-start',
+        chrome === 'flat' && 'pt-2',
         detailPanelGapClassNames[gap],
         variant === 'emphasis' && 'gap-3',
         span && detailSpanClassNames[span],
@@ -203,7 +217,7 @@ export function DetailPanel({
     >
       <Heading
         className={cn(
-          'font-display text-lg font-bold uppercase leading-none tracking-[-0.01em] text-primary',
+          'font-sans text-lg font-semibold leading-snug text-foreground',
           variant === 'emphasis' && 'text-xl',
         )}
       >
@@ -302,7 +316,7 @@ export function DetailField({
   }
 
   return (
-    <div className={cn('grid gap-1', indent && 'pl-2', rowClassName)}>
+    <div className={cn('grid min-w-0 gap-1', indent && 'pl-2', rowClassName)}>
       {content}
     </div>
   )

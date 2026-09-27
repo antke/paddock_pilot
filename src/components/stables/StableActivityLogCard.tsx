@@ -21,20 +21,21 @@ export function StableActivityLogCard({
       contentGap="compact"
     >
       {entries.length === 0 ? (
-        <DashboardEmptyState chrome="soft" spacing="flush">
+        <DashboardEmptyState chrome="flat" spacing="flush">
           No audited activity has been recorded yet.
         </DashboardEmptyState>
       ) : (
         <ScrollableList
+          ariaLabel="Recent stable changes"
           itemCount={entries.length}
           visibleItemLimit={8}
           estimatedItemHeightRem={4.75}
         >
-          <DashboardItemList gap="compact">
+          <DashboardItemList gap="flush">
             {entries.map((entry) => (
               <DashboardItemRecordCard
                 key={entry._id}
-                chrome="cards"
+                chrome="flat"
                 density="compact"
                 interactive={false}
               >

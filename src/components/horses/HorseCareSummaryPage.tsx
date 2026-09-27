@@ -28,8 +28,13 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { api } from 'convex/_generated/api'
 import type { Doc, Id } from 'convex/_generated/dataModel'
 import type { ReactNode } from 'react'
+import type { FunctionReturnType } from 'convex/server'
 import { eventStatusLabels, eventTypeLabels } from 'shared/events/eventSchema'
 import { stableDocumentTypeLabels } from 'shared/stables/stableDocumentSchema'
+
+export type HorseCareSummaryData = FunctionReturnType<
+  typeof api.horseCareSummary.getForHorse
+>
 
 type HorseCareSummaryPageProps = {
   stableId: string
@@ -53,6 +58,16 @@ export function HorseCareSummaryPage({ horseId }: HorseCareSummaryPageProps) {
     convexQuery(api.horseCareSummary.getForHorse, { horseId }),
   )
 
+  return <HorseCareSummaryView summary={summary} />
+}
+
+export function HorseCareSummaryView({
+  summary,
+  onPrint = () => window.print(),
+}: {
+  summary: HorseCareSummaryData
+  onPrint?: () => void
+}) {
   if (!summary.horse) {
     return (
       <RouteEntityNotFoundAlert
@@ -75,13 +90,13 @@ export function HorseCareSummaryPage({ horseId }: HorseCareSummaryPageProps) {
     <PrintSummaryPage>
       <PrintSummaryHeader
         as="h2"
-        title="Care summary"
+        title={`${horse.name} — care summary`}
         description={formatMetaText([
           stable.name,
           `Generated ${formatMediumTimestampDate(Date.now())}`,
         ])}
         actions={
-          <Button type="button" onClick={() => window.print()}>
+          <Button type="button" onClick={onPrint}>
             Print summary
           </Button>
         }
@@ -91,7 +106,7 @@ export function HorseCareSummaryPage({ horseId }: HorseCareSummaryPageProps) {
         <DetailGrid>
           <DetailPrintField label="Stable" value={stable.name} />
           <DetailPrintField label="Owner" value={horse.ownerName} />
-          <DetailPrintField label="Age" value={`${age}`} />
+          <DetailPrintField label="Age" value={age} />
           <DetailPrintField label="Breed" value={horse.breed} />
           <DetailPrintField
             label="Sex"
@@ -100,7 +115,14 @@ export function HorseCareSummaryPage({ horseId }: HorseCareSummaryPageProps) {
           <DetailPrintField label="Color" value={horse.color} />
           <DetailPrintField label="Height" value={horse.height} />
           <DetailPrintField label="Discipline" value={horse.discipline} />
-          <DetailPrintField label="Date of birth" value={horse.dateOfBirth} />
+          <DetailPrintField
+            label="Date of birth"
+            value={
+              horse.dateOfBirth
+                ? formatMediumDateKey(horse.dateOfBirth)
+                : undefined
+            }
+          />
           <DetailPrintField
             label="Passport number"
             value={horse.passportNumber}
@@ -172,6 +194,14 @@ export function HorseCareSummaryPage({ horseId }: HorseCareSummaryPageProps) {
       </SummarySection>
 
       <SummarySection title="Nutrition profile">
+        {!horse.feedingRoutine &&
+          !horse.nutritionNotes &&
+          !horse.nutritionRecommended?.length &&
+          !horse.nutritionAvoid?.length && (
+            <PrintSummaryEmptyState>
+              No nutrition profile has been recorded.
+            </PrintSummaryEmptyState>
+          )}
         <DetailPrintField
           label="Feeding routine"
           value={horse.feedingRoutine}
@@ -211,7 +241,7 @@ export function HorseCareSummaryPage({ horseId }: HorseCareSummaryPageProps) {
             meta: formatMetaText([
               record.dosage,
               record.frequency,
-              `Started ${formatMediumDateKey(record.startDate)}`,
+              `Start date: ${formatMediumDateKey(record.startDate)}`,
             ]),
             body: formatLineText([record.reason, record.notes]),
           }))}
@@ -306,7 +336,11 @@ function SummarySection({
   title: string
   children: ReactNode
 }) {
-  return <PrintSummarySection title={title}>{children}</PrintSummarySection>
+  return (
+    <PrintSummarySection as="h3" title={title}>
+      {children}
+    </PrintSummarySection>
+  )
 }
 
 function RecordList({
@@ -323,9 +357,9 @@ function RecordList({
   return (
     <DashboardItemList>
       {records.map((record) => (
-        <PrintSummaryRecordPanel key={record.id} stack="tight">
+        <PrintSummaryRecordPanel key={record.id} stack="tight" chrome="flat">
           <PrintSummaryRecordHeader
-            as="h3"
+            as="h4"
             title={record.title}
             description={record.meta}
             descriptionSize="xs"

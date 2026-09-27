@@ -9,18 +9,10 @@ import { DashboardSectionHeader } from './DashboardSectionHeader'
 type DashboardSectionHeaderProps = ComponentProps<typeof DashboardSectionHeader>
 type DashboardInlineHeaderProps = ComponentProps<typeof DashboardInlineHeader>
 type DashboardSectionCardContentGap =
-  | 'tight'
-  | 'compact'
-  | 'default'
-  | 'comfortable'
-  | 'loose'
+  'tight' | 'compact' | 'default' | 'comfortable' | 'loose'
 type DashboardSectionCardContentTextSize = 'default' | 'sm'
 type DashboardSectionCardContentLayout =
-  | 'block'
-  | 'default'
-  | 'flexColumn'
-  | 'splitRail'
-  | 'twoColumn'
+  'block' | 'default' | 'flexColumn' | 'splitRail' | 'twoColumn'
 type DashboardSubsectionGap = 'compact' | 'default' | 'loose'
 type DashboardSectionCardWidth = 'auto' | 'full'
 
@@ -41,6 +33,7 @@ type DashboardSectionCardProps = Omit<
     | 'headingClassName'
     | 'titleClassName'
   > & {
+    surface?: 'flat' | 'panel'
     children?: ReactNode
     contentClassName?: string
     contentGap?: DashboardSectionCardContentGap
@@ -120,6 +113,7 @@ export function DashboardSectionCard({
   footerClassName,
   headerClassName,
   headingClassName,
+  surface = 'panel',
   size = 'panel',
   title,
   titleClassName,
@@ -137,7 +131,12 @@ export function DashboardSectionCard({
   return (
     <Card
       data-slot="dashboard-section-card"
-      className={cn(width === 'full' && 'w-full', className)}
+      className={cn(
+        surface === 'flat' &&
+          'rounded-none border-0 bg-transparent py-0 shadow-none [&>[data-slot=card-header]]:px-0 [&>[data-slot=card-content]]:px-0 [&>[data-slot=card-footer]]:px-0',
+        width === 'full' && 'w-full',
+        className,
+      )}
       {...props}
     >
       {hasHeader && (

@@ -18,6 +18,7 @@ type ChoiceButtonGroupProps<TValue extends string> = {
   disabled?: boolean
   'aria-label'?: string
   'aria-invalid'?: boolean
+  'aria-describedby'?: string
   className?: string
   layout?: ChoiceButtonGroupLayout
 }
@@ -29,6 +30,7 @@ export function ChoiceButtonGroup<TValue extends string>({
   disabled = false,
   'aria-label': ariaLabel,
   'aria-invalid': ariaInvalid,
+  'aria-describedby': ariaDescribedBy,
   className,
   layout = 'compact',
 }: ChoiceButtonGroupProps<TValue>) {
@@ -53,6 +55,7 @@ export function ChoiceButtonGroup<TValue extends string>({
       disabled={disabled}
       aria-label={ariaLabel}
       aria-invalid={ariaInvalid}
+      aria-describedby={ariaDescribedBy}
     >
       {options.map((option) => (
         <ToggleGroupItem
@@ -66,8 +69,7 @@ export function ChoiceButtonGroup<TValue extends string>({
         >
           <span
             className={cn(
-              layout === 'cards' &&
-                'font-display text-base font-bold uppercase leading-none tracking-[0.02em]',
+              layout === 'cards' && 'text-base font-semibold leading-snug',
             )}
           >
             {option.label}

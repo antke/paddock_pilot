@@ -4,7 +4,7 @@ import {
   UploadSimpleIcon,
   XIcon,
 } from '@phosphor-icons/react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { ComponentProps, DragEvent, ReactNode, Ref } from 'react'
 
 import {
@@ -62,7 +62,14 @@ export function FileUploadField({
   className,
   ...props
 }: FileUploadFieldProps) {
+  const generatedId = useId()
+  const inputId = props.id ?? `${generatedId}-file`
+  const errorId = `${inputId}-error`
   const invalid = Boolean(errors?.length)
+  const descriptionIds =
+    [props['aria-describedby'], invalid ? errorId : undefined]
+      .filter(Boolean)
+      .join(' ') || undefined
   const internalInputRef = useRef<HTMLInputElement | null>(null)
   const [dragging, setDragging] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File>()
@@ -71,6 +78,8 @@ export function FileUploadField({
   useEffect(() => {
     if (files !== undefined) {
       setSelectedFile(files?.[0])
+      if (!files?.length && internalInputRef.current)
+        internalInputRef.current.value = ''
     }
   }, [files])
 
@@ -131,7 +140,7 @@ export function FileUploadField({
   return (
     <Field data-slot="file-upload-field" data-invalid={invalid}>
       <FieldLabelRow>
-        <FieldLabel htmlFor={props.id}>{label}</FieldLabel>
+        <FieldLabel htmlFor={inputId}>{label}</FieldLabel>
         {help && (
           <FormHelpTooltip label={helpLabel ?? `About ${label}`}>
             {help}
@@ -163,8 +172,7 @@ export function FileUploadField({
           <AttachmentContent>
             <AttachmentTitle>{selectedFile.name}</AttachmentTitle>
             <AttachmentDescription>
-              {typeLabel} · {formatFileSize(selectedFile.size)} · Ready to
-              upload
+              {typeLabel} · {formatFileSize(selectedFile.size)}
             </AttachmentDescription>
           </AttachmentContent>
           <AttachmentActions>
@@ -182,6 +190,7 @@ export function FileUploadField({
             type="button"
             aria-label={`Replace ${selectedFile.name}`}
             aria-invalid={invalid}
+            aria-describedby={descriptionIds}
             disabled={props.disabled}
             onClick={openFilePicker}
           />
@@ -202,6 +211,7 @@ export function FileUploadField({
             className,
           )}
           aria-invalid={invalid}
+          aria-describedby={descriptionIds}
           aria-required={required || undefined}
           disabled={props.disabled}
           onClick={openFilePicker}
@@ -251,16 +261,18 @@ export function FileUploadField({
 
       <Input
         {...props}
+        id={inputId}
         ref={setInputRef}
         type="file"
         tabIndex={-1}
         className="sr-only"
         aria-invalid={invalid}
+        aria-describedby={descriptionIds}
         aria-required={required || undefined}
         onChange={(event) => selectFiles(event.target.files)}
       />
 
-      {invalid && <FieldError errors={errors} />}
+      {invalid && <FieldError id={errorId} errors={errors} />}
     </Field>
   )
 }

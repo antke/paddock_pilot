@@ -1,3 +1,4 @@
+import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
@@ -28,7 +29,9 @@ export function HorseListPage({ horses, stableId }: HorseListPageProps) {
         }
       />
 
-      <HorseList horses={horses} stableId={stableId} />
+      <DashboardSection aria-label="Horse list">
+        <HorseList horses={horses} stableId={stableId} />
+      </DashboardSection>
 
       <DashboardActions
         align="end"

@@ -17,7 +17,7 @@ export function StableUpcomingEvents({
   stableId,
   events,
   limit = 5,
-  chrome = 'cards',
+  chrome = 'soft',
 }: StableUpcomingEventsProps) {
   const upcomingEvents = getUpcomingEvents(events, new Date()).slice(0, limit)
 
@@ -49,7 +49,7 @@ export function StableUpcomingEventsCard({
   stableId,
   events,
   limit,
-  chrome = 'cards',
+  chrome = 'soft',
 }: StableUpcomingEventsProps) {
   return (
     <DashboardSection

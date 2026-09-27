@@ -11,6 +11,7 @@ function RouteComponent() {
 
   return (
     <Navigate
+      replace
       to="/stables/$stableId/horses/$horseId/profile"
       params={{ stableId, horseId }}
     />

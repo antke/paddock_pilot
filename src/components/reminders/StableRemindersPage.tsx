@@ -16,7 +16,7 @@ import { api } from 'convex/_generated/api'
 import type { Doc, Id } from 'convex/_generated/dataModel'
 import { useMutation, usePaginatedQuery } from 'convex/react'
 import { useCallback, useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 import { formatCountLabel } from '#/lib/numberDisplay'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import { CareRemindersCard } from './CareRemindersCard'
@@ -37,7 +37,7 @@ const reminderLoadingLabel = 'Loading reminders...'
 
 export function StableRemindersPage({
   stableId,
-  chrome = 'cards',
+  chrome = 'soft',
 }: StableRemindersPageProps) {
   const { today } = useLocalDateContext()
   const { data: stable } = useSuspenseQuery(
@@ -56,7 +56,6 @@ export function StableRemindersPage({
   const completeReminder = useMutation(api.careReminders.complete)
   const dismissReminder = useMutation(api.careReminders.dismiss)
   const removeReminder = useMutation(api.careReminders.remove)
-  const [createAction, setCreateAction] = useState<ReactNode | null>(null)
   const horseOptions = useMemo(
     () =>
       horses.map((horse) => ({
@@ -143,60 +142,71 @@ export function StableRemindersPage({
   }
 
   return (
+    <StableRemindersPageView
+      reminders={paginatedReminders.results}
+      canAddReminder={permissions.canManageStableReminders}
+      horseOptions={horseOptions}
+      chrome={chrome}
+      showHeader={false}
+      emptyMessage={getListFilterEmptyMessage({
+        filtering,
+        emptyMessage: 'No care reminders have been added for this stable yet.',
+        filteredEmptyMessage: 'No reminders match these filters.',
+      })}
+      isLoading={paginatedReminders.status === 'LoadingFirstPage'}
+      loadingLabel={reminderLoadingLabel}
+      listToolbar={
+        <ListFilterControls
+          config={filterConfig}
+          filtering={filtering}
+          sticky
+        />
+      }
+      listFooter={
+        <ListLoadMoreFooter
+          status={paginatedReminders.status}
+          onLoadMore={paginatedReminders.loadMore}
+          pageSize={reminderPageSize}
+          loadMoreLabel="Load more reminders"
+          loadingLabel={reminderLoadingLabel}
+        />
+      }
+      onAdd={onAdd}
+      onComplete={(reminder) =>
+        runReminderActionWithToast(completeReminder, reminder, {
+          successTitle: 'Reminder completed',
+          successDescription: `${reminder.title} was marked as complete.`,
+        })
+      }
+      onDismiss={(reminder) =>
+        runReminderActionWithToast(dismissReminder, reminder, {
+          successTitle: 'Reminder dismissed',
+          successDescription: `${reminder.title} was dismissed.`,
+        })
+      }
+      onRemove={(reminder) =>
+        runReminderActionWithToast(removeReminder, reminder, {
+          successTitle: 'Reminder removed',
+          successDescription: `${reminder.title} was removed.`,
+        })
+      }
+    />
+  )
+}
+
+/** Shared page renderer: data/mutations stay in the connected route or local lab. */
+export function StableRemindersPageView(
+  props: ComponentProps<typeof CareRemindersCard>,
+) {
+  const [createAction, setCreateAction] = useState<ReactNode | null>(null)
+  return (
     <DashboardPage>
       <DashboardPageHeader title="Care reminders" actions={createAction} />
-
       <DashboardSectionCard contentGap="loose">
         <CareRemindersCard
-          reminders={paginatedReminders.results}
-          canAddReminder={permissions.canManageStableReminders}
-          horseOptions={horseOptions}
-          chrome={chrome}
+          {...props}
           showHeader={false}
-          emptyMessage={getListFilterEmptyMessage({
-            filtering,
-            emptyMessage:
-              'No care reminders have been added for this stable yet.',
-            filteredEmptyMessage: 'No reminders match these filters.',
-          })}
-          isLoading={paginatedReminders.status === 'LoadingFirstPage'}
-          loadingLabel={reminderLoadingLabel}
           onCreateActionChange={setCreateAction}
-          listToolbar={
-            <ListFilterControls
-              config={filterConfig}
-              filtering={filtering}
-              sticky
-            />
-          }
-          listFooter={
-            <ListLoadMoreFooter
-              status={paginatedReminders.status}
-              onLoadMore={paginatedReminders.loadMore}
-              pageSize={reminderPageSize}
-              loadMoreLabel="Load more reminders"
-              loadingLabel={reminderLoadingLabel}
-            />
-          }
-          onAdd={onAdd}
-          onComplete={(reminder) =>
-            runReminderActionWithToast(completeReminder, reminder, {
-              successTitle: 'Reminder completed',
-              successDescription: `${reminder.title} was marked as complete.`,
-            })
-          }
-          onDismiss={(reminder) =>
-            runReminderActionWithToast(dismissReminder, reminder, {
-              successTitle: 'Reminder dismissed',
-              successDescription: `${reminder.title} was dismissed.`,
-            })
-          }
-          onRemove={(reminder) =>
-            runReminderActionWithToast(removeReminder, reminder, {
-              successTitle: 'Reminder removed',
-              successDescription: `${reminder.title} was removed.`,
-            })
-          }
         />
       </DashboardSectionCard>
     </DashboardPage>

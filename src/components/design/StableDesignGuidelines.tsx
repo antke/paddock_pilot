@@ -1,3 +1,11 @@
+import { DashboardRecordDetails } from '#/components/dashboard/DashboardRecordDetails'
+import { createDashboardLabFixtureData } from '#/components/dashboard-lab/dashboardLabFixtures'
+import { createDashboardAuditSample } from '#/components/page-lab/prototypes/dashboardAnalysisFixtures'
+import { createAnalysisCentreData } from '#/components/analysis/analysisCentreData'
+import { StableActivityTimelineChart } from '#/components/analysis/StableActivityTimelineChart'
+import { getTimelinePeriods } from '#/components/analysis/stableActivityTimelineScale'
+import { getTodayDateKey } from '#/lib/dateDisplay'
+import { eventTypes } from 'shared/events/eventSchema'
 import { useState } from 'react'
 import {
   CaretDownIcon,
@@ -22,10 +30,6 @@ import {
   DashboardBrandWordmark,
   DashboardDisplayHeading,
 } from '#/components/dashboard/DashboardDisplayHeading'
-import {
-  DashboardHeroSection,
-  DashboardHeroTitle,
-} from '#/components/dashboard/DashboardHeroSection'
 import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
 import { DashboardInlinePanel } from '#/components/dashboard/DashboardInlinePanel'
 import {
@@ -33,7 +37,10 @@ import {
   DashboardLayoutStack,
 } from '#/components/dashboard/DashboardLayoutGrid'
 import { DashboardLoadingState } from '#/components/dashboard/DashboardLoadingState'
-import { DashboardMetaList } from '#/components/dashboard/DashboardMetaList'
+import {
+  DashboardMetric,
+  DashboardMetricStrip,
+} from '#/components/dashboard/DashboardMetric'
 import { DashboardSectionTabGroup } from '#/components/dashboard/DashboardNavigation'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import {
@@ -50,20 +57,7 @@ import {
   DetailPrintListBlock,
   DetailStack,
 } from '#/components/dashboard/DetailBlocks'
-import {
-  CalendarDayCell,
-  CalendarDayEventList,
-  CalendarDayHeader,
-  CalendarDayNumber,
-  CalendarEventChip,
-  CalendarEventChipMeta,
-  CalendarEventChipTitle,
-  CalendarGrid,
-  CalendarMoreEventsButton,
-  CalendarShell,
-  CalendarWeekdayCell,
-  CalendarWeekdayRow,
-} from '#/components/events/EventCalendar'
+import { CalendarSample } from './CalendarSample'
 import { EventDateBadge } from '#/components/events/EventDateBadge'
 import { FileUploadField } from '#/components/forms/FileUploadField'
 import { FormHelpTooltip } from '#/components/forms/FormHelpTooltip'
@@ -77,7 +71,7 @@ import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { RecordRemoveAction } from '#/components/list-layout/RecordRemoveAction'
 import { ListFilterBar } from '#/components/list-filtering/ListFilterBar'
-import { OnboardingStepper } from '#/components/onboarding/OnboardingStepper'
+import { OnboardingStepperSample } from './OnboardingStepperSample'
 import { StableCardLink } from '#/components/stables/StableCard'
 import { StablePersonCard } from '#/components/stables/StablePersonCard'
 import { StableProviderCard } from '#/components/stables/StableProviderCard'
@@ -89,33 +83,7 @@ import type {
   ListFilterSelectedFacets,
   ListFilterUiConfig,
 } from '#/components/list-filtering/listFiltering'
-import {
-  ActivityTimelineBody,
-  ActivityTimelineCanvas,
-  ActivityTimelineCaption,
-  ActivityTimelineCurrentPeriodBadge,
-  ActivityTimelineEventBadgeRow,
-  ActivityTimelineEventBlock,
-  ActivityTimelineEventText,
-  ActivityTimelineEventTitle,
-  ActivityTimelineGrid,
-  ActivityTimelineGridPeriodButton,
-  ActivityTimelineHeaderRow,
-  ActivityTimelineListEntry,
-  ActivityTimelineOverviewPanel,
-  ActivityTimelineOverviewPeriodButton,
-  ActivityTimelineOverviewRail,
-  ActivityTimelineOverviewTrack,
-  ActivityTimelinePeriodButton,
-  ActivityTimelinePeriodLabel,
-  ActivityTimelineRoot,
-  ActivityTimelineScrollArea,
-  ActivityTimelineTodayMarker,
-  ActivityTimelineViewportPanel,
-  ActivityTimelineWindow,
-  ActivityTimelineWindowDrag,
-  ActivityTimelineWindowHandle,
-} from '#/components/timeline/ActivityTimeline'
+import { ActivityTimelineListEntry } from '#/components/timeline/ActivityTimeline'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import {
   AlertDialog,
@@ -202,53 +170,53 @@ type DemoFacetId = 'horse' | 'state' | 'category'
 type GuidelineTabId = 'care' | 'timeline' | 'notes' | 'providers'
 
 const palette = [
-  ['Canvas', '--background'],
-  ['Paper', '--card'],
-  ['Rail', '--border'],
-  ['Ink', '--foreground'],
-  ['Green', '--primary'],
-  ['Quiet green', '--brand-surface'],
-  ['Leather', '--secondary'],
-  ['Brass', '--chart-3'],
-  ['Clay', '--destructive'],
-] satisfies Array<[string, string]>
+  ['Ivory', '--background', '#f7f3e9 · Main canvas'],
+  ['Paper', '--card', 'Contained surfaces and overlays'],
+  ['Border', '--border', 'Controls and expanded record boundaries'],
+  ['Ink', '--foreground', 'Body copy and record details'],
+  ['Evergreen', '--primary', '#244c3b · Primary actions'],
+  ['Quiet green', '--brand-surface', 'Supporting emphasis'],
+  ['Warm ink', '--selection', '#555247 · Selected controls'],
+  ['Oat', '--selection-surface', '#e7e0ce · Selected rows'],
+  ['Burgundy', '--destructive', '#962f43 · Destructive actions and errors'],
+] satisfies Array<[string, string, string]>
 
 const principles = [
   {
-    title: 'One source of style',
-    body: 'Buttons, badges, cards, tabs, fields, filters, and list rows should be styled through shared primitives.',
+    title: 'Shared components',
+    body: 'Keep buttons, fields, selection states and record rows in shared primitives so the same action looks and behaves consistently.',
   },
   {
-    title: 'Keep the proven layout',
-    body: 'Existing dense screens already work. Preserve their structure and update rails, fill, type, radius, and state treatment.',
+    title: 'Soft sections and readable rows',
+    body: 'Use one paper section per working group on an oat canvas. Shared alternating row fills provide separation; expanded details can gain a neutral boundary.',
   },
   {
-    title: 'Warm utility, not decoration',
-    body: 'Use canvas backgrounds, hard working edges, sparse earth accents, and photography only where it adds real context.',
+    title: 'Clear action and selection',
+    body: 'Evergreen marks primary actions, oat surfaces with warm ink mark the current choice, and burgundy marks destructive actions. Keep ordinary data in readable text.',
   },
 ]
 
 const typographyFamilies = [
   {
-    name: 'Product sans · Manrope Variable',
+    name: 'Body · Alegreya Sans',
     token: 'font-sans',
     className: 'font-sans',
     sample: 'Paddock operations and everyday interface copy',
     use: 'Default application UI, controls, records, descriptions, and data.',
   },
   {
-    name: 'Display condensed · Barlow Condensed',
+    name: 'Headings · Alegreya',
     token: 'font-display',
-    className: 'font-display font-bold uppercase tracking-[-0.015em]',
-    sample: 'FIELD OFFICE',
-    use: 'Hero, page, section, and panel display headings only.',
+    className: 'font-display font-semibold leading-[1.15] tracking-[-0.015em]',
+    sample: 'A day at the stable',
+    use: 'Sentence-case page, section and panel headings at weight 600.',
   },
   {
-    name: 'Brand serif',
+    name: 'Brand · Alegreya',
     token: 'font-serif',
-    className: 'font-serif font-bold',
+    className: 'font-serif font-semibold',
     sample: 'Paddock Pilot',
-    use: 'Brand wordmark and rare editorial accents.',
+    use: 'The wordmark shares the heading family.',
   },
   {
     name: 'Data mono',
@@ -273,19 +241,18 @@ const typographyWeights = [
     className: 'font-medium',
   },
   {
-    name: 'Semibold',
+    name: 'Heading semibold',
     token: 'font-semibold',
     value: '600',
-    className: 'font-semibold',
+    className: 'font-display font-semibold',
   },
   { name: 'Bold', token: 'font-bold', value: '700', className: 'font-bold' },
-  { name: 'Black', token: 'font-black', value: '900', className: 'font-black' },
 ] as const
 
 const typographySizes = [
-  { token: 'text-xs', value: '12px', className: 'text-xs' },
-  { token: 'text-sm', value: '14px', className: 'text-sm' },
-  { token: 'text-base', value: '16px', className: 'text-base' },
+  { token: 'text-xs', value: '13px', className: 'text-xs' },
+  { token: 'text-sm', value: '15px', className: 'text-sm' },
+  { token: 'text-base', value: '17px', className: 'text-base' },
   { token: 'text-lg', value: '18px', className: 'text-lg' },
   { token: 'text-xl', value: '20px', className: 'text-xl' },
   { token: 'text-2xl', value: '24px', className: 'text-2xl' },
@@ -298,7 +265,7 @@ const typographySizes = [
 
 const typographyLineHeights = [
   { token: 'leading-none', value: '1' },
-  { token: 'leading-[0.96]', value: '0.96' },
+  { token: 'leading-[1.15]', value: '1.15' },
   { token: 'leading-tight', value: '1.25' },
   { token: 'leading-snug', value: '1.375' },
   { token: 'leading-normal', value: '1.5' },
@@ -312,53 +279,51 @@ const typographyRoles = [
   {
     role: 'Brand wordmark',
     owner: 'DashboardBrandWordmark',
-    recipe: 'font-serif text-2xl font-bold leading-none',
-    className: 'font-serif text-2xl font-bold leading-none',
+    recipe: 'font-serif text-2xl font-semibold leading-tight',
+    className: 'font-serif text-2xl font-semibold leading-tight',
     sample: 'Paddock Pilot',
   },
   {
     role: 'Hero display title',
     owner: 'DashboardHeroTitle',
     recipe:
-      'font-display text-5xl sm:text-6xl lg:text-7xl font-bold uppercase leading-[0.96] tracking-[-0.015em]',
+      'font-display text-4xl sm:text-5xl font-semibold leading-[1.15] tracking-[-0.015em]',
     className:
-      'font-display text-5xl font-bold uppercase leading-[0.96] tracking-[-0.015em] sm:text-6xl lg:text-7xl',
-    sample: 'Stable HQ',
+      'font-display text-4xl font-semibold leading-[1.15] tracking-[-0.015em] sm:text-5xl',
+    sample: 'Stable journal',
   },
   {
     role: 'Page display title',
     owner: 'DashboardPageHeader',
     recipe:
-      'font-display text-4xl sm:text-5xl font-bold uppercase leading-[0.96] tracking-[-0.015em]',
+      'font-display text-3xl sm:text-4xl font-semibold leading-[1.15] tracking-[-0.015em]',
     className:
-      'font-display text-4xl font-bold uppercase leading-[0.96] tracking-[-0.015em] sm:text-5xl',
+      'font-display text-3xl font-semibold leading-[1.15] tracking-[-0.015em] sm:text-4xl',
     sample: 'Horses',
   },
   {
     role: 'Section title',
     owner: 'DashboardSectionHeader · section',
     recipe:
-      'font-display text-3xl sm:text-4xl font-bold uppercase leading-[0.96] tracking-[-0.015em]',
+      'font-display text-2xl sm:text-3xl font-semibold leading-[1.15] tracking-[-0.015em]',
     className:
-      'font-display text-3xl font-bold uppercase leading-[0.96] tracking-[-0.015em] sm:text-4xl',
+      'font-display text-2xl font-semibold leading-[1.15] tracking-[-0.015em] sm:text-3xl',
     sample: 'Care overview',
   },
   {
     role: 'Panel title',
     owner: 'DashboardSectionHeader · panel',
     recipe:
-      'font-display text-2xl sm:text-3xl font-bold uppercase leading-[0.96] tracking-[-0.015em]',
+      'font-display text-2xl font-semibold leading-[1.15] tracking-[-0.015em]',
     className:
-      'font-display text-2xl font-bold uppercase leading-[0.96] tracking-[-0.015em] sm:text-3xl',
+      'font-display text-2xl font-semibold leading-[1.15] tracking-[-0.015em]',
     sample: 'Horses needing attention',
   },
   {
     role: 'Nested heading',
     owner: 'DashboardInlineHeader / DashboardSubsection',
-    recipe:
-      'font-display text-lg font-bold uppercase leading-none tracking-[-0.01em]',
-    className:
-      'font-display text-lg font-bold uppercase leading-none tracking-[-0.01em]',
+    recipe: 'font-sans text-lg font-medium leading-snug',
+    className: 'font-sans text-lg font-medium leading-snug',
     sample: 'Provider and cost',
   },
   {
@@ -415,7 +380,7 @@ const typographyRoles = [
     owner: 'DashboardMetaList · micro',
     recipe: 'text-xs font-medium leading-4',
     className: 'text-xs font-medium leading-4 text-muted-foreground',
-    sample: 'UPDATED 12 MIN AGO',
+    sample: 'Updated 12 minutes ago',
   },
   {
     role: 'Control text',
@@ -456,7 +421,7 @@ const componentInventory = [
       'dashboard/command-center StableCommandCenter, dashboardData, dashboardTypes, and command-center modules',
     use: 'Signed-in home dashboard, stable overview briefing, priority queue, horse roster, care board, and compact calendar composition',
     status: 'Canonical',
-    rule: 'Keep production dashboard compositions in dashboard/command-center and let internal review routes import the promoted StableCommandCenter implementation. Keep command-center data shaping in dashboardData/dashboardTypes, and avoid production imports from review-route folders.',
+    rule: 'Keep Health issues and Care reminders independently contained. Keep production dashboard compositions in dashboard/command-center and let internal review routes import the promoted StableCommandCenter implementation. Keep command-center data shaping in dashboardData/dashboardTypes, and avoid production imports from review-route folders.',
   },
   {
     group: 'Route state',
@@ -479,7 +444,7 @@ const componentInventory = [
       'DashboardSection, DashboardLayoutGrid, DashboardLayoutStack, DashboardSectionHeader, DashboardHeaderRail, DashboardSectionCard, DashboardSectionDivider, DashboardSubsection, DashboardPageHeader, and DashboardInlineHeader',
     use: 'Dashboard sections, list panels, tab sections, nested headings, card headers with actions',
     status: 'Canonical',
-    rule: 'Use DashboardSection with its gap, padding, tone, chrome, contentAlign, and span props for dashboard, detail, tab, brand CTA, public app-style panel shells, and section placement before adding local app-panel, border, radius, fill, gap, col-span, padding, or content-alignment recipes; use tone="reference" for common non-interactive reference groups so they keep a neutral structural border while Stable Green strengthens only the title and labels; reserve tone="brandQuiet" for rare urgent handover or emergency callouts and pair it only with the inverse brand-surface foreground tokens; every titled DashboardSectionCard inherits the canonical display-style panel title by default, and card-like DashboardSection compositions must use size="panel" rather than a compact UI heading; reserve DashboardInlineHeader and DashboardSubsection typography for nested record, lane, or inset-surface headings only; reserve semantic accent rails for repeated DashboardItemCard records, where they communicate record type or urgency; use DashboardSection padding values, including roomy, for command-center emphasis before adding feature-local border or padding overrides; use DashboardLayoutGrid variants for equal, sidebar, split, splitWide, thirds, thirdsCompact, quarters, alert-column, and command-center section body compositions before adding local responsive grid recipes; use DashboardLayoutStack for repeated vertical page, column, and rail stacks before adding local grid gap wrappers; keep direct ui/Card, CardHeader, CardContent, CardFooter, and Separator usage inside DashboardSectionCard and DashboardSectionDivider; use DashboardSectionCard contentLayout for block, form-stack, two-column, and split-rail card bodies, contentGap for Card header/body/footer rhythm, contentTextSize for compact card bodies, and width for full-width card placement before adding local contentClassName layout, gap, text-size, or width recipes; use DashboardSectionDivider for card section breaks, DashboardSubsection for repeated compact heading-plus-content blocks inside cards or sections, and DashboardSectionHeader and DashboardPageHeader contentLayout/descriptionSize/descriptionWidth for standard headers. Their shared DashboardHeaderRail keeps titles and descriptions on the left and anchors a lone badge or action to the top-right card inset; when both are present, badges stay top-right and actions occupy the bottom-right of the header. Narrow layouts stack the rail after the main content while keeping it right-aligned. Use DashboardInlineHeader with its gap, descriptionSize, and aside badge-cluster handling for standalone compact headings before adding local header markup.',
+    rule: 'Use DashboardSection with its gap, padding, tone, chrome, contentAlign, and span props for dashboard, detail, tab, brand CTA, public app-style panel shells, and section placement before adding local app-panel, border, radius, fill, gap, col-span, padding, or content-alignment recipes; use soft sections for working groups and flat subgroups inside them; reserve tone="brandQuiet" for rare urgent handover or emergency callouts and pair it only with the inverse brand-surface foreground tokens; every titled DashboardSectionCard inherits the canonical display-style panel title by default, and card-like DashboardSection compositions must use size="panel" rather than a compact UI heading; reserve DashboardInlineHeader and DashboardSubsection typography for nested record, lane, or inset-surface headings only; use flat DashboardItemCard rows and express urgency through clear text or exceptional-state badges; use DashboardSection padding values, including roomy, for command-center emphasis before adding feature-local border or padding overrides; use DashboardLayoutGrid variants for equal, sidebar, split, splitWide, thirds, thirdsCompact, quarters, alert-column, and command-center section body compositions before adding local responsive grid recipes; use DashboardLayoutStack for repeated vertical page, column, and rail stacks before adding local grid gap wrappers; keep direct ui/Card, CardHeader, CardContent, CardFooter, and Separator usage inside DashboardSectionCard and DashboardSectionDivider; use DashboardSectionCard contentLayout for block, form-stack, two-column, and split-rail card bodies, contentGap for Card header/body/footer rhythm, contentTextSize for compact card bodies, and width for full-width card placement before adding local contentClassName layout, gap, text-size, or width recipes; use DashboardSectionDivider for card section breaks, DashboardSubsection for repeated compact heading-plus-content blocks inside cards or sections, and DashboardSectionHeader and DashboardPageHeader contentLayout/descriptionSize/descriptionWidth for standard headers. Their shared DashboardHeaderRail keeps titles and descriptions on the left and anchors a lone badge or action to the top-right card inset; when both are present, badges stay top-right and actions occupy the bottom-right of the header. Narrow layouts stack the rail after the main content while keeping it right-aligned. Use DashboardInlineHeader with its gap, descriptionSize, and aside badge-cluster handling for standalone compact headings before adding local header markup.',
   },
   {
     group: 'Typography labels',
@@ -487,7 +452,7 @@ const componentInventory = [
       'ui/TextLabel, DashboardMetaList, textDisplay helpers, and numberDisplay helpers',
     use: 'Metric labels, fieldset legends, nested labels, and compact metadata strings',
     status: 'Canonical',
-    rule: 'Keep muted uppercase product labels in TextLabel, rendered compact metadata strings in DashboardMetaList, string-only metadata assembly in formatMetaText/formatLineText, comma and conjunction lists in formatCommaList/formatConjunctionList, and count/plural labels in formatCountLabel; repeated tracking, separator, list joining, pluralization, and weight classes should stay out of feature files.',
+    rule: 'Keep sentence-case product labels in TextLabel, rendered compact metadata strings in DashboardMetaList, string-only metadata assembly in formatMetaText/formatLineText, comma and conjunction lists in formatCommaList/formatConjunctionList, and count/plural labels in formatCountLabel; repeated tracking, separator, list joining, pluralization, and weight classes should stay out of feature files.',
   },
   {
     group: 'Domain badges',
@@ -503,7 +468,7 @@ const componentInventory = [
       'ui/Button, ui/ButtonLink, ui/ActionGroup, DashboardActions, DashboardPageHeader action slots, DashboardSectionHeader action slots, DialogFooter, AlertDialogFooter, FormSubmitActions, and FormSubmitButtons',
     use: 'Primary CTAs, secondary links, row action groups, form footers, icon buttons, badge/action clusters',
     status: 'Canonical',
-    rule: 'Keep ordinary button appearance and semantic action icons inside ui/Button and buttonVariants, including subtle low-emphasis controls and chip-icon remove buttons. Set action="create" on controls that open add/create forms, action="edit" on controls that open edit forms, and action="delete" on destructive delete/remove controls; the shared primitive supplies the canonical plus, pen, or trash icon and spacing. Do not add these icons to ordinary navigation or form submit buttons merely because their copy contains the same verb. The default primary action uses a Ledger Paper fill with a Stable Green border and label; neutral outline is secondary, while solid is reserved for rare conversion or floating create actions. Green component borders therefore communicate interactivity and must not be reused as ordinary card structure. Keep low-level action-row and footer spacing in ActionGroup; use DashboardActions for dashboard/header/card and public CTA action rows, including its width prop for full-width footers, DialogFooter and AlertDialogFooter for modal footers, FormSubmitActions for wrapped inline or dialog submit/cancel rows, FormSubmitButtons for compact inline submit pairs inside existing layouts, and toast action buttons routed through buttonVariants. Specialized interactive geometry, such as timeline cells, scrub handles, calendar day cells, and drag targets, should stay in its domain primitive owner rather than feature files.',
+    rule: 'Keep ordinary button appearance and semantic action icons inside ui/Button and buttonVariants, including subtle low-emphasis controls and chip-icon remove buttons. Set action="create" on controls that open add/create forms, action="edit" on controls that open edit forms, and action="delete" on destructive delete/remove controls; the shared primitive supplies the canonical plus, pen, or trash icon and spacing. Do not add these icons to ordinary navigation or form submit buttons merely because their copy contains the same verb. Evergreen identifies the primary action; neutral outlines are secondary. Warm ink and oat identify selected controls and rows, while burgundy is reserved for destructive actions and errors. Keep ordinary section structure flat and neutral. Keep low-level action-row and footer spacing in ActionGroup; use DashboardActions for dashboard/header/card and public CTA action rows, including its width prop for full-width footers, DialogFooter and AlertDialogFooter for modal footers, FormSubmitActions for wrapped inline or dialog submit/cancel rows, FormSubmitButtons for compact inline submit pairs inside existing layouts, and toast action buttons routed through buttonVariants. Specialized interactive geometry, such as timeline cells, scrub handles, calendar day cells, and drag targets, should stay in its domain primitive owner rather than feature files.',
   },
   {
     group: 'Search and filters',
@@ -519,7 +484,7 @@ const componentInventory = [
       'DashboardItemCard helpers, DashboardItemList, DashboardItemCard, DashboardItemLinkCard, DashboardItemRecordCard, DashboardItemRecordFooter, DashboardItemMediaCard, DashboardItemActionRow, DashboardItemActionColumn, DashboardItemActions, DashboardItemCardContent, DashboardItemRecordContent, dashboard item text helpers, DashboardInlineHeader, DashboardMetaList, and DashboardSectionCard for framed panels',
     use: 'Care reminders, documents, horses, providers, events, alerts, health, medication, nutrition, timeline',
     status: 'Canonical',
-    rule: 'Keep row stacks, plain item shells, route-link item shells, content-plus-action record cards, preview/media rows, full-width row footers, open/link rows, selected row state, list content alignment, row density, record title sizing, open-row title hover treatment through titleTone, compact item title sizing, inline header title size/weight, title/meta layout, metadata spacing, top-right badge clusters through DashboardBadgeList, bottom-right side and media actions, right-aligned wrapping footer actions through actionsPlacement, compact metadata separators through DashboardMetaList, and description/body text, including muted body tone, in DashboardItemCard helpers before adding local row markup, hover-title classes, selected background/border recipes, alignment classes, text color classes, or padding overrides. Footer record actions wrap instead of becoming a hidden horizontal strip, and exceptional badge clusters move ahead of long record copy on narrow layouts. Set interactive={false} whenever a record has no row-level link or selection action. Semantic rails belong only to real urgency, status, or record-kind distinctions; ordinary upcoming records use the neutral Wood Rail boundary. DashboardItemLinkCard owns block, full-width, full-height link geometry so its border and paper surface remain intact inside semantic list wrappers and responsive grids. Use density="compact" on DashboardItemRecordCard and DashboardItemOpenLink for dense lists. Specialized timeline, calendar, date marker, avatar, filter, and overlay geometry should stay in their own primitive owners instead of feature files.',
+    rule: 'Keep row stacks, plain item shells, route-link item shells, content-plus-action record cards, preview/media rows, full-width row footers, open/link rows, selected row state, list content alignment, row density, record title sizing, open-row title hover treatment through titleTone, compact item title sizing, inline header title size/weight, title/meta layout, metadata spacing, top-right badge clusters through DashboardBadgeList, bottom-right side and media actions, right-aligned wrapping footer actions through actionsPlacement, compact metadata separators through DashboardMetaList, and description/body text, including muted body tone, in DashboardItemCard helpers before adding local row markup, hover-title classes, selected background/border recipes, alignment classes, text color classes, or padding overrides. Footer record actions wrap instead of becoming a hidden horizontal strip, and exceptional badge clusters move ahead of long record copy on narrow layouts. Set interactive={false} whenever a record has no row-level link or selection action. Use clear text and exceptional-state badges for urgency; ordinary records use shared alternating fills. DashboardItemLinkCard owns block, full-width, full-height link geometry so its hover and selected surfaces remain intact inside semantic list wrappers and responsive grids. Use density="compact" on DashboardItemRecordCard and DashboardItemOpenLink for dense lists. Specialized timeline, calendar, date marker, avatar, filter, and overlay geometry should stay in their own primitive owners instead of feature files.',
   },
   {
     group: 'Tables and matrices',
@@ -550,7 +515,7 @@ const componentInventory = [
       'EventCalendar primitives, EventCalendarChrome helpers, StableEventsCalendar, and MiniCalendarCard',
     use: 'Month calendars, narrow monthly agendas, mini dashboard calendars, day cells, direct event links, selected-day disclosures, and hidden-count notices',
     status: 'Canonical',
-    rule: 'Keep route month calendars in StableEventsCalendar, compact dashboard week calendars in MiniCalendarCard, visual month-grid pieces in EventCalendar primitives, and class recipes for cells, chips, selected-day panels, and week-day states in EventCalendarChrome. Full month grids become date-led agendas below the medium breakpoint so event titles and times remain readable instead of compressing into seven unusable columns. Calendar event chips are direct links; dense days use CalendarMoreEventsButton to disclose a keyboard-operable, programmatically related selected-day agenda rather than hiding records behind an inert count or hover-only preview. Project recurring and multi-day records into the visible month through the shared occurrence model so the Calendar remains an operational truth across date boundaries. Compact seven-day schedules use a touch- and keyboard-friendly horizontal strip below the large breakpoint, then resolve to a seven-column grid when every day has enough usable width. Feature files should not add local calendar grid, day-cell, event-chip, scroll-strip, or selected-day style recipes.',
+    rule: 'Keep route month calendars in StableEventsCalendar, compact dashboard week calendars in MiniCalendarCard, visual month-grid pieces in EventCalendar primitives, and class recipes for cells, chips, selected-day panels, and week-day states in EventCalendarChrome. Full month grids become date-led agendas below the medium breakpoint so event titles and times remain readable instead of compressing into seven unusable columns. The read-only month table keeps weekday and date semantics with native event links; it does not advertise date-picker arrow-key behavior. Calendar event chips are direct links; dense days use CalendarMoreEventsButton to disclose a keyboard-operable, programmatically related selected-day agenda rather than hiding records behind an inert count or hover-only preview. Project recurring and multi-day records into the visible month through the shared occurrence model so the Calendar remains an operational truth across date boundaries. Compact seven-day schedules use a touch- and keyboard-friendly horizontal strip below the large breakpoint, then resolve to a seven-column grid when every day has enough usable width. Feature files should not add local calendar grid, day-cell, event-chip, scroll-strip, or selected-day style recipes.',
   },
   {
     group: 'Entity media',
@@ -558,7 +523,7 @@ const componentInventory = [
       'UserAvatar, StableCardLink, StablePersonCard, StableProviderCard, HorseAvatar, HorseCard, HorseCardLink, HorseSelectionCard, DocumentPreview, DocumentDownloadAction, DashboardItemRecordCard, and DashboardItemMediaCard for entity row shells',
     use: 'Stable links, stable people, provider directories, member management, horse rows, rosters, profile headers, document previews, full-row horse links, and horse selection grids',
     status: 'Canonical',
-    rule: 'Use UserAvatar for account photos and initial fallbacks, StableCardLink for whole-row stable navigation, StablePersonCard for owner/member identity rows in both roster and management contexts, and StableProviderCard for provider directory rows in production and review routes. Use HorseAvatar for decorative horse thumbnails with lazy loading, failed-image fallback, and Unicode-safe initials; use HorseCard for static horse identity cards, HorseCardLink whenever a horse card opens its detail page, and HorseSelectionCard for full-card selection with outline feedback. Entity collections always use the rounded bordered card treatment with card spacing; borderless line rows and chrome overrides are not supported. Stable and horse links must make the whole card clickable and must not add a separate open button. Use DocumentPreview for uploaded document image/file fallback frames; it trusts the explicit file-availability state, uses MIME truth before filename inference, and replaces failed image previews with the canonical unavailable-file fallback. DocumentDownloadAction owns the green-bordered primary file action, filename-preserving downloads, stable pending width, duplicate-action prevention, pending feedback, and recoverable errors. Keep its Download slot directly before the tinted destructive Remove action for every document row while Open remains a quiet ghost action: available files expose the working control to every viewer independently of record-management permission, while missing or unavailable files retain a disabled control whose reason is exposed through the shared Tooltip. Use DashboardItemRecordCard for content-plus-action entity row shells, and DashboardItemMediaCard for preview/media rows instead of local image/fallback, title-hover, selection-outline, icon-button, or row action recipes. Document rows keep a visible Wood Rail boundary, a base-size filename, full-contrast notes, and muted treatment only for compact format, type, size, added date, and relationship metadata.',
+    rule: 'Use UserAvatar for account photos and initial fallbacks, StableCardLink for whole-row stable navigation, StablePersonCard for owner/member identity rows in both roster and management contexts, and StableProviderCard for provider directory rows in production and review routes. Use HorseAvatar for decorative horse thumbnails with lazy loading, failed-image fallback, and Unicode-safe initials; use HorseCard for static horse identity cards, HorseCardLink whenever a horse card opens its detail page, and HorseSelectionCard for full-card selection with outline feedback. Entity collections use open rows with shared alternating fills by default; selected rows use the shared warm ink selection treatment. Stable and horse links must make the whole card clickable and must not add a separate open button. Use DocumentPreview for uploaded document image/file fallback frames; it trusts the explicit file-availability state, uses MIME truth before filename inference, and replaces failed image previews with the canonical unavailable-file fallback. DocumentDownloadAction owns the primary file action, filename-preserving downloads, stable pending width, duplicate-action prevention, pending feedback, and recoverable errors. Keep its Download slot directly before the tinted destructive Remove action for every document row while Open remains a quiet ghost action: available files expose the working control to every viewer independently of record-management permission, while missing or unavailable files retain a disabled control whose reason is exposed through the shared Tooltip. Use DashboardItemRecordCard for content-plus-action entity row shells, and DashboardItemMediaCard for preview/media rows instead of local image/fallback, title-hover, selection-outline, icon-button, or row action recipes. Document rows use shared alternating fills, a base-size filename, full-contrast notes, and muted treatment only for compact format, type, size, added date, and relationship metadata.',
   },
   {
     group: 'Detail and metric blocks',
@@ -704,12 +669,21 @@ export function StableDesignGuidelines() {
     <div className="relative left-1/2 min-h-screen w-screen -translate-x-1/2 bg-background text-foreground">
       <div className="mx-auto grid max-w-[90rem] gap-8 px-4 py-6 sm:px-6 lg:px-8">
         <GuidelineHeader />
+        <div id="journal-sample">
+          <StableJournalSpecimen />
+        </div>
         <PrinciplesSection />
-        <FoundationSection />
+        <div id="foundations">
+          <FoundationSection />
+        </div>
         <TypographyInventorySection />
-        <ComponentSpecimens />
+        <div id="components">
+          <ComponentSpecimens />
+        </div>
         <CareTemplateSection />
-        <InventorySection />
+        <div id="inventory">
+          <InventorySection />
+        </div>
         <RolloutSection />
       </div>
     </div>
@@ -718,54 +692,171 @@ export function StableDesignGuidelines() {
 
 function GuidelineHeader() {
   return (
-    <DashboardHeroSection className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-stretch">
-      <div className="grid content-between gap-8">
-        <div className="grid max-w-4xl gap-4">
-          <DashboardHeroTitle>Warm utility system</DashboardHeroTitle>
-          <p className="max-w-3xl text-base font-semibold leading-7 text-muted-foreground">
-            The app should feel practical, familiar, and horse-world adjacent
-            without falling into antique styling. This page is the working
-            template for shared primitives, dense record screens, and rollout
-            rules.
-          </p>
-        </div>
+    <header className="grid max-w-3xl gap-4">
+      <DashboardDisplayHeading>Stable journal system</DashboardDisplayHeading>
+      <p className="text-base leading-7 text-muted-foreground">
+        Alegreya headings, Alegreya Sans body text, an oat canvas, paper
+        sections and gently alternating record rows. This lab shows shared
+        components and their interaction states for the signed-in app.
+      </p>
+      <nav aria-label="Style lab sections" className="flex flex-wrap gap-2">
+        {[
+          ['In practice', 'journal-sample'],
+          ['Colours', 'foundations'],
+          ['Typography', 'typography-system'],
+          ['Components', 'components'],
+          ['Inventory', 'inventory'],
+        ].map(([label, id]) => (
+          <ButtonAnchor key={id} href={`#${id}`} variant="ghost" size="sm">
+            {label}
+          </ButtonAnchor>
+        ))}
+      </nav>
+    </header>
+  )
+}
 
-        <DashboardActions align="start">
-          <Button type="button" action="create">
-            Primary action
-          </Button>
-          <Button type="button" variant="outline">
-            Secondary action
-          </Button>
-        </DashboardActions>
-      </div>
+const journalDays = [
+  {
+    value: '18',
+    label: 'Fri 18',
+    date: 'Friday, 18 September 2026',
+    event: 'Turnout',
+    time: '09:00',
+    person: 'Antek',
+  },
+  {
+    value: '19',
+    label: 'Sat 19',
+    date: 'Saturday, 19 September 2026',
+    event: null,
+    time: null,
+    person: null,
+  },
+  {
+    value: '20',
+    label: 'Sun 20',
+    date: 'Sunday, 20 September 2026',
+    event: 'Groundwork',
+    time: '10:00',
+    person: 'Mae',
+  },
+  {
+    value: '21',
+    label: 'Mon 21',
+    date: 'Monday, 21 September 2026',
+    event: 'Farrier visit',
+    time: '14:30',
+    person: 'Sam Taylor',
+  },
+  {
+    value: '22',
+    label: 'Tue 22',
+    date: 'Tuesday, 22 September 2026',
+    event: null,
+    time: null,
+    person: null,
+  },
+  {
+    value: '23',
+    label: 'Wed 23',
+    date: 'Wednesday, 23 September 2026',
+    event: null,
+    time: null,
+    person: null,
+  },
+  {
+    value: '24',
+    label: 'Thu 24',
+    date: 'Thursday, 24 September 2026',
+    event: null,
+    time: null,
+    person: null,
+  },
+] as const
 
-      <DashboardInlinePanel
-        chrome="soft"
-        padding="none"
-        className="min-h-64 overflow-hidden"
-      >
-        <img
-          src="/design-moodboards/stable-field-office-hero.png"
-          alt="Chestnut horse outside a warm stable yard"
-          className="h-full w-full object-cover"
-        />
-      </DashboardInlinePanel>
-    </DashboardHeroSection>
+function StableJournalSpecimen() {
+  const [selectedDay, setSelectedDay] = useState<string>('18')
+  const [completed, setCompleted] = useState(false)
+  const day =
+    journalDays.find((item) => item.value === selectedDay) ?? journalDays[0]
+
+  return (
+    <DashboardSection
+      title="At the stable"
+      description="Sample records · changes stay in this preview and reset when you leave."
+      size="section"
+    >
+      <DashboardLayoutGrid variant="equal">
+        <DashboardSubsection title="Next 7 days">
+          <ChoiceButtonGroup
+            aria-label="Choose a sample schedule day"
+            value={selectedDay}
+            onValueChange={setSelectedDay}
+            options={journalDays}
+          />
+          <div aria-live="polite" aria-atomic="true" className="min-h-36 pt-5">
+            <p className="text-sm text-muted-foreground">{day.date}</p>
+            {day.event ? (
+              <DashboardItemCard density="compact">
+                <DashboardItemRecordContent
+                  title={day.event}
+                  meta={
+                    <>
+                      <span className="tabular-nums">{day.time}</span>
+                      <span>Maple</span>
+                      <span>{day.person}</span>
+                    </>
+                  }
+                />
+              </DashboardItemCard>
+            ) : (
+              <DashboardEmptyState className="mt-3">
+                No events planned for this sample day.
+              </DashboardEmptyState>
+            )}
+          </div>
+        </DashboardSubsection>
+        <DashboardSubsection title="Care for Maple">
+          <DashboardItemCard density="compact">
+            <DashboardItemRecordContent
+              title="Grooming"
+              meta={<span>Due Friday, 18 September</span>}
+              description="Brush Maple and check her hooves after turnout."
+            />
+            <DashboardActions align="start" className="mt-4">
+              <Button
+                type="button"
+                variant={completed ? 'outline' : 'default'}
+                onClick={() => setCompleted((value) => !value)}
+              >
+                {completed ? 'Undo completion' : 'Mark complete'}
+              </Button>
+            </DashboardActions>
+            <p
+              role="status"
+              className="mt-3 text-sm leading-6 text-muted-foreground"
+            >
+              {completed
+                ? 'Grooming completed in this preview. No live record was changed.'
+                : 'Grooming is still due in this preview.'}
+            </p>
+          </DashboardItemCard>
+        </DashboardSubsection>
+      </DashboardLayoutGrid>
+    </DashboardSection>
   )
 }
 
 function PrinciplesSection() {
   return (
-    <section className="grid gap-4 md:grid-cols-3">
+    <DashboardSection title="Working rules" size="section">
       {principles.map((principle) => (
-        <DashboardSectionCard
-          key={principle.title}
-          title={principle.title}
-          description={principle.body}
-        />
+        <DashboardSubsection key={principle.title} title={principle.title}>
+          <DashboardItemBodyText>{principle.body}</DashboardItemBodyText>
+        </DashboardSubsection>
       ))}
-    </section>
+    </DashboardSection>
   )
 }
 
@@ -773,13 +864,13 @@ function FoundationSection() {
   return (
     <section className="grid items-start gap-6">
       <DashboardSectionCard
-        title="Foundation Tokens"
+        title="Foundation tokens"
         description="These are the app-level values other components should consume. Avoid local theme variables unless a component has a real semantic reason to introduce one."
         contentLayout="block"
       >
         <DetailStack gap="loose">
           <DetailGrid columns={4}>
-            {palette.map(([name, token]) => (
+            {palette.map(([name, token, meaning]) => (
               <DashboardInlinePanel key={token} padding="tight" stack="default">
                 <div
                   className="h-16 border border-border-subtle"
@@ -788,19 +879,19 @@ function FoundationSection() {
                 <div>
                   <p className="font-semibold">{name}</p>
                   <p className="text-xs text-muted-foreground">{token}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {meaning}
+                  </p>
                 </div>
               </DashboardInlinePanel>
             ))}
           </DetailGrid>
 
           <DashboardSection
-            chrome="soft"
-            tone="reference"
-            title="Reference information surface"
-            description="Common reference groups stay on Ledger Paper with a neutral Wood Rail border. Stable Green strengthens the internal hierarchy without turning the whole card into an accent block."
+            title="Reference information"
+            description="Sample provider details use one soft section, readable labels and open facts."
             size="panel"
             padding="compact"
-            className="rounded-row border"
           >
             <DetailGrid columns={3} gap="default">
               <DetailField
@@ -863,13 +954,13 @@ function TypographyInventorySection() {
       <DashboardSectionCard
         as="h2"
         size="page"
-        title="Typography System"
-        description="A source-wide inventory of the type families, semantic roles, weights, sizes, line heights, and casing currently used by the application. Use the role names when reviewing or assigning typography."
+        title="Typography system"
+        description="The approved app typography: Alegreya headings at 600 and 1.15 line height; Alegreya Sans body and controls at 400, 500 and 700; existing semibold body utilities resolve to the loaded bold weight. Use sentence case and shared semantic roles."
       />
 
       <DashboardSectionCard
         title="Semantic roles"
-        description="These recurring text treatments are already owned by shared components. Choose a role first; use a raw utility only when no semantic owner fits."
+        description="Shared components own these recurring text treatments. Choose a role first; use a raw utility only when no semantic owner fits."
         contentGap="compact"
       >
         {typographyRoles.map((item) => (
@@ -879,7 +970,7 @@ function TypographyInventorySection() {
             className="grid min-w-0 gap-4 overflow-hidden lg:grid-cols-[12rem_minmax(0,1fr)_minmax(15rem,0.7fr)] lg:items-center"
           >
             <div className="min-w-0">
-              <TextLabel as="p" weight="black" tracking="none">
+              <TextLabel as="p" weight="medium" tracking="none">
                 {item.role}
               </TextLabel>
               <p className="mt-1 text-xs leading-5 text-muted-foreground">
@@ -899,7 +990,7 @@ function TypographyInventorySection() {
       <div className="grid gap-6 xl:grid-cols-2">
         <DashboardSectionCard
           title="Font families"
-          description={`${typographyFamilies.length} families appear in the source. Sans remains the product default; the other families have narrow jobs.`}
+          description={`${typographyFamilies.length} font roles serve the app. Alegreya and Alegreya Sans carry its identity; mono is reserved for technical references.`}
           contentGap="compact"
         >
           {typographyFamilies.map((item) => (
@@ -909,7 +1000,7 @@ function TypographyInventorySection() {
               className="grid gap-3"
             >
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <TextLabel as="p" weight="black" tracking="none">
+                <TextLabel as="p" weight="medium" tracking="none">
                   {item.name}
                 </TextLabel>
                 <code className="font-mono text-xs text-muted-foreground">
@@ -928,7 +1019,7 @@ function TypographyInventorySection() {
 
         <DashboardSectionCard
           title="Font weights"
-          description={`${typographyWeights.length} weights are active. Most interface hierarchy should stay between medium and bold; black is reserved for display and emphatic labels.`}
+          description={`${typographyWeights.length} weights serve distinct roles: body 400, controls 500, headings 600 and emphasized body 700. Existing semibold body utilities resolve to 700.`}
           contentGap="compact"
         >
           {typographyWeights.map((item) => (
@@ -938,7 +1029,7 @@ function TypographyInventorySection() {
               className="grid gap-2 sm:grid-cols-[8rem_minmax(0,1fr)_auto] sm:items-center"
             >
               <div>
-                <TextLabel as="p" weight="black" tracking="none">
+                <TextLabel as="p" weight="medium" tracking="none">
                   {item.name}
                 </TextLabel>
                 <p className="font-mono text-xs text-muted-foreground">
@@ -958,7 +1049,7 @@ function TypographyInventorySection() {
 
       <DashboardSectionCard
         title="Complete size scale"
-        description={`${typographySizes.length} supported sizes carry the interface hierarchy. Product text starts at 12px; smaller geometry belongs to icons and marks, not copy.`}
+        description={`${typographySizes.length} supported sizes carry the interface hierarchy. Product text starts at 13px; smaller geometry belongs to icons and marks, not copy.`}
         contentGap="compact"
       >
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -991,7 +1082,7 @@ function TypographyInventorySection() {
       <div className="grid gap-6 xl:grid-cols-2">
         <DashboardSectionCard
           title="Line heights"
-          description={`${typographyLineHeights.length} line-height utilities are active, from compressed display headings to readable multi-line body copy.`}
+          description={`${typographyLineHeights.length} line-height utilities support 1.15 headings and readable multi-line body copy.`}
           contentGap="compact"
         >
           <div className="grid gap-3 sm:grid-cols-2">
@@ -1019,11 +1110,11 @@ function TypographyInventorySection() {
 
         <DashboardSectionCard
           title="Case and tracking"
-          description="The source uses natural case for product copy and restrained role-specific tracking for compact labels and display headings."
+          description="Use sentence case for headings, labels and actions. Keep body tracking natural and heading tracking restrained."
           contentGap="compact"
         >
           <DashboardItemCard density="compact" className="grid gap-2">
-            <TextLabel as="p" weight="black" tracking="none">
+            <TextLabel as="p" weight="medium" tracking="none">
               Natural case
             </TextLabel>
             <p className="text-base font-semibold tracking-normal">
@@ -1034,19 +1125,19 @@ function TypographyInventorySection() {
             </code>
           </DashboardItemCard>
           <DashboardItemCard density="compact" className="grid gap-2">
-            <TextLabel as="p" size="sm" weight="black" tracking="none">
-              Uppercase UI label
+            <TextLabel as="p" size="sm" weight="medium" tracking="none">
+              Sentence-case UI label
             </TextLabel>
             <code className="font-mono text-xs text-muted-foreground">
-              TextLabel · uppercase · tracking-[0.035em]
+              TextLabel · sentence case · tracking-normal
             </code>
           </DashboardItemCard>
           <DashboardItemCard density="compact" className="grid gap-2">
             <DashboardDisplayHeading as="p" scale="section">
-              Uppercase display
+              A day at the stable
             </DashboardDisplayHeading>
             <code className="font-mono text-xs text-muted-foreground">
-              font-display · font-bold · uppercase · leading-[0.96]
+              font-display · font-semibold · leading-[1.15]
             </code>
           </DashboardItemCard>
           <DashboardItemCard density="compact" className="grid gap-2">
@@ -1054,7 +1145,7 @@ function TypographyInventorySection() {
               Paddock Pilot
             </DashboardBrandWordmark>
             <code className="font-mono text-xs text-muted-foreground">
-              Brand exception · serif · natural case
+              Alegreya · font-semibold · sentence case
             </code>
           </DashboardItemCard>
         </DashboardSectionCard>
@@ -1067,17 +1158,18 @@ function ComponentSpecimens() {
   const [activeGuidelineTab, setActiveGuidelineTab] =
     useState<GuidelineTabId>('care')
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false)
+  const [juniperSelected, setJuniperSelected] = useState(true)
 
   return (
     <section className="grid items-start gap-6">
       <DashboardSectionCard
-        title="Global Primitives"
+        title="Global primitives"
         description="Use these primitives directly. Do not repeat button, badge, field, card, or tab class recipes in feature files."
         className="order-2"
         contentGap="loose"
       >
         <div className="grid gap-3">
-          <TextLabel as="p" size="sm" weight="black" tracking="none">
+          <TextLabel as="p" size="sm" weight="medium" tracking="none">
             Text labels
           </TextLabel>
           <div className="grid gap-2 sm:grid-cols-3">
@@ -1094,9 +1186,13 @@ function ComponentSpecimens() {
               <p className="mt-3 text-sm text-muted-foreground">
                 Compact detail panels use the same muted label rhythm.
               </p>
+              <DashboardRecordDetails recordTitle="Panel heading">
+                Optional notes expand inside their record. Identity, status and
+                actions remain visible.
+              </DashboardRecordDetails>
             </DashboardItemCard>
             <DashboardItemCard chrome="soft">
-              <TextLabel weight="black" tracking="tight">
+              <TextLabel weight="medium" tracking="tight">
                 Guideline label
               </TextLabel>
               <p className="mt-3 text-sm text-muted-foreground">
@@ -1108,7 +1204,7 @@ function ComponentSpecimens() {
         </div>
 
         <div className="grid gap-3">
-          <TextLabel as="p" size="sm" weight="black" tracking="none">
+          <TextLabel as="p" size="sm" weight="medium" tracking="none">
             Buttons
           </TextLabel>
           <DashboardActions align="start">
@@ -1185,7 +1281,7 @@ function ComponentSpecimens() {
           <DashboardInlinePanel chrome="soft" padding="tight">
             <DashboardInlineHeader
               title="Document action hierarchy"
-              description="Keep Open quiet, make Download the green-bordered primary file action, and reserve the tinted destructive treatment for Remove. Disabled downloads retain their slot and expose the reason in a tooltip."
+              description="Keep Open quiet, make Download the primary file action, and reserve the tinted destructive treatment for Remove. Disabled downloads retain their slot and expose the reason in a tooltip."
               descriptionSize="xs"
               titleWeight="semibold"
             />
@@ -1221,7 +1317,7 @@ function ComponentSpecimens() {
         </div>
 
         <div className="grid gap-3">
-          <TextLabel as="p" size="sm" weight="black" tracking="none">
+          <TextLabel as="p" size="sm" weight="medium" tracking="none">
             Badges
           </TextLabel>
           <div className="grid gap-3">
@@ -1255,7 +1351,7 @@ function ComponentSpecimens() {
         </div>
 
         <div className="grid gap-3">
-          <TextLabel as="p" size="sm" weight="black" tracking="none">
+          <TextLabel as="p" size="sm" weight="medium" tracking="none">
             Date markers
           </TextLabel>
           <div className="flex flex-wrap items-start gap-3">
@@ -1266,73 +1362,16 @@ function ComponentSpecimens() {
         </div>
 
         <div className="grid gap-3">
-          <TextLabel as="p" size="sm" weight="black" tracking="none">
-            Calendar grid
+          <TextLabel as="p" size="sm" weight="medium" tracking="none">
+            Calendar
           </TextLabel>
-          <CalendarShell>
-            <CalendarWeekdayRow>
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(
-                (weekday) => (
-                  <CalendarWeekdayCell key={weekday}>
-                    {weekday}
-                  </CalendarWeekdayCell>
-                ),
-              )}
-            </CalendarWeekdayRow>
-            <CalendarGrid>
-              {[
-                {
-                  day: 18,
-                  events: [
-                    ['Hoof trim', '09:30'],
-                    ['Vet recheck', '11:00'],
-                    ['Arena booking', '15:30'],
-                  ],
-                },
-                { day: 19, events: [] },
-                { day: 20, events: [['Dentist', '13:00']] },
-                { day: 21, events: [] },
-                { day: 22, events: [['Vaccination', '10:15']] },
-                { day: 23, events: [] },
-                { day: 24, events: [['Bodywork', '11:45']] },
-              ].map(({ day, events }) => (
-                <CalendarDayCell key={day} isToday={day === 18}>
-                  <CalendarDayHeader>
-                    <CalendarDayNumber isToday={day === 18}>
-                      {day}
-                    </CalendarDayNumber>
-                    {events.length > 1 && (
-                      <Badge size="count" variant="secondary">
-                        {events.length}
-                      </Badge>
-                    )}
-                  </CalendarDayHeader>
-                  <CalendarDayEventList>
-                    {events.slice(0, 2).map(([title, time]) => (
-                      <CalendarEventChip key={title}>
-                        <CalendarEventChipTitle>{title}</CalendarEventChipTitle>
-                        <CalendarEventChipMeta>{time}</CalendarEventChipMeta>
-                      </CalendarEventChip>
-                    ))}
-                    {events.length > 2 && (
-                      <CalendarMoreEventsButton
-                        aria-label={`${events.length - 2} additional event`}
-                        disabled
-                      >
-                        +{events.length - 2} more
-                      </CalendarMoreEventsButton>
-                    )}
-                  </CalendarDayEventList>
-                </CalendarDayCell>
-              ))}
-            </CalendarGrid>
-          </CalendarShell>
+          <CalendarSample />
         </div>
 
         <PlanningRailSpecimen />
 
         <div id="chronological-rail" className="grid gap-3">
-          <TextLabel as="p" size="sm" weight="black" tracking="none">
+          <TextLabel as="p" size="sm" weight="medium" tracking="none">
             Chronological rail
           </TextLabel>
           <div>
@@ -1359,7 +1398,7 @@ function ComponentSpecimens() {
         </div>
 
         <div className="grid gap-3">
-          <TextLabel as="p" size="sm" weight="black" tracking="none">
+          <TextLabel as="p" size="sm" weight="medium" tracking="none">
             Progress
           </TextLabel>
           <DashboardSubsection
@@ -1374,17 +1413,10 @@ function ComponentSpecimens() {
         </div>
 
         <div className="grid gap-3">
-          <TextLabel as="p" size="sm" weight="black" tracking="none">
+          <TextLabel as="p" size="sm" weight="medium" tracking="none">
             First-run stepper
           </TextLabel>
-          <OnboardingStepper
-            steps={[
-              { id: 'profile', label: 'About you', status: 'completed' },
-              { id: 'stable', label: 'Stable', status: 'current' },
-              { id: 'horse', label: 'First horse', status: 'upcoming' },
-              { id: 'team', label: 'Your team', status: 'deferred' },
-            ]}
-          />
+          <OnboardingStepperSample />
           <p className="text-sm leading-relaxed text-muted-foreground">
             Sequential onboarding stays visible and calm. Optional steps use
             “Done later” instead of warning or incomplete styling.
@@ -1392,7 +1424,7 @@ function ComponentSpecimens() {
         </div>
 
         <div className="grid gap-3">
-          <TextLabel as="p" size="sm" weight="black" tracking="none">
+          <TextLabel as="p" size="sm" weight="medium" tracking="none">
             Tables
           </TextLabel>
           <DashboardTablePanel>
@@ -1426,7 +1458,7 @@ function ComponentSpecimens() {
         </div>
 
         <div className="grid gap-3">
-          <TextLabel as="p" size="sm" weight="black" tracking="none">
+          <TextLabel as="p" size="sm" weight="medium" tracking="none">
             Status surfaces
           </TextLabel>
           <div className="grid gap-2 lg:grid-cols-3">
@@ -1450,7 +1482,7 @@ function ComponentSpecimens() {
         </div>
 
         <div className="grid gap-3">
-          <TextLabel as="p" size="sm" weight="black" tracking="none">
+          <TextLabel as="p" size="sm" weight="medium" tracking="none">
             Section layout grids
           </TextLabel>
           <DashboardLayoutGrid variant="sidebar">
@@ -1500,7 +1532,7 @@ function ComponentSpecimens() {
         </div>
 
         <div className="grid gap-3">
-          <TextLabel as="p" size="sm" weight="black" tracking="none">
+          <TextLabel as="p" size="sm" weight="medium" tracking="none">
             Fields
           </TextLabel>
           <FieldGrid breakpoint="sm" gap="compact">
@@ -1603,7 +1635,7 @@ function ComponentSpecimens() {
         />
 
         <div className="grid gap-3">
-          <TextLabel as="p" size="sm" weight="black" tracking="none">
+          <TextLabel as="p" size="sm" weight="medium" tracking="none">
             Entity media
           </TextLabel>
           <div className="grid gap-2">
@@ -1635,8 +1667,8 @@ function ComponentSpecimens() {
                 ownerName: 'Leah Reed',
                 breed: 'Cob',
               }}
-              checked
-              onCheckedChange={() => undefined}
+              checked={juniperSelected}
+              onCheckedChange={setJuniperSelected}
             />
             <StableProviderCard
               provider={{
@@ -1655,7 +1687,7 @@ function ComponentSpecimens() {
       </DashboardSectionCard>
 
       <DashboardSectionCard
-        title="Navigation and Filters"
+        title="Navigation and filters"
         description="Tabs and list filters are canonical patterns. Their layout should stay consistent across pages."
         className="order-1"
         contentGap="loose"
@@ -1675,8 +1707,55 @@ function ComponentSpecimens() {
         <FilterSpecimen />
 
         <PrimitiveControlSpecimen />
+
+        <MetricStripSpecimen />
       </DashboardSectionCard>
     </section>
+  )
+}
+
+function MetricStripSpecimen() {
+  const sampleMetrics = [
+    { title: 'Horses', value: '24' },
+    { title: 'Members', value: '12' },
+    { title: 'Visits', value: '8' },
+    { title: 'Reminders', value: '6' },
+    { title: 'Providers', value: '5' },
+    { title: 'Documents', value: '36' },
+    { title: 'Completed', value: '18' },
+    { title: 'Planned', value: '9' },
+  ]
+
+  return (
+    <DashboardSubsection
+      id="metric-strip-specimen"
+      as="h3"
+      title="Metric strips"
+      description="Illustrative values. Resize the page to compare dividers at the start of each row."
+    >
+      {([3, 4] as const).map((columns) => {
+        const label = `${columns === 3 ? 'Three' : 'Four'}-column metric strip`
+        return (
+          <DashboardSubsection key={columns} as="h4" title={label}>
+            <DashboardMetricStrip
+              id={`metric-strip-${columns}`}
+              role="group"
+              aria-label={label}
+              columns={columns}
+            >
+              {sampleMetrics.slice(0, columns * 2).map((metric) => (
+                <DashboardMetric
+                  key={metric.title}
+                  title={metric.title}
+                  value={metric.value}
+                  stripItem
+                />
+              ))}
+            </DashboardMetricStrip>
+          </DashboardSubsection>
+        )
+      })}
+    </DashboardSubsection>
   )
 }
 
@@ -1705,145 +1784,70 @@ function BadgeSizeSpecimen({
 }
 
 function PlanningRailSpecimen() {
-  const periods = [
-    { label: 'Jun 17', density: 0.22, active: false },
-    { label: 'Jun 18', density: 0.9, active: true },
-    { label: 'Jun 19', density: 0.45, active: false },
-  ]
-  const gridTemplateColumns = `repeat(${periods.length}, minmax(9rem, 1fr))`
+  const [timeline] = useState(
+    () =>
+      createAnalysisCentreData(
+        createDashboardAuditSample(
+          createDashboardLabFixtureData(),
+          'schedule',
+          getTodayDateKey(),
+        ),
+        [],
+      ).timeline,
+  )
+  const periods = getTimelinePeriods(timeline.buckets, 'day')
+  const [selectedPeriodKey, setSelectedPeriodKey] = useState<string | null>(
+    null,
+  )
+  const [eventMessage, setEventMessage] = useState('')
 
   return (
     <div className="grid gap-3">
-      <TextLabel as="p" size="sm" weight="black" tracking="none">
+      <TextLabel as="p" size="sm" weight="medium" tracking="none">
         Planning rails
       </TextLabel>
-      <ActivityTimelineRoot className="min-h-0">
-        <ActivityTimelineViewportPanel>
-          <ActivityTimelineScrollArea className="max-h-none overflow-hidden">
-            <ActivityTimelineCanvas>
-              <ActivityTimelineHeaderRow style={{ gridTemplateColumns }}>
-                {periods.map((period) => (
-                  <ActivityTimelinePeriodButton
-                    key={period.label}
-                    selected={period.active}
-                  >
-                    {period.active && (
-                      <ActivityTimelineCurrentPeriodBadge>
-                        Today
-                      </ActivityTimelineCurrentPeriodBadge>
-                    )}
-                    <TextLabel size="micro" weight="semibold">
-                      Day
-                    </TextLabel>
-                    <ActivityTimelinePeriodLabel>
-                      {period.label}
-                    </ActivityTimelinePeriodLabel>
-                  </ActivityTimelinePeriodButton>
-                ))}
-              </ActivityTimelineHeaderRow>
 
-              <ActivityTimelineBody className="h-32">
-                <ActivityTimelineGrid style={{ gridTemplateColumns }}>
-                  {periods.map((period) => (
-                    <ActivityTimelineGridPeriodButton
-                      key={period.label}
-                      selected={period.active}
-                      hasActivity={period.density > 0.3}
-                      aria-label={period.label}
-                    />
-                  ))}
-                </ActivityTimelineGrid>
-                <ActivityTimelineEventBlock
-                  accentColor="var(--primary)"
-                  style={{
-                    left: '9.5rem',
-                    top: '1.25rem',
-                    width: '13rem',
-                    height: '5.7rem',
-                  }}
-                >
-                  <ActivityTimelineEventTitle>
-                    <ActivityTimelineEventText>
-                      Hoof trim follow-up
-                    </ActivityTimelineEventText>
-                  </ActivityTimelineEventTitle>
-                  <DashboardMetaList
-                    size="micro"
-                    gap="compact"
-                    separator="dot"
-                    className="min-w-0 overflow-hidden"
-                  >
-                    <span>Farrier</span>
-                    <span>09:30</span>
-                    <span>Planned</span>
-                  </DashboardMetaList>
-                  <ActivityTimelineEventBadgeRow>
-                    <Badge variant="outline" size="micro">
-                      repeats
-                    </Badge>
-                    <Badge variant="outline" size="micro">
-                      2d
-                    </Badge>
-                  </ActivityTimelineEventBadgeRow>
-                </ActivityTimelineEventBlock>
-              </ActivityTimelineBody>
-            </ActivityTimelineCanvas>
-          </ActivityTimelineScrollArea>
-        </ActivityTimelineViewportPanel>
+      <p className="text-sm text-muted-foreground">
+        Sample planning rail. Move and zoom the real timeline; event clicks stay
+        in this preview.
+      </p>
+      <StableActivityTimelineChart
+        periods={periods}
+        occurrences={timeline.occurrences}
+        scale="day"
+        visibleSeries={['all']}
+        visibleEventTypes={[...eventTypes]}
+        selectedPeriodKey={selectedPeriodKey}
+        onPeriodSelect={(period) => setSelectedPeriodKey(period.key)}
+        onEventOpen={() =>
+          setEventMessage(
+            'Sample event selected locally. No event page was opened.',
+          )
+        }
+      />
+      {eventMessage && <p role="status">{eventMessage}</p>}
 
-        <ActivityTimelineOverviewPanel>
-          <ActivityTimelineOverviewRail>
-            <ActivityTimelineOverviewTrack>
-              {periods.map((period) => (
-                <ActivityTimelineOverviewPeriodButton
-                  key={period.label}
-                  density={period.density}
-                  aria-label={`${period.label} overview`}
-                />
-              ))}
-            </ActivityTimelineOverviewTrack>
-            <ActivityTimelineTodayMarker style={{ left: '50%' }} />
-            <ActivityTimelineWindow style={{ left: '30%', width: '45%' }}>
-              <ActivityTimelineWindowHandle
-                edge="start"
-                aria-label="Resize visible timeline start"
-              />
-              <ActivityTimelineWindowDrag aria-label="Move visible timeline window" />
-              <ActivityTimelineWindowHandle
-                edge="end"
-                aria-label="Resize visible timeline end"
-              />
-            </ActivityTimelineWindow>
-          </ActivityTimelineOverviewRail>
-        </ActivityTimelineOverviewPanel>
-
-        <ActivityTimelineCaption>
-          Planning rails should use ActivityTimeline primitives for chrome,
-          blocks, overview windows, tags, and captions.
-        </ActivityTimelineCaption>
-
-        <ActivityTimelineListEntry
-          badges={
-            <>
-              <Badge variant="secondary">Health</Badge>
-              <Badge variant="warning">Watch</Badge>
-            </>
-          }
-          title="Heat in left foreleg"
-          meta={
-            <>
-              <span>Noted Jun 18</span>
-              <span>Resolved Jun 21</span>
-            </>
-          }
-          description="Chronological timeline rows should keep the same shell, badge row, dense title, metadata, and content spacing."
-        >
-          <DashboardItemBodyText>
-            Use this entry primitive for timeline list rows before composing a
-            local panel by hand.
-          </DashboardItemBodyText>
-        </ActivityTimelineListEntry>
-      </ActivityTimelineRoot>
+      <ActivityTimelineListEntry
+        badges={
+          <>
+            <Badge variant="secondary">Health</Badge>
+            <Badge variant="warning">Watch</Badge>
+          </>
+        }
+        title="Heat in left foreleg"
+        meta={
+          <>
+            <span>Noted Jun 18</span>
+            <span>Resolved Jun 21</span>
+          </>
+        }
+        description="Chronological timeline rows should keep the same shell, badge row, dense title, metadata, and content spacing."
+      >
+        <DashboardItemBodyText>
+          Use this entry primitive for timeline list rows before composing a
+          local panel by hand.
+        </DashboardItemBodyText>
+      </ActivityTimelineListEntry>
     </div>
   )
 }
@@ -1859,7 +1863,7 @@ function FeedbackOverlaySpecimen({
 
   return (
     <div className="grid gap-3">
-      <TextLabel as="p" size="sm" weight="black" tracking="none">
+      <TextLabel as="p" size="sm" weight="medium" tracking="none">
         Feedback and overlays
       </TextLabel>
       <div className="grid gap-3">
@@ -2198,7 +2202,7 @@ function CareTemplateSection() {
       <DashboardSectionCard
         as="h2"
         size="page"
-        title="Care Card Template"
+        title="Care record template"
         description="Keep the current care-card layout. The style comes from shared rows, badges, and buttons so every detail screen can inherit the same treatment."
         actions={
           <Button type="button" action="create">
@@ -2303,7 +2307,7 @@ function InventorySection() {
       <DashboardSectionCard
         as="h2"
         size="page"
-        title="Component Inventory"
+        title="Component inventory"
         description="This is the refactor map. If a page needs one of these patterns, it should use the listed canonical component before adding custom styles."
       />
 
@@ -2314,26 +2318,26 @@ function InventorySection() {
             className="grid gap-4 lg:grid-cols-[12rem_minmax(0,1fr)_8rem_minmax(14rem,0.7fr)] lg:items-start"
           >
             <div>
-              <TextLabel as="p" weight="black" tracking="none">
+              <TextLabel as="p" weight="medium" tracking="none">
                 Group
               </TextLabel>
               <p className="font-semibold">{item.group}</p>
             </div>
             <div>
-              <TextLabel as="p" weight="black" tracking="none">
+              <TextLabel as="p" weight="medium" tracking="none">
                 Canonical source
               </TextLabel>
               <p className="font-semibold">{item.canonical}</p>
               <p className="mt-1 text-sm text-muted-foreground">{item.use}</p>
             </div>
             <div>
-              <TextLabel as="p" weight="black" tracking="none">
+              <TextLabel as="p" weight="medium" tracking="none">
                 Status
               </TextLabel>
               <InventoryStatusBadge status={item.status} />
             </div>
             <div>
-              <TextLabel as="p" weight="black" tracking="none">
+              <TextLabel as="p" weight="medium" tracking="none">
                 Implementation rule
               </TextLabel>
               <p className="text-sm text-muted-foreground">{item.rule}</p>
@@ -2364,13 +2368,13 @@ function RolloutSection() {
   const steps = [
     'Keep primitives global: Button, Badge, Card, Tabs, Field, FieldPanel, Input, Select.',
     'Replace repeated title, button, badge, toast, and row styles with shared helpers.',
-    'Move feature screens onto the warm token layer without changing their core layout.',
+    'Tune the global app-section and app-record tokens; use one soft section per working group and alternating rows within it.',
     'Use this page as the review checklist before adding a new component pattern.',
   ]
 
   return (
     <DashboardSectionCard
-      title="Rollout Rules"
+      title="Rollout rules"
       description="The goal is consistency first, then incremental visual tuning."
       contentGap="compact"
     >

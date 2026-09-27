@@ -87,7 +87,6 @@ function HorseAnalysisPanel({
 }) {
   return (
     <DashboardSection
-      chrome="cards"
       className={cn('min-w-0 gap-5', className)}
       span={span}
       title={title}
@@ -103,12 +102,14 @@ function HorseAnalysisPanel({
 }
 
 function HorseAnalysisList({
+  ariaLabel,
   children,
   itemCount,
   visibleItemLimit,
   estimatedItemHeightRem,
   className,
 }: {
+  ariaLabel: string
   children: ReactNode
   itemCount: number
   visibleItemLimit: number
@@ -117,6 +118,7 @@ function HorseAnalysisList({
 }) {
   return (
     <ScrollableList
+      ariaLabel={ariaLabel}
       itemCount={itemCount}
       visibleItemLimit={visibleItemLimit}
       estimatedItemHeightRem={estimatedItemHeightRem}
@@ -196,7 +198,7 @@ function HorseWellbeingSummaryPanel({
           ))}
         </div>
 
-        <DashboardItemCard chrome="soft" className="grid content-start gap-2">
+        <DashboardItemCard chrome="flat" className="grid content-start gap-2">
           <DashboardInlineHeader
             title="Latest signal"
             aside={
@@ -296,7 +298,7 @@ function HorseHealthOverview({ analysis }: { analysis: LabHorseDeepDive }) {
   const frequency = analysis.healthFrequency
 
   return (
-    <DashboardItemCard chrome="soft" className="grid content-start gap-3">
+    <DashboardItemCard chrome="flat" className="grid content-start gap-3">
       <DashboardInlineHeader
         title="Health overview"
         aside={
@@ -378,7 +380,7 @@ function HorseProgressPanel({ analysis }: { analysis: LabHorseDeepDive }) {
 
 function HorseWeightTrendCard({ trend }: { trend: LabHorseWeightTrend }) {
   return (
-    <DashboardItemCard chrome="soft" className="grid gap-3">
+    <DashboardItemCard chrome="flat" className="grid gap-3">
       <DashboardInlineHeader
         title="Latest recording"
         aside={
@@ -430,6 +432,7 @@ function HorseNutritionPanel({ analysis }: { analysis: LabHorseDeepDive }) {
         <DashboardLayoutStack gap="compact">
           {analysis.nutritionSignals.length > 0 ? (
             <HorseAnalysisList
+              ariaLabel="Nutrition correlations"
               itemCount={analysis.nutritionSignals.length}
               visibleItemLimit={4}
               estimatedItemHeightRem={6.5}
@@ -456,7 +459,7 @@ function HorseNutritionSignalRow({
   signal: LabHorseNutritionSignal
 }) {
   return (
-    <DashboardItemCard chrome="soft" className="grid gap-2">
+    <DashboardItemCard chrome="flat" className="grid gap-2">
       <DashboardInlineHeader
         title={signal.summary}
         aside={
@@ -537,6 +540,7 @@ function HorseReminderGroup({
         </DashboardEmptyState>
       ) : (
         <HorseAnalysisList
+          ariaLabel="Due horse reminders"
           itemCount={reminders.length}
           visibleItemLimit={4}
           estimatedItemHeightRem={5.75}
@@ -569,6 +573,7 @@ function HorseUpcomingEventGroup({
         </DashboardEmptyState>
       ) : (
         <HorseAnalysisList
+          ariaLabel="Upcoming horse events"
           itemCount={events.length}
           visibleItemLimit={4}
           estimatedItemHeightRem={5.75}
@@ -595,6 +600,7 @@ function HorseCadenceGroup({ items }: { items: Array<LabHorseCareCadence> }) {
         </DashboardEmptyState>
       ) : (
         <HorseAnalysisList
+          ariaLabel="Horse care cadence"
           itemCount={items.length}
           visibleItemLimit={4}
           estimatedItemHeightRem={5.75}
@@ -661,6 +667,7 @@ function HorseDocumentationEventGroup({
   return (
     <DashboardSubsection title="Event notes" titleWeight="semibold">
       <HorseAnalysisList
+        ariaLabel="Events missing notes"
         itemCount={events.length}
         visibleItemLimit={4}
         estimatedItemHeightRem={5.75}
@@ -690,6 +697,7 @@ function HorseOutcomeGapGroup({
   return (
     <DashboardSubsection title="Horse outcome notes" titleWeight="semibold">
       <HorseAnalysisList
+        ariaLabel="Horse outcome notes"
         itemCount={outcomes.length}
         visibleItemLimit={4}
         estimatedItemHeightRem={5.25}
@@ -725,6 +733,7 @@ function HorseSignalGroup({
         <DashboardEmptyState chrome="soft">{emptyLabel}</DashboardEmptyState>
       ) : (
         <HorseAnalysisList
+          ariaLabel={title}
           itemCount={signals.length}
           visibleItemLimit={4}
           estimatedItemHeightRem={5.5}
@@ -750,7 +759,7 @@ function HorseSignalRow({
 }) {
   return (
     <DashboardItemCard
-      chrome="soft"
+      chrome="flat"
       density={compact ? 'compact' : undefined}
       className="grid gap-2"
     >
@@ -762,10 +771,12 @@ function HorseSignalRow({
             backgroundColor: timelineSignalKindAccentColors[signal.kind],
           }}
         />
-        <span className="truncate font-semibold">{signal.title}</span>
+        <span className="min-w-0 break-words font-semibold">
+          {signal.title}
+        </span>
         {signal.urgent ? <Badge variant="destructive">Urgent</Badge> : null}
       </div>
-      <DashboardItemBodyText tone="muted" className="truncate">
+      <DashboardItemBodyText tone="muted" className="break-words">
         {getHorseSignalDetail(signal)}
       </DashboardItemBodyText>
     </DashboardItemCard>
@@ -774,7 +785,7 @@ function HorseSignalRow({
 
 function HorseReminderRow({ reminder }: { reminder: HorseReminder }) {
   return (
-    <DashboardItemCard chrome="soft" className="grid gap-2">
+    <DashboardItemCard chrome="flat" className="grid gap-2">
       <DashboardInlineHeader title={reminder.title} titleWeight="semibold" />
       <DashboardItemBodyText tone="muted">
         Due {formatEventDate(reminder.dueDate)} ·{' '}
@@ -813,7 +824,7 @@ function HorseEventRow({
 
 function HorseCadenceRow({ item }: { item: LabHorseCareCadence }) {
   return (
-    <DashboardItemCard chrome="soft" className="grid gap-2">
+    <DashboardItemCard chrome="flat" className="grid gap-2">
       <DashboardInlineHeader
         title={eventTypeLabels[item.type]}
         aside={

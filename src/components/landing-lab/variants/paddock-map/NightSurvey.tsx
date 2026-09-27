@@ -1,5 +1,8 @@
 import { landingLabContent } from '../../landingLabContent'
-import { LandingLabActions } from '../../LandingLabPrimitives'
+import {
+  LandingLabActions,
+  LandingLabCapabilityHeading,
+} from '../../LandingLabPrimitives'
 import { PaddockMapStudyFrame } from './PaddockMapStudyFrame'
 
 const surveyPlacements = [
@@ -89,11 +92,11 @@ export function NightSurvey({ theme }: { theme: 'light' | 'dark' }) {
         {landingLabContent.capabilities.map((capability, index) => (
           <article
             key={capability.id}
-            className={`${surveyPlacements[index]} border-t border-current/30 py-8 lg:py-10`}
+            className={`@container ${surveyPlacements[index]} border-t border-current/30 py-8 lg:py-10`}
           >
-            <h2 className="max-w-[12ch] font-display text-[clamp(3rem,6vw,5.4rem)] leading-[0.88] font-bold tracking-[-0.03em] text-balance uppercase">
+            <LandingLabCapabilityHeading>
               {capability.title}
-            </h2>
+            </LandingLabCapabilityHeading>
             <p className="mt-5 max-w-xl text-base leading-7 opacity-80 sm:text-lg sm:leading-8">
               {capability.description}
             </p>

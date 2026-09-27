@@ -1,0 +1,55 @@
+# Shared navigation — 19 September 2026
+
+Scope: `AppDashboardNavigation`, `DashboardNavigation`, `HorseDetailSectionTabs`, their actual consumers, and installed Base UI link/composite behavior. Impeccable audit/harden applies. Source and DOM evidence only; no browser, authentication or live stable switch was performed.
+
+## Findings and bounded corrections
+
+| Finding                                                                                                                                                                                   | Evidence and correction                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Minor-section buttons had no programmatic connection to their changing content. They were exposed as a navigation landmark even though these controls act as manual local view selectors. | `DashboardSectionTabs` already used native `type=button` controls with `aria-pressed`, and Base UI supplied arrow navigation. Those behaviors remain. The selector is now a named group. `DashboardSectionTabGroup` connects each button to one content region with `aria-controls`; that region is named by the active button through `aria-labelledby`. IDs come from `useId`, including when multiple specimens coexist. |
+| Horse subsection landmark names changed with the selection, e.g. “Upcoming activity views” became “Activity history views”.                                                               | `HorseDetailSectionTabs` now uses the stable group label “Horse section views”; the current content region retains its more specific label, e.g. Upcoming or History. This distinguishes stable control identity from selected content.                                                                                                                                                                                     |
+| The exported stable selector was unnamed and its selected state existed as styling and an “Active” text fragment only.                                                                    | Added “Stable selection” to the existing navigation and `aria-pressed` to its native choice buttons. Existing callback and close-on-click behavior are preserved. This owner currently has **no application consumer**, so the evidence is component-level, not proof of a production stable-switch flow.                                                                                                                   |
+
+The new content region is one spacing-preserving semantic wrapper. Its shared `grid min-w-0 gap-3` retains the former parent's grid spacing between content children and allows narrow content to shrink; it adds no border, card, background or animation. It exists to associate the controls with their content, not to add another visual surface. Lower `ui/tabs.tsx` and `ui/navigation-menu.tsx` were inspected but not edited. No ARIA tab/tabpanel roles were added; manual pressed-button selection remains the supported contract.
+
+## Behaviors already correct
+
+- `DashboardNavigationLinkItem` and `DashboardNavigationMenuLink` produce real anchors and set `aria-current="page"` for the active destination. DOM regressions pass before and after the change.
+- The More disclosure is a button; the nested current destination gets `aria-current`, not the disclosure. Existing close-on-click ownership stays in the menu-link/menu-button helpers.
+- `HorseDetail` keeps major Profile, Activity, Care, Nutrition and Documents destinations as TanStack links. Timeline and Care summary remain actual nested destinations under More.
+- Base UI `NavigationMenu.List` supplies composite arrow focus. The subsection test verifies ArrowRight moves focus without switching the selected content until explicit activation. Existing `aria-pressed` already conveyed the selected state.
+- `PageLabNavigation` supplies TanStack Link render elements. Installed TanStack `link.tsx` supplies its active link `aria-current` behavior; data-active styling alone was not treated as evidence of missing current-page semantics.
+
+## Exact consumer and ownership inventory
+
+| Owner                           | Current consumers and behavior                                                                                                                                                                                              |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DashboardNavigation`           | `HorseDetail.tsx` major route rail (`overflow="scroll"`, named with horse); `PageLabPage.tsx` page-lab directory (wrap); internal `DashboardSectionTabs`; exported `AppDashboardNavigation` (not itself mounted elsewhere). |
+| `DashboardNavigationLinkItem`   | `HorseDetail.tsx` major route links.                                                                                                                                                                                        |
+| `DashboardNavigationMenuGroup`  | `HorseDetail.tsx` More; exported `AppDashboardNavigation` stable picker.                                                                                                                                                    |
+| `DashboardNavigationMenuLink`   | `HorseDetail.tsx` Timeline and Care summary.                                                                                                                                                                                |
+| `DashboardNavigationMenuButton` | Exported `AppDashboardNavigation` stable choices.                                                                                                                                                                           |
+| `DashboardSectionTabs`          | `DashboardSectionTabGroup` only.                                                                                                                                                                                            |
+| `DashboardSectionTabGroup`      | `HorseDetailSectionTabs`; controlled style-lab specimen in `StableDesignGuidelines.tsx`.                                                                                                                                    |
+| `HorseDetailSectionTabs`        | `HorseActivitySection.tsx`, `HorseCareSection.tsx`, `HorseNutritionSection.tsx`.                                                                                                                                            |
+
+The three horse sections are mounted by `HorseDetail.tsx`; local actual-component specimens also mount Activity through `HorseActivityPageLab.tsx`, and Care/Nutrition through `HorseRecordsPageLab.tsx`. The changed shared section composition therefore reaches activity, care, and nutrition views plus their lab specimens. Only these static import relationships are claimed, not complete route-state coverage.
+
+Responsive presentation remains in `DashboardNavigation`: `overflow="scroll"` keeps major horse links on one line with a thin horizontal scrollbar, while the default minor-selector/directory layout wraps. Alignment, content widths and section font/size variants live in the dashboard navigation owner. These are shared recipe decisions and necessary geometry, not route-owned color or typography forks; no blanket class removal was warranted. The current stable-button justify-between/text-left classes organize a name and state label. Approved type, ivory canvas, evergreen action and selection colors remain unchanged.
+
+## Verification
+
+Initial focused regression run: **2 failed / 2 passed**. Missing stable group/content association and stable-selector name/state tests failed; real link and nested-current destination tests passed. After correction, **11 tests pass across 3 files**:
+
+- `DashboardNavigation.test.tsx`: 5 tests — unique control/content IDs, stable named group and associated changing region, manual arrow focus + explicit selection, real link/current-page semantics, stable selection callback/state, and nested disclosure/current semantics (some assertions share a case).
+- Existing `HorseActivitySection.test.tsx` and `HorseRecordsPageLab.test.tsx`: 6 tests exercise the actual section consumers and sample integrations.
+
+Final scoped ESLint and full TypeScript checks pass. An earlier TypeScript attempt found an unrelated concurrent `HorseProfileForm.test.tsx:76` callback/mock union error; its owner corrected that independently before the final check. After parent review, the semantic region explicitly retained the former `grid gap-3` content spacing with `min-w-0`; the same 11 behavior tests were rerun and pass. No class-string-only test was added.
+
+Changed files: `dashboard/DashboardNavigation.tsx`, `dashboard/AppDashboardNavigation.tsx`, `horses/HorseDetailSectionTabs.tsx`, new `dashboard/DashboardNavigation.test.tsx`, and this report. No route, authentication, lower primitive, global stylesheet or coverage file changed.
+
+## Remaining browser/auth gaps
+
+At a narrow viewport, verify that the major horse rail scrolls without page overflow and that focus reveals offscreen links. Confirm More opens inside the viewport, closes on destination activation and Escape, and maintains a visible focus treatment. Repeat minor-section selection with native Enter/Space, enlarged text and reduced motion. The DOM tests verify native button/anchor semantics and arrow behavior; they do not establish actual scrollbar geometry, touch behavior or pixel contrast.
+
+The unused `AppDashboardNavigation` export should not be marked as a visually verified production stable picker. A connected switch may involve route context, permissions and authentication not exercised here. Live horse route navigation, browser history and URL-addressed care selection remain separate from these shared component assertions. No empty/invalid dynamic tab-array defect was invented: current horse consumers provide static nonempty items and constrained selection values.

@@ -1,3 +1,4 @@
+import { createEventOccurrences } from 'shared/events/eventOccurrences'
 import {
   dateKeyToDate,
   formatDateKey,
@@ -9,6 +10,7 @@ import type {
   DashboardCommandHorse,
   DashboardCommandOverview,
   DashboardCommandStable,
+  DashboardCommandScheduleEvent,
 } from './dashboardTypes'
 
 export function createDashboardCommandData({
@@ -34,11 +36,35 @@ export function createDashboardCommandData({
       return a.time.localeCompare(b.time)
     })
   const today = dateKeyToDate(todayKey)
+  const end = new Date(today)
+  end.setDate(today.getDate() + 6)
+  const occurrences = createEventOccurrences({
+    events: stableEvents,
+    windowStart: todayKey,
+    windowEnd: formatDateKey(end),
+  })
   const weekDays = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(today)
     date.setDate(today.getDate() + index)
     const key = formatDateKey(date)
-    const dayEvents = stableEvents.filter((event) => event.date === key)
+    const dayEvents: Array<DashboardCommandScheduleEvent> = occurrences
+      .filter(
+        (occurrence) =>
+          occurrence.startDate <= key && occurrence.endDate >= key,
+      )
+      .map((occurrence) => ({
+        ...occurrence.event,
+        occurrenceKey: occurrence.occurrenceKey,
+        date: occurrence.startDate,
+        endDate: occurrence.durationDays > 1 ? occurrence.endDate : undefined,
+        status: occurrence.event.status ?? 'planned',
+      }))
+      .sort(
+        (a, b) =>
+          a.date.localeCompare(b.date) ||
+          a.time.localeCompare(b.time) ||
+          (a.occurrenceKey ?? '').localeCompare(b.occurrenceKey ?? ''),
+      )
 
     return {
       date,
@@ -59,7 +85,7 @@ export function createDashboardCommandData({
     upcomingEvents: overview.upcomingEvents,
     dueReminders: overview.dueReminders,
     attentionHorses: overview.attentionHorses,
-    todayEvents: stableEvents.filter((event) => event.date === todayKey),
+    todayEvents: weekDays[0].events,
     weekDays,
     urgentCount:
       overview.summary.overdueReminderCount +

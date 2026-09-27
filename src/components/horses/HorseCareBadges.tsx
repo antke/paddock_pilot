@@ -41,7 +41,7 @@ const medicationRecordStatusVariant = {
 >
 
 const healthIssueKindVariant = {
-  active: 'destructive',
+  active: 'info',
   resolved: 'secondary',
 } satisfies Record<
   HealthIssueStatus,
@@ -79,7 +79,7 @@ export function HealthIssueStatusBadge({
 
   return (
     <Badge variant={healthIssueStatusVariant[status]} {...props}>
-      <StatusIcon className="size-3" weight="bold" />
+      <StatusIcon aria-hidden="true" className="size-3" weight="bold" />
       {horseHealthIssueStatusLabels[status]}
     </Badge>
   )

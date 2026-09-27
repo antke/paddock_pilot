@@ -13,22 +13,49 @@ import {
   AppHeaderActions,
   AppHeaderNav,
   AppHeaderUtilityCluster,
+  AppHeaderLinks,
 } from './layout/AppShell'
 import ThemeToggle from './ThemeToggle'
+
+const activeNavigationClassName =
+  'border-selection bg-selection-surface text-selection hover:bg-selection-surface hover:text-selection'
 
 export default function Header() {
   const devAuthBypassEnabled = useDevAuthBypassEnabled()
 
   return (
-    <AppHeader>
-      <AppHeaderNav aria-label="Primary navigation">
+    <HeaderView
+      navigation={
+        <HeaderNavigation devAuthBypassEnabled={devAuthBypassEnabled} />
+      }
+      accountActions={
+        <HeaderAccountActions devAuthBypassEnabled={devAuthBypassEnabled} />
+      }
+    />
+  )
+}
+
+export function HeaderView({
+  navigation,
+  accountActions,
+  position,
+  navigationLabel = 'Primary navigation',
+}: {
+  navigation: ReactNode
+  accountActions: ReactNode
+  position?: 'sticky' | 'static'
+  navigationLabel?: string
+}) {
+  return (
+    <AppHeader position={position}>
+      <AppHeaderNav aria-label={navigationLabel}>
         <AppBrandLink>Paddock Pilot</AppBrandLink>
 
-        <HeaderNavigation devAuthBypassEnabled={devAuthBypassEnabled} />
+        <AppHeaderLinks>{navigation}</AppHeaderLinks>
 
         <AppHeaderActions>
           <AppHeaderUtilityCluster>
-            <HeaderAccountActions devAuthBypassEnabled={devAuthBypassEnabled} />
+            {accountActions}
             <ThemeToggle />
           </AppHeaderUtilityCluster>
         </AppHeaderActions>
@@ -81,7 +108,7 @@ function HeaderNavigation({
   )
 
   return (
-    <div className="order-3 flex w-full items-center gap-1 sm:order-none sm:w-auto">
+    <>
       {devAuthBypassEnabled ? (
         <>
           <HeaderNavigationLink to="/" exact>
@@ -98,12 +125,19 @@ function HeaderNavigation({
           <Show when="signed-in">{signedInNavigation}</Show>
         </>
       )}
-    </div>
+    </>
   )
 }
 
-function ActiveStableNavigation({ stableId }: { stableId: string }) {
-  const { pathname } = useLocation()
+export function ActiveStableNavigation({
+  stableId,
+  pathname: samplePath,
+}: {
+  stableId: string
+  pathname?: string
+}) {
+  const location = useLocation()
+  const pathname = samplePath ?? location.pathname
   const stableBasePath = `/stables/${stableId}`
   const calendarPath = `${stableBasePath}/events/calendar`
 
@@ -122,7 +156,7 @@ function ActiveStableNavigation({ stableId }: { stableId: string }) {
         className={cn(
           buttonVariants({ variant: 'ghost', size: 'sm' }),
           pathname.startsWith(`${stableBasePath}/horses`) &&
-            'bg-primary/10 text-foreground',
+            activeNavigationClassName,
         )}
       >
         Horses
@@ -139,7 +173,7 @@ function ActiveStableNavigation({ stableId }: { stableId: string }) {
         className={cn(
           buttonVariants({ variant: 'ghost', size: 'sm' }),
           pathname.startsWith(`${stableBasePath}/reminders`) &&
-            'bg-primary/10 text-foreground',
+            activeNavigationClassName,
         )}
       >
         Care
@@ -158,7 +192,7 @@ function ActiveStableNavigation({ stableId }: { stableId: string }) {
           buttonVariants({ variant: 'ghost', size: 'sm' }),
           pathname.startsWith(`${stableBasePath}/events`) &&
             pathname !== calendarPath &&
-            'bg-primary/10 text-foreground',
+            activeNavigationClassName,
         )}
       >
         Events
@@ -170,7 +204,7 @@ function ActiveStableNavigation({ stableId }: { stableId: string }) {
         aria-current={pathname === calendarPath ? 'page' : undefined}
         className={cn(
           buttonVariants({ variant: 'ghost', size: 'sm' }),
-          pathname === calendarPath && 'bg-primary/10 text-foreground',
+          pathname === calendarPath && activeNavigationClassName,
         )}
       >
         Calendar
@@ -185,7 +219,7 @@ function ActiveStableNavigation({ stableId }: { stableId: string }) {
         className={cn(
           buttonVariants({ variant: 'ghost', size: 'sm' }),
           pathname === `${stableBasePath}/documents` &&
-            'bg-primary/10 text-foreground',
+            activeNavigationClassName,
         )}
       >
         Documents
@@ -200,7 +234,7 @@ function ActiveStableNavigation({ stableId }: { stableId: string }) {
         className={cn(
           buttonVariants({ variant: 'ghost', size: 'sm' }),
           pathname === `${stableBasePath}/analysis` &&
-            'bg-primary/10 text-foreground',
+            activeNavigationClassName,
         )}
       >
         Analysis
@@ -228,12 +262,12 @@ function HeaderNavigationLink({
         active === undefined
           ? {
               'aria-current': 'page',
-              className: 'bg-primary/10 text-foreground',
+              className: activeNavigationClassName,
             }
           : undefined
       }
       aria-current={active ? 'page' : undefined}
-      className={cn(active && 'bg-primary/10 text-foreground')}
+      className={cn(active && activeNavigationClassName)}
       variant="ghost"
       size="sm"
     >

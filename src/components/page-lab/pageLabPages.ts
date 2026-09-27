@@ -1,4 +1,20 @@
 export const pageLabPages = [
+  { id: 'route-recovery', label: 'Route recovery' },
+  { id: 'onboarding', label: 'Onboarding' },
+  { id: 'profile', label: 'Account profile' },
+  { id: 'pricing', label: 'Pricing states' },
+  { id: 'invitations', label: 'Invitation access' },
+  { id: 'header', label: 'Application header' },
+  { id: 'horse-invitations', label: 'Horse invitations' },
+  { id: 'horse-records', label: 'Horse records' },
+  { id: 'horse-activity', label: 'Horse activity' },
+  { id: 'members-settings', label: 'Members settings' },
+  { id: 'members-directory', label: 'Members directory' },
+  { id: 'deleted-horses', label: 'Deleted horses' },
+  { id: 'stable-welcome', label: 'Stable welcome' },
+  { id: 'stable-form', label: 'Stable form' },
+  { id: 'stable-layout', label: 'Stable route layout' },
+  { id: 'providers', label: 'Providers' },
   {
     id: 'stable-dashboard',
     label: 'Stable dashboard',
@@ -16,12 +32,20 @@ export const pageLabPages = [
     label: 'Horse detail',
   },
   {
+    id: 'horse-form',
+    label: 'Horse form',
+  },
+  {
     id: 'event-list',
     label: 'Event list',
   },
   {
     id: 'event-detail',
     label: 'Event detail',
+  },
+  {
+    id: 'event-service-notes',
+    label: 'Service notes',
   },
   {
     id: 'reminders',

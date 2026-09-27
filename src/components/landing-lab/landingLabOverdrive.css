@@ -2,6 +2,15 @@
   isolation: isolate;
 }
 
+/* Decorative map lines remain behind readable copy in every map composition. */
+.paddock-map-study > svg [stroke] {
+  stroke-opacity: 0.14;
+}
+
+.care-cycle-field > svg {
+  opacity: 0.18;
+}
+
 .paddock-layered-field {
   --paddock-layer-a: color-mix(
     in srgb,
@@ -316,6 +325,16 @@
 }
 
 @media (max-width: 1023px) {
+  /* The application display face needs a wider measure than the original
+     condensed studies. Keep complete words readable in narrow captures. */
+  .landing-overdrive h1 {
+    max-width: 100%;
+    font-size: clamp(2.25rem, 9vw, 4.5rem);
+    line-height: 1;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
   .gathered-from-left,
   .gathered-from-right,
   .gathered-from-top,
@@ -358,6 +377,27 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
+  }
+
+  /* Short durations do not stop view-timeline motion. Reuse the complete,
+     static composition already shown on narrow or unsupported browsers. */
+  .gathered-from-left,
+  .gathered-from-right,
+  .gathered-from-top,
+  .gathered-from-bottom,
+  .aisle-depth img,
+  .gatefold-left,
+  .gatefold-right {
+    animation: none !important;
+    clip-path: none;
+    transform: none;
+  }
+
+  .gathered-from-left,
+  .gathered-from-right,
+  .gathered-from-top,
+  .gathered-from-bottom {
+    opacity: 1;
   }
 
   .paddock-layered-route,

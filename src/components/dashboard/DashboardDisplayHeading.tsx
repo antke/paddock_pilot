@@ -11,10 +11,10 @@ type DashboardDisplayHeadingProps = Omit<ComponentProps<'h1'>, 'children'> & {
 }
 
 const dashboardDisplayHeadingScaleClassNames = {
-  hero: 'text-5xl sm:text-6xl lg:text-7xl',
-  page: 'text-4xl sm:text-5xl',
-  section: 'text-3xl sm:text-4xl',
-  panel: 'text-2xl sm:text-3xl',
+  hero: 'text-4xl sm:text-5xl',
+  page: 'text-3xl sm:text-4xl',
+  section: 'text-2xl',
+  panel: 'text-2xl',
 } satisfies Record<DashboardDisplayHeadingScale, string>
 
 export function DashboardDisplayHeading({
@@ -30,7 +30,7 @@ export function DashboardDisplayHeading({
     <Heading
       data-slot="dashboard-display-heading"
       className={cn(
-        'min-w-0 text-balance font-display font-bold [overflow-wrap:anywhere] uppercase leading-[0.96] tracking-[-0.015em]',
+        'min-w-0 text-balance font-display font-semibold [overflow-wrap:anywhere] leading-[1.15] tracking-[-0.015em]',
         dashboardDisplayHeadingScaleClassNames[scale],
         className,
       )}
@@ -47,7 +47,10 @@ export function DashboardBrandWordmark({
 }: ComponentProps<'span'>) {
   return (
     <span
-      className={cn('font-serif text-2xl font-bold leading-none', className)}
+      className={cn(
+        'font-serif text-2xl font-semibold leading-tight',
+        className,
+      )}
       {...props}
     />
   )

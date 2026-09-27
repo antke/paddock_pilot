@@ -1,20 +1,13 @@
+import { MembersSettingsPageLab } from './MembersSettingsPageLab'
+import { useState } from 'react'
+import { Field, FieldLabel } from '#/components/ui/field'
+import { Select } from '#/components/ui/select'
+import { ProvidersPageLab } from './ProvidersPageLab'
+import { DeletedHorsesPageLab } from './DeletedHorsesPageLab'
 import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
-import { DetailDisplayField } from '#/components/dashboard/DetailBlocks'
-import {
-  DashboardItemCardContent,
-  DashboardItemList,
-  DashboardItemRecordCard,
-} from '#/components/dashboard/DashboardItemCard'
-import { DashboardLayoutStack } from '#/components/dashboard/DashboardLayoutGrid'
-import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
+import { StableOverviewPageLab } from './StableOverviewPageLab'
 import { StableActivityLogCard } from '#/components/stables/StableActivityLogCard'
-import { StableArchiveCard } from '#/components/stables/StableArchiveCard'
-import { StablePersonCard } from '#/components/stables/StablePersonCard'
-import { StableProviderCard } from '#/components/stables/StableProviderCard'
-import type { StableProviderCardProvider } from '#/components/stables/StableProviderCard'
-import { StableProviderRemoveAction } from '#/components/stables/StableProvidersCard'
 import { StableSettingsLayout } from '#/components/stables/StableSettingsPage'
-import { Button } from '#/components/ui/button'
 import { TabsContent } from '#/components/ui/tabs'
 
 const activityEntries = [
@@ -41,237 +34,63 @@ const activityEntries = [
 ]
 
 export function SettingsPageLab({ data }: { data: DashboardLabData }) {
-  const stable = data.stable
-
   return (
     <StableSettingsLayout defaultValue="overview">
       <TabsContent value="overview">
-        <DashboardLayoutStack gap="comfortable">
-          <DashboardSectionCard
-            title={stable.name}
-            actions={
-              <Button action="edit" variant="outline">
-                Edit stable
-              </Button>
-            }
-            contentLayout="twoColumn"
-            contentTextSize="sm"
-          >
-            <DetailDisplayField label="Location" value={stable.location} />
-            <DetailDisplayField label="Owner" value="Mae Turner" />
-            <DetailDisplayField
-              label="Postal address"
-              value={[stable.addressLine1, stable.postcode, stable.country]
-                .filter(Boolean)
-                .join('\n')}
-              span="sm2"
-              multiline
-            />
-            <DetailDisplayField label="Contact" value={stable.contactName} />
-            <DetailDisplayField
-              label="Contact phone"
-              value={stable.contactPhone}
-            />
-            <DetailDisplayField
-              label="Opening hours"
-              value={stable.openingHours}
-              span="sm2"
-              multiline
-            />
-            <DetailDisplayField
-              label="Yard rules"
-              value={stable.yardRules}
-              span="sm2"
-              multiline
-            />
-          </DashboardSectionCard>
-
-          <StableArchiveCard stableName={stable.name} onArchive={() => true} />
-        </DashboardLayoutStack>
+        <StableOverviewPageLab data={data} />
       </TabsContent>
 
       <TabsContent value="members">
-        <SettingsPeopleCard
-          records={[
-            {
-              title: 'Mae Turner',
-              meta: 'mae@cedarridge.example',
-              role: 'owner',
-            },
-            {
-              title: 'Rae Monroe',
-              meta: 'Yard manager · (555) 014-0912',
-              role: 'member',
-              canManage: true,
-            },
-            {
-              title: 'June Hale',
-              meta: 'june@cedarridge.example',
-              role: 'member',
-              canManage: true,
-            },
-          ]}
-        />
+        <MembersSettingsPageLab data={data} embedded />
       </TabsContent>
 
       <TabsContent value="providers">
-        <SettingsListCard
-          title="Providers"
-          description="Regular care contacts available when scheduling work."
-          actionLabel="Add provider"
-          records={[
-            {
-              provider: {
-                name: 'Dr. Halley Morse',
-                phone: '(555) 014-3300',
-                type: 'vet',
-              },
-              canManage: true,
-            },
-            {
-              provider: {
-                name: 'Ben Carter',
-                phone: '(555) 014-1902',
-                type: 'farrier',
-              },
-              canManage: true,
-            },
-            {
-              provider: {
-                name: 'North County Equine Dental',
-                notes: 'Annual visits',
-                type: 'dentist',
-              },
-              canManage: true,
-            },
-          ]}
-        />
+        <ProvidersPageLab data={data} embedded />
       </TabsContent>
 
       <TabsContent value="deleted-horses">
-        <DashboardSectionCard
-          title="Deleted horses"
-          description="Recently deleted horses remain recoverable for 14 days."
-        >
-          <DashboardItemRecordCard
-            chrome="cards"
-            density="compact"
-            interactive={false}
-          >
-            <DashboardItemCardContent
-              title="Willow"
-              titleSize="sm"
-              meta={
-                <span>Deleted 3 days ago · Permanently removed in 11 days</span>
-              }
-            />
-          </DashboardItemRecordCard>
-        </DashboardSectionCard>
+        <DeletedHorsesPageLab data={data} embedded />
       </TabsContent>
 
       <TabsContent value="activity">
-        <StableActivityLogCard entries={activityEntries} />
+        <ActivitySample />
       </TabsContent>
     </StableSettingsLayout>
   )
 }
 
-function SettingsPeopleCard({
-  records,
-}: {
-  records: Array<{
-    title: string
-    meta: string
-    role: 'owner' | 'member'
-    canManage?: boolean
-  }>
-}) {
+function ActivitySample() {
+  const [scenario, setScenario] = useState('standard')
+  const entries =
+    scenario === 'empty'
+      ? []
+      : scenario === 'long'
+        ? Array.from({ length: 20 }, (_, index) => ({
+            ...activityEntries[index % 3],
+            _id: `sample-activity-${index}`,
+            createdAt: Date.UTC(2026, 8, 18, 12) - index * 3600000,
+            actor: index === 3 ? null : activityEntries[index % 3].actor,
+            summary:
+              index === 0
+                ? 'A long sample change mentioning the Northern Pastures Equestrian and Rehabilitation Centre and its coordination team.'
+                : activityEntries[index % 3].summary,
+          }))
+        : activityEntries
   return (
-    <DashboardSectionCard
-      title="Members"
-      description="People with access to this stable."
-      actions={<Button action="create">Invite member</Button>}
-    >
-      <DashboardItemList gap="compact">
-        {records.map((record) => (
-          <StablePersonCard
-            key={record.title}
-            name={record.title}
-            role={record.role}
-            meta={<span>{record.meta}</span>}
-            actions={
-              record.canManage ? (
-                <>
-                  <Button type="button" action="edit" variant="ghost" size="sm">
-                    Edit details
-                  </Button>
-                  <Button
-                    type="button"
-                    action="delete"
-                    variant="ghost"
-                    size="sm"
-                  >
-                    Remove
-                  </Button>
-                </>
-              ) : undefined
-            }
-          />
-        ))}
-      </DashboardItemList>
-    </DashboardSectionCard>
-  )
-}
-
-function SettingsListCard({
-  title,
-  description,
-  actionLabel,
-  records,
-}: {
-  title: string
-  description: string
-  actionLabel: string
-  records: Array<{
-    provider: StableProviderCardProvider
-    canManage?: boolean
-  }>
-}) {
-  return (
-    <DashboardSectionCard
-      title={title}
-      description={description}
-      actions={<Button action="create">{actionLabel}</Button>}
-    >
-      <DashboardItemList gap="compact">
-        {records.map((record) => (
-          <StableProviderCard
-            key={record.provider.name}
-            provider={record.provider}
-            actions={
-              <>
-                {record.canManage && (
-                  <>
-                    <Button
-                      type="button"
-                      action="edit"
-                      variant="ghost"
-                      size="sm"
-                    >
-                      Edit
-                    </Button>
-                    <StableProviderRemoveAction
-                      providerName={record.provider.name}
-                      isRemoving={false}
-                      onRemove={async () => true}
-                    />
-                  </>
-                )}
-              </>
-            }
-          />
-        ))}
-      </DashboardItemList>
-    </DashboardSectionCard>
+    <>
+      <Field>
+        <FieldLabel htmlFor="activity-sample-state">Sample activity</FieldLabel>
+        <Select
+          id="activity-sample-state"
+          value={scenario}
+          onChange={(event) => setScenario(event.target.value)}
+        >
+          <option value="standard">Standard</option>
+          <option value="long">20 changes and long details</option>
+          <option value="empty">Empty</option>
+        </Select>
+      </Field>
+      <StableActivityLogCard entries={entries} />
+    </>
   )
 }

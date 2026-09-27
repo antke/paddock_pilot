@@ -24,7 +24,7 @@ export function AppDashboardNavigation({
   if (!showStableSelector) return null
 
   return (
-    <DashboardNavigation align="end" inset={false}>
+    <DashboardNavigation align="end" inset={false} ariaLabel="Stable selection">
       <DashboardNavigationMenuGroup
         active
         label={activeStable?.name ?? 'Select stable'}
@@ -34,6 +34,7 @@ export function AppDashboardNavigation({
           <DashboardNavigationMenuButton
             key={stable._id}
             data-active={stable._id === activeStableId || undefined}
+            aria-pressed={stable._id === activeStableId}
             onClick={() => onActiveStableChange(stable._id)}
             className="justify-between text-left"
           >

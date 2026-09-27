@@ -1,4 +1,5 @@
-import { formatDateKey, formatShortWeekdayDate } from '#/lib/dateDisplay'
+import { getTodayDateKey } from '#/lib/dateDisplay'
+import { createDashboardCommandData } from '#/components/dashboard/command-center/dashboardData'
 import type {
   DashboardLabData,
   DashboardLabEvent,
@@ -13,51 +14,21 @@ export function createDashboardLabData({
   events,
   horses,
   overview,
+  todayKey = getTodayDateKey(),
 }: {
   stable: DashboardLabStable
   stables: Array<DashboardLabStable>
   events: Array<DashboardLabEvent>
   horses: Array<DashboardLabHorse>
   overview: DashboardLabOverview
+  todayKey?: string
 }): DashboardLabData {
-  const stableEvents = events
-    .filter((event) => event.stableId === stable._id)
-    .sort((a, b) => {
-      const dateSort = a.date.localeCompare(b.date)
-      if (dateSort !== 0) return dateSort
-      return a.time.localeCompare(b.time)
-    })
-  const today = new Date()
-  const todayKey = formatDateKey(today)
-  const weekDays = Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(today)
-    date.setDate(today.getDate() + index)
-    const key = formatDateKey(date)
-    const dayEvents = stableEvents.filter((event) => event.date === key)
-
-    return {
-      date,
-      key,
-      label: index === 0 ? 'Today' : formatShortWeekdayDate(date),
-      day: `${date.getDate()}`,
-      eventCount: dayEvents.length,
-      events: dayEvents,
-    }
-  })
-
-  return {
+  return createDashboardCommandData({
     stable,
     stables,
-    events: stableEvents,
+    events,
     horses,
     overview,
-    upcomingEvents: overview.upcomingEvents,
-    dueReminders: overview.dueReminders,
-    attentionHorses: overview.attentionHorses,
-    todayEvents: stableEvents.filter((event) => event.date === todayKey),
-    weekDays,
-    urgentCount:
-      overview.summary.overdueReminderCount +
-      overview.summary.highSeverityIssueCount,
-  }
+    todayKey,
+  })
 }

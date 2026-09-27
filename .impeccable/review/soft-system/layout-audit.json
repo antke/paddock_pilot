@@ -1,0 +1,802 @@
+[
+  {
+    "id": "reminders",
+    "headings": [
+      "Care reminders",
+      "Follow up on lameness notes after turnout change",
+      "Order yard first-aid refills",
+      "Upload vaccination certificate",
+      "Review winter supplement plan"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 1280
+  },
+  {
+    "id": "horse-detail",
+    "headings": [
+      "Juniper",
+      "At a glance",
+      "Identification",
+      "Lineage and routine"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 1280
+  },
+  {
+    "id": "horse-form",
+    "headings": [
+      "Edit horse profile",
+      "Delete horse"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 1280
+  },
+  {
+    "id": "horse-records",
+    "headings": [
+      "Juniper — records sample",
+      "Care reminders"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 2,
+    "width": 1280
+  },
+  {
+    "id": "documents",
+    "headings": [
+      "Documents sample",
+      "Juniper sample passport notes.txt",
+      "Sample vaccination notes.txt",
+      "Cedar Ridge Barn insurance summary",
+      "Atlas shoeing notes.txt",
+      "Paddock Pilot reference mark.svg",
+      "Juniper.follow-up.scan.FINAL.PNG",
+      "Sample annual dental examination and follow-up recommendations for the next routine visit.txt"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 2,
+    "width": 1280
+  },
+  {
+    "id": "analysis",
+    "headings": [
+      "Analysis Centre",
+      "Stable activity timeline",
+      "25 September 2026",
+      "Needs attention"
+    ],
+    "overflow": false,
+    "overflowing": [
+      "activity-timeline-period-button",
+      "text-label",
+      "SPAN",
+      "SPAN",
+      "activity-timeline-period-button",
+      "text-label",
+      "SPAN",
+      "activity-timeline-period-button"
+    ],
+    "sections": 3,
+    "width": 1280
+  },
+  {
+    "id": "members-settings",
+    "headings": [
+      "Members settings sample",
+      "Members"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 2,
+    "width": 1280
+  },
+  {
+    "id": "stable-dashboard",
+    "headings": [
+      "Cedar Ridge Barn",
+      "Today",
+      "Next 7 days",
+      "Horses",
+      "Health issues",
+      "Care reminders"
+    ],
+    "overflow": false,
+    "overflowing": [
+      "calendar-week-day-column",
+      "calendar-week-day-button",
+      "calendar-week-day-label",
+      "calendar-week-day-meta",
+      "calendar-week-day-column",
+      "calendar-week-day-button",
+      "calendar-week-day-label",
+      "calendar-week-day-number"
+    ],
+    "sections": 5,
+    "width": 390
+  },
+  {
+    "id": "reminders",
+    "headings": [
+      "Care reminders",
+      "Follow up on lameness notes after turnout change",
+      "Order yard first-aid refills",
+      "Upload vaccination certificate",
+      "Review winter supplement plan"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 390
+  },
+  {
+    "id": "documents",
+    "headings": [
+      "Documents sample",
+      "Juniper sample passport notes.txt",
+      "Sample vaccination notes.txt",
+      "Cedar Ridge Barn insurance summary",
+      "Atlas shoeing notes.txt",
+      "Paddock Pilot reference mark.svg",
+      "Juniper.follow-up.scan.FINAL.PNG",
+      "Sample annual dental examination and follow-up recommendations for the next routine visit.txt"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 2,
+    "width": 390
+  },
+  {
+    "id": "horse-form",
+    "headings": [
+      "Edit horse profile",
+      "Delete horse"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 390
+  },
+  {
+    "id": "event-list",
+    "headings": [
+      "Events"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 390
+  },
+  {
+    "id": "horse-list",
+    "headings": [
+      "Horses"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 390
+  },
+  {
+    "id": "members-settings",
+    "headings": [
+      "Members settings sample",
+      "Members"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 2,
+    "width": 390
+  },
+  {
+    "id": "analysis",
+    "headings": [
+      "Analysis Centre",
+      "Stable activity timeline",
+      "25 September 2026",
+      "Needs attention"
+    ],
+    "overflow": false,
+    "overflowing": [
+      "activity-timeline-period-button",
+      "text-label",
+      "SPAN",
+      "SPAN",
+      "SPAN",
+      "tooltip-trigger",
+      "SPAN",
+      "SPAN"
+    ],
+    "sections": 3,
+    "width": 390
+  },
+  {
+    "id": "stables-list",
+    "headings": [
+      "All stables"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 390
+  },
+  {
+    "id": "event-detail",
+    "headings": [
+      "Dental float",
+      "Overview",
+      "Provider and cost",
+      "Completion",
+      "Horses"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 2,
+    "width": 390
+  },
+  {
+    "id": "event-service-notes",
+    "headings": [
+      "Service notes interaction sample",
+      "Horse service notes"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 2,
+    "width": 390
+  },
+  {
+    "id": "calendar",
+    "headings": [
+      "Event calendar",
+      "September 2026"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 390
+  },
+  {
+    "id": "timeline",
+    "headings": [
+      "Horse timeline sample",
+      "Timeline"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 390
+  },
+  {
+    "id": "care-summary",
+    "headings": [
+      "Care summary sample",
+      "Juniper — care summary"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 8,
+    "width": 390
+  },
+  {
+    "id": "providers",
+    "headings": [
+      "Provider directory sample",
+      "Provider directory"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 2,
+    "width": 390
+  },
+  {
+    "id": "members-directory",
+    "headings": [
+      "Members",
+      "Stable directory",
+      "Your yard profile"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 3,
+    "width": 390
+  },
+  {
+    "id": "route-recovery",
+    "headings": [
+      "This page couldn’t load"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 390
+  },
+  {
+    "id": "onboarding",
+    "headings": [
+      "Set up Sample Cedar Ridge",
+      "How does the stable run?"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 390
+  },
+  {
+    "id": "profile",
+    "headings": [
+      "Your profile",
+      "Profile details"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 390
+  },
+  {
+    "id": "pricing",
+    "headings": [
+      "Plans",
+      "Testing access"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 390
+  },
+  {
+    "id": "invitations",
+    "headings": [
+      "Sample Cedar Ridge Barn",
+      "Ready to join"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 2,
+    "width": 390
+  },
+  {
+    "id": "header",
+    "headings": [
+      "Application header"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 390
+  },
+  {
+    "id": "horse-invitations",
+    "headings": [
+      "Invitation review",
+      "Horse invitations"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 390
+  },
+  {
+    "id": "horse-activity",
+    "headings": [
+      "Juniper — activity sample",
+      "Upcoming activity"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 390
+  },
+  {
+    "id": "deleted-horses",
+    "headings": [
+      "Deleted horses sample",
+      "Deleted horses"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 2,
+    "width": 390
+  },
+  {
+    "id": "stable-welcome",
+    "headings": [
+      "Your stable is ready",
+      "Getting started"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 390
+  },
+  {
+    "id": "stable-form",
+    "headings": [
+      "Edit stable",
+      "Stable details"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 0,
+    "width": 390
+  },
+  {
+    "id": "stable-layout",
+    "headings": [
+      "Care"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 0,
+    "width": 390
+  },
+  {
+    "id": "settings",
+    "headings": [
+      "Stable settings",
+      "Cedar Ridge Barn",
+      "Archive stable"
+    ],
+    "overflow": false,
+    "overflowing": [
+      "tabs-trigger",
+      "tabs-trigger"
+    ],
+    "sections": 3,
+    "width": 390
+  },
+  {
+    "id": "forms",
+    "headings": [
+      "Edit event"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 0,
+    "width": 390
+  },
+  {
+    "id": "horse-detail",
+    "headings": [
+      "Juniper",
+      "At a glance",
+      "Identification",
+      "Lineage and routine"
+    ],
+    "overflow": false,
+    "overflowing": [
+      "navigation-menu-item",
+      "navigation-menu-link",
+      "navigation-menu-item",
+      "navigation-menu-trigger",
+      "svg",
+      "path"
+    ],
+    "sections": 1,
+    "width": 390
+  },
+  {
+    "id": "horse-records",
+    "headings": [
+      "Juniper — records sample",
+      "Care reminders"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 2,
+    "width": 390
+  },
+  {
+    "id": "reminders",
+    "headings": [
+      "Care reminders",
+      "Follow up on lameness notes after turnout change",
+      "Order yard first-aid refills",
+      "Upload vaccination certificate",
+      "Review winter supplement plan"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 1280
+  },
+  {
+    "id": "stable-dashboard",
+    "headings": [
+      "Cedar Ridge Barn",
+      "Today",
+      "Next 7 days",
+      "Horses",
+      "Health issues",
+      "Care reminders"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 5,
+    "width": 1280
+  },
+  {
+    "id": "event-list",
+    "headings": [
+      "Events"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 1280
+  },
+  {
+    "id": "horse-list",
+    "headings": [
+      "Horses"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 1280
+  },
+  {
+    "id": "stables-list",
+    "headings": [
+      "All stables"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 1280
+  },
+  {
+    "id": "event-detail",
+    "headings": [
+      "Dental float",
+      "Overview",
+      "Provider and cost",
+      "Completion",
+      "Horses"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 2,
+    "width": 1280
+  },
+  {
+    "id": "event-service-notes",
+    "headings": [
+      "Service notes interaction sample",
+      "Horse service notes"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 2,
+    "width": 1280
+  },
+  {
+    "id": "calendar",
+    "headings": [
+      "Event calendar",
+      "September 2026"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 1280
+  },
+  {
+    "id": "timeline",
+    "headings": [
+      "Horse timeline sample",
+      "Timeline"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 1280
+  },
+  {
+    "id": "care-summary",
+    "headings": [
+      "Care summary sample",
+      "Juniper — care summary"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 8,
+    "width": 1280
+  },
+  {
+    "id": "providers",
+    "headings": [
+      "Provider directory sample",
+      "Provider directory"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 2,
+    "width": 1280
+  },
+  {
+    "id": "members-directory",
+    "headings": [
+      "Members",
+      "Stable directory",
+      "Your yard profile"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 3,
+    "width": 1280
+  },
+  {
+    "id": "route-recovery",
+    "headings": [
+      "This page couldn’t load"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 1280
+  },
+  {
+    "id": "onboarding",
+    "headings": [
+      "Set up Sample Cedar Ridge",
+      "How does the stable run?"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 1280
+  },
+  {
+    "id": "profile",
+    "headings": [
+      "Your profile",
+      "Profile details"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 1280
+  },
+  {
+    "id": "pricing",
+    "headings": [
+      "Plans",
+      "Testing access"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 1280
+  },
+  {
+    "id": "invitations",
+    "headings": [
+      "Sample Cedar Ridge Barn",
+      "Ready to join"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 2,
+    "width": 1280
+  },
+  {
+    "id": "header",
+    "headings": [
+      "Application header"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 1280
+  },
+  {
+    "id": "horse-invitations",
+    "headings": [
+      "Invitation review",
+      "Horse invitations"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 1280
+  },
+  {
+    "id": "horse-activity",
+    "headings": [
+      "Juniper — activity sample",
+      "Upcoming activity"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 1280
+  },
+  {
+    "id": "deleted-horses",
+    "headings": [
+      "Deleted horses sample",
+      "Deleted horses"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 2,
+    "width": 1280
+  },
+  {
+    "id": "stable-welcome",
+    "headings": [
+      "Your stable is ready",
+      "Getting started"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 1,
+    "width": 1280
+  },
+  {
+    "id": "stable-form",
+    "headings": [
+      "Edit stable",
+      "Stable details"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 0,
+    "width": 1280
+  },
+  {
+    "id": "stable-layout",
+    "headings": [
+      "Care"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 0,
+    "width": 1280
+  },
+  {
+    "id": "settings",
+    "headings": [
+      "Stable settings",
+      "Cedar Ridge Barn",
+      "Archive stable"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 3,
+    "width": 1280
+  },
+  {
+    "id": "forms",
+    "headings": [
+      "Edit event"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 0,
+    "width": 1280
+  },
+  {
+    "id": "stable-dashboard",
+    "headings": [
+      "Cedar Ridge Barn",
+      "Today",
+      "Next 7 days",
+      "Horses",
+      "Health issues",
+      "Care reminders"
+    ],
+    "overflow": false,
+    "overflowing": [],
+    "sections": 5,
+    "width": 1280
+  }
+]

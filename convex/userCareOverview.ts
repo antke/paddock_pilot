@@ -330,7 +330,9 @@ export const getForCurrentUser = query({
             (a.activeIssueCount + a.activeMedicationCount)
           )
         })
-        .slice(0, 8),
+        // Keep the compact attention preview, but never hide a high-severity
+        // care target behind the ranking cap. Access filtering happens above.
+        .filter((horse, index) => index < 8 || horse.highIssueCount > 0),
     }
   },
 })

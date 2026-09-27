@@ -29,6 +29,8 @@ import type * as libs_audit from "../libs/audit.js";
 import type * as libs_auth from "../libs/auth.js";
 import type * as libs_dateKeys from "../libs/dateKeys.js";
 import type * as libs_email_deliveryPolicy from "../libs/email/deliveryPolicy.js";
+import type * as libs_email_layout from "../libs/email/layout.js";
+import type * as libs_email_notifications from "../libs/email/notifications.js";
 import type * as libs_email_outbox from "../libs/email/outbox.js";
 import type * as libs_email_provider from "../libs/email/provider.js";
 import type * as libs_email_providers_console from "../libs/email/providers/console.js";
@@ -83,6 +85,8 @@ declare const fullApi: ApiFromModules<{
   "libs/auth": typeof libs_auth;
   "libs/dateKeys": typeof libs_dateKeys;
   "libs/email/deliveryPolicy": typeof libs_email_deliveryPolicy;
+  "libs/email/layout": typeof libs_email_layout;
+  "libs/email/notifications": typeof libs_email_notifications;
   "libs/email/outbox": typeof libs_email_outbox;
   "libs/email/provider": typeof libs_email_provider;
   "libs/email/providers/console": typeof libs_email_providers_console;

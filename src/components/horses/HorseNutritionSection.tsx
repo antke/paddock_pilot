@@ -31,7 +31,22 @@ const nutritionTabs = [
   },
 ] as const
 
-export function HorseNutritionSection({ horse }: HorseDetailSectionProps) {
+type SectionActionRenderer = (
+  onCreateActionChange: (action: ReactNode | null) => void,
+) => ReactNode
+
+type HorseNutritionSectionViewProps = HorseDetailSectionProps & {
+  renderLogs?: SectionActionRenderer
+  renderWeight?: SectionActionRenderer
+  renderMedication?: SectionActionRenderer
+}
+
+export function HorseNutritionSection({
+  horse,
+  renderLogs,
+  renderWeight,
+  renderMedication,
+}: HorseNutritionSectionViewProps) {
   const [activeTab, setActiveTab] = useState<NutritionTab>('nutrition')
   const [headerAction, setHeaderAction] = useState<ReactNode>(null)
 
@@ -49,26 +64,36 @@ export function HorseNutritionSection({ horse }: HorseDetailSectionProps) {
       {activeTab === 'nutrition' && (
         <>
           <HorseNutritionCard horse={horse} showHeader={false} />
-          <HorseNutritionLogsCard
-            horse={horse}
-            onCreateActionChange={setHeaderAction}
-          />
+          {renderLogs ? (
+            renderLogs(setHeaderAction)
+          ) : (
+            <HorseNutritionLogsCard
+              horse={horse}
+              onCreateActionChange={setHeaderAction}
+            />
+          )}
         </>
       )}
 
-      {activeTab === 'weight' && (
-        <HorseWeightRecordsCard
-          horse={horse}
-          onCreateActionChange={setHeaderAction}
-        />
-      )}
+      {activeTab === 'weight' &&
+        (renderWeight ? (
+          renderWeight(setHeaderAction)
+        ) : (
+          <HorseWeightRecordsCard
+            horse={horse}
+            onCreateActionChange={setHeaderAction}
+          />
+        ))}
 
-      {activeTab === 'medication' && (
-        <HorseMedicationRecordsCard
-          horse={horse}
-          onCreateActionChange={setHeaderAction}
-        />
-      )}
+      {activeTab === 'medication' &&
+        (renderMedication ? (
+          renderMedication(setHeaderAction)
+        ) : (
+          <HorseMedicationRecordsCard
+            horse={horse}
+            onCreateActionChange={setHeaderAction}
+          />
+        ))}
     </HorseDetailSectionTabs>
   )
 }

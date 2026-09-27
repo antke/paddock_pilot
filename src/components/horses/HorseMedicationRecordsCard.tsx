@@ -3,7 +3,6 @@ import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { FilteredDashboardItemList } from '#/components/list-filtering/FilteredDashboardItemList'
 import { useListFiltering } from '#/components/list-filtering/useListFiltering'
 import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
-import { DashboardInlinePanel } from '#/components/dashboard/DashboardInlinePanel'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import {
   DashboardItemBodyText,
@@ -20,7 +19,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import type { MedicationRecordFormSchema } from 'shared/horses/medicationRecordSchema'
 import { MedicationRecordStatusBadge } from './HorseCareBadges'
 import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
@@ -54,9 +53,94 @@ export function HorseMedicationRecordsCard({
     api.horseMedicationRecords.complete,
   )
   const removeMedicationRecord = useMutation(api.horseMedicationRecords.remove)
+  return (
+    <HorseMedicationRecordsCardView
+      key={horse._id}
+      horse={horse}
+      records={records}
+      canManage={permissions.canManage}
+      onCreateActionChange={onCreateActionChange}
+      onAdd={async (data) => {
+        try {
+          await addMedicationRecord({ horseId: horse._id, ...data })
+          showAppSuccessToast({ title: 'Medication record added' })
+        } catch (error) {
+          showAppErrorToast()
+          throw error
+        }
+      }}
+      onComplete={async (record) => {
+        try {
+          await completeMedicationRecord({ id: record._id, endDate: today })
+          showAppSuccessToast({ title: 'Medication completed' })
+        } catch (error) {
+          showAppErrorToast()
+          throw error
+        }
+      }}
+      onRemove={async (record) => {
+        try {
+          await removeMedicationRecord({ id: record._id })
+          showAppSuccessToast({ title: 'Medication record removed' })
+        } catch (error) {
+          showAppErrorToast()
+          throw error
+        }
+      }}
+    />
+  )
+}
+
+type HorseMedicationRecordsCardViewProps = HorseMedicationRecordsCardProps & {
+  records: Array<Doc<'horseMedicationRecords'>>
+  canManage: boolean
+  onAdd: (data: MedicationRecordFormSchema) => Promise<void>
+  onComplete: (record: Doc<'horseMedicationRecords'>) => Promise<void>
+  onRemove: (record: Doc<'horseMedicationRecords'>) => Promise<void>
+}
+
+export function HorseMedicationRecordsCardView({
+  horse,
+  records,
+  canManage,
+  onAdd,
+  onComplete,
+  onRemove,
+  onCreateActionChange,
+}: HorseMedicationRecordsCardViewProps) {
+  const activeOperations = useRef(new Set<string>())
+  const [operations, setOperations] = useState<
+    Record<string, { pending: 'status' | 'remove' | null; failed: boolean }>
+  >({})
+  const runRecordAction = async (
+    id: string,
+    kind: 'status' | 'remove',
+    callback: () => Promise<void>,
+  ) => {
+    if (activeOperations.current.has(id)) return
+    activeOperations.current.add(id)
+    setOperations((states) => ({
+      ...states,
+      [id]: { pending: kind, failed: false },
+    }))
+    let failed = false
+    try {
+      await callback()
+    } catch (error) {
+      failed = true
+      if (kind === 'remove') throw error
+    } finally {
+      activeOperations.current.delete(id)
+      setOperations((states) => ({
+        ...states,
+        [id]: { pending: null, failed },
+      }))
+    }
+  }
+  const [isCreating, setIsCreating] = useState(false)
+  const listRegion = useRef<HTMLDivElement>(null)
+  const { today } = useLocalDateContext()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [pendingRecordId, setPendingRecordId] = useState<string>()
-  const canManage = permissions.canManage
   const activeRecords = records.filter((record) => record.status === 'active')
   const filterConfig = useMemo(createHorseMedicationRecordListFilterConfig, [])
   const filtering = useListFiltering({
@@ -66,24 +150,10 @@ export function HorseMedicationRecordsCard({
 
   const onAddMedicationRecord = useCallback(
     async (data: MedicationRecordFormSchema) => {
-      try {
-        await addMedicationRecord({ horseId: horse._id, ...data })
-
-        showAppSuccessToast({
-          title: 'Medication record added',
-          description: (
-            <p>
-              {data.medicationName} is now on {horse.name}'s record.
-            </p>
-          ),
-        })
-        setIsCreateOpen(false)
-      } catch (err) {
-        showAppErrorToast()
-        throw err
-      }
+      await onAdd(data)
+      setIsCreateOpen(false)
     },
-    [addMedicationRecord, horse._id, horse.name],
+    [onAdd],
   )
 
   const createDialog = useMemo(
@@ -91,54 +161,23 @@ export function HorseMedicationRecordsCard({
       canManage ? (
         <CreateRecordDialog
           open={isCreateOpen}
+          isPending={isCreating}
           onOpenChange={setIsCreateOpen}
           triggerLabel="Add medication"
           title="Add medication"
           description="Record a medication course without losing your place in the list."
         >
-          <MedicationRecordForm onSubmit={onAddMedicationRecord} />
+          <MedicationRecordForm
+            onSubmit={onAddMedicationRecord}
+            onPendingChange={setIsCreating}
+          />
         </CreateRecordDialog>
       ) : null,
-    [canManage, isCreateOpen, onAddMedicationRecord],
+    [canManage, isCreateOpen, isCreating, onAddMedicationRecord],
   )
   const inlineCreateDialog = onCreateActionChange ? null : createDialog
 
   useHorseDetailCreateAction(createDialog, onCreateActionChange)
-
-  const onCompleteMedicationRecord = async (
-    record: Doc<'horseMedicationRecords'>,
-  ) => {
-    try {
-      setPendingRecordId(record._id)
-      await completeMedicationRecord({ id: record._id, endDate: today })
-      showAppSuccessToast({
-        title: 'Medication completed',
-        description: <p>{record.medicationName} was marked as completed.</p>,
-      })
-    } catch (err) {
-      showAppErrorToast()
-    } finally {
-      setPendingRecordId(undefined)
-    }
-  }
-
-  const onRemoveMedicationRecord = async (
-    record: Doc<'horseMedicationRecords'>,
-  ) => {
-    try {
-      setPendingRecordId(record._id)
-      await removeMedicationRecord({ id: record._id })
-      showAppSuccessToast({
-        title: 'Medication record removed',
-        description: <p>{record.medicationName} was removed.</p>,
-      })
-    } catch (err) {
-      showAppErrorToast()
-      throw err
-    } finally {
-      setPendingRecordId(undefined)
-    }
-  }
 
   const recordList = (
     <FilteredDashboardItemList
@@ -150,28 +189,38 @@ export function HorseMedicationRecordsCard({
         <MedicationRecordRow
           key={record._id}
           record={record}
+          pending={operations[record._id]?.pending ?? null}
+          failed={operations[record._id]?.failed ?? false}
+          run={(kind, callback) => runRecordAction(record._id, kind, callback)}
           canManage={canManage}
-          pending={pendingRecordId === record._id}
-          onComplete={onCompleteMedicationRecord}
-          onRemove={onRemoveMedicationRecord}
+          removalFocusTarget={() => listRegion.current}
+          today={today}
+          onComplete={onComplete}
+          onRemove={onRemove}
         />
       )}
     />
   )
 
   const content = (
-    <>
+    <div
+      ref={listRegion}
+      role="region"
+      aria-label={`${horse.name}: medication records`}
+      tabIndex={-1}
+      className="grid gap-5 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
       {activeRecords.length > 0 && (
         <ActiveMedicationPanel records={activeRecords} />
       )}
       {inlineCreateDialog}
       {recordList}
-    </>
+    </div>
   )
 
   if (onCreateActionChange) return content
 
-  return <DashboardSection chrome="cards">{content}</DashboardSection>
+  return <DashboardSection>{content}</DashboardSection>
 }
 
 function ActiveMedicationPanel({
@@ -182,11 +231,10 @@ function ActiveMedicationPanel({
   return (
     <DashboardSection
       as="h3"
-      chrome="cards"
+      chrome="flat"
       gap="compact"
-      padding="compact"
-      title="Active medication"
-      description="Current courses that should stay visible while reviewing this horse."
+      title="Active and planned medication"
+      description="Courses remain visible here while you search the history below."
       size="panel"
       descriptionSize="sm"
     >
@@ -204,8 +252,9 @@ function MedicationRecordSummary({
 }: {
   record: Doc<'horseMedicationRecords'>
 }) {
+  const { today } = useLocalDateContext()
   return (
-    <DashboardInlinePanel stack="compact" textSize="sm">
+    <div className="app-record grid gap-2">
       <DashboardInlineHeader
         title={record.medicationName}
         description={record.reason}
@@ -216,11 +265,14 @@ function MedicationRecordSummary({
         <span>{record.dosage}</span>
         {record.frequency && <span>{record.frequency}</span>}
         {record.startDate && (
-          <span>Started {formatMediumDateKey(record.startDate)}</span>
+          <span>
+            {record.startDate > today ? 'Starts' : 'Started'}{' '}
+            {formatMediumDateKey(record.startDate)}
+          </span>
         )}
         {record.prescribedBy && <span>{record.prescribedBy}</span>}
       </DashboardMetaList>
-    </DashboardInlinePanel>
+    </div>
   )
 }
 
@@ -228,18 +280,36 @@ function MedicationRecordRow({
   record,
   canManage,
   pending,
+  failed,
+  run,
+  removalFocusTarget,
+  today,
   onComplete,
   onRemove,
 }: {
   record: Doc<'horseMedicationRecords'>
   canManage: boolean
-  pending: boolean
+  pending: 'status' | 'remove' | null
+  failed: boolean
+  run: (
+    kind: 'status' | 'remove',
+    callback: () => Promise<void>,
+  ) => Promise<void>
+  removalFocusTarget: () => HTMLElement | null
+  today: string
   onComplete: (record: Doc<'horseMedicationRecords'>) => Promise<void>
   onRemove: (record: Doc<'horseMedicationRecords'>) => Promise<void>
 }) {
   return (
     <DashboardItemRecordCard
-      chrome="cards"
+      chrome="flat"
+      footer={
+        failed ? (
+          <p role="alert" className="text-sm text-destructive">
+            Could not update this record. Please try again.
+          </p>
+        ) : undefined
+      }
       actionsPlacement="footer"
       actionsClassName="ml-auto"
       actionBadges={
@@ -255,17 +325,25 @@ function MedicationRecordRow({
                 type="button"
                 variant="ghost"
                 size="sm"
-                disabled={pending}
-                onClick={() => onComplete(record)}
+                disabled={pending !== null || record.startDate > today}
+                title={
+                  record.startDate > today
+                    ? 'A future course cannot be completed before its start date.'
+                    : undefined
+                }
+                aria-busy={pending === 'status' || undefined}
+                aria-label={`Complete ${record.medicationName}`}
+                onClick={() => void run('status', () => onComplete(record))}
               >
-                Complete
+                {pending === 'status' ? 'Completing…' : 'Complete'}
               </Button>
             )}
             <HorseRecordRemoveAction
-              disabled={pending}
+              disabled={pending !== null}
               title={`Remove ${record.medicationName}?`}
               description="This medication record will be removed from the horse history permanently. This cannot be undone."
-              onConfirm={() => onRemove(record)}
+              removalFocusTarget={removalFocusTarget}
+              onConfirm={() => run('remove', () => onRemove(record))}
             />
           </>
         ) : undefined
@@ -276,11 +354,17 @@ function MedicationRecordRow({
         titleSize="dense"
         meta={
           <>
-            <span>Started {formatMediumDateKey(record.startDate)}</span>
+            <span>
+              {record.startDate > today ? 'Starts' : 'Started'}{' '}
+              {formatMediumDateKey(record.startDate)}
+            </span>
             <span>{record.dosage}</span>
             {record.frequency && <span>{record.frequency}</span>}
             {record.endDate && (
-              <span>Ended {formatMediumDateKey(record.endDate)}</span>
+              <span>
+                {record.status === 'completed' ? 'Ended' : 'Planned end'}{' '}
+                {formatMediumDateKey(record.endDate)}
+              </span>
             )}
             {record.prescribedBy && <span>{record.prescribedBy}</span>}
           </>

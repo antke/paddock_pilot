@@ -29,12 +29,12 @@ function ButtonActionIcon({ action }: { action?: ButtonAction }) {
 }
 
 const buttonVariants = cva(
-  "group/button relative inline-flex max-w-full shrink-0 cursor-pointer items-center justify-center rounded-control border border-transparent bg-clip-padding text-center text-sm font-semibold whitespace-normal shadow-none transition-[background-color,border-color,color,box-shadow] duration-150 outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button relative inline-flex max-w-full shrink-0 cursor-pointer items-center justify-center rounded-control border border-transparent bg-clip-padding text-center text-sm font-semibold whitespace-normal shadow-none transition-[background-color,border-color,color,box-shadow] duration-150 motion-safe:active:translate-y-px motion-reduce:transition-none outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default:
-          'border-primary bg-card !text-primary !no-underline hover:bg-primary/10 hover:!no-underline aria-expanded:bg-primary/10 aria-expanded:!text-primary dark:bg-card dark:hover:bg-primary/15',
+          'border-primary bg-primary !text-primary-foreground !no-underline hover:bg-primary/92 hover:!no-underline aria-expanded:bg-primary/90 aria-expanded:!text-primary-foreground',
         solid:
           'border-primary bg-primary !text-primary-foreground !no-underline hover:bg-primary/92 hover:!no-underline aria-expanded:bg-primary/90 aria-expanded:!text-primary-foreground',
         outline:

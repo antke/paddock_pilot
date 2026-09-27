@@ -29,7 +29,7 @@ export function HorseDetailSectionTabs<TTabId extends string>({
   return (
     <DashboardSectionTabGroup
       activeId={activeId}
-      ariaLabel={`${activeItem.title} views`}
+      ariaLabel="Horse section views"
       items={items}
       onSelect={onSelect}
     >

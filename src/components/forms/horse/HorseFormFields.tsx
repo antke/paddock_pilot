@@ -13,11 +13,9 @@ import {
 import { Input } from '#/components/ui/input'
 import { Textarea } from '#/components/ui/textarea'
 import { formatMetaText } from '#/lib/textDisplay'
-import {
-  calculateHorseAge,
-  splitHorseBirthDate,
-} from 'shared/horses/horseAge'
+import { calculateHorseAge, splitHorseBirthDate } from 'shared/horses/horseAge'
 import type { ReactNode, Ref } from 'react'
+import { useId } from 'react'
 import { Controller, useFormState, useWatch } from 'react-hook-form'
 import type { Control } from 'react-hook-form'
 import { HorseBreedAutocomplete } from './HorseBreedAutocomplete'
@@ -27,6 +25,7 @@ import type { HorseFormInput, HorseFormSchema } from './horseFormSchema'
 type Props = {
   control: Control<HorseFormInput, unknown, HorseFormSchema>
   disabled?: boolean
+  existingBreed?: string
 }
 
 type HorseSexChoice = NonNullable<HorseFormSchema['sex']> | 'unspecified'
@@ -42,8 +41,7 @@ const toOptionalSex = (value: HorseSexChoice) =>
   value === 'unspecified' ? undefined : value
 
 type ShoeingStatusChoice =
-  | NonNullable<HorseFormSchema['shoeingStatus']>
-  | 'unspecified'
+  NonNullable<HorseFormSchema['shoeingStatus']> | 'unspecified'
 
 const shoeingOptions = [
   { value: 'unspecified', label: 'Not specified' },
@@ -64,7 +62,12 @@ const shoeingStatusLabels = {
   full_set: 'Full set',
 } satisfies Record<NonNullable<HorseFormSchema['shoeingStatus']>, string>
 
-export function HorseFormFields({ control, disabled = false }: Props) {
+export function HorseFormFields({
+  control,
+  disabled = false,
+  existingBreed,
+}: Props) {
+  const profileImageId = useId()
   const horseName = useWatch({ control, name: 'name' })
   const ownerName = useWatch({ control, name: 'ownerName' })
   const dateOfBirth = useWatch({ control, name: 'dateOfBirth' })
@@ -184,12 +187,18 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                     type="text"
                     disabled={disabled}
                     aria-invalid={fieldState.invalid}
+                    aria-describedby={
+                      fieldState.invalid ? `${field.name}-error` : undefined
+                    }
                     placeholder="Secretariat"
                     autoComplete="off"
                   />
 
                   {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+                    <FieldError
+                      id={`${field.name}-error`}
+                      errors={[fieldState.error]}
+                    />
                   )}
                 </Field>
               )}
@@ -207,12 +216,18 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                     type="text"
                     disabled={disabled}
                     aria-invalid={fieldState.invalid}
+                    aria-describedby={
+                      fieldState.invalid ? `${field.name}-error` : undefined
+                    }
                     placeholder="Penny Chenery"
                     autoComplete="off"
                   />
 
                   {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+                    <FieldError
+                      id={`${field.name}-error`}
+                      errors={[fieldState.error]}
+                    />
                   )}
                 </Field>
               )}
@@ -236,17 +251,24 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                   <FieldLabel>Sex</FieldLabel>
 
                   <ChoiceButtonGroup
+                    aria-label="Sex"
                     value={field.value ?? 'unspecified'}
                     options={sexOptions}
                     disabled={disabled}
                     aria-invalid={fieldState.invalid}
+                    aria-describedby={
+                      fieldState.invalid ? `${field.name}-error` : undefined
+                    }
                     onValueChange={(value) =>
                       field.onChange(toOptionalSex(value))
                     }
                   />
 
                   {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+                    <FieldError
+                      id={`${field.name}-error`}
+                      errors={[fieldState.error]}
+                    />
                   )}
                 </Field>
               )}
@@ -257,20 +279,24 @@ export function HorseFormFields({ control, disabled = false }: Props) {
             <Controller
               name="profileImage"
               control={control}
-              render={({ field: { name, onBlur, onChange, ref, value } }) => (
+              render={({
+                field: { name, onBlur, onChange, ref, value },
+                fieldState,
+              }) => (
                 <FileUploadField
-                  id={name}
+                  id={`${profileImageId}-${name}`}
                   name={name}
                   label="Profile picture"
                   helpLabel="About horse profile picture"
-                  help="Upload an optional image to show on horse cards."
+                  help="Upload an optional image up to 5 MB to show on horse cards."
                   accept="image/*"
                   kind="image"
                   width="full"
                   disabled={disabled}
                   autoComplete="off"
                   files={value ?? null}
-                  inputRef={ref}
+                  controlRef={ref}
+                  errors={fieldState.invalid ? [fieldState.error] : undefined}
                   onBlur={onBlur}
                   onFilesChange={onChange}
                 />
@@ -307,12 +333,18 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                       type="text"
                       disabled={disabled}
                       aria-invalid={fieldState.invalid}
+                      aria-describedby={
+                        fieldState.invalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="Passport or registration reference"
                       autoComplete="off"
                     />
 
                     {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={[fieldState.error]}
+                      />
                     )}
                   </Field>
                 )}
@@ -334,12 +366,18 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                       type="text"
                       disabled={disabled}
                       aria-invalid={fieldState.invalid}
+                      aria-describedby={
+                        fieldState.invalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="Microchip reference"
                       autoComplete="off"
                     />
 
                     {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={[fieldState.error]}
+                      />
                     )}
                   </Field>
                 )}
@@ -365,12 +403,18 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                       type="text"
                       disabled={disabled}
                       aria-invalid={fieldState.invalid}
+                      aria-describedby={
+                        fieldState.invalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="Insurer name"
                       autoComplete="off"
                     />
 
                     {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={[fieldState.error]}
+                      />
                     )}
                   </Field>
                 )}
@@ -391,12 +435,18 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                       type="text"
                       disabled={disabled}
                       aria-invalid={fieldState.invalid}
+                      aria-describedby={
+                        fieldState.invalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="Policy number"
                       autoComplete="off"
                     />
 
                     {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={[fieldState.error]}
+                      />
                     )}
                   </Field>
                 )}
@@ -418,11 +468,17 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                       value={field.value ?? ''}
                       disabled={disabled}
                       aria-invalid={fieldState.invalid}
+                      aria-describedby={
+                        fieldState.invalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="Dr. Carter"
                       autoComplete="off"
                     />
                     {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={[fieldState.error]}
+                      />
                     )}
                   </Field>
                 )}
@@ -440,11 +496,18 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                       value={field.value ?? ''}
                       disabled={disabled}
                       aria-invalid={fieldState.invalid}
+                      aria-describedby={
+                        fieldState.invalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="+1 555 0123"
                       autoComplete="tel"
+                      type="tel"
                     />
                     {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={[fieldState.error]}
+                      />
                     )}
                   </Field>
                 )}
@@ -466,11 +529,17 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                       value={field.value ?? ''}
                       disabled={disabled}
                       aria-invalid={fieldState.invalid}
+                      aria-describedby={
+                        fieldState.invalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="Alex Morgan"
                       autoComplete="off"
                     />
                     {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={[fieldState.error]}
+                      />
                     )}
                   </Field>
                 )}
@@ -488,11 +557,18 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                       value={field.value ?? ''}
                       disabled={disabled}
                       aria-invalid={fieldState.invalid}
+                      aria-describedby={
+                        fieldState.invalid ? `${field.name}-error` : undefined
+                      }
                       placeholder="+1 555 0456"
                       autoComplete="tel"
+                      type="tel"
                     />
                     {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={[fieldState.error]}
+                      />
                     )}
                   </Field>
                 )}
@@ -514,12 +590,18 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                     value={field.value ?? ''}
                     disabled={disabled}
                     aria-invalid={fieldState.invalid}
+                    aria-describedby={
+                      fieldState.invalid ? `${field.name}-error` : undefined
+                    }
                     placeholder="Important notes for urgent care or service providers"
                     autoComplete="off"
                   />
 
                   {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+                    <FieldError
+                      id={`${field.name}-error`}
+                      errors={[fieldState.error]}
+                    />
                   )}
                 </Field>
               )}
@@ -546,17 +628,25 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                   <FieldLabel htmlFor={field.name}>Breed</FieldLabel>
 
                   <HorseBreedAutocomplete
+                    inputRef={field.ref}
+                    existingBreed={existingBreed}
                     id={field.name}
                     name={field.name}
                     value={field.value ?? ''}
                     disabled={disabled}
                     invalid={fieldState.invalid}
+                    describedBy={
+                      fieldState.invalid ? `${field.name}-error` : undefined
+                    }
                     onBlur={field.onBlur}
                     onValueChange={field.onChange}
                   />
 
                   {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+                    <FieldError
+                      id={`${field.name}-error`}
+                      errors={[fieldState.error]}
+                    />
                   )}
                 </Field>
               )}
@@ -576,12 +666,18 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                     type="text"
                     disabled={disabled}
                     aria-invalid={fieldState.invalid}
+                    aria-describedby={
+                      fieldState.invalid ? `${field.name}-error` : undefined
+                    }
                     placeholder="Chestnut"
                     autoComplete="off"
                   />
 
                   {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+                    <FieldError
+                      id={`${field.name}-error`}
+                      errors={[fieldState.error]}
+                    />
                   )}
                 </Field>
               )}
@@ -600,12 +696,18 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                     type="text"
                     disabled={disabled}
                     aria-invalid={fieldState.invalid}
+                    aria-describedby={
+                      fieldState.invalid ? `${field.name}-error` : undefined
+                    }
                     placeholder="16.1hh"
                     autoComplete="off"
                   />
 
                   {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+                    <FieldError
+                      id={`${field.name}-error`}
+                      errors={[fieldState.error]}
+                    />
                   )}
                 </Field>
               )}
@@ -625,12 +727,18 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                     type="text"
                     disabled={disabled}
                     aria-invalid={fieldState.invalid}
+                    aria-describedby={
+                      fieldState.invalid ? `${field.name}-error` : undefined
+                    }
                     placeholder="Eventing"
                     autoComplete="off"
                   />
 
                   {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+                    <FieldError
+                      id={`${field.name}-error`}
+                      errors={[fieldState.error]}
+                    />
                   )}
                 </Field>
               )}
@@ -650,11 +758,17 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                     value={field.value ?? ''}
                     disabled={disabled}
                     aria-invalid={fieldState.invalid}
+                    aria-describedby={
+                      fieldState.invalid ? `${field.name}-error` : undefined
+                    }
                     placeholder="Sire name"
                     autoComplete="off"
                   />
                   {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+                    <FieldError
+                      id={`${field.name}-error`}
+                      errors={[fieldState.error]}
+                    />
                   )}
                 </Field>
               )}
@@ -672,11 +786,17 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                     value={field.value ?? ''}
                     disabled={disabled}
                     aria-invalid={fieldState.invalid}
+                    aria-describedby={
+                      fieldState.invalid ? `${field.name}-error` : undefined
+                    }
                     placeholder="Dam name"
                     autoComplete="off"
                   />
                   {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+                    <FieldError
+                      id={`${field.name}-error`}
+                      errors={[fieldState.error]}
+                    />
                   )}
                 </Field>
               )}
@@ -692,17 +812,24 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                   <FieldLabel>Shoeing status</FieldLabel>
 
                   <ChoiceButtonGroup
+                    aria-label="Shoeing status"
                     value={field.value ?? 'unspecified'}
                     options={shoeingOptions}
                     disabled={disabled}
                     aria-invalid={fieldState.invalid}
+                    aria-describedby={
+                      fieldState.invalid ? `${field.name}-error` : undefined
+                    }
                     onValueChange={(value) =>
                       field.onChange(toOptionalShoeingStatus(value))
                     }
                   />
 
                   {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+                    <FieldError
+                      id={`${field.name}-error`}
+                      errors={[fieldState.error]}
+                    />
                   )}
                 </Field>
               )}
@@ -723,12 +850,18 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                     value={field.value ?? ''}
                     disabled={disabled}
                     aria-invalid={fieldState.invalid}
+                    aria-describedby={
+                      fieldState.invalid ? `${field.name}-error` : undefined
+                    }
                     placeholder="Last worm count, product notes, or next check reminder"
                     autoComplete="off"
                   />
 
                   {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+                    <FieldError
+                      id={`${field.name}-error`}
+                      errors={[fieldState.error]}
+                    />
                   )}
                 </Field>
               )}
@@ -738,7 +871,7 @@ export function HorseFormFields({ control, disabled = false }: Props) {
               control={control}
               name="allergies"
               label="Allergies or sensitivities"
-              placeholder="One item per line\nPenicillin\nBee stings"
+              placeholder={'One item per line\nPenicillin\nBee stings'}
               disabled={disabled}
             />
           </FieldGrid>
@@ -768,12 +901,18 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                     value={field.value ?? ''}
                     disabled={disabled}
                     aria-invalid={fieldState.invalid}
+                    aria-describedby={
+                      fieldState.invalid ? `${field.name}-error` : undefined
+                    }
                     placeholder="Morning hay, evening mash, turnout notes..."
                     autoComplete="off"
                   />
 
                   {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+                    <FieldError
+                      id={`${field.name}-error`}
+                      errors={[fieldState.error]}
+                    />
                   )}
                 </Field>
               )}
@@ -792,12 +931,18 @@ export function HorseFormFields({ control, disabled = false }: Props) {
                     value={field.value ?? ''}
                     disabled={disabled}
                     aria-invalid={fieldState.invalid}
+                    aria-describedby={
+                      fieldState.invalid ? `${field.name}-error` : undefined
+                    }
                     placeholder="Supplements, minerals, intolerance warnings, or special requirements"
                     autoComplete="off"
                   />
 
                   {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+                    <FieldError
+                      id={`${field.name}-error`}
+                      errors={[fieldState.error]}
+                    />
                   )}
                 </Field>
               )}
@@ -809,7 +954,9 @@ export function HorseFormFields({ control, disabled = false }: Props) {
               control={control}
               name="nutritionRecommended"
               label="Recommended or required"
-              placeholder="One item per line\nLow-sugar chaff\nJoint supplement"
+              placeholder={
+                'One item per line\nLow-sugar chaff\nJoint supplement'
+              }
               disabled={disabled}
             />
 
@@ -817,7 +964,7 @@ export function HorseFormFields({ control, disabled = false }: Props) {
               control={control}
               name="nutritionAvoid"
               label="Avoid or cannot eat"
-              placeholder="One item per line\nOats\nHigh-sugar treats"
+              placeholder={'One item per line\nOats\nHigh-sugar treats'}
               disabled={disabled}
             />
           </FieldGrid>
@@ -885,6 +1032,9 @@ function BirthDateOrAgeFields({
                   maxLength={4}
                   disabled={disabled}
                   invalid={fieldState.invalid}
+                  describedBy={
+                    fieldState.invalid ? `${field.name}-error` : undefined
+                  }
                   inputRef={field.ref}
                   onBlur={field.onBlur}
                   onChange={(value) => updatePart('year', value)}
@@ -897,6 +1047,9 @@ function BirthDateOrAgeFields({
                   maxLength={2}
                   disabled={disabled || !birthDate.year}
                   invalid={fieldState.invalid}
+                  describedBy={
+                    fieldState.invalid ? `${field.name}-error` : undefined
+                  }
                   onBlur={field.onBlur}
                   onChange={(value) => updatePart('month', value)}
                 />
@@ -908,13 +1061,19 @@ function BirthDateOrAgeFields({
                   maxLength={2}
                   disabled={disabled || !birthDate.month}
                   invalid={fieldState.invalid}
+                  describedBy={
+                    fieldState.invalid ? `${field.name}-error` : undefined
+                  }
                   onBlur={field.onBlur}
                   onChange={(value) => updatePart('day', value)}
                 />
               </div>
 
               {fieldState.invalid && (
-                <FieldError errors={[fieldState.error]} />
+                <FieldError
+                  id={`${field.name}-error`}
+                  errors={[fieldState.error]}
+                />
               )}
             </Field>
           )
@@ -939,6 +1098,9 @@ function BirthDateOrAgeFields({
               placeholder="10"
               disabled={disabled}
               aria-invalid={fieldState.invalid}
+              aria-describedby={
+                fieldState.invalid ? `${field.name}-error` : undefined
+              }
               onBlur={field.onBlur}
               onChange={(event) =>
                 field.onChange(
@@ -951,7 +1113,12 @@ function BirthDateOrAgeFields({
                 ? 'Approximate age is fine.'
                 : 'Birth date takes priority.'}
             </FieldDescription>
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            {fieldState.invalid && (
+              <FieldError
+                id={`${field.name}-error`}
+                errors={[fieldState.error]}
+              />
+            )}
           </Field>
         )}
       />
@@ -960,6 +1127,7 @@ function BirthDateOrAgeFields({
 }
 
 function BirthDatePartInput({
+  describedBy,
   disabled,
   id,
   inputRef,
@@ -974,6 +1142,7 @@ function BirthDatePartInput({
   disabled: boolean
   id: string
   inputRef?: Ref<HTMLInputElement>
+  describedBy?: string
   invalid: boolean
   label: string
   maxLength: number
@@ -996,6 +1165,7 @@ function BirthDatePartInput({
         placeholder={placeholder}
         disabled={disabled}
         aria-invalid={invalid}
+        aria-describedby={describedBy}
         onBlur={onBlur}
         onChange={(event) => onChange(event.target.value)}
       />

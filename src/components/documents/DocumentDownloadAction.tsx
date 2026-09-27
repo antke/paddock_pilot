@@ -28,6 +28,7 @@ export function DocumentDownloadAction({
   const unavailableReason = getUnavailableReason(fileState)
 
   useEffect(() => {
+    isMounted.current = true
     return () => {
       isMounted.current = false
       activeRequest.current?.abort()
@@ -50,7 +51,11 @@ export function DocumentDownloadAction({
       const file = await response.blob()
       triggerBrowserDownload(file, fileName)
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') return
+      if (
+        controller.signal.aborted ||
+        (error instanceof Error && error.name === 'AbortError')
+      )
+        return
 
       showAppErrorToast({
         title: 'Could not download document',

@@ -27,7 +27,7 @@ export function StablePersonCard({
 }: StablePersonCardProps) {
   return (
     <DashboardItemRecordCard
-      chrome="cards"
+      chrome="flat"
       density="compact"
       interactive={false}
       actionBadges={<StableMemberRoleBadge role={role} />}
@@ -37,6 +37,8 @@ export function StablePersonCard({
       <DashboardItemCardContent
         title={name}
         titleSize="sm"
+        titleClassName="wrap-anywhere"
+        metaClassName="[&>span]:min-w-0 [&>span]:max-w-full [&>span]:wrap-anywhere"
         leading={<UserAvatar name={name} photoUrl={photoUrl} size="sm" />}
         meta={meta}
         metaSeparator="dot"

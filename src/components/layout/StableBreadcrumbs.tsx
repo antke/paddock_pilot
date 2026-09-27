@@ -14,9 +14,12 @@ import { useQuery } from 'convex/react'
 import { Fragment } from 'react'
 import {
   createStableBreadcrumbItems,
-  getStableRouteSegments,
+  getStableBreadcrumbEntityIds,
 } from './stableBreadcrumbTrail'
-import type { StableBreadcrumbItem } from './stableBreadcrumbTrail'
+import type {
+  StableBreadcrumbItem,
+  StableBreadcrumbLabels,
+} from './stableBreadcrumbTrail'
 
 type StableBreadcrumbsProps = {
   stableId: string
@@ -26,35 +29,39 @@ export function StableBreadcrumbs({ stableId }: StableBreadcrumbsProps) {
   const { pathname } = useLocation()
   const stableBasePath = `/stables/${stableId}`
   const pathAfterStable = pathname.slice(stableBasePath.length)
-  const [feature, entityOrAction] = getStableRouteSegments(pathAfterStable)
-  const horseId =
-    feature === 'horses' &&
-    entityOrAction !== 'create' &&
-    entityOrAction !== 'deleted'
-      ? entityOrAction
-      : undefined
-  const eventId =
-    feature === 'events' &&
-    entityOrAction !== 'create' &&
-    entityOrAction !== 'calendar'
-      ? entityOrAction
-      : undefined
+  const { horseId, eventId } = getStableBreadcrumbEntityIds(pathAfterStable)
   const horse = useQuery(api.horses.get, horseId ? { id: horseId } : 'skip')
   const event = useQuery(
     api.events.get,
     eventId ? { id: eventId as Id<'events'> } : 'skip',
   )
-  const items = createStableBreadcrumbItems(pathAfterStable, {
-    eventTitle: event?.title,
-    horseName: horse?.name,
-  })
+  return (
+    <StableBreadcrumbsView
+      stableId={stableId}
+      pathAfterStable={pathAfterStable}
+      labels={{ eventTitle: event?.title, horseName: horse?.name }}
+    />
+  )
+}
+
+export function StableBreadcrumbsView({
+  stableId,
+  pathAfterStable,
+  labels,
+}: {
+  stableId: string
+  pathAfterStable: string
+  labels?: StableBreadcrumbLabels
+}) {
+  const { horseId, eventId } = getStableBreadcrumbEntityIds(pathAfterStable)
+  const items = createStableBreadcrumbItems(pathAfterStable, labels)
 
   return (
     <Breadcrumb>
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink
-            render={<Link to="/" />}
+            render={<Link to="/" activeOptions={{ exact: true }} />}
             aria-label="Dashboard"
             title="Dashboard"
           >
@@ -99,7 +106,13 @@ function StableBreadcrumbLink({
   if (item.destination === 'horses') {
     return (
       <BreadcrumbLink
-        render={<Link to="/stables/$stableId/horses" params={{ stableId }} />}
+        render={
+          <Link
+            to="/stables/$stableId/horses"
+            params={{ stableId }}
+            activeOptions={{ exact: true }}
+          />
+        }
       >
         {item.label}
       </BreadcrumbLink>
@@ -111,6 +124,7 @@ function StableBreadcrumbLink({
       <BreadcrumbLink
         render={
           <Link
+            activeOptions={{ exact: true }}
             to="/stables/$stableId/horses/$horseId/profile"
             params={{ stableId, horseId }}
           />
@@ -124,7 +138,13 @@ function StableBreadcrumbLink({
   if (item.destination === 'events') {
     return (
       <BreadcrumbLink
-        render={<Link to="/stables/$stableId/events" params={{ stableId }} />}
+        render={
+          <Link
+            to="/stables/$stableId/events"
+            params={{ stableId }}
+            activeOptions={{ exact: true }}
+          />
+        }
       >
         {item.label}
       </BreadcrumbLink>
@@ -136,6 +156,7 @@ function StableBreadcrumbLink({
       <BreadcrumbLink
         render={
           <Link
+            activeOptions={{ exact: true }}
             to="/stables/$stableId/events/$eventId"
             params={{ stableId, eventId }}
           />

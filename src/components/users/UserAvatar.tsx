@@ -1,4 +1,5 @@
 import type { ComponentProps } from 'react'
+import { useState } from 'react'
 
 import { cn } from '#/lib/utils'
 
@@ -22,6 +23,8 @@ export function UserAvatar({
   size = 'md',
   ...props
 }: UserAvatarProps) {
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null)
+  const hasUsableImage = Boolean(photoUrl) && failedImageUrl !== photoUrl
   return (
     <div
       data-slot="user-avatar"
@@ -33,8 +36,13 @@ export function UserAvatar({
       )}
       {...props}
     >
-      {photoUrl ? (
-        <img src={photoUrl} alt="" className="size-full object-cover" />
+      {hasUsableImage ? (
+        <img
+          src={photoUrl}
+          alt=""
+          onError={() => setFailedImageUrl(photoUrl ?? null)}
+          className="size-full object-cover"
+        />
       ) : (
         getInitials(name)
       )}
@@ -43,10 +51,12 @@ export function UserAvatar({
 }
 
 function getInitials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('')
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => Array.from(part)[0]?.toLocaleUpperCase())
+      .join('') || '?'
+  )
 }

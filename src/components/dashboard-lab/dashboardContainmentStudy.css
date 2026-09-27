@@ -1,0 +1,257 @@
+/* Experiments only: these rules never apply to the production dashboard. */
+[data-dashboard-study] .study-layout {
+  display: grid;
+  align-items: start;
+  gap: 24px;
+  margin-top: 8px;
+}
+
+[data-dashboard-study] .study-main {
+  display: grid;
+  align-content: start;
+  gap: 24px;
+  min-width: 0;
+}
+
+[data-dashboard-study] .study-section {
+  align-content: start;
+  min-width: 0;
+  padding: 24px;
+  gap: 20px;
+  border: 0;
+}
+
+/* A boundary belongs to a section or a row, never both. Status is in text. */
+[data-dashboard-study] [data-slot='dashboard-item-card'] {
+  height: auto;
+  min-width: 0;
+  padding: 14px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+}
+
+[data-dashboard-study] [data-slot='dashboard-item-card']:hover {
+  background: var(--surface-muted);
+}
+
+[data-dashboard-study] .study-section [data-slot='dashboard-item-list'],
+[data-dashboard-study] .study-section [data-slot='scrollable-list-viewport'] {
+  gap: 4px;
+}
+
+[data-dashboard-study] .study-attention > .grid {
+  gap: 8px;
+}
+
+[data-dashboard-study] .study-attention > .grid + .grid {
+  margin-top: 12px;
+}
+
+[data-dashboard-study] .study-attention [data-slot='dashboard-section-header'] {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+[data-dashboard-study]
+  .study-attention
+  [data-slot='dashboard-section-header']
+  > :last-child {
+  justify-self: start;
+}
+
+/* A: four clear section boundaries, with no nested record frames. */
+[data-dashboard-study='sections'] .study-section {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+}
+
+[data-dashboard-study='sections'] .study-attention {
+  background: var(--surface);
+}
+
+/* B: headings group sections; alternating, borderless lanes distinguish rows. */
+[data-dashboard-study='bands'] .study-main {
+  gap: 32px;
+}
+
+[data-dashboard-study='bands'] .study-section {
+  padding: 0;
+  gap: 16px;
+}
+
+[data-dashboard-study='bands']
+  .study-section
+  > [data-slot='dashboard-section-header'] {
+  padding: 16px 20px;
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+
+[data-dashboard-study='bands'] [data-slot='dashboard-item-card'] {
+  padding: 16px 20px;
+  border-radius: 0;
+}
+
+[data-dashboard-study='bands']
+  [data-slot='dashboard-item-card']:nth-child(odd) {
+  background: var(--card);
+}
+
+[data-dashboard-study='bands']
+  [data-slot='dashboard-item-card']:nth-child(even) {
+  background: var(--surface-muted);
+}
+
+[data-dashboard-study='bands'] .study-attention > .grid > :first-child {
+  padding-inline: 20px;
+}
+
+[data-dashboard-study='bands'] .study-horses [data-slot='dashboard-item-list'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* C: two working areas; the left sheet groups planning without nested panels. */
+[data-dashboard-study='rail'] .study-main {
+  padding: 28px;
+  gap: 32px;
+  border-radius: 12px;
+  background: var(--card);
+}
+
+[data-dashboard-study='rail'] .study-main .study-section {
+  padding: 0;
+}
+
+[data-dashboard-study='rail'] .study-attention {
+  border-radius: 12px;
+  background: var(--surface-muted);
+}
+
+[data-dashboard-study='rail']
+  .study-attention
+  [data-slot='dashboard-item-card']:hover {
+  background: var(--card);
+}
+
+[data-dashboard-study='rail'] .study-main .study-section + .study-section {
+  padding-top: 24px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+@media (min-width: 1100px) {
+  [data-dashboard-study] .study-layout {
+    grid-template-columns: minmax(0, 1.65fr) minmax(340px, 1fr);
+  }
+}
+
+/* Soft-section refinements keep the original structure and shared controls. */
+[data-soft-refinement] .study-section {
+  --study-inset: 24px;
+  padding: var(--study-inset);
+}
+
+[data-soft-refinement]
+  .study-section
+  > [data-slot='dashboard-section-header']
+  h2 {
+  font-size: 1.5rem;
+}
+
+/* Defined headers: the header is part of the panel, not a nested container. */
+[data-soft-refinement='headers'] .study-section {
+  background: var(--card);
+}
+
+[data-soft-refinement='headers']
+  .study-section
+  > [data-slot='dashboard-section-header'] {
+  margin: calc(-1 * var(--study-inset)) calc(-1 * var(--study-inset)) 0;
+  padding: 18px var(--study-inset);
+  /* impeccable-disable-next-line design-system-radius: inner radius follows the 12px panel minus its 1px outline. */
+  border-radius: 11px 11px 0 0;
+  background: var(--surface-muted);
+}
+
+[data-soft-refinement='headers']
+  .study-attention
+  > [data-slot='dashboard-section-header'] {
+  background: color-mix(in oklab, var(--destructive) 7%, var(--card));
+}
+
+[data-soft-refinement='headers'] .study-attention h3 {
+  font-weight: 700;
+}
+
+/* Compact rhythm: less padding, never smaller type or clipped content. */
+[data-soft-refinement='compact'] .study-layout,
+[data-soft-refinement='compact'] .study-main {
+  gap: 20px;
+}
+
+[data-soft-refinement='compact'] .study-section {
+  --study-inset: 20px;
+  gap: 12px;
+}
+
+[data-soft-refinement='compact'] [data-slot='dashboard-item-card'] {
+  padding: 10px 8px;
+}
+
+[data-soft-refinement='compact'] .study-attention {
+  background: var(--card);
+}
+
+[data-soft-refinement='compact'] .study-attention > .grid + .grid {
+  margin-top: 4px;
+}
+
+@media (min-width: 1100px) {
+  [data-soft-refinement='compact']
+    .study-attention
+    [data-slot='scrollable-list-viewport'] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 12px;
+  }
+}
+
+/* Gentle contrast: surfaces retain containment while outlines recede. */
+[data-soft-refinement='gentle'] .study-section {
+  --study-inset: 28px;
+  border-color: var(--border-subtle);
+}
+
+[data-soft-refinement='gentle'] .study-attention {
+  background: color-mix(in oklab, var(--destructive) 4%, var(--card));
+}
+
+[data-soft-refinement='gentle']
+  .study-attention
+  > [data-slot='dashboard-section-header']
+  h2 {
+  color: var(--destructive);
+}
+
+[data-soft-refinement='gentle'] [data-slot='dashboard-item-card'] {
+  padding: 16px 8px;
+}
+
+@media (max-width: 639px) {
+  [data-soft-refinement] .study-section {
+    --study-inset: 18px;
+  }
+  [data-dashboard-study] .study-section,
+  [data-dashboard-study='rail'] .study-main {
+    padding: 18px;
+  }
+
+  [data-dashboard-study='bands'] .study-section {
+    padding: 0;
+  }
+
+  [data-dashboard-study] .study-layout,
+  [data-dashboard-study] .study-main {
+    gap: 20px;
+  }
+}

@@ -10,6 +10,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ComponentType, ReactNode } from 'react'
 import type * as Buttons from '#/components/ui/button'
 import { getFunctionName } from 'convex/server'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { convexQuery } from '@convex-dev/react-query'
+import { api } from 'convex/_generated/api'
 import { Route } from '#/routes/invitations/$token'
 
 const state = vi.hoisted(() => ({
@@ -34,7 +37,6 @@ const state = vi.hoisted(() => ({
   decline: vi.fn(),
 }))
 vi.mock('convex/react', () => ({
-  useQuery: () => state.preview,
   useMutation: (reference: Parameters<typeof getFunctionName>[0]) =>
     getFunctionName(reference) === 'stableInvitations:accept'
       ? state.accept
@@ -87,21 +89,44 @@ afterEach(() => {
 })
 const InvitationPage = Route.options.component as ComponentType
 
+function renderInvitationPage() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+  })
+  // Use the route's real suspense-query contract with local cached data only.
+  queryClient.setQueryData(
+    convexQuery(api.stableInvitations.preview, { token: 'test-token' })
+      .queryKey,
+    state.preview,
+  )
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <InvitationPage />
+    </QueryClientProvider>,
+  )
+}
+
 describe('invitation response page', () => {
   it('offers accept and decline to the invited account', async () => {
-    render(<InvitationPage />)
+    renderInvitationPage()
+    expect(
+      screen.getByRole('button', { name: 'Decline invitation' }),
+    ).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Accept invitation' }))
     await waitFor(() =>
       expect(state.accept).toHaveBeenCalledWith({ token: 'test-token' }),
     )
     expect(
-      screen.getByRole('button', { name: 'Decline invitation' }),
+      await screen.findByRole('heading', { name: 'Welcome to Willow Yard' }),
     ).toBeTruthy()
+    expect(
+      screen.queryByRole('button', { name: 'Decline invitation' }),
+    ).toBeNull()
     expect(state.decline).not.toHaveBeenCalled()
   })
 
   it('declines using the invitation token', async () => {
-    render(<InvitationPage />)
+    renderInvitationPage()
     fireEvent.click(screen.getByRole('button', { name: 'Decline invitation' }))
     await waitFor(() =>
       expect(state.decline).toHaveBeenCalledWith({ token: 'test-token' }),
@@ -115,7 +140,7 @@ describe('invitation response page', () => {
       state.preview.status = status
       state.preview.viewer.isAcceptedByViewer = status === 'accepted'
       state.preview.viewer.isDeclinedByViewer = status === 'declined'
-      render(<InvitationPage />)
+      renderInvitationPage()
       expect(
         screen
           .getByRole('link', { name: 'Create my own stable' })
@@ -129,7 +154,7 @@ describe('invitation response page', () => {
 
   it('preserves the invitation URL when switching the wrong account', () => {
     state.preview.viewer.emailMatches = false
-    render(<InvitationPage />)
+    renderInvitationPage()
     expect(screen.getByRole('button', { name: 'Switch account' })).toBeTruthy()
     expect(
       screen.getByTestId('switch-account').getAttribute('data-return-to'),
@@ -142,7 +167,7 @@ describe('invitation response page', () => {
   it('does not mislabel a missing account email as a different account', () => {
     state.preview.viewer.emailMatches = false
     state.preview.viewer.hasEmail = false
-    render(<InvitationPage />)
+    renderInvitationPage()
     expect(
       screen.getByText('Your account email is not available yet'),
     ).toBeTruthy()

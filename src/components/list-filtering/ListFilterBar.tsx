@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import { FunnelSimpleIcon } from '@phosphor-icons/react'
 
@@ -16,7 +16,7 @@ import { ListFilterChips } from './ListFilterChips'
 import type { ListFilterChip } from './ListFilterChips'
 import { ListFilterPanel } from './ListFilterPanel'
 
-const listFilterBarClassName = 'app-panel p-3 sm:p-4'
+const listFilterBarClassName = 'rounded-row bg-surface p-3 sm:p-4'
 const listFilterHeaderClassName =
   'grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3'
 
@@ -30,6 +30,7 @@ type ListFilterBarProps<TFacetId extends string = string> = {
   isFiltering: boolean
   className?: string
   sticky?: boolean
+  onFocusWithinChange?: (focused: boolean) => void
 }
 
 export function ListFilterBar<TFacetId extends string = string>({
@@ -42,11 +43,46 @@ export function ListFilterBar<TFacetId extends string = string>({
   isFiltering,
   className,
   sticky = false,
+  onFocusWithinChange,
 }: ListFilterBarProps<TFacetId>) {
   const idPrefix = useId()
   const searchId = `${idPrefix}-search`
   const panelId = `${idPrefix}-filters`
   const [isPanelOpen, setIsPanelOpen] = useState(false)
+  const search = useRef<HTMLInputElement>(null)
+  const toggle = useRef<HTMLButtonElement>(null)
+  const panel = useRef<HTMLDivElement>(null)
+  const focusedPanelControl = useRef<HTMLElement | null>(null)
+  useEffect(() => {
+    const rememberFocus = (event: FocusEvent) => {
+      const target = event.target
+      focusedPanelControl.current =
+        target instanceof HTMLElement &&
+        (panel.current?.contains(target) || target === toggle.current)
+          ? target
+          : null
+    }
+    document.addEventListener('focusin', rememberFocus)
+    return () => document.removeEventListener('focusin', rememberFocus)
+  }, [])
+  useLayoutEffect(() => {
+    const focused = focusedPanelControl.current
+    if (
+      !focused ||
+      (document.activeElement !== focused &&
+        document.activeElement !== document.body)
+    )
+      return
+    if (
+      !focused.isConnected ||
+      (!isPanelOpen && panel.current?.contains(focused))
+    ) {
+      const target = toggle.current?.isConnected
+        ? toggle.current
+        : search.current
+      target?.focus()
+    }
+  }, [config.facets, isPanelOpen])
   const activeChips = getActiveFacetChips(config, selectedFacets)
   const activeFacetCount = activeChips.length
   const hasFacets = config.facets.length > 0
@@ -58,9 +94,16 @@ export function ListFilterBar<TFacetId extends string = string>({
     <div
       data-slot="list-filter-bar"
       data-sticky={sticky || undefined}
+      onFocusCapture={() => onFocusWithinChange?.(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          onFocusWithinChange?.(false)
+        }
+      }}
       className={cn(
         listFilterBarClassName,
-        sticky && 'lg:sticky lg:top-24 lg:z-30',
+        sticky &&
+          'lg:sticky lg:top-[var(--app-header-scroll-clearance,1rem)] lg:z-30',
         className,
       )}
     >
@@ -71,6 +114,7 @@ export function ListFilterBar<TFacetId extends string = string>({
               {config.searchLabel ?? 'Search'}
             </FieldLabel>
             <Input
+              ref={search}
               id={searchId}
               type="search"
               value={query}
@@ -83,6 +127,7 @@ export function ListFilterBar<TFacetId extends string = string>({
 
           {hasFacets && (
             <Button
+              ref={toggle}
               type="button"
               variant="outline"
               size="control"
@@ -105,12 +150,22 @@ export function ListFilterBar<TFacetId extends string = string>({
           isFiltering={isFiltering}
           onRemove={(facetId) => onFacetChange(facetId, '')}
           onReset={onReset}
+          fallbackFocus={() => search.current}
         />
 
         {hasFacets && (
           <div
+            ref={panel}
             id={panelId}
             aria-hidden={!isPanelOpen}
+            inert={!isPanelOpen}
+            onKeyDown={(event) => {
+              if (isPanelOpen && event.key === 'Escape') {
+                event.preventDefault()
+                setIsPanelOpen(false)
+                toggle.current?.focus()
+              }
+            }}
             className={cn(
               'app-height-collapse',
               isPanelOpen
@@ -123,7 +178,9 @@ export function ListFilterBar<TFacetId extends string = string>({
                 <ListFilterPanel
                   facets={config.facets}
                   selectedFacets={selectedFacets}
-                  onFacetChange={onFacetChange}
+                  onFacetChange={(facetId, value) => {
+                    if (isPanelOpen) onFacetChange(facetId, value)
+                  }}
                   idPrefix={idPrefix}
                   disabled={!isPanelOpen}
                 />

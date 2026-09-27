@@ -58,7 +58,7 @@ export function CareReminderStatusBadge({
       variant={overdue ? 'destructive' : careReminderStatusVariant[status]}
       {...props}
     >
-      <StatusIcon className="size-3" weight="bold" />
+      <StatusIcon aria-hidden="true" className="size-3" weight="bold" />
       {getCareReminderStateLabel({ status, overdue })}
     </Badge>
   )

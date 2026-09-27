@@ -1,4 +1,5 @@
 import type { ComponentProps, ReactNode } from 'react'
+import { useId } from 'react'
 
 import {
   NavigationMenu,
@@ -24,6 +25,7 @@ type DashboardNavigationProps = {
   inset?: boolean
   listClassName?: string
   overflow?: 'scroll' | 'wrap'
+  role?: 'navigation' | 'group'
 }
 
 type DashboardSectionTabItem<TTabId extends string> = {
@@ -38,6 +40,8 @@ type DashboardSectionTabsProps<TTabId extends string> = Omit<
   activeId: TTabId
   items: ReadonlyArray<DashboardSectionTabItem<TTabId>>
   onSelect: (id: TTabId) => void
+  contentId?: string
+  controlIdPrefix?: string
 }
 
 type DashboardSectionTabGroupProps<TTabId extends string> = Pick<
@@ -98,6 +102,7 @@ export function DashboardNavigation({
   inset = true,
   listClassName,
   overflow = 'wrap',
+  role,
 }: DashboardNavigationProps) {
   const alignEnd = align === 'end'
   const alignAlways = alignEnd && alignMode === 'always'
@@ -106,6 +111,7 @@ export function DashboardNavigation({
   return (
     <NavigationMenu
       aria-label={ariaLabel}
+      role={role}
       className={cn(
         'min-w-0 max-w-full justify-start',
         alignAlways && 'ml-auto justify-end',
@@ -135,16 +141,24 @@ export function DashboardSectionTabs<TTabId extends string>({
   ariaLabel = 'Section views',
   items,
   onSelect,
+  contentId,
+  controlIdPrefix,
   ...navigationProps
 }: DashboardSectionTabsProps<TTabId>) {
   return (
-    <DashboardNavigation ariaLabel={ariaLabel} {...navigationProps}>
+    <DashboardNavigation
+      ariaLabel={ariaLabel}
+      role="group"
+      {...navigationProps}
+    >
       {items.map((item) => (
         <NavigationMenuItem key={item.id}>
           <NavigationMenuButtonLink
             data-active={activeId === item.id || undefined}
             aria-pressed={activeId === item.id}
-            className="h-11 shrink-0 px-3.5 py-2.5 font-display text-sm font-bold whitespace-nowrap uppercase leading-none tracking-[0.025em] sm:px-5"
+            aria-controls={contentId}
+            id={controlIdPrefix ? `${controlIdPrefix}-${item.id}` : undefined}
+            className="h-11 shrink-0 px-3.5 py-2.5 text-base font-semibold whitespace-nowrap leading-tight sm:px-5"
             onClick={() => onSelect(item.id)}
           >
             {item.label}
@@ -168,7 +182,7 @@ export function DashboardNavigationLinkItem({
         aria-current={active ? 'page' : undefined}
         className={cn(
           variant === 'section' &&
-            'h-10 shrink-0 px-3.5 font-display text-sm font-bold whitespace-nowrap uppercase leading-none tracking-[0.025em]',
+            'h-10 shrink-0 px-3.5 text-base font-semibold whitespace-nowrap leading-tight',
           className,
         )}
         {...props}
@@ -192,7 +206,7 @@ export function DashboardNavigationMenuGroup({
         data-active={active || undefined}
         className={cn(
           variant === 'section' &&
-            'h-10 shrink-0 px-3.5 font-display text-sm font-bold whitespace-nowrap uppercase leading-none tracking-[0.025em]',
+            'h-10 shrink-0 px-3.5 text-base font-semibold whitespace-nowrap leading-tight',
           triggerClassName,
         )}
       >
@@ -225,8 +239,7 @@ export function DashboardNavigationMenuLink({
       data-active={active || undefined}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        variant === 'section' &&
-          'font-display text-xs font-bold uppercase tracking-[0.025em]',
+        variant === 'section' && 'text-sm font-semibold',
         className,
       )}
       {...props}
@@ -253,6 +266,8 @@ export function DashboardSectionTabGroup<TTabId extends string>({
   tabsListClassName,
   ...props
 }: DashboardSectionTabGroupProps<TTabId>) {
+  const id = useId()
+  const contentId = `${id}-content`
   return (
     <div className={cn('grid gap-3', className)} {...props}>
       <DashboardSectionTabs
@@ -264,9 +279,18 @@ export function DashboardSectionTabGroup<TTabId extends string>({
         listClassName={tabsListClassName}
         onSelect={onSelect}
         className={tabsClassName}
+        controlIdPrefix={id}
+        contentId={contentId}
       />
 
-      {children}
+      <div
+        id={contentId}
+        role="region"
+        aria-labelledby={`${id}-${activeId}`}
+        className="grid min-w-0 gap-3"
+      >
+        {children}
+      </div>
     </div>
   )
 }

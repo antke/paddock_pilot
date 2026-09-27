@@ -1,11 +1,14 @@
 import { Check, Copy, Monitor, Moon, Sun } from '@phosphor-icons/react'
 import { Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 
-import { Button } from '#/components/ui/button'
+import { Button, ButtonAnchor } from '#/components/ui/button'
+import { Field, FieldLabel } from '#/components/ui/field'
+import { Input } from '#/components/ui/input'
+import { copyTextToClipboard } from '#/lib/clipboard'
 import { cn } from '#/lib/utils'
 import {
-  getLandingLabCaptureUrl,
+  getLandingLabCaptureSource,
   getLandingLabReviewSearch,
 } from './landingLabSearch'
 import { landingLabVariants } from './landingLabVariants'
@@ -30,36 +33,21 @@ export function LandingLabChrome({
   variantId: LandingLabVariantId
   viewport: LandingLabViewport
 }) {
-  const [copyStatus, setCopyStatus] = useState('')
   const activeMapVersion = resolvePaddockMapVersionId(mapVersion)
-
-  async function copyCaptureUrl() {
-    const url = getLandingLabCaptureUrl({
-      currentHref: window.location.href,
-      variantId,
-      theme,
-      mapVersion,
-    })
-
-    try {
-      await navigator.clipboard.writeText(url)
-      setCopyStatus('Capture link copied')
-    } catch {
-      setCopyStatus('Copy failed; use the address bar')
-    }
-  }
 
   return (
     <header className="border-b border-border bg-surface px-4 py-4">
       <div className="mx-auto grid w-full max-w-[96rem] gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <Link
-              to="/landing-lab"
-              className="font-serif text-lg font-bold text-foreground no-underline hover:text-primary"
-            >
-              Landing concepts
-            </Link>
+            <h1 className="font-serif text-lg font-bold">
+              <Link
+                to="/landing-lab"
+                className="font-serif text-lg font-bold text-foreground no-underline hover:text-primary"
+              >
+                Landing concepts
+              </Link>
+            </h1>
             <p className="mt-1 text-xs text-muted-foreground">
               Review only · the live landing page is unchanged
             </p>
@@ -95,10 +83,14 @@ export function LandingLabChrome({
                 </Link>
               ))}
             </div>
-            <Button variant="outline" size="sm" onClick={copyCaptureUrl}>
-              <Copy />
-              Copy capture link
-            </Button>
+            <CaptureLinkCopy
+              key={`${variantId}-${theme}-${viewport}-${activeMapVersion}`}
+              source={getLandingLabCaptureSource({
+                variantId,
+                theme,
+                mapVersion,
+              })}
+            />
           </div>
         </div>
 
@@ -201,10 +193,87 @@ export function LandingLabChrome({
             Choose this direction
           </Link>
         </div>
-        <p className="sr-only" aria-live="polite">
-          {copyStatus}
-        </p>
       </div>
     </header>
+  )
+}
+
+type CopyState = {
+  phase: 'idle' | 'pending' | 'success' | 'failure'
+  url?: string
+}
+
+function CaptureLinkCopy({ source }: { source: string }) {
+  const inputId = useId()
+  const epoch = useRef(0)
+  const pending = useRef(false)
+  const [state, setState] = useState<CopyState>({ phase: 'idle' })
+  useEffect(
+    () => () => {
+      epoch.current += 1
+    },
+    [],
+  )
+
+  const copy = async () => {
+    if (pending.current) return
+    pending.current = true
+    const request = epoch.current
+    const url = new URL(source, window.location.href).toString()
+    setState({ phase: 'pending', url })
+    try {
+      await copyTextToClipboard(url)
+      if (epoch.current === request) setState({ phase: 'success', url })
+    } catch {
+      if (epoch.current === request) setState({ phase: 'failure', url })
+    } finally {
+      pending.current = false
+    }
+  }
+
+  return (
+    <div className="grid min-w-0 gap-2 sm:max-w-md">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={copy}
+        disabled={state.phase === 'pending'}
+        aria-busy={state.phase === 'pending' || undefined}
+      >
+        <Copy aria-hidden="true" />
+        {state.phase === 'pending'
+          ? 'Copying capture link…'
+          : 'Copy capture link'}
+      </Button>
+      <p
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className={cn(
+          'text-sm text-muted-foreground',
+          (state.phase === 'idle' || state.phase === 'pending') && 'sr-only',
+        )}
+      >
+        {state.phase === 'success'
+          ? 'Capture link copied.'
+          : state.phase === 'failure'
+            ? 'Could not copy. Select the capture URL below or open it directly.'
+            : ''}
+      </p>
+      {state.phase === 'failure' && (
+        <Field>
+          <FieldLabel htmlFor={inputId}>Capture URL</FieldLabel>
+          <Input
+            id={inputId}
+            readOnly
+            value={state.url ?? ''}
+            onFocus={(event) => event.currentTarget.select()}
+          />
+          <ButtonAnchor href={state.url} variant="outline" size="sm">
+            Open capture
+          </ButtonAnchor>
+        </Field>
+      )}
+    </div>
   )
 }

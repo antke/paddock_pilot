@@ -8,14 +8,18 @@ import {
 import { useListFiltering } from '#/components/list-filtering/useListFiltering'
 
 import { CareRemindersCard } from './CareRemindersCard'
+import { StableRemindersPageView } from './StableRemindersPage'
 import { createCareReminderListFilterConfig } from './careReminderListFilters'
 
-type FilterableCareRemindersCardProps = ComponentProps<typeof CareRemindersCard>
+type FilterableCareRemindersCardProps = ComponentProps<
+  typeof CareRemindersCard
+> & { pageLayout?: boolean }
 
 export function FilterableCareRemindersCard({
   reminders,
   horseOptions,
   emptyMessage,
+  pageLayout = false,
   ...cardProps
 }: FilterableCareRemindersCardProps) {
   const filterConfig = useMemo(
@@ -27,8 +31,10 @@ export function FilterableCareRemindersCard({
     config: filterConfig,
   })
 
+  const View = pageLayout ? StableRemindersPageView : CareRemindersCard
+
   return (
-    <CareRemindersCard
+    <View
       {...cardProps}
       reminders={filtering.items}
       horseOptions={horseOptions}
@@ -41,7 +47,8 @@ export function FilterableCareRemindersCard({
         <ListFilterControls
           config={filterConfig}
           filtering={filtering}
-          hideWhenEmpty
+          sticky={pageLayout}
+          hideWhenEmpty={!pageLayout}
         />
       }
     />

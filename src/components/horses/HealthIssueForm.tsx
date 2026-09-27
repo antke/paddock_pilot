@@ -1,4 +1,6 @@
+import { useId, useRef } from 'react'
 import { InlineForm } from '#/components/forms/FormLayout'
+import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
 import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
 import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
 import { Field, FieldError, FieldGrid, FieldLabel } from '#/components/ui/field'
@@ -15,6 +17,7 @@ import { horseHealthIssueSeverityLabels } from './horseCareLabels'
 
 type HealthIssueFormProps = {
   disabled?: boolean
+  onPendingChange?: (pending: boolean) => void
   onSubmit: (data: HealthIssueFormSchema) => Promise<void>
 }
 
@@ -31,8 +34,11 @@ const severityChoiceOptions = severityOptions.map((severity) => ({
 
 export function HealthIssueForm({
   disabled = false,
+  onPendingChange,
   onSubmit,
 }: HealthIssueFormProps) {
+  const formId = useId()
+  const submitting = useRef(false)
   const form = useForm<HealthIssueFormSchema>({
     resolver: zodResolver(healthIssueFormSchema),
     mode: 'onTouched',
@@ -43,8 +49,22 @@ export function HealthIssueForm({
   })
 
   const submitIssue = async (data: HealthIssueFormSchema) => {
-    await onSubmit(data)
-    form.reset()
+    if (submitting.current) return
+    submitting.current = true
+    form.clearErrors('root')
+    onPendingChange?.(true)
+    try {
+      await onSubmit(data)
+      form.reset()
+    } catch {
+      form.setError('root', {
+        message:
+          'Could not save this record. Your entries are still here; please try again.',
+      })
+    } finally {
+      submitting.current = false
+      onPendingChange?.(false)
+    }
   }
 
   return (
@@ -55,16 +75,34 @@ export function HealthIssueForm({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Issue title</FieldLabel>
+              <FieldLabel htmlFor={`${formId}-${field.name}`}>
+                Issue title
+              </FieldLabel>
               <Input
+                aria-required={[
+                  'title',
+                  'medicationName',
+                  'dosage',
+                  'startDate',
+                ].includes(field.name)}
                 {...field}
-                id={field.name}
+                id={`${formId}-${field.name}`}
                 disabled={disabled || form.formState.isSubmitting}
                 aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid
+                    ? `${formId}-${field.name}-error`
+                    : undefined
+                }
                 placeholder="Chipped hoof, food intolerance..."
                 autoComplete="off"
               />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && (
+                <FieldError
+                  id={`${formId}-${field.name}-error`}
+                  errors={[fieldState.error]}
+                />
+              )}
             </Field>
           )}
         />
@@ -74,8 +112,9 @@ export function HealthIssueForm({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Severity</FieldLabel>
+              <FieldLabel>Severity (optional)</FieldLabel>
               <ChoiceButtonGroup
+                aria-label="Severity (optional)"
                 value={field.value}
                 options={severityChoiceOptions}
                 onValueChange={(nextValue) =>
@@ -83,8 +122,18 @@ export function HealthIssueForm({
                 }
                 disabled={disabled || form.formState.isSubmitting}
                 aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid
+                    ? `${formId}-${field.name}-error`
+                    : undefined
+                }
               />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && (
+                <FieldError
+                  id={`${formId}-${field.name}-error`}
+                  errors={[fieldState.error]}
+                />
+              )}
             </Field>
           )}
         />
@@ -95,19 +144,31 @@ export function HealthIssueForm({
         control={form.control}
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>Description</FieldLabel>
+            <FieldLabel htmlFor={`${formId}-${field.name}`}>
+              Description (optional)
+            </FieldLabel>
             <Textarea
               {...field}
-              id={field.name}
+              id={`${formId}-${field.name}`}
               disabled={disabled || form.formState.isSubmitting}
               aria-invalid={fieldState.invalid}
+              aria-describedby={
+                fieldState.invalid ? `${formId}-${field.name}-error` : undefined
+              }
               placeholder="What should other owners, stable admins, vets, or farriers know?"
               autoComplete="off"
             />
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            {fieldState.invalid && (
+              <FieldError
+                id={`${formId}-${field.name}-error`}
+                errors={[fieldState.error]}
+              />
+            )}
           </Field>
         )}
       />
+
+      <FormSubmissionError message={form.formState.errors.root?.message} />
 
       <FormSubmitActions
         isSubmitting={form.formState.isSubmitting}

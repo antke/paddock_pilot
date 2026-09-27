@@ -1,6 +1,7 @@
+import { ReferenceStudiesPage } from './ReferenceStudiesPage'
+import { getReferenceStudy } from './referenceStudies'
 import { NoStablesPrompt } from '#/components/stables/NoStablesPrompt'
 import { LabPageHeader, LabPageShell } from '#/components/lab/LabChrome'
-import { StableCommandCenter } from '#/components/dashboard/command-center/StableCommandCenter'
 import { useDevAuthBypassEnabled } from '#/lib/devAuthBypass'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import { convexQuery } from '@convex-dev/react-query'
@@ -8,19 +9,26 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
 import { createDashboardLabData } from './dashboardLabData'
-import { createDashboardLabFixtureData } from './dashboardLabFixtures'
+import { createDashboardContainmentFixture } from './dashboardContainmentFixtures'
+import {
+  DashboardContainmentNavigation,
+  DashboardContainmentStudy,
+  isSoftSectionStudy,
+} from './DashboardContainmentStudy'
 
-export function DashboardLabPage() {
+export function DashboardLabPage({ version = '1' }: { version?: string }) {
   const devAuthBypassEnabled = useDevAuthBypassEnabled()
+  const referenceStudy = getReferenceStudy(version)
+  if (referenceStudy) return <ReferenceStudiesPage study={referenceStudy} />
 
   if (devAuthBypassEnabled) {
-    return <DashboardLabFixturePage />
+    return <DashboardLabFixturePage version={version} />
   }
 
-  return <DashboardLabLivePage />
+  return <DashboardLabLivePage version={version} />
 }
 
-function DashboardLabLivePage() {
+function DashboardLabLivePage({ version }: { version: string }) {
   const { data: stables } = useSuspenseQuery(convexQuery(api.stables.list))
   const { data: events } = useSuspenseQuery(convexQuery(api.events.list))
   const activeStable = stables[0]
@@ -35,6 +43,7 @@ function DashboardLabLivePage() {
 
   return (
     <DashboardLabData
+      version={version}
       stables={stables}
       events={events}
       activeStable={activeStable}
@@ -42,26 +51,34 @@ function DashboardLabLivePage() {
   )
 }
 
-function DashboardLabFixturePage() {
-  const data = createDashboardLabFixtureData()
+function DashboardLabFixturePage({ version }: { version: string }) {
+  const data = createDashboardContainmentFixture()
 
   return (
     <LabPageShell>
       <LabPageHeader
-        title="Stable-first dashboard concepts"
-        description="Dev fixture data is active for visual review."
-      />
+        title={
+          isSoftSectionStudy(version)
+            ? 'Soft sections — refinements'
+            : 'Dashboard grouping demos'
+        }
+        description="Compare the same busy, fictional yard across each version. Calendar days and Show all work; record links lead to the app."
+      >
+        <DashboardContainmentNavigation version={version} />
+      </LabPageHeader>
 
-      <StableCommandCenter data={data} />
+      <DashboardContainmentStudy data={data} version={version} />
     </LabPageShell>
   )
 }
 
 function DashboardLabData({
+  version,
   stables,
   events,
   activeStable,
 }: {
+  version: string
   stables: Array<Doc<'stables'>>
   events: Array<Doc<'events'>>
   activeStable: Doc<'stables'>
@@ -87,11 +104,17 @@ function DashboardLabData({
   return (
     <LabPageShell>
       <LabPageHeader
-        title="Stable-first dashboard concepts"
-        description="Soft grouped dashboard layout for tuning the final dashboard chrome."
-      />
+        title={
+          isSoftSectionStudy(version)
+            ? 'Soft sections — refinements'
+            : 'Dashboard grouping demos'
+        }
+        description="Compare the same active stable data across each version."
+      >
+        <DashboardContainmentNavigation version={version} />
+      </LabPageHeader>
 
-      <StableCommandCenter data={data} />
+      <DashboardContainmentStudy data={data} version={version} />
     </LabPageShell>
   )
 }

@@ -7,6 +7,10 @@ export type DashboardCommandChrome = DashboardChrome
 
 export type DashboardCommandStable = Doc<'stables'>
 export type DashboardCommandEvent = Doc<'events'>
+// Calendar projections keep the real event ID for navigation.
+export type DashboardCommandScheduleEvent = DashboardCommandEvent & {
+  occurrenceKey?: string
+}
 export type DashboardCommandOverview = FunctionReturnType<
   typeof api.userCareOverview.getForCurrentUser
 >
@@ -30,7 +34,7 @@ export type DashboardCommandData = {
   upcomingEvents: Array<DashboardCommandUpcomingEvent>
   dueReminders: Array<DashboardCommandReminder>
   attentionHorses: Array<DashboardCommandAttentionHorse>
-  todayEvents: Array<DashboardCommandEvent>
+  todayEvents: Array<DashboardCommandScheduleEvent>
   weekDays: Array<DashboardCommandDay>
   urgentCount: number
 }
@@ -41,5 +45,5 @@ export type DashboardCommandDay = {
   label: string
   day: string
   eventCount: number
-  events: Array<DashboardCommandEvent>
+  events: Array<DashboardCommandScheduleEvent>
 }

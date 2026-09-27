@@ -4,10 +4,27 @@ import { ArrowRight } from '@phosphor-icons/react'
 import { ButtonLink } from '#/components/ui/button'
 import { cn } from '#/lib/utils'
 import { landingLabContent } from './landingLabContent'
+import { LandingLabThemeBoundary } from './LandingLabThemeBoundary'
 
 export type LandingLabVariantProps = {
   theme?: 'light' | 'dark'
   versionId?: string
+}
+
+/** Capability titles size against their article's inline container, not the viewport. */
+export function LandingLabCapabilityHeading({
+  className,
+  ...props
+}: ComponentProps<'h2'>) {
+  return (
+    <h2
+      className={cn(
+        'max-w-[12ch] font-display text-[clamp(2rem,13cqi,5.5rem)] leading-[0.88] font-bold tracking-[-0.03em] text-balance break-normal uppercase [overflow-wrap:normal]',
+        className,
+      )}
+      {...props}
+    />
+  )
 }
 
 export function LandingLabPageFrame({
@@ -24,23 +41,24 @@ export function LandingLabPageFrame({
   theme?: 'light' | 'dark'
 }) {
   return (
-    <div
-      className={cn(
-        'min-h-screen overflow-x-clip bg-background text-foreground selection:bg-primary/25',
-        theme === 'dark' && 'dark',
-        className,
-      )}
-    >
-      <a
-        href="#main-content"
-        className="sr-only z-[100] rounded-control bg-primary px-4 py-3 font-semibold text-primary-foreground focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+    <LandingLabThemeBoundary theme={theme}>
+      <div
+        className={cn(
+          'min-h-screen overflow-x-clip bg-background text-foreground selection:bg-primary/25',
+          className,
+        )}
       >
-        Skip to content
-      </a>
-      <LandingLabPublicHeader className={headerClassName} />
-      {children}
-      <LandingLabPublicFooter className={footerClassName} />
-    </div>
+        <a
+          href="#main-content"
+          className="sr-only z-[100] rounded-control bg-primary px-4 py-3 font-semibold text-primary-foreground focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+        >
+          Skip to content
+        </a>
+        <LandingLabPublicHeader className={headerClassName} />
+        {children}
+        <LandingLabPublicFooter className={footerClassName} />
+      </div>
+    </LandingLabThemeBoundary>
   )
 }
 

@@ -1,3 +1,4 @@
+import { getEffectiveInvitationStatus } from 'shared/stableInvitations/invitationState'
 import {
   CalendarCheckIcon,
   CheckCircleIcon,
@@ -16,7 +17,6 @@ import {
 } from '#/components/dashboard/DashboardItemCard'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
-import { FieldPanel } from '#/components/ui/field'
 import { TextLabel } from '#/components/ui/text-label'
 import type { OnboardingRole, OnboardingStepId } from './onboardingSteps'
 
@@ -45,9 +45,12 @@ export function OnboardingReviewStep({
   role: OnboardingRole
   stable: Doc<'stables'>
 }) {
+  const pendingInvitations = invitations.filter(
+    (invitation) => getEffectiveInvitationStatus(invitation) === 'pending',
+  )
   return (
     <div className="grid gap-5">
-      <Alert className="border-success/25 bg-success/10">
+      <Alert role="note">
         <CheckCircleIcon aria-hidden="true" />
         <AlertTitle>Review your setup</AlertTitle>
         <AlertDescription>
@@ -165,9 +168,11 @@ export function OnboardingReviewStep({
             <ReviewField
               label="Pending invitations"
               value={
-                invitations.length > 0
-                  ? invitations.map((invitation) => invitation.email).join('\n')
-                  : 'No invitations added'
+                pendingInvitations.length > 0
+                  ? pendingInvitations
+                      .map((invitation) => invitation.email)
+                      .join('\n')
+                  : 'No pending invitations'
               }
               onEdit={() => onEdit('invite-team')}
             />
@@ -202,12 +207,12 @@ function ReviewSection({
   title: string
 }) {
   return (
-    <FieldPanel className="overflow-hidden p-0">
-      <div className="border-b border-border-subtle bg-surface-muted px-4 py-3">
+    <section className="grid gap-2">
+      <div className="border-b border-border-subtle pb-2">
         <DashboardInlineHeader as="h3" title={title} titleSize="sm" />
       </div>
       <dl>{children}</dl>
-    </FieldPanel>
+    </section>
   )
 }
 
@@ -221,9 +226,9 @@ function ReviewField({
   value: ReactNode
 }) {
   return (
-    <div className="grid min-h-14 grid-cols-[minmax(7rem,0.7fr)_minmax(0,1fr)_auto] items-center gap-3 border-b border-border-subtle px-4 py-3 last:border-b-0">
+    <div className="grid min-h-14 grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(7rem,0.7fr)_minmax(0,1fr)_auto] items-center gap-3 border-b border-border-subtle py-3 last:border-b-0">
       <TextLabel as="dt">{label}</TextLabel>
-      <dd className="min-w-0 whitespace-pre-wrap text-sm font-medium">
+      <dd className="col-start-1 min-w-0 break-words whitespace-pre-wrap text-sm font-medium sm:col-start-auto">
         {value}
       </dd>
       {onEdit && (
@@ -232,6 +237,7 @@ function ReviewField({
           action="edit"
           variant="ghost"
           size="icon-sm"
+          className="col-start-2 row-start-1 sm:col-start-3"
           aria-label={`Edit ${label.toLowerCase()}`}
           onClick={onEdit}
         />
@@ -287,7 +293,7 @@ function NextSteps({ role }: { role: OnboardingRole }) {
       {items.map((item) => (
         <DashboardItemRecordCard
           key={item.title}
-          chrome="soft"
+          chrome="flat"
           density="compact"
         >
           <DashboardItemCardContent

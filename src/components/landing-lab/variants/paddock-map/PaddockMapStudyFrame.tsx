@@ -19,7 +19,10 @@ export function PaddockMapStudyFrame({
     >
       <main
         id="main-content"
-        className={cn('landing-overdrive relative overflow-hidden', className)}
+        className={cn(
+          'paddock-map-study landing-overdrive relative overflow-hidden',
+          className,
+        )}
       >
         {children}
       </main>

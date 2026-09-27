@@ -7,6 +7,7 @@ import {
   calendarWeekDayNumberClassName,
   calendarWeekDayPanelClassName,
   calendarWeekGridClassName,
+  calendarWeekPaperClassName,
 } from '#/components/events/EventCalendarChrome'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
@@ -15,10 +16,9 @@ import {
   DashboardInlinePanelButton,
 } from '#/components/dashboard/DashboardInlinePanel'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
-import { formatCountLabel } from '#/lib/numberDisplay'
 import { cn } from '#/lib/utils'
 import { useId, useState } from 'react'
-import { EventRow } from '#/components/events/EventRow'
+import { EventLinkCard } from './EventLinkCard'
 import type {
   DashboardCommandChrome,
   DashboardCommandData,
@@ -38,7 +38,7 @@ export function MiniCalendarCard({
   data,
   showSelectedDay = true,
   showInlineEvents = false,
-  chrome = 'cards',
+  chrome = 'soft',
 }: MiniCalendarCardProps) {
   const [selectedDayKey, setSelectedDayKey] = useState<string>()
   const selectedDay = data.weekDays.find((day) => day.key === selectedDayKey)
@@ -54,7 +54,7 @@ export function MiniCalendarCard({
       gap="compact"
       padding={chrome === 'cards' ? 'roomy' : 'default'}
       title="Next 7 days"
-      description="Select a day to see what’s planned."
+      description="Select a day to see calendar entries, including completed and cancelled events."
       descriptionSize="sm"
       size="panel"
       titleStyle="display"
@@ -110,7 +110,7 @@ export function MiniCalendarCard({
                   className={calendarWeekDayButtonClassName({
                     chrome: controlChrome,
                     className: cn(
-                      'bg-card lg:min-h-28 lg:grid-cols-1 lg:content-between lg:items-stretch lg:gap-2',
+                      'lg:min-h-28 lg:grid-cols-1 lg:content-between lg:items-stretch lg:gap-2',
                       showSelectedDay &&
                         isSelected &&
                         'rounded-b-none lg:rounded-b-row',
@@ -147,8 +147,8 @@ export function MiniCalendarCard({
                     })}
                   >
                     {day.eventCount === 0
-                      ? 'Clear'
-                      : formatCountLabel(day.eventCount, 'event')}
+                      ? 'No entries'
+                      : `${day.eventCount} ${day.eventCount === 1 ? 'entry' : 'entries'}`}
                   </span>
                 </DashboardInlinePanelButton>
                 {showSelectedDay && isSelected && (
@@ -157,7 +157,6 @@ export function MiniCalendarCard({
                     labelledBy={controlId}
                     day={day}
                     chrome={controlChrome}
-                    className="bg-card"
                     wrapperClassName="lg:hidden"
                   />
                 )}
@@ -171,7 +170,7 @@ export function MiniCalendarCard({
               labelledBy={`${calendarId}-day-${selectedDay.key}-button`}
               day={selectedDay}
               chrome={controlChrome}
-              className="bg-card lg:mt-2 lg:rounded-row"
+              className="lg:mt-2 lg:rounded-row"
               wrapperClassName="hidden lg:col-span-7 lg:grid"
             />
           )}
@@ -197,7 +196,6 @@ function DayColumn({
       stack="default"
       className={calendarWeekDayPanelClassName({
         isToday,
-        className: 'bg-card',
       })}
     >
       <div>
@@ -218,7 +216,7 @@ function DayColumn({
             data-slot="calendar-week-day-meta"
             className={calendarWeekDayMetaClassName()}
           >
-            {day.eventCount === 0 ? 'Clear' : day.eventCount}
+            {day.eventCount === 0 ? 'No entries' : day.eventCount}
           </p>
         </div>
       </div>
@@ -227,20 +225,21 @@ function DayColumn({
         {day.events.length === 0 ? (
           <DashboardEmptyState
             chrome={chrome}
-            className="bg-card"
+            className={calendarWeekPaperClassName()}
             bodyClassName="text-xs leading-5"
           >
-            Nothing planned.
+            No calendar entries.
           </DashboardEmptyState>
         ) : (
           day.events.map((event) => (
-            <EventRow
-              key={event._id}
+            <EventLinkCard
+              key={event.occurrenceKey ?? event._id}
               event={event}
               density="compact"
               chrome={chrome}
-              className="bg-card"
-              variant="contextual"
+              className={calendarWeekPaperClassName()}
+              showDate={false}
+              dayKey={day.key}
             />
           ))
         )}
@@ -280,18 +279,22 @@ function SelectedDayPanel({
         })}
       >
         {day.events.length === 0 ? (
-          <DashboardEmptyState chrome={chrome} className="bg-card">
-            Nothing planned for this day.
+          <DashboardEmptyState
+            chrome={chrome}
+            className={calendarWeekPaperClassName()}
+          >
+            No calendar entries for this day.
           </DashboardEmptyState>
         ) : (
           <DashboardItemList>
             {day.events.map((event) => (
-              <EventRow
-                key={event._id}
+              <EventLinkCard
+                key={event.occurrenceKey ?? event._id}
                 event={event}
                 chrome={chrome}
-                className="bg-card"
-                variant="contextual"
+                className={calendarWeekPaperClassName()}
+                showDate={false}
+                dayKey={day.key}
               />
             ))}
           </DashboardItemList>

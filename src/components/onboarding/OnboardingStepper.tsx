@@ -31,7 +31,7 @@ export function OnboardingStepper({
       aria-label="Onboarding progress"
       data-slot="onboarding-stepper"
       className={cn(
-        'overflow-hidden rounded-card border border-border',
+        'overflow-hidden rounded-panel border border-border',
         className,
       )}
       {...props}
@@ -46,7 +46,7 @@ export function OnboardingStepper({
             aria-current={step.status === 'current' ? 'step' : undefined}
             data-status={step.status}
             className={cn(
-              'relative flex min-w-0 items-center gap-3 border-b border-border-subtle px-4 py-3 last:border-b-0 sm:border-r sm:border-b-0 sm:last:border-r-0',
+              'relative flex min-w-0 border-b border-border-subtle last:border-b-0 sm:border-r sm:border-b-0 sm:last:border-r-0',
               step.status === 'current' && 'bg-primary/8',
               step.status === 'completed' && 'bg-success/6',
             )}
@@ -57,7 +57,7 @@ export function OnboardingStepper({
                 !onStepSelect ||
                 (step.status !== 'completed' && step.status !== 'deferred')
               }
-              className="contents disabled:pointer-events-none"
+              className="app-control-focus flex min-h-16 w-full min-w-0 items-center gap-3 border border-transparent px-4 py-3 text-left outline-none ring-inset enabled:hover:bg-surface-muted disabled:pointer-events-none"
               onClick={() => onStepSelect?.(step)}
             >
               <StepMarker index={index} status={step.status} />
@@ -94,7 +94,7 @@ function StepMarker({
       aria-hidden="true"
       data-slot="onboarding-step-marker"
       className={cn(
-        'grid size-8 shrink-0 place-items-center rounded-full border font-mono text-xs font-semibold',
+        'grid size-8 shrink-0 place-items-center rounded-full border font-sans text-xs font-semibold tabular-nums',
         status === 'current' &&
           'border-primary bg-primary text-primary-foreground',
         status === 'completed' &&

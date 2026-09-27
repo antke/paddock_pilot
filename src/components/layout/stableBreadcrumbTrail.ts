@@ -1,15 +1,12 @@
 export type StableBreadcrumbDestination =
-  | 'horses'
-  | 'horse'
-  | 'events'
-  | 'event'
+  'horses' | 'horse' | 'events' | 'event'
 
 export type StableBreadcrumbItem = {
   destination?: StableBreadcrumbDestination
   label: string
 }
 
-type StableBreadcrumbLabels = {
+export type StableBreadcrumbLabels = {
   eventTitle?: string
   horseName?: string
 }
@@ -27,6 +24,24 @@ const horseSectionLabels: Record<string, string> = {
 
 export function getStableRouteSegments(pathAfterStable: string) {
   return pathAfterStable.split('/').filter(Boolean)
+}
+
+export function getStableBreadcrumbEntityIds(pathAfterStable: string) {
+  const [feature, entityOrAction] = getStableRouteSegments(pathAfterStable)
+  return {
+    horseId:
+      feature === 'horses' &&
+      entityOrAction !== 'create' &&
+      entityOrAction !== 'deleted'
+        ? entityOrAction
+        : undefined,
+    eventId:
+      feature === 'events' &&
+      entityOrAction !== 'create' &&
+      entityOrAction !== 'calendar'
+        ? entityOrAction
+        : undefined,
+  }
 }
 
 export function createStableBreadcrumbItems(

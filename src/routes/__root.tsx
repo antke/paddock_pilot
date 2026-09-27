@@ -13,7 +13,10 @@ import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
 import { ButtonLink } from '#/components/ui/button'
 import { Toaster } from '#/components/ui/sonner'
 import { TooltipProvider } from '#/components/ui/tooltip'
-import { AppUserStateProvider } from '#/components/layout/AppUserStateProvider'
+import {
+  AppUserStateGate,
+  AppUserStateProvider,
+} from '#/components/layout/AppUserStateProvider'
 import { isLandingLabPath } from '#/lib/landingLab'
 import {
   SITE_DESCRIPTION,
@@ -142,7 +145,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             <AppUserStateProvider>
               <TooltipProvider>
                 <ApplicationRouteShell pathname={pathname}>
-                  {children}
+                  <AppUserStateGate>{children}</AppUserStateGate>
                 </ApplicationRouteShell>
 
                 <Toaster />

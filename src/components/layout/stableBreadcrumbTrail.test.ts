@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { createStableBreadcrumbItems } from './stableBreadcrumbTrail'
+import {
+  createStableBreadcrumbItems,
+  getStableBreadcrumbEntityIds,
+} from './stableBreadcrumbTrail'
 
 describe('createStableBreadcrumbItems', () => {
   it.each([
@@ -29,4 +32,21 @@ describe('createStableBreadcrumbItems', () => {
 
     expect(items.map((item) => item.label)).toEqual(expectedLabels)
   })
+})
+
+it.each([
+  [
+    '/horses/sample-horse/care',
+    { horseId: 'sample-horse', eventId: undefined },
+  ],
+  [
+    '/events/sample-event/edit',
+    { horseId: undefined, eventId: 'sample-event' },
+  ],
+  ['/horses/create', { horseId: undefined, eventId: undefined }],
+  ['/horses/deleted', { horseId: undefined, eventId: undefined }],
+  ['/events/create', { horseId: undefined, eventId: undefined }],
+  ['/events/calendar', { horseId: undefined, eventId: undefined }],
+])('queries only actual entity identifiers for %s', (path, expected) => {
+  expect(getStableBreadcrumbEntityIds(path)).toEqual(expected)
 })

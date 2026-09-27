@@ -49,7 +49,7 @@ type DashboardSectionProps = Omit<
 const dashboardSectionGapClassNames = {
   compact: 'gap-4',
   roomy: 'gap-5',
-  default: 'gap-6',
+  default: 'gap-[var(--app-section-content-gap)]',
   loose: 'gap-8',
 } satisfies Record<DashboardSectionGap, string>
 
@@ -88,7 +88,7 @@ export function DashboardSection({
   as,
   badges,
   children,
-  chrome = 'cards',
+  chrome = 'soft',
   className,
   contentAlign = 'default',
   description,

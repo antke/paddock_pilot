@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { IdentificationCardIcon } from '@phosphor-icons/react'
+import { useEffect, useRef, useState } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 import type { FunctionReturnType } from 'convex/server'
 
 import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
@@ -10,9 +10,8 @@ import {
   DetailStack,
   DetailSummaryField,
 } from '#/components/dashboard/DetailBlocks'
-import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
+import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { Button, ButtonLink } from '#/components/ui/button'
-import { FieldPanel } from '#/components/ui/field'
 import type { api } from 'convex/_generated/api'
 import { StableMemberRoleBadge } from './StableBadges'
 import { StableMemberDetailsForm } from './StableMemberDetailsForm'
@@ -25,9 +24,12 @@ type MyDetails = FunctionReturnType<typeof api.stableMembers.getMyDetails>
 
 type StableMembersPageProps = {
   stable: Stable
-  access: StableAccess
+  access: Pick<StableAccess, 'role'>
   people: StablePeople
   myDetails: MyDetails
+  renderDetailsForm?: (
+    props: ComponentProps<typeof StableMemberDetailsForm>,
+  ) => ReactNode
 }
 
 export function StableMembersPage({
@@ -35,8 +37,20 @@ export function StableMembersPage({
   access,
   people,
   myDetails,
+  renderDetailsForm = (props) => <StableMemberDetailsForm {...props} />,
 }: StableMembersPageProps) {
   const [isEditingDetails, setIsEditingDetails] = useState(false)
+  const editButtonRef = useRef<HTMLButtonElement>(null)
+  const editorRef = useRef<HTMLDivElement>(null)
+  const previouslyEditing = useRef(false)
+  useEffect(() => {
+    if (isEditingDetails)
+      editorRef.current
+        ?.querySelector<HTMLInputElement>('input:not(:disabled)')
+        ?.focus()
+    else if (previouslyEditing.current) editButtonRef.current?.focus()
+    previouslyEditing.current = isEditingDetails
+  }, [isEditingDetails])
 
   return (
     <>
@@ -48,7 +62,12 @@ export function StableMembersPage({
 
       <DashboardLayoutGrid variant="sidebar">
         <DashboardSectionCard title="Stable directory" contentGap="compact">
-          <DashboardItemList gap="compact">
+          <DashboardItemList gap="flush">
+            {people.length === 0 && (
+              <DashboardEmptyState>
+                No members are listed for this stable.
+              </DashboardEmptyState>
+            )}
             {people.map((person) => {
               const name = formatPersonName(person)
 
@@ -74,6 +93,7 @@ export function StableMembersPage({
           actions={
             myDetails && !isEditingDetails ? (
               <Button
+                ref={editButtonRef}
                 type="button"
                 action="edit"
                 variant="outline"
@@ -87,13 +107,13 @@ export function StableMembersPage({
         >
           {myDetails ? (
             isEditingDetails ? (
-              <FieldPanel>
-                <StableMemberDetailsForm
-                  member={myDetails}
-                  onCancel={() => setIsEditingDetails(false)}
-                  onSaved={() => setIsEditingDetails(false)}
-                />
-              </FieldPanel>
+              <div ref={editorRef}>
+                {renderDetailsForm({
+                  member: myDetails,
+                  onCancel: () => setIsEditingDetails(false),
+                  onSaved: () => setIsEditingDetails(false),
+                })}
+              </div>
             ) : (
               <DetailStack>
                 <DetailSummaryField
@@ -111,24 +131,20 @@ export function StableMembersPage({
               </DetailStack>
             )
           ) : (
-            <Alert>
-              <IdentificationCardIcon />
-              <AlertTitle>Stable owner access</AlertTitle>
-              <AlertDescription>
-                <span>
-                  Invite members, update their details, and manage access from
-                  Stable settings.
-                </span>
-                <ButtonLink
-                  to="/stables/$stableId/settings"
-                  params={{ stableId: stable._id }}
-                  search={{ tab: 'members' }}
-                  size="sm"
-                >
-                  Manage members
-                </ButtonLink>
-              </AlertDescription>
-            </Alert>
+            <DetailStack>
+              <p>
+                Invite members, update their details, and manage access from
+                Stable settings.
+              </p>
+              <ButtonLink
+                to="/stables/$stableId/settings"
+                params={{ stableId: stable._id }}
+                search={{ tab: 'members' }}
+                size="sm"
+              >
+                Manage members
+              </ButtonLink>
+            </DetailStack>
           )}
         </DashboardSectionCard>
       </DashboardLayoutGrid>

@@ -1,4 +1,5 @@
 import type { ComponentProps, FormEventHandler, ReactNode } from 'react'
+import { useRef, useState } from 'react'
 
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
@@ -42,6 +43,37 @@ type RouteFormActionsProps = {
     description: ReactNode
     confirmLabel?: string
   }
+}
+
+function isAvailableFocusTarget(
+  element: HTMLElement,
+  form: HTMLFormElement | null,
+) {
+  const hiddenAncestor = element.closest(
+    '[inert], [hidden], [aria-hidden="true"]',
+  )
+  return (
+    element.isConnected &&
+    !element.matches(':disabled, [aria-disabled="true"]') &&
+    // Base UI removes its outside-app mask after resolving finalFocus.
+    // Reject hidden content within this form; leave return timing to the dialog.
+    (!hiddenAncestor || Boolean(form && !form.contains(hiddenAncestor)))
+  )
+}
+
+function findFormFocusTarget(form: HTMLFormElement | null) {
+  if (!form?.isConnected) return undefined
+  const controls = form.querySelectorAll<HTMLElement>(
+    'input:not([type=hidden]), textarea, select',
+  )
+  return (
+    Array.from(controls).find((element) =>
+      isAvailableFocusTarget(element, form),
+    ) ??
+    Array.from(form.querySelectorAll<HTMLButtonElement>('button')).find(
+      (element) => isAvailableFocusTarget(element, form),
+    )
+  )
 }
 
 export function RouteFormCard({
@@ -95,22 +127,42 @@ export function RouteFormActions({
   submitLabel,
   submittingLabel,
 }: RouteFormActionsProps) {
+  const [resetOpen, setResetOpen] = useState(false)
+  const resetTrigger = useRef<HTMLButtonElement>(null)
+  const ownerForm = useRef<HTMLFormElement | null>(null)
+  const actionDisabled = disabled || isSubmitting
+
   return (
     <>
       {resetConfirmation && (
-        <AlertDialog>
+        <AlertDialog open={resetOpen} onOpenChange={setResetOpen}>
           <AlertDialogTrigger
             render={
               <Button
+                ref={(element) => {
+                  resetTrigger.current = element
+                  if (element) ownerForm.current = element.closest('form')
+                }}
                 type="button"
                 variant="outline"
-                disabled={disabled || isSubmitting}
+                disabled={actionDisabled}
               />
             }
           >
             {resetLabel}
           </AlertDialogTrigger>
-          <AlertDialogContent>
+          <AlertDialogContent
+            finalFocus={() => {
+              if (
+                resetTrigger.current &&
+                isAvailableFocusTarget(resetTrigger.current, ownerForm.current)
+              ) {
+                return resetTrigger.current
+              }
+              // A successful reset can disable or remove its original trigger.
+              return findFormFocusTarget(ownerForm.current) ?? true
+            }}
+          >
             <AlertDialogHeader>
               <AlertDialogTitle>{resetConfirmation.title}</AlertDialogTitle>
               <AlertDialogDescription>
@@ -119,7 +171,16 @@ export function RouteFormActions({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Keep editing</AlertDialogCancel>
-              <AlertDialogAction variant="destructive" onClick={onReset}>
+              <AlertDialogAction
+                type="button"
+                variant="destructive"
+                disabled={actionDisabled}
+                onClick={() => {
+                  if (actionDisabled) return
+                  onReset()
+                  setResetOpen(false)
+                }}
+              >
                 {resetConfirmation.confirmLabel ?? resetLabel}
               </AlertDialogAction>
             </AlertDialogFooter>

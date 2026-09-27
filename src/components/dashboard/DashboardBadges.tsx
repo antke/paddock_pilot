@@ -56,18 +56,13 @@ export function DashboardValueBadge({
 
 export function DashboardPercentBadge({
   value,
-  warningBelow = 75,
-  variant,
+  variant = 'secondary',
   ...props
 }: DashboardBadgeProps & {
   value: number
-  warningBelow?: number
 }) {
   return (
-    <Badge
-      variant={variant ?? (value < warningBelow ? 'destructive' : 'secondary')}
-      {...props}
-    >
+    <Badge variant={variant} {...props}>
       {value}%
     </Badge>
   )

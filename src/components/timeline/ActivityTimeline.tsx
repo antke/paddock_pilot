@@ -79,7 +79,7 @@ export function ActivityTimelineScrollArea({
     <div
       data-slot="activity-timeline-scroll-area"
       className={cn(
-        'max-h-[38rem] w-full min-w-0 overflow-auto overscroll-x-contain [contain:layout_paint]',
+        'max-h-[38rem] w-full min-w-0 overflow-auto overscroll-x-contain outline-none focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring/25 [scrollbar-width:thin] [contain:layout_paint]',
         className,
       )}
       {...props}
@@ -94,10 +94,9 @@ export function ActivityTimelineCanvas({
   return (
     <div
       data-slot="activity-timeline-canvas"
-      className={cn(
-        'relative min-w-full transition-[width] duration-300 ease-out',
-        className,
-      )}
+      // Zoom measures this committed width to preserve the visible center.
+      // A geometry transition would expose an intermediate scrollWidth.
+      className={cn('relative min-w-full', className)}
       {...props}
     />
   )
@@ -172,7 +171,7 @@ export function ActivityTimelineBody({
   return (
     <div
       className={cn(
-        'relative transition-[height] duration-300 ease-out',
+        'relative transition-[height] duration-300 ease-out motion-reduce:transition-none',
         className,
       )}
       {...props}
@@ -215,6 +214,7 @@ export function ActivityTimelineGridPeriodButton({
 }
 
 export function ActivityTimelineEventBlock({
+  children,
   accentColor,
   className,
   muted,
@@ -227,7 +227,7 @@ export function ActivityTimelineEventBlock({
       data-slot="activity-timeline-event-block"
       type="button"
       className={cn(
-        'absolute z-10 grid min-w-0 content-start gap-1.5 rounded-row border border-border-subtle px-3.5 py-2.5 text-left transition-[left,top,width,height,border-color,filter] duration-300 ease-out hover:border-primary/30 hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'absolute z-10 grid min-w-0 content-start gap-1.5 rounded-row border border-border-subtle px-3.5 py-2.5 text-left transition-[border-color,filter] duration-300 ease-out motion-reduce:transition-none hover:border-primary/30 hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         muted && 'opacity-55',
         selected && 'border-primary/35 brightness-95 saturate-150',
         className,
@@ -237,7 +237,14 @@ export function ActivityTimelineEventBlock({
         ...style,
       }}
       {...props}
-    />
+    >
+      <span
+        data-slot="activity-timeline-event-content"
+        className="sticky left-3.5 grid w-full min-w-0 max-w-64 justify-self-start gap-1.5"
+      >
+        {children}
+      </span>
+    </button>
   )
 }
 
@@ -322,16 +329,13 @@ export function ActivityTimelineListEntry({
     <div
       data-slot="activity-timeline-list-entry"
       data-accent={accent}
-      className="grid grid-cols-[1.5rem_minmax(0,1fr)] overflow-hidden rounded-row border border-border bg-surface-elevated"
+      className="app-record grid grid-cols-[1.5rem_minmax(0,1fr)]"
     >
-      <div
-        className="relative flex justify-center bg-surface-muted/65"
-        aria-hidden={true}
-      >
+      <div className="relative flex justify-center" aria-hidden={true}>
         <span className="absolute inset-y-0 w-px bg-border" />
         <span
           className={cn(
-            'relative mt-[1.35rem] size-2.5 rounded-full border-2 border-background',
+            'relative mt-2 size-2.5 rounded-full border-2 border-background',
             accent === 'primary' && 'bg-primary',
             accent === 'warning' && 'bg-chart-3',
             accent === 'danger' && 'bg-destructive',
@@ -341,7 +345,7 @@ export function ActivityTimelineListEntry({
         />
       </div>
 
-      <div className="grid min-w-0 gap-2 p-4 sm:p-5">
+      <div className="grid min-w-0 gap-2 pl-3">
         {badges && <DashboardBadgeList>{badges}</DashboardBadgeList>}
         <DashboardItemRecordContent titleSize="dense" {...props}>
           {children}
@@ -469,16 +473,33 @@ export function ActivityTimelineWindowHandle({
 
 export function ActivityTimelineWindowDrag({
   className,
+  windowBounds,
+  style,
   ...props
-}: ComponentProps<'button'>) {
+}: ComponentProps<'button'> & {
+  windowBounds?: { leftRatio: number; widthRatio: number }
+}) {
+  const targetWidth = windowBounds
+    ? `max(2.75rem, 44px, ${windowBounds.widthRatio * 100}%)`
+    : undefined
   return (
     <button
       data-slot="activity-timeline-window-drag"
       type="button"
       className={cn(
-        'absolute inset-y-0 left-4 right-4 cursor-grab rounded-control outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing',
+        'absolute inset-y-0 cursor-grab rounded-control outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing',
+        windowBounds ? 'right-auto touch-none' : 'left-4 right-4',
         className,
       )}
+      style={{
+        ...(windowBounds
+          ? {
+              left: `clamp(0px, calc(${(windowBounds.leftRatio + windowBounds.widthRatio / 2) * 100}% - ${targetWidth} / 2), calc(100% - ${targetWidth}))`,
+              width: targetWidth,
+            }
+          : {}),
+        ...style,
+      }}
       {...props}
     />
   )

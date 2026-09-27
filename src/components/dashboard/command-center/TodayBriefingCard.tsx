@@ -6,7 +6,7 @@ import type {
 } from './dashboardTypes'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import { DashboardSectionHeader } from '#/components/dashboard/DashboardSectionHeader'
-import { EventRow } from '#/components/events/EventRow'
+import { EventLinkCard } from './EventLinkCard'
 import { ButtonLink } from '#/components/ui/button'
 
 type TodayBriefingCardProps = {
@@ -18,10 +18,10 @@ type TodayBriefingCardProps = {
 export function TodayBriefingCard({
   className,
   data,
-  chrome = 'cards',
+  chrome = 'soft',
 }: TodayBriefingCardProps) {
   const events = data.todayEvents
-  const recordChrome = 'soft' as const
+  const recordChrome = 'flat' as const
 
   return (
     <DashboardSection
@@ -60,12 +60,13 @@ export function TodayBriefingCard({
       ) : (
         <DashboardItemList>
           {events.map((event) => (
-            <EventRow
-              key={event._id}
+            <EventLinkCard
+              key={event.occurrenceKey ?? event._id}
               event={event}
               chrome={recordChrome}
               accent="primary"
-              variant="contextual"
+              showDate={false}
+              dayKey={data.weekDays[0]?.key}
             />
           ))}
         </DashboardItemList>

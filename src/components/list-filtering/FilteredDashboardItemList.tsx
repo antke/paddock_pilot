@@ -22,6 +22,8 @@ type FilteredDashboardItemListProps<
     items: ReadonlyArray<TItem>
   }
   emptyMessage: ReactNode
+  /** Complete unfiltered empty state; replaces, rather than nests, the default surface. */
+  emptyState?: ReactNode
   filteredEmptyMessage: ReactNode
   hideControlsWhenEmpty?: boolean
   itemLayout?: 'grid' | 'list'
@@ -35,6 +37,7 @@ export function FilteredDashboardItemList<
 >({
   config,
   emptyMessage,
+  emptyState,
   filteredEmptyMessage,
   filtering,
   gap = 'loose',
@@ -66,17 +69,21 @@ export function FilteredDashboardItemList<
       </p>
 
       {filtering.items.length === 0 ? (
-        <DashboardEmptyState chrome="soft">
-          {getListFilterEmptyMessage({
-            filtering,
-            emptyMessage,
-            filteredEmptyMessage,
-          })}
-        </DashboardEmptyState>
+        !filtering.isFiltering && emptyState !== undefined ? (
+          emptyState
+        ) : (
+          <DashboardEmptyState chrome="soft">
+            {getListFilterEmptyMessage({
+              filtering,
+              emptyMessage,
+              filteredEmptyMessage,
+            })}
+          </DashboardEmptyState>
+        )
       ) : (
         <DashboardItemList
           role="list"
-          gap={gap}
+          gap="comfortable"
           className={cn(usesGrid && 'lg:grid-cols-2')}
         >
           {filtering.items.map((item, index) => {

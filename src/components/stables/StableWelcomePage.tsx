@@ -1,10 +1,8 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import {
   ArrowRightIcon,
   CheckCircleIcon,
   CircleIcon,
-  GearIcon,
-  UserCircleIcon,
 } from '@phosphor-icons/react'
 import type { ReactNode } from 'react'
 import type { FunctionReturnType } from 'convex/server'
@@ -19,7 +17,6 @@ import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { Button, ButtonLink } from '#/components/ui/button'
 import type { ButtonAction } from '#/components/ui/button'
-import { FieldPanel } from '#/components/ui/field'
 import { Progress } from '#/components/ui/progress'
 import type { api } from 'convex/_generated/api'
 import { StableMemberRoleBadge } from './StableBadges'
@@ -42,6 +39,11 @@ type MemberWelcomePageProps = {
   stable: Stable
   member: StableMember
   ownHorseCount: number
+  renderDetailsForm?: (props: {
+    member: StableMember
+    onCancel: () => void
+    onSaved: () => void
+  }) => ReactNode
 }
 
 export function OwnerStableWelcomePage({
@@ -82,8 +84,16 @@ export function OwnerStableWelcomePage({
       title: 'Invite the first member',
       description: 'Invite by email, then track delivery and acceptance.',
       complete: memberCount > 0 || invitationCount > 0,
-      actionLabel: memberCount > 0 ? 'Manage members' : 'Invite member',
-      action: memberCount > 0 ? undefined : ('create' as const),
+      actionLabel:
+        memberCount > 0
+          ? 'Manage members'
+          : invitationCount > 0
+            ? 'Review invitations'
+            : 'Invite member',
+      action:
+        memberCount > 0 || invitationCount > 0
+          ? undefined
+          : ('create' as const),
       to: '/stables/$stableId/settings' as const,
       search: { tab: 'members' as const },
     },
@@ -113,7 +123,9 @@ export function MemberStableWelcomePage({
   stable,
   member,
   ownHorseCount,
+  renderDetailsForm,
 }: MemberWelcomePageProps) {
+  const detailsId = useId()
   const [isEditingDetails, setIsEditingDetails] = useState(
     !member.phone || !member.emergencyContact,
   )
@@ -126,6 +138,8 @@ export function MemberStableWelcomePage({
       customAction: (
         <Button
           type="button"
+          aria-expanded={isEditingDetails}
+          aria-controls={isEditingDetails ? detailsId : undefined}
           action={isEditingDetails ? undefined : 'edit'}
           variant="outline"
           size="sm"
@@ -163,13 +177,21 @@ export function MemberStableWelcomePage({
           title="Your private yard details"
           description="Only you and the stable owner can maintain these details."
         >
-          <FieldPanel>
-            <StableMemberDetailsForm
-              member={member}
-              onCancel={() => setIsEditingDetails(false)}
-              onSaved={() => setIsEditingDetails(false)}
-            />
-          </FieldPanel>
+          <div id={detailsId}>
+            {renderDetailsForm ? (
+              renderDetailsForm({
+                member,
+                onCancel: () => setIsEditingDetails(false),
+                onSaved: () => setIsEditingDetails(false),
+              })
+            ) : (
+              <StableMemberDetailsForm
+                member={member}
+                onCancel={() => setIsEditingDetails(false)}
+                onSaved={() => setIsEditingDetails(false)}
+              />
+            )}
+          </div>
         </DashboardSectionCard>
       )}
 
@@ -179,14 +201,12 @@ export function MemberStableWelcomePage({
         contentLayout="twoColumn"
       >
         <WelcomeLinkCard
-          icon={<GearIcon />}
           title="Stable overview"
           description="Read contact details, opening hours and yard rules."
           to="/stables/$stableId"
           stableId={stable._id}
         />
         <WelcomeLinkCard
-          icon={<UserCircleIcon />}
           title="Stable people"
           description="See the owner and the members you can coordinate with."
           to="/stables/$stableId/members"
@@ -255,7 +275,7 @@ function StableWelcomeLayout({
           max={steps.length}
           label={`${completedCount} of ${steps.length} setup steps complete`}
         />
-        <DashboardItemList gap="compact">
+        <DashboardItemList gap="flush" role="list" aria-label="Setup checklist">
           {steps.map((step) => (
             <WelcomeStepRow
               key={step.title}
@@ -292,7 +312,14 @@ function WelcomeStepRow({
     ) : undefined)
 
   return (
-    <DashboardItemRecordCard chrome="soft" density="compact" actions={action}>
+    <DashboardItemRecordCard
+      chrome="flat"
+      density="compact"
+      actions={action}
+      interactive={false}
+      role="listitem"
+      aria-label={`${step.title}: ${step.complete ? 'Complete' : 'Not complete'}`}
+    >
       <DashboardItemCardContent
         title={step.title}
         titleSize="sm"
@@ -317,13 +344,11 @@ function WelcomeStepRow({
 }
 
 function WelcomeLinkCard({
-  icon,
   title,
   description,
   to,
   stableId,
 }: {
-  icon: ReactNode
   title: string
   description: string
   to: '/stables/$stableId' | '/stables/$stableId/members'
@@ -333,18 +358,13 @@ function WelcomeLinkCard({
     <DashboardItemLinkCard
       to={to}
       params={{ stableId }}
-      chrome="soft"
+      chrome="flat"
       density="compact"
     >
       <DashboardItemCardContent
         title={title}
         titleSize="sm"
         titleTone="open"
-        leading={
-          <span className="text-primary [&_svg]:size-5" aria-hidden="true">
-            {icon}
-          </span>
-        }
         meta={<span>{description}</span>}
       />
     </DashboardItemLinkCard>

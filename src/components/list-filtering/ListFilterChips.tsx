@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { XIcon } from '@phosphor-icons/react'
 
 import { ActionGroup } from '#/components/ui/action-group'
@@ -25,6 +25,7 @@ type ListFilterChipsProps<TFacetId extends string = string> = {
   onRemove: (facetId: TFacetId) => void
   onReset: () => void
   className?: string
+  fallbackFocus?: () => HTMLElement | null
 }
 
 export function ListFilterChips<TFacetId extends string = string>({
@@ -33,7 +34,49 @@ export function ListFilterChips<TFacetId extends string = string>({
   onRemove,
   onReset,
   className,
+  fallbackFocus,
 }: ListFilterChipsProps<TFacetId>) {
+  const row = useRef<HTMLDivElement>(null)
+  const clear = useRef<HTMLButtonElement>(null)
+  const focused = useRef<{ node: HTMLButtonElement; index: number } | null>(
+    null,
+  )
+  useEffect(() => {
+    const clearOutsideFocus = (event: FocusEvent) => {
+      if (
+        !(event.target instanceof Node) ||
+        !row.current?.contains(event.target)
+      )
+        focused.current = null
+    }
+    document.addEventListener('focusin', clearOutsideFocus)
+    return () => document.removeEventListener('focusin', clearOutsideFocus)
+  }, [])
+  useLayoutEffect(() => {
+    const previous = focused.current
+    if (
+      !previous ||
+      (document.activeElement !== previous.node &&
+        document.activeElement !== document.body)
+    )
+      return
+    if (previous.node.isConnected && !previous.node.disabled && isFiltering)
+      return
+    const buttons = isFiltering
+      ? Array.from(
+          row.current?.querySelectorAll<HTMLButtonElement>(
+            '[data-filter-chip]',
+          ) ?? [],
+        ).filter((button) => !button.disabled)
+      : []
+    const next =
+      previous.index >= 0
+        ? buttons[Math.min(previous.index, buttons.length - 1)]
+        : undefined
+    const target =
+      next ?? fallbackFocus?.() ?? (isFiltering ? clear.current : null)
+    target?.focus()
+  }, [chips, isFiltering, fallbackFocus])
   const [previousChips, setPreviousChips] =
     useState<ReadonlyArray<ListFilterChip<TFacetId>>>(chips)
 
@@ -54,7 +97,21 @@ export function ListFilterChips<TFacetId extends string = string>({
 
   return (
     <div
+      ref={row}
       aria-hidden={!isFiltering}
+      inert={!isFiltering}
+      onFocusCapture={(event) => {
+        if (!(event.target instanceof HTMLButtonElement)) return
+        const buttons = Array.from(
+          row.current?.querySelectorAll<HTMLButtonElement>(
+            '[data-filter-chip]',
+          ) ?? [],
+        )
+        focused.current = {
+          node: event.target,
+          index: buttons.indexOf(event.target),
+        }
+      }}
       className={cn(
         'app-height-collapse',
         isFiltering ? 'app-height-collapse-open' : 'app-height-collapse-closed',
@@ -71,18 +128,23 @@ export function ListFilterChips<TFacetId extends string = string>({
                 key={chip.facetId}
                 chip={chip}
                 disabled={!isFiltering}
-                onRemove={() => onRemove(chip.facetId)}
+                onRemove={() => {
+                  if (isFiltering) onRemove(chip.facetId)
+                }}
                 title={accessibleLabel}
               />
             )
           })}
 
           <Button
+            ref={clear}
             type="button"
             variant="subtle"
             size="xs"
             disabled={!isFiltering}
-            onClick={onReset}
+            onClick={() => {
+              if (isFiltering) onReset()
+            }}
           >
             Clear all
           </Button>
@@ -110,14 +172,13 @@ function ListFilterChipItem<TFacetId extends string = string>({
       className={listFilterChipClassName}
       title={title}
     >
-      <span className={listFilterChipLabelClassName}>
-        {chip.label}:
-      </span>
+      <span className={listFilterChipLabelClassName}>{chip.label}:</span>
       <span className={listFilterChipValueClassName}>{chip.valueLabel}</span>
       <Button
         type="button"
         variant="subtle"
         size="chip-icon"
+        data-filter-chip={chip.facetId}
         aria-label={`Remove ${title} filter`}
         disabled={disabled}
         onClick={onRemove}

@@ -1,5 +1,6 @@
 import { SignIn } from '@clerk/tanstack-react-start'
 import { createFileRoute } from '@tanstack/react-router'
+import { AuthPageShell } from '#/components/layout/AuthPageShell'
 
 export const Route = createFileRoute('/sign-in/$')({
   component: SignInPage,
@@ -7,8 +8,8 @@ export const Route = createFileRoute('/sign-in/$')({
 
 function SignInPage() {
   return (
-    <div className="flex h-full items-center justify-center">
+    <AuthPageShell>
       <SignIn />
-    </div>
+    </AuthPageShell>
   )
 }

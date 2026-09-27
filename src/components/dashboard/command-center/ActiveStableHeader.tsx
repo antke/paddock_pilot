@@ -13,8 +13,8 @@ export function ActiveStableHeader({ data }: ActiveStableHeaderProps) {
       : `${data.urgentCount} items need attention`
   const eventLabel =
     data.todayEvents.length === 1
-      ? '1 event today'
-      : `${data.todayEvents.length} events today`
+      ? '1 calendar entry today'
+      : `${data.todayEvents.length} calendar entries today`
   const hasSummaryBadges = data.urgentCount > 0 || data.todayEvents.length > 0
 
   return (

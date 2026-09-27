@@ -1,4 +1,6 @@
+import { useId, useRef } from 'react'
 import { FormGroup, InlineForm } from '#/components/forms/FormLayout'
+import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
 import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
 import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
 import { Field, FieldError, FieldGrid, FieldLabel } from '#/components/ui/field'
@@ -20,6 +22,7 @@ import { horseMedicationStatusLabels } from './horseCareLabels'
 
 type MedicationRecordFormProps = {
   disabled?: boolean
+  onPendingChange?: (pending: boolean) => void
   onSubmit: (data: MedicationRecordFormSchema) => Promise<void>
 }
 
@@ -32,8 +35,11 @@ const asMedicationStatus = (value: string) => value as MedicationRecordStatus
 
 export function MedicationRecordForm({
   disabled = false,
+  onPendingChange,
   onSubmit,
 }: MedicationRecordFormProps) {
+  const formId = useId()
+  const submitting = useRef(false)
   const form = useForm<
     MedicationRecordFormInput,
     unknown,
@@ -54,17 +60,31 @@ export function MedicationRecordForm({
   })
 
   const submitMedicationRecord = async (data: MedicationRecordFormSchema) => {
-    await onSubmit(data)
-    form.reset({
-      medicationName: '',
-      dosage: '',
-      frequency: '',
-      startDate: getTodayDateKey(),
-      prescribedBy: '',
-      reason: '',
-      notes: '',
-      status: 'active',
-    })
+    if (submitting.current) return
+    submitting.current = true
+    form.clearErrors('root')
+    onPendingChange?.(true)
+    try {
+      await onSubmit(data)
+      form.reset({
+        medicationName: '',
+        dosage: '',
+        frequency: '',
+        startDate: getTodayDateKey(),
+        prescribedBy: '',
+        reason: '',
+        notes: '',
+        status: 'active',
+      })
+    } catch {
+      form.setError('root', {
+        message:
+          'Could not save this record. Your entries are still here; please try again.',
+      })
+    } finally {
+      submitting.current = false
+      onPendingChange?.(false)
+    }
   }
 
   return (
@@ -78,16 +98,34 @@ export function MedicationRecordForm({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Medication</FieldLabel>
+              <FieldLabel htmlFor={`${formId}-${field.name}`}>
+                Medication
+              </FieldLabel>
               <Input
+                aria-required={[
+                  'title',
+                  'medicationName',
+                  'dosage',
+                  'startDate',
+                ].includes(field.name)}
                 {...field}
-                id={field.name}
+                id={`${formId}-${field.name}`}
                 disabled={disabled || form.formState.isSubmitting}
                 aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid
+                    ? `${formId}-${field.name}-error`
+                    : undefined
+                }
                 placeholder="Bute, antibiotics, supplement course..."
                 autoComplete="off"
               />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && (
+                <FieldError
+                  id={`${formId}-${field.name}-error`}
+                  errors={[fieldState.error]}
+                />
+              )}
             </Field>
           )}
         />
@@ -98,17 +136,33 @@ export function MedicationRecordForm({
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Dosage</FieldLabel>
+                <FieldLabel htmlFor={`${formId}-${field.name}`}>
+                  Dosage
+                </FieldLabel>
                 <Input
+                  aria-required={[
+                    'title',
+                    'medicationName',
+                    'dosage',
+                    'startDate',
+                  ].includes(field.name)}
                   {...field}
-                  id={field.name}
+                  id={`${formId}-${field.name}`}
                   disabled={disabled || form.formState.isSubmitting}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid
+                      ? `${formId}-${field.name}-error`
+                      : undefined
+                  }
                   placeholder="1 sachet, 10 ml, as directed..."
                   autoComplete="off"
                 />
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id={`${formId}-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -119,17 +173,33 @@ export function MedicationRecordForm({
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Frequency</FieldLabel>
+                <FieldLabel htmlFor={`${formId}-${field.name}`}>
+                  Frequency (optional)
+                </FieldLabel>
                 <Input
+                  aria-required={[
+                    'title',
+                    'medicationName',
+                    'dosage',
+                    'startDate',
+                  ].includes(field.name)}
                   {...field}
-                  id={field.name}
+                  id={`${formId}-${field.name}`}
                   disabled={disabled || form.formState.isSubmitting}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid
+                      ? `${formId}-${field.name}-error`
+                      : undefined
+                  }
                   placeholder="Twice daily"
                   autoComplete="off"
                 />
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id={`${formId}-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -142,16 +212,32 @@ export function MedicationRecordForm({
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Start date</FieldLabel>
+                <FieldLabel htmlFor={`${formId}-${field.name}`}>
+                  Start date
+                </FieldLabel>
                 <Input
+                  aria-required={[
+                    'title',
+                    'medicationName',
+                    'dosage',
+                    'startDate',
+                  ].includes(field.name)}
                   {...field}
-                  id={field.name}
+                  id={`${formId}-${field.name}`}
                   type="date"
                   disabled={disabled || form.formState.isSubmitting}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid
+                      ? `${formId}-${field.name}-error`
+                      : undefined
+                  }
                 />
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id={`${formId}-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -162,18 +248,36 @@ export function MedicationRecordForm({
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>End date</FieldLabel>
+                <FieldLabel htmlFor={`${formId}-${field.name}`}>
+                  End date (optional)
+                </FieldLabel>
                 <Input
-                  id={field.name}
+                  aria-required={[
+                    'title',
+                    'medicationName',
+                    'dosage',
+                    'startDate',
+                  ].includes(field.name)}
+                  id={`${formId}-${field.name}`}
+                  ref={field.ref}
+                  name={field.name}
                   type="date"
                   value={field.value ?? ''}
                   disabled={disabled || form.formState.isSubmitting}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid
+                      ? `${formId}-${field.name}-error`
+                      : undefined
+                  }
                   onBlur={field.onBlur}
                   onChange={(event) => field.onChange(event.target.value)}
                 />
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id={`${formId}-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -187,15 +291,26 @@ export function MedicationRecordForm({
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel>Status</FieldLabel>
               <ChoiceButtonGroup
+                aria-label="Status"
                 value={field.value}
                 options={medicationStatusOptions}
                 disabled={disabled || form.formState.isSubmitting}
                 aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid
+                    ? `${formId}-${field.name}-error`
+                    : undefined
+                }
                 onValueChange={(value) =>
                   field.onChange(asMedicationStatus(value))
                 }
               />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && (
+                <FieldError
+                  id={`${formId}-${field.name}-error`}
+                  errors={[fieldState.error]}
+                />
+              )}
             </Field>
           )}
         />
@@ -211,17 +326,33 @@ export function MedicationRecordForm({
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Prescribed by</FieldLabel>
+                <FieldLabel htmlFor={`${formId}-${field.name}`}>
+                  Prescribed by (optional)
+                </FieldLabel>
                 <Input
+                  aria-required={[
+                    'title',
+                    'medicationName',
+                    'dosage',
+                    'startDate',
+                  ].includes(field.name)}
                   {...field}
-                  id={field.name}
+                  id={`${formId}-${field.name}`}
                   disabled={disabled || form.formState.isSubmitting}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid
+                      ? `${formId}-${field.name}-error`
+                      : undefined
+                  }
                   placeholder="Vet or clinic name"
                   autoComplete="off"
                 />
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id={`${formId}-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -234,17 +365,27 @@ export function MedicationRecordForm({
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Reason</FieldLabel>
+                <FieldLabel htmlFor={`${formId}-${field.name}`}>
+                  Reason (optional)
+                </FieldLabel>
                 <Textarea
                   {...field}
-                  id={field.name}
+                  id={`${formId}-${field.name}`}
                   disabled={disabled || form.formState.isSubmitting}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid
+                      ? `${formId}-${field.name}-error`
+                      : undefined
+                  }
                   placeholder="Why this medication is being given..."
                   autoComplete="off"
                 />
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id={`${formId}-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -255,23 +396,35 @@ export function MedicationRecordForm({
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Notes</FieldLabel>
+                <FieldLabel htmlFor={`${formId}-${field.name}`}>
+                  Notes (optional)
+                </FieldLabel>
                 <Textarea
                   {...field}
-                  id={field.name}
+                  id={`${formId}-${field.name}`}
                   disabled={disabled || form.formState.isSubmitting}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid
+                      ? `${formId}-${field.name}-error`
+                      : undefined
+                  }
                   placeholder="Administration notes, side effects, withdrawal period..."
                   autoComplete="off"
                 />
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id={`${formId}-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
           />
         </FieldGrid>
       </FormGroup>
+
+      <FormSubmissionError message={form.formState.errors.root?.message} />
 
       <FormSubmitActions
         isSubmitting={form.formState.isSubmitting}

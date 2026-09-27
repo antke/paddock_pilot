@@ -15,7 +15,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import type { HealthIssueFormSchema } from 'shared/horses/healthIssueSchema'
 import {
   HealthIssueSeverityBadge,
@@ -45,9 +45,93 @@ export function HorseHealthIssuesCard({
   const addIssue = useMutation(api.horseHealthIssues.add)
   const resolveIssue = useMutation(api.horseHealthIssues.resolve)
   const removeIssue = useMutation(api.horseHealthIssues.remove)
+  return (
+    <HorseHealthIssuesCardView
+      key={horse._id}
+      horse={horse}
+      issues={issues}
+      canManage={permissions.canManage}
+      onCreateActionChange={onCreateActionChange}
+      onAdd={async (data) => {
+        try {
+          await addIssue({ horseId: horse._id, ...data })
+          showAppSuccessToast({ title: 'Health issue added' })
+        } catch (error) {
+          showAppErrorToast()
+          throw error
+        }
+      }}
+      onResolve={async (issue) => {
+        try {
+          await resolveIssue({ id: issue._id })
+          showAppSuccessToast({ title: 'Health issue resolved' })
+        } catch (error) {
+          showAppErrorToast()
+          throw error
+        }
+      }}
+      onRemove={async (issue) => {
+        try {
+          await removeIssue({ id: issue._id })
+          showAppSuccessToast({ title: 'Health issue removed' })
+        } catch (error) {
+          showAppErrorToast()
+          throw error
+        }
+      }}
+    />
+  )
+}
+
+type HorseHealthIssuesCardViewProps = HorseHealthIssuesCardProps & {
+  issues: Array<Doc<'horseHealthIssues'>>
+  canManage: boolean
+  onAdd: (data: HealthIssueFormSchema) => Promise<void>
+  onResolve: (issue: Doc<'horseHealthIssues'>) => Promise<void>
+  onRemove: (issue: Doc<'horseHealthIssues'>) => Promise<void>
+}
+
+export function HorseHealthIssuesCardView({
+  horse,
+  issues,
+  canManage,
+  onAdd,
+  onResolve,
+  onRemove,
+  onCreateActionChange,
+}: HorseHealthIssuesCardViewProps) {
+  const activeOperations = useRef(new Set<string>())
+  const [operations, setOperations] = useState<
+    Record<string, { pending: 'status' | 'remove' | null; failed: boolean }>
+  >({})
+  const runRecordAction = async (
+    id: string,
+    kind: 'status' | 'remove',
+    callback: () => Promise<void>,
+  ) => {
+    if (activeOperations.current.has(id)) return
+    activeOperations.current.add(id)
+    setOperations((states) => ({
+      ...states,
+      [id]: { pending: kind, failed: false },
+    }))
+    let failed = false
+    try {
+      await callback()
+    } catch (error) {
+      failed = true
+      if (kind === 'remove') throw error
+    } finally {
+      activeOperations.current.delete(id)
+      setOperations((states) => ({
+        ...states,
+        [id]: { pending: null, failed },
+      }))
+    }
+  }
+  const [isCreating, setIsCreating] = useState(false)
+  const listRegion = useRef<HTMLDivElement>(null)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [pendingIssueId, setPendingIssueId] = useState<string>()
-  const canManage = permissions.canManage
   const filterConfig = useMemo(createHorseHealthIssueListFilterConfig, [])
   const filtering = useListFiltering({
     items: issues,
@@ -56,27 +140,10 @@ export function HorseHealthIssuesCard({
 
   const onAddIssue = useCallback(
     async (data: HealthIssueFormSchema) => {
-      try {
-        await addIssue({
-          horseId: horse._id,
-          title: data.title,
-          description: data.description,
-          severity: data.severity,
-        })
-
-        showAppSuccessToast({
-          title: 'Health issue added',
-          description: (
-            <p>{data.title} is now visible on this horse profile.</p>
-          ),
-        })
-        setIsCreateOpen(false)
-      } catch (err) {
-        showAppErrorToast()
-        throw err
-      }
+      await onAdd(data)
+      setIsCreateOpen(false)
     },
-    [addIssue, horse._id],
+    [onAdd],
   )
 
   const createDialog = useMemo(
@@ -84,50 +151,23 @@ export function HorseHealthIssuesCard({
       canManage ? (
         <CreateRecordDialog
           open={isCreateOpen}
+          isPending={isCreating}
           onOpenChange={setIsCreateOpen}
           triggerLabel="Add health issue"
           title="Create health issue"
           description="Record a health note without losing your place in the list."
         >
-          <HealthIssueForm onSubmit={onAddIssue} />
+          <HealthIssueForm
+            onSubmit={onAddIssue}
+            onPendingChange={setIsCreating}
+          />
         </CreateRecordDialog>
       ) : null,
-    [canManage, isCreateOpen, onAddIssue],
+    [canManage, isCreateOpen, isCreating, onAddIssue],
   )
   const inlineCreateDialog = onCreateActionChange ? null : createDialog
 
   useHorseDetailCreateAction(createDialog, onCreateActionChange)
-
-  const onResolveIssue = async (issue: Doc<'horseHealthIssues'>) => {
-    try {
-      setPendingIssueId(issue._id)
-      await resolveIssue({ id: issue._id })
-      showAppSuccessToast({
-        title: 'Health issue resolved',
-        description: <p>{issue.title} was marked as resolved.</p>,
-      })
-    } catch (err) {
-      showAppErrorToast()
-    } finally {
-      setPendingIssueId(undefined)
-    }
-  }
-
-  const onRemoveIssue = async (issue: Doc<'horseHealthIssues'>) => {
-    try {
-      setPendingIssueId(issue._id)
-      await removeIssue({ id: issue._id })
-      showAppSuccessToast({
-        title: 'Health issue removed',
-        description: <p>{issue.title} was removed.</p>,
-      })
-    } catch (err) {
-      showAppErrorToast()
-      throw err
-    } finally {
-      setPendingIssueId(undefined)
-    }
-  }
 
   const issueList = (
     <FilteredDashboardItemList
@@ -139,37 +179,55 @@ export function HorseHealthIssuesCard({
         <IssueRow
           key={issue._id}
           issue={issue}
+          pending={operations[issue._id]?.pending ?? null}
+          failed={operations[issue._id]?.failed ?? false}
+          run={(kind, callback) => runRecordAction(issue._id, kind, callback)}
           canManage={canManage}
-          pending={pendingIssueId === issue._id}
-          onResolve={onResolveIssue}
-          onRemove={onRemoveIssue}
+          removalFocusTarget={() => listRegion.current}
+          onResolve={onResolve}
+          onRemove={onRemove}
         />
       )}
     />
   )
 
   const content = (
-    <>
+    <div
+      ref={listRegion}
+      role="region"
+      aria-label={`${horse.name}: health records`}
+      tabIndex={-1}
+      className="grid gap-5 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
       {inlineCreateDialog}
       {issueList}
-    </>
+    </div>
   )
 
   if (onCreateActionChange) return content
 
-  return <DashboardSection chrome="cards">{content}</DashboardSection>
+  return <DashboardSection>{content}</DashboardSection>
 }
 
 function IssueRow({
   issue,
   canManage,
   pending,
+  failed,
+  run,
+  removalFocusTarget,
   onResolve,
   onRemove,
 }: {
   issue: Doc<'horseHealthIssues'>
   canManage: boolean
-  pending: boolean
+  pending: 'status' | 'remove' | null
+  failed: boolean
+  run: (
+    kind: 'status' | 'remove',
+    callback: () => Promise<void>,
+  ) => Promise<void>
+  removalFocusTarget: () => HTMLElement | null
   onResolve: (issue: Doc<'horseHealthIssues'>) => Promise<void>
   onRemove: (issue: Doc<'horseHealthIssues'>) => Promise<void>
 }) {
@@ -178,7 +236,14 @@ function IssueRow({
 
   return (
     <DashboardItemRecordCard
-      chrome="cards"
+      chrome="flat"
+      footer={
+        failed ? (
+          <p role="alert" className="text-sm text-destructive">
+            Could not update this record. Please try again.
+          </p>
+        ) : undefined
+      }
       actionsPlacement="footer"
       actionsClassName="ml-auto"
       actionBadges={
@@ -199,17 +264,20 @@ function IssueRow({
                 type="button"
                 variant="ghost"
                 size="sm"
-                disabled={pending}
-                onClick={() => onResolve(issue)}
+                disabled={pending !== null}
+                aria-busy={pending === 'status' || undefined}
+                aria-label={`Resolve ${issue.title}`}
+                onClick={() => void run('status', () => onResolve(issue))}
               >
-                Resolve
+                {pending === 'status' ? 'Resolving…' : 'Resolve'}
               </Button>
             )}
             <HorseRecordRemoveAction
-              disabled={pending}
+              disabled={pending !== null}
               title={`Remove ${issue.title}?`}
               description="This health issue and its history will be removed permanently. This cannot be undone."
-              onConfirm={() => onRemove(issue)}
+              removalFocusTarget={removalFocusTarget}
+              onConfirm={() => run('remove', () => onRemove(issue))}
             />
           </>
         ) : undefined

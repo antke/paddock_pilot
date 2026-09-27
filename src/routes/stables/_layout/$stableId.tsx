@@ -1,4 +1,4 @@
-import { DashboardPage } from '#/components/dashboard/DashboardPage'
+import { StableRouteLayoutView } from '#/components/layout/StableRouteLayoutView'
 import { StableBreadcrumbs } from '#/components/layout/StableBreadcrumbs'
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 
@@ -10,9 +10,10 @@ function RouteComponent() {
   const { stableId } = Route.useParams()
 
   return (
-    <DashboardPage>
-      <StableBreadcrumbs stableId={stableId} />
+    <StableRouteLayoutView
+      breadcrumbs={<StableBreadcrumbs stableId={stableId} />}
+    >
       <Outlet />
-    </DashboardPage>
+    </StableRouteLayoutView>
   )
 }

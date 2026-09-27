@@ -6,10 +6,7 @@ import {
   DashboardItemRecordFooter,
 } from '#/components/dashboard/DashboardItemCard'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
-import {
-  HorseCardContent,
-  horseCardSurfaceClassName,
-} from '#/components/horses/HorseCard'
+import { HorseCardContent } from '#/components/horses/HorseCard'
 import { Button } from '#/components/ui/button'
 import {
   AlertDialog,
@@ -28,18 +25,18 @@ import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { EventHorseDetailsFormSchema } from 'shared/events/eventHorseDetailsSchema'
-import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
+import { showAppSuccessToast } from '#/components/ui/sonner'
+import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
 import { EventHorseStatusBadge } from './EventBadges'
 import { EventHorseServiceDetailsForm } from './EventHorseServiceDetailsForm'
-import { cn } from '#/lib/utils'
 import { formatCurrencyAmount } from '#/lib/numberDisplay'
 
 type EventHorseDetails = FunctionReturnType<
   typeof api.eventHorseDetails.listForEvent
 >
-type EventHorseDetailRow = EventHorseDetails['rows'][number]
+export type EventHorseDetailRow = EventHorseDetails['rows'][number]
 
 type EventHorseServiceDetailsCardProps = {
   eventId: string
@@ -55,40 +52,40 @@ export function EventHorseServiceDetailsCard({
   )
   const updateDetails = useMutation(api.eventHorseDetails.update)
   const withdrawHorse = useMutation(api.events.withdrawHorseFromEvent)
-  const [editingRowId, setEditingRowId] = useState<Id<'eventsHorses'> | null>(
-    null,
-  )
-  const [withdrawingRowId, setWithdrawingRowId] = useState<
-    Id<'eventsHorses'> | undefined
-  >()
-
-  const onSubmit = async (
-    rowId: Id<'eventsHorses'>,
-    values: EventHorseDetailsFormSchema,
-  ) => {
-    try {
-      await updateDetails({ id: rowId, ...values })
-      setEditingRowId(null)
-      showAppSuccessToast({ title: 'Horse service details saved' })
-    } catch (err) {
-      showAppErrorToast({ title: 'Could not save service details' })
-    }
-  }
-
-  const onWithdraw = async (rowId: Id<'eventsHorses'>) => {
-    try {
-      setWithdrawingRowId(rowId)
-      await withdrawHorse({ eventHorseId: rowId })
-      showAppSuccessToast({ title: 'Horse withdrawn from event' })
-    } catch {
-      showAppErrorToast({ title: 'Could not withdraw the horse' })
-    } finally {
-      setWithdrawingRowId(undefined)
-    }
-  }
-
   if (!data.event) return null
 
+  return (
+    <EventHorseServiceDetailsView
+      rows={data.rows}
+      onSave={async (rowId, values) => {
+        await updateDetails({ id: rowId, ...values })
+        showAppSuccessToast({ title: 'Horse service details saved' })
+      }}
+      onWithdraw={async (rowId) => {
+        await withdrawHorse({ eventHorseId: rowId })
+        showAppSuccessToast({ title: 'Horse withdrawn from event' })
+      }}
+    />
+  )
+}
+
+type EventHorseServiceDetailsViewProps = {
+  rows: Array<EventHorseDetailRow>
+  onSave: (
+    rowId: Id<'eventsHorses'>,
+    values: EventHorseDetailsFormSchema,
+  ) => Promise<void>
+  onWithdraw: (rowId: Id<'eventsHorses'>) => Promise<void>
+  withdrawalDescription?: string
+}
+
+/** Shared UI; mutation owners must reject failures and resolve only after saving. */
+export function EventHorseServiceDetailsView({
+  rows,
+  onSave,
+  onWithdraw,
+  withdrawalDescription = 'The horse will no longer count as participating in this event. The organiser will be notified.',
+}: EventHorseServiceDetailsViewProps) {
   return (
     <DashboardSectionCard
       title="Horse service notes"
@@ -96,22 +93,19 @@ export function EventHorseServiceDetailsCard({
       description="Record what each horse needs before a shared visit and what happened afterwards."
       descriptionSize="sm"
     >
-      {data.rows.length === 0 ? (
+      {rows.length === 0 ? (
         <DashboardEmptyState chrome="cards">
           No horses are attached to this event.
         </DashboardEmptyState>
       ) : (
         <DashboardItemList>
-          {data.rows.map((row) => (
+          {rows.map((row) => (
             <EventHorseServiceRow
               key={row.eventHorse._id}
               row={row}
-              isEditing={editingRowId === row.eventHorse._id}
-              onEdit={() => setEditingRowId(row.eventHorse._id)}
-              onCancel={() => setEditingRowId(null)}
-              onSubmit={(values) => onSubmit(row.eventHorse._id, values)}
+              onSubmit={(values) => onSave(row.eventHorse._id, values)}
               onWithdraw={() => onWithdraw(row.eventHorse._id)}
-              isWithdrawing={withdrawingRowId === row.eventHorse._id}
+              withdrawalDescription={withdrawalDescription}
             />
           ))}
         </DashboardItemList>
@@ -122,21 +116,46 @@ export function EventHorseServiceDetailsCard({
 
 function EventHorseServiceRow({
   row,
-  isEditing,
-  onEdit,
-  onCancel,
   onSubmit,
   onWithdraw,
-  isWithdrawing,
+  withdrawalDescription,
 }: {
   row: EventHorseDetailRow
-  isEditing: boolean
-  onEdit: () => void
-  onCancel: () => void
   onSubmit: (values: EventHorseDetailsFormSchema) => Promise<void>
   onWithdraw: () => Promise<void>
-  isWithdrawing: boolean
+  withdrawalDescription: string
 }) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [withdrawOpen, setWithdrawOpen] = useState(false)
+  const [isWithdrawing, setIsWithdrawing] = useState(false)
+  const [withdrawError, setWithdrawError] = useState(false)
+  const withdrawing = useRef(false)
+  const editTrigger = useRef<HTMLButtonElement>(null)
+  const withdrawTrigger = useRef<HTMLButtonElement>(null)
+  const rowFocusTarget = useRef<HTMLDivElement>(null)
+  const wasEditing = useRef(false)
+
+  useEffect(() => {
+    if (wasEditing.current && !isEditing) editTrigger.current?.focus()
+    wasEditing.current = isEditing
+  }, [isEditing])
+
+  const confirmWithdrawal = async () => {
+    if (withdrawing.current) return
+    withdrawing.current = true
+    setIsWithdrawing(true)
+    setWithdrawError(false)
+    try {
+      await onWithdraw()
+      setWithdrawOpen(false)
+    } catch {
+      setWithdrawError(true)
+    } finally {
+      withdrawing.current = false
+      setIsWithdrawing(false)
+    }
+  }
+
   const { eventHorse, horse, canManage, canWithdraw } = row
   const hasDetails = Boolean(
     eventHorse.requestedServiceNotes ||
@@ -151,41 +170,70 @@ function EventHorseServiceRow({
 
   return (
     <DashboardItemRecordCard
-      chrome="cards"
+      ref={rowFocusTarget}
+      role="group"
+      aria-label={`${horse?.name ?? 'Unknown horse'} service notes`}
+      tabIndex={-1}
+      chrome="flat"
       density="compact"
       interactive={false}
-      className={cn(horseCardSurfaceClassName, 'p-4')}
       actions={
         !isEditing && (canManage || canWithdraw) ? (
           <>
             {canManage && (
               <Button
                 type="button"
+                ref={editTrigger}
                 action={hasDetails ? 'edit' : 'create'}
                 variant="outline"
                 size="sm"
-                onClick={onEdit}
+                onClick={() => setIsEditing(true)}
               >
                 {hasDetails ? 'Edit details' : 'Add details'}
               </Button>
             )}
             {canWithdraw && (
-              <AlertDialog>
+              <AlertDialog
+                open={withdrawOpen}
+                onOpenChange={(open) => {
+                  if (!withdrawing.current) {
+                    setWithdrawOpen(open)
+                    if (open) setWithdrawError(false)
+                  }
+                }}
+              >
                 <AlertDialogTrigger
-                  render={<Button type="button" variant="outline" size="sm" />}
+                  render={
+                    <Button
+                      ref={withdrawTrigger}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                    />
+                  }
                 >
                   Withdraw horse
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent
+                  finalFocus={() =>
+                    withdrawTrigger.current ?? rowFocusTarget.current
+                  }
+                >
                   <AlertDialogHeader>
                     <AlertDialogTitle>
                       Withdraw {horse?.name ?? 'this horse'}?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      The horse will no longer count as participating in this
-                      event. The organiser will be notified.
+                      {withdrawalDescription}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
+                  {withdrawError && (
+                    <RouteStatusAlert
+                      tone="danger"
+                      title="Could not withdraw the horse"
+                      description="Withdrawal was not confirmed. Try again or close this dialog."
+                    />
+                  )}
                   <AlertDialogFooter>
                     <AlertDialogCancel disabled={isWithdrawing}>
                       Keep horse
@@ -193,7 +241,8 @@ function EventHorseServiceRow({
                     <AlertDialogAction
                       variant="destructive"
                       disabled={isWithdrawing}
-                      onClick={onWithdraw}
+                      aria-busy={isWithdrawing || undefined}
+                      onClick={() => void confirmWithdrawal()}
                     >
                       {isWithdrawing ? 'Withdrawing...' : 'Withdraw horse'}
                     </AlertDialogAction>
@@ -209,8 +258,11 @@ function EventHorseServiceRow({
           {isEditing ? (
             <EventHorseServiceDetailsForm
               defaultValues={defaultValues}
-              onSubmit={onSubmit}
-              onCancel={onCancel}
+              onSubmit={async (values) => {
+                await onSubmit(values)
+                setIsEditing(false)
+              }}
+              onCancel={() => setIsEditing(false)}
             />
           ) : hasDetails ? (
             <>

@@ -41,7 +41,7 @@ export function DashboardInlineField({
         cn(
           dashboardInlineFieldPaddingClassNames[padding],
           interactive &&
-            'cursor-pointer transition-colors hover:bg-primary/8 data-[selected=true]:bg-primary/10 data-[selected=true]:text-foreground data-[disabled=true]:cursor-not-allowed data-[disabled=true]:hover:bg-surface-elevated',
+            'cursor-pointer transition-colors hover:bg-surface-muted data-[selected=true]:border-selection data-[selected=true]:bg-selection-surface data-[selected=true]:text-selection data-[selected=true]:ring-1 data-[selected=true]:ring-selection data-[disabled=true]:cursor-not-allowed data-[disabled=true]:hover:bg-surface-elevated',
           className,
         ),
       )}

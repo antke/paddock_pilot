@@ -1,11 +1,12 @@
+import { compareWeightRecordsNewestFirst } from '../shared/horses/weightRecordOrder'
 import { ConvexError, v } from 'convex/values'
 import {
   weightRecordAddSchema,
   weightUnitSchema,
 } from '../shared/horses/weightRecordSchema'
 import type { Doc } from './_generated/dataModel'
-import { mutation, query   } from './_generated/server'
-import type {MutationCtx, QueryCtx} from './_generated/server';
+import { mutation, query } from './_generated/server'
+import type { MutationCtx, QueryCtx } from './_generated/server'
 import {
   assertCanManageHorse,
   assertCanViewStable,
@@ -44,11 +45,6 @@ const getRecordHorse = async (
   return horse
 }
 
-const byMeasuredAtDesc = (
-  a: Doc<'horseWeightRecords'>,
-  b: Doc<'horseWeightRecords'>,
-) => b.measuredAt - a.measuredAt
-
 export const listForHorse = query({
   args: { horseId: v.id('horses') },
   handler: async (ctx, args) => {
@@ -62,7 +58,7 @@ export const listForHorse = query({
       .withIndex('by_horse_id', (q) => q.eq('horseId', args.horseId))
       .collect()
 
-    return records.sort(byMeasuredAtDesc)
+    return records.sort(compareWeightRecordsNewestFirst)
   },
 })
 
@@ -74,7 +70,9 @@ export const getPermissions = query({
 
     const access = await assertCanViewStable(ctx, horse.stableId)
 
-    return { canManage: access.role === 'owner' || horse.ownerId === access.userId }
+    return {
+      canManage: access.role === 'owner' || horse.ownerId === access.userId,
+    }
   },
 })
 

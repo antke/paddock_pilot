@@ -1,20 +1,48 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '#/components/ui/button'
 import { DesktopIcon, MoonIcon, SunIcon } from '@phosphor-icons/react'
 
 type ThemeMode = 'light' | 'dark' | 'auto'
+const THEME_CHANGE_EVENT = 'paddock-theme-change'
+
+// A rejected write should not discard the user's choice on a route remount.
+// Keep this fallback per document; a later storage change takes precedence.
+const temporaryPreferences = new WeakMap<
+  Document,
+  { mode: ThemeMode; stored: string | null | undefined }
+>()
+
+function readStoredTheme() {
+  try {
+    return window.localStorage.getItem('theme')
+  } catch {
+    return undefined
+  }
+}
+
+function normalizeMode(value: string | null | undefined): ThemeMode {
+  return value === 'dark' || value === 'auto' ? value : 'light'
+}
 
 function getInitialMode(): ThemeMode {
   if (typeof window === 'undefined') {
-    return 'auto'
+    return 'light'
   }
 
-  const stored = window.localStorage.getItem('theme')
-  if (stored === 'light' || stored === 'dark' || stored === 'auto') {
-    return stored
+  const stored = readStoredTheme()
+  const temporary = temporaryPreferences.get(document)
+  if (temporary && (stored === undefined || stored === temporary.stored)) {
+    return temporary.mode
   }
+  temporaryPreferences.delete(document)
+  if (stored !== undefined) return normalizeMode(stored)
 
-  return 'light'
+  const root = document.documentElement
+  const current = root.getAttribute('data-theme')
+  if (current === 'light' || current === 'dark') return current
+  return root.classList.contains('light') || root.classList.contains('dark')
+    ? 'auto'
+    : 'light'
 }
 
 function applyThemeMode(mode: ThemeMode) {
@@ -35,11 +63,41 @@ function applyThemeMode(mode: ThemeMode) {
 
 export default function ThemeToggle() {
   const [mode, setMode] = useState<ThemeMode>('light')
+  const currentMode = useRef<ThemeMode>('light')
 
   useEffect(() => {
     const initialMode = getInitialMode()
+    currentMode.current = initialMode
     setMode(initialMode)
     applyThemeMode(initialMode)
+  }, [])
+
+  useEffect(() => {
+    const onLocalChange = (event: Event) => {
+      const value: unknown = (event as CustomEvent<unknown>).detail
+      if (value !== 'light' && value !== 'dark' && value !== 'auto') return
+      currentMode.current = value
+      setMode(value)
+    }
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== 'theme' && event.key !== null) return
+      try {
+        if (event.storageArea !== window.localStorage) return
+      } catch {
+        return
+      }
+      temporaryPreferences.delete(document)
+      const nextMode = normalizeMode(event.newValue)
+      currentMode.current = nextMode
+      setMode(nextMode)
+      applyThemeMode(nextMode)
+    }
+    window.addEventListener(THEME_CHANGE_EVENT, onLocalChange)
+    window.addEventListener('storage', onStorage)
+    return () => {
+      window.removeEventListener(THEME_CHANGE_EVENT, onLocalChange)
+      window.removeEventListener('storage', onStorage)
+    }
   }, [])
 
   useEffect(() => {
@@ -48,7 +106,9 @@ export default function ThemeToggle() {
     }
 
     const media = window.matchMedia('(prefers-color-scheme: dark)')
-    const onChange = () => applyThemeMode('auto')
+    const onChange = () => {
+      if (currentMode.current === 'auto') applyThemeMode('auto')
+    }
 
     media.addEventListener('change', onChange)
     return () => {
@@ -58,10 +118,26 @@ export default function ThemeToggle() {
 
   function toggleMode() {
     const nextMode: ThemeMode =
-      mode === 'light' ? 'dark' : mode === 'dark' ? 'auto' : 'light'
+      currentMode.current === 'light'
+        ? 'dark'
+        : currentMode.current === 'dark'
+          ? 'auto'
+          : 'light'
+    currentMode.current = nextMode
     setMode(nextMode)
     applyThemeMode(nextMode)
-    window.localStorage.setItem('theme', nextMode)
+    try {
+      window.localStorage.setItem('theme', nextMode)
+      temporaryPreferences.delete(document)
+    } catch {
+      temporaryPreferences.set(document, {
+        mode: nextMode,
+        stored: readStoredTheme(),
+      })
+    }
+    window.dispatchEvent(
+      new CustomEvent(THEME_CHANGE_EVENT, { detail: nextMode }),
+    )
   }
 
   const label =

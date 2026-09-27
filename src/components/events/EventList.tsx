@@ -6,7 +6,6 @@ import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { api } from 'convex/_generated/api'
 import type { Doc, Id } from 'convex/_generated/dataModel'
-import { isEmpty } from 'lodash'
 import { useMemo } from 'react'
 import { createEventListFilterConfig } from './eventListFilters'
 import { EventRow } from './EventRow'
@@ -44,20 +43,17 @@ export function EventTable({
   const filterConfig = useMemo(createEventListFilterConfig, [])
   const filtering = useListFiltering({ items: events, config: filterConfig })
 
-  if (isEmpty(events)) {
-    return (
-      <DashboardEmptyState chrome={chrome} title={emptyTitle}>
-        {emptyDescription}
-      </DashboardEmptyState>
-    )
-  }
-
   return (
     <FilteredDashboardItemList
       config={filterConfig}
       filtering={filtering}
       gap="compact"
       emptyMessage={emptyDescription}
+      emptyState={
+        <DashboardEmptyState chrome={chrome} title={emptyTitle}>
+          {emptyDescription}
+        </DashboardEmptyState>
+      }
       filteredEmptyMessage="No events match these filters."
       stickyFilters
       renderItem={(event) => (

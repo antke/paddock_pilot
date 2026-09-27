@@ -4,6 +4,8 @@ import { Field, FieldError, FieldGrid, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Textarea } from '#/components/ui/textarea'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useId, useRef, useState } from 'react'
+import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
 import { useForm } from 'react-hook-form'
 import { eventHorseDetailsFormSchema } from 'shared/events/eventHorseDetailsSchema'
 import type {
@@ -22,6 +24,10 @@ export function EventHorseServiceDetailsForm({
   onSubmit,
   onCancel,
 }: EventHorseServiceDetailsFormProps) {
+  const formId = useId()
+  const submitting = useRef(false)
+  const [saveError, setSaveError] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const form = useForm<
     EventHorseDetailsFormInput,
     unknown,
@@ -32,53 +38,104 @@ export function EventHorseServiceDetailsForm({
     defaultValues,
   })
 
+  const submit = async (values: EventHorseDetailsFormSchema) => {
+    if (submitting.current) return
+    submitting.current = true
+    setIsSaving(true)
+    setSaveError(false)
+    try {
+      await onSubmit(values)
+    } catch {
+      setSaveError(true)
+    } finally {
+      submitting.current = false
+      setIsSaving(false)
+    }
+  }
+
   return (
-    <InlineForm gap="compact" onSubmit={form.handleSubmit(onSubmit)}>
+    <InlineForm gap="compact" onSubmit={form.handleSubmit(submit)}>
+      {saveError && (
+        <RouteStatusAlert
+          tone="danger"
+          title="Could not save service details"
+          description="Your entries are still here. Try saving again."
+        />
+      )}
       <Field
         data-invalid={Boolean(form.formState.errors.requestedServiceNotes)}
       >
-        <FieldLabel htmlFor="requestedServiceNotes">Requested notes</FieldLabel>
+        <FieldLabel htmlFor={`${formId}-requestedServiceNotes`}>
+          Requested notes
+        </FieldLabel>
         <Textarea
-          id="requestedServiceNotes"
+          autoFocus
+          id={`${formId}-requestedServiceNotes`}
           {...form.register('requestedServiceNotes')}
-          disabled={form.formState.isSubmitting}
+          disabled={isSaving || form.formState.isSubmitting}
           aria-invalid={Boolean(form.formState.errors.requestedServiceNotes)}
+          aria-describedby={
+            form.formState.errors.requestedServiceNotes
+              ? `${formId}-requestedServiceNotes-error`
+              : undefined
+          }
           placeholder="What should the provider check or do for this horse?"
         />
-        <FieldError errors={[form.formState.errors.requestedServiceNotes]} />
+        <FieldError
+          id={`${formId}-requestedServiceNotes-error`}
+          errors={[form.formState.errors.requestedServiceNotes]}
+        />
       </Field>
 
       <Field data-invalid={Boolean(form.formState.errors.completionNotes)}>
-        <FieldLabel htmlFor="completionNotes">Outcome notes</FieldLabel>
+        <FieldLabel htmlFor={`${formId}-completionNotes`}>
+          Outcome notes
+        </FieldLabel>
         <Textarea
-          id="completionNotes"
+          id={`${formId}-completionNotes`}
           {...form.register('completionNotes')}
-          disabled={form.formState.isSubmitting}
+          disabled={isSaving || form.formState.isSubmitting}
           aria-invalid={Boolean(form.formState.errors.completionNotes)}
+          aria-describedby={
+            form.formState.errors.completionNotes
+              ? `${formId}-completionNotes-error`
+              : undefined
+          }
           placeholder="What happened for this horse? Any aftercare or follow-up?"
         />
-        <FieldError errors={[form.formState.errors.completionNotes]} />
+        <FieldError
+          id={`${formId}-completionNotes-error`}
+          errors={[form.formState.errors.completionNotes]}
+        />
       </Field>
 
       <FieldGrid>
         <Field data-invalid={Boolean(form.formState.errors.costShare)}>
-          <FieldLabel htmlFor="costShare">Cost share</FieldLabel>
+          <FieldLabel htmlFor={`${formId}-costShare`}>Cost share</FieldLabel>
           <Input
-            id="costShare"
+            id={`${formId}-costShare`}
             type="number"
             min={0}
             step="0.01"
-            disabled={form.formState.isSubmitting}
+            disabled={isSaving || form.formState.isSubmitting}
             aria-invalid={Boolean(form.formState.errors.costShare)}
+            aria-describedby={
+              form.formState.errors.costShare
+                ? `${formId}-costShare-error`
+                : undefined
+            }
             placeholder="Optional amount for this horse"
             {...form.register('costShare', { valueAsNumber: true })}
           />
-          <FieldError errors={[form.formState.errors.costShare]} />
+          <FieldError
+            id={`${formId}-costShare-error`}
+            errors={[form.formState.errors.costShare]}
+          />
         </Field>
       </FieldGrid>
 
       <FormSubmitActions
-        isSubmitting={form.formState.isSubmitting}
+        isSubmitting={isSaving || form.formState.isSubmitting}
         onCancel={onCancel}
         submitLabel="Save details"
         submittingLabel="Saving..."

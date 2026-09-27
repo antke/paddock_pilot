@@ -38,15 +38,15 @@ export function calendarDayCellClassName({
   return cn(
     'min-h-28 border-r border-b border-border-subtle last:border-r-0',
     muted ? 'bg-surface-muted' : 'bg-surface-elevated p-2.5',
-    isToday && 'bg-primary/8 ring-1 ring-inset ring-primary/25',
-    isSelected && 'bg-primary/10 ring-2 ring-inset ring-primary/35',
+    isToday && 'bg-surface-muted',
+    isSelected && 'bg-selection-surface ring-2 ring-inset ring-selection',
     className,
   )
 }
 
 export function calendarMoreEventsButtonClassName(className?: string) {
   return cn(
-    'app-control-focus h-auto min-h-8 w-full justify-start rounded-control border-0 bg-surface-muted px-2 py-1 text-left text-xs font-semibold text-muted-foreground hover:bg-primary/10 hover:text-foreground focus-visible:outline-none',
+    'app-control-focus h-auto min-h-8 w-full justify-start rounded-control border-0 bg-surface-muted px-2 py-1 text-left text-xs font-semibold text-muted-foreground hover:bg-card hover:text-foreground focus-visible:outline-none',
     className,
   )
 }
@@ -58,7 +58,11 @@ export function calendarDayNumberClassName({
   isToday?: boolean
   className?: string
 } = {}) {
-  return cn('font-medium', isToday && 'text-primary', className)
+  return cn(
+    'font-medium',
+    isToday && 'font-bold underline decoration-border underline-offset-4',
+    className,
+  )
 }
 
 export function calendarDayHeaderClassName(className?: string) {
@@ -71,7 +75,7 @@ export function calendarDayEventListClassName(className?: string) {
 
 export function calendarEventChipClassName(className?: string) {
   return cn(
-    'app-row group/event grid gap-0.5 border-primary/20 bg-card px-2 py-1.5 text-left text-xs text-foreground hover:border-primary/40 hover:bg-primary/10 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+    'app-row group/event grid gap-0.5 border-border-subtle bg-card px-2 py-1.5 text-left text-xs text-foreground hover:border-border hover:bg-surface-muted focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
     className,
   )
 }
@@ -109,6 +113,12 @@ export function calendarWeekDayColumnClassName(className?: string) {
   return cn('grid snap-start content-start', className)
 }
 
+// Weekly calendar entries and their containing panels share the same paper
+// surface, including when the surrounding dashboard uses flat or soft chrome.
+export function calendarWeekPaperClassName(className?: string) {
+  return cn('bg-card', className)
+}
+
 export function calendarWeekDayPanelClassName({
   className,
   isToday = false,
@@ -118,8 +128,8 @@ export function calendarWeekDayPanelClassName({
 }) {
   return cn(
     'app-row content-start',
-    isToday && 'border-primary/30 bg-primary/8',
-    className,
+    isToday && 'border-border',
+    calendarWeekPaperClassName(className),
   )
 }
 
@@ -142,13 +152,17 @@ export function calendarWeekDayButtonClassName({
 }) {
   return cn(
     'text-left',
-    chrome === 'cards' && 'app-row hover:border-primary/30 hover:bg-card',
-    chrome === 'soft' && 'app-row hover:border-primary/25 hover:bg-card',
+    chrome === 'flat' &&
+      'rounded-control border border-transparent bg-transparent p-3 hover:bg-surface-muted',
+    chrome === 'cards' && 'app-row hover:border-border hover:bg-card',
+    chrome === 'soft' &&
+      'rounded-control border border-transparent bg-transparent p-3 hover:bg-surface-muted',
     isCompact
       ? 'grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-3'
       : 'grid min-h-28 content-between',
-    isToday && 'border-primary/25 bg-primary/8 text-primary',
-    isSelected && 'border-primary/45 bg-primary/10 ring-1 ring-primary/20',
+    isToday && 'border-border bg-surface-muted',
+    isSelected &&
+      'border-selection bg-selection-surface text-selection ring-1 ring-selection hover:border-selection hover:bg-selection-surface',
     showSelectedDay &&
       isExpanded &&
       (chrome === 'cards' || chrome === 'soft') &&
@@ -178,7 +192,11 @@ export function calendarWeekDayNumberClassName({
   className?: string
   isCompact?: boolean
 } = {}) {
-  return cn('text-2xl font-semibold', isCompact && 'order-1', className)
+  return cn(
+    'text-2xl font-semibold tabular-nums',
+    isCompact && 'order-1',
+    className,
+  )
 }
 
 export function calendarWeekDayMetaClassName({
@@ -204,6 +222,9 @@ export function calendarSelectedDayPanelClassName({
 }) {
   return dashboardInlinePanelClassName(
     chrome,
-    cn('grid gap-2 rounded-t-none px-3 py-3', className),
+    cn(
+      'grid gap-2 rounded-t-none px-3 py-3',
+      calendarWeekPaperClassName(className),
+    ),
   )
 }

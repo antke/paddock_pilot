@@ -27,8 +27,26 @@ const careTabs = [
   },
 ] as const
 
-export function HorseCareSection({ horse }: HorseDetailSectionProps) {
-  const [activeTab, setActiveTab] = useState<CareTab>('reminders')
+type SectionActionRenderer = (
+  onCreateActionChange: (action: ReactNode | null) => void,
+) => ReactNode
+
+type HorseCareSectionViewProps = HorseDetailSectionProps & {
+  activeTab?: CareTab
+  onTabChange?: (tab: CareTab) => void
+  renderReminders?: SectionActionRenderer
+  renderHealthIssues?: SectionActionRenderer
+}
+
+export function HorseCareSection({
+  horse,
+  activeTab: controlledTab,
+  onTabChange,
+  renderReminders,
+  renderHealthIssues,
+}: HorseCareSectionViewProps) {
+  const [localTab, setLocalTab] = useState<CareTab>('reminders')
+  const activeTab = controlledTab ?? localTab
   const [headerAction, setHeaderAction] = useState<ReactNode>(null)
 
   return (
@@ -38,7 +56,8 @@ export function HorseCareSection({ horse }: HorseDetailSectionProps) {
       onSelect={(nextTab) => {
         if (activeTab === nextTab) return
         setHeaderAction(null)
-        setActiveTab(nextTab)
+        if (onTabChange) onTabChange(nextTab)
+        else setLocalTab(nextTab)
       }}
       actions={headerAction}
     >
@@ -50,14 +69,11 @@ export function HorseCareSection({ horse }: HorseDetailSectionProps) {
             horse.farrierPhone ||
             horse.emergencyNotes) && (
             <DashboardSection
-              chrome="soft"
+              chrome="flat"
               title="Care contacts"
               as="h3"
-              size="panel"
+              size="compact"
               gap="compact"
-              padding="compact"
-              tone="reference"
-              className="rounded-row border"
             >
               <DetailGrid breakpoint="xl" columns={4} gap="default">
                 {horse.vetName && (
@@ -87,19 +103,26 @@ export function HorseCareSection({ horse }: HorseDetailSectionProps) {
             </DashboardSection>
           )}
 
-          <HorseCareRemindersCard
-            horse={horse}
-            onCreateActionChange={setHeaderAction}
-          />
+          {renderReminders ? (
+            renderReminders(setHeaderAction)
+          ) : (
+            <HorseCareRemindersCard
+              horse={horse}
+              onCreateActionChange={setHeaderAction}
+            />
+          )}
         </>
       )}
 
-      {activeTab === 'health' && (
-        <HorseHealthIssuesCard
-          horse={horse}
-          onCreateActionChange={setHeaderAction}
-        />
-      )}
+      {activeTab === 'health' &&
+        (renderHealthIssues ? (
+          renderHealthIssues(setHeaderAction)
+        ) : (
+          <HorseHealthIssuesCard
+            horse={horse}
+            onCreateActionChange={setHeaderAction}
+          />
+        ))}
     </HorseDetailSectionTabs>
   )
 }

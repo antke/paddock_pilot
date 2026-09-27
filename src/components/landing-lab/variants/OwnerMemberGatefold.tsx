@@ -1,6 +1,10 @@
 import { cn } from '#/lib/utils'
 import { landingLabContent } from '../landingLabContent'
-import { LandingLabActions, LandingLabPageFrame } from '../LandingLabPrimitives'
+import {
+  LandingLabActions,
+  LandingLabCapabilityHeading,
+  LandingLabPageFrame,
+} from '../LandingLabPrimitives'
 import type { LandingLabVariantProps } from '../LandingLabPrimitives'
 
 const gatefoldPlacements = [
@@ -77,15 +81,15 @@ export default function OwnerMemberGatefold({
           {landingLabContent.capabilities.map((capability, index) => (
             <article
               key={capability.id}
-              className={`${gatefoldPlacements[index]} grid content-center border-b border-border px-5 py-12 sm:px-8 sm:py-16 lg:min-h-[48svh] lg:px-10 lg:py-14 xl:px-14 ${
+              className={`@container ${gatefoldPlacements[index]} grid content-center border-b border-border px-5 py-12 sm:px-8 sm:py-16 lg:min-h-[48svh] lg:px-10 lg:py-14 xl:px-14 ${
                 index % 2 === 0
                   ? 'gatefold-left bg-secondary text-secondary-foreground lg:border-r'
                   : 'gatefold-right bg-accent text-accent-foreground'
               }`}
             >
-              <h2 className="max-w-[12ch] font-display text-[clamp(3rem,6vw,5.5rem)] leading-[0.88] font-bold tracking-[-0.03em] text-balance uppercase">
+              <LandingLabCapabilityHeading>
                 {capability.title}
-              </h2>
+              </LandingLabCapabilityHeading>
               <p
                 className={cn(
                   'mt-6 max-w-xl text-base leading-7 sm:text-lg sm:leading-8',

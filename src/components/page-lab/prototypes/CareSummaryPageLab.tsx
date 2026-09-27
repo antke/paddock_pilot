@@ -1,104 +1,91 @@
+import { useState } from 'react'
+import type { Id } from 'convex/_generated/dataModel'
 import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
-import {
-  DetailDisplayField,
-  DetailGrid,
-} from '#/components/dashboard/DetailBlocks'
-import {
-  PrintSummaryBodyText,
-  PrintSummaryHeader,
-  PrintSummaryPage,
-  PrintSummaryRecordHeader,
-  PrintSummaryRecordPanel,
-  PrintSummarySection,
-} from '#/components/dashboard/PrintSummary'
-import { Button } from '#/components/ui/button'
-import { calculateHorseAge } from 'shared/horses/horseAge'
+import { DashboardPage } from '#/components/dashboard/DashboardPage'
+import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
+import { HorseCareSummaryView } from '#/components/horses/HorseCareSummaryPage'
+import { Field, FieldLabel } from '#/components/ui/field'
+import { Select } from '#/components/ui/select'
+import { createHorseHistorySummary } from './horseHistoryFixtures'
+import type { HorseHistoryScenario } from './horseHistoryFixtures'
+
+type CareSummaryScenario = HorseHistoryScenario | 'multipage'
+
+export function createCareSummaryPrintFixture(data: DashboardLabData) {
+  const summary = createHorseHistorySummary(data, 'standard')
+  if (!summary.horse) return summary
+  const document = summary.documents[0]
+  const healthIssue = summary.activeHealthIssues[0]
+  return {
+    ...summary,
+    horse: {
+      ...summary.horse,
+      name: 'Żuraw — Cedar Ridge Juniper',
+      passportNumber: 'POL-2026-000123456789',
+    },
+    activeHealthIssues: [
+      {
+        ...healthIssue,
+        title: 'Sample multiline handover record',
+        // Short lines exercise a record taller than paper while staying within
+        // the real 1,000-character description limit.
+        description: [
+          'Start of sample handover log.',
+          ...Array.from(
+            { length: 80 },
+            (_, index) => `Line ${String(index + 1).padStart(2, '0')}`,
+          ),
+          'End of sample handover log.',
+        ].join('\n'),
+      },
+    ],
+    documents: Array.from({ length: 24 }, (_, index) => ({
+      ...document,
+      _id: `lab-print-document-${index}` as Id<'stableDocuments'>,
+      fileName: `Juniper — care and identification record ${String(index + 1).padStart(2, '0')}.pdf`,
+      notes:
+        'Illustrative document metadata for a multipage print check. No file is attached. Recorded by Łucja Kowalska at Żuraw Stable.',
+      createdAt: document.createdAt - index * 86_400_000,
+    })),
+  }
+}
 
 export function CareSummaryPageLab({ data }: { data: DashboardLabData }) {
-  const horse = data.horses[0]
-
-  if (!horse) return null
-  const age = calculateHorseAge(horse.dateOfBirth) ?? horse.age
-
+  const [scenario, setScenario] = useState<CareSummaryScenario>('standard')
+  const summary =
+    scenario === 'multipage'
+      ? createCareSummaryPrintFixture(data)
+      : createHorseHistorySummary(data, scenario)
   return (
-    <PrintSummaryPage>
-      <PrintSummaryHeader
-        as="h2"
-        title="Care summary"
-        description={`${data.stable.name} · Prepared for care handover`}
-        actions={<Button>Print summary</Button>}
-      />
-
-      <PrintSummarySection title="Profile and identification">
-        <DetailGrid columns={3} breakpoint="sm">
-          <DetailDisplayField label="Stable" value={data.stable.name} />
-          <DetailDisplayField label="Owner" value={horse.ownerName} />
-          <DetailDisplayField label="Age" value={age} />
-          <DetailDisplayField label="Breed" value={horse.breed} />
-          <DetailDisplayField label="Sex" value={horse.sex} />
-          <DetailDisplayField label="Color" value={horse.color} />
-          <DetailDisplayField label="Height" value={horse.height} />
-          <DetailDisplayField label="Discipline" value={horse.discipline} />
-          <DetailDisplayField label="Shoeing" value={horse.shoeingStatus} />
-        </DetailGrid>
-      </PrintSummarySection>
-
-      <PrintSummarySection title="Emergency and care contacts">
-        <DetailGrid>
-          <DetailDisplayField label="Vet" value={horse.vetName} />
-          <DetailDisplayField label="Vet phone" value={horse.vetPhone} />
-          <DetailDisplayField label="Farrier" value={horse.farrierName} />
-          <DetailDisplayField
-            label="Farrier phone"
-            value={horse.farrierPhone}
-          />
-          <DetailDisplayField
-            label="Emergency notes"
-            value={horse.emergencyNotes}
-            span="sm2"
-            multiline
-          />
-        </DetailGrid>
-      </PrintSummarySection>
-
-      <PrintSummarySection title="Nutrition profile">
-        <DetailGrid>
-          <DetailDisplayField
-            label="Feeding routine"
-            value={horse.feedingRoutine}
-            multiline
-          />
-          <DetailDisplayField
-            label="Nutrition notes"
-            value={horse.nutritionNotes}
-            multiline
-          />
-        </DetailGrid>
-      </PrintSummarySection>
-
-      <PrintSummarySection title="Active health and medication">
-        <div className="grid gap-3 md:grid-cols-2">
-          <PrintSummaryRecordPanel chrome="soft">
-            <PrintSummaryRecordHeader
-              title="Right fore lameness"
-              description="Medium severity · Noted 8 Jul 2026"
-            />
-            <PrintSummaryBodyText>
-              Monitor after turnout and record response to the new shoeing
-              cycle.
-            </PrintSummaryBodyText>
-          </PrintSummaryRecordPanel>
-          <PrintSummaryRecordPanel chrome="soft">
-            <PrintSummaryRecordHeader
-              title="Phenylbutazone"
-              description="1 sachet daily · Active course"
-            />
-            <PrintSummaryBodyText>
-              Give with the evening feed through 12 Jul.
-            </PrintSummaryBodyText>
-          </PrintSummaryRecordPanel>
-        </div>
-      </PrintSummarySection>
-    </PrintSummaryPage>
+    <DashboardPage>
+      <div className="print:hidden">
+        <DashboardPageHeader
+          title="Care summary sample"
+          description="Illustrative care records rendered by the actual care-summary view. Print opens your browser's print preview; no records are saved."
+        />
+        <Field>
+          <FieldLabel htmlFor="care-summary-sample">Sample records</FieldLabel>
+          <Select
+            id="care-summary-sample"
+            value={scenario}
+            onChange={(event) =>
+              setScenario(event.target.value as CareSummaryScenario)
+            }
+          >
+            <option value="standard">Complete sample</option>
+            <option value="empty">Sparse profile and empty records</option>
+            <option value="long">Long name, identifiers and notes</option>
+            <option value="multipage">Multipage records and long body</option>
+            <option value="missing">Missing horse</option>
+          </Select>
+        </Field>
+      </div>
+      {summary.horse && (
+        <p className="hidden print:block">
+          Sample care summary — illustrative records, not a real care handover.
+        </p>
+      )}
+      <HorseCareSummaryView summary={summary} />
+    </DashboardPage>
   )
 }

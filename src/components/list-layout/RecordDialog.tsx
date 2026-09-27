@@ -1,4 +1,4 @@
-import type { ComponentProps, ReactNode } from 'react'
+import type { ComponentProps, ReactNode, Ref } from 'react'
 
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { Button } from '#/components/ui/button'
@@ -6,14 +6,17 @@ import { DialogContent, DialogTrigger } from '#/components/ui/dialog'
 import { cn } from '#/lib/utils'
 
 type RecordDialogDesktopTriggerProps = {
+  triggerRef?: Ref<HTMLButtonElement>
   children: ReactNode
 }
 
 type RecordDialogFloatingTriggerProps = {
+  triggerRef?: Ref<HTMLButtonElement>
   label: string
 }
 
 export function RecordDialogDesktopTrigger({
+  triggerRef,
   children,
 }: RecordDialogDesktopTriggerProps) {
   return (
@@ -21,7 +24,10 @@ export function RecordDialogDesktopTrigger({
       data-slot="record-dialog-desktop-trigger"
       className="hidden sm:flex"
     >
-      <DialogTrigger render={<Button type="button" action="create" />}>
+      <DialogTrigger
+        ref={triggerRef}
+        render={<Button type="button" action="create" />}
+      >
         {children}
       </DialogTrigger>
     </DashboardActions>
@@ -29,10 +35,12 @@ export function RecordDialogDesktopTrigger({
 }
 
 export function RecordDialogFloatingTrigger({
+  triggerRef,
   label,
 }: RecordDialogFloatingTriggerProps) {
   return (
     <DialogTrigger
+      ref={triggerRef}
       data-slot="record-dialog-floating-trigger"
       render={
         <Button

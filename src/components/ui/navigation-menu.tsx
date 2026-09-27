@@ -56,7 +56,7 @@ function NavigationMenuItem({
 }
 
 const navigationMenuTriggerStyle = cva(
-  'group/navigation-menu-trigger inline-flex h-9 w-max cursor-pointer items-center justify-center rounded-control px-3 py-1.5 text-xs font-semibold transition-[background-color,border-color,color,box-shadow] duration-150 outline-none hover:bg-primary/8 focus:bg-primary/8 focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-active:bg-primary/10 data-active:text-foreground data-popup-open:bg-primary/10 data-popup-open:hover:bg-primary/12 data-open:bg-primary/10 data-open:hover:bg-primary/12 data-open:focus:bg-primary/10 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11',
+  'group/navigation-menu-trigger inline-flex h-9 w-max cursor-pointer items-center justify-center rounded-control border border-transparent px-3 py-1.5 text-sm font-semibold transition-[background-color,border-color,color,box-shadow] duration-150 outline-none hover:bg-surface-muted focus:bg-surface-muted focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-active:border-selection data-active:bg-selection-surface data-active:text-selection data-popup-open:bg-surface-muted data-open:bg-surface-muted data-active:hover:bg-selection-surface data-active:focus:bg-selection-surface [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11',
 )
 
 function NavigationMenuTrigger({
@@ -112,7 +112,7 @@ function NavigationMenuPositioner({
         align={align}
         alignOffset={alignOffset}
         className={cn(
-          'isolate z-50 h-(--positioner-height) w-(--positioner-width) max-w-(--available-width) transition-[top,left,right,bottom] duration-[0.35s] ease-[cubic-bezier(0.22,1,0.36,1)] data-instant:transition-none data-[side=bottom]:before:top-[-10px] data-[side=bottom]:before:right-0 data-[side=bottom]:before:left-0',
+          'isolate z-50 h-(--positioner-height) w-(--positioner-width) max-w-(--available-width) transition-[top,left,right,bottom] duration-[0.35s] ease-[cubic-bezier(0.22,1,0.36,1)] data-instant:transition-none motion-reduce:transition-none data-[side=bottom]:before:top-[-10px] data-[side=bottom]:before:right-0 data-[side=bottom]:before:left-0',
           className,
         )}
         {...props}
@@ -139,7 +139,7 @@ function NavigationMenuLink({
     <NavigationMenuPrimitive.Link
       data-slot="navigation-menu-link"
       className={cn(
-        "flex items-center gap-2 rounded-control px-3 py-2 text-xs font-medium transition-[background-color,border-color,color,box-shadow] duration-150 outline-none hover:bg-primary/8 focus:bg-primary/8 focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none in-data-[slot=navigation-menu-content]:rounded-control data-active:bg-primary/10 data-active:hover:bg-primary/12 data-active:focus:bg-primary/10 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 [&_svg:not([class*='size-'])]:size-4",
+        "flex items-center gap-2 rounded-control border border-transparent px-3 py-2 text-sm font-medium transition-[background-color,border-color,color,box-shadow] duration-150 outline-none hover:bg-surface-muted focus:bg-surface-muted focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none in-data-[slot=navigation-menu-content]:rounded-control data-active:border-selection data-active:bg-selection-surface data-active:text-selection data-active:hover:bg-selection-surface data-active:focus:bg-selection-surface [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}

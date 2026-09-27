@@ -1,3 +1,4 @@
+import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
 import { createDashboardLabData } from '#/components/dashboard-lab/dashboardLabData'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
@@ -10,7 +11,9 @@ import type { FunctionReturnType } from 'convex/server'
 import { AnalysisCentre } from './AnalysisCentre'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
 
-type StableAnalysis = FunctionReturnType<typeof api.stableAnalysis.getForStable>
+export type StableAnalysis = FunctionReturnType<
+  typeof api.stableAnalysis.getForStable
+>
 type UnlockedAnalysis = Extract<StableAnalysis, { hasAccess: true }>
 
 type StableAnalysisPageProps = {
@@ -27,7 +30,7 @@ export function StableAnalysisPage({ stableId }: StableAnalysisPageProps) {
   )
 
   if (!analysis.hasAccess) {
-    return <LockedAnalysis />
+    return <StableAnalysisPageView analysis={analysis} />
   }
 
   return (
@@ -73,9 +76,25 @@ function UnlockedAnalysisPage({
     overview,
   })
 
+  return <StableAnalysisPageView analysis={analysis} data={data} />
+}
+
+export function StableAnalysisPageView({
+  analysis,
+  data,
+}: {
+  analysis: StableAnalysis
+  data?: DashboardLabData
+}) {
+  if (!analysis.hasAccess) return <LockedAnalysis />
+  if (!data) throw new Error('Unlocked analysis requires dashboard data')
   return (
     <DashboardPage gap="loose">
-      <AnalysisCentre data={data} stableAnalysis={analysis} />
+      <AnalysisCentre
+        key={analysis.stable._id}
+        data={data}
+        stableAnalysis={analysis}
+      />
     </DashboardPage>
   )
 }

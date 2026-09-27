@@ -22,7 +22,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import type { NutritionLogFormSchema } from 'shared/horses/nutritionLogSchema'
 import { createHorseNutritionLogListFilterConfig } from './horseDetailListFilters'
 import type { HorseDetailCreateActionChange } from './useHorseDetailCreateAction'
@@ -46,15 +46,6 @@ export function HorseNutritionLogsCard({
   )
   const addNutritionLog = useMutation(api.horseNutritionLogs.add)
   const removeNutritionLog = useMutation(api.horseNutritionLogs.remove)
-  const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [pendingLogId, setPendingLogId] = useState<string>()
-  const canManage = permissions.canManage
-  const filterConfig = useMemo(createHorseNutritionLogListFilterConfig, [])
-  const filtering = useListFiltering({
-    items: logs,
-    config: filterConfig,
-  })
-
   const onAddNutritionLog = useCallback(
     async (data: NutritionLogFormSchema) => {
       try {
@@ -72,7 +63,6 @@ export function HorseNutritionLogsCard({
           title: 'Nutrition log added',
           description: <p>{horse.name}'s nutrition history was updated.</p>,
         })
-        setIsCreateOpen(false)
       } catch (err) {
         showAppErrorToast()
         throw err
@@ -81,28 +71,8 @@ export function HorseNutritionLogsCard({
     [addNutritionLog, horse._id, horse.name],
   )
 
-  const createDialog = useMemo(
-    () =>
-      canManage ? (
-        <CreateRecordDialog
-          open={isCreateOpen}
-          onOpenChange={setIsCreateOpen}
-          triggerLabel="Add nutrition log"
-          title="Add nutrition log"
-          description="Record a nutrition change without losing your place in the list."
-        >
-          <NutritionLogForm horse={horse} onSubmit={onAddNutritionLog} />
-        </CreateRecordDialog>
-      ) : null,
-    [canManage, horse, isCreateOpen, onAddNutritionLog],
-  )
-  const inlineCreateDialog = onCreateActionChange ? null : createDialog
-
-  useHorseDetailCreateAction(createDialog, onCreateActionChange)
-
   const onRemoveNutritionLog = async (log: Doc<'horseNutritionLogs'>) => {
     try {
-      setPendingLogId(log._id)
       await removeNutritionLog({ id: log._id })
       showAppSuccessToast({
         title: 'Nutrition log removed',
@@ -111,10 +81,77 @@ export function HorseNutritionLogsCard({
     } catch (err) {
       showAppErrorToast()
       throw err
-    } finally {
-      setPendingLogId(undefined)
     }
   }
+
+  return (
+    <HorseNutritionLogsView
+      key={horse._id}
+      horse={horse}
+      logs={logs}
+      canManage={permissions.canManage}
+      onAdd={onAddNutritionLog}
+      onRemove={onRemoveNutritionLog}
+      onCreateActionChange={onCreateActionChange}
+    />
+  )
+}
+
+export function HorseNutritionLogsView({
+  horse,
+  logs,
+  canManage,
+  onAdd,
+  onRemove,
+  onCreateActionChange,
+}: HorseNutritionLogsCardProps & {
+  logs: Array<Doc<'horseNutritionLogs'>>
+  canManage: boolean
+  onAdd: (values: NutritionLogFormSchema) => Promise<void>
+  onRemove: (log: Doc<'horseNutritionLogs'>) => Promise<void>
+}) {
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const creating = useRef(false)
+  const region = useRef<HTMLElement>(null)
+  const onPendingChange = useCallback((pending: boolean) => {
+    creating.current = pending
+    setIsCreating(pending)
+  }, [])
+  const addAndClose = useCallback(
+    async (values: NutritionLogFormSchema) => {
+      await onAdd(values)
+      setIsCreateOpen(false)
+    },
+    [onAdd],
+  )
+  const filterConfig = useMemo(createHorseNutritionLogListFilterConfig, [])
+  const filtering = useListFiltering({ items: logs, config: filterConfig })
+  const createDialog = useMemo(
+    () =>
+      canManage ? (
+        <CreateRecordDialog
+          open={isCreateOpen}
+          onOpenChange={(open) => {
+            if (!creating.current) setIsCreateOpen(open)
+          }}
+          isPending={isCreating}
+          triggerLabel="Add nutrition log"
+          title="Add nutrition log"
+          description="Keep a dated record of feeding changes."
+        >
+          <NutritionLogForm
+            horse={horse}
+            onSubmit={addAndClose}
+            onPendingChange={onPendingChange}
+          />
+        </CreateRecordDialog>
+      ) : null,
+    [canManage, horse, isCreateOpen, isCreating, addAndClose, onPendingChange],
+  )
+  const inlineCreateDialog = onCreateActionChange ? null : createDialog
+
+  useHorseDetailCreateAction(createDialog, onCreateActionChange)
 
   const logList = (
     <FilteredDashboardItemList
@@ -127,8 +164,8 @@ export function HorseNutritionLogsCard({
           key={log._id}
           log={log}
           canManage={canManage}
-          pending={pendingLogId === log._id}
-          onRemove={onRemoveNutritionLog}
+          onRemove={onRemove}
+          removalFocusTarget={() => region.current}
         />
       )}
     />
@@ -141,31 +178,56 @@ export function HorseNutritionLogsCard({
     </>
   )
 
-  if (onCreateActionChange) return content
+  if (onCreateActionChange)
+    return (
+      <div
+        ref={(element) => {
+          region.current = element
+        }}
+        role="group"
+        aria-label="Nutrition history"
+        tabIndex={-1}
+        className="grid gap-6"
+      >
+        {content}
+      </div>
+    )
 
-  return <DashboardSection chrome="cards">{content}</DashboardSection>
+  return (
+    <DashboardSection
+      ref={(element) => {
+        region.current = element
+      }}
+      role="group"
+      aria-label="Nutrition history"
+      tabIndex={-1}
+    >
+      {content}
+    </DashboardSection>
+  )
 }
 
 function NutritionLogRow({
   log,
   canManage,
-  pending,
+  removalFocusTarget,
   onRemove,
 }: {
   log: Doc<'horseNutritionLogs'>
   canManage: boolean
-  pending: boolean
+  removalFocusTarget: () => HTMLElement | null
   onRemove: (log: Doc<'horseNutritionLogs'>) => Promise<void>
 }) {
   return (
     <DashboardItemRecordCard
-      chrome="cards"
+      interactive={false}
+      chrome="flat"
       actionsPlacement="footer"
       actionsClassName="ml-auto"
       actions={
         canManage ? (
           <HorseRecordRemoveAction
-            disabled={pending}
+            removalFocusTarget={removalFocusTarget}
             title={`Remove ${log.summary}?`}
             description="This nutrition change will be removed from the horse history permanently. This cannot be undone."
             onConfirm={() => onRemove(log)}

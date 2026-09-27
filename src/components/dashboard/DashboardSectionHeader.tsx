@@ -90,8 +90,7 @@ export function DashboardSectionHeader({
               'leading-6 text-muted-foreground',
               descriptionWidth === 'default' && 'max-w-3xl',
               descriptionWidth === 'narrow' && 'max-w-2xl',
-              descriptionSize === 'default' &&
-                (usesDisplayTitle ? 'text-sm font-semibold' : 'text-base'),
+              descriptionSize === 'default' && 'text-sm',
               descriptionSize === 'sm' && 'text-sm',
               descriptionClassName,
             )}

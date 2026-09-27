@@ -110,6 +110,49 @@ function StableSwitcher() {
   }
 
   return (
+    <StableSwitcherView
+      stables={stables}
+      activeStableId={activeStableId}
+      onStableChange={onStableChange}
+      canManage={activeStable?.ownerId === currentUser?._id}
+      onOpen={(destination) => {
+        if (destination === 'stables') {
+          void navigate({ to: '/stables' })
+          return
+        }
+        if (!activeStableId) return
+        const routes = {
+          overview: '/stables/$stableId',
+          members: '/stables/$stableId/members',
+          welcome: '/stables/$stableId/welcome',
+          settings: '/stables/$stableId/settings',
+        } as const
+        void navigate({
+          to: routes[destination],
+          params: { stableId: activeStableId },
+        })
+      }}
+    />
+  )
+}
+
+type StableDestination =
+  'overview' | 'members' | 'welcome' | 'settings' | 'stables'
+export function StableSwitcherView({
+  stables,
+  activeStableId,
+  onStableChange,
+  canManage,
+  onOpen,
+}: {
+  stables: Array<{ _id: string; name: string }>
+  activeStableId?: string
+  onStableChange: (id: string) => void
+  canManage: boolean
+  onOpen: (destination: StableDestination) => void
+}) {
+  const activeStable = stables.find((stable) => stable._id === activeStableId)
+  return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
@@ -146,55 +189,27 @@ function StableSwitcher() {
         <DropdownMenuSeparator />
         {activeStableId && (
           <>
-            <DropdownMenuItem
-              onClick={() =>
-                navigate({
-                  to: '/stables/$stableId',
-                  params: { stableId: activeStableId },
-                })
-              }
-            >
+            <DropdownMenuItem onClick={() => onOpen('overview')}>
               <HouseIcon aria-hidden="true" />
               Stable overview
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() =>
-                navigate({
-                  to: '/stables/$stableId/members',
-                  params: { stableId: activeStableId },
-                })
-              }
-            >
+            <DropdownMenuItem onClick={() => onOpen('members')}>
               <UsersThreeIcon aria-hidden="true" />
               Stable people
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() =>
-                navigate({
-                  to: '/stables/$stableId/welcome',
-                  params: { stableId: activeStableId },
-                })
-              }
-            >
+            <DropdownMenuItem onClick={() => onOpen('welcome')}>
               <ListChecksIcon aria-hidden="true" />
               Getting started
             </DropdownMenuItem>
-            {activeStable?.ownerId === currentUser?._id && (
-              <DropdownMenuItem
-                onClick={() =>
-                  navigate({
-                    to: '/stables/$stableId/settings',
-                    params: { stableId: activeStableId },
-                  })
-                }
-              >
+            {canManage && (
+              <DropdownMenuItem onClick={() => onOpen('settings')}>
                 <GearIcon aria-hidden="true" />
                 Stable settings
               </DropdownMenuItem>
             )}
           </>
         )}
-        <DropdownMenuItem onClick={() => navigate({ to: '/stables' })}>
+        <DropdownMenuItem onClick={() => onOpen('stables')}>
           <BuildingsIcon aria-hidden="true" />
           Manage stables
         </DropdownMenuItem>

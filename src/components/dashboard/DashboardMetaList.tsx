@@ -38,7 +38,10 @@ function renderSeparatedMeta(
   children: ReactNode,
   separator: Exclude<DashboardMetaListSeparator, 'none'>,
 ) {
-  return Children.toArray(children).map((child, index) => (
+  const visibleItems = Children.toArray(children).filter(
+    (child) => typeof child !== 'string' || child.trim().length > 0,
+  )
+  return visibleItems.map((child, index) => (
     <Fragment key={index}>
       {index > 0 && (
         <span aria-hidden="true" className="text-muted-foreground/45">

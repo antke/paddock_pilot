@@ -1,3 +1,4 @@
+import { compareWeightRecordsNewestFirst } from '../shared/horses/weightRecordOrder'
 import { v } from 'convex/values'
 import type { Doc, Id } from './_generated/dataModel'
 import { query } from './_generated/server'
@@ -235,7 +236,7 @@ const getWeightTrends = (
     .map((horse) => {
       const records = weightRecords
         .filter((record) => record.horseId === horse._id)
-        .sort((a, b) => b.measuredAt - a.measuredAt)
+        .sort(compareWeightRecordsNewestFirst)
       const latest = records[0]
 
       if (!latest) return null
@@ -332,13 +333,13 @@ const getCareCadence = (
           .filter(
             (event) => event.status === 'completed' && event.date <= today,
           )
-          .sort((a, b) => sortByDateDesc(a.date, b.date))[0]
+          .sort((a, b) => sortByDateDesc(a.date, b.date)).at(0)
         const nextPlanned = typedEvents
           .filter(
             (event) =>
               (event.status ?? 'planned') === 'planned' && event.date >= today,
           )
-          .sort(compareEventDateAndTime)[0]
+          .sort(compareEventDateAndTime).at(0)
         const daysSinceLast = lastCompleted
           ? Math.floor(
               (Date.parse(today) - Date.parse(lastCompleted.date)) / oneDayInMs,

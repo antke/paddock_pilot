@@ -48,7 +48,7 @@ function CountryStudy() {
     <div className="country-study">
       <header className="country-study-toolbar">
         <div className="country-study-title">
-          <strong>Two country openings</strong>
+          <h1>Two country openings</h1>
           <span>Same story. Two ways in.</span>
         </div>
         <nav className="country-study-options" aria-label="Hero composition">
@@ -93,12 +93,12 @@ function CountryStudy() {
           ? 'A full-width stable photograph opens the page, followed by a dedicated shared-care example.'
           : 'A generous typographic opening, followed by a landscape photograph and a quiet care record.'}
       </p>
-      <div className={`country-study-stage country-study-stage-${viewport}`}>
+      <main className={`country-study-stage country-study-stage-${viewport}`}>
         <iframe
           title={`${composition === 'journal' ? 'Field journal' : 'Open yard'} ${viewport} preview`}
           src={previewUrl}
         />
-      </div>
+      </main>
     </div>
   )
 }

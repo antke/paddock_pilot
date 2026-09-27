@@ -18,7 +18,7 @@ export function StableIntroductionStep({
 }) {
   return (
     <div className="grid gap-5">
-      <Alert className="border-primary/20 bg-primary/5">
+      <Alert role="note">
         <BuildingsIcon aria-hidden="true" />
         <AlertTitle>You’re connected to {stable.name}</AlertTitle>
         <AlertDescription>
@@ -28,30 +28,23 @@ export function StableIntroductionStep({
       </Alert>
 
       <DetailGrid>
-        <DetailDisplayField framed label="Location" value={stable.location} />
+        <DetailDisplayField label="Location" value={stable.location} />
         <DetailDisplayField
-          framed
           label="Primary contact"
           value={stable.contactName || 'Not added yet'}
         />
         <DetailDisplayField
-          framed
           label="Contact phone"
           value={stable.contactPhone || 'Not added yet'}
         />
         <DetailDisplayField
-          framed
           label="Opening hours"
           value={stable.openingHours || 'Not added yet'}
         />
       </DetailGrid>
 
       {stable.yardRules && (
-        <DetailDisplayField
-          framed
-          label="Yard rules"
-          value={stable.yardRules}
-        />
+        <DetailDisplayField label="Yard rules" value={stable.yardRules} />
       )}
 
       <DashboardActions align="end">

@@ -1,3 +1,15 @@
+import { DashboardActions } from '#/components/dashboard/DashboardActions'
+import { Button } from '#/components/ui/button'
+import {
+  getOverviewWindowMetrics,
+  getScrollRatioFromWindow,
+  getTimelineViewportCenter,
+  getCenteredTimelineScrollLeft,
+  getNextTimelineZoom,
+  minTimelineColumnZoom,
+  maxTimelineColumnZoom,
+} from './timelineOverviewGeometry'
+import type { TimelineScrollState } from './timelineOverviewGeometry'
 import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
 import { DashboardMetaList } from '#/components/dashboard/DashboardMetaList'
 import { formatEventDateRange } from '#/components/events/eventDisplay'
@@ -27,7 +39,6 @@ import {
   ActivityTimelineViewportPanel,
   ActivityTimelineWindow,
   ActivityTimelineWindowDrag,
-  ActivityTimelineWindowHandle,
 } from '#/components/timeline/ActivityTimeline'
 import { Badge } from '#/components/ui/badge'
 import { TextLabel, textLabelVariants } from '#/components/ui/text-label'
@@ -46,7 +57,14 @@ import {
   PillIcon,
   ScalesIcon,
 } from '@phosphor-icons/react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 import { eventStatusLabels, eventTypeLabels } from 'shared/events/eventSchema'
 import type {
   LabTimelineOccurrence,
@@ -88,12 +106,7 @@ type StableActivityTimelineChartProps = {
 type TimelineEvent = LabTimelineOccurrence['event']
 type TimelineEventStatus = NonNullable<TimelineEvent['status']>
 type TimelineEventTypeShape =
-  | 'circle'
-  | 'diamond'
-  | 'square'
-  | 'pill'
-  | 'triangle'
-  | 'rhomboid'
+  'circle' | 'diamond' | 'square' | 'pill' | 'triangle' | 'rhomboid'
 
 type TimelineBlock = {
   occurrence: LabTimelineOccurrence
@@ -101,12 +114,6 @@ type TimelineBlock = {
   laneIndex: number
   startIndex: number
   endIndex: number
-}
-
-type TimelineScrollState = {
-  scrollLeft: number
-  clientWidth: number
-  scrollWidth: number
 }
 
 const columnWidthByScale = {
@@ -118,8 +125,6 @@ const columnWidthByScale = {
 const laneHeightRem = 6.6
 const blockHeightRem = 5.7
 const blockInsetRem = 0.48
-const minColumnZoom = 0.85
-const maxColumnZoom = 2.2
 
 const eventTypeAccents = {
   vet: 'var(--destructive)',
@@ -174,10 +179,12 @@ export function StableActivityTimelineChart({
   className,
 }: StableActivityTimelineChartProps) {
   const viewportRef = useRef<HTMLDivElement>(null)
+  const periodButtons = useRef(new Map<string, HTMLButtonElement>())
   const lastAutoScrolledPeriodKeyRef = useRef<string | null>(null)
   const [scrollState, setScrollState] =
     useState<TimelineScrollState>(initialScrollState)
   const [columnZoom, setColumnZoom] = useState(1)
+  const pendingZoomCenter = useRef<number | null>(null)
   const todayKey = getTodayDateKey()
   const visibleOccurrences = occurrences.filter(
     (occurrence) =>
@@ -305,38 +312,70 @@ export function StableActivityTimelineChart({
     selectedPeriodIndex,
   ])
 
-  const resizeVisibleWindow = useCallback(
-    (leftRatio: number, visibleRatio: number) => {
-      const viewport = viewportRef.current
-      if (!viewport || periods.length === 0) return
+  const changeZoom = (direction: -1 | 1) => {
+    const viewport = viewportRef.current
+    if (!viewport) return
+    pendingZoomCenter.current = getTimelineViewportCenter(
+      getTimelineScrollState(viewport),
+    )
+    setColumnZoom((current) => getNextTimelineZoom(current, direction))
+  }
 
-      const rootRemInPixels = getRootRemInPixels()
-      const baseTimelineWidth =
-        periods.length * baseColumnWidthRem * rootRemInPixels
-      const nextZoom = clamp(
-        viewport.clientWidth / Math.max(1, baseTimelineWidth * visibleRatio),
-        minColumnZoom,
-        maxColumnZoom,
-      )
-
-      setColumnZoom(nextZoom)
-      requestAnimationFrame(() => scrollToRatio(leftRatio))
-    },
-    [baseColumnWidthRem, periods.length, scrollToRatio],
-  )
+  useLayoutEffect(() => {
+    const viewport = viewportRef.current
+    if (!viewport || pendingZoomCenter.current === null) return
+    viewport.scrollLeft = getCenteredTimelineScrollLeft(
+      pendingZoomCenter.current,
+      getTimelineScrollState(viewport),
+    )
+    pendingZoomCenter.current = null
+    updateScrollState()
+  }, [columnZoom, updateScrollState])
 
   return (
     <ActivityTimelineRoot className={className}>
       <ActivityTimelineViewportPanel>
         <ActivityTimelineScrollArea
           ref={viewportRef}
+          role="region"
+          aria-label="Stable activity calendar"
+          tabIndex={0}
           onScroll={updateScrollState}
         >
           <ActivityTimelineCanvas style={{ width: `${timelineWidthRem}rem` }}>
-            <ActivityTimelineHeaderRow style={{ gridTemplateColumns }}>
-              {periods.map((period) => (
+            <ActivityTimelineHeaderRow
+              role="group"
+              aria-label="Timeline periods — use arrow keys to select"
+              style={{ gridTemplateColumns }}
+            >
+              {periods.map((period, index) => (
                 <ActivityTimelinePeriodButton
                   key={period.key}
+                  ref={(button) => {
+                    if (button) periodButtons.current.set(period.key, button)
+                    else periodButtons.current.delete(period.key)
+                  }}
+                  tabIndex={index === Math.max(0, selectedPeriodIndex) ? 0 : -1}
+                  onKeyDown={(event) => {
+                    const nextIndex =
+                      event.key === 'Home'
+                        ? 0
+                        : event.key === 'End'
+                          ? periods.length - 1
+                          : event.key === 'ArrowLeft'
+                            ? Math.max(0, index - 1)
+                            : event.key === 'ArrowRight'
+                              ? Math.min(periods.length - 1, index + 1)
+                              : null
+                    if (nextIndex === null) return
+                    event.preventDefault()
+                    const nextPeriod = periods[nextIndex]
+                    onPeriodSelect(nextPeriod)
+                    periodButtons.current
+                      .get(nextPeriod.key)
+                      ?.focus({ preventScroll: true })
+                    scrollToPeriod(nextIndex)
+                  }}
                   selected={selectedPeriodKey === period.key}
                   onClick={() => onPeriodSelect(period)}
                 >
@@ -369,7 +408,9 @@ export function StableActivityTimelineChart({
 
               {blocks.length === 0 ? (
                 <ActivityTimelineEmptyState>
-                  No event blocks match the selected timeline filters.
+                  {occurrences.length === 0
+                    ? 'No events scheduled in this timeline yet.'
+                    : 'No event blocks match the selected timeline filters.'}
                 </ActivityTimelineEmptyState>
               ) : (
                 blocks.map((block) => (
@@ -393,7 +434,8 @@ export function StableActivityTimelineChart({
         scrollState={scrollState}
         onScrollRatioChange={scrollToRatio}
         onPeriodJump={scrollToPeriod}
-        onResizeVisibleWindow={resizeVisibleWindow}
+        columnZoom={columnZoom}
+        onZoomChange={changeZoom}
       />
 
       <ActivityTimelineCaption>
@@ -602,16 +644,21 @@ function TimelineOverviewNavigator({
   scrollState,
   onScrollRatioChange,
   onPeriodJump,
-  onResizeVisibleWindow,
+  columnZoom,
+  onZoomChange,
 }: {
   periods: Array<StableTimelinePeriod>
   todayKey: string
   scrollState: TimelineScrollState
   onScrollRatioChange: (ratio: number) => void
   onPeriodJump: (periodIndex: number) => void
-  onResizeVisibleWindow: (leftRatio: number, visibleRatio: number) => void
+  columnZoom: number
+  onZoomChange: (direction: -1 | 1) => void
 }) {
+  const rangeId = useId()
   const railRef = useRef<HTMLDivElement>(null)
+  const cancelDrag = useRef<(() => void) | null>(null)
+  useEffect(() => () => cancelDrag.current?.(), [columnZoom, periods.length])
   const windowMetrics = getOverviewWindowMetrics(scrollState)
   const todayMarkerRatio = getTodayOverviewMarkerRatio(periods, todayKey)
   const maxActivityCount = Math.max(
@@ -619,62 +666,42 @@ function TimelineOverviewNavigator({
     ...periods.map(getTimelinePeriodActivityCount),
   )
 
-  const handlePointerDown = (
-    mode: 'move' | 'start' | 'end',
-    event: ReactPointerEvent<HTMLElement>,
-  ) => {
+  const handlePointerDown = (event: ReactPointerEvent<HTMLElement>) => {
     const rail = railRef.current
-    if (!rail) return
+    if (!rail || event.button !== 0) return
 
     event.preventDefault()
+    cancelDrag.current?.()
     const railBounds = rail.getBoundingClientRect()
     const initialLeft = windowMetrics.leftRatio
     const initialWidth = windowMetrics.widthRatio
-    const initialRight = initialLeft + initialWidth
     const pointerStartRatio = getPointerRatio(event.clientX, railBounds)
 
     const handlePointerMove = (moveEvent: PointerEvent) => {
       const pointerRatio = getPointerRatio(moveEvent.clientX, railBounds)
 
-      if (mode === 'move') {
-        const nextLeft = clamp(
-          initialLeft + pointerRatio - pointerStartRatio,
-          0,
-          1 - initialWidth,
-        )
-        onScrollRatioChange(getScrollRatioFromWindow(nextLeft, initialWidth))
-        return
-      }
-
-      if (mode === 'start') {
-        const nextLeft = clamp(pointerRatio, 0, initialRight - 0.08)
-        const nextWidth = initialRight - nextLeft
-        onResizeVisibleWindow(
-          getScrollRatioFromWindow(nextLeft, nextWidth),
-          nextWidth,
-        )
-        return
-      }
-
-      const nextRight = clamp(pointerRatio, initialLeft + 0.08, 1)
-      const nextWidth = nextRight - initialLeft
-      onResizeVisibleWindow(
-        getScrollRatioFromWindow(initialLeft, nextWidth),
-        nextWidth,
+      const nextLeft = clamp(
+        initialLeft + pointerRatio - pointerStartRatio,
+        0,
+        1 - initialWidth,
       )
+      onScrollRatioChange(getScrollRatioFromWindow(nextLeft, initialWidth))
     }
 
     const handlePointerUp = () => {
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
+      window.removeEventListener('pointercancel', handlePointerUp)
+      cancelDrag.current = null
     }
 
+    cancelDrag.current = handlePointerUp
     window.addEventListener('pointermove', handlePointerMove)
     window.addEventListener('pointerup', handlePointerUp)
+    window.addEventListener('pointercancel', handlePointerUp)
   }
 
   const handleWindowKeyDown = (
-    mode: 'move' | 'start' | 'end',
     event: ReactKeyboardEvent<HTMLButtonElement>,
   ) => {
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
@@ -684,50 +711,31 @@ function TimelineOverviewNavigator({
     const step = Math.max(1 / Math.max(periods.length, 1), 0.02)
     const initialLeft = windowMetrics.leftRatio
     const initialWidth = windowMetrics.widthRatio
-    const initialRight = initialLeft + initialWidth
 
-    if (mode === 'move') {
-      const nextLeft = clamp(
-        initialLeft + direction * step,
-        0,
-        1 - initialWidth,
-      )
-      onScrollRatioChange(getScrollRatioFromWindow(nextLeft, initialWidth))
-      return
-    }
-
-    if (mode === 'start') {
-      const nextLeft = clamp(
-        initialLeft + direction * step,
-        0,
-        initialRight - 0.08,
-      )
-      const nextWidth = initialRight - nextLeft
-      onResizeVisibleWindow(
-        getScrollRatioFromWindow(nextLeft, nextWidth),
-        nextWidth,
-      )
-      return
-    }
-
-    const nextRight = clamp(
-      initialRight + direction * step,
-      initialLeft + 0.08,
-      1,
-    )
-    const nextWidth = nextRight - initialLeft
-    onResizeVisibleWindow(
-      getScrollRatioFromWindow(initialLeft, nextWidth),
-      nextWidth,
-    )
+    const nextLeft = clamp(initialLeft + direction * step, 0, 1 - initialWidth)
+    onScrollRatioChange(getScrollRatioFromWindow(nextLeft, initialWidth))
   }
+  const firstVisible = Math.min(
+    periods.length,
+    Math.floor(windowMetrics.leftRatio * periods.length) + 1,
+  )
+  const lastVisible = Math.min(
+    periods.length,
+    Math.ceil(
+      (windowMetrics.leftRatio + windowMetrics.widthRatio) * periods.length,
+    ),
+  )
 
   return (
     <ActivityTimelineOverviewPanel>
       <DashboardInlineHeader
         title="Timeline overview"
-        description="Drag the window or use its arrow-key controls to move and resize the visible calendar."
-        aside={<Badge variant="neutral">{periods.length} periods</Badge>}
+        description="Drag the highlighted window or use its arrow keys to move. Zoom changes column width while keeping the same calendar area in view."
+        aside={
+          <Badge variant="neutral">
+            {formatCountLabel(periods.length, 'period')}
+          </Badge>
+        }
         titleClassName={textLabelVariants({
           size: 'xs',
           weight: 'semibold',
@@ -736,6 +744,39 @@ function TimelineOverviewNavigator({
         descriptionSize="xs"
         descriptionClassName="leading-5"
       />
+
+      <DashboardActions align="start">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={columnZoom >= maxTimelineColumnZoom}
+          onClick={() => onZoomChange(1)}
+          aria-describedby={rangeId}
+        >
+          Zoom in
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={columnZoom <= minTimelineColumnZoom}
+          onClick={() => onZoomChange(-1)}
+          aria-describedby={rangeId}
+        >
+          Zoom out
+        </Button>
+        <span
+          id={rangeId}
+          role="status"
+          className="text-sm text-muted-foreground"
+        >
+          {periods.length
+            ? `Visible columns ${firstVisible}–${lastVisible} of ${periods.length}.`
+            : 'No period columns.'}{' '}
+          Column zoom {Math.round(columnZoom * 100)}%.
+        </span>
+      </DashboardActions>
 
       <ActivityTimelineOverviewRail ref={railRef}>
         <ActivityTimelineOverviewTrack>
@@ -746,6 +787,7 @@ function TimelineOverviewNavigator({
             return (
               <ActivityTimelineOverviewPeriodButton
                 key={period.key}
+                tabIndex={-1}
                 title={`${period.label} · ${formatTimelinePeriodActivitySummary(period)}`}
                 onClick={() => onPeriodJump(index)}
                 density={density}
@@ -761,32 +803,21 @@ function TimelineOverviewNavigator({
         ) : null}
 
         <ActivityTimelineWindow
+          aria-hidden="true"
           style={{
             left: `${windowMetrics.leftRatio * 100}%`,
             width: `${windowMetrics.widthRatio * 100}%`,
           }}
-        >
-          <ActivityTimelineWindowHandle
-            edge="start"
-            aria-label="Resize visible timeline start"
-            aria-keyshortcuts="ArrowLeft ArrowRight"
-            onKeyDown={(event) => handleWindowKeyDown('start', event)}
-            onPointerDown={(event) => handlePointerDown('start', event)}
-          />
-          <ActivityTimelineWindowDrag
-            aria-label="Move visible timeline window"
-            aria-keyshortcuts="ArrowLeft ArrowRight"
-            onKeyDown={(event) => handleWindowKeyDown('move', event)}
-            onPointerDown={(event) => handlePointerDown('move', event)}
-          />
-          <ActivityTimelineWindowHandle
-            edge="end"
-            aria-label="Resize visible timeline end"
-            aria-keyshortcuts="ArrowLeft ArrowRight"
-            onKeyDown={(event) => handleWindowKeyDown('end', event)}
-            onPointerDown={(event) => handlePointerDown('end', event)}
-          />
-        </ActivityTimelineWindow>
+        />
+        <ActivityTimelineWindowDrag
+          aria-label="Move visible timeline window"
+          aria-describedby={rangeId}
+          aria-keyshortcuts="ArrowLeft ArrowRight"
+          disabled={windowMetrics.widthRatio >= 1}
+          windowBounds={windowMetrics}
+          onKeyDown={handleWindowKeyDown}
+          onPointerDown={handlePointerDown}
+        />
       </ActivityTimelineOverviewRail>
     </ActivityTimelineOverviewPanel>
   )
@@ -1019,30 +1050,6 @@ function getTimelineScrollState(viewport: HTMLDivElement): TimelineScrollState {
     clientWidth: viewport.clientWidth,
     scrollWidth: viewport.scrollWidth,
   }
-}
-
-function getOverviewWindowMetrics(scrollState: TimelineScrollState) {
-  if (scrollState.scrollWidth <= 0 || scrollState.clientWidth <= 0) {
-    return { leftRatio: 0, widthRatio: 1 }
-  }
-
-  const widthRatio = clamp(
-    scrollState.clientWidth / scrollState.scrollWidth,
-    0.08,
-    1,
-  )
-  const leftRatio = clamp(
-    scrollState.scrollLeft / scrollState.scrollWidth,
-    0,
-    1 - widthRatio,
-  )
-
-  return { leftRatio, widthRatio }
-}
-
-function getScrollRatioFromWindow(leftRatio: number, widthRatio: number) {
-  if (widthRatio >= 1) return 0
-  return clamp(leftRatio / (1 - widthRatio), 0, 1)
 }
 
 function getPointerRatio(clientX: number, railBounds: DOMRect) {

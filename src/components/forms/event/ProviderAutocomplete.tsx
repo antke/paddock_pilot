@@ -1,3 +1,5 @@
+import { useRef } from 'react'
+import type { Ref } from 'react'
 import { CheckIcon } from '@phosphor-icons/react'
 
 import {
@@ -30,6 +32,8 @@ type ProviderAutocompleteProps = {
   providers: Array<ProviderOption>
   disabled?: boolean
   invalid?: boolean
+  describedBy?: string
+  inputRef?: Ref<HTMLInputElement>
   onBlur: () => void
   onValueChange: (value: string) => void
   onProviderSelect: (provider: ProviderOption) => void
@@ -52,19 +56,24 @@ export function ProviderAutocomplete({
   providers,
   disabled = false,
   invalid = false,
+  describedBy,
+  inputRef,
   onBlur,
   onValueChange,
   onProviderSelect,
 }: ProviderAutocompleteProps) {
+  const highlightedProvider = useRef<ProviderOption | undefined>(undefined)
   if (providers.length === 0) {
     return (
       <Input
+        ref={inputRef}
         id={id}
         name={name}
         value={value}
         type="text"
         disabled={disabled}
         aria-invalid={invalid}
+        aria-describedby={describedBy}
         placeholder="Provider name"
         autoComplete="off"
         onBlur={onBlur}
@@ -100,13 +109,27 @@ export function ProviderAutocomplete({
 
         return searchableText.includes(normalizedQuery)
       }}
-      onValueChange={onValueChange}
+      onItemHighlighted={(provider) => {
+        highlightedProvider.current = provider
+      }}
+      onValueChange={(nextValue, details) => {
+        onValueChange(nextValue)
+        if (details.reason === 'item-press') {
+          const provider =
+            highlightedProvider.current?.name === nextValue
+              ? highlightedProvider.current
+              : providers.find((option) => option.name === nextValue)
+          if (provider) onProviderSelect(provider)
+        }
+      }}
     >
       <AutocompleteInput
+        ref={inputRef}
         id={id}
         name={name}
         disabled={disabled}
         aria-invalid={invalid}
+        aria-describedby={describedBy}
         placeholder="Select or enter a provider"
         autoComplete="off"
         triggerLabel="Show saved providers"
@@ -129,7 +152,7 @@ export function ProviderAutocomplete({
                 >
                   <span
                     aria-hidden="true"
-                    className="flex size-8 items-center justify-center rounded-full border border-border-subtle bg-surface-muted font-mono text-xs font-bold text-foreground"
+                    className="flex size-8 items-center justify-center rounded-full border border-border-subtle bg-surface-muted font-sans text-xs font-bold text-foreground"
                   >
                     {getProviderInitials(provider.name)}
                   </span>

@@ -4,6 +4,7 @@ import { Suspense } from 'react'
 
 import { cn } from '#/lib/utils'
 import { LandingLabChrome } from './LandingLabChrome'
+import { LandingLabThemeBoundary } from './LandingLabThemeBoundary'
 import './landingLabOverdrive.css'
 import type { LandingLabTheme, LandingLabViewport } from './LandingLabChrome'
 import {
@@ -178,19 +179,16 @@ export function LandingLabCapture({
   const Variant = variant.component
 
   return (
-    <Suspense
-      fallback={
-        <div
-          className={cn(
-            'grid min-h-screen place-items-center bg-background text-foreground',
-            theme === 'dark' && 'dark',
-          )}
-        >
-          <p className="text-sm font-semibold">Loading {variant.label}…</p>
-        </div>
-      }
-    >
-      <Variant theme={theme} versionId={mapVersion} />
-    </Suspense>
+    <LandingLabThemeBoundary theme={theme}>
+      <Suspense
+        fallback={
+          <div className="grid min-h-screen place-items-center bg-background text-foreground">
+            <p className="text-sm font-semibold">Loading {variant.label}…</p>
+          </div>
+        }
+      >
+        <Variant theme={theme} versionId={mapVersion} />
+      </Suspense>
+    </LandingLabThemeBoundary>
   )
 }

@@ -100,21 +100,21 @@ export function createHorseAnalysisData({
   const horseSignals = timelineSignals
     .filter((signal) => signal.horseId === horse._id)
     .sort(compareTimelineSignalDescending)
-  const healthSignals = horseSignals
-    .filter((signal) => signal.kind === 'health')
-    .slice(0, 6)
-  const medicationSignals = horseSignals
-    .filter((signal) => signal.kind === 'medication')
-    .slice(0, 6)
-  const nutritionTimelineSignals = horseSignals
-    .filter((signal) => signal.kind === 'nutrition')
-    .slice(0, 6)
-  const weightSignals = horseSignals
-    .filter((signal) => signal.kind === 'weight')
-    .slice(0, 6)
-  const reminderSignals = horseSignals
-    .filter((signal) => signal.kind === 'reminder')
-    .slice(0, 6)
+  const healthSignals = horseSignals.filter(
+    (signal) => signal.kind === 'health',
+  )
+  const medicationSignals = horseSignals.filter(
+    (signal) => signal.kind === 'medication',
+  )
+  const nutritionTimelineSignals = horseSignals.filter(
+    (signal) => signal.kind === 'nutrition',
+  )
+  const weightSignals = horseSignals.filter(
+    (signal) => signal.kind === 'weight',
+  )
+  const reminderSignals = horseSignals.filter(
+    (signal) => signal.kind === 'reminder',
+  )
   const attention =
     analysis.horsesNeedingAttention.find(
       (item) => item.horseId === horse._id,
@@ -157,9 +157,9 @@ export function createHorseAnalysisData({
       ) ?? null,
     healthFrequency,
     nutritionSignals:
-      stableAnalysis?.nutritionSignals
-        .filter((signal) => signal.horseId === horse._id)
-        .slice(0, 6) ?? [],
+      stableAnalysis?.nutritionSignals.filter(
+        (signal) => signal.horseId === horse._id,
+      ) ?? [],
     careCadence:
       stableAnalysis?.careCadence
         .filter((item) => item.horseId === horse._id)

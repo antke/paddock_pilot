@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import type { ReactNode } from 'react'
 
 import {
@@ -21,6 +22,7 @@ type CreateRecordDialogProps = {
   description?: string
   children: ReactNode
   className?: string
+  isPending?: boolean
 }
 
 export function CreateRecordDialog({
@@ -31,17 +33,38 @@ export function CreateRecordDialog({
   description,
   children,
   className,
+  isPending = false,
 }: CreateRecordDialogProps) {
+  const desktopTrigger = useRef<HTMLButtonElement>(null)
+  const floatingTrigger = useRef<HTMLButtonElement>(null)
+
   return (
     <Dialog
       data-slot="create-record-dialog"
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={(nextOpen) => {
+        if (!isPending) onOpenChange(nextOpen)
+      }}
     >
-      <RecordDialogDesktopTrigger>{triggerLabel}</RecordDialogDesktopTrigger>
-      <RecordDialogFloatingTrigger label={triggerLabel} />
+      <RecordDialogDesktopTrigger triggerRef={desktopTrigger}>
+        {triggerLabel}
+      </RecordDialogDesktopTrigger>
+      <RecordDialogFloatingTrigger
+        triggerRef={floatingTrigger}
+        label={triggerLabel}
+      />
 
-      <RecordDialogContent className={className}>
+      <RecordDialogContent
+        className={className}
+        showCloseButton={!isPending}
+        finalFocus={() =>
+          // The opener can become hidden when the viewport crosses the mobile breakpoint.
+          [desktopTrigger.current, floatingTrigger.current].find(
+            (trigger) =>
+              trigger?.isConnected && trigger.getClientRects().length > 0,
+          ) ?? true
+        }
+      >
         <DialogHeader className="px-6 pt-6 pb-4 md:px-7 md:pt-7">
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}

@@ -8,6 +8,7 @@ import {
   waitFor,
 } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { StrictMode } from 'react'
 
 import { DocumentDownloadAction } from './DocumentDownloadAction'
 
@@ -183,5 +184,54 @@ describe('DocumentDownloadAction', () => {
       'Download unavailable: No file is attached',
     )
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+  it('clears pending after StrictMode effect replay and a rejected download', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
+    render(
+      <StrictMode>
+        <DocumentDownloadAction
+          fileName="sample.txt"
+          fileState="available"
+          fileUrl="https://files.example/sample"
+        />
+      </StrictMode>,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Download sample.txt' }))
+    await waitFor(() =>
+      expect(toastMocks.showAppErrorToast).toHaveBeenCalledTimes(1),
+    )
+    expect(
+      screen.getByRole<HTMLButtonElement>('button', {
+        name: 'Download sample.txt',
+      }).disabled,
+    ).toBe(false)
+  })
+
+  it('aborts an outstanding download on unmount without a failure toast', async () => {
+    let signal: AbortSignal | undefined
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        (_url: string, options: { signal: AbortSignal }) =>
+          new Promise((_resolve, reject) => {
+            signal = options.signal
+            signal.addEventListener('abort', () =>
+              reject(new DOMException('Aborted', 'AbortError')),
+            )
+          }),
+      ),
+    )
+    const { unmount } = render(
+      <DocumentDownloadAction
+        fileName="sample.txt"
+        fileState="available"
+        fileUrl="https://files.example/sample"
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Download sample.txt' }))
+    unmount()
+    expect(signal?.aborted).toBe(true)
+    await Promise.resolve()
+    expect(toastMocks.showAppErrorToast).not.toHaveBeenCalled()
   })
 })

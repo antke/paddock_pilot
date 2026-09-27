@@ -1,12 +1,17 @@
 import type { ComponentProps, ReactNode } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
 import { cn } from '#/lib/utils'
 import { useQueryErrorResetBoundary } from '@tanstack/react-query'
+import { useRouter } from '@tanstack/react-router'
 
-type RouteStatusAlertProps = Omit<ComponentProps<typeof Alert>, 'children'> & {
+type RouteStatusAlertProps = Omit<
+  ComponentProps<typeof Alert>,
+  'children' | 'title'
+> & {
   title: ReactNode
   description?: ReactNode
   actions?: ReactNode
@@ -33,6 +38,7 @@ type RouteQueryErrorAlertProps = Pick<
   'description' | 'title' | 'width'
 > & {
   reset: () => void
+  recoveryActions?: ReactNode
 }
 
 const routeStatusAlertToneClassNames = {
@@ -115,24 +121,70 @@ export function RouteQueryErrorAlert({
   reset,
   title,
   width,
+  recoveryActions,
 }: RouteQueryErrorAlertProps) {
   const queryErrorResetBoundary = useQueryErrorResetBoundary()
+  const router = useRouter()
+  const pending = useRef(false)
+  const epoch = useRef(0)
+  const [isPending, setIsPending] = useState(false)
+  const [retryFailed, setRetryFailed] = useState(false)
+  useEffect(() => {
+    const current = ++epoch.current
+    return () => {
+      if (epoch.current === current) epoch.current++
+    }
+  }, [])
 
-  const retry = () => {
+  const retry = async () => {
+    if (pending.current) return
+    pending.current = true
+    const current = epoch.current
+    const location = router.state.location
+    const isCurrent = () =>
+      epoch.current === current &&
+      router.state.location.href === location.href &&
+      router.state.location.state.__TSR_key === location.state.__TSR_key
+    setIsPending(true)
+    setRetryFailed(false)
     queryErrorResetBoundary.reset()
-    reset()
+    try {
+      // CatchBoundary.reset alone does not clear an errored loader match.
+      await router.invalidate({ sync: true })
+      if (isCurrent()) reset()
+    } catch {
+      if (isCurrent()) setRetryFailed(true)
+    } finally {
+      pending.current = false
+      if (isCurrent()) setIsPending(false)
+    }
   }
 
   return (
     <RouteStatusAlert
       title={title}
-      description={description}
+      description={
+        <>
+          {description}
+          {retryFailed ? (
+            <p>That retry couldn’t finish. Please try again.</p>
+          ) : null}
+        </>
+      }
       tone="danger"
       width={width}
       actions={
-        <Button type="button" onClick={retry} className="min-h-11">
-          Try again
-        </Button>
+        <>
+          <Button
+            type="button"
+            onClick={() => void retry()}
+            disabled={isPending}
+            aria-busy={isPending}
+          >
+            {isPending ? 'Trying again…' : 'Try again'}
+          </Button>
+          {recoveryActions}
+        </>
       }
     />
   )

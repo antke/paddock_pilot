@@ -58,7 +58,7 @@ export function StableDashboardAlerts({
   )
   return (
     <DashboardSection
-      chrome="cards"
+      chrome="soft"
       gap="compact"
       title="Care alerts"
       description="Quick checks for urgent care, missing details, follow-ups, and upcoming service coordination."

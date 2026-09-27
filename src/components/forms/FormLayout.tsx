@@ -18,6 +18,7 @@ type InlineFormProps = ComponentProps<'form'> & {
 
 type FormTabsContentProps = ComponentProps<typeof TabsContent>
 type FormGroupProps = Omit<ComponentProps<'section'>, 'title'> & {
+  headingLevel?: 2 | 3 | 4
   description?: ReactNode
   title: ReactNode
 }
@@ -89,8 +90,10 @@ export function FormGroup({
   className,
   description,
   title,
+  headingLevel = 3,
   ...props
 }: FormGroupProps) {
+  const Heading = `h${headingLevel}` as const
   return (
     <section
       data-slot="form-group"
@@ -98,14 +101,14 @@ export function FormGroup({
       {...props}
     >
       <div className="grid gap-1">
-        <h3
+        <Heading
           className={cn(
             dashboardNestedHeadingClassName,
             'text-lg leading-none',
           )}
         >
           {title}
-        </h3>
+        </Heading>
         {description && (
           <p className="text-sm leading-relaxed text-muted-foreground">
             {description}
@@ -134,14 +137,12 @@ export function FormStepHeader({
       {...props}
     >
       <span
-        className="row-span-2 grid size-7 place-items-center rounded-control border border-border-subtle bg-surface-muted font-mono text-xs font-semibold text-muted-foreground"
+        className="row-span-2 grid size-7 place-items-center rounded-control border border-border-subtle bg-surface-muted font-sans text-xs font-semibold text-muted-foreground tabular-nums"
         aria-hidden="true"
       >
         {String(number).padStart(2, '0')}
       </span>
-      <span className="text-xs font-bold text-foreground uppercase">
-        {title}
-      </span>
+      <span className="text-xs font-bold text-foreground">{title}</span>
       {description && (
         <span className="text-sm text-muted-foreground">{description}</span>
       )}
@@ -235,7 +236,7 @@ export function FormSection({
       >
         <span
           className={cn(
-            'grid size-8 shrink-0 place-items-center rounded-control border border-border-subtle bg-surface-muted font-mono text-xs font-semibold text-muted-foreground',
+            'grid size-8 shrink-0 place-items-center rounded-control border border-border-subtle bg-surface-muted font-sans text-xs font-semibold text-muted-foreground tabular-nums',
             invalid &&
               'border-destructive/35 bg-destructive/10 text-destructive',
           )}

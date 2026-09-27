@@ -50,7 +50,7 @@ describe('FileUploadField', () => {
     fireEvent.change(input!, { target: { files: [image] } })
 
     expect(screen.getByText('maple-profile.png')).toBeTruthy()
-    expect(screen.getByText(/PNG · 5 B · Ready to upload/)).toBeTruthy()
+    expect(screen.getByText('PNG · 5 B')).toBeTruthy()
     expect(onFilesChange).toHaveBeenLastCalledWith([image])
 
     fireEvent.click(
@@ -113,5 +113,32 @@ describe('FileUploadField', () => {
     expect(
       screen.getByRole('button', { name: /drop a file here or browse/i }),
     ).toBeTruthy()
+  })
+  it('associates an error with browse, selected-file replacement and native controls', () => {
+    const file = new File(['sample'], 'sample.txt', { type: 'text/plain' })
+    const props = {
+      label: 'Sample file',
+      onFilesChange: () => {},
+      errors: [{ message: 'Choose a smaller sample file.' }],
+    }
+    const { rerender, container } = render(<FileUploadField {...props} />)
+    const browse = screen.getByRole('button', {
+      name: /Drop a file here or browse/,
+    })
+    const errorId = browse.getAttribute('aria-describedby')!
+    expect(document.getElementById(errorId)?.textContent).toBe(
+      'Choose a smaller sample file.',
+    )
+    expect(
+      container.querySelector('input')?.getAttribute('aria-describedby'),
+    ).toBe(errorId)
+    rerender(
+      <FileUploadField {...props} files={[file] as unknown as FileList} />,
+    )
+    expect(
+      screen
+        .getByRole('button', { name: 'Replace sample.txt' })
+        .getAttribute('aria-describedby'),
+    ).toBe(errorId)
   })
 })

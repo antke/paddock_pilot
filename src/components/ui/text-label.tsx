@@ -5,7 +5,7 @@ import type { HTMLAttributes } from 'react'
 
 import { cn } from '#/lib/utils'
 
-const textLabelVariants = cva('uppercase text-muted-foreground', {
+const textLabelVariants = cva('text-muted-foreground', {
   variants: {
     size: {
       nano: 'text-xs',
@@ -16,7 +16,7 @@ const textLabelVariants = cva('uppercase text-muted-foreground', {
     weight: {
       medium: 'font-medium',
       semibold: 'font-semibold',
-      black: 'font-black',
+      black: 'font-bold',
     },
     tracking: {
       standard: 'tracking-[0.035em]',
@@ -29,7 +29,7 @@ const textLabelVariants = cva('uppercase text-muted-foreground', {
   defaultVariants: {
     size: 'xs',
     weight: 'semibold',
-    tracking: 'standard',
+    tracking: 'none',
   },
 })
 

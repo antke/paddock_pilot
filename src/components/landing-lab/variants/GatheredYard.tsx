@@ -17,9 +17,9 @@ export default function GatheredYard({
       <main id="main-content" className="landing-overdrive bg-background">
         <section
           aria-labelledby="gathered-yard-heading"
-          className="gathered-convergence relative min-h-[125svh] border-b border-border bg-surface lg:min-h-[142svh]"
+          className="gathered-convergence relative border-b border-border bg-surface lg:min-h-[142svh]"
         >
-          <div className="relative grid min-h-[125svh] place-items-center gap-9 px-5 py-36 sm:px-8 lg:sticky lg:top-0 lg:grid-cols-12 lg:grid-rows-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:place-items-stretch lg:items-center lg:gap-6 lg:px-10 lg:py-8 xl:px-14">
+          <div className="relative grid place-items-center gap-9 px-5 py-12 sm:px-8 sm:py-16 lg:sticky lg:top-0 lg:min-h-[125svh] lg:grid-cols-12 lg:grid-rows-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:place-items-stretch lg:items-center lg:gap-6 lg:px-10 lg:py-8 xl:px-14">
             <div className="relative z-10 lg:col-span-6 lg:col-start-4 lg:row-start-2 lg:text-center">
               <h1
                 id="gathered-yard-heading"
@@ -37,7 +37,7 @@ export default function GatheredYard({
               <h2
                 key={capability.id}
                 id={`gathered-${capability.id}`}
-                className={`${fragmentClasses[index]} max-w-[8ch] font-display text-3xl leading-[0.9] font-bold tracking-[-0.025em] text-balance uppercase sm:max-w-[9ch] sm:text-3xl lg:max-w-[12ch] lg:text-[clamp(2.5rem,3.4vw,3.75rem)]`}
+                className={`${fragmentClasses[index]} hidden max-w-[8ch] font-display text-3xl leading-[0.9] font-bold tracking-[-0.025em] text-balance uppercase sm:max-w-[9ch] sm:text-3xl lg:block lg:max-w-[12ch] lg:text-[clamp(2.5rem,3.4vw,3.75rem)]`}
               >
                 {capability.title}
               </h2>
@@ -45,7 +45,7 @@ export default function GatheredYard({
 
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border"
+              className="pointer-events-none absolute inset-y-0 hidden lg:block left-1/2 w-px -translate-x-1/2 bg-border"
             />
           </div>
         </section>
@@ -57,11 +57,17 @@ export default function GatheredYard({
           {landingLabContent.capabilities.map((capability, index) => (
             <article
               key={capability.id}
-              aria-labelledby={`gathered-${capability.id}`}
+              aria-labelledby={`gathered-detail-${capability.id}`}
               className={`grid content-center px-5 py-10 sm:px-8 sm:py-12 lg:min-h-72 lg:px-10 xl:px-14 ${
                 index % 2 === 0 ? 'lg:border-r lg:border-border' : ''
               } ${index < 2 ? 'border-b border-border' : ''}`}
             >
+              <h2
+                id={`gathered-detail-${capability.id}`}
+                className="mb-5 font-display text-3xl leading-tight font-bold tracking-[-0.025em] text-balance uppercase lg:hidden"
+              >
+                {capability.title}
+              </h2>
               <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
                 {capability.description}
               </p>

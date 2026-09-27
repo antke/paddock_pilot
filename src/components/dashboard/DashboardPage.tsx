@@ -7,7 +7,7 @@ type DashboardPageWidth = 'full' | 'narrow' | 'compact'
 type DashboardPageVerticalAlign = 'start' | 'center'
 
 const dashboardPageGapClassNames = {
-  standard: 'grid gap-6',
+  standard: 'grid gap-[var(--app-section-gap)]',
   loose: 'grid gap-8',
   compact: 'grid gap-4',
 } satisfies Record<DashboardPageGap, string>
@@ -30,6 +30,7 @@ export function dashboardPageClassName(
   className?: string,
 ) {
   return cn(
+    'min-w-0',
     dashboardPageGapClassNames[gap],
     dashboardPageWidthClassNames[width],
     dashboardPageVerticalAlignClassNames[verticalAlign],

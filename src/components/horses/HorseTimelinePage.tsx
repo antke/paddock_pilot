@@ -35,10 +35,17 @@ import {
   NutritionLogKindBadge,
   WeightRecordKindBadge,
 } from './HorseCareBadges'
+import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
+import { ListFilterControls } from '#/components/list-filtering/ListFilterControls'
+import { useListFiltering } from '#/components/list-filtering/useListFiltering'
+import { formatCurrencyAmount } from '#/lib/numberDisplay'
+import { horseTimelineFilterConfig } from './horseTimelineFilters'
 import { horseHealthIssueSeverityLabels } from './horseCareLabels'
 
-type HorseTimeline = FunctionReturnType<typeof api.horseTimeline.listForHorse>
-type TimelineEntry = HorseTimeline['entries'][number]
+export type HorseTimeline = FunctionReturnType<
+  typeof api.horseTimeline.listForHorse
+>
+export type TimelineEntry = HorseTimeline['entries'][number]
 
 type HorseTimelinePageProps = {
   stableId: string
@@ -52,6 +59,24 @@ export function HorseTimelinePage({ horseId }: HorseTimelinePageProps) {
     }),
   )
 
+  return <HorseTimelineView key={horseId} timeline={timeline} />
+}
+
+export function HorseTimelineView({ timeline }: { timeline: HorseTimeline }) {
+  const filtering = useListFiltering({
+    items: timeline.entries,
+    config: horseTimelineFilterConfig,
+  })
+  if (!timeline.horse)
+    return (
+      <RouteEntityNotFoundAlert
+        entity="horse"
+        description="This care history is no longer available."
+      />
+    )
+  const entries = [...filtering.items].sort(
+    (a, b) => b.occurredAt - a.occurredAt,
+  )
   return (
     <DashboardSectionCard
       title="Timeline"
@@ -63,13 +88,27 @@ export function HorseTimelinePage({ horseId }: HorseTimelinePageProps) {
       size="panel"
       contentGap="comfortable"
     >
-      {timeline.entries.length === 0 ? (
-        <DashboardEmptyState chrome="soft" title="No timeline entries yet">
-          Events and care records will appear here as the yard adds them.
+      {timeline.entries.length > 0 && (
+        <ListFilterControls
+          config={horseTimelineFilterConfig}
+          filtering={filtering}
+        />
+      )}
+      {entries.length === 0 ? (
+        <DashboardEmptyState
+          title={
+            filtering.isFiltering
+              ? 'No matching records'
+              : 'No timeline entries yet'
+          }
+        >
+          {filtering.isFiltering
+            ? 'Try another search or clear the filters.'
+            : 'Events and care records will appear here as the yard adds them.'}
         </DashboardEmptyState>
       ) : (
         <DashboardItemList gap="compact">
-          {timeline.entries.map((entry) => (
+          {entries.map((entry) => (
             <TimelineEntryCard
               key={`${entry.kind}-${entry.id}`}
               entry={entry}
@@ -146,7 +185,7 @@ function EventTimelineEntry({
       )}
       {entry.costShare !== undefined && (
         <DashboardMetaList>
-          <span>Cost share: {entry.costShare}</span>
+          <span>Cost share: {formatCurrencyAmount(entry.costShare)}</span>
         </DashboardMetaList>
       )}
     </ActivityTimelineListEntry>

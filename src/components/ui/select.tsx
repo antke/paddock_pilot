@@ -15,7 +15,7 @@ function Select({ className, ...props }: React.ComponentProps<'select'>) {
       />
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute top-1/2 right-1 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent text-foreground/80 transition-[background-color,color,transform] duration-150 group-hover/select:bg-primary/18 group-hover/select:text-foreground group-active/select:scale-95 group-active/select:bg-primary/24 motion-reduce:transition-none"
+        className="pointer-events-none absolute top-1/2 right-1 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent text-foreground/80 transition-[background-color,color,transform] duration-150 group-hover/select:bg-surface-muted group-hover/select:text-foreground group-active/select:scale-95 group-active/select:bg-surface-muted motion-reduce:transition-none"
       >
         <svg
           className="size-4"

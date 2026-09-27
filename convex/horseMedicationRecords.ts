@@ -145,6 +145,11 @@ export const complete = mutation({
     await assertCanManageHorse(ctx, horse)
 
     const endDate = args.endDate ?? resolveTodayDateKey()
+    if (endDate < record.startDate) {
+      throw new ConvexError(
+        'A medication course cannot be completed before its start date.',
+      )
+    }
     const input = validateAddInput({ ...record, status: 'completed', endDate })
 
     await ctx.db.patch(args.id, {

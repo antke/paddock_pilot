@@ -10,7 +10,7 @@ import {
   DashboardItemRecordContent,
 } from '#/components/dashboard/DashboardItemCard'
 import { DashboardLayoutStack } from '#/components/dashboard/DashboardLayoutGrid'
-import { DashboardSectionTabs } from '#/components/dashboard/DashboardNavigation'
+import { AnalysisScopeSelector } from './AnalysisScopeSelector'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import {
@@ -131,7 +131,7 @@ type StableAttentionItem = {
   accent: 'danger' | 'warning'
   target:
     | { kind: 'reminders' }
-    | { kind: 'horse-care'; horseId: string }
+    | { kind: 'horse-care'; horseId: string; careView?: 'health' }
     | { kind: 'event'; eventId: string }
 }
 
@@ -245,7 +245,7 @@ export function AnalysisCentre({
       <DashboardPageHeader title="Analysis Centre" />
 
       <div className="grid gap-3">
-        <DashboardSectionTabs
+        <AnalysisScopeSelector
           activeId={activeTabValue}
           items={analysisTabItems}
           onSelect={setActiveAnalysisTab}
@@ -313,7 +313,6 @@ function AnalysisPanel({
 }) {
   return (
     <DashboardSection
-      chrome="cards"
       className={cn('min-w-0 gap-5', className)}
       span={span}
       title={title}
@@ -329,6 +328,7 @@ function AnalysisPanel({
 }
 
 function AnalysisList({
+  ariaLabel,
   children,
   itemCount,
   visibleItemLimit,
@@ -336,6 +336,7 @@ function AnalysisList({
   fillParent,
   className,
 }: {
+  ariaLabel: string
   children: ReactNode
   itemCount: number
   visibleItemLimit: number
@@ -345,6 +346,7 @@ function AnalysisList({
 }) {
   return (
     <ScrollableList
+      ariaLabel={ariaLabel}
       itemCount={itemCount}
       visibleItemLimit={visibleItemLimit}
       estimatedItemHeightRem={estimatedItemHeightRem}
@@ -398,10 +400,7 @@ function StableActivityTimelinePanel({
           onScaleChange={onTimelineScaleChange}
         />
 
-        <DashboardItemCard
-          chrome="soft"
-          className="min-w-0 overflow-hidden p-3 md:p-4"
-        >
+        <div className="min-w-0">
           <StableActivityTimelineChart
             periods={periods}
             occurrences={timeline.occurrences}
@@ -412,8 +411,12 @@ function StableActivityTimelinePanel({
             onPeriodSelect={onPeriodSelect}
             onEventOpen={onEventOpen}
           />
-        </DashboardItemCard>
+        </div>
 
+        <p className="text-sm text-muted-foreground">
+          Display filters affect event blocks only. Period totals, care records
+          and the details below include all activity.
+        </p>
         <TimelineSeriesControls
           visibleSeries={visibleSeries}
           onSeriesToggle={onSeriesToggle}
@@ -436,7 +439,7 @@ function TimelineScaleControls({
 }) {
   return (
     <DashboardItemCard
-      chrome="soft"
+      chrome="flat"
       density="compact"
       className="flex flex-wrap items-center justify-between gap-3 p-3 md:p-4"
     >
@@ -450,6 +453,7 @@ function TimelineScaleControls({
         </DashboardItemBodyText>
       </div>
       <ChoiceButtonGroup
+        aria-label="Calendar scale"
         value={scale}
         options={stableTimelineScaleOptions}
         onValueChange={onScaleChange}
@@ -471,7 +475,7 @@ function TimelineSeriesControls({
   return (
     <DashboardItemFieldsetCard
       aria-label="Timeline blocks"
-      chrome="soft"
+      chrome="flat"
       density="compact"
       className={cn('grid gap-3 p-3 md:p-4', className)}
     >
@@ -534,7 +538,7 @@ function TimelineEventTypeControls({
   return (
     <DashboardItemFieldsetCard
       aria-label="Timeline event categories"
-      chrome="soft"
+      chrome="flat"
       density="compact"
       className={cn('grid gap-3 p-3 md:p-4', className)}
     >
@@ -691,15 +695,11 @@ function SelectedTimelinePeriodPanel({
   span?: ComponentProps<typeof DashboardSection>['span']
 }) {
   const unitLabel = getTimelineScaleUnitLabel(scale)
-  const hasConstrainedOccurrenceList = Boolean(
-    period &&
-    period.occurrences.length > selectedPeriodOccurrenceListVisibleItemLimit,
-  )
 
   return (
     <AnalysisPanel
       title={period ? period.label : `Selected timeline ${unitLabel}`}
-      description={`Click a ${unitLabel} column or event block in the timeline to inspect stable events overlapping that ${unitLabel}.`}
+      description={`Select a ${unitLabel} column to inspect all activity in that ${unitLabel}, including blocks hidden by display filters. Select an event block to open its event page.`}
       action={
         period ? (
           <DashboardBadgeList>
@@ -712,21 +712,13 @@ function SelectedTimelinePeriodPanel({
                   period.urgentSignalCount > 0 ? 'destructive' : 'secondary'
                 }
               >
-                {formatCountLabel(period.signalCount, 'event')}
+                {formatCountLabel(period.signalCount, 'care record')}
               </Badge>
             )}
           </DashboardBadgeList>
         ) : undefined
       }
-      className={cn(
-        hasConstrainedOccurrenceList &&
-          'h-[70vh] max-h-[70vh] grid-rows-[auto_minmax(0,1fr)] overflow-hidden',
-        className,
-      )}
-      bodyClassName={cn(
-        'min-h-0',
-        hasConstrainedOccurrenceList && 'overflow-hidden',
-      )}
+      className={className}
       span={span}
     >
       {!period ? (
@@ -734,20 +726,8 @@ function SelectedTimelinePeriodPanel({
           Select a timeline {unitLabel} to preview overlapping event blocks.
         </DashboardEmptyState>
       ) : (
-        <div
-          className={cn(
-            'grid min-h-0 gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]',
-            hasConstrainedOccurrenceList && 'h-full',
-          )}
-        >
-          <TimelinePeriodBreakdown
-            period={period}
-            className={
-              hasConstrainedOccurrenceList
-                ? 'h-full overflow-y-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
-                : undefined
-            }
-          />
+        <div className="grid min-h-0 gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
+          <TimelinePeriodBreakdown period={period} />
 
           {period.occurrences.length === 0 ? (
             <DashboardEmptyState chrome="soft">
@@ -755,16 +735,11 @@ function SelectedTimelinePeriodPanel({
             </DashboardEmptyState>
           ) : (
             <AnalysisList
+              ariaLabel="All events in selected period"
               itemCount={period.occurrences.length}
               visibleItemLimit={selectedPeriodOccurrenceListVisibleItemLimit}
               estimatedItemHeightRem={
                 selectedPeriodOccurrenceListEstimatedItemHeightRem
-              }
-              fillParent={hasConstrainedOccurrenceList}
-              className={
-                hasConstrainedOccurrenceList
-                  ? 'h-full content-start pb-0'
-                  : undefined
               }
             >
               {period.occurrences.map((occurrence) => (
@@ -792,7 +767,7 @@ function TimelinePeriodBreakdown({
 }) {
   return (
     <div className={cn('grid min-h-0 content-start gap-3', className)}>
-      <DashboardItemCard chrome="soft" className="grid gap-3">
+      <DashboardItemCard chrome="flat" className="grid gap-3">
         <DashboardInlineHeader
           title={period.scale === 'day' ? 'Day mix' : 'Period mix'}
           titleWeight="semibold"
@@ -805,7 +780,10 @@ function TimelinePeriodBreakdown({
           />
           <DetailKeyValueRow label="Planned" value={period.plannedEventCount} />
           {period.signalCount > 0 && (
-            <DetailKeyValueRow label="Events" value={period.signalCount} />
+            <DetailKeyValueRow
+              label="Care records"
+              value={period.signalCount}
+            />
           )}
           {period.urgentSignalCount > 0 && (
             <DetailKeyValueRow
@@ -828,25 +806,24 @@ function TimelineSignalDigest({ period }: { period: StableTimelinePeriod }) {
 
   const urgentSignals = period.signals.filter((signal) => signal.urgent)
   const standardSignals = period.signals.filter((signal) => !signal.urgent)
-  const visibleSignals = [...urgentSignals, ...standardSignals].slice(0, 4)
-  const hiddenSignalCount = period.signalCount - visibleSignals.length
+  const visibleSignals = [...urgentSignals, ...standardSignals]
 
   return (
-    <DashboardItemCard chrome="soft" className="grid gap-3">
+    <DashboardItemCard chrome="flat" className="grid gap-3">
       <DashboardInlineHeader
-        title="Event digest"
+        title="Care record digest"
         aside={
           <Badge
             variant={period.urgentSignalCount > 0 ? 'destructive' : 'secondary'}
           >
-            {formatCountLabel(period.signalCount, 'event')}
+            {formatCountLabel(period.signalCount, 'care record')}
           </Badge>
         }
         titleWeight="semibold"
       />
 
       <DashboardBadgeList gap="compact">
-        {period.signalKindCounts.slice(0, 3).map((item) => (
+        {period.signalKindCounts.map((item) => (
           <Badge
             key={item.kind}
             variant="neutral"
@@ -864,7 +841,12 @@ function TimelineSignalDigest({ period }: { period: StableTimelinePeriod }) {
         ))}
       </DashboardBadgeList>
 
-      <div className="grid gap-2">
+      <ScrollableList
+        ariaLabel="Care records in selected period"
+        itemCount={visibleSignals.length}
+        visibleItemLimit={4}
+        estimatedItemHeightRem={5.5}
+      >
         {visibleSignals.map((signal) => (
           <TimelineSignalRow
             key={`${signal.kind}:${signal.id}`}
@@ -872,12 +854,7 @@ function TimelineSignalDigest({ period }: { period: StableTimelinePeriod }) {
             showDate={period.scale !== 'day'}
           />
         ))}
-        {hiddenSignalCount > 0 && (
-          <DashboardItemBodyText tone="muted" className="text-xs font-medium">
-            +{formatCountLabel(hiddenSignalCount, 'more event')} in this period
-          </DashboardItemBodyText>
-        )}
-      </div>
+      </ScrollableList>
     </DashboardItemCard>
   )
 }
@@ -891,8 +868,8 @@ function TimelineSignalRow({
 }) {
   return (
     <DashboardInlinePanel
-      chrome="soft"
-      padding="tight"
+      chrome="flat"
+      padding="none"
       className="min-w-0"
       stack="tight"
     >
@@ -904,10 +881,12 @@ function TimelineSignalRow({
             backgroundColor: timelineSignalKindAccentColors[signal.kind],
           }}
         />
-        <span className="truncate text-sm font-medium">{signal.title}</span>
+        <span className="min-w-0 break-words text-sm font-medium">
+          {signal.title}
+        </span>
         {signal.urgent && <Badge variant="destructive">Urgent</Badge>}
       </div>
-      <p className="truncate text-xs leading-5 text-muted-foreground">
+      <p className="break-words text-xs leading-5 text-muted-foreground">
         {getTimelineSignalDetail(signal, showDate)}
       </p>
     </DashboardInlinePanel>
@@ -936,7 +915,7 @@ function TimelineOccurrenceRow({
         endDate: occurrence.endDate,
       }}
       stableId={stableId}
-      chrome="soft"
+      chrome="flat"
       horseCount={event.horseIds.length}
       supplementalMeta={[
         occurrence.durationDays > 1
@@ -977,6 +956,7 @@ function StableNeedsAttentionPanel({
         </DashboardEmptyState>
       ) : (
         <AnalysisList
+          ariaLabel="Stable needs attention"
           itemCount={items.length}
           visibleItemLimit={stableAttentionListVisibleItemLimit}
           estimatedItemHeightRem={stableAttentionListEstimatedItemHeightRem}
@@ -1019,8 +999,9 @@ function StableAttentionRow({
       <DashboardItemLinkCard
         to="/stables/$stableId/horses/$horseId/care"
         params={{ stableId, horseId: item.target.horseId }}
+        search={{ careView: item.target.careView }}
         accent={item.accent}
-        chrome="cards"
+        chrome="flat"
         density="compact"
         className={className}
       >
@@ -1035,7 +1016,7 @@ function StableAttentionRow({
         to="/stables/$stableId/events/$eventId"
         params={{ stableId, eventId: item.target.eventId }}
         accent={item.accent}
-        chrome="cards"
+        chrome="flat"
         density="compact"
         className={className}
       >
@@ -1049,7 +1030,7 @@ function StableAttentionRow({
       to="/stables/$stableId/reminders"
       params={{ stableId }}
       accent={item.accent}
-      chrome="cards"
+      chrome="flat"
       density="compact"
       className={className}
     >
@@ -1087,30 +1068,35 @@ function createStableAttentionItems(
           isOverdueReminder || signal.kind === 'health' ? 'danger' : 'warning',
         target:
           signal.kind === 'health' && signal.horseId
-            ? { kind: 'horse-care', horseId: String(signal.horseId) }
+            ? {
+                kind: 'horse-care',
+                horseId: String(signal.horseId),
+                careView: 'health',
+              }
             : { kind: 'reminders' },
       }
     })
 
   const overdueCare = stableAnalysis.careCadence
     .filter((item) => item.overdue)
-    .map(
-      (item): StableAttentionItem => ({
-        id: `cadence:${item.horseId}:${item.type}`,
-        title: `${eventTypeLabels[item.type]} care is overdue`,
-        meta: [
-          item.horseName,
-          item.lastCompletedDate
-            ? `Last completed ${formatEventDate(item.lastCompletedDate)}`
-            : undefined,
-        ].filter((value): value is string => Boolean(value)),
-        description: `The usual interval is ${formatCountLabel(item.expectedDays, 'day')}.`,
-        priority: 3,
-        date: item.lastCompletedDate ?? '',
-        accent: 'warning',
-        target: { kind: 'horse-care', horseId: String(item.horseId) },
-      }),
-    )
+    .map((item): StableAttentionItem => ({
+      id: `cadence:${item.horseId}:${item.type}`,
+      title: `${eventTypeLabels[item.type]} care is overdue`,
+      meta: [
+        item.horseName,
+        item.lastCompletedDate
+          ? `Last completed ${formatEventDate(item.lastCompletedDate)}`
+          : undefined,
+      ].filter((value): value is string => Boolean(value)),
+      description: `The usual interval is ${formatCountLabel(item.expectedDays, 'day')}.`,
+      priority: 3,
+      date: item.lastCompletedDate ?? '',
+      accent: 'warning',
+      target: {
+        kind: 'horse-care',
+        horseId: String(item.horseId),
+      },
+    }))
 
   const missingEventNotes = stableAnalysis.completionNotesNeeded.map(
     (event): StableAttentionItem => ({

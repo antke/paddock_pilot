@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -9,7 +10,9 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getFunctionName } from 'convex/server'
 import type { ReactNode } from 'react'
-import { AppUserStateProvider } from './AppUserStateProvider'
+import type * as RouterModule from '@tanstack/react-router'
+import { AppUserStateGate, AppUserStateProvider } from './AppUserStateProvider'
+import { ApplicationRouteShell } from './ApplicationRouteShell'
 
 const state = vi.hoisted(() => ({
   path: '/',
@@ -20,9 +23,15 @@ const state = vi.hoisted(() => ({
   stables: [] as Array<{ _id: string; name: string }>,
   nextOnboarding: null as { stableId: string } | null,
   sync: vi.fn(),
+  signOut: vi.fn(),
 }))
 vi.mock('@clerk/tanstack-react-start', () => ({
   useAuth: () => ({ userId: state.clerkUserId }),
+  useClerk: () => ({ signOut: state.signOut }),
+  ClerkLoaded: ({ children }: { children: ReactNode }) => children,
+  ClerkLoading: () => null,
+  Show: ({ when, children }: { when: string; children: ReactNode }) =>
+    (when === 'signed-in') === !!state.clerkUserId ? children : null,
 }))
 vi.mock('convex/react', () => ({
   useConvexAuth: () => ({
@@ -51,7 +60,8 @@ vi.mock('convex/react', () => ({
     }
   },
 }))
-vi.mock('@tanstack/react-router', () => ({
+vi.mock('@tanstack/react-router', async (importOriginal) => ({
+  ...(await importOriginal<typeof RouterModule>()),
   useLocation: () => ({ pathname: state.path }),
   Navigate: (props: {
     to: string
@@ -62,28 +72,14 @@ vi.mock('@tanstack/react-router', () => ({
 vi.mock('./RoutePending', () => ({
   RoutePending: () => <p>Loading account</p>,
 }))
-vi.mock('./RouteStatusAlert', () => ({
-  RouteStatusAlert: ({
-    title,
-    actions,
-  }: {
-    title: string
-    actions: ReactNode
-  }) => (
-    <div>
-      {title}
-      {actions}
-    </div>
-  ),
+vi.mock('../Header', () => ({
+  default: () => <header>Application navigation</header>,
 }))
-vi.mock('#/components/ui/button', () => ({
-  Button: ({
-    children,
-    onClick,
-  }: {
-    children: ReactNode
-    onClick: () => void
-  }) => <button onClick={onClick}>{children}</button>,
+vi.mock('../Footer', () => ({
+  default: () => <footer>Application footer</footer>,
+}))
+vi.mock('#/lib/devAuthBypass', () => ({
+  useDevAuthBypassEnabled: () => false,
 }))
 
 beforeEach(() => {
@@ -95,12 +91,20 @@ beforeEach(() => {
   state.stables = []
   state.nextOnboarding = null
   state.sync.mockReset().mockResolvedValue('member-id')
+  state.signOut.mockReset().mockResolvedValue(undefined)
   localStorage.clear()
 })
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
+})
 const app = () => (
   <AppUserStateProvider>
-    <p>Requested page</p>
+    <ApplicationRouteShell pathname={state.path}>
+      <AppUserStateGate>
+        <p>Requested page</p>
+      </AppUserStateGate>
+    </ApplicationRouteShell>
   </AppUserStateProvider>
 )
 const redirect = () => JSON.parse(screen.getByTestId('redirect').textContent)
@@ -187,5 +191,96 @@ describe('invitation-first account routing', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
     await screen.findByText('Requested page')
     expect(state.sync).toHaveBeenCalledTimes(2)
+  })
+
+  it('preserves the shell during initial account loading and a failed refresh', async () => {
+    state.sync.mockRejectedValueOnce(new Error('unavailable'))
+    render(app())
+    expect(screen.getByRole('banner').textContent).toBe(
+      'Application navigation',
+    )
+    expect(screen.getByRole('contentinfo').textContent).toBe(
+      'Application footer',
+    )
+    expect(screen.getByRole('main').textContent).toContain('Loading account')
+    await screen.findByRole('heading', {
+      name: 'Could not prepare your account',
+    })
+    expect(screen.getByRole('banner')).toBeTruthy()
+    expect(screen.getByRole('contentinfo')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Reload page' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Sign out' })).toBeTruthy()
+    expect(screen.queryByText('Requested page')).toBeNull()
+  })
+
+  it('shows retry progress and a repeated failure while keeping sign-out available', async () => {
+    let rejectRetry!: (reason: Error) => void
+    state.sync
+      .mockRejectedValueOnce(new Error('unavailable'))
+      .mockImplementationOnce(
+        () =>
+          new Promise((_, reject) => {
+            rejectRetry = reject
+          }),
+      )
+    render(app())
+    fireEvent.click(await screen.findByRole('button', { name: 'Try again' }))
+    const retry = screen.getByRole<HTMLButtonElement>('button', {
+      name: 'Trying again…',
+    })
+    expect(retry.disabled).toBe(true)
+    expect(screen.getByRole('status').textContent).toBe(
+      'Refreshing your account…',
+    )
+    fireEvent.click(retry)
+    expect(state.sync).toHaveBeenCalledTimes(2)
+    expect(screen.getByRole('button', { name: 'Sign out' })).toBeTruthy()
+    await act(async () => rejectRetry(new Error('still unavailable')))
+    expect(screen.getByRole('status').textContent).toContain(
+      'still couldn’t be refreshed',
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Sign out' }))
+    await waitFor(() =>
+      expect(state.signOut).toHaveBeenCalledWith({ redirectUrl: '/sign-in' }),
+    )
+  })
+
+  it('explains a failed sign-out and allows another attempt', async () => {
+    state.sync.mockRejectedValue(new Error('unavailable'))
+    state.signOut.mockRejectedValueOnce(new Error('offline'))
+    render(app())
+    fireEvent.click(await screen.findByRole('button', { name: 'Sign out' }))
+    await screen.findByText(/We couldn’t sign you out/)
+    fireEvent.click(screen.getByRole('button', { name: 'Sign out' }))
+    await waitFor(() => expect(state.signOut).toHaveBeenCalledTimes(2))
+  })
+
+  it('times out stalled synchronization and ignores its late result after retry', async () => {
+    vi.useFakeTimers()
+    state.path = '/invitations/invite-first'
+    let resolveStalled!: () => void
+    state.sync
+      .mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveStalled = resolve
+          }),
+      )
+      .mockRejectedValueOnce(new Error('retry failed'))
+    render(app())
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20_000)
+    })
+    expect(
+      screen.getByRole('heading', { name: 'Could not prepare your account' }),
+    ).toBeTruthy()
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+    })
+    await act(async () => resolveStalled())
+    expect(screen.queryByText('Requested page')).toBeNull()
+    expect(screen.getByRole('status').textContent).toContain(
+      'still couldn’t be refreshed',
+    )
   })
 })

@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
 import { DashboardValueBadge } from '#/components/dashboard/DashboardBadges'
@@ -99,6 +100,7 @@ export function CareReminderForm({
   heading,
   presentation = 'panel',
 }: CareReminderFormProps) {
+  const formId = useId()
   const form = useForm<CareReminderFormSchema>({
     resolver: zodResolver(careReminderFormSchema),
     mode: 'onTouched',
@@ -126,6 +128,7 @@ export function CareReminderForm({
       : 'Add reminder'
 
   const handleSubmit = form.handleSubmit(async (values) => {
+    form.clearErrors('root')
     const reminder = {
       title: values.title,
       description: values.description,
@@ -134,34 +137,41 @@ export function CareReminderForm({
       priority: values.priority,
     } satisfies CareReminderSubmitBaseData
 
-    if (fixedHorseId) {
-      await onSubmit({
-        ...reminder,
-        targetType: 'horse',
-        horseId: fixedHorseId,
+    try {
+      if (fixedHorseId) {
+        await onSubmit({
+          ...reminder,
+          targetType: 'horse',
+          horseId: fixedHorseId,
+        })
+      } else if (values.targetType === 'horses') {
+        await onSubmit({
+          ...reminder,
+          targetType: 'horses',
+          horseIds: values.horseIds,
+        })
+      } else {
+        await onSubmit({
+          ...reminder,
+          targetType: 'stable',
+        })
+      }
+
+      form.reset({
+        targetType: fixedHorseId ? 'horses' : 'stable',
+        horseIds: fixedHorseId ? [fixedHorseId] : [],
+        title: '',
+        description: '',
+        category: values.category,
+        dueDate: getTodayDateKey(),
+        priority: values.priority,
       })
-    } else if (values.targetType === 'horses') {
-      await onSubmit({
-        ...reminder,
-        targetType: 'horses',
-        horseIds: values.horseIds,
-      })
-    } else {
-      await onSubmit({
-        ...reminder,
-        targetType: 'stable',
+    } catch {
+      form.setError('root', {
+        message:
+          'Could not add this reminder. Your entries are still here; please try again.',
       })
     }
-
-    form.reset({
-      targetType: fixedHorseId ? 'horses' : 'stable',
-      horseIds: fixedHorseId ? [fixedHorseId] : [],
-      title: '',
-      description: '',
-      category: values.category,
-      dueDate: getTodayDateKey(),
-      priority: values.priority,
-    })
   })
 
   return (
@@ -187,6 +197,7 @@ export function CareReminderForm({
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel>Applies to</FieldLabel>
               <ChoiceButtonGroup
+                aria-label="Applies to"
                 value={field.value}
                 options={targetOptions}
                 onValueChange={(nextValue) => {
@@ -202,11 +213,21 @@ export function CareReminderForm({
                 }}
                 disabled={isSubmitting}
                 aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid
+                    ? `${formId}-${field.name}-error`
+                    : undefined
+                }
               />
               <FieldDescription>
                 Horse reminders appear in the selected horses’ care sections.
               </FieldDescription>
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && (
+                <FieldError
+                  id={`${formId}-${field.name}-error`}
+                  errors={[fieldState.error]}
+                />
+              )}
             </Field>
           )}
         />
@@ -217,10 +238,15 @@ export function CareReminderForm({
           name="horseIds"
           control={control}
           render={({ field, fieldState }) => (
-            <FieldSet data-invalid={fieldState.invalid}>
+            <FieldSet
+              data-invalid={fieldState.invalid}
+              aria-describedby={
+                fieldState.invalid ? `${formId}-${field.name}-error` : undefined
+              }
+            >
+              <FieldLegend>Horses</FieldLegend>
               <FieldHeader>
                 <FieldHeaderContent>
-                  <FieldLegend>Horses</FieldLegend>
                   <FieldDescription>
                     Create one reminder for each selected horse.
                   </FieldDescription>
@@ -256,13 +282,14 @@ export function CareReminderForm({
               </DashboardActions>
 
               <ScrollableList
+                ariaLabel="Available horses"
                 itemCount={horseOptions.length}
                 visibleItemLimit={3}
                 estimatedItemHeightRem={5.5}
                 className="p-0.5"
               >
                 {horseOptions.map((horse) => {
-                  const inputId = `care-reminder-horse-${horse.id}`
+                  const inputId = `${formId}-care-reminder-horse-${horse.id}`
                   const checked = field.value.includes(horse.id)
                   const setHorseChecked = (isChecked: boolean) => {
                     field.onChange(
@@ -288,43 +315,60 @@ export function CareReminderForm({
                 })}
               </ScrollableList>
 
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && (
+                <FieldError
+                  id={`${formId}-${field.name}-error`}
+                  errors={[fieldState.error]}
+                />
+              )}
             </FieldSet>
           )}
         />
       )}
 
       <Field data-invalid={!!errors.title}>
-        <FieldLabel htmlFor="title">Title</FieldLabel>
+        <FieldLabel htmlFor={`${formId}-title`}>Title</FieldLabel>
         <Input
-          id="title"
+          id={`${formId}-title`}
+          aria-required="true"
           placeholder="Book next farrier visit"
           disabled={isSubmitting}
           aria-invalid={Boolean(errors.title)}
+          aria-describedby={errors.title ? `${formId}-title-error` : undefined}
           {...register('title')}
         />
-        <FieldError errors={[errors.title]} />
+        <FieldError id={`${formId}-title-error`} errors={[errors.title]} />
       </Field>
 
       <FieldGrid>
         <Field data-invalid={!!errors.dueDate}>
-          <FieldLabel htmlFor="dueDate">Due date</FieldLabel>
+          <FieldLabel htmlFor={`${formId}-dueDate`}>Due date</FieldLabel>
           <Input
-            id="dueDate"
+            id={`${formId}-dueDate`}
+            aria-required="true"
             type="date"
             disabled={isSubmitting}
             aria-invalid={Boolean(errors.dueDate)}
+            aria-describedby={
+              errors.dueDate ? `${formId}-dueDate-error` : undefined
+            }
             {...register('dueDate')}
           />
-          <FieldError errors={[errors.dueDate]} />
+          <FieldError
+            id={`${formId}-dueDate-error`}
+            errors={[errors.dueDate]}
+          />
         </Field>
 
         <Field data-invalid={!!errors.category}>
-          <FieldLabel htmlFor="category">Category</FieldLabel>
+          <FieldLabel htmlFor={`${formId}-category`}>Category</FieldLabel>
           <Select
-            id="category"
+            id={`${formId}-category`}
             disabled={isSubmitting}
             aria-invalid={Boolean(errors.category)}
+            aria-describedby={
+              errors.category ? `${formId}-category-error` : undefined
+            }
             {...register('category')}
           >
             {careReminderCategories.map((category) => (
@@ -333,7 +377,10 @@ export function CareReminderForm({
               </option>
             ))}
           </Select>
-          <FieldError errors={[errors.category]} />
+          <FieldError
+            id={`${formId}-category-error`}
+            errors={[errors.category]}
+          />
         </Field>
       </FieldGrid>
 
@@ -344,6 +391,7 @@ export function CareReminderForm({
           <Field data-invalid={fieldState.invalid}>
             <FieldLabel>Priority</FieldLabel>
             <ChoiceButtonGroup
+              aria-label="Priority"
               value={field.value}
               options={priorityOptions}
               onValueChange={(nextValue) =>
@@ -351,28 +399,45 @@ export function CareReminderForm({
               }
               disabled={isSubmitting}
               aria-invalid={fieldState.invalid}
+              aria-describedby={
+                fieldState.invalid ? `${formId}-${field.name}-error` : undefined
+              }
             />
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            {fieldState.invalid && (
+              <FieldError
+                id={`${formId}-${field.name}-error`}
+                errors={[fieldState.error]}
+              />
+            )}
           </Field>
         )}
       />
 
       <Field data-invalid={!!errors.description}>
-        <FieldLabel htmlFor="description">Notes (optional)</FieldLabel>
+        <FieldLabel htmlFor={`${formId}-description`}>
+          Notes (optional)
+        </FieldLabel>
         <Textarea
-          id="description"
+          id={`${formId}-description`}
           placeholder="What should be remembered or checked?"
           disabled={isSubmitting}
           aria-invalid={Boolean(errors.description)}
+          aria-describedby={
+            errors.description ? `${formId}-description-error` : undefined
+          }
           {...register('description')}
         />
-        <FieldError errors={[errors.description]} />
+        <FieldError
+          id={`${formId}-description-error`}
+          errors={[errors.description]}
+        />
       </Field>
 
+      {errors.root ? <FieldError errors={[errors.root]} /> : null}
       <FormSubmitActions
         isSubmitting={isSubmitting}
         submitLabel={submitLabel}
-        submittingLabel="Adding..."
+        submittingLabel="Adding…"
         sticky={presentation === 'plain'}
       />
     </DashboardInlineForm>

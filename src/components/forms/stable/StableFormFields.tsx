@@ -14,16 +14,22 @@ import type { Control } from 'react-hook-form'
 import type { StableFormSchema } from './stableFormSchema'
 
 type Props = {
+  headingLevel?: 2 | 3 | 4
   control: Control<StableFormSchema>
   disabled?: boolean
 }
 
-export function StableFormFields({ control, disabled = false }: Props) {
+export function StableFormFields({
+  control,
+  disabled = false,
+  headingLevel = 3,
+}: Props) {
   return (
     <div className="grid gap-8">
       <FormGroup
+        headingLevel={headingLevel}
         title="Stable basics"
-        description="Name the stable and add the location people use to identify it."
+        description="Stable name and location are required. All other details are optional."
       >
         <FieldGrid>
           <Controller
@@ -36,15 +42,24 @@ export function StableFormFields({ control, disabled = false }: Props) {
                 <Input
                   {...field}
                   id={field.name}
+                  aria-required="true"
                   type="text"
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
-                  placeholder="Wild Unicorn Ranch"
+                  aria-describedby={
+                    fieldState.invalid
+                      ? `stable-${field.name}-error`
+                      : undefined
+                  }
+                  placeholder="Cedar Ridge Barn"
                   autoComplete="off"
                 />
 
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id={`stable-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -59,15 +74,24 @@ export function StableFormFields({ control, disabled = false }: Props) {
                 <Input
                   {...field}
                   id={field.name}
+                  aria-required="true"
                   type="text"
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid
+                      ? `stable-${field.name}-error`
+                      : undefined
+                  }
                   placeholder="Town, area, or familiar yard location"
                   autoComplete="off"
                 />
 
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id={`stable-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -76,6 +100,7 @@ export function StableFormFields({ control, disabled = false }: Props) {
       </FormGroup>
 
       <FormGroup
+        headingLevel={headingLevel}
         title="Postal address"
         description="Use the complete address for documents, visits, and directions."
       >
@@ -93,12 +118,20 @@ export function StableFormFields({ control, disabled = false }: Props) {
                   type="text"
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid
+                      ? `stable-${field.name}-error`
+                      : undefined
+                  }
                   placeholder="Yard name or street address"
                   autoComplete="address-line1"
                 />
 
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id={`stable-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -116,12 +149,20 @@ export function StableFormFields({ control, disabled = false }: Props) {
                   type="text"
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid
+                      ? `stable-${field.name}-error`
+                      : undefined
+                  }
                   placeholder="Village, town, or county"
                   autoComplete="address-line2"
                 />
 
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id={`stable-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -142,12 +183,20 @@ export function StableFormFields({ control, disabled = false }: Props) {
                   type="text"
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid
+                      ? `stable-${field.name}-error`
+                      : undefined
+                  }
                   placeholder="Postcode"
                   autoComplete="postal-code"
                 />
 
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id={`stable-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -166,12 +215,20 @@ export function StableFormFields({ control, disabled = false }: Props) {
                   type="text"
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid
+                      ? `stable-${field.name}-error`
+                      : undefined
+                  }
                   placeholder="Country"
                   autoComplete="country-name"
                 />
 
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id={`stable-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -180,6 +237,7 @@ export function StableFormFields({ control, disabled = false }: Props) {
       </FormGroup>
 
       <FormGroup
+        headingLevel={headingLevel}
         title="Stable profile"
         description="Add optional context that helps members recognise the yard."
       >
@@ -201,18 +259,27 @@ export function StableFormFields({ control, disabled = false }: Props) {
                 id={field.name}
                 disabled={disabled}
                 aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid ? `stable-${field.name}-error` : undefined
+                }
                 placeholder="Share something about the stable"
                 autoComplete="off"
                 minHeight="relaxed"
               />
 
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && (
+                <FieldError
+                  id={`stable-${field.name}-error`}
+                  errors={[fieldState.error]}
+                />
+              )}
             </Field>
           )}
         />
       </FormGroup>
 
       <FormGroup
+        headingLevel={headingLevel}
         title="Operations"
         description="Keep the everyday and emergency contact details in one place."
       >
@@ -230,12 +297,20 @@ export function StableFormFields({ control, disabled = false }: Props) {
                   type="text"
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid
+                      ? `stable-${field.name}-error`
+                      : undefined
+                  }
                   placeholder="Yard manager"
                   autoComplete="off"
                 />
 
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id={`stable-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -254,12 +329,20 @@ export function StableFormFields({ control, disabled = false }: Props) {
                   type="tel"
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid
+                      ? `stable-${field.name}-error`
+                      : undefined
+                  }
                   placeholder="+48 123 456 789"
                   autoComplete="off"
                 />
 
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id={`stable-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -280,12 +363,20 @@ export function StableFormFields({ control, disabled = false }: Props) {
                   type="tel"
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid
+                      ? `stable-${field.name}-error`
+                      : undefined
+                  }
                   placeholder="Emergency stable contact"
                   autoComplete="off"
                 />
 
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id={`stable-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -305,13 +396,21 @@ export function StableFormFields({ control, disabled = false }: Props) {
                   id={field.name}
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid
+                      ? `stable-${field.name}-error`
+                      : undefined
+                  }
                   placeholder="Weekdays 7:00-20:00, weekends by arrangement"
                   autoComplete="off"
                   minHeight="relaxed"
                 />
 
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id={`stable-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -328,13 +427,21 @@ export function StableFormFields({ control, disabled = false }: Props) {
                   id={field.name}
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid
+                      ? `stable-${field.name}-error`
+                      : undefined
+                  }
                   placeholder="Shared rules for visiting, turnout, gates, equipment, or parking"
                   autoComplete="off"
                   minHeight="relaxed"
                 />
 
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id={`stable-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}

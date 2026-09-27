@@ -16,7 +16,6 @@ import {
   FieldLabel,
   FieldLabelRow,
   FieldLegend,
-  FieldPanel,
   FieldSet,
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
@@ -26,7 +25,7 @@ import { Textarea } from '#/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group'
 import { TextLabel } from '#/components/ui/text-label'
 import type { Id } from 'convex/_generated/dataModel'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Controller, useFormState, useWatch } from 'react-hook-form'
 import type { Control, UseFormSetValue } from 'react-hook-form'
 import {
@@ -387,6 +386,30 @@ const getSimpleRecurrenceRule = (
   }
 }
 
+// Only show a simple preset when it faithfully represents the saved rule.
+// Opening, resetting, or changing the event date must never rewrite a schedule.
+function getSimplePreset(
+  recurrence: EventFormInput['recurrence'],
+  eventDate: string | undefined,
+): SimpleRecurrencePreset | undefined {
+  if (!recurrence) return 'weekly'
+  if (recurrence.frequency === 'daily' && recurrence.interval === 1)
+    return 'daily'
+  if (recurrence.frequency === 'weekly') {
+    if (recurrence.interval === 1) return 'weekly'
+    if (recurrence.interval === 2) return 'biweekly'
+  }
+  if (
+    recurrence.frequency === 'monthly' &&
+    recurrence.interval === 1 &&
+    recurrence.monthlyMode === 'dayOfMonth' &&
+    recurrence.dayOfMonth === getStartDayOfMonth(eventDate) &&
+    recurrence.missingDateStrategy !== 'skip'
+  )
+    return 'monthly'
+  return undefined
+}
+
 const getStartOrdinal = (date: string | undefined): RecurrenceOrdinal => {
   const parsedDate = parseEventDate(date)
   if (!parsedDate) return 1
@@ -580,9 +603,14 @@ export function EventFormFields({
   const horsesInvalid = Boolean(errors.horseIds)
   const recurrenceInvalid = Boolean(errors.recurring || errors.recurrence)
   const [recurrenceEditorMode, setRecurrenceEditorMode] =
-    useState<RecurrenceEditorMode>('simple')
-  const [simplePreset, setSimplePreset] =
-    useState<SimpleRecurrencePreset>('weekly')
+    useState<RecurrenceEditorMode>(() =>
+      recurrence && recurrence.end?.type !== 'never' ? 'advanced' : 'simple',
+    )
+  const simplePreset = getSimplePreset(recurrence, eventDate)
+  const activeEditorMode =
+    simplePreset === undefined || errors.recurrence?.end
+      ? 'advanced'
+      : recurrenceEditorMode
   const simplePresetUsesDays =
     simplePreset === 'weekly' || simplePreset === 'biweekly'
 
@@ -601,7 +629,6 @@ export function EventFormFields({
     preset: SimpleRecurrencePreset,
     daysOfWeekValue = recurrence?.daysOfWeek,
   ) => {
-    setSimplePreset(preset)
     setValue(
       'recurrence',
       getSimpleRecurrenceRule(
@@ -616,28 +643,6 @@ export function EventFormFields({
       },
     )
   }
-
-  useEffect(() => {
-    if (recurrenceEditorMode !== 'simple' || simplePreset !== 'monthly') return
-
-    const dayOfMonth = getStartDayOfMonth(eventDate)
-    if (
-      recurrence?.frequency === 'monthly' &&
-      recurrence.monthlyMode === 'dayOfMonth' &&
-      recurrence.dayOfMonth === dayOfMonth
-    ) {
-      return
-    }
-
-    setValue(
-      'recurrence',
-      getSimpleRecurrenceRule('monthly', eventDate, undefined, recurrence?.end),
-      {
-        shouldDirty: true,
-        shouldValidate: true,
-      },
-    )
-  }, [eventDate, recurrence, recurrenceEditorMode, setValue, simplePreset])
 
   return (
     <>
@@ -663,11 +668,19 @@ export function EventFormFields({
                 type="text"
                 disabled={disabled}
                 aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid ? 'event-title-error' : undefined
+                }
                 placeholder="Farrier appointment"
                 autoComplete="off"
               />
 
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && (
+                <FieldError
+                  id="event-title-error"
+                  errors={[fieldState.error]}
+                />
+              )}
             </Field>
           )}
         />
@@ -680,6 +693,7 @@ export function EventFormFields({
               <FieldLabel>Type</FieldLabel>
 
               <ChoiceButtonGroup
+                aria-label="Event type"
                 value={field.value}
                 options={eventTypeOptions}
                 onValueChange={(nextValue) =>
@@ -687,9 +701,14 @@ export function EventFormFields({
                 }
                 disabled={disabled}
                 aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid ? 'event-type-error' : undefined
+                }
               />
 
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && (
+                <FieldError id="event-type-error" errors={[fieldState.error]} />
+              )}
             </Field>
           )}
         />
@@ -702,6 +721,7 @@ export function EventFormFields({
               <FieldLabel>Status</FieldLabel>
 
               <ChoiceButtonGroup
+                aria-label="Event status"
                 value={field.value ?? 'planned'}
                 options={eventStatusOptions}
                 onValueChange={(nextValue) =>
@@ -709,9 +729,17 @@ export function EventFormFields({
                 }
                 disabled={disabled}
                 aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid ? 'event-status-error' : undefined
+                }
               />
 
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && (
+                <FieldError
+                  id="event-status-error"
+                  errors={[fieldState.error]}
+                />
+              )}
             </Field>
           )}
         />
@@ -730,10 +758,16 @@ export function EventFormFields({
                   type="date"
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid ? 'event-date-error' : undefined
+                  }
                 />
 
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id="event-date-error"
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -753,6 +787,9 @@ export function EventFormFields({
                   type="date"
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid ? 'event-endDate-error' : undefined
+                  }
                 />
 
                 <FieldDescription>
@@ -760,7 +797,10 @@ export function EventFormFields({
                   full day.
                 </FieldDescription>
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id="event-endDate-error"
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -779,6 +819,9 @@ export function EventFormFields({
                   type="time"
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid ? 'event-time-error' : undefined
+                  }
                 />
 
                 <FieldDescription>
@@ -786,7 +829,10 @@ export function EventFormFields({
                 </FieldDescription>
 
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id="event-time-error"
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -806,9 +852,21 @@ export function EventFormFields({
           name="horseIds"
           control={control}
           render={({ field, fieldState }) => (
-            <FieldSet data-invalid={fieldState.invalid} disabled={disabled}>
+            <FieldSet
+              data-invalid={fieldState.invalid}
+              disabled={disabled}
+              aria-describedby={
+                fieldState.invalid ? 'event-horseIds-error' : undefined
+              }
+            >
               <FieldLegend className="sr-only">Horses</FieldLegend>
 
+              {horses.length === 0 ? (
+                <FieldDescription>
+                  No horses are available in this stable. Add a horse before
+                  creating an event.
+                </FieldDescription>
+              ) : null}
               <FieldGrid breakpoint="sm" gap="compact">
                 {horses.map((horse) => {
                   const horseId = horse._id
@@ -836,7 +894,12 @@ export function EventFormFields({
                 })}
               </FieldGrid>
 
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && (
+                <FieldError
+                  id="event-horseIds-error"
+                  errors={[fieldState.error]}
+                />
+              )}
             </FieldSet>
           )}
         />
@@ -864,11 +927,19 @@ export function EventFormFields({
                 type="text"
                 disabled={disabled}
                 aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid ? 'event-location-error' : undefined
+                }
                 placeholder="Main arena"
                 autoComplete="off"
               />
 
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && (
+                <FieldError
+                  id="event-location-error"
+                  errors={[fieldState.error]}
+                />
+              )}
             </Field>
           )}
         />
@@ -888,13 +959,20 @@ export function EventFormFields({
                   providers={providers}
                   disabled={disabled}
                   invalid={fieldState.invalid}
+                  describedBy={
+                    fieldState.invalid ? 'event-providerName-error' : undefined
+                  }
+                  inputRef={field.ref}
                   onBlur={field.onBlur}
                   onValueChange={field.onChange}
                   onProviderSelect={applyProvider}
                 />
 
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id="event-providerName-error"
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -914,12 +992,18 @@ export function EventFormFields({
                   type="tel"
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid ? 'event-providerPhone-error' : undefined
+                  }
                   placeholder="Provider contact number"
                   autoComplete="off"
                 />
 
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id="event-providerPhone-error"
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -935,6 +1019,7 @@ export function EventFormFields({
                 <FieldLabel htmlFor={field.name}>Total cost</FieldLabel>
 
                 <Input
+                  ref={field.ref}
                   id={field.name}
                   name={field.name}
                   value={field.value ?? ''}
@@ -943,6 +1028,9 @@ export function EventFormFields({
                   step="0.01"
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid ? 'event-totalCost-error' : undefined
+                  }
                   placeholder="Optional shared visit total"
                   autoComplete="off"
                   onBlur={field.onBlur}
@@ -956,7 +1044,10 @@ export function EventFormFields({
                 />
 
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id="event-totalCost-error"
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -970,6 +1061,7 @@ export function EventFormFields({
                 <FieldLabel htmlFor={field.name}>Cost per horse</FieldLabel>
 
                 <Input
+                  ref={field.ref}
                   id={field.name}
                   name={field.name}
                   value={field.value ?? ''}
@@ -978,6 +1070,9 @@ export function EventFormFields({
                   step="0.01"
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid ? 'event-costPerHorse-error' : undefined
+                  }
                   placeholder="Optional split amount"
                   autoComplete="off"
                   onBlur={field.onBlur}
@@ -991,7 +1086,10 @@ export function EventFormFields({
                 />
 
                 {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id="event-costPerHorse-error"
+                    errors={[fieldState.error]}
+                  />
                 )}
               </Field>
             )}
@@ -1011,7 +1109,7 @@ export function EventFormFields({
           name="recurring"
           control={control}
           render={({ field }) => (
-            <Field orientation="horizontal" className="app-row bg-card p-4">
+            <Field orientation="horizontal">
               <Switch
                 id={field.name}
                 checked={field.value}
@@ -1020,7 +1118,6 @@ export function EventFormFields({
                   field.onChange(checked)
                   if (checked) {
                     setRecurrenceEditorMode('simple')
-                    setSimplePreset('weekly')
                   }
                   setValue(
                     'recurrence',
@@ -1061,14 +1158,17 @@ export function EventFormFields({
 
                 <RecurrenceModeSelector
                   disabled={disabled}
-                  value={recurrenceEditorMode}
+                  value={activeEditorMode}
                   onValueChange={(value) => {
                     setRecurrenceEditorMode(value)
+                    if (value === 'simple' && simplePreset === undefined) {
+                      applySimplePreset('weekly')
+                    }
                   }}
                 />
 
-                {recurrenceEditorMode === 'simple' && (
-                  <FieldPanel gap="default">
+                {activeEditorMode === 'simple' && (
+                  <FieldGroup gap="default">
                     <DashboardInlineHeader
                       as="h3"
                       className="border-b border-border-subtle pb-4"
@@ -1087,7 +1187,8 @@ export function EventFormFields({
                       </FieldLabelRow>
 
                       <ToggleGroup
-                        value={[simplePreset]}
+                        aria-label="Repeat pattern"
+                        value={simplePreset ? [simplePreset] : []}
                         onValueChange={(values) => {
                           const nextValue = values.at(-1)
                           if (nextValue) {
@@ -1134,6 +1235,7 @@ export function EventFormFields({
                             </FieldLabelRow>
 
                             <ToggleGroup
+                              aria-label="Days of week"
                               value={(daysField.value ?? []).map(String)}
                               onValueChange={(values) => {
                                 daysField.onChange(values.map(asDayOfWeek))
@@ -1143,6 +1245,11 @@ export function EventFormFields({
                               wrap
                               disabled={disabled}
                               aria-invalid={fieldState.invalid}
+                              aria-describedby={
+                                fieldState.invalid
+                                  ? 'event-recurrence-daysOfWeek-error'
+                                  : undefined
+                              }
                             >
                               {daysOfWeekButtonOrder.map((day) => (
                                 <ToggleGroupItem
@@ -1156,17 +1263,20 @@ export function EventFormFields({
                             </ToggleGroup>
 
                             {fieldState.invalid && (
-                              <FieldError errors={[fieldState.error]} />
+                              <FieldError
+                                id="event-recurrence-daysOfWeek-error"
+                                errors={[fieldState.error]}
+                              />
                             )}
                           </Field>
                         )}
                       />
                     )}
-                  </FieldPanel>
+                  </FieldGroup>
                 )}
 
-                {recurrenceEditorMode === 'advanced' && (
-                  <FieldPanel gap="default">
+                {activeEditorMode === 'advanced' && (
+                  <FieldGroup gap="default">
                     <DashboardInlineHeader
                       as="h3"
                       className="border-b border-border-subtle pb-4"
@@ -1194,6 +1304,7 @@ export function EventFormFields({
                                 </FieldLabel>
 
                                 <ToggleGroup
+                                  aria-label="Frequency"
                                   value={
                                     frequencyField.value
                                       ? [frequencyField.value]
@@ -1369,6 +1480,11 @@ export function EventFormFields({
                                   variant="outline"
                                   disabled={disabled}
                                   aria-invalid={fieldState.invalid}
+                                  aria-describedby={
+                                    fieldState.invalid
+                                      ? 'event-recurrence-frequency-error'
+                                      : undefined
+                                  }
                                 >
                                   {recurrenceFrequencies.map((frequency) => (
                                     <ToggleGroupItem
@@ -1381,7 +1497,10 @@ export function EventFormFields({
                                 </ToggleGroup>
 
                                 {fieldState.invalid && (
-                                  <FieldError errors={[fieldState.error]} />
+                                  <FieldError
+                                    id="event-recurrence-frequency-error"
+                                    errors={[fieldState.error]}
+                                  />
                                 )}
                               </Field>
                             )}
@@ -1410,6 +1529,7 @@ export function EventFormFields({
                                   <FieldInlineControl>
                                     <FieldInlineText>Every</FieldInlineText>
                                     <Input
+                                      ref={intervalField.ref}
                                       id={intervalField.name}
                                       name={intervalField.name}
                                       value={intervalField.value ?? 1}
@@ -1418,6 +1538,11 @@ export function EventFormFields({
                                       width="compactNumber"
                                       disabled={disabled}
                                       aria-invalid={fieldState.invalid}
+                                      aria-describedby={
+                                        fieldState.invalid
+                                          ? 'event-recurrence-interval-error'
+                                          : undefined
+                                      }
                                       onBlur={intervalField.onBlur}
                                       onChange={(e) => {
                                         const val = e.target.value
@@ -1437,7 +1562,10 @@ export function EventFormFields({
                                   </FieldInlineControl>
 
                                   {fieldState.invalid && (
-                                    <FieldError errors={[fieldState.error]} />
+                                    <FieldError
+                                      id="event-recurrence-interval-error"
+                                      errors={[fieldState.error]}
+                                    />
                                   )}
                                 </Field>
                               )
@@ -1462,6 +1590,7 @@ export function EventFormFields({
                                     </FieldLabel>
 
                                     <ToggleGroup
+                                      aria-label="Days of week"
                                       value={(daysField.value ?? []).map(
                                         String,
                                       )}
@@ -1475,6 +1604,11 @@ export function EventFormFields({
                                       wrap
                                       disabled={disabled}
                                       aria-invalid={fieldState.invalid}
+                                      aria-describedby={
+                                        fieldState.invalid
+                                          ? 'event-recurrence-daysOfWeek-error'
+                                          : undefined
+                                      }
                                     >
                                       {daysOfWeekButtonOrder.map((day) => (
                                         <ToggleGroupItem
@@ -1488,7 +1622,10 @@ export function EventFormFields({
                                     </ToggleGroup>
 
                                     {fieldState.invalid && (
-                                      <FieldError errors={[fieldState.error]} />
+                                      <FieldError
+                                        id="event-recurrence-daysOfWeek-error"
+                                        errors={[fieldState.error]}
+                                      />
                                     )}
                                   </Field>
                                 )}
@@ -1518,6 +1655,13 @@ export function EventFormFields({
                                       </FieldLabel>
 
                                       <RadioGroup
+                                        aria-label="Repeat by"
+                                        aria-invalid={fieldState.invalid}
+                                        aria-describedby={
+                                          fieldState.invalid
+                                            ? 'event-recurrence-monthlyMode-error'
+                                            : undefined
+                                        }
                                         value={modeField.value ?? 'dayOfMonth'}
                                         className="sm:w-auto sm:grid-cols-[max-content_max-content] sm:justify-start sm:gap-x-8"
                                         onValueChange={(value) => {
@@ -1623,6 +1767,7 @@ export function EventFormFields({
 
                                       {fieldState.invalid && (
                                         <FieldError
+                                          id="event-recurrence-monthlyMode-error"
                                           errors={[fieldState.error]}
                                         />
                                       )}
@@ -1654,6 +1799,7 @@ export function EventFormFields({
                                               Day
                                             </FieldInlineText>
                                             <Input
+                                              ref={dayField.ref}
                                               id={dayField.name}
                                               name={dayField.name}
                                               value={dayField.value ?? ''}
@@ -1663,6 +1809,11 @@ export function EventFormFields({
                                               width="compactNumber"
                                               disabled={disabled}
                                               aria-invalid={fieldState.invalid}
+                                              aria-describedby={
+                                                fieldState.invalid
+                                                  ? 'event-recurrence-dayOfMonth-error'
+                                                  : undefined
+                                              }
                                               onBlur={dayField.onBlur}
                                               onChange={(e) => {
                                                 const val = e.target.value
@@ -1691,6 +1842,7 @@ export function EventFormFields({
 
                                           {fieldState.invalid && (
                                             <FieldError
+                                              id="event-recurrence-dayOfMonth-error"
                                               errors={[fieldState.error]}
                                             />
                                           )}
@@ -1715,6 +1867,13 @@ export function EventFormFields({
                                             </FieldLabel>
 
                                             <RadioGroup
+                                              aria-label="Missing monthly date"
+                                              aria-invalid={fieldState.invalid}
+                                              aria-describedby={
+                                                fieldState.invalid
+                                                  ? 'event-recurrence-missingDateStrategy-error'
+                                                  : undefined
+                                              }
                                               value={
                                                 strategyField.value ??
                                                 'lastDayOfMonth'
@@ -1747,6 +1906,7 @@ export function EventFormFields({
 
                                             {fieldState.invalid && (
                                               <FieldError
+                                                id="event-recurrence-missingDateStrategy-error"
                                                 errors={[fieldState.error]}
                                               />
                                             )}
@@ -1778,6 +1938,7 @@ export function EventFormFields({
                                           </FieldLabel>
 
                                           <ToggleGroup
+                                            aria-label="Week of month"
                                             value={
                                               ordinalField.value
                                                 ? [String(ordinalField.value)]
@@ -1797,6 +1958,11 @@ export function EventFormFields({
                                             wrap
                                             disabled={disabled}
                                             aria-invalid={fieldState.invalid}
+                                            aria-describedby={
+                                              fieldState.invalid
+                                                ? 'event-recurrence-ordinal-error'
+                                                : undefined
+                                            }
                                           >
                                             {recurrenceOrdinals.map(
                                               (ordinal) => (
@@ -1812,6 +1978,7 @@ export function EventFormFields({
 
                                           {fieldState.invalid && (
                                             <FieldError
+                                              id="event-recurrence-ordinal-error"
                                               errors={[fieldState.error]}
                                             />
                                           )}
@@ -1834,6 +2001,7 @@ export function EventFormFields({
                                           </FieldLabel>
 
                                           <ToggleGroup
+                                            aria-label="Weekday"
                                             value={
                                               weekdayField.value !== undefined
                                                 ? [String(weekdayField.value)]
@@ -1851,6 +2019,11 @@ export function EventFormFields({
                                             wrap
                                             disabled={disabled}
                                             aria-invalid={fieldState.invalid}
+                                            aria-describedby={
+                                              fieldState.invalid
+                                                ? 'event-recurrence-weekday-error'
+                                                : undefined
+                                            }
                                           >
                                             {daysOfWeekButtonOrder.map(
                                               (day) => (
@@ -1869,6 +2042,7 @@ export function EventFormFields({
 
                                           {fieldState.invalid && (
                                             <FieldError
+                                              id="event-recurrence-weekday-error"
                                               errors={[fieldState.error]}
                                             />
                                           )}
@@ -1898,6 +2072,15 @@ export function EventFormFields({
                               <FieldLabel size="compact">Ends</FieldLabel>
 
                               <RadioGroup
+                                aria-label="Repeat schedule ends"
+                                aria-invalid={Boolean(
+                                  fieldState.error?.message,
+                                )}
+                                aria-describedby={
+                                  fieldState.error?.message
+                                    ? 'event-recurrence-end-error-type'
+                                    : undefined
+                                }
                                 value={endField.value?.type ?? 'never'}
                                 className="sm:grid-cols-3 lg:grid-cols-1"
                                 onValueChange={(value) => {
@@ -1946,17 +2129,21 @@ export function EventFormFields({
                               </RadioGroup>
 
                               {fieldState.invalid && (
-                                <FieldError errors={[fieldState.error]} />
+                                <FieldError
+                                  id="event-recurrence-end-error-type"
+                                  errors={[fieldState.error]}
+                                />
                               )}
                             </Field>
                           )}
                         />
 
                         <Controller
-                          name="recurrence.end"
+                          name="recurrence.end.date"
                           control={control}
                           render={({ field: endField, fieldState }) => {
-                            if (endField.value?.type !== 'on_date') return <></>
+                            if (recurrence?.end?.type !== 'on_date')
+                              return <></>
 
                             return (
                               <Field data-invalid={fieldState.invalid}>
@@ -1968,22 +2155,28 @@ export function EventFormFields({
                                 </FieldLabel>
 
                                 <Input
+                                  ref={endField.ref}
                                   id="recurrence-end-date"
                                   type="date"
-                                  value={endField.value.date}
+                                  value={endField.value ?? ''}
                                   disabled={disabled}
                                   aria-invalid={fieldState.invalid}
+                                  aria-describedby={
+                                    fieldState.invalid
+                                      ? 'event-recurrence-end-error-date'
+                                      : undefined
+                                  }
                                   onBlur={endField.onBlur}
                                   onChange={(e) => {
-                                    endField.onChange({
-                                      type: 'on_date',
-                                      date: e.target.value,
-                                    })
+                                    endField.onChange(e.target.value)
                                   }}
                                 />
 
                                 {fieldState.invalid && (
-                                  <FieldError errors={[fieldState.error]} />
+                                  <FieldError
+                                    id="event-recurrence-end-error-date"
+                                    errors={[fieldState.error]}
+                                  />
                                 )}
                               </Field>
                             )
@@ -1991,10 +2184,10 @@ export function EventFormFields({
                         />
 
                         <Controller
-                          name="recurrence.end"
+                          name="recurrence.end.count"
                           control={control}
                           render={({ field: endField, fieldState }) => {
-                            if (endField.value?.type !== 'after_occurrences')
+                            if (recurrence?.end?.type !== 'after_occurrences')
                               return <></>
 
                             return (
@@ -2007,28 +2200,35 @@ export function EventFormFields({
                                 </FieldLabel>
 
                                 <Input
+                                  ref={endField.ref}
                                   id="recurrence-end-count"
                                   type="number"
                                   min={1}
-                                  value={endField.value.count ?? 1}
+                                  value={endField.value ?? ''}
                                   width="compactNumber"
                                   disabled={disabled}
                                   aria-invalid={fieldState.invalid}
+                                  aria-describedby={
+                                    fieldState.invalid
+                                      ? 'event-recurrence-end-error-count'
+                                      : undefined
+                                  }
                                   onBlur={endField.onBlur}
                                   onChange={(e) => {
                                     const val = e.target.value
-                                    endField.onChange({
-                                      type: 'after_occurrences',
-                                      count:
-                                        val === ''
-                                          ? undefined
-                                          : e.target.valueAsNumber,
-                                    })
+                                    endField.onChange(
+                                      val === ''
+                                        ? undefined
+                                        : e.target.valueAsNumber,
+                                    )
                                   }}
                                 />
 
                                 {fieldState.invalid && (
-                                  <FieldError errors={[fieldState.error]} />
+                                  <FieldError
+                                    id="event-recurrence-end-error-count"
+                                    errors={[fieldState.error]}
+                                  />
                                 )}
                               </Field>
                             )
@@ -2036,16 +2236,16 @@ export function EventFormFields({
                         />
                       </div>
                     </div>
-                  </FieldPanel>
+                  </FieldGroup>
                 )}
 
                 {recurrencePreview && (
-                  <FieldPanel gap="compact">
+                  <FieldGroup gap="compact">
                     <TextLabel weight="semibold">Schedule summary</TextLabel>
                     <p className="m-0 text-sm leading-relaxed text-foreground">
                       {recurrencePreview}
                     </p>
-                  </FieldPanel>
+                  </FieldGroup>
                 )}
               </FieldSet>
             )
@@ -2074,11 +2274,19 @@ export function EventFormFields({
                 value={field.value ?? ''}
                 disabled={disabled}
                 aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid ? 'event-description-error' : undefined
+                }
                 placeholder="Notes for this event"
                 autoComplete="off"
               />
 
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && (
+                <FieldError
+                  id="event-description-error"
+                  errors={[fieldState.error]}
+                />
+              )}
             </Field>
           )}
         />
@@ -2098,11 +2306,21 @@ export function EventFormFields({
                 value={field.value ?? ''}
                 disabled={disabled}
                 aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid
+                    ? 'event-notesAfterCompletion-error'
+                    : undefined
+                }
                 placeholder="What was done, follow-up instructions, or next steps"
                 autoComplete="off"
               />
 
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && (
+                <FieldError
+                  id="event-notesAfterCompletion-error"
+                  errors={[fieldState.error]}
+                />
+              )}
             </Field>
           )}
         />

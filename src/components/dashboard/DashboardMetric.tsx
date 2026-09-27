@@ -27,14 +27,16 @@ type DashboardMetricStripProps = ComponentProps<'div'> & {
   columns?: DashboardMetricStripColumns
 }
 
+// The strip owns both columns and their dividers, so item settings cannot
+// drift from the responsive row boundaries.
 const dashboardMetricStripColumnClassNames = {
   3: {
-    sm: 'sm:grid-cols-3',
-    md: 'md:grid-cols-3',
+    sm: 'sm:grid-cols-3 sm:[&>.metric-strip-item:not(:nth-child(3n+1))]:border-l sm:[&>.metric-strip-item:not(:nth-child(3n+1))]:pl-(--metric-strip-inset)',
+    md: 'md:grid-cols-3 md:[&>.metric-strip-item:not(:nth-child(3n+1))]:border-l md:[&>.metric-strip-item:not(:nth-child(3n+1))]:pl-(--metric-strip-inset)',
   },
   4: {
-    sm: 'sm:grid-cols-2 xl:grid-cols-4',
-    md: 'md:grid-cols-2 xl:grid-cols-4',
+    sm: 'sm:grid-cols-2 xl:grid-cols-4 sm:max-xl:[&>.metric-strip-item:nth-child(even)]:border-l sm:max-xl:[&>.metric-strip-item:nth-child(even)]:pl-(--metric-strip-inset) xl:[&>.metric-strip-item:not(:nth-child(4n+1))]:border-l xl:[&>.metric-strip-item:not(:nth-child(4n+1))]:pl-(--metric-strip-inset)',
+    md: 'md:grid-cols-2 xl:grid-cols-4 md:max-xl:[&>.metric-strip-item:nth-child(even)]:border-l md:max-xl:[&>.metric-strip-item:nth-child(even)]:pl-(--metric-strip-inset) xl:[&>.metric-strip-item:not(:nth-child(4n+1))]:border-l xl:[&>.metric-strip-item:not(:nth-child(4n+1))]:pl-(--metric-strip-inset)',
   },
 } satisfies Record<
   DashboardMetricStripColumns,
@@ -42,21 +44,11 @@ const dashboardMetricStripColumnClassNames = {
 >
 
 const dashboardMetricStripItemClassNames = {
-  compact: {
-    sm: 'sm:border-l sm:border-border-subtle sm:pl-4 first:sm:border-l-0 first:sm:pl-0',
-    md: 'md:border-l md:border-border-subtle md:pl-4 first:md:border-l-0 first:md:pl-0',
-  },
-  default: {
-    sm: 'sm:border-l sm:border-border-subtle sm:pl-5 first:sm:border-l-0 first:sm:pl-0',
-    md: 'md:border-l md:border-border-subtle md:pl-5 first:md:border-l-0 first:md:pl-0',
-  },
-} satisfies Record<
-  DashboardMetricStripInset,
-  Record<DashboardMetricStripBreakpoint, string>
->
+  compact: '[--metric-strip-inset:calc(var(--spacing)*4)]',
+  default: '[--metric-strip-inset:calc(var(--spacing)*5)]',
+} satisfies Record<DashboardMetricStripInset, string>
 
 type DashboardMetricStripItemOptions = {
-  breakpoint?: DashboardMetricStripBreakpoint
   inset?: DashboardMetricStripInset
 }
 
@@ -79,11 +71,14 @@ export function DashboardMetricStrip({
 }
 
 export function dashboardMetricStripItemClassName({
-  breakpoint = 'sm',
   className,
   inset = 'default',
 }: DashboardMetricStripItemOptions & { className?: string } = {}) {
-  return cn(dashboardMetricStripItemClassNames[inset][breakpoint], className)
+  return cn(
+    'metric-strip-item border-border-subtle',
+    dashboardMetricStripItemClassNames[inset],
+    className,
+  )
 }
 
 export function DashboardMetric({
@@ -125,7 +120,9 @@ export function DashboardMetric({
       >
         {title}
       </p>
-      <p className={cn('text-3xl font-semibold tracking-normal', valueClassName)}>
+      <p
+        className={cn('text-3xl font-semibold tracking-normal', valueClassName)}
+      >
         {value}
       </p>
       {children && (

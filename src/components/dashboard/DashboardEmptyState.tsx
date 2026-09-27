@@ -20,7 +20,7 @@ export function DashboardEmptyState({
   actions,
   bodyClassName,
   children,
-  chrome = 'cards',
+  chrome = 'flat',
   className,
   spacing = 'default',
   title,

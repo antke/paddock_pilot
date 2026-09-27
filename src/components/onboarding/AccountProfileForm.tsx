@@ -1,7 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from 'convex/react'
 import { Controller, useForm } from 'react-hook-form'
-import { z } from 'zod'
+import { useId, useRef, useState } from 'react'
+import { accountProfileSchema } from './accountProfileSchema'
+import type { AccountProfileValues } from './accountProfileSchema'
+import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
 import type { Id } from 'convex/_generated/dataModel'
 
 import { FileUploadField } from '#/components/forms/FileUploadField'
@@ -19,13 +22,7 @@ import { Input } from '#/components/ui/input'
 import { showAppErrorToast } from '#/components/ui/sonner'
 import { api } from 'convex/_generated/api'
 
-const accountProfileSchema = z.object({
-  preferredName: z.string().trim().min(1, 'Add the name people should use.'),
-  phone: z.string().trim().optional(),
-  profileImage: z.custom<FileList>().optional(),
-})
-
-type AccountProfileValues = z.infer<typeof accountProfileSchema>
+export type { AccountProfileValues } from './accountProfileSchema'
 
 type AccountProfileFormProps = {
   initialValues: {
@@ -35,25 +32,14 @@ type AccountProfileFormProps = {
   }
   onSaved: () => void | Promise<void>
   submitLabel?: string
+  onPendingChange?: (pending: boolean) => void
 }
 
-export function AccountProfileForm({
-  initialValues,
-  onSaved,
-  submitLabel = 'Save and continue',
-}: AccountProfileFormProps) {
+export function AccountProfileForm(props: AccountProfileFormProps) {
   const updateProfile = useMutation(api.onboarding.updateAccountProfile)
   const generateUploadUrl = useMutation(
     api.onboarding.generateProfileImageUploadUrl,
   )
-  const form = useForm<AccountProfileValues>({
-    resolver: zodResolver(accountProfileSchema),
-    mode: 'onTouched',
-    defaultValues: {
-      preferredName: initialValues.displayName,
-      phone: initialValues.phone ?? '',
-    },
-  })
 
   const uploadProfileImage = async (file?: File) => {
     if (!file) return undefined
@@ -74,7 +60,7 @@ export function AccountProfileForm({
     return { storageId, uploadToken }
   }
 
-  const onSubmit = async (values: AccountProfileValues) => {
+  const onSave = async (values: AccountProfileValues) => {
     try {
       const profileImageUpload = await uploadProfileImage(
         values.profileImage?.item(0) ?? undefined,
@@ -85,11 +71,78 @@ export function AccountProfileForm({
         profileImageId: profileImageUpload?.storageId,
         profileUploadToken: profileImageUpload?.uploadToken,
       })
-      await onSaved()
+      return true
     } catch {
       showAppErrorToast({ title: 'Could not save your profile' })
+      return false
     }
   }
+  return <AccountProfileFormView {...props} onSave={onSave} />
+}
+
+export function AccountProfileFormView({
+  initialValues,
+  onSaved,
+  onSave,
+  onPendingChange,
+  submitLabel = 'Save and continue',
+}: AccountProfileFormProps & {
+  onSave: (values: AccountProfileValues) => Promise<void | boolean>
+}) {
+  const formId = useId()
+  const pending = useRef(false)
+  const [isPending, setIsPending] = useState(false)
+  const [continuationFailed, setContinuationFailed] = useState(false)
+  const [error, setError] = useState<string>()
+  const form = useForm<AccountProfileValues>({
+    resolver: zodResolver(accountProfileSchema),
+    mode: 'onTouched',
+    defaultValues: {
+      preferredName: initialValues.displayName,
+      phone: initialValues.phone ?? '',
+      profileImage: undefined,
+    },
+  })
+  const onSubmit = async (values: AccountProfileValues) => {
+    if (pending.current) return
+    pending.current = true
+    setIsPending(true)
+    onPendingChange?.(true)
+    setError(undefined)
+    try {
+      if (!continuationFailed) {
+        try {
+          const acknowledged = await onSave(values)
+          if (acknowledged === false)
+            throw new Error('Profile not acknowledged')
+        } catch {
+          setError(
+            'Could not save your profile. Your details and selected image are still here. Please try again.',
+          )
+          return
+        }
+        form.reset({
+          preferredName: values.preferredName,
+          phone: values.phone ?? '',
+          profileImage: undefined,
+        })
+      }
+      try {
+        await onSaved()
+        setContinuationFailed(false)
+      } catch {
+        setContinuationFailed(true)
+        setError(
+          'Your profile was saved, but the next step could not finish. Retry continuing; your profile and image will not be saved again.',
+        )
+      }
+    } finally {
+      pending.current = false
+      setIsPending(false)
+      onPendingChange?.(false)
+    }
+  }
+  const fieldsDisabled = isPending || continuationFailed
 
   return (
     <InlineForm
@@ -117,15 +170,27 @@ export function AccountProfileForm({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Preferred name</FieldLabel>
+              <FieldLabel htmlFor={`${formId}-${field.name}`}>
+                Preferred name
+              </FieldLabel>
               <Input
                 {...field}
-                id={field.name}
+                id={`${formId}-${field.name}`}
                 autoComplete="name"
                 aria-invalid={fieldState.invalid}
-                disabled={form.formState.isSubmitting}
+                aria-describedby={
+                  fieldState.invalid
+                    ? `${formId}-${field.name}-error`
+                    : undefined
+                }
+                disabled={fieldsDisabled}
               />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && (
+                <FieldError
+                  id={`${formId}-${field.name}-error`}
+                  errors={[fieldState.error]}
+                />
+              )}
             </Field>
           )}
         />
@@ -135,15 +200,22 @@ export function AccountProfileForm({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Phone number</FieldLabel>
+              <FieldLabel htmlFor={`${formId}-${field.name}`}>
+                Phone number
+              </FieldLabel>
               <Input
                 {...field}
-                id={field.name}
+                id={`${formId}-${field.name}`}
                 type="tel"
                 autoComplete="tel"
                 placeholder="Optional"
                 aria-invalid={fieldState.invalid}
-                disabled={form.formState.isSubmitting}
+                aria-describedby={
+                  fieldState.invalid
+                    ? `${formId}-${field.name}-error`
+                    : undefined
+                }
+                disabled={fieldsDisabled}
               />
             </Field>
           )}
@@ -155,26 +227,28 @@ export function AccountProfileForm({
         control={form.control}
         render={({ field, fieldState }) => (
           <FileUploadField
-            id={field.name}
+            id={`${formId}-${field.name}`}
             kind="image"
             accept="image/*"
-            label="Profile image"
+            label="Profile image (optional)"
             uploadLabel="Add a profile image"
-            uploadDescription="A photo helps other stable members recognise you."
-            help="Optional."
+            uploadDescription="A photo helps other stable members recognise you. Image files only, up to 5 MB."
+            help="Choose an image up to 5 MB."
             errors={fieldState.error ? [fieldState.error] : undefined}
-            files={field.value}
-            onFilesChange={field.onChange}
-            disabled={form.formState.isSubmitting}
+            files={field.value ?? null}
+            onFilesChange={(files) => field.onChange(files ?? undefined)}
+            controlRef={field.ref}
+            disabled={fieldsDisabled}
             width="full"
           />
         )}
       />
 
+      <FormSubmissionError message={error} />
       <FormSubmitActions
         align="end"
-        isSubmitting={form.formState.isSubmitting}
-        submitLabel={submitLabel}
+        isSubmitting={isPending}
+        submitLabel={continuationFailed ? 'Retry continuing' : submitLabel}
         submittingLabel="Saving..."
       />
     </InlineForm>

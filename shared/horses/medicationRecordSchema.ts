@@ -43,30 +43,41 @@ const optionalDate = z
   .optional()
   .transform((value) => value || undefined)
 
-export const medicationRecordAddSchema = z.object({
-  horseId: z.string().min(1),
-  medicationName: medicationNameSchema,
-  dosage: medicationDosageSchema,
-  frequency: optionalText(medicationShortTextSchema),
-  startDate: medicationDateSchema,
-  endDate: optionalDate,
-  prescribedBy: optionalText(medicationShortTextSchema),
-  reason: optionalText(medicationLongTextSchema),
-  notes: optionalText(medicationLongTextSchema),
-  status: medicationRecordStatusSchema,
-})
+const hasValidDateOrder = (value: { startDate: string; endDate?: string }) =>
+  !value.endDate || value.endDate >= value.startDate
+const dateOrderError = {
+  message: 'End date cannot be before the start date.',
+  path: ['endDate'],
+}
 
-export const medicationRecordFormSchema = z.object({
-  medicationName: medicationNameSchema,
-  dosage: medicationDosageSchema,
-  frequency: medicationShortTextSchema,
-  startDate: medicationDateSchema,
-  endDate: optionalDate,
-  prescribedBy: medicationShortTextSchema,
-  reason: medicationLongTextSchema,
-  notes: medicationLongTextSchema,
-  status: medicationRecordStatusSchema,
-})
+export const medicationRecordAddSchema = z
+  .object({
+    horseId: z.string().min(1),
+    medicationName: medicationNameSchema,
+    dosage: medicationDosageSchema,
+    frequency: optionalText(medicationShortTextSchema),
+    startDate: medicationDateSchema,
+    endDate: optionalDate,
+    prescribedBy: optionalText(medicationShortTextSchema),
+    reason: optionalText(medicationLongTextSchema),
+    notes: optionalText(medicationLongTextSchema),
+    status: medicationRecordStatusSchema,
+  })
+  .refine(hasValidDateOrder, dateOrderError)
+
+export const medicationRecordFormSchema = z
+  .object({
+    medicationName: medicationNameSchema,
+    dosage: medicationDosageSchema,
+    frequency: medicationShortTextSchema,
+    startDate: medicationDateSchema,
+    endDate: optionalDate,
+    prescribedBy: medicationShortTextSchema,
+    reason: medicationLongTextSchema,
+    notes: medicationLongTextSchema,
+    status: medicationRecordStatusSchema,
+  })
+  .refine(hasValidDateOrder, dateOrderError)
 
 export type MedicationRecordFormSchema = z.infer<
   typeof medicationRecordFormSchema

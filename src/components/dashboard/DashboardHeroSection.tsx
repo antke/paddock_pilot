@@ -17,7 +17,7 @@ type DashboardHeroTitleProps = Omit<ComponentProps<'h1'>, 'children'> & {
 type DashboardHeroActionsProps = ComponentProps<'div'>
 
 export function DashboardHeroSection({
-  chrome = 'cards',
+  chrome = 'flat',
   className,
   ...props
 }: DashboardHeroSectionProps) {

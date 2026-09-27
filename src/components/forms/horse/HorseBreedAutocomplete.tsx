@@ -1,5 +1,5 @@
 import { CheckIcon } from '@phosphor-icons/react'
-import { useEffect, useState } from 'react'
+import type { Ref } from 'react'
 
 import {
   AutocompleteContent,
@@ -12,14 +12,17 @@ import {
   AutocompleteRoot,
 } from '#/components/ui/autocomplete'
 import { cn } from '#/lib/utils'
-import { horseBreeds } from 'shared/horses/horseBreeds'
+import { horseBreedOptions, matchHorseBreed } from './horseBreedSelection'
 
 type HorseBreedAutocompleteProps = {
   id: string
   name: string
   value: string
+  existingBreed?: string
+  inputRef?: Ref<HTMLInputElement>
   disabled?: boolean
   invalid?: boolean
+  describedBy?: string
   onBlur: () => void
   onValueChange: (value: string) => void
 }
@@ -28,55 +31,40 @@ export function HorseBreedAutocomplete({
   id,
   name,
   value,
+  existingBreed,
+  inputRef,
   disabled = false,
   invalid = false,
+  describedBy,
   onBlur,
   onValueChange,
 }: HorseBreedAutocompleteProps) {
-  const [query, setQuery] = useState(value)
-  const [legacyBreed] = useState(() => {
-    if (!value || horseBreeds.some((breed) => breed === value)) return undefined
-    return value
-  })
-  const breedOptions = legacyBreed
-    ? ([legacyBreed, ...horseBreeds] as const)
-    : horseBreeds
+  const breedOptions = horseBreedOptions(existingBreed)
 
   const commitKnownBreed = () => {
-    const selectedBreed = breedOptions.find(
-      (breed) => breed.toLocaleLowerCase() === query.toLocaleLowerCase(),
-    )
-
-    const nextValue = selectedBreed ?? ''
-    setQuery(nextValue)
-    onValueChange(nextValue)
+    // Preserve unresolved text so the form can explain it and block submission.
+    const selectedBreed = matchHorseBreed(value, existingBreed)
+    if (selectedBreed !== undefined && selectedBreed !== value)
+      onValueChange(selectedBreed)
     onBlur()
   }
-
-  useEffect(() => {
-    setQuery(value)
-  }, [value])
 
   return (
     <AutocompleteRoot
       items={breedOptions}
-      value={query}
+      value={value}
       disabled={disabled}
       openOnInputClick
       autoHighlight
-      onValueChange={(nextValue, eventDetails) => {
-        setQuery(nextValue)
-
-        if (eventDetails.reason === 'item-press' || nextValue === '') {
-          onValueChange(nextValue)
-        }
-      }}
+      onValueChange={onValueChange}
     >
       <AutocompleteInput
+        ref={inputRef}
         id={id}
         name={name}
         disabled={disabled}
         aria-invalid={invalid}
+        aria-describedby={describedBy}
         placeholder="Search horse breeds"
         autoComplete="off"
         triggerLabel="Show horse breeds"
@@ -113,7 +101,7 @@ export function HorseBreedAutocomplete({
           </AutocompleteList>
         </AutocompleteGroup>
         <AutocompleteEmpty>
-          No breed matches. Choose a breed from the available list.
+          No breed matches. Choose a breed from the list, or clear this field.
         </AutocompleteEmpty>
       </AutocompleteContent>
     </AutocompleteRoot>

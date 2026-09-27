@@ -1,7 +1,6 @@
 import { api } from 'convex/_generated/api'
 import { useMutation } from 'convex/react'
-import { useState } from 'react'
-
+import { useRef, useState } from 'react'
 import {
   DashboardItemCardContent,
   DashboardItemList,
@@ -9,6 +8,7 @@ import {
 } from '#/components/dashboard/DashboardItemCard'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
+import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,91 +21,122 @@ import {
   AlertDialogTrigger,
 } from '#/components/ui/alert-dialog'
 import { Button } from '#/components/ui/button'
-import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
+import { showAppSuccessToast } from '#/components/ui/sonner'
 import { formatMediumTimestampDate } from '#/lib/dateDisplay'
 import type { StableSettingsData } from './stableSettingsTypes'
 import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react'
 
-export function DeletedHorsesCard({
-  horses,
-}: {
-  horses: StableSettingsData['deletedHorses']
-}) {
-  if (horses.length === 0) {
-    return (
-      <DashboardSectionCard
-        title="Deleted horses"
-        description="Deleted horses remain recoverable for 14 days."
-      >
-        <DashboardEmptyState chrome="soft" spacing="flush">
-          No horses are waiting to be permanently deleted.
-        </DashboardEmptyState>
-      </DashboardSectionCard>
-    )
-  }
+export type DeletedHorse = StableSettingsData['deletedHorses'][number]
 
+export function DeletedHorsesCard({ horses }: { horses: Array<DeletedHorse> }) {
+  const restoreHorse = useMutation(api.horses.restoreHorse)
+  const permanentlyDeleteHorse = useMutation(api.horses.permanentlyDeleteHorse)
+  return (
+    <DeletedHorsesView
+      horses={horses}
+      onRestore={async (horse) => {
+        await restoreHorse({ id: horse._id })
+        showAppSuccessToast({
+          title: 'Horse restored',
+          description: `${horse.name} is visible in the stable again.`,
+        })
+      }}
+      onPermanentlyDelete={async (horse) => {
+        await permanentlyDeleteHorse({ id: horse._id })
+        showAppSuccessToast({
+          title: 'Horse permanently deleted',
+          description: `${horse.name} and its horse-specific records were removed.`,
+        })
+      }}
+    />
+  )
+}
+
+/** Shared view. Callbacks resolve after persistence and reject any unconfirmed operation. */
+export function DeletedHorsesView({
+  horses,
+  onRestore,
+  onPermanentlyDelete,
+}: {
+  horses: Array<DeletedHorse>
+  onRestore: (horse: DeletedHorse) => Promise<void>
+  onPermanentlyDelete: (horse: DeletedHorse) => Promise<void>
+}) {
+  const section = useRef<HTMLDivElement>(null)
   return (
     <DashboardSectionCard
+      ref={section}
+      role="group"
+      aria-label="Deleted horses"
+      tabIndex={-1}
       title="Deleted horses"
-      description="Restore a horse before its permanent deletion date. After 14 days it becomes eligible for final removal."
+      description="Deleted horses are kept for 14 days, then become eligible for permanent removal. Restore a horse while it is still listed here."
     >
-      <DashboardItemList gap="compact">
-        {horses.map((horse) => (
-          <DeletedHorseRow key={horse._id} horse={horse} />
-        ))}
-      </DashboardItemList>
+      {horses.length === 0 ? (
+        <DashboardEmptyState>
+          No horses are waiting to be permanently deleted.
+        </DashboardEmptyState>
+      ) : (
+        <DashboardItemList gap="compact">
+          {horses.map((horse) => (
+            <DeletedHorseRow
+              key={horse._id}
+              horse={horse}
+              onRestore={async () => {
+                await onRestore(horse)
+                section.current?.focus()
+              }}
+              onPermanentlyDelete={() => onPermanentlyDelete(horse)}
+              removalFocusTarget={() => section.current}
+            />
+          ))}
+        </DashboardItemList>
+      )}
     </DashboardSectionCard>
   )
 }
 
 function DeletedHorseRow({
   horse,
+  onRestore,
+  onPermanentlyDelete,
+  removalFocusTarget,
 }: {
-  horse: StableSettingsData['deletedHorses'][number]
+  horse: DeletedHorse
+  onRestore: () => Promise<void>
+  onPermanentlyDelete: () => Promise<void>
+  removalFocusTarget: () => HTMLElement | null
 }) {
-  const restoreHorse = useMutation(api.horses.restoreHorse)
-  const permanentlyDeleteHorse = useMutation(api.horses.permanentlyDeleteHorse)
   const [pendingAction, setPendingAction] = useState<'restore' | 'delete'>()
+  const [failedAction, setFailedAction] = useState<'restore' | 'delete'>()
   const [deleteOpen, setDeleteOpen] = useState(false)
-
-  const onRestore = async () => {
+  const pending = useRef(false)
+  const deleteTrigger = useRef<HTMLButtonElement>(null)
+  const perform = async (action: 'restore' | 'delete') => {
+    if (pending.current) return
+    pending.current = true
+    setPendingAction(action)
+    setFailedAction(undefined)
     try {
-      setPendingAction('restore')
-      await restoreHorse({ id: horse._id })
-      showAppSuccessToast({
-        title: 'Horse restored',
-        description: <p>{horse.name} is visible in the stable again.</p>,
-      })
+      if (action === 'restore') await onRestore()
+      else {
+        await onPermanentlyDelete()
+        setDeleteOpen(false)
+      }
     } catch {
-      showAppErrorToast()
+      setFailedAction(action)
     } finally {
+      pending.current = false
       setPendingAction(undefined)
     }
   }
-
-  const onPermanentlyDelete = async () => {
-    try {
-      setPendingAction('delete')
-      await permanentlyDeleteHorse({ id: horse._id })
-      setDeleteOpen(false)
-      showAppSuccessToast({
-        title: 'Horse permanently deleted',
-        description: (
-          <p>{horse.name} and its horse-specific records were removed.</p>
-        ),
-      })
-    } catch {
-      showAppErrorToast()
-    } finally {
-      setPendingAction(undefined)
-    }
-  }
-
   return (
     <DashboardItemRecordCard
-      chrome="cards"
+      chrome="flat"
       density="compact"
       interactive={false}
+      role="group"
+      aria-label={`${horse.name}, deleted horse`}
       actions={
         <>
           <Button
@@ -114,17 +145,25 @@ function DeletedHorseRow({
             variant="outline"
             disabled={pendingAction !== undefined}
             aria-busy={pendingAction === 'restore' || undefined}
-            onClick={onRestore}
+            onClick={() => void perform('restore')}
           >
             <ArrowCounterClockwiseIcon aria-hidden="true" />
             {pendingAction === 'restore' ? 'Restoring...' : 'Restore'}
           </Button>
-
           {horse.canPermanentlyDelete && (
-            <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+            <AlertDialog
+              open={deleteOpen}
+              onOpenChange={(open) => {
+                if (!pending.current) {
+                  setDeleteOpen(open)
+                  if (open) setFailedAction(undefined)
+                }
+              }}
+            >
               <AlertDialogTrigger
                 render={
                   <Button
+                    ref={deleteTrigger}
                     type="button"
                     action="delete"
                     size="sm"
@@ -135,16 +174,30 @@ function DeletedHorseRow({
               >
                 Delete permanently
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent
+                finalFocus={() =>
+                  deleteTrigger.current?.isConnected
+                    ? deleteTrigger.current
+                    : removalFocusTarget()
+                }
+              >
                 <AlertDialogHeader>
                   <AlertDialogTitle>
                     Permanently delete {horse.name}?
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    This removes horse-specific records and single-horse events.
-                    Events shared with other horses will remain.
+                    This cannot be undone. It removes horse-specific records and
+                    single-horse events. Events shared with other horses will
+                    remain.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
+                {failedAction === 'delete' && (
+                  <RouteStatusAlert
+                    tone="danger"
+                    title="Could not permanently delete horse"
+                    description="Deletion was not confirmed. Try again or cancel."
+                  />
+                )}
                 <AlertDialogFooter>
                   <AlertDialogCancel disabled={pendingAction !== undefined}>
                     Cancel
@@ -154,7 +207,7 @@ function DeletedHorseRow({
                     variant="destructive"
                     disabled={pendingAction !== undefined}
                     aria-busy={pendingAction === 'delete' || undefined}
-                    onClick={onPermanentlyDelete}
+                    onClick={() => void perform('delete')}
                   >
                     {pendingAction === 'delete'
                       ? 'Deleting...'
@@ -166,15 +219,30 @@ function DeletedHorseRow({
           )}
         </>
       }
+      footer={
+        failedAction === 'restore' ? (
+          <RouteStatusAlert
+            tone="danger"
+            title="Could not restore horse"
+            description="Restoration was not confirmed. Try restoring again."
+          />
+        ) : undefined
+      }
     >
       <DashboardItemCardContent
         title={horse.name}
         titleSize="sm"
         meta={
           <>
-            <span>Deleted {formatMediumTimestampDate(horse.deletedAt!)}</span>
             <span>
-              Permanent deletion {formatMediumTimestampDate(horse.purgeAt)}
+              Deleted{' '}
+              {horse.deletedAt === undefined
+                ? 'date unavailable'
+                : formatMediumTimestampDate(horse.deletedAt)}
+            </span>
+            <span>
+              Eligible for permanent removal{' '}
+              {formatMediumTimestampDate(horse.purgeAt)}
             </span>
           </>
         }

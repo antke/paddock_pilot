@@ -23,14 +23,14 @@ export function StableProviderCard({
 }: StableProviderCardProps) {
   return (
     <DashboardItemRecordCard
-      chrome="cards"
+      chrome="flat"
       density="compact"
       interactive={false}
       actions={actions}
     >
       <DashboardItemRecordContent
         title={provider.name}
-        titleTone="open"
+        titleTone="default"
         meta={
           <>
             <span>{stableProviderTypeLabels[provider.type]}</span>

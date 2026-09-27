@@ -8,6 +8,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
+import { useId, useRef, useState } from 'react'
+import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Controller, useForm } from 'react-hook-form'
 import { stableMemberDetailsFormSchema } from 'shared/stables/stableMemberSchema'
 import type { StableMemberDetailsFormSchema } from 'shared/stables/stableMemberSchema'
@@ -15,15 +17,65 @@ import type { StableMemberDetailsFormSchema } from 'shared/stables/stableMemberS
 type StableMemberDetailsFormProps = {
   member: Doc<'stableMembers'>
   onCancel: () => void
+  cancelLabel?: string
   onSaved: () => void
+  onPendingChange?: (pending: boolean) => void
 }
 
 export function StableMemberDetailsForm({
   member,
   onCancel,
+  cancelLabel,
   onSaved,
+  onPendingChange,
 }: StableMemberDetailsFormProps) {
   const updateDetails = useMutation(api.stableMembers.updateDetails)
+  const onSave = async (data: StableMemberDetailsFormSchema) => {
+    try {
+      await updateDetails({ id: member._id, ...data })
+      showAppSuccessToast({ title: 'Member details updated' })
+      return true
+    } catch {
+      showAppErrorToast()
+      return false
+    }
+  }
+
+  return (
+    <StableMemberDetailsFormView
+      member={member}
+      onSave={onSave}
+      onCancel={onCancel}
+      cancelLabel={cancelLabel}
+      onSaved={onSaved}
+      onPendingChange={onPendingChange}
+    />
+  )
+}
+
+type StableMemberDetailsFormViewProps = StableMemberDetailsFormProps & {
+  onSave: (values: StableMemberDetailsFormSchema) => Promise<boolean>
+}
+
+// Identity-bound defaults prevent edits from carrying across members.
+export function StableMemberDetailsFormView(
+  props: StableMemberDetailsFormViewProps,
+) {
+  return <MemberDetailsFields key={props.member._id} {...props} />
+}
+
+function MemberDetailsFields({
+  member,
+  onSave,
+  onCancel,
+  cancelLabel,
+  onSaved,
+  onPendingChange,
+}: StableMemberDetailsFormViewProps) {
+  const formId = useId()
+  const pendingRef = useRef(false)
+  const [isPending, setIsPending] = useState(false)
+  const [saveError, setSaveError] = useState(false)
   const form = useForm<StableMemberDetailsFormSchema>({
     resolver: zodResolver(stableMemberDetailsFormSchema),
     mode: 'onTouched',
@@ -35,38 +87,60 @@ export function StableMemberDetailsForm({
   })
 
   const onSubmit = async (data: StableMemberDetailsFormSchema) => {
+    if (pendingRef.current) return
+    pendingRef.current = true
+    setIsPending(true)
+    setSaveError(false)
+    onPendingChange?.(true)
     try {
-      await updateDetails({
-        id: member._id,
-        displayNameOverride: data.displayNameOverride,
-        phone: data.phone,
-        emergencyContact: data.emergencyContact,
-      })
-
-      showAppSuccessToast({ title: 'Member details updated' })
-      onSaved()
-    } catch (err) {
-      showAppErrorToast()
+      if (await onSave(data)) onSaved()
+      else setSaveError(true)
+    } catch {
+      setSaveError(true)
+    } finally {
+      pendingRef.current = false
+      setIsPending(false)
+      onPendingChange?.(false)
     }
   }
 
   return (
     <InlineForm gap="tight" onSubmit={form.handleSubmit(onSubmit)}>
+      {saveError && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            Could not save member details. Your changes are still here. Please
+            try again.
+          </AlertDescription>
+        </Alert>
+      )}
       <FieldGrid gap="compact">
         <Controller
           name="displayNameOverride"
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Yard display name</FieldLabel>
+              <FieldLabel htmlFor={`${formId}-${field.name}`}>
+                Yard display name
+              </FieldLabel>
               <Input
                 {...field}
-                id={field.name}
-                disabled={form.formState.isSubmitting}
+                id={`${formId}-${field.name}`}
+                disabled={form.formState.isSubmitting || isPending}
                 aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid
+                    ? `${formId}-${field.name}-error`
+                    : undefined
+                }
                 placeholder="Name used around the yard"
               />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && (
+                <FieldError
+                  id={`${formId}-${field.name}-error`}
+                  errors={[fieldState.error]}
+                />
+              )}
             </Field>
           )}
         />
@@ -76,16 +150,26 @@ export function StableMemberDetailsForm({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Phone</FieldLabel>
+              <FieldLabel htmlFor={`${formId}-${field.name}`}>Phone</FieldLabel>
               <Input
                 {...field}
-                id={field.name}
+                id={`${formId}-${field.name}`}
                 type="tel"
-                disabled={form.formState.isSubmitting}
+                disabled={form.formState.isSubmitting || isPending}
                 aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid
+                    ? `${formId}-${field.name}-error`
+                    : undefined
+                }
                 placeholder="Member phone number"
               />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && (
+                <FieldError
+                  id={`${formId}-${field.name}-error`}
+                  errors={[fieldState.error]}
+                />
+              )}
             </Field>
           )}
         />
@@ -96,22 +180,33 @@ export function StableMemberDetailsForm({
         control={form.control}
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>Emergency contact</FieldLabel>
+            <FieldLabel htmlFor={`${formId}-${field.name}`}>
+              Emergency contact
+            </FieldLabel>
             <Textarea
               {...field}
-              id={field.name}
-              disabled={form.formState.isSubmitting}
+              id={`${formId}-${field.name}`}
+              disabled={form.formState.isSubmitting || isPending}
               aria-invalid={fieldState.invalid}
+              aria-describedby={
+                fieldState.invalid ? `${formId}-${field.name}-error` : undefined
+              }
               placeholder="Who should be contacted in an emergency?"
             />
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            {fieldState.invalid && (
+              <FieldError
+                id={`${formId}-${field.name}-error`}
+                errors={[fieldState.error]}
+              />
+            )}
           </Field>
         )}
       />
 
       <FormSubmitActions
-        isSubmitting={form.formState.isSubmitting}
+        isSubmitting={form.formState.isSubmitting || isPending}
         onCancel={onCancel}
+        cancelLabel={cancelLabel}
         submitLabel="Save details"
         submittingLabel="Saving..."
       />

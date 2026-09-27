@@ -45,8 +45,7 @@ type HorseSelectionCardProps = HorseCardBaseProps & {
   value?: string
 }
 
-export const horseCardSurfaceClassName =
-  'border-border bg-card dark:border-border dark:bg-card'
+export const horseCardSurfaceClassName = 'text-foreground'
 
 export function HorseCardContent({
   horse,
@@ -92,7 +91,7 @@ export function HorseCard({
   return (
     <DashboardItemCard
       accent={accent}
-      chrome="cards"
+      chrome="flat"
       density="compact"
       interactive={false}
       className={cn(horseCardSurfaceClassName, className)}
@@ -116,11 +115,11 @@ export function HorseCardLink({
       to="/stables/$stableId/horses/$horseId"
       params={{ stableId, horseId }}
       accent={accent}
-      chrome="cards"
+      chrome="flat"
       density="compact"
       className={cn(
         horseCardSurfaceClassName,
-        'hover:bg-surface-elevated active:bg-primary/10',
+        'hover:bg-surface-elevated active:bg-surface',
         className,
       )}
     >
@@ -166,11 +165,10 @@ export function HorseSelectionCard({
         chrome="cards"
         density="compact"
         interactive={!disabled}
-        data-selected={checked || undefined}
+        selected={checked}
         className={cn(
           horseCardSurfaceClassName,
-          'cursor-pointer active:bg-primary/5 peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:outline-none',
-          checked && 'border-primary ring-1 ring-primary',
+          'cursor-pointer active:bg-selection-surface peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:outline-none',
           invalid && 'border-destructive/70 ring-2 ring-destructive/20',
           disabled && 'cursor-not-allowed opacity-50',
           className,

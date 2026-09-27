@@ -1,25 +1,25 @@
 import { cn } from '#/lib/utils'
 
-export type DashboardChrome = 'cards' | 'soft'
+export type DashboardChrome = 'flat' | 'cards' | 'soft'
 
 export function dashboardSectionClassName(
   chrome: DashboardChrome,
   className?: string,
 ) {
   return cn(
-    chrome === 'cards' && 'app-panel bg-card p-6 md:p-7',
-    chrome === 'soft' &&
-      'border-y border-border-subtle bg-surface px-5 py-6 md:px-6 md:py-7',
+    chrome === 'flat' && 'bg-transparent',
+    chrome === 'cards' && 'app-section border-border-subtle',
+    chrome === 'soft' && 'app-section',
     className,
   )
 }
 
 export function dashboardHeroClassName(chrome: DashboardChrome) {
   return cn(
-    'overflow-hidden',
-    chrome === 'cards' && 'app-panel-strong bg-card p-5 md:p-7',
-    chrome === 'soft' &&
-      'border-y border-border-subtle bg-surface px-5 py-6 md:px-7',
+    'min-w-0',
+    chrome === 'flat' && 'bg-transparent py-2',
+    chrome === 'cards' && 'app-section border-border',
+    chrome === 'soft' && 'app-section',
   )
 }
 
@@ -28,6 +28,7 @@ export function dashboardInlinePanelClassName(
   className?: string,
 ) {
   return cn(
+    chrome === 'flat' && 'bg-transparent py-4',
     chrome === 'cards' && 'app-row p-5',
     chrome === 'soft' && 'rounded-row bg-surface p-5',
     className,
@@ -40,8 +41,9 @@ export function dashboardEmptyClassName(
 ) {
   return cn(
     'text-sm text-muted-foreground',
-    chrome === 'cards' && 'app-row border-dashed border-border p-5',
-    chrome === 'soft' && 'app-row border-dashed border-border-subtle p-5',
+    chrome === 'flat' && 'py-4',
+    chrome === 'cards' && 'rounded-row bg-surface py-4 px-5',
+    chrome === 'soft' && 'py-4',
     className,
   )
 }

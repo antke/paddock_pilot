@@ -28,7 +28,7 @@ function RouteComponent() {
       />
 
       <DashboardSectionCard contentGap="comfortable">
-        <EventList stableId={stableId} chrome="soft" />
+        <EventList stableId={stableId} />
       </DashboardSectionCard>
     </DashboardPage>
   )

@@ -4,6 +4,7 @@ export function RoutePending() {
   return (
     <DashboardLoadingState
       data-slot="route-pending"
+      label="Loading page…"
       className="h-full min-h-[60dvh]"
       panelClassName="size-auto border-0 bg-transparent"
       spinnerClassName="size-10"

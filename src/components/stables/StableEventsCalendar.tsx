@@ -28,7 +28,14 @@ import { Button } from '#/components/ui/button'
 import { getTodayDateKey } from '#/lib/dateDisplay'
 import { formatCountLabel } from '#/lib/numberDisplay'
 import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react'
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { eventStatusLabels } from 'shared/events/eventSchema'
 import {
   addMonths,
@@ -48,18 +55,23 @@ import type {
 
 type StableEventsCalendarProps = {
   events: Array<StableDashboardEvent>
+  initialMonth?: Date
 }
 
 type CalendarCell =
-  | { key: string; kind: 'empty' }
-  | { date: Date; key: string; kind: 'day' }
+  { key: string; kind: 'empty' } | { date: Date; key: string; kind: 'day' }
 
-export function StableEventsCalendar({ events }: StableEventsCalendarProps) {
+export function StableEventsCalendar({
+  events,
+  initialMonth,
+}: StableEventsCalendarProps) {
   const [visibleMonth, setVisibleMonth] = useState(() =>
-    startOfMonth(new Date()),
+    startOfMonth(initialMonth ?? new Date()),
   )
   const [selectedDateKey, setSelectedDateKey] = useState<string>()
   const [calendarAnnouncement, setCalendarAnnouncement] = useState('')
+  const calendarRef = useRef<HTMLDivElement>(null)
+  const lastFocusedRef = useRef<HTMLElement | null>(null)
   const selectedAgendaId = useId()
   const selectedAgendaRef = useRef<HTMLDivElement>(null)
   const selectedAgendaTriggerRef = useRef<HTMLButtonElement>(null)
@@ -94,8 +106,54 @@ export function StableEventsCalendar({ events }: StableEventsCalendarProps) {
     (_, index) => calendarCells.slice(index * 7, index * 7 + 7),
   )
 
+  // Track actual focus before a reactive render removes its node. A later
+  // focus elsewhere clears ownership, so ordinary data updates cannot steal it.
   useEffect(() => {
-    if (selectedDateKey) selectedAgendaRef.current?.focus()
+    const rememberFocus = (event: FocusEvent) => {
+      const target = event.target
+      lastFocusedRef.current =
+        target instanceof HTMLElement && calendarRef.current?.contains(target)
+          ? target
+          : null
+    }
+    document.addEventListener('focusin', rememberFocus)
+    const breakpoint = window.matchMedia?.('(min-width: 48rem)')
+    const recoverResponsiveFocus = () => {
+      const focused = lastFocusedRef.current
+      if (
+        !focused ||
+        (document.activeElement !== focused &&
+          document.activeElement !== document.body)
+      )
+        return
+      const presentation = focused
+        .closest('[data-calendar-view]')
+        ?.getAttribute('data-calendar-view')
+      const hidden = breakpoint?.matches
+        ? presentation === 'mobile'
+        : presentation === 'month' || presentation === 'selected'
+      if (hidden) calendarRef.current?.focus()
+    }
+    breakpoint?.addEventListener('change', recoverResponsiveFocus)
+    return () => {
+      document.removeEventListener('focusin', rememberFocus)
+      breakpoint?.removeEventListener('change', recoverResponsiveFocus)
+    }
+  }, [])
+
+  useLayoutEffect(() => {
+    const focused = lastFocusedRef.current
+    if (
+      focused &&
+      !focused.isConnected &&
+      document.activeElement === document.body
+    )
+      calendarRef.current?.focus()
+  }, [events, selectedDateKey, visibleMonth])
+
+  useEffect(() => {
+    if (selectedDateKey && isRendered(selectedAgendaRef.current))
+      selectedAgendaRef.current?.focus()
   }, [selectedDateKey])
 
   const selectMonth = (month: Date) => {
@@ -108,12 +166,19 @@ export function StableEventsCalendar({ events }: StableEventsCalendarProps) {
   }
 
   const closeSelectedAgenda = () => {
-    selectedAgendaTriggerRef.current?.focus()
+    const trigger = selectedAgendaTriggerRef.current
+    if (isRendered(trigger)) trigger?.focus()
+    else calendarRef.current?.focus()
     setSelectedDateKey(undefined)
   }
 
   return (
     <DashboardSectionCard
+      ref={calendarRef}
+      role="region"
+      aria-label={`${formatMonthLabel(visibleMonth)} calendar`}
+      tabIndex={-1}
+      className="app-control-focus"
       title={formatMonthLabel(visibleMonth)}
       description={`${formatCountLabel(visibleMonthOccurrences.length, 'event')} this month`}
       descriptionSize="sm"
@@ -158,9 +223,10 @@ export function StableEventsCalendar({ events }: StableEventsCalendarProps) {
         className="md:hidden"
         gap="compact"
         title="Monthly agenda"
+        data-calendar-view="mobile"
       >
         {visibleMonthOccurrences.length === 0 ? (
-          <DashboardEmptyState chrome="soft" spacing="flush">
+          <DashboardEmptyState chrome="flat" spacing="flush">
             No events are scheduled this month.
           </DashboardEmptyState>
         ) : (
@@ -169,7 +235,7 @@ export function StableEventsCalendar({ events }: StableEventsCalendarProps) {
               <EventRow
                 key={occurrence.occurrenceKey}
                 event={getOccurrenceDisplayEvent(occurrence)}
-                chrome="soft"
+                chrome="flat"
                 horseCount={occurrence.event.horseIds.length}
                 supplementalMeta={
                   occurrence.durationDays > 1
@@ -185,7 +251,10 @@ export function StableEventsCalendar({ events }: StableEventsCalendarProps) {
 
       <CalendarShell
         className="hidden md:block"
-        role="grid"
+        role="table"
+        data-calendar-view="month"
+        aria-colcount={7}
+        aria-rowcount={calendarWeeks.length + 1}
         aria-label={`${formatMonthLabel(visibleMonth)} event calendar`}
       >
         <CalendarWeekdayRow role="row">
@@ -201,14 +270,7 @@ export function StableEventsCalendar({ events }: StableEventsCalendarProps) {
             <div role="row" className="contents" key={`week-${weekIndex}`}>
               {week.map((cell) => {
                 if (cell.kind === 'empty') {
-                  return (
-                    <CalendarDayCell
-                      key={cell.key}
-                      role="gridcell"
-                      aria-hidden="true"
-                      muted
-                    />
-                  )
+                  return <CalendarDayCell key={cell.key} role="cell" muted />
                 }
 
                 const dateOccurrences = occurrencesByDate.get(cell.key) ?? []
@@ -222,7 +284,7 @@ export function StableEventsCalendar({ events }: StableEventsCalendarProps) {
                 return (
                   <CalendarDayCell
                     key={cell.key}
-                    role="gridcell"
+                    role="cell"
                     aria-label={fullDate}
                     aria-current={isToday ? 'date' : undefined}
                     isToday={isToday}
@@ -283,12 +345,13 @@ export function StableEventsCalendar({ events }: StableEventsCalendarProps) {
           id={selectedAgendaId}
           ref={selectedAgendaRef}
           role="region"
+          data-calendar-view="selected"
           aria-label={`Events on ${formatEventDate(selectedDateKey)}`}
           tabIndex={-1}
           onKeyDown={(event) => {
             if (event.key === 'Escape') closeSelectedAgenda()
           }}
-          className="hidden scroll-mt-24 rounded-panel border-t border-border-subtle pt-5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:block"
+          className="hidden rounded-panel border-t border-border-subtle pt-5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:block"
         >
           <DashboardSubsection
             as="h3"
@@ -310,7 +373,7 @@ export function StableEventsCalendar({ events }: StableEventsCalendarProps) {
                 <EventRow
                   key={dayOccurrence.occurrence.occurrenceKey}
                   event={getOccurrenceDisplayEvent(dayOccurrence.occurrence)}
-                  chrome="soft"
+                  chrome="flat"
                   horseCount={dayOccurrence.occurrence.event.horseIds.length}
                   leadingLabel={getDayOccurrenceLabel(dayOccurrence)}
                   showRecurrence={false}
@@ -375,4 +438,12 @@ function getDayOccurrenceLabel({
     return occurrence.event.time
   if (position === 'end') return 'Ends today'
   return 'Continues'
+}
+
+function isRendered(element: HTMLElement | null): element is HTMLElement {
+  return Boolean(
+    element?.isConnected &&
+    element.getClientRects().length > 0 &&
+    window.getComputedStyle(element).visibility !== 'hidden',
+  )
 }

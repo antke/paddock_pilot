@@ -18,8 +18,11 @@
   gap: 3px;
   margin-right: auto;
 }
-.country-study-title strong {
+.country-study-title h1 {
+  margin: 0;
+  font-family: inherit;
   font-size: 15px;
+  font-weight: 700;
 }
 .country-study-title span {
   font-size: 12px;
