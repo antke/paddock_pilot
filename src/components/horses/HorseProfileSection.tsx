@@ -1,3 +1,5 @@
+import { CopyIcon } from '@phosphor-icons/react'
+import { useState } from 'react'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import {
   DetailField,
@@ -9,10 +11,68 @@ import {
 } from '#/components/dashboard/DetailBlocks'
 import { DashboardBadgeList } from '#/components/dashboard/DashboardBadgeList'
 import { TextLabel } from '#/components/ui/text-label'
+import { Button } from '#/components/ui/button'
+import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
+import { copyTextToClipboard } from '#/lib/clipboard'
 import { calculateHorseAge } from 'shared/horses/horseAge'
 import { HorseAllergyBadge } from './HorseBadges'
 import { sexLabels, shoeingStatusLabels } from './HorseDetail'
 import type { HorseDetailSectionProps } from './HorseDetail'
+
+function HorseIdentifierValue({
+  value,
+  label,
+}: {
+  value: string
+  label: string
+}) {
+  const [isCopying, setIsCopying] = useState(false)
+
+  const copy = async () => {
+    if (isCopying) return
+    setIsCopying(true)
+    try {
+      await copyTextToClipboard(value)
+      showAppSuccessToast({ title: `${label} copied` })
+    } catch {
+      showAppErrorToast({
+        title: `Could not copy ${label.toLowerCase()}`,
+        description: <p>Select the number and copy it manually.</p>,
+      })
+    } finally {
+      setIsCopying(false)
+    }
+  }
+
+  return (
+    <span className="inline-flex max-w-full items-center gap-1">
+      <span className="min-w-0 wrap-anywhere select-text">{value}</span>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              variant="subtle"
+              size="icon-sm"
+              aria-label={`Copy ${label.toLowerCase()}`}
+              aria-busy={isCopying || undefined}
+              disabled={isCopying}
+              onClick={copy}
+            />
+          }
+        >
+          <CopyIcon aria-hidden="true" />
+        </TooltipTrigger>
+        <TooltipContent>Copy {label.toLowerCase()}</TooltipContent>
+      </Tooltip>
+    </span>
+  )
+}
 
 export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
   const age = calculateHorseAge(horse.dateOfBirth) ?? horse.age
@@ -94,7 +154,12 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
                 <DetailField
                   indent={false}
                   label="Passport number"
-                  value={horse.passportNumber}
+                  value={
+                    <HorseIdentifierValue
+                      value={horse.passportNumber}
+                      label="Passport number"
+                    />
+                  }
                   variant="readable"
                 />
               )}
@@ -102,7 +167,12 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
                 <DetailField
                   indent={false}
                   label="Microchip"
-                  value={horse.microchipNumber}
+                  value={
+                    <HorseIdentifierValue
+                      value={horse.microchipNumber}
+                      label="Microchip number"
+                    />
+                  }
                   variant="readable"
                 />
               )}
