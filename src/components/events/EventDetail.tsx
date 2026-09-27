@@ -56,19 +56,25 @@ export function EventDetail({
           <EventDateBadge date={event.date} time={event.time} variant="hero" />
         }
         badges={
-          eventStatus !== 'planned' ? (
+          event.type !== 'training' && eventStatus !== 'planned' ? (
             <EventStatusBadge status={eventStatus} />
           ) : undefined
         }
         actions={
           canManageEvent ? (
             <ButtonLink
-              to="/stables/$stableId/events/$eventId/edit"
+              to={
+                event.type === 'training'
+                  ? '/stables/$stableId/training/$eventId/edit'
+                  : '/stables/$stableId/events/$eventId/edit'
+              }
               params={{ stableId, eventId: event._id }}
               action="edit"
               variant="outline"
             >
-              Edit event
+              {event.type === 'training'
+                ? 'Edit training session'
+                : 'Edit event'}
             </ButtonLink>
           ) : undefined
         }
@@ -91,7 +97,11 @@ export function EventDetail({
               />
               <DetailSummaryField
                 label="Status"
-                value={eventStatusLabels[eventStatus]}
+                value={
+                  event.type === 'training'
+                    ? 'See individual horse records below'
+                    : eventStatusLabels[eventStatus]
+                }
               />
               {event.location && (
                 <DetailSummaryField label="Location" value={event.location} />

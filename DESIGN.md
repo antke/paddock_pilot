@@ -2,33 +2,33 @@
 name: Paddock Pilot — Stable journal
 description: A warm, readable app system for everyday stable coordination.
 colors:
-  ivory: '#f7f3e9'
-  ink: '#29332c'
-  paper: '#fcf9f1'
-  evergreen: '#244c3b'
-  selection: '#555247'
-  selection-ink: '#fffaf3'
-  oat: '#e7e0ce'
+  off-white: '#eeece8'
+  ink: '#30372f'
+  paper: '#fcfbf8'
+  evergreen: '#285b43'
+  selection: '#55594c'
+  selection-ink: '#f8fbf9'
+  pale-stone: '#e4e6dc'
   burgundy: '#962f43'
-  destructive-ink: '#fff8f5'
-  secondary: '#e9e7db'
-  muted-ink: '#62665d'
-  divider: '#c9c3b5'
-  input-border: '#918e7f'
-  surface: '#f3efe5'
-  surface-muted: '#e8e5d9'
-  quiet-green: '#355f4c'
-  quiet-green-ink: '#fffaf1'
-  quiet-green-muted-ink: '#d9e5dd'
+  destructive-ink: '#fff8f9'
+  secondary: '#e4e6dc'
+  muted-ink: '#62695f'
+  divider: '#bec8c2'
+  input-border: '#7d8b83'
+  surface: 'color-mix(in srgb, #fcfbf8 70%, #eeece8)'
+  surface-muted: '#eeece8'
+  quiet-green: '#306c53'
+  quiet-green-ink: '#f7fbf8'
+  quiet-green-muted-ink: '#dfede4'
   warning: '#87571f'
   warning-surface: '#f1e2c8'
-  information: '#455d4e'
-  information-surface: '#e0e8dd'
-  night-canvas: '#20231f'
-  night-ink: '#f3eee4'
-  night-primary: '#b6cbb9'
-  night-selection: '#ded5bd'
-  night-selection-surface: '#403e34'
+  information: '#365f4d'
+  information-surface: '#e0ede5'
+  night-canvas: '#272a24'
+  night-ink: '#f0f3ea'
+  night-primary: '#a9c7ab'
+  night-selection: '#d9decc'
+  night-selection-surface: '#41493a'
   night-destructive: '#f2a8b7'
 typography:
   display:
@@ -124,7 +124,7 @@ components:
     rounded: '{rounded.control}'
     padding: '2px 10px'
   selected-control:
-    backgroundColor: '{colors.oat}'
+    backgroundColor: '{colors.pale-stone}'
     textColor: '{colors.selection}'
     rounded: '{rounded.control}'
   record-row:
@@ -145,7 +145,7 @@ components:
 
 **Creative North Star: "Stable journal"**
 
-A warm, readable working journal for stable plans, horse records and everyday care. Alegreya headings and Alegreya Sans body text give the app its character. An oat canvas, paper working sections and gently alternating rows keep real records easy to scan. Evergreen actions, oat selection and burgundy destructive states have distinct jobs.
+A warm, readable working journal for stable plans, horse records and everyday care. Alegreya headings and Alegreya Sans body text give the app its character. A soft stone canvas, paper working sections and gently alternating rows keep real records easy to scan. Evergreen actions, pale stone selection and burgundy destructive states have distinct jobs.
 
 This is the canonical shared **application** system, grounded in [src/styles.css](src/styles.css), [dashboard primitives](src/components/dashboard), [UI primitives](src/components/ui) and the [design lab](src/components/design/StableDesignGuidelines.tsx). The public landing has its own [scoped design record](docs/design/landing/DESIGN.md).
 
@@ -154,24 +154,24 @@ The shared foundation is implemented. Some specialized components and route-loca
 **Key Characteristics:**
 
 - Sentence-case serif headings and readable sans-serif records.
-- Soft paper sections on an oat canvas, with open, alternating record rows.
+- Soft paper sections on a soft stone canvas, with open, alternating record rows.
 - Distinct action, selection and destructive colors in both themes.
 - Useful interaction feedback without decorative headings, patterns or imagery.
 
 ## Colors
 
-The frontmatter records the implemented light palette and key dark counterparts. CSS semantic variables remain the implementation source, including additional status, chart and sidebar roles.
+Pine & paper is the approved app palette: warm stone, soft paper and a rich pine accent. The frontmatter records the implemented light palette and key dark counterparts. CSS semantic variables remain the implementation source, including additional status, chart and sidebar roles.
 
 - **Evergreen** (`--primary`) identifies primary actions and focus. Primary text uses `--primary-foreground`.
-- **Warm ink** (`--selection`) and **oat** (`--selection-surface`) identify selected controls, navigation and rows. Solid selection fills use `--selection-foreground`; oat fills use warm ink or the normal readable foreground according to the primitive.
+- **Deep neutral ink** (`--selection`) and **pale stone** (`--selection-surface`) identify selected controls, navigation and rows. Solid selection fills use `--selection-foreground`; pale stone fills use deep neutral ink or the normal readable foreground according to the primitive.
 - **Burgundy** (`--destructive`) identifies destructive actions and errors. It is separate from selection.
-- **Ivory**, **paper**, **surface** and **surface-muted** provide the canvas, contained content, quiet regions and grouped controls. The application main canvas uses surface-muted; working sections use paper.
+- **Off-white**, **paper**, **surface** and **surface-muted** provide the canvas, contained content, quiet regions and grouped controls. The application main canvas uses surface-muted; working sections use paper.
 - **Ink** and **muted ink** provide reading hierarchy; dividers use `--border` or its subtle mixed counterpart. Inputs use `--input` for a clearer boundary.
 - **Quiet green** retains its own inverse foreground pair. Warning and information badges use their dedicated foreground/surface tokens rather than arbitrary chart colors.
 
 Dark mode maps the same roles through `.dark`; use semantic utilities rather than copying light hex values into components. Text selection uses the selection surface, the caret uses primary, and the scrollbar is tinted from primary and the neutral border.
 
-**The Separate States Rule.** Evergreen means action, oat with warm ink means selection, and burgundy means destructive feedback. Keep these roles distinct when adding a new control.
+**The Separate States Rule.** Evergreen means action, pale stone with deep neutral ink means selection, and burgundy means destructive feedback. Keep these roles distinct when adding a new control.
 
 ## Typography
 
@@ -223,7 +223,9 @@ Controls use 6px corners, record hover/bands use 8px and sections use 12px. Ordi
 
 Use the shared `action="create"`, `action="edit"` and `action="delete"` props for semantic action icons. Ordinary navigation and submit actions do not acquire an icon just because of their wording. Keep decorative icons out of headings.
 
-Tabs, toggles, calendar selection, timeline period selection and selected record rows consume the warm ink tokens. Use the native/shared selected state and accessible attributes rather than a color-only local approximation. Persistent navigation should expose the current destination; choice controls should expose their pressed or selected state.
+Tabs, toggles, calendar selection, timeline period selection and selected record rows consume the deep neutral ink tokens. Use the native/shared selected state and accessible attributes rather than a color-only local approximation. Persistent navigation should expose the current destination; choice controls should expose their pressed or selected state.
+
+Use `DashboardTabbedCard` for nested views in a single working section (Events, horse Activity, Care and Nutrition). Its `TabsList variant="line"` uses 17px bold labels, 48px targets and a 3px neutral-ink active underline on one shared divider. Keep labels on one horizontally scrollable row. Actions sit alongside the tabs when the card has room and move below them in narrow containers; use the card's width rather than the viewport to make that decision. Keep the content description inside the active panel and avoid repeating its selected tab as a heading. Keyboard focus is an inset primary ring, distinct from the active underline.
 
 ### Records, facts and badges
 
@@ -266,7 +268,7 @@ Review the remaining page families for specialized surfaces, local type override
 ### Don't:
 
 - **Don't** restore condensed uppercase display type, decorative eyebrows, heading icons, background patterns or marketing imagery in app chrome.
-- **Don't** confuse warm ink selection with burgundy destructive states.
+- **Don't** confuse deep neutral ink selection with burgundy destructive states.
 - **Don't** add nested card stacks, ambient shadows or decorative accent rails to ordinary records.
 - **Don't** duplicate shared button, field, tab, badge or record-row styling in feature files.
 - **Don't** claim prototype interactions or every page-family migration are complete without implementation and review.

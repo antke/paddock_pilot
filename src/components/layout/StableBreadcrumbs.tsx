@@ -103,6 +103,27 @@ function StableBreadcrumbLink({
   horseId?: string
   eventId?: string
 }) {
+  if (item.destination === 'training')
+    return (
+      <BreadcrumbLink
+        render={<Link to="/stables/$stableId/training" params={{ stableId }} />}
+      >
+        {item.label}
+      </BreadcrumbLink>
+    )
+  if (item.destination === 'trainingSession' && eventId)
+    return (
+      <BreadcrumbLink
+        render={
+          <Link
+            to="/stables/$stableId/training/$eventId"
+            params={{ stableId, eventId }}
+          />
+        }
+      >
+        {item.label}
+      </BreadcrumbLink>
+    )
   if (item.destination === 'horses') {
     return (
       <BreadcrumbLink

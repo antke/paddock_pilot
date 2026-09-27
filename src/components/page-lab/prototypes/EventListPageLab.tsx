@@ -1,8 +1,5 @@
-import { EventTable } from '#/components/events/EventList'
-import { DashboardPage } from '#/components/dashboard/DashboardPage'
-import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
-import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
-import { ButtonLink } from '#/components/ui/button'
+import { StableEventsPage } from '#/components/events/StableEventsPage'
+import type { EventsView } from '#/components/events/StableEventsPage'
 import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
 import { useState } from 'react'
 import { Field, FieldLabel } from '#/components/ui/field'
@@ -16,6 +13,7 @@ type EventListPageLabProps = {
 export function EventListPageLab({ data }: EventListPageLabProps) {
   const fixtureMode = useDevAuthBypassEnabled()
   const [sample, setSample] = useState('standard')
+  const [view, setView] = useState<EventsView>('calendar')
   const stableEvents = data.events.filter(
     (event) => event.stableId === data.stable._id,
   )
@@ -35,7 +33,7 @@ export function EventListPageLab({ data }: EventListPageLabProps) {
           }))
 
   return (
-    <DashboardPage>
+    <div className="grid gap-6">
       {import.meta.env.DEV && fixtureMode && (
         <Field>
           <FieldLabel htmlFor="event-list-sample">Sample schedule</FieldLabel>
@@ -52,27 +50,12 @@ export function EventListPageLab({ data }: EventListPageLabProps) {
           </Select>
         </Field>
       )}
-      <DashboardPageHeader
-        title="Events"
-        actions={
-          <ButtonLink
-            to="/stables/$stableId/events/create"
-            params={{ stableId: data.stable._id }}
-            action="create"
-          >
-            Add event
-          </ButtonLink>
-        }
+      <StableEventsPage
+        stableId={data.stable._id}
+        events={events}
+        view={view}
+        onViewChange={setView}
       />
-
-      <DashboardSectionCard contentGap="comfortable">
-        <EventTable
-          stableId={data.stable._id}
-          events={events}
-          emptyTitle="No events added yet."
-          emptyDescription="Create an event to start building this stable schedule."
-        />
-      </DashboardSectionCard>
-    </DashboardPage>
+    </div>
   )
 }

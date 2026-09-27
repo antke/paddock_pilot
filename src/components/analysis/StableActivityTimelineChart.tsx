@@ -127,6 +127,7 @@ const blockHeightRem = 5.7
 const blockInsetRem = 0.48
 
 const eventTypeAccents = {
+  competition: 'var(--chart-3)',
   vet: 'var(--destructive)',
   training: 'var(--primary)',
   dentist: 'var(--chart-1)',
@@ -144,6 +145,7 @@ const timelineSignalKindIcons = {
 } satisfies Record<LabTimelineSignalKind, Icon>
 
 export const stableTimelineEventTypeOptions = [
+  { type: 'competition', shape: 'diamond' },
   { type: 'vet', shape: 'circle' },
   { type: 'training', shape: 'rhomboid' },
   { type: 'dentist', shape: 'diamond' },

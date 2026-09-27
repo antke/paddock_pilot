@@ -123,7 +123,11 @@ export const getForCurrentUser = query({
           stable,
           horses: activeHorses,
           events: events
-            .filter((event) => hasActiveHorse(event, activeHorseIds))
+            .filter(
+              (event) =>
+                event.type !== 'training' &&
+                hasActiveHorse(event, activeHorseIds),
+            )
             .map((event) => withActiveEventHorseIds(event, activeHorseIds)),
           reminders: reminders.filter(
             (reminder) =>

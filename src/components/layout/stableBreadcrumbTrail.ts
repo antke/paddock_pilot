@@ -1,5 +1,5 @@
 export type StableBreadcrumbDestination =
-  'horses' | 'horse' | 'events' | 'event'
+  'horses' | 'horse' | 'events' | 'event' | 'training' | 'trainingSession'
 
 export type StableBreadcrumbItem = {
   destination?: StableBreadcrumbDestination
@@ -13,6 +13,7 @@ export type StableBreadcrumbLabels = {
 
 const horseSectionLabels: Record<string, string> = {
   activity: 'Activity',
+  training: 'Training',
   care: 'Care',
   'care-summary': 'Care summary',
   documents: 'Documents',
@@ -36,7 +37,7 @@ export function getStableBreadcrumbEntityIds(pathAfterStable: string) {
         ? entityOrAction
         : undefined,
     eventId:
-      feature === 'events' &&
+      (feature === 'events' || feature === 'training') &&
       entityOrAction !== 'create' &&
       entityOrAction !== 'calendar'
         ? entityOrAction
@@ -81,6 +82,24 @@ export function createStableBreadcrumbItems(
       { ...horseItem, destination: 'horse' },
       { label: horseSectionLabels[section] ?? formatSegment(section) },
     ]
+  }
+
+  if (feature === 'training') {
+    if (!entityOrAction) return [{ label: 'Training log' }]
+    const home: StableBreadcrumbItem = {
+      destination: 'training',
+      label: 'Training log',
+    }
+    if (entityOrAction === 'create')
+      return [home, { label: 'Add training session' }]
+    const session = { label: labels.eventTitle ?? 'Training session' }
+    return section === 'edit'
+      ? [
+          home,
+          { ...session, destination: 'trainingSession' },
+          { label: 'Edit training session' },
+        ]
+      : [home, session]
   }
 
   if (feature === 'events') {

@@ -18,6 +18,7 @@ import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
 import { Button } from '#/components/ui/button'
 
 type HorseProfileFormProps = {
+  breedSuggestions?: ReadonlyArray<string>
   mode: 'create' | 'edit'
   initialValues?: Partial<HorseFormInput>
   profileImageId?: Id<'_storage'>
@@ -45,6 +46,7 @@ export function HorseProfileForm({
   disabled = false,
   onPendingChange,
   sampleNotice,
+  breedSuggestions = [],
 }: HorseProfileFormProps) {
   const formId = useId()
   const mounted = useRef(true)
@@ -67,9 +69,13 @@ export function HorseProfileForm({
       pendingChange.current?.(false)
     }
   }, [])
+  const [addedBreeds, setAddedBreeds] = useState<Array<string>>([])
+  const additionalBreeds = [...breedSuggestions, ...addedBreeds]
   const existingBreed = mode === 'edit' ? initialValues?.breed : undefined
   const form = useForm<HorseFormInput, unknown, HorseFormSchema>({
-    resolver: zodResolver(createHorseFormSchema(existingBreed)),
+    resolver: zodResolver(
+      createHorseFormSchema(existingBreed, additionalBreeds),
+    ),
     mode: 'onTouched',
     defaultValues: horseProfileDefaults(initialValues),
   })
@@ -221,6 +227,8 @@ export function HorseProfileForm({
       <HorseFormFields
         control={form.control}
         existingBreed={existingBreed}
+        additionalBreeds={additionalBreeds}
+        onAddBreed={(breed) => setAddedBreeds((current) => [...current, breed])}
         disabled={isPending || disabled || Boolean(savedId)}
       />
     </RouteFormCard>

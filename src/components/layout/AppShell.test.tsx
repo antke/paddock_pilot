@@ -200,7 +200,7 @@ describe('application shell access', () => {
     document.documentElement.style.removeProperty('font-size')
   })
 
-  it('keeps every stable destination and marks only Calendar current on its nested route', async () => {
+  it('merges Calendar into Events and keeps Events active on legacy calendar routes', async () => {
     vi.stubGlobal('matchMedia', () => ({
       matches: false,
       addEventListener: vi.fn(),
@@ -234,21 +234,16 @@ describe('application shell access', () => {
       'Horses',
       'Care',
       'Events',
-      'Calendar',
       'Documents',
       'Analysis',
     ])
       expect(within(nav).getByRole('link', { name })).toBeTruthy()
-    expect(
-      within(nav)
-        .getByRole('link', { name: 'Calendar' })
-        .getAttribute('aria-current'),
-    ).toBe('page')
+    expect(within(nav).queryByRole('link', { name: 'Calendar' })).toBeNull()
     expect(
       within(nav)
         .getByRole('link', { name: 'Events' })
         .getAttribute('aria-current'),
-    ).toBeNull()
+    ).toBe('page')
     expect(
       within(nav).getByRole('link', { name: 'Horses' }).getAttribute('href'),
     ).toBe('/stables/sample-stable/horses')

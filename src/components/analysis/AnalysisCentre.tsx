@@ -11,7 +11,7 @@ import {
 } from '#/components/dashboard/DashboardItemCard'
 import { DashboardLayoutStack } from '#/components/dashboard/DashboardLayoutGrid'
 import { AnalysisScopeSelector } from './AnalysisScopeSelector'
-import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
+import { AnalysisPageHeader } from './AnalysisPageHeader'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import {
   DetailKeyValueList,
@@ -242,7 +242,7 @@ export function AnalysisCentre({
 
   return (
     <div className="grid gap-8">
-      <DashboardPageHeader title="Analysis Centre" />
+      <AnalysisPageHeader />
 
       <div className="grid gap-3">
         <AnalysisScopeSelector

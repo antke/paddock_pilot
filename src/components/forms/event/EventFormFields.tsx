@@ -1,3 +1,4 @@
+import { TrainingFormFields } from '#/components/training/TrainingFormFields'
 import { FormSection, FormStepHeader } from '#/components/forms/FormLayout'
 import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
 import { FormHelpTooltip } from '#/components/forms/FormHelpTooltip'
@@ -57,7 +58,8 @@ type HorseOption = {
 
 type ProviderOption = {
   _id: Id<'stableProviders'>
-  type: 'vet' | 'farrier' | 'dentist' | 'physio' | 'saddler' | 'other'
+  type:
+    'trainer' | 'vet' | 'farrier' | 'dentist' | 'physio' | 'saddler' | 'other'
   name: string
   phone?: string
 }
@@ -68,6 +70,7 @@ type Props = {
   horses: Array<HorseOption>
   providers?: Array<ProviderOption>
   disabled?: boolean
+  trainingMode?: 'create' | 'edit'
 }
 
 type RecurrenceEditorMode = 'simple' | 'advanced'
@@ -161,10 +164,12 @@ const asRecurrenceOrdinal = (value: string) =>
 const asSimpleRecurrencePreset = (value: string) =>
   value as SimpleRecurrencePreset
 
-const eventTypeOptions = eventTypes.map((eventType) => ({
-  value: eventType,
-  label: eventTypeLabels[eventType],
-})) satisfies Array<{ value: EventType; label: string }>
+const eventTypeOptions = eventTypes
+  .filter((type) => type !== 'training')
+  .map((eventType) => ({
+    value: eventType,
+    label: eventTypeLabels[eventType],
+  })) satisfies Array<{ value: EventType; label: string }>
 
 const eventStatusOptions = eventStatuses.map((status) => ({
   value: status,
@@ -547,6 +552,7 @@ export function EventFormFields({
   horses,
   providers = [],
   disabled = false,
+  trainingMode,
 }: Props) {
   const eventDate = useWatch({ control, name: 'date' })
   const endDate = useWatch({ control, name: 'endDate' })
@@ -566,7 +572,7 @@ export function EventFormFields({
   const { errors, submitCount } = useFormState({ control })
   const recurrencePreview = getRecurrencePreview(recurrence, eventDate, endDate)
   const essentialsSummary = formatMetaText([
-    eventTitle || 'Untitled event',
+    eventTitle || (trainingMode ? 'Untitled session' : 'Untitled event'),
     eventTypeLabels[eventType],
     eventDate ? formatShortDateKey(eventDate) : 'No date',
   ])
@@ -588,7 +594,8 @@ export function EventFormFields({
     errors.status ||
     errors.date ||
     errors.endDate ||
-    errors.time,
+    errors.time ||
+    errors.training,
   )
   const logisticsInvalid = Boolean(
     errors.location ||
@@ -648,11 +655,15 @@ export function EventFormFields({
     <>
       <FormSection
         defaultOpen
-        description="Name the event and set its timing."
+        description={
+          trainingMode
+            ? 'Describe the training and set its timing.'
+            : 'Name the event and set its timing.'
+        }
         invalid={essentialsInvalid}
         number={1}
         summary={essentialsSummary}
-        title="Event details"
+        title={trainingMode ? 'Session details' : 'Event details'}
         validationAttempt={submitCount}
       >
         <Controller
@@ -671,7 +682,9 @@ export function EventFormFields({
                 aria-describedby={
                   fieldState.invalid ? 'event-title-error' : undefined
                 }
-                placeholder="Farrier appointment"
+                placeholder={
+                  trainingMode ? 'Flatwork session' : 'Farrier appointment'
+                }
                 autoComplete="off"
               />
 
@@ -685,65 +698,91 @@ export function EventFormFields({
           )}
         />
 
-        <Controller
-          name="type"
-          control={control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Type</FieldLabel>
+        {!trainingMode && (
+          <Controller
+            name="type"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>Type</FieldLabel>
 
-              <ChoiceButtonGroup
-                aria-label="Event type"
-                value={field.value}
-                options={eventTypeOptions}
-                onValueChange={(nextValue) =>
-                  field.onChange(asEventType(nextValue))
-                }
-                disabled={disabled}
-                aria-invalid={fieldState.invalid}
-                aria-describedby={
-                  fieldState.invalid ? 'event-type-error' : undefined
-                }
-              />
-
-              {fieldState.invalid && (
-                <FieldError id="event-type-error" errors={[fieldState.error]} />
-              )}
-            </Field>
-          )}
-        />
-
-        <Controller
-          name="status"
-          control={control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Status</FieldLabel>
-
-              <ChoiceButtonGroup
-                aria-label="Event status"
-                value={field.value ?? 'planned'}
-                options={eventStatusOptions}
-                onValueChange={(nextValue) =>
-                  field.onChange(asEventStatus(nextValue))
-                }
-                disabled={disabled}
-                aria-invalid={fieldState.invalid}
-                aria-describedby={
-                  fieldState.invalid ? 'event-status-error' : undefined
-                }
-              />
-
-              {fieldState.invalid && (
-                <FieldError
-                  id="event-status-error"
-                  errors={[fieldState.error]}
+                <ChoiceButtonGroup
+                  aria-label="Event type"
+                  value={field.value}
+                  options={eventTypeOptions}
+                  onValueChange={(nextValue) =>
+                    field.onChange(asEventType(nextValue))
+                  }
+                  disabled={disabled}
+                  aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid ? 'event-type-error' : undefined
+                  }
                 />
-              )}
-            </Field>
-          )}
-        />
 
+                {fieldState.invalid && (
+                  <FieldError
+                    id="event-type-error"
+                    errors={[fieldState.error]}
+                  />
+                )}
+              </Field>
+            )}
+          />
+        )}
+        {trainingMode && (
+          <TrainingFormFields control={control} disabled={disabled} />
+        )}
+
+        {trainingMode !== 'edit' && (
+          <Controller
+            name="status"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>Status</FieldLabel>
+
+                <ChoiceButtonGroup
+                  aria-label={trainingMode ? 'Session status' : 'Event status'}
+                  value={field.value ?? 'planned'}
+                  options={
+                    trainingMode
+                      ? eventStatusOptions.map((option) => ({
+                          ...option,
+                          label:
+                            option.value === 'planned'
+                              ? 'Scheduled'
+                              : option.label,
+                        }))
+                      : eventStatusOptions
+                  }
+                  onValueChange={(nextValue) =>
+                    field.onChange(asEventStatus(nextValue))
+                  }
+                  disabled={disabled}
+                  aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid ? 'event-status-error' : undefined
+                  }
+                />
+
+                {fieldState.invalid && (
+                  <FieldError
+                    id="event-status-error"
+                    errors={[fieldState.error]}
+                  />
+                )}
+              </Field>
+            )}
+          />
+        )}
+        {trainingMode && (
+          <FieldDescription>
+            {trainingMode === 'edit'
+              ? 'Record completion separately for each horse and date on the session page.'
+              : 'Completed confirms this date for your selected horses. Future repeats remain scheduled.'}
+          </FieldDescription>
+        )}
         <FieldGrid columns={3}>
           <Controller
             name="date"
@@ -841,7 +880,11 @@ export function EventFormFields({
       </FormSection>
 
       <FormSection
-        description="Choose every horse this event applies to."
+        description={
+          trainingMode
+            ? 'Choose the horses taking part in this session.'
+            : 'Choose every horse this event applies to.'
+        }
         invalid={horsesInvalid}
         number={2}
         summary={horsesSummary}
@@ -906,11 +949,15 @@ export function EventFormFields({
       </FormSection>
 
       <FormSection
-        description="Add a location, service provider, and costs when relevant."
+        description={
+          trainingMode
+            ? 'Add a location, trainer, and costs when relevant.'
+            : 'Add a location, service provider, and costs when relevant.'
+        }
         invalid={logisticsInvalid}
         number={3}
         summary={logisticsSummary}
-        title="Place & provider"
+        title={trainingMode ? 'Place & trainer' : 'Place & provider'}
         validationAttempt={submitCount}
       >
         <Controller
@@ -950,7 +997,9 @@ export function EventFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Provider</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {trainingMode ? 'Trainer' : 'Provider'}
+                </FieldLabel>
 
                 <ProviderAutocomplete
                   id={field.name}
@@ -983,7 +1032,9 @@ export function EventFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Provider phone</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {trainingMode ? 'Trainer phone' : 'Provider phone'}
+                </FieldLabel>
 
                 <Input
                   {...field}
@@ -2277,7 +2328,11 @@ export function EventFormFields({
                 aria-describedby={
                   fieldState.invalid ? 'event-description-error' : undefined
                 }
-                placeholder="Notes for this event"
+                placeholder={
+                  trainingMode
+                    ? 'Notes for this session'
+                    : 'Notes for this event'
+                }
                 autoComplete="off"
               />
 

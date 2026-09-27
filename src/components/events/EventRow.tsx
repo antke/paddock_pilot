@@ -80,7 +80,11 @@ export function EventRow({
 
   return (
     <DashboardItemLinkCard
-      to="/stables/$stableId/events/$eventId"
+      to={
+        event.type === 'training'
+          ? '/stables/$stableId/training/$eventId'
+          : '/stables/$stableId/events/$eventId'
+      }
       params={{ stableId, eventId: event._id }}
       accent={accent}
       chrome={chrome}

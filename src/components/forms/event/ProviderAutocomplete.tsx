@@ -20,7 +20,8 @@ import type { Id } from 'convex/_generated/dataModel'
 
 type ProviderOption = {
   _id: Id<'stableProviders'>
-  type: 'vet' | 'farrier' | 'dentist' | 'physio' | 'saddler' | 'other'
+  type:
+    'trainer' | 'vet' | 'farrier' | 'dentist' | 'physio' | 'saddler' | 'other'
   name: string
   phone?: string
 }

@@ -3,7 +3,7 @@ import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
 import { cn } from '#/lib/utils'
 
 export function calendarShellClassName(className?: string) {
-  return cn('app-panel overflow-hidden text-xs', className)
+  return cn('app-panel-strong overflow-hidden text-xs', className)
 }
 
 export function calendarWeekdayRowClassName(className?: string) {
@@ -21,7 +21,10 @@ export function calendarWeekdayCellClassName(className?: string) {
 }
 
 export function calendarGridClassName(className?: string) {
-  return cn('grid grid-cols-7', className)
+  return cn(
+    'grid grid-cols-7 [&>[role=row]:last-child>[role=cell]]:border-b-0',
+    className,
+  )
 }
 
 export function calendarDayCellClassName({

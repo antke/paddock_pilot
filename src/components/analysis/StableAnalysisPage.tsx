@@ -1,7 +1,7 @@
 import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
 import { createDashboardLabData } from '#/components/dashboard-lab/dashboardLabData'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
-import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
+import { AnalysisPageHeader } from './AnalysisPageHeader'
 import { FeatureAccessPrompt } from '#/components/dashboard/FeatureAccessPrompt'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -41,7 +41,7 @@ export function StableAnalysisPage({ stableId }: StableAnalysisPageProps) {
 function LockedAnalysis() {
   return (
     <DashboardPage>
-      <DashboardPageHeader title="Analysis Centre" />
+      <AnalysisPageHeader />
 
       <FeatureAccessPrompt
         title="Analysis Centre is a Premium feature"

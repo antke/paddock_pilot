@@ -1,11 +1,46 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  birthDateForHorseAge,
   calculateHorseAge,
   composeHorseBirthDate,
   getTodayDateKey,
   splitHorseBirthDate,
 } from './horseAge'
+
+describe('birthDateForHorseAge', () => {
+  const asOf = new Date(2026, 8, 27)
+
+  it('estimates only the year when the birthday is unknown', () => {
+    expect(birthDateForHorseAge(10, '', asOf)).toBe('2016')
+    expect(birthDateForHorseAge(0, '', asOf)).toBe('2026')
+    expect(birthDateForHorseAge(100, '', asOf)).toBe('1926')
+  })
+
+  it.each(['2016-03-12', '2015-10-12', '2016-09-27', '2015-09-28', '2015-10'])(
+    'preserves birthday precision and produces the requested age for %s',
+    (birthday) => {
+      const result = birthDateForHorseAge(8, birthday, asOf)
+      expect(result.slice(4)).toBe(birthday.slice(4))
+      expect(calculateHorseAge(result, asOf)).toBe(8)
+    },
+  )
+
+  it('drops an impossible leap day without inventing a new birthday', () => {
+    const today = new Date(2026, 1, 28)
+    expect(birthDateForHorseAge(8, '2020-02-29', today)).toBe('2018-02')
+    expect(
+      calculateHorseAge(birthDateForHorseAge(8, '2020-02-29', today), today),
+    ).toBe(8)
+  })
+
+  it.each([-1, 101, 2.5, NaN])(
+    'does not infer a birth date for invalid age %s',
+    (age) => {
+      expect(birthDateForHorseAge(age, '', asOf)).toBe('')
+    },
+  )
+})
 
 describe('calculateHorseAge', () => {
   const asOf = new Date(2026, 6, 23)
@@ -39,12 +74,10 @@ describe('calculateHorseAge', () => {
 describe('partial horse birth dates', () => {
   it('composes and splits year, month and day precision', () => {
     expect(composeHorseBirthDate({ year: '2016' })).toBe('2016')
-    expect(composeHorseBirthDate({ year: '2016', month: '4' })).toBe(
-      '2016-04',
+    expect(composeHorseBirthDate({ year: '2016', month: '4' })).toBe('2016-04')
+    expect(composeHorseBirthDate({ year: '2016', month: '4', day: '9' })).toBe(
+      '2016-04-09',
     )
-    expect(
-      composeHorseBirthDate({ year: '2016', month: '4', day: '9' }),
-    ).toBe('2016-04-09')
     expect(splitHorseBirthDate('2016-04')).toEqual({
       year: '2016',
       month: '04',

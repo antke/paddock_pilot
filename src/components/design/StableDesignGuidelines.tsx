@@ -170,14 +170,14 @@ type DemoFacetId = 'horse' | 'state' | 'category'
 type GuidelineTabId = 'care' | 'timeline' | 'notes' | 'providers'
 
 const palette = [
-  ['Ivory', '--background', '#f7f3e9 · Main canvas'],
+  ['Off-white', '--background', '#eeece8 · Main canvas'],
   ['Paper', '--card', 'Contained surfaces and overlays'],
   ['Border', '--border', 'Controls and expanded record boundaries'],
   ['Ink', '--foreground', 'Body copy and record details'],
-  ['Evergreen', '--primary', '#244c3b · Primary actions'],
+  ['Evergreen', '--primary', '#285b43 · Primary actions'],
   ['Quiet green', '--brand-surface', 'Supporting emphasis'],
-  ['Warm ink', '--selection', '#555247 · Selected controls'],
-  ['Oat', '--selection-surface', '#e7e0ce · Selected rows'],
+  ['Deep neutral ink', '--selection', '#55594c · Selected controls'],
+  ['Pale stone', '--selection-surface', '#e4e6dc · Selected rows'],
   ['Burgundy', '--destructive', '#962f43 · Destructive actions and errors'],
 ] satisfies Array<[string, string, string]>
 
@@ -188,11 +188,11 @@ const principles = [
   },
   {
     title: 'Soft sections and readable rows',
-    body: 'Use one paper section per working group on an oat canvas. Shared alternating row fills provide separation; expanded details can gain a neutral boundary.',
+    body: 'Use one paper section per working group on a soft stone canvas. Shared alternating row fills provide separation; expanded details can gain a neutral boundary.',
   },
   {
     title: 'Clear action and selection',
-    body: 'Evergreen marks primary actions, oat surfaces with warm ink mark the current choice, and burgundy marks destructive actions. Keep ordinary data in readable text.',
+    body: 'Evergreen marks primary actions, pale stone surfaces with deep neutral ink mark the current choice, and burgundy marks destructive actions. Keep ordinary data in readable text.',
   },
 ]
 
@@ -468,7 +468,7 @@ const componentInventory = [
       'ui/Button, ui/ButtonLink, ui/ActionGroup, DashboardActions, DashboardPageHeader action slots, DashboardSectionHeader action slots, DialogFooter, AlertDialogFooter, FormSubmitActions, and FormSubmitButtons',
     use: 'Primary CTAs, secondary links, row action groups, form footers, icon buttons, badge/action clusters',
     status: 'Canonical',
-    rule: 'Keep ordinary button appearance and semantic action icons inside ui/Button and buttonVariants, including subtle low-emphasis controls and chip-icon remove buttons. Set action="create" on controls that open add/create forms, action="edit" on controls that open edit forms, and action="delete" on destructive delete/remove controls; the shared primitive supplies the canonical plus, pen, or trash icon and spacing. Do not add these icons to ordinary navigation or form submit buttons merely because their copy contains the same verb. Evergreen identifies the primary action; neutral outlines are secondary. Warm ink and oat identify selected controls and rows, while burgundy is reserved for destructive actions and errors. Keep ordinary section structure flat and neutral. Keep low-level action-row and footer spacing in ActionGroup; use DashboardActions for dashboard/header/card and public CTA action rows, including its width prop for full-width footers, DialogFooter and AlertDialogFooter for modal footers, FormSubmitActions for wrapped inline or dialog submit/cancel rows, FormSubmitButtons for compact inline submit pairs inside existing layouts, and toast action buttons routed through buttonVariants. Specialized interactive geometry, such as timeline cells, scrub handles, calendar day cells, and drag targets, should stay in its domain primitive owner rather than feature files.',
+    rule: 'Keep ordinary button appearance and semantic action icons inside ui/Button and buttonVariants, including subtle low-emphasis controls and chip-icon remove buttons. Set action="create" on controls that open add/create forms, action="edit" on controls that open edit forms, and action="delete" on destructive delete/remove controls; the shared primitive supplies the canonical plus, pen, or trash icon and spacing. Do not add these icons to ordinary navigation or form submit buttons merely because their copy contains the same verb. Evergreen identifies the primary action; neutral outlines are secondary. Deep neutral ink and pale stone identify selected controls and rows, while burgundy is reserved for destructive actions and errors. Keep ordinary section structure flat and neutral. Keep low-level action-row and footer spacing in ActionGroup; use DashboardActions for dashboard/header/card and public CTA action rows, including its width prop for full-width footers, DialogFooter and AlertDialogFooter for modal footers, FormSubmitActions for wrapped inline or dialog submit/cancel rows, FormSubmitButtons for compact inline submit pairs inside existing layouts, and toast action buttons routed through buttonVariants. Specialized interactive geometry, such as timeline cells, scrub handles, calendar day cells, and drag targets, should stay in its domain primitive owner rather than feature files.',
   },
   {
     group: 'Search and filters',
@@ -523,7 +523,7 @@ const componentInventory = [
       'UserAvatar, StableCardLink, StablePersonCard, StableProviderCard, HorseAvatar, HorseCard, HorseCardLink, HorseSelectionCard, DocumentPreview, DocumentDownloadAction, DashboardItemRecordCard, and DashboardItemMediaCard for entity row shells',
     use: 'Stable links, stable people, provider directories, member management, horse rows, rosters, profile headers, document previews, full-row horse links, and horse selection grids',
     status: 'Canonical',
-    rule: 'Use UserAvatar for account photos and initial fallbacks, StableCardLink for whole-row stable navigation, StablePersonCard for owner/member identity rows in both roster and management contexts, and StableProviderCard for provider directory rows in production and review routes. Use HorseAvatar for decorative horse thumbnails with lazy loading, failed-image fallback, and Unicode-safe initials; use HorseCard for static horse identity cards, HorseCardLink whenever a horse card opens its detail page, and HorseSelectionCard for full-card selection with outline feedback. Entity collections use open rows with shared alternating fills by default; selected rows use the shared warm ink selection treatment. Stable and horse links must make the whole card clickable and must not add a separate open button. Use DocumentPreview for uploaded document image/file fallback frames; it trusts the explicit file-availability state, uses MIME truth before filename inference, and replaces failed image previews with the canonical unavailable-file fallback. DocumentDownloadAction owns the primary file action, filename-preserving downloads, stable pending width, duplicate-action prevention, pending feedback, and recoverable errors. Keep its Download slot directly before the tinted destructive Remove action for every document row while Open remains a quiet ghost action: available files expose the working control to every viewer independently of record-management permission, while missing or unavailable files retain a disabled control whose reason is exposed through the shared Tooltip. Use DashboardItemRecordCard for content-plus-action entity row shells, and DashboardItemMediaCard for preview/media rows instead of local image/fallback, title-hover, selection-outline, icon-button, or row action recipes. Document rows use shared alternating fills, a base-size filename, full-contrast notes, and muted treatment only for compact format, type, size, added date, and relationship metadata.',
+    rule: 'Use UserAvatar for account photos and initial fallbacks, StableCardLink for whole-row stable navigation, StablePersonCard for owner/member identity rows in both roster and management contexts, and StableProviderCard for provider directory rows in production and review routes. Use HorseAvatar for decorative horse thumbnails with lazy loading, failed-image fallback, and Unicode-safe initials; use HorseCard for static horse identity cards, HorseCardLink whenever a horse card opens its detail page, and HorseSelectionCard for full-card selection with outline feedback. Entity collections use open rows with shared alternating fills by default; selected rows use the shared deep neutral ink selection treatment. Stable and horse links must make the whole card clickable and must not add a separate open button. Use DocumentPreview for uploaded document image/file fallback frames; it trusts the explicit file-availability state, uses MIME truth before filename inference, and replaces failed image previews with the canonical unavailable-file fallback. DocumentDownloadAction owns the primary file action, filename-preserving downloads, stable pending width, duplicate-action prevention, pending feedback, and recoverable errors. Keep its Download slot directly before the tinted destructive Remove action for every document row while Open remains a quiet ghost action: available files expose the working control to every viewer independently of record-management permission, while missing or unavailable files retain a disabled control whose reason is exposed through the shared Tooltip. Use DashboardItemRecordCard for content-plus-action entity row shells, and DashboardItemMediaCard for preview/media rows instead of local image/fallback, title-hover, selection-outline, icon-button, or row action recipes. Document rows use shared alternating fills, a base-size filename, full-contrast notes, and muted treatment only for compact format, type, size, added date, and relationship metadata.',
   },
   {
     group: 'Detail and metric blocks',
@@ -695,7 +695,7 @@ function GuidelineHeader() {
     <header className="grid max-w-3xl gap-4">
       <DashboardDisplayHeading>Stable journal system</DashboardDisplayHeading>
       <p className="text-base leading-7 text-muted-foreground">
-        Alegreya headings, Alegreya Sans body text, an oat canvas, paper
+        Alegreya headings, Alegreya Sans body text, a soft stone canvas, paper
         sections and gently alternating record rows. This lab shows shared
         components and their interaction states for the signed-in app.
       </p>

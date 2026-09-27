@@ -58,6 +58,9 @@ function RouteComponent() {
 }
 
 function EditHorseForm({ horse }: { horse: Doc<'horses'> }) {
+  const { data: horses } = useSuspenseQuery(
+    convexQuery(api.horses.list, { stableId: horse.stableId }),
+  )
   const navigate = useNavigate()
   const updateHorse = useMutation(api.horses.update)
   const generateUploadUrl = useMutation(
@@ -70,6 +73,9 @@ function EditHorseForm({ horse }: { horse: Doc<'horses'> }) {
     <>
       <HorseProfileForm
         mode="edit"
+        breedSuggestions={horses.flatMap((item) =>
+          item.breed ? [item.breed] : [],
+        )}
         embedded
         initialValues={horse}
         profileImageId={horse.profileImageId}

@@ -1,3 +1,5 @@
+import { createTodayTrainingSample } from './dashboardAnalysisFixtures'
+import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import { HorseDetail } from '#/components/horses/HorseDetail'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
@@ -12,11 +14,15 @@ type HorseDetailPageLabProps = {
 }
 
 export function HorseDetailPageLab({ data }: HorseDetailPageLabProps) {
+  const { today } = useLocalDateContext()
   const fixtureMode = useDevAuthBypassEnabled()
   const [sample, setSample] = useState('standard')
   const originalHorse = data.horses[0]
   const horse =
-    !originalHorse || !fixtureMode || sample === 'standard'
+    !originalHorse ||
+    !fixtureMode ||
+    sample === 'standard' ||
+    sample === 'training'
       ? originalHorse
       : sample === 'minimal'
         ? {
@@ -70,6 +76,7 @@ export function HorseDetailPageLab({ data }: HorseDetailPageLabProps) {
             onChange={(event) => setSample(event.target.value)}
           >
             <option value="standard">Standard sample</option>
+            <option value="training">Training log</option>
             <option value="detailed">Long name and detailed record</option>
             <option value="minimal">Minimal record · read-only</option>
           </Select>
@@ -79,7 +86,14 @@ export function HorseDetailPageLab({ data }: HorseDetailPageLabProps) {
         stableId={data.stable._id}
         horse={horse}
         events={events}
-        category="profile"
+        category={sample === 'training' ? 'training' : 'profile'}
+        trainingData={{
+          horses: data.horses,
+          events: createTodayTrainingSample(data, today).map(
+            (entry) => entry.occurrence.event,
+          ),
+          records: [],
+        }}
         canManageHorse={!fixtureMode || sample !== 'minimal'}
       />
     </DetailStack>

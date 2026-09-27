@@ -139,7 +139,6 @@ export function ActiveStableNavigation({
   const location = useLocation()
   const pathname = samplePath ?? location.pathname
   const stableBasePath = `/stables/${stableId}`
-  const calendarPath = `${stableBasePath}/events/calendar`
 
   return (
     <>
@@ -183,31 +182,30 @@ export function ActiveStableNavigation({
         params={{ stableId }}
         data-slot="button"
         aria-current={
-          pathname.startsWith(`${stableBasePath}/events`) &&
-          pathname !== calendarPath
-            ? 'page'
-            : undefined
+          pathname.startsWith(`${stableBasePath}/events`) ? 'page' : undefined
         }
         className={cn(
           buttonVariants({ variant: 'ghost', size: 'sm' }),
           pathname.startsWith(`${stableBasePath}/events`) &&
-            pathname !== calendarPath &&
             activeNavigationClassName,
         )}
       >
         Events
       </Link>
       <Link
-        to="/stables/$stableId/events/calendar"
+        to="/stables/$stableId/training"
         params={{ stableId }}
         data-slot="button"
-        aria-current={pathname === calendarPath ? 'page' : undefined}
+        aria-current={
+          pathname.startsWith(`${stableBasePath}/training`) ? 'page' : undefined
+        }
         className={cn(
           buttonVariants({ variant: 'ghost', size: 'sm' }),
-          pathname === calendarPath && activeNavigationClassName,
+          pathname.startsWith(`${stableBasePath}/training`) &&
+            activeNavigationClassName,
         )}
       >
-        Calendar
+        Training log
       </Link>
       <Link
         to="/stables/$stableId/documents"

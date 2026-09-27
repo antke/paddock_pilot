@@ -255,10 +255,12 @@ export function createHorseWeightRecordListFilterConfig(): ListFilterConfig<
   }
 }
 
-const eventTypeFilterOptions = eventTypes.map((type) => ({
-  value: type,
-  label: eventTypeLabels[type],
-})) satisfies ReadonlyArray<ListFilterOption>
+const eventTypeFilterOptions = eventTypes
+  .filter((type) => type !== 'training')
+  .map((type) => ({
+    value: type,
+    label: eventTypeLabels[type],
+  })) satisfies ReadonlyArray<ListFilterOption>
 
 const eventStatusFilterOptions = eventStatuses.map((status) => ({
   value: status,

@@ -418,6 +418,12 @@ async function permanentlyDeleteHorseData(
       .collect(),
   ])
 
+  const trainingRecords = await ctx.db
+    .query('trainingRecords')
+    .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
+    .collect()
+  for (const record of trainingRecords) await ctx.db.delete(record._id)
+
   const reminderIds = new Set(reminders.map((reminder) => reminder._id))
   const documentIds = new Set(documents.map((document) => document._id))
   const storageIds = new Set(

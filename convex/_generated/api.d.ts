@@ -53,6 +53,7 @@ import type * as stableMembers from "../stableMembers.js";
 import type * as stableProviders from "../stableProviders.js";
 import type * as stables from "../stables.js";
 import type * as storageMaintenance from "../storageMaintenance.js";
+import type * as training from "../training.js";
 import type * as userCareOverview from "../userCareOverview.js";
 import type * as userSubscriptions from "../userSubscriptions.js";
 import type * as users from "../users.js";
@@ -109,6 +110,7 @@ declare const fullApi: ApiFromModules<{
   stableProviders: typeof stableProviders;
   stables: typeof stables;
   storageMaintenance: typeof storageMaintenance;
+  training: typeof training;
   userCareOverview: typeof userCareOverview;
   userSubscriptions: typeof userSubscriptions;
   users: typeof users;

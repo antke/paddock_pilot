@@ -17,12 +17,15 @@ afterEach(cleanup)
 
 function BreedAutocompleteHarness() {
   const [value, setValue] = useState('')
+  const [breeds, setBreeds] = useState<Array<string>>([])
 
   return (
     <HorseBreedAutocomplete
       id="breed"
       name="breed"
       value={value}
+      additionalBreeds={breeds}
+      onAddBreed={(breed) => setBreeds((current) => [...current, breed])}
       onBlur={() => undefined}
       onValueChange={setValue}
     />
@@ -30,6 +33,35 @@ function BreedAutocompleteHarness() {
 }
 
 describe('HorseBreedAutocomplete', () => {
+  it('adds a trimmed local breed without submitting the horse form and rejects blank names', async () => {
+    render(<BreedAutocompleteHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Add breed' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Use breed' }))
+    expect(await screen.findByText('Enter a breed name.')).toBeTruthy()
+    fireEvent.change(screen.getByLabelText('New breed name'), {
+      target: { value: '  Local mountain pony  ' },
+    })
+    fireEvent.keyDown(screen.getByLabelText('New breed name'), { key: 'Enter' })
+    expect(screen.queryByLabelText('New breed name')).toBeNull()
+    expect(screen.getByRole<HTMLInputElement>('combobox').value).toBe(
+      'Local mountain pony',
+    )
+    fireEvent.blur(screen.getByRole('combobox'))
+    expect(screen.getByRole<HTMLInputElement>('combobox').value).toBe(
+      'Local mountain pony',
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Add breed' }))
+    fireEvent.change(screen.getByLabelText('New breed name'), {
+      target: { value: 'Not added' },
+    })
+    fireEvent.keyDown(screen.getByLabelText('New breed name'), {
+      key: 'Escape',
+    })
+    expect(screen.getByRole<HTMLInputElement>('combobox').value).toBe(
+      'Local mountain pony',
+    )
+  })
+
   it('commits an exact breed from the controlled list', () => {
     render(<BreedAutocompleteHarness />)
 
@@ -56,6 +88,7 @@ describe('HorseBreedAutocomplete', () => {
       id: 'breed',
       name: 'breed',
       onBlur: () => undefined,
+      onAddBreed: vi.fn(),
       onValueChange: onChange,
     }
     const view = render(

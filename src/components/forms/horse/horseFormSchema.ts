@@ -10,14 +10,22 @@ import { matchHorseBreed } from './horseBreedSelection'
 
 const optionalAgeSchema = z.literal('').or(horseAgeSchema)
 
-export const createHorseFormSchema = (existingBreed?: string) =>
+export const createHorseFormSchema = (
+  existingBreed?: string,
+  additionalBreeds: ReadonlyArray<string> = [],
+) =>
   horseBaseFormSchema
     .extend({
       breed: horseBreedSchema
-        .transform((value) => matchHorseBreed(value, existingBreed) ?? value)
+        .transform(
+          (value) =>
+            matchHorseBreed(value, existingBreed, additionalBreeds) ?? value,
+        )
         .refine(
-          (value) => matchHorseBreed(value, existingBreed) !== undefined,
-          'Choose a breed from the list, or clear this field.',
+          (value) =>
+            matchHorseBreed(value, existingBreed, additionalBreeds) !==
+            undefined,
+          'Choose a breed from the list, add a new breed, or clear this field.',
         ),
       age: optionalAgeSchema,
       dateOfBirth: z.literal('').or(horseDateOfBirthSchema),

@@ -3,7 +3,7 @@ import { EventDetail } from '#/components/events/EventDetail'
 import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { createFileRoute, Outlet, Navigate } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 
@@ -26,6 +26,15 @@ function RouteComponent() {
   if (!data || data.event.stableId !== stableId) {
     return <RouteEntityNotFoundAlert entity="event" />
   }
+
+  if (data.event.type === 'training')
+    return (
+      <Navigate
+        to="/stables/$stableId/training/$eventId"
+        params={{ stableId, eventId }}
+        replace
+      />
+    )
 
   return (
     <DashboardPage>

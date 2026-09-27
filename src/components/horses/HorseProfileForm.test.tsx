@@ -50,10 +50,112 @@ function setup(
 }
 afterEach(() => {
   cleanup()
+  vi.useRealTimers()
   vi.restoreAllMocks()
 })
 
+describe('linked birth date and age fields', () => {
+  function setToday() {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 8, 27))
+  }
+  function change(label: string, nextValue: string) {
+    fireEvent.change(screen.getByLabelText(label), {
+      target: { value: nextValue },
+    })
+  }
+  function value(label: string) {
+    return screen.getByLabelText<HTMLInputElement>(label).value
+  }
+
+  it('initializes linked fields and recalculates when year, month or day changes', () => {
+    setToday()
+    setup()
+    expect(value('Year')).toBe('2016')
+    change('Year', '2020')
+    expect(value('Or current age')).toBe('6')
+    change('Month', '10')
+    expect(value('Or current age')).toBe('5')
+    change('Month', '9')
+    expect(value('Or current age')).toBe('6')
+    change('Day', '28')
+    expect(value('Or current age')).toBe('5')
+    change('Day', '27')
+    expect(value('Or current age')).toBe('6')
+    fireEvent.blur(screen.getByLabelText('Month'))
+    expect(value('Month')).toBe('09')
+  })
+
+  it('updates the year from age, keeps a known birthday, and submits consistent values', async () => {
+    setToday()
+    const { form, props } = setup({
+      initialValues: { ...initialValues, dateOfBirth: '2017-10-12' },
+    })
+    expect(value('Or current age')).toBe('8')
+    change('Or current age', '12')
+    expect(value('Year')).toBe('2013')
+    expect(value('Month')).toBe('10')
+    expect(value('Day')).toBe('12')
+    fireEvent.submit(form)
+    await waitFor(() => expect(props.save).toHaveBeenCalledTimes(1))
+    expect(vi.mocked(props.save).mock.calls[0][0]).toMatchObject({
+      age: 12,
+      dateOfBirth: '2013-10-12',
+    })
+  })
+
+  it('clears stale derived values while a date is incomplete or invalid', () => {
+    setToday()
+    setup()
+    change('Year', '20')
+    expect(value('Or current age')).toBe('')
+    change('Year', '2020')
+    change('Month', '13')
+    expect(value('Or current age')).toBe('')
+    change('Month', '')
+    expect(value('Or current age')).toBe('6')
+    change('Year', '')
+    expect(value('Or current age')).toBe('')
+    change('Or current age', '0')
+    expect(value('Year')).toBe('2026')
+    expect(value('Month')).toBe('')
+    change('Or current age', '')
+    expect(value('Year')).toBe('')
+  })
+})
+
 describe('horse profile lifecycle', () => {
+  it.each(['create', 'edit'] as const)(
+    'saves an explicitly added custom breed in %s mode',
+    async (mode) => {
+      const { props, form } = setup({ mode })
+      fireEvent.click(screen.getByRole('button', { name: /Profile & health/ }))
+      fireEvent.click(screen.getByRole('button', { name: 'Add breed' }))
+      fireEvent.change(screen.getByLabelText('New breed name'), {
+        target: { value: '  Local mountain pony  ' },
+      })
+      fireEvent.click(screen.getByRole('button', { name: 'Use breed' }))
+      expect(props.save).not.toHaveBeenCalled()
+      fireEvent.submit(form)
+      await waitFor(() => expect(props.save).toHaveBeenCalledTimes(1))
+      expect(vi.mocked(props.save).mock.calls[0][0].breed).toBe(
+        'Local mountain pony',
+      )
+    },
+  )
+
+  it('accepts a saved stable breed and canonicalizes case without adding a duplicate', async () => {
+    const { props, form } = setup({
+      breedSuggestions: ['Local mountain pony'],
+      initialValues: { ...initialValues, breed: 'local MOUNTAIN pony' },
+    })
+    fireEvent.submit(form)
+    await waitFor(() => expect(props.save).toHaveBeenCalledTimes(1))
+    expect(vi.mocked(props.save).mock.calls[0][0].breed).toBe(
+      'Local mountain pony',
+    )
+  })
+
   it.each([false, true])(
     'retains an unmatched breed and blocks saving (blur: %s)',
     async (blur) => {
@@ -68,7 +170,7 @@ describe('horse profile lifecycle', () => {
       if (blur) fireEvent.blur(breed)
       fireEvent.submit(form)
       await screen.findByText(
-        'Choose a breed from the list, or clear this field.',
+        'Choose a breed from the list, add a new breed, or clear this field.',
       )
       expect(breed.value).toBe('Imaginary horse')
       expect(props.save).not.toHaveBeenCalled()
@@ -100,7 +202,7 @@ describe('horse profile lifecycle', () => {
     fireEvent.change(breed, { target: { value: 'A different unknown breed' } })
     fireEvent.submit(form)
     await screen.findByText(
-      'Choose a breed from the list, or clear this field.',
+      'Choose a breed from the list, add a new breed, or clear this field.',
     )
     expect(save).toHaveBeenCalledTimes(1)
     fireEvent.change(breed, { target: { value: '' } })

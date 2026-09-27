@@ -1,6 +1,8 @@
 import z from 'zod'
+import { trainingDetailsSchema } from '../training/trainingSchema'
 
 export const eventTypes = [
+  'competition',
   'vet',
   'training',
   'dentist',
@@ -25,6 +27,7 @@ export const recurrenceMissingDateStrategies = [
 export const daysOfWeek = [0, 1, 2, 3, 4, 5, 6] as const
 
 export const eventTypeLabels = {
+  competition: 'Competition',
   vet: 'Vet',
   training: 'Training',
   dentist: 'Dentist',
@@ -97,8 +100,16 @@ export const eventNotesAfterCompletionSchema = z
 
 export const eventCostSchema = z
   .union([z.number(), z.nan(), z.undefined()])
-  .transform((val) => (val === undefined || Number.isNaN(val) ? undefined : val))
-  .pipe(z.number().min(0, 'Cost cannot be negative.').max(100000, 'Cost is too high.').optional())
+  .transform((val) =>
+    val === undefined || Number.isNaN(val) ? undefined : val,
+  )
+  .pipe(
+    z
+      .number()
+      .min(0, 'Cost cannot be negative.')
+      .max(100000, 'Cost is too high.')
+      .optional(),
+  )
 
 export const eventStatusSchema = z.enum(eventStatuses)
 
@@ -250,6 +261,7 @@ const eventInputFieldsSchema = z.object({
   status: eventStatusSchema.optional(),
   notesAfterCompletion: optionalText(eventNotesAfterCompletionSchema),
   recurrence: eventRecurrenceSchema.optional(),
+  training: trainingDetailsSchema.optional(),
 })
 
 function validateEventDateRange(

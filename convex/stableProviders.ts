@@ -9,6 +9,7 @@ import {
 } from './libs/stablePermissions'
 
 const stableProviderTypeValidator = v.union(
+  v.literal('trainer'),
   v.literal('vet'),
   v.literal('farrier'),
   v.literal('dentist'),

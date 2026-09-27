@@ -4,6 +4,7 @@ import type {
   DashboardCommandHorse,
   DashboardCommandOverview,
   DashboardCommandStable,
+  DashboardTrainingData,
 } from '#/components/dashboard/command-center/dashboardTypes'
 import { StableCommandCenter } from '#/components/dashboard/command-center/StableCommandCenter'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
@@ -14,6 +15,7 @@ type StableDashboardProps = {
   horses: Array<DashboardCommandHorse>
   events: Array<DashboardCommandEvent>
   overview: DashboardCommandOverview
+  training: DashboardTrainingData
   todayKey: string
 }
 
@@ -24,6 +26,7 @@ export function StableDashboard({
   events,
   overview,
   todayKey,
+  training,
 }: StableDashboardProps) {
   const data = createDashboardCommandData({
     stable,
@@ -32,6 +35,7 @@ export function StableDashboard({
     events,
     overview,
     todayKey,
+    training,
   })
 
   return (

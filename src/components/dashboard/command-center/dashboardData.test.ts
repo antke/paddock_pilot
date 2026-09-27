@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { Doc, Id } from 'convex/_generated/dataModel'
 
 import { createDashboardCommandData } from './dashboardData'
 import type {
@@ -44,6 +45,76 @@ function createEvent({
 }
 
 describe('createDashboardCommandData', () => {
+  it('shows only today’s scheduled/completed horse sessions using per-horse results', () => {
+    const horses = [
+      'Completed horse',
+      'Scheduled horse',
+      'Skipped horse',
+      'Resting horse',
+    ].map((name) => ({
+      _id: name as Id<'horses'>,
+      name,
+    }))
+    const session: DashboardCommandEvent = {
+      ...createEvent({ id: 'training', date: '2040-02-27', time: '10:00' }),
+      horseIds: horses.slice(0, 3).map((horse) => horse._id),
+      type: 'training',
+      status: 'completed',
+      recurrence: { frequency: 'daily', interval: 1 },
+      training: { activities: ['flatwork'], format: 'regular' },
+    }
+    const records = [0, 2].map((index) => ({
+      _id: `record-${index}` as Id<'trainingRecords'>,
+      _creationTime: 0,
+      stableId: stable._id,
+      eventId: session._id,
+      horseId: horses[index]._id,
+      date: '2040-02-28',
+      status: index === 0 ? 'completed' : 'skipped',
+      details: session.training!,
+      recordedBy: 'owner' as Id<'users'>,
+      createdAt: 0,
+      updatedAt: 0,
+    })) as Array<Doc<'trainingRecords'>>
+    const data = createDashboardCommandData({
+      stable,
+      stables: [stable],
+      events: [],
+      horses: [],
+      overview,
+      todayKey: '2040-02-28',
+      training: {
+        horses,
+        records,
+        events: [
+          session,
+          { ...session, _id: 'cancelled' as Id<'events'>, status: 'cancelled' },
+          {
+            ...session,
+            _id: 'tomorrow' as Id<'events'>,
+            date: '2040-02-29',
+            recurrence: undefined,
+          },
+          {
+            ...session,
+            _id: 'elsewhere' as Id<'events'>,
+            stableId: 'another-stable' as Id<'stables'>,
+          },
+        ],
+      },
+    })
+    expect(
+      data.todayTraining?.map((entry) => [entry.horse.name, entry.status]),
+    ).toEqual([
+      ['Completed horse', 'completed'],
+      ['Scheduled horse', 'planned'],
+    ])
+    expect(
+      data.todayTraining?.every(
+        (entry) => entry.occurrence.startDate === '2040-02-28',
+      ),
+    ).toBe(true)
+  })
   const build = (events: Array<DashboardCommandEvent>) =>
     createDashboardCommandData({
       stable,

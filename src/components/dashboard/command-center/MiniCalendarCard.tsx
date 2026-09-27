@@ -110,7 +110,7 @@ export function MiniCalendarCard({
                   className={calendarWeekDayButtonClassName({
                     chrome: controlChrome,
                     className: cn(
-                      'lg:min-h-28 lg:grid-cols-1 lg:content-between lg:items-stretch lg:gap-2',
+                      'lg:min-h-28 lg:grid-cols-1 lg:content-between lg:items-stretch lg:justify-items-center lg:text-center lg:gap-2',
                       showSelectedDay &&
                         isSelected &&
                         'rounded-b-none lg:rounded-b-row',
@@ -143,7 +143,7 @@ export function MiniCalendarCard({
                     className={calendarWeekDayMetaClassName({
                       isCompact: true,
                       className:
-                        'lg:order-none lg:justify-self-start lg:text-left',
+                        'lg:order-none lg:justify-self-center lg:text-center',
                     })}
                   >
                     {day.eventCount === 0

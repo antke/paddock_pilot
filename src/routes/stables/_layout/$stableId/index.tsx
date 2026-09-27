@@ -26,6 +26,7 @@ function RouteComponent() {
     { data: horses },
     { data: events },
     { data: overview },
+    { data: training },
   ] = useSuspenseQueries({
     queries: [
       {
@@ -50,6 +51,12 @@ function RouteComponent() {
         }),
         staleTime: Infinity,
       },
+      {
+        ...convexQuery(api.training.listForStable, {
+          stableId: stableDocumentId,
+        }),
+        staleTime: Infinity,
+      },
     ],
   })
 
@@ -65,6 +72,7 @@ function RouteComponent() {
       events={events}
       overview={overview}
       todayKey={today}
+      training={training}
     />
   )
 }

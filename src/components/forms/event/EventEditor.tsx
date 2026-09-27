@@ -16,6 +16,7 @@ import type { EventFormInput, EventFormSchema } from './eventFormSchema'
 
 type Props = {
   mode: 'create' | 'edit'
+  feature?: 'events' | 'training'
   initialValues: EventFormInput
   horses: ComponentProps<typeof EventFormFields>['horses']
   providers?: ComponentProps<typeof EventFormFields>['providers']
@@ -29,6 +30,7 @@ type Props = {
 /** Callers key this editor by stable/event identity; reactive updates preserve a draft. */
 export function EventEditor({
   mode,
+  feature = 'events',
   initialValues,
   horses,
   providers,
@@ -38,6 +40,8 @@ export function EventEditor({
   onPendingChange,
   completionMessage = 'Event saved.',
 }: Props) {
+  const isTraining = feature === 'training'
+  const noun = isTraining ? 'training session' : 'event'
   const formId = useId()
   const form = useForm<EventFormInput, unknown, EventFormSchema>({
     resolver: zodResolver(eventFormSchema),
@@ -49,17 +53,17 @@ export function EventEditor({
     onSaved,
     onAcknowledged,
     onPendingChange,
-    saveError:
-      'Could not save event. Your entries are still here. Please try again.',
-    continueError:
-      'Event saved, but its page could not be opened. Open the event to continue; your changes do not need to be saved again.',
+    saveError: `Could not save ${noun}. Your entries are still here. Please try again.`,
+    continueError: isTraining
+      ? 'Training session saved, but its page could not be opened. Open the session to continue; your changes do not need to be saved again.'
+      : 'Event saved, but its page could not be opened. Open the event to continue; your changes do not need to be saved again.',
   })
   const pending = save.pending || form.formState.isSubmitting
 
   return (
     <RouteFormCard
       formId={formId}
-      title={mode === 'create' ? 'Add event' : 'Edit event'}
+      title={mode === 'create' ? `Add ${noun}` : `Edit ${noun}`}
       stickyActions
       onSubmit={(event) => {
         if (pending || save.completed) {
@@ -78,8 +82,14 @@ export function EventEditor({
           <FormSubmitButtons
             isSubmitting={pending}
             disabled={save.completed}
-            submitLabel={save.completed ? 'Event saved' : 'Open event'}
-            submittingLabel="Opening event…"
+            submitLabel={
+              save.completed
+                ? isTraining
+                  ? 'Training saved'
+                  : 'Event saved'
+                : `Open ${noun}`
+            }
+            submittingLabel={isTraining ? 'Opening session…' : 'Opening event…'}
           />
         ) : (
           <RouteFormActions
@@ -92,20 +102,23 @@ export function EventEditor({
             resetConfirmation={
               form.formState.isDirty
                 ? {
-                    title: 'Reset event changes?',
+                    title: `Reset ${noun} changes?`,
                     description:
                       'Your unsaved entries will be replaced with the values from when you opened this form.',
                     confirmLabel: 'Reset changes',
                   }
                 : undefined
             }
-            submitLabel={mode === 'create' ? 'Create event' : 'Update event'}
+            submitLabel={
+              mode === 'create' ? `Create ${noun}` : `Update ${noun}`
+            }
             submittingLabel={mode === 'create' ? 'Creating…' : 'Saving…'}
           />
         )
       }
     >
       <EventFormFields
+        trainingMode={isTraining ? mode : undefined}
         control={form.control}
         setValue={form.setValue}
         horses={horses}

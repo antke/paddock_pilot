@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react'
 import {
   createMemoryHistory,
@@ -108,9 +109,25 @@ it('offers true empty command-center state through the shared dashboard composit
   await openSample(() => (
     <StableDashboardPageLab data={createDashboardLabFixtureData()} />
   ))
+  const training = await screen.findByRole('region', {
+    name: 'Today’s training',
+  })
+  expect(within(training).getAllByRole('heading', { level: 3 })).toHaveLength(2)
+  expect(within(training).queryByText('Meadow')).toBeNull()
+  expect(
+    within(training)
+      .getByRole('link', { name: /Morning flatwork/ })
+      .getAttribute('href'),
+  ).toContain('/training/sample-dashboard-training-0?date=')
+  expect(within(training).getByText('09:00–09:45')).toBeTruthy()
+  expect(within(training).getByText('Completed')).toBeTruthy()
+  expect(within(training).getByText('Scheduled')).toBeTruthy()
   fireEvent.change(await screen.findByLabelText('Sample dashboard'), {
     target: { value: 'empty' },
   })
+  expect(
+    await screen.findByText('No scheduled or completed training today.'),
+  ).toBeTruthy()
   expect(await screen.findByText('A quieter day at the stable')).toBeTruthy()
   expect(screen.queryByText('Juniper')).toBeNull()
   expect(useMutation).not.toHaveBeenCalled()

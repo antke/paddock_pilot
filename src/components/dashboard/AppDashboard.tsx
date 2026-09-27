@@ -57,6 +57,9 @@ function AppDashboardData({
   const { data: horses } = useSuspenseQuery(
     convexQuery(api.horses.list, { stableId: activeStable._id }),
   )
+  const { data: training } = useSuspenseQuery(
+    convexQuery(api.training.listForStable, { stableId: activeStable._id }),
+  )
   const { data: invitations } = useSuspenseQuery(
     convexQuery(api.events.listPendingHorseInvitations),
   )
@@ -69,6 +72,7 @@ function AppDashboardData({
     horses,
     overview,
     todayKey: today,
+    training,
   })
 
   return (

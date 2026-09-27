@@ -1,3 +1,4 @@
+import { getTrainingEntries } from '#/components/training/trainingCalendarData'
 import type { Id } from 'convex/_generated/dataModel'
 import type { FunctionReturnType } from 'convex/server'
 import type { api } from 'convex/_generated/api'
@@ -374,4 +375,43 @@ export function createAnalysisAuditSample(
     horseOutcomeNotesNeeded: [],
     providerDetailsMissing: [],
   }
+}
+
+/** Today's training uses the real projection, with explicitly fictional sessions. */
+export function createTodayTrainingSample(
+  data: DashboardLabData,
+  today: string,
+) {
+  const horses = data.horses.filter(
+    (horse) => horse.stableId === data.stable._id,
+  )
+  const events: Array<DashboardLabEvent> = horses
+    .slice(0, 2)
+    .map((horse, index) => ({
+      _id: `sample-dashboard-training-${index}` as Id<'events'>,
+      _creationTime: 0,
+      stableId: data.stable._id,
+      createdBy: horse.ownerId,
+      horseIds: [horse._id],
+      type: 'training',
+      title: index === 0 ? 'Morning flatwork' : 'Trainer lesson',
+      date: today,
+      time: index === 0 ? '09:00' : '15:00',
+      status: index === 0 ? 'completed' : 'planned',
+      training: {
+        activities: [index === 0 ? 'flatwork' : 'jumping'],
+        format: index === 0 ? 'regular' : 'lesson',
+        rider: 'Sample rider',
+        durationMinutes: 45,
+        focus: 'Rhythm and balanced transitions',
+      },
+    }))
+  return getTrainingEntries({
+    events,
+    horses,
+    records: [],
+    start: today,
+    end: today,
+    today,
+  })
 }

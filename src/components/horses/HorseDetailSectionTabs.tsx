@@ -1,5 +1,4 @@
-import { DashboardSectionTabGroup } from '#/components/dashboard/DashboardNavigation'
-import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
+import { DashboardTabbedCard } from '#/components/dashboard/DashboardTabbedCard'
 import type { ReactNode } from 'react'
 
 export type HorseDetailSectionTabItem<TTabId extends string> = {
@@ -24,23 +23,15 @@ export function HorseDetailSectionTabs<TTabId extends string>({
   items,
   onSelect,
 }: HorseDetailSectionTabsProps<TTabId>) {
-  const activeItem = items.find((item) => item.id === activeId) ?? items[0]
-
   return (
-    <DashboardSectionTabGroup
+    <DashboardTabbedCard
       activeId={activeId}
       ariaLabel="Horse section views"
       items={items}
       onSelect={onSelect}
+      actions={actions}
     >
-      <DashboardSectionCard
-        title={activeItem.title}
-        description={activeItem.description}
-        actions={actions}
-        contentGap="loose"
-      >
-        {children}
-      </DashboardSectionCard>
-    </DashboardSectionTabGroup>
+      {children}
+    </DashboardTabbedCard>
   )
 }

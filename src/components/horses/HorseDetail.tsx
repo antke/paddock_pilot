@@ -15,6 +15,8 @@ import {
 } from '@tanstack/react-router'
 import type { Doc } from 'convex/_generated/dataModel'
 import type { ReactNode } from 'react'
+import { HorseTrainingSection } from './HorseTrainingSection'
+import type { HorseTrainingData } from './HorseTrainingSection'
 import { HorseActivitySection } from './HorseActivitySection'
 import { HorseCareSection } from './HorseCareSection'
 import { HorseDocumentsSection } from './HorseDocumentsSection'
@@ -29,12 +31,13 @@ export type HorseDetailHorse = Doc<'horses'> & {
 }
 
 export type HorseDetailCategory =
-  'profile' | 'activity' | 'care' | 'nutrition' | 'documents'
+  'profile' | 'activity' | 'training' | 'care' | 'nutrition' | 'documents'
 
 type HorseDetailProps = {
   stableId: string
   horse: HorseDetailHorse
   events: Array<Doc<'events'>>
+  trainingData?: HorseTrainingData
   category?: HorseDetailCategory
   canManageHorse: boolean
   children?: ReactNode
@@ -61,6 +64,7 @@ export const shoeingStatusLabels = {
 const categoryItems = [
   { id: 'profile', label: 'Profile' },
   { id: 'activity', label: 'Activity' },
+  { id: 'training', label: 'Training' },
   { id: 'care', label: 'Care' },
   { id: 'nutrition', label: 'Nutrition' },
   { id: 'documents', label: 'Documents' },
@@ -71,6 +75,7 @@ export function HorseDetail({
   horse,
   events,
   category,
+  trainingData,
   canManageHorse,
   children,
 }: HorseDetailProps) {
@@ -185,6 +190,13 @@ export function HorseDetail({
           events={events}
         />
       )}
+      {activeCategory === 'training' && (
+        <HorseTrainingSection
+          stableId={stableId}
+          horse={horse}
+          data={trainingData}
+        />
+      )}
       {activeCategory === 'care' && (
         <HorseCareSection
           stableId={stableId}
@@ -223,6 +235,7 @@ export function HorseDetail({
 function getHorseDetailCategory(
   pathAfterHorse: string,
 ): HorseDetailCategory | undefined {
+  if (pathAfterHorse === '/training') return 'training'
   if (pathAfterHorse === '/activity') return 'activity'
   if (pathAfterHorse === '/care') return 'care'
   if (pathAfterHorse === '/health') return 'nutrition'

@@ -1,3 +1,5 @@
+import { useSuspenseQuery } from '@tanstack/react-query'
+import { convexQuery } from '@convex-dev/react-query'
 import { useMutation } from 'convex/react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
@@ -19,10 +21,16 @@ function RouteComponent() {
   )
   const navigate = useNavigate()
   const { stableId } = Route.useParams()
+  const { data: horses } = useSuspenseQuery(
+    convexQuery(api.horses.list, { stableId: stableId as Id<'stables'> }),
+  )
   return (
     <HorseProfileForm
       key={stableId}
       mode="create"
+      breedSuggestions={horses.flatMap((horse) =>
+        horse.breed ? [horse.breed] : [],
+      )}
       uploadImage={(file) => uploadHorseProfileImage(file, generateUploadUrl)}
       save={(values, imageId) =>
         addHorse({

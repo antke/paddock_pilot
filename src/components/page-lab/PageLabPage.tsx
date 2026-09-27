@@ -1,3 +1,5 @@
+import { PaletteWorkshopPageLab } from './prototypes/PaletteWorkshopPageLab'
+import { TrainingPageLab } from './prototypes/TrainingPageLab'
 import { StableLayoutPageLab } from './prototypes/StableLayoutPageLab'
 import { RouteRecoveryPageLab } from './prototypes/RouteRecoveryPageLab'
 import { HorseRecordsPageLab } from './prototypes/HorseRecordsPageLab'
@@ -336,9 +338,14 @@ function PageLabReviewSurface({
     return <SettingsPageLab data={data} />
   }
 
+  if (pageId === 'palette') return <PaletteWorkshopPageLab />
+
   if (pageId === 'forms') {
     return <FormsPageLab data={data} />
   }
+
+  if (pageId === 'training')
+    return <TrainingPageLab key={data.stable._id} data={data} />
 
   if (pageId === 'calendar') {
     return <CalendarPageLab data={data} />

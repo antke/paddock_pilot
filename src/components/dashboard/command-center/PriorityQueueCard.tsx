@@ -138,6 +138,7 @@ export function PriorityQueueCard({
               type="button"
               variant="outline"
               size="sm"
+              className="min-h-11 whitespace-normal"
               aria-expanded={expanded}
               onClick={() =>
                 setExpandedStableId(expanded ? undefined : data.stable._id)

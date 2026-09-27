@@ -289,6 +289,7 @@ const emailWebhookEventsSchema = defineTable({
  * STABLE PROVIDERS
  */
 export const stableProviderType = v.union(
+  v.literal('trainer'),
   v.literal('vet'),
   v.literal('farrier'),
   v.literal('dentist'),
@@ -633,6 +634,7 @@ const horseNutritionLogsSchema = defineTable({ ...horseNutritionLogsFields })
  * EVENTS
  */
 export const eventType = v.union(
+  v.literal('competition'),
   v.literal('vet'),
   v.literal('training'),
   v.literal('dentist'),
@@ -689,11 +691,56 @@ export const eventRecurrenceSetup = v.object({
   end: v.optional(recurrenceEndRule),
 })
 
+export const trainingDetails = v.object({
+  activities: v.array(
+    v.union(
+      v.literal('flatwork'),
+      v.literal('jumping'),
+      v.literal('groundwork'),
+      v.literal('hacking'),
+      v.literal('lunging'),
+      v.literal('other'),
+    ),
+  ),
+  format: v.union(
+    v.literal('regular'),
+    v.literal('lesson'),
+    v.literal('workshop'),
+  ),
+  durationMinutes: v.optional(v.number()),
+  rider: v.optional(v.string()),
+  focus: v.optional(v.string()),
+  nextFocus: v.optional(v.string()),
+})
+
+const trainingRecordsSchema = defineTable({
+  stableId: v.id('stables'),
+  eventId: v.id('events'),
+  horseId: v.id('horses'),
+  date: v.string(),
+  status: v.union(
+    v.literal('planned'),
+    v.literal('completed'),
+    v.literal('cancelled'),
+    v.literal('skipped'),
+  ),
+  details: trainingDetails,
+  outcome: v.optional(v.string()),
+  recordedBy: v.id('users'),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+})
+  .index('by_stable_id', ['stableId'])
+  .index('by_event_id', ['eventId'])
+  .index('by_horse_id', ['horseId'])
+  .index('by_event_horse_date', ['eventId', 'horseId', 'date'])
+
 export const eventFields = {
   horseIds: v.array(v.id('horses')),
   createdBy: v.id('users'),
   stableId: v.id('stables'),
   type: eventType,
+  training: v.optional(trainingDetails),
   title: v.string(),
   description: v.optional(v.string()),
   location: v.optional(v.string()),
@@ -822,6 +869,7 @@ export default defineSchema({
   horseMedicationRecords: horseMedicationRecordsSchema,
   horseNutritionLogs: horseNutritionLogsSchema,
   events: eventsSchema,
+  trainingRecords: trainingRecordsSchema,
   eventsHorses: eventHorsesSchema,
   careReminders: careRemindersSchema,
 })

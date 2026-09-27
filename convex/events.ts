@@ -1,5 +1,6 @@
 import { ConvexError, v } from 'convex/values'
-import { omit } from 'lodash'
+import { isEqual, omit } from 'lodash'
+import { isDateKey } from '../shared/training/trainingSchema'
 import { eventInputSchema } from '../shared/events/eventSchema'
 import type { Doc, Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
@@ -33,6 +34,7 @@ const validateEventInput = (args: {
   providerPhone?: string
   totalCost?: number
   costPerHorse?: number
+  training?: Doc<'events'>['training']
   status?: Doc<'events'>['status']
   notesAfterCompletion?: string
   endDate?: string
@@ -46,6 +48,11 @@ const validateEventInput = (args: {
     )
   }
 
+  if (!isDateKey(args.date) || (args.endDate && !isDateKey(args.endDate))) {
+    throw new ConvexError('Use a valid calendar date')
+  }
+  if (args.type !== 'training' && args.training)
+    throw new ConvexError('Training details belong in Training log')
   return result.data
 }
 
@@ -302,7 +309,10 @@ export const list = query({
       }),
     )
 
-    return events.flat().sort(byEventDateAndTime)
+    return events
+      .flat()
+      .filter((event) => event.type !== 'training')
+      .sort(byEventDateAndTime)
   },
 })
 
@@ -391,9 +401,13 @@ export const listForStable = query({
       .withIndex('by_stable_id_date', (q) => q.eq('stableId', args.stableId))
       .collect()
 
-    return (await filterEventsForActiveHorses(ctx, args.stableId, events)).sort(
-      byEventDateAndTime,
-    )
+    return (
+      await filterEventsForActiveHorses(
+        ctx,
+        args.stableId,
+        events.filter((event) => event.type !== 'training'),
+      )
+    ).sort(byEventDateAndTime)
   },
 })
 
@@ -425,7 +439,10 @@ export const listForHorse = query({
       eventIds.map((eventId) => ctx.db.get(eventId)),
     )
 
-    return events.filter(isEvent).sort(byEventDateAndTime)
+    return events
+      .filter(isEvent)
+      .filter((event) => event.type !== 'training')
+      .sort(byEventDateAndTime)
   },
 })
 
@@ -455,6 +472,17 @@ export const add = mutation({
     const invitedHorses = horses.filter(
       (horse) => access.role !== 'owner' && horse.ownerId !== user._id,
     )
+    if (eventInput.type === 'training') {
+      if (!eventInput.training)
+        throw new ConvexError('Choose training activities')
+      if (
+        eventInput.status === 'completed' &&
+        eventInput.date >
+          new Date(Date.now() + 14 * 3600000).toISOString().slice(0, 10)
+      ) {
+        throw new ConvexError('Future sessions cannot be completed')
+      }
+    }
     const now = Date.now()
     const eventId = await ctx.db.insert('events', {
       stableId: args.stableId,
@@ -471,9 +499,10 @@ export const add = mutation({
       providerPhone: eventInput.providerPhone,
       totalCost: eventInput.totalCost,
       costPerHorse: eventInput.costPerHorse,
-      status: eventInput.status,
+      status: eventInput.type === 'training' ? 'planned' : eventInput.status,
       notesAfterCompletion: eventInput.notesAfterCompletion,
       recurrence: eventInput.recurrence,
+      training: eventInput.training,
     })
 
     await Promise.all([
@@ -500,6 +529,28 @@ export const add = mutation({
         }),
       ),
     ])
+
+    if (
+      eventInput.type === 'training' &&
+      eventInput.training &&
+      eventInput.status &&
+      eventInput.status !== 'planned'
+    ) {
+      for (const horse of confirmedHorses) {
+        await ctx.db.insert('trainingRecords', {
+          stableId: args.stableId,
+          eventId,
+          horseId: horse._id,
+          date: eventInput.date,
+          status: eventInput.status,
+          details: eventInput.training,
+          outcome: eventInput.notesAfterCompletion,
+          recordedBy: user._id,
+          createdAt: now,
+          updatedAt: now,
+        })
+      }
+    }
 
     await sendEventInvitationEmails(
       ctx,
@@ -545,6 +596,39 @@ export const update = mutation({
       })
     ) {
       throw new ConvexError('Not authorized to update this event')
+    }
+
+    if ((event.type === 'training') !== (eventInput.type === 'training')) {
+      throw new ConvexError(
+        'Events and training sessions cannot be converted through this form',
+      )
+    }
+    if (event.type === 'training') {
+      const records = await ctx.db
+        .query('trainingRecords')
+        .withIndex('by_event_id', (q) => q.eq('eventId', event._id))
+        .collect()
+      const hasHistory = records.length > 0 || event.status === 'completed'
+      if (
+        hasHistory &&
+        (event.date !== eventInput.date ||
+          event.endDate !== eventInput.endDate ||
+          !isEqual(event.recurrence, eventInput.recurrence))
+      ) {
+        throw new ConvexError(
+          'This session has training history. Keep its schedule and create a new session for a different schedule.',
+        )
+      }
+      if (
+        records.some(
+          (record) =>
+            event.horseIds.includes(record.horseId) &&
+            !args.horseIds.includes(record.horseId),
+        )
+      )
+        throw new ConvexError(
+          'A horse with recorded training cannot be removed from this session',
+        )
     }
 
     const horses = await getStableHorses(ctx, args.stableId, args.horseIds)
@@ -660,9 +744,10 @@ export const update = mutation({
       providerPhone: eventInput.providerPhone,
       totalCost: eventInput.totalCost,
       costPerHorse: eventInput.costPerHorse,
-      status: eventInput.status,
+      status: event.type === 'training' ? event.status : eventInput.status,
       notesAfterCompletion: eventInput.notesAfterCompletion,
       recurrence: eventInput.recurrence,
+      training: eventInput.training,
     })
     await syncConfirmedHorseIds(ctx, id)
     await sendEventInvitationEmails(

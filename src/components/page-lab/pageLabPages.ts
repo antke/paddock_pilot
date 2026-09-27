@@ -1,4 +1,5 @@
 export const pageLabPages = [
+  { id: 'palette', label: 'Palette workshop' },
   { id: 'route-recovery', label: 'Route recovery' },
   { id: 'onboarding', label: 'Onboarding' },
   { id: 'profile', label: 'Account profile' },
@@ -37,7 +38,7 @@ export const pageLabPages = [
   },
   {
     id: 'event-list',
-    label: 'Event list',
+    label: 'Events',
   },
   {
     id: 'event-detail',
@@ -67,6 +68,7 @@ export const pageLabPages = [
     id: 'forms',
     label: 'Forms',
   },
+  { id: 'training', label: 'Training log' },
   {
     id: 'calendar',
     label: 'Calendar',

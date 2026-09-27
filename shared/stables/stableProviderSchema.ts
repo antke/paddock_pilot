@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 export const stableProviderTypes = [
+  'trainer',
   'vet',
   'farrier',
   'dentist',
@@ -10,6 +11,7 @@ export const stableProviderTypes = [
 ] as const
 
 export const stableProviderTypeLabels = {
+  trainer: 'Trainer',
   vet: 'Vet',
   farrier: 'Farrier',
   dentist: 'Dentist',

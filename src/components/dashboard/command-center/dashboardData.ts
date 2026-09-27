@@ -1,3 +1,4 @@
+import { getTrainingEntries } from '#/components/training/trainingCalendarData'
 import { createEventOccurrences } from 'shared/events/eventOccurrences'
 import {
   dateKeyToDate,
@@ -6,6 +7,7 @@ import {
 } from '#/lib/dateDisplay'
 import type {
   DashboardCommandData,
+  DashboardTrainingData,
   DashboardCommandEvent,
   DashboardCommandHorse,
   DashboardCommandOverview,
@@ -20,6 +22,7 @@ export function createDashboardCommandData({
   horses,
   overview,
   todayKey,
+  training,
 }: {
   stable: DashboardCommandStable
   stables: Array<DashboardCommandStable>
@@ -27,6 +30,7 @@ export function createDashboardCommandData({
   horses: Array<DashboardCommandHorse>
   overview: DashboardCommandOverview
   todayKey: string
+  training?: DashboardTrainingData
 }): DashboardCommandData {
   const stableEvents = events
     .filter((event) => event.stableId === stable._id)
@@ -76,7 +80,25 @@ export function createDashboardCommandData({
     }
   })
 
+  const todayTraining = training
+    ? getTrainingEntries({
+        events: training.events.filter(
+          (event) => event.stableId === stable._id,
+        ),
+        records: training.records.filter(
+          (record) => record.stableId === stable._id,
+        ),
+        horses: training.horses,
+        start: todayKey,
+        end: todayKey,
+        today: todayKey,
+      }).filter(
+        (entry) => entry.status === 'planned' || entry.status === 'completed',
+      )
+    : []
+
   return {
+    todayTraining,
     stable,
     stables,
     events: stableEvents,

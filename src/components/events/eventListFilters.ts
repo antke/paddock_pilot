@@ -74,10 +74,12 @@ export function createEventListFilterConfig(): ListFilterConfig<
   }
 }
 
-const eventTypeFilterOptions = eventTypes.map((type) => ({
-  value: type,
-  label: eventTypeLabels[type],
-})) satisfies ReadonlyArray<ListFilterOption & { value: EventType }>
+const eventTypeFilterOptions = eventTypes
+  .filter((type) => type !== 'training')
+  .map((type) => ({
+    value: type,
+    label: eventTypeLabels[type],
+  })) satisfies ReadonlyArray<ListFilterOption & { value: EventType }>
 
 const eventStatusFilterOptions = eventStatuses.map((status) => ({
   value: status,

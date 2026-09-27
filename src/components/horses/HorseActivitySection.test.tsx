@@ -115,14 +115,12 @@ describe('actual horse activity sample', () => {
     expect(
       screen.getByRole('link', { name: 'Add event' }).getAttribute('href'),
     ).toContain('/events/create')
-    const history = screen.getByRole('button', { name: 'History' })
+    const history = screen.getByRole('tab', { name: 'History' })
     history.focus()
     fireEvent.click(history)
-    expect(history.getAttribute('aria-pressed')).toBe('true')
+    expect(history.getAttribute('aria-selected')).toBe('true')
     expect(document.activeElement).toBe(history)
-    expect(
-      screen.getByRole('heading', { level: 2, name: 'Activity history' }),
-    ).toBeTruthy()
+    expect(screen.getByRole('tabpanel', { name: 'History' })).toBeTruthy()
     expect(screen.getByText('Sample completed visit today')).toBeTruthy()
     expect(screen.getByText('Sample cancelled future lesson')).toBeTruthy()
     expect(screen.getByText('Sample earlier appointment')).toBeTruthy()
@@ -131,7 +129,7 @@ describe('actual horse activity sample', () => {
       screen
         .getByRole('link', { name: /Sample cancelled future lesson/ })
         .getAttribute('href'),
-    ).toContain('/events/sample-horse-activity-2')
+    ).toContain('/training/sample-horse-activity-2')
     expect(useMutation).not.toHaveBeenCalled()
   })
 
@@ -162,7 +160,7 @@ describe('actual horse activity sample', () => {
         .getByRole('region', { name: 'Juniper — upcoming activity' })
         .getAttribute('tabindex'),
     ).toBe('0')
-    fireEvent.click(screen.getByRole('button', { name: 'History' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'History' }))
     const history = screen.getByRole('region', {
       name: 'Juniper — activity history',
     })
@@ -176,7 +174,7 @@ describe('actual horse activity sample', () => {
     expect(
       screen.getByText('No upcoming activity for this horse.'),
     ).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'History' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'History' }))
     expect(screen.getByText('No activity history yet.')).toBeTruthy()
     fireEvent.change(scenario, { target: { value: 'missing' } })
     expect(screen.getByRole('alert').textContent).toContain(

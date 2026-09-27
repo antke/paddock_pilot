@@ -18,7 +18,6 @@ const oneDayInMs = 24 * 60 * 60 * 1000
 
 const careCadenceEntries = [
   ['vet', 365],
-  ['training', 30],
   ['dentist', 365],
   ['hoof_trimming', 56],
   ['massage', 90],
@@ -39,11 +38,7 @@ export type LabTimelineSeriesKey =
   | 'weight'
 
 export type LabTimelineSignalKind =
-  | 'health'
-  | 'medication'
-  | 'nutrition'
-  | 'weight'
-  | 'reminder'
+  'health' | 'medication' | 'nutrition' | 'weight' | 'reminder'
 
 export type LabTimelineSourceSignal = {
   id: string

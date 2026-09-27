@@ -64,6 +64,7 @@ export const getForHorse = query({
     )
     const recentEvents = events
       .filter(isEvent)
+      .filter((event) => event.type !== 'training')
       .sort(byEventDateDesc)
       .slice(0, 12)
       .map((event) => ({

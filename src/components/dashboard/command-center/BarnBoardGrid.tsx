@@ -7,6 +7,7 @@ import { ActiveStableHeader } from './ActiveStableHeader'
 import { HorseRosterCard } from './HorseRosterCard'
 import { MiniCalendarCard } from './MiniCalendarCard'
 import { CareRemindersSummaryCard, HealthIssuesCard } from './PriorityQueueCard'
+import { TodayTrainingCard } from './TodayTrainingCard'
 import { TodayBriefingCard } from './TodayBriefingCard'
 import type { DashboardCommandData } from './dashboardTypes'
 
@@ -22,6 +23,7 @@ export function BarnBoardGrid({ data }: BarnBoardGridProps) {
       <DashboardLayoutGrid variant="commandCenter">
         <DashboardLayoutStack>
           <TodayBriefingCard data={data} />
+          <TodayTrainingCard data={data} />
           <MiniCalendarCard data={data} />
           <HorseRosterCard data={data} />
         </DashboardLayoutStack>

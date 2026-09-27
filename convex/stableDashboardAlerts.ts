@@ -94,7 +94,10 @@ export const getForStable = query({
     const activeHorses = horses.filter(isActiveHorse)
     const activeHorseIds = new Set(activeHorses.map((horse) => horse._id))
     const visibleEvents = events
-      .filter((event) => hasActiveHorse(event, activeHorseIds))
+      .filter(
+        (event) =>
+          event.type !== 'training' && hasActiveHorse(event, activeHorseIds),
+      )
       .map((event) => withActiveEventHorseIds(event, activeHorseIds))
     const visibleHealthIssues = healthIssues.filter((issue) =>
       activeHorseIds.has(issue.horseId),

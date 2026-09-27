@@ -55,6 +55,7 @@ import type {
 
 type StableEventsCalendarProps = {
   events: Array<StableDashboardEvent>
+  surface?: 'flat' | 'panel'
   initialMonth?: Date
 }
 
@@ -64,6 +65,7 @@ type CalendarCell =
 export function StableEventsCalendar({
   events,
   initialMonth,
+  surface = 'panel',
 }: StableEventsCalendarProps) {
   const [visibleMonth, setVisibleMonth] = useState(() =>
     startOfMonth(initialMonth ?? new Date()),
@@ -174,6 +176,7 @@ export function StableEventsCalendar({
 
   return (
     <DashboardSectionCard
+      surface={surface}
       ref={calendarRef}
       role="region"
       aria-label={`${formatMonthLabel(visibleMonth)} calendar`}

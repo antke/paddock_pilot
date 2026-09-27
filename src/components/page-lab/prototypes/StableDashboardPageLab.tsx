@@ -6,7 +6,10 @@ import { Field, FieldLabel } from '#/components/ui/field'
 import { Select } from '#/components/ui/select'
 import { useDevAuthBypassEnabled } from '#/lib/devAuthBypass'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
-import { createDashboardAuditSample } from './dashboardAnalysisFixtures'
+import {
+  createDashboardAuditSample,
+  createTodayTrainingSample,
+} from './dashboardAnalysisFixtures'
 import type { DashboardSampleState } from './dashboardAnalysisFixtures'
 import { HomeDashboardSample } from './HomeDashboardSample'
 
@@ -74,7 +77,10 @@ export function StableDashboardPageLab({ data }: StableDashboardPageLabProps) {
       ) : (
         <StableCommandCenter
           key={`${data.stable._id}-${scenario}`}
-          data={sample}
+          data={{
+            ...sample,
+            todayTraining: createTodayTrainingSample(sample, today),
+          }}
         />
       )}
     </>

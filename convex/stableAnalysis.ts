@@ -18,9 +18,8 @@ import {
 const fourteenDaysInMs = 14 * 24 * 60 * 60 * 1000
 const oneDayInMs = 24 * 60 * 60 * 1000
 
-const careCadenceDays: Record<Doc<'events'>['type'], number> = {
+const careCadenceDays: Partial<Record<Doc<'events'>['type'], number>> = {
   vet: 365,
-  training: 30,
   dentist: 365,
   hoof_trimming: 56,
   massage: 90,
@@ -77,11 +76,7 @@ const countEventsByType = (events: Array<Doc<'events'>>) => {
 const sortByDateDesc = (a: string, b: string) => b.localeCompare(a)
 
 type StableTimelineSignalKind =
-  | 'health'
-  | 'medication'
-  | 'nutrition'
-  | 'weight'
-  | 'reminder'
+  'health' | 'medication' | 'nutrition' | 'weight' | 'reminder'
 
 type StableTimelineSignal = {
   id: string
@@ -333,13 +328,15 @@ const getCareCadence = (
           .filter(
             (event) => event.status === 'completed' && event.date <= today,
           )
-          .sort((a, b) => sortByDateDesc(a.date, b.date)).at(0)
+          .sort((a, b) => sortByDateDesc(a.date, b.date))
+          .at(0)
         const nextPlanned = typedEvents
           .filter(
             (event) =>
               (event.status ?? 'planned') === 'planned' && event.date >= today,
           )
-          .sort(compareEventDateAndTime).at(0)
+          .sort(compareEventDateAndTime)
+          .at(0)
         const daysSinceLast = lastCompleted
           ? Math.floor(
               (Date.parse(today) - Date.parse(lastCompleted.date)) / oneDayInMs,
@@ -581,7 +578,10 @@ export const getForStable = query({
     const horses = allHorses.filter(isActiveHorse)
     const activeHorseIds = new Set(horses.map((horse) => horse._id))
     const events = allEvents
-      .filter((event) => hasActiveHorse(event, activeHorseIds))
+      .filter(
+        (event) =>
+          event.type !== 'training' && hasActiveHorse(event, activeHorseIds),
+      )
       .map((event) => withActiveEventHorseIds(event, activeHorseIds))
     const healthIssues = allHealthIssues.filter((issue) =>
       activeHorseIds.has(issue.horseId),

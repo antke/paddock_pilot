@@ -3,7 +3,8 @@ import type { Doc } from './_generated/dataModel'
 import { query } from './_generated/server'
 import { assertCanViewStable } from './libs/stablePermissions'
 
-const isEvent = (event: Doc<'events'> | null): event is Doc<'events'> => event !== null
+const isEvent = (event: Doc<'events'> | null): event is Doc<'events'> =>
+  event !== null
 
 const isConfirmedEventHorse = (eventHorse: Doc<'eventsHorses'>) => {
   return eventHorse.status === undefined || eventHorse.status === 'confirmed'
@@ -59,10 +60,25 @@ export const listForHorse = query({
       confirmedEventHorses.map((eventHorse) => ctx.db.get(eventHorse.eventId)),
     )
 
+    const trainingRecords = await ctx.db
+      .query('trainingRecords')
+      .withIndex('by_horse_id', (q) => q.eq('horseId', args.horseId))
+      .collect()
+    const recordedEventIds = new Set(
+      trainingRecords.map((record) => record.eventId),
+    )
+
     const eventEntries = confirmedEventHorses
       .map((eventHorse, index) => {
         const event = events[index]
         if (!isEvent(event)) return null
+        if (
+          event.type === 'training' &&
+          (event.training ||
+            event.recurrence ||
+            recordedEventIds.has(event._id))
+        )
+          return null
 
         return {
           id: event._id,
@@ -83,6 +99,42 @@ export const listForHorse = query({
         }
       })
       .filter((entry) => entry !== null)
+
+    const trainingEntries = (
+      await Promise.all(
+        trainingRecords.map(async (record) => {
+          const event = await ctx.db.get(record.eventId)
+          if (!event) return null
+          return {
+            id: record._id,
+            kind: 'event' as const,
+            occurredAt: eventTimestamp({ ...event, date: record.date }),
+            title: event.title,
+            eventType: event.type,
+            status:
+              record.status === 'skipped'
+                ? ('cancelled' as const)
+                : record.status,
+            description: [
+              record.status === 'skipped' ? 'Skipped' : undefined,
+              record.details.focus,
+            ]
+              .filter(Boolean)
+              .join(' · '),
+            providerName: event.providerName,
+            notesAfterCompletion: record.outcome,
+            requestedServiceNotes: undefined,
+            horseCompletionNotes: record.details.nextFocus
+              ? `Next focus: ${record.details.nextFocus}`
+              : undefined,
+            costShare: undefined,
+            date: record.date,
+            endDate: undefined,
+            time: event.time,
+          }
+        }),
+      )
+    ).filter((entry) => entry !== null)
 
     const healthIssueEntries = healthIssues.map((issue) => ({
       id: issue._id,
@@ -133,6 +185,7 @@ export const listForHorse = query({
 
     const entries = [
       ...eventEntries,
+      ...trainingEntries,
       ...healthIssueEntries,
       ...weightEntries,
       ...medicationEntries,

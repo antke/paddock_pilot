@@ -1,5 +1,5 @@
 import type { HorseFormInput, HorseFormSchema } from './horseFormSchema'
-import { calculateHorseAge } from 'shared/horses/horseAge'
+import { birthDateForHorseAge, calculateHorseAge } from 'shared/horses/horseAge'
 import type { Id } from 'convex/_generated/dataModel'
 
 export function horseProfileDefaults(
@@ -11,8 +11,6 @@ export function horseProfileDefaults(
     breed: '',
     color: '',
     height: '',
-    dateOfBirth: '',
-    age: '',
     passportNumber: '',
     microchipNumber: '',
     insuranceProvider: '',
@@ -34,6 +32,12 @@ export function horseProfileDefaults(
     ...Object.fromEntries(
       Object.entries(horse).filter(([, value]) => value !== undefined),
     ),
+    dateOfBirth:
+      horse.dateOfBirth ||
+      (typeof horse.age === 'number' ? birthDateForHorseAge(horse.age) : ''),
+    age: horse.dateOfBirth
+      ? (calculateHorseAge(horse.dateOfBirth) ?? '')
+      : (horse.age ?? ''),
   }
 }
 

@@ -47,6 +47,37 @@ export const calculateHorseAge = (
   return age
 }
 
+export const birthDateForHorseAge = (
+  age: number,
+  dateOfBirth = '',
+  asOf = new Date(),
+): string => {
+  if (!Number.isInteger(age) || age < 0 || age > 100) return ''
+
+  const birthDate = parseDateKey(dateOfBirth)
+  const month = birthDate?.month
+  const day = birthDate?.day
+  const birthdayUpcoming =
+    month !== undefined &&
+    (month > asOf.getMonth() + 1 ||
+      (month === asOf.getMonth() + 1 &&
+        day !== undefined &&
+        day > asOf.getDate()))
+  const year = String(asOf.getFullYear() - age - Number(birthdayUpcoming))
+  const yearAndMonth = month
+    ? `${year}-${String(month).padStart(2, '0')}`
+    : year
+  const result = day
+    ? `${yearAndMonth}-${String(day).padStart(2, '0')}`
+    : yearAndMonth
+
+  // A leap day may not exist in the new year. Keep the known month without
+  // inventing a replacement birthday.
+  return day !== undefined && !parseDateKey(result)
+    ? birthDateForHorseAge(age, yearAndMonth, asOf)
+    : result
+}
+
 export const getTodayDateKey = (today = new Date()) =>
   [
     today.getFullYear(),

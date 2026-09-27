@@ -1,3 +1,7 @@
+import type {
+  TrainingEntry,
+  TrainingHorse,
+} from '#/components/training/trainingCalendarData'
 import type { Doc } from 'convex/_generated/dataModel'
 import type { FunctionReturnType } from 'convex/server'
 import type { api } from 'convex/_generated/api'
@@ -25,7 +29,14 @@ export type DashboardCommandUpcomingEvent =
 export type DashboardCommandAttentionHorse =
   DashboardCommandOverview['attentionHorses'][number]
 
+export type DashboardTrainingData = {
+  events: Array<Doc<'events'>>
+  records: Array<Doc<'trainingRecords'>>
+  horses: Array<TrainingHorse>
+}
+
 export type DashboardCommandData = {
+  todayTraining?: Array<TrainingEntry>
   stable: DashboardCommandStable
   stables: Array<DashboardCommandStable>
   events: Array<DashboardCommandEvent>
