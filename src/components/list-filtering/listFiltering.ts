@@ -22,10 +22,12 @@ export type ListFilterUiConfig<TFacetId extends string = string> = {
   facets: ReadonlyArray<ListFilterUiFacet<TFacetId>>
 }
 
-export type ListFilterFacet<TItem, TFacetId extends string = string> =
-  ListFilterUiFacet<TFacetId> & {
-    matches: (item: TItem, selectedValue: string) => boolean
-  }
+export type ListFilterFacet<
+  TItem,
+  TFacetId extends string = string,
+> = ListFilterUiFacet<TFacetId> & {
+  matches: (item: TItem, selectedValue: string) => boolean
+}
 
 export type ListFilterConfig<TItem, TFacetId extends string = string> = Omit<
   ListFilterUiConfig<TFacetId>,

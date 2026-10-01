@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { LocaleProvider } from '#/i18n/LocaleProvider'
+import { LanguageSelector } from '#/i18n/LanguageSelector'
 import {
   cleanup,
   fireEvent,
@@ -35,9 +37,10 @@ const data = createDashboardAuditSample(
 const analysis = createAnalysisAuditSample(data, today)
 afterEach(() => {
   cleanup()
+  localStorage.clear()
   vi.restoreAllMocks()
 })
-async function show(locked = false, empty = false) {
+async function show(locked = false, empty = false, localized = false) {
   const sampleData = empty
     ? createDashboardAuditSample(data, 'empty', today)
     : data
@@ -66,7 +69,16 @@ async function show(locked = false, empty = false) {
     history: createMemoryHistory({ initialEntries: ['/'] }),
   })
   await router.load()
-  render(<RouterProvider router={router} />)
+  render(
+    localized ? (
+      <LocaleProvider>
+        <LanguageSelector />
+        <RouterProvider router={router} />
+      </LocaleProvider>
+    ) : (
+      <RouterProvider router={router} />
+    ),
+  )
 }
 
 describe('actual analysis view', () => {
@@ -280,4 +292,43 @@ describe('actual analysis view', () => {
     expect(onSelect).toHaveBeenCalledWith(data.horses[49]._id)
     expect(option.textContent).toContain('Sample horse 50')
   })
+})
+
+it('preserves timeline period, event filters and zoom when changing language', async () => {
+  localStorage.clear()
+  vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['en-GB'])
+  await show(false, false, true)
+  const scale = await screen.findByRole('group', { name: 'Calendar scale' })
+  fireEvent.click(within(scale).getByRole('button', { name: 'Week' }))
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Vet' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Zoom in' }))
+  const periods = screen.getByRole('group', {
+    name: 'Timeline periods — use arrow keys to select',
+  })
+  const period = within(periods).getAllByRole('button').at(-1)!
+  fireEvent.click(period)
+  const before = screen.getByRole('status').textContent
+  const zoom = before.match(/Column zoom (\d+)%/)![1]
+  fireEvent.change(screen.getByRole('combobox', { name: 'Language' }), {
+    target: { value: 'pl' },
+  })
+  expect(screen.getByRole('heading', { name: 'Centrum analiz' })).toBeTruthy()
+  expect(
+    screen
+      .getByRole('checkbox', { name: 'Weterynarz' })
+      .getAttribute('aria-checked'),
+  ).toBe('false')
+  expect(period.isConnected).toBe(true)
+  expect(period.getAttribute('aria-pressed')).toBe('true')
+  expect(
+    within(screen.getByRole('group', { name: 'Skala kalendarza' }))
+      .getByRole('button', { name: 'Tydzień' })
+      .getAttribute('aria-pressed'),
+  ).toBe('true')
+  expect(screen.getByRole('status').textContent).toContain(
+    `Powiększenie kolumn: ${zoom}%`,
+  )
+  expect(
+    screen.getByRole('region', { name: 'Kalendarz aktywności stajni' }),
+  ).toBeTruthy()
 })

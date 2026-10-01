@@ -1,0 +1,32 @@
+export const stableAlerts = {
+  title: 'Ważne informacje o opiece',
+  help: 'Sprawdź pilne potrzeby opieki, brakujące dane, notatki po wizytach i nadchodzące wizyty specjalistów.',
+  attention: 'Wymaga uwagi',
+  noHealthIssues: 'Brak aktywnych poważnych problemów zdrowotnych.',
+  dueReminders: 'Najbliższe przypomnienia',
+  noReminders: 'Brak przypomnień na najbliższe 7 dni.',
+  upcomingCare: 'Nadchodząca opieka',
+  noEvents: 'Brak zaplanowanych wydarzeń na najbliższe 30 dni.',
+  profileGaps: 'Braki w profilach',
+  profileComplete: 'Ważne informacje w profilach koni są uzupełnione.',
+  followUps: 'Notatki po wydarzeniach',
+  followUpsComplete:
+    'Zakończone wydarzenia mają notatki dotyczące dalszej opieki.',
+  outcomes: 'Wyniki wizyt u koni',
+  outcomesComplete:
+    'Po zakończonych wizytach grupowych zapisano wyniki dla poszczególnych koni.',
+  providers: 'Dane specjalistów',
+  providersComplete: 'Dane specjalistów przy wydarzeniach są uzupełnione.',
+  pending: 'Oczekujące zaproszenia',
+  pendingEmpty:
+    'Brak oczekujących zaproszeń do stajni lub do udziału koni w wydarzeniach.',
+  due: 'Termin: {{date}}',
+  missing: 'Brakuje: {{fields}}',
+  completedNoNotes: 'Zakończono {{date}} bez notatek.',
+  addOutcome: 'Dodaj notatki z wizyty dla konia {{horse}}.',
+  providerName: 'imię i nazwisko lub nazwa specjalisty',
+  providerPhone: 'telefon specjalisty',
+  providerMissing: 'Brakuje: {{fields}}.',
+  stableInvitation: 'Zaproszenie do stajni ({{role}}): {{status}}.',
+  waitingHorse: 'Oczekiwanie na potwierdzenie udziału konia {{horse}}.',
+} as const

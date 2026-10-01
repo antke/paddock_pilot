@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import type { ComponentProps, FormEventHandler, ReactNode } from 'react'
 import { useRef, useState } from 'react'
 
@@ -28,6 +29,7 @@ type RouteFormCardProps = {
   contentGap?: ComponentProps<typeof DashboardSectionCard>['contentGap']
   embedded?: boolean
   sectionTitle?: ReactNode
+  noValidate?: boolean
   stickyActions?: boolean
 }
 
@@ -77,6 +79,7 @@ function findFormFocusTarget(form: HTMLFormElement | null) {
 }
 
 export function RouteFormCard({
+  noValidate,
   formId,
   title,
   onSubmit,
@@ -88,7 +91,12 @@ export function RouteFormCard({
   stickyActions = false,
 }: RouteFormCardProps) {
   const formCard = (
-    <form data-slot="route-form-card" id={formId} onSubmit={onSubmit}>
+    <form
+      data-slot="route-form-card"
+      id={formId}
+      onSubmit={onSubmit}
+      noValidate={noValidate}
+    >
       <DashboardSectionCard
         data-slot="route-form-section-card"
         width="full"
@@ -121,12 +129,14 @@ export function RouteFormCard({
 export function RouteFormActions({
   isSubmitting,
   onReset,
-  resetLabel = 'Reset',
+  resetLabel,
   disabled = false,
   resetConfirmation,
   submitLabel,
   submittingLabel,
 }: RouteFormActionsProps) {
+  const t = useT()
+  const effectiveResetLabel = resetLabel ?? t('common.reset')
   const [resetOpen, setResetOpen] = useState(false)
   const resetTrigger = useRef<HTMLButtonElement>(null)
   const ownerForm = useRef<HTMLFormElement | null>(null)
@@ -149,7 +159,7 @@ export function RouteFormActions({
               />
             }
           >
-            {resetLabel}
+            {effectiveResetLabel}
           </AlertDialogTrigger>
           <AlertDialogContent
             finalFocus={() => {
@@ -170,7 +180,7 @@ export function RouteFormActions({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Keep editing</AlertDialogCancel>
+              <AlertDialogCancel>{t('common.keepEditing')}</AlertDialogCancel>
               <AlertDialogAction
                 type="button"
                 variant="destructive"
@@ -181,7 +191,7 @@ export function RouteFormActions({
                   setResetOpen(false)
                 }}
               >
-                {resetConfirmation.confirmLabel ?? resetLabel}
+                {resetConfirmation.confirmLabel ?? effectiveResetLabel}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -191,7 +201,7 @@ export function RouteFormActions({
       <FormSubmitButtons
         isSubmitting={isSubmitting}
         onCancel={resetConfirmation ? undefined : onReset}
-        cancelLabel={resetLabel}
+        cancelLabel={effectiveResetLabel}
         disabled={disabled}
         submitLabel={submitLabel}
         submittingLabel={submittingLabel}

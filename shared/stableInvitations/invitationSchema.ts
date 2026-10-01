@@ -8,9 +8,14 @@ export const stableInvitationRoleLabels = {
   guest: 'Guest (legacy)',
 } as const
 
-export const stableInvitationSchema = z.object({
-  email: z.string().trim().email('Use a valid email address.'),
-  role: z.literal('member'),
-})
+export const createStableInvitationSchema = (
+  invalidEmail = 'Use a valid email address.',
+) =>
+  z.object({
+    email: z.string().trim().email(invalidEmail),
+    role: z.literal('member'),
+  })
+
+export const stableInvitationSchema = createStableInvitationSchema()
 
 export type StableInvitationInput = z.infer<typeof stableInvitationSchema>

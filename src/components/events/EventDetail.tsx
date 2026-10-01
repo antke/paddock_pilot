@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import {
   DetailField,
   DetailPanel,
@@ -12,7 +13,6 @@ import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCar
 import { ButtonLink } from '#/components/ui/button'
 import { HorseCardLink } from '#/components/horses/HorseCard'
 import type { Doc } from 'convex/_generated/dataModel'
-import { eventStatusLabels } from 'shared/events/eventSchema'
 import type { EventStatus } from 'shared/events/eventSchema'
 import { formatCurrencyAmount } from '#/lib/numberDisplay'
 import { EventStatusBadge } from './EventBadges'
@@ -39,7 +39,10 @@ export function EventDetail({
   canManageEvent,
   showServiceDetails = true,
 }: EventDetailProps) {
-  const recurrenceSummary = formatRecurrence(event.recurrence)
+  const t = useT()
+  const { locale } = useLocale()
+
+  const recurrenceSummary = formatRecurrence(event.recurrence, locale)
   const eventStatus: EventStatus = event.status ?? 'planned'
   const hasProviderDetails = Boolean(
     event.providerName ||
@@ -73,8 +76,8 @@ export function EventDetail({
               variant="outline"
             >
               {event.type === 'training'
-                ? 'Edit training session'
-                : 'Edit event'}
+                ? t('eventViews.editTraining')
+                : t('eventViews.edit')}
             </ButtonLink>
           ) : undefined
         }
@@ -84,37 +87,47 @@ export function EventDetail({
         <DetailPanelGrid
           className={hasProviderDetails ? 'gap-3' : 'gap-3 lg:grid-cols-1'}
         >
-          <DetailPanel as="h2" title="Overview" variant="emphasis">
+          <DetailPanel
+            as="h2"
+            title={t('eventViews.overview')}
+            variant="emphasis"
+          >
             <DetailSummaryGrid>
               <DetailSummaryField
-                label="Date"
-                value={formatEventDateRange(event.date, event.endDate)}
-              />
-              <DetailSummaryField label="Time" value={event.time} />
-              <DetailSummaryField
-                label="Type"
-                value={formatEventType(event.type)}
+                label={t('eventViews.date')}
+                value={formatEventDateRange(event.date, event.endDate, locale)}
               />
               <DetailSummaryField
-                label="Status"
+                label={t('eventViews.time')}
+                value={event.time}
+              />
+              <DetailSummaryField
+                label={t('eventViews.type')}
+                value={formatEventType(event.type, locale)}
+              />
+              <DetailSummaryField
+                label={t('eventViews.status')}
                 value={
                   event.type === 'training'
-                    ? 'See individual horse records below'
-                    : eventStatusLabels[eventStatus]
+                    ? t('eventViews.individualStatus')
+                    : t(`calendar.${eventStatus}`)
                 }
               />
               {event.location && (
-                <DetailSummaryField label="Location" value={event.location} />
+                <DetailSummaryField
+                  label={t('eventViews.location')}
+                  value={event.location}
+                />
               )}
               {recurrenceSummary && (
                 <DetailSummaryField
-                  label="Recurrence"
+                  label={t('eventViews.recurrence')}
                   value={recurrenceSummary}
                 />
               )}
               {event.description && (
                 <DetailSummaryField
-                  label="Description"
+                  label={t('eventViews.description')}
                   value={event.description}
                   multiline
                   span="sm2"
@@ -124,30 +137,34 @@ export function EventDetail({
           </DetailPanel>
 
           {hasProviderDetails && (
-            <DetailPanel as="h2" title="Provider and cost" variant="emphasis">
+            <DetailPanel
+              as="h2"
+              title={t('eventViews.providerCost')}
+              variant="emphasis"
+            >
               <DetailSummaryGrid className="lg:grid-cols-1">
                 {event.providerName && (
                   <DetailSummaryField
-                    label="Provider"
+                    label={t('eventViews.provider')}
                     value={event.providerName}
                   />
                 )}
                 {event.providerPhone && (
                   <DetailSummaryField
-                    label="Provider phone"
+                    label={t('eventViews.providerPhone')}
                     value={event.providerPhone}
                   />
                 )}
                 {event.totalCost !== undefined && (
                   <DetailSummaryField
-                    label="Total cost"
-                    value={formatCurrencyAmount(event.totalCost)}
+                    label={t('eventViews.totalCost')}
+                    value={formatCurrencyAmount(event.totalCost, locale)}
                   />
                 )}
                 {event.costPerHorse !== undefined && (
                   <DetailSummaryField
-                    label="Cost per horse"
-                    value={formatCurrencyAmount(event.costPerHorse)}
+                    label={t('eventViews.costPerHorse')}
+                    value={formatCurrencyAmount(event.costPerHorse, locale)}
                   />
                 )}
               </DetailSummaryGrid>
@@ -157,13 +174,13 @@ export function EventDetail({
           {event.notesAfterCompletion && (
             <DetailPanel
               as="h2"
-              title="Completion"
+              title={t('eventViews.completion')}
               span={hasProviderDetails ? 'lg2' : undefined}
               variant="emphasis"
             >
               <DetailField
                 indent={false}
-                label="Completion notes"
+                label={t('eventViews.completionNotes')}
                 value={event.notesAfterCompletion}
                 multiline
                 variant="readable"
@@ -174,13 +191,13 @@ export function EventDetail({
       </DashboardSectionCard>
 
       <DashboardSectionCard
-        title="Horses"
+        title={t('eventViews.horses')}
         size="panel"
         contentGap="comfortable"
       >
         {horses.length === 0 ? (
           <DashboardEmptyState chrome="soft" spacing="flush">
-            No horses are attached to this event.
+            {t('eventViews.noHorses')}
           </DashboardEmptyState>
         ) : (
           <DashboardItemList gap="comfortable">

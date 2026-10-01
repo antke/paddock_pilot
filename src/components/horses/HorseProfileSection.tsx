@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { CopyIcon } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
@@ -21,7 +22,8 @@ import {
 import { copyTextToClipboard } from '#/lib/clipboard'
 import { calculateHorseAge } from 'shared/horses/horseAge'
 import { HorseAllergyBadge } from './HorseBadges'
-import { sexLabels, shoeingStatusLabels } from './HorseDetail'
+import { getHorseBreedLabel } from 'shared/i18n/horseBreedLabels'
+import { formatPartialDateKey } from '#/lib/dateDisplay'
 import type { HorseDetailSectionProps } from './HorseDetail'
 
 function HorseIdentifierValue({
@@ -31,6 +33,8 @@ function HorseIdentifierValue({
   value: string
   label: string
 }) {
+  const t = useT()
+
   const [isCopying, setIsCopying] = useState(false)
 
   const copy = async () => {
@@ -38,11 +42,11 @@ function HorseIdentifierValue({
     setIsCopying(true)
     try {
       await copyTextToClipboard(value)
-      showAppSuccessToast({ title: `${label} copied` })
+      showAppSuccessToast({ title: t('horseDetail.copied', { label }) })
     } catch {
       showAppErrorToast({
-        title: `Could not copy ${label.toLowerCase()}`,
-        description: <p>Select the number and copy it manually.</p>,
+        title: t('horseDetail.copyFailed', { label: label.toLowerCase() }),
+        description: <p>{t('horseDetail.copyHelp')}</p>,
       })
     } finally {
       setIsCopying(false)
@@ -59,7 +63,7 @@ function HorseIdentifierValue({
               type="button"
               variant="subtle"
               size="icon-sm"
-              aria-label={`Copy ${label.toLowerCase()}`}
+              aria-label={t('horseDetail.copy', { label: label.toLowerCase() })}
               aria-busy={isCopying || undefined}
               disabled={isCopying}
               onClick={copy}
@@ -68,13 +72,18 @@ function HorseIdentifierValue({
         >
           <CopyIcon aria-hidden="true" />
         </TooltipTrigger>
-        <TooltipContent>Copy {label.toLowerCase()}</TooltipContent>
+        <TooltipContent>
+          {t('horseDetail.copy', { label: label.toLowerCase() })}
+        </TooltipContent>
       </Tooltip>
     </span>
   )
 }
 
 export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const age = calculateHorseAge(horse.dateOfBirth) ?? horse.age
   const hasRegistrationDetails =
     horse.passportNumber ||
@@ -83,39 +92,40 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
     horse.insurancePolicyNumber
   const hasBreedingDetails = horse.sire || horse.dam || horse.shoeingStatus
   const hasCareNotes = horse.allergies?.length || horse.dewormingNotes
-  const ageLabel = typeof age === 'number' ? `${age}` : 'Not recorded'
+  const ageLabel =
+    typeof age === 'number' ? `${age}` : t('horseDetail.notRecorded')
 
   return (
-    <DashboardSection aria-label="Horse profile">
+    <DashboardSection aria-label={t('horseDetail.profileRegion')}>
       <DetailPanelGrid variant="equal">
-        <DetailPanel as="h2" title="At a glance" span="lg2">
+        <DetailPanel as="h2" title={t('horseDetail.glance')} span="lg2">
           <DetailGrid columns={4} mobileColumns={2} gap="default">
             <DetailField
               indent={false}
-              label="Age"
+              label={t('horseDetail.age')}
               value={ageLabel}
               variant="readable"
             />
             {horse.breed && (
               <DetailField
                 indent={false}
-                label="Breed"
-                value={horse.breed}
+                label={t('horseDetail.breed')}
+                value={getHorseBreedLabel(horse.breed, locale)}
                 variant="readable"
               />
             )}
             {horse.sex && (
               <DetailField
                 indent={false}
-                label="Sex"
-                value={sexLabels[horse.sex]}
+                label={t('horseDetail.sex')}
+                value={t(`horseForm.${horse.sex}`)}
                 variant="readable"
               />
             )}
             {horse.height && (
               <DetailField
                 indent={false}
-                label="Height"
+                label={t('horseDetail.height')}
                 value={horse.height}
                 variant="readable"
               />
@@ -123,7 +133,7 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
             {horse.color && (
               <DetailField
                 indent={false}
-                label="Color"
+                label={t('horseDetail.color')}
                 value={horse.color}
                 variant="readable"
               />
@@ -131,7 +141,7 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
             {horse.discipline && (
               <DetailField
                 indent={false}
-                label="Discipline"
+                label={t('horseDetail.discipline')}
                 value={horse.discipline}
                 variant="readable"
               />
@@ -139,8 +149,8 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
             {horse.dateOfBirth && (
               <DetailField
                 indent={false}
-                label="Date of birth"
-                value={horse.dateOfBirth}
+                label={t('horseDetail.birthDate')}
+                value={formatPartialDateKey(horse.dateOfBirth, locale)}
                 variant="readable"
               />
             )}
@@ -148,16 +158,16 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
         </DetailPanel>
 
         {hasRegistrationDetails && (
-          <DetailPanel as="h2" title="Identification">
+          <DetailPanel as="h2" title={t('horseDetail.identification')}>
             <DetailGrid gap="default">
               {horse.passportNumber && (
                 <DetailField
                   indent={false}
-                  label="Passport number"
+                  label={t('horseDetail.passport')}
                   value={
                     <HorseIdentifierValue
                       value={horse.passportNumber}
-                      label="Passport number"
+                      label={t('horseDetail.passport')}
                     />
                   }
                   variant="readable"
@@ -166,11 +176,11 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
               {horse.microchipNumber && (
                 <DetailField
                   indent={false}
-                  label="Microchip"
+                  label={t('horseDetail.microchip')}
                   value={
                     <HorseIdentifierValue
                       value={horse.microchipNumber}
-                      label="Microchip number"
+                      label={t('horseDetail.microchipNumber')}
                     />
                   }
                   variant="readable"
@@ -179,7 +189,7 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
               {horse.insuranceProvider && (
                 <DetailField
                   indent={false}
-                  label="Insurance"
+                  label={t('horseDetail.insurance')}
                   value={horse.insuranceProvider}
                   variant="readable"
                 />
@@ -187,7 +197,7 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
               {horse.insurancePolicyNumber && (
                 <DetailField
                   indent={false}
-                  label="Insurance policy"
+                  label={t('horseDetail.policy')}
                   value={horse.insurancePolicyNumber}
                   variant="readable"
                 />
@@ -197,12 +207,12 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
         )}
 
         {hasBreedingDetails && (
-          <DetailPanel as="h2" title="Lineage and routine">
+          <DetailPanel as="h2" title={t('horseDetail.lineage')}>
             <DetailGrid gap="default">
               {horse.sire && (
                 <DetailField
                   indent={false}
-                  label="Sire"
+                  label={t('horseDetail.sire')}
                   value={horse.sire}
                   variant="readable"
                 />
@@ -210,7 +220,7 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
               {horse.dam && (
                 <DetailField
                   indent={false}
-                  label="Dam"
+                  label={t('horseDetail.dam')}
                   value={horse.dam}
                   variant="readable"
                 />
@@ -218,8 +228,8 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
               {horse.shoeingStatus && (
                 <DetailField
                   indent={false}
-                  label="Shoeing status"
-                  value={shoeingStatusLabels[horse.shoeingStatus]}
+                  label={t('horseDetail.shoeing')}
+                  value={t(`horseForm.${horse.shoeingStatus}`)}
                   variant="readable"
                 />
               )}
@@ -228,7 +238,7 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
         )}
 
         {hasCareNotes && (
-          <DetailPanel as="h2" title="Notes" span="lg2">
+          <DetailPanel as="h2" title={t('horseDetail.notes')} span="lg2">
             <DetailStack gap="loose">
               {horse.allergies?.length ? (
                 <DetailStack gap="compact">
@@ -237,7 +247,7 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
                     weight="semibold"
                     className="text-primary"
                   >
-                    Allergies
+                    {t('horseDetail.allergies')}
                   </TextLabel>
                   <DashboardBadgeList>
                     {horse.allergies.map((allergy) => (
@@ -247,7 +257,7 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
                 </DetailStack>
               ) : null}
               {horse.dewormingNotes && (
-                <DetailNoteBlock label="Deworming notes">
+                <DetailNoteBlock label={t('horseDetail.deworming')}>
                   {horse.dewormingNotes}
                 </DetailNoteBlock>
               )}

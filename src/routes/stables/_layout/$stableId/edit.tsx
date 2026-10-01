@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { StableProfileForm } from '#/components/stables/StableProfileForm'
 import {
   RouteEntityNotFoundAlert,
@@ -20,6 +21,8 @@ export const Route = createFileRoute('/stables/_layout/$stableId/edit')({
 })
 
 function RouteComponent() {
+  const t = useT()
+
   const { stableId } = Route.useParams()
 
   const id = stableId as Id<'stables'>
@@ -37,11 +40,11 @@ function RouteComponent() {
     return (
       <RouteStatusAlert
         tone="warning"
-        title="Stable details are read-only for you"
-        description="Only the stable owner can update shared stable details and rules."
+        title={t('stables.readOnly')}
+        description={t('stables.readOnlyHelp')}
         actions={
           <ButtonLink to="/stables/$stableId" params={{ stableId }}>
-            Return to stable
+            {t('stables.return')}
           </ButtonLink>
         }
       />
@@ -56,6 +59,8 @@ type EditStableFormProps = {
 }
 
 function EditStableForm({ stable }: EditStableFormProps) {
+  const t = useT()
+
   const nav = useNavigate()
   const updateStable = useMutation(api.stables.update)
 
@@ -69,8 +74,10 @@ function EditStableForm({ stable }: EditStableFormProps) {
       }}
       onAcknowledged={(_, values) =>
         showAppSuccessToast({
-          title: 'Stable updated',
-          description: <p>{values.name} has been updated.</p>,
+          title: t('stables.updated'),
+          description: (
+            <p>{t('stables.updatedDescription', { name: values.name })}</p>
+          ),
         })
       }
       onSaved={(stableId) =>
@@ -81,11 +88,13 @@ function EditStableForm({ stable }: EditStableFormProps) {
 }
 
 function EditStableError({ reset }: ErrorComponentProps) {
+  const t = useT()
+
   return (
     <RouteQueryErrorAlert
       reset={reset}
-      title="The stable form couldn’t load"
-      description="Check your connection, then try again. Stable details have not been changed."
+      title={t('stables.formLoadFailed')}
+      description={t('stables.formLoadFailedHelp')}
     />
   )
 }

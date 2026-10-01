@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { StableDashboard } from '#/components/stables/StableDashboard'
 import {
   RouteEntityNotFoundAlert,
@@ -78,11 +79,13 @@ function RouteComponent() {
 }
 
 function StableDashboardError({ reset }: ErrorComponentProps) {
+  const t = useT()
+
   return (
     <RouteQueryErrorAlert
       reset={reset}
-      title="The stable noticeboard couldn’t load"
-      description="Check your connection, then try again. Your stable records have not been changed."
+      title={t('listControls.dashboardFailed')}
+      description={t('listControls.dashboardFailedHelp')}
     />
   )
 }

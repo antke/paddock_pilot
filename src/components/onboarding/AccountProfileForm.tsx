@@ -1,8 +1,10 @@
+import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
+import { useT } from '#/i18n/LocaleProvider'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from 'convex/react'
 import { Controller, useForm } from 'react-hook-form'
 import { useId, useRef, useState } from 'react'
-import { accountProfileSchema } from './accountProfileSchema'
+import { createAccountProfileSchema } from './accountProfileSchema'
 import type { AccountProfileValues } from './accountProfileSchema'
 import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
 import type { Id } from 'convex/_generated/dataModel'
@@ -36,6 +38,7 @@ type AccountProfileFormProps = {
 }
 
 export function AccountProfileForm(props: AccountProfileFormProps) {
+  const t = useT()
   const updateProfile = useMutation(api.onboarding.updateAccountProfile)
   const generateUploadUrl = useMutation(
     api.onboarding.generateProfileImageUploadUrl,
@@ -73,7 +76,7 @@ export function AccountProfileForm(props: AccountProfileFormProps) {
       })
       return true
     } catch {
-      showAppErrorToast({ title: 'Could not save your profile' })
+      showAppErrorToast({ title: t('profileForm.saveFailedTitle') })
       return false
     }
   }
@@ -85,17 +88,20 @@ export function AccountProfileFormView({
   onSaved,
   onSave,
   onPendingChange,
-  submitLabel = 'Save and continue',
+  submitLabel,
 }: AccountProfileFormProps & {
   onSave: (values: AccountProfileValues) => Promise<void | boolean>
 }) {
+  const t = useT()
   const formId = useId()
   const pending = useRef(false)
   const [isPending, setIsPending] = useState(false)
   const [continuationFailed, setContinuationFailed] = useState(false)
-  const [error, setError] = useState<string>()
+  const [error, setError] = useState<
+    'profileForm.saveFailed' | 'profileForm.continueFailed'
+  >()
   const form = useForm<AccountProfileValues>({
-    resolver: zodResolver(accountProfileSchema),
+    resolver: zodResolver(createAccountProfileSchema(t)),
     mode: 'onTouched',
     defaultValues: {
       preferredName: initialValues.displayName,
@@ -103,6 +109,7 @@ export function AccountProfileFormView({
       profileImage: undefined,
     },
   })
+  useLocalizedValidation(form)
   const onSubmit = async (values: AccountProfileValues) => {
     if (pending.current) return
     pending.current = true
@@ -116,9 +123,7 @@ export function AccountProfileFormView({
           if (acknowledged === false)
             throw new Error('Profile not acknowledged')
         } catch {
-          setError(
-            'Could not save your profile. Your details and selected image are still here. Please try again.',
-          )
+          setError('profileForm.saveFailed')
           return
         }
         form.reset({
@@ -132,9 +137,7 @@ export function AccountProfileFormView({
         setContinuationFailed(false)
       } catch {
         setContinuationFailed(true)
-        setError(
-          'Your profile was saved, but the next step could not finish. Retry continuing; your profile and image will not be saved again.',
-        )
+        setError('profileForm.continueFailed')
       }
     } finally {
       pending.current = false
@@ -158,9 +161,7 @@ export function AccountProfileFormView({
           <p className="font-semibold">
             {form.watch('preferredName') || initialValues.displayName}
           </p>
-          <FieldDescription>
-            Shared across every stable you own or join.
-          </FieldDescription>
+          <FieldDescription>{t('profileForm.shared')}</FieldDescription>
         </div>
       </div>
 
@@ -171,7 +172,7 @@ export function AccountProfileFormView({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                Preferred name
+                {t('profileForm.preferredName')}
               </FieldLabel>
               <Input
                 {...field}
@@ -201,14 +202,14 @@ export function AccountProfileFormView({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                Phone number
+                {t('profileForm.phone')}
               </FieldLabel>
               <Input
                 {...field}
                 id={`${formId}-${field.name}`}
                 type="tel"
                 autoComplete="tel"
-                placeholder="Optional"
+                placeholder={t('profileForm.optional')}
                 aria-invalid={fieldState.invalid}
                 aria-describedby={
                   fieldState.invalid
@@ -230,10 +231,10 @@ export function AccountProfileFormView({
             id={`${formId}-${field.name}`}
             kind="image"
             accept="image/*"
-            label="Profile image (optional)"
-            uploadLabel="Add a profile image"
-            uploadDescription="A photo helps other stable members recognise you. Image files only, up to 5 MB."
-            help="Choose an image up to 5 MB."
+            label={t('profileForm.imageLabel')}
+            uploadLabel={t('profileForm.imageUpload')}
+            uploadDescription={t('profileForm.imageDescription')}
+            help={t('profileForm.imageHelp')}
             errors={fieldState.error ? [fieldState.error] : undefined}
             files={field.value ?? null}
             onFilesChange={(files) => field.onChange(files ?? undefined)}
@@ -244,12 +245,16 @@ export function AccountProfileFormView({
         )}
       />
 
-      <FormSubmissionError message={error} />
+      <FormSubmissionError message={error ? t(error) : undefined} />
       <FormSubmitActions
         align="end"
         isSubmitting={isPending}
-        submitLabel={continuationFailed ? 'Retry continuing' : submitLabel}
-        submittingLabel="Saving..."
+        submitLabel={
+          continuationFailed
+            ? t('profileForm.retryContinue')
+            : (submitLabel ?? t('profileForm.continue'))
+        }
+        submittingLabel={t('profileForm.saving')}
       />
     </InlineForm>
   )

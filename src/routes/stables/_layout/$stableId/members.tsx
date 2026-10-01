@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
@@ -45,11 +46,13 @@ function RouteComponent() {
 }
 
 function StableMembersError({ reset }: ErrorComponentProps) {
+  const t = useT()
+
   return (
     <RouteQueryErrorAlert
       reset={reset}
-      title="The stable directory couldn’t load"
-      description="Check your connection, then try again. Member access has not been changed."
+      title={t('stables.directoryLoadFailed')}
+      description={t('stables.membersLoadFailedHelp')}
     />
   )
 }

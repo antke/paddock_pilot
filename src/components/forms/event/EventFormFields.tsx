@@ -1,3 +1,10 @@
+import { localeInstances } from '#/i18n/resources'
+import { displayLocales } from 'shared/i18n/locale'
+import type { Locale } from 'shared/i18n/locale'
+import { formatCurrencyAmount } from '#/lib/numberDisplay'
+import { formatRecurrence } from '#/components/events/eventDisplay'
+import { isDateKey } from 'shared/training/trainingSchema'
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { TrainingFormFields } from '#/components/training/TrainingFormFields'
 import { FormSection, FormStepHeader } from '#/components/forms/FormLayout'
 import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
@@ -30,10 +37,7 @@ import { useState } from 'react'
 import { Controller, useFormState, useWatch } from 'react-hook-form'
 import type { Control, UseFormSetValue } from 'react-hook-form'
 import {
-  dayOfWeekLabels,
-  eventStatusLabels,
   eventStatuses,
-  eventTypeLabels,
   eventTypes,
   recurrenceFrequencies,
   recurrenceOrdinals,
@@ -78,29 +82,7 @@ type SimpleRecurrencePreset = 'daily' | 'weekly' | 'biweekly' | 'monthly'
 type RecurrenceRule = NonNullable<EventFormInput['recurrence']>
 type RecurrenceEnd = RecurrenceRule['end']
 
-const shortDayLabels = {
-  0: 'Sun',
-  1: 'Mon',
-  2: 'Tue',
-  3: 'Wed',
-  4: 'Thu',
-  5: 'Fri',
-  6: 'Sat',
-} satisfies Record<DayOfWeek, string>
-
 const daysOfWeekButtonOrder = [1, 2, 3, 4, 5, 6, 0] satisfies Array<DayOfWeek>
-
-const recurrenceFrequencyLabels = {
-  daily: 'Daily',
-  weekly: 'Weekly',
-  monthly: 'Monthly',
-} satisfies Record<RecurrenceFrequency, string>
-
-const recurrenceUnits = {
-  daily: 'day',
-  weekly: 'week',
-  monthly: 'month',
-} satisfies Record<RecurrenceFrequency, string>
 
 const simpleRecurrencePresets = [
   'daily',
@@ -109,45 +91,81 @@ const simpleRecurrencePresets = [
   'monthly',
 ] satisfies Array<SimpleRecurrencePreset>
 
-const simpleRecurrencePresetLabels = {
-  daily: 'Every day',
-  weekly: 'Every week',
-  biweekly: 'Every 2 weeks',
-  monthly: 'Every month',
-} satisfies Record<SimpleRecurrencePreset, string>
-
-const simpleRecurrencePresetDescriptions = {
-  daily: 'Runs on every calendar day',
-  weekly: 'Choose one or more weekdays',
-  biweekly: 'Repeats on alternate weeks',
-  monthly: 'Uses the event date each month',
-} satisfies Record<SimpleRecurrencePreset, string>
-
-const recurrenceEditorModeOptions = [
-  {
-    value: 'simple',
-    label: 'Simple',
-    description: 'Use a familiar daily, weekly, or monthly pattern.',
-  },
-  {
-    value: 'advanced',
-    label: 'Advanced',
-    description: 'Control intervals, monthly rules, and when repeats end.',
-  },
-] satisfies Array<{
-  value: RecurrenceEditorMode
-  label: string
-  description: string
-}>
-
-const ordinalLabels = {
-  1: '1st',
-  2: '2nd',
-  3: '3rd',
-  4: '4th',
-  last: 'Last',
-} satisfies Record<RecurrenceOrdinal, string>
-
+function getEventFormOptions(locale: Locale) {
+  const t = localeInstances[locale].t
+  const recurrenceFrequencyLabels = {
+    daily: t('eventForm.daily'),
+    weekly: t('eventForm.weekly'),
+    monthly: t('eventForm.monthly'),
+  } satisfies Record<RecurrenceFrequency, string>
+  const simpleRecurrencePresetLabels = {
+    daily: t('eventForm.everyDay'),
+    weekly: t('eventForm.everyWeek'),
+    biweekly: t('eventForm.everyTwoWeeks'),
+    monthly: t('eventForm.everyMonth'),
+  } satisfies Record<SimpleRecurrencePreset, string>
+  const simpleRecurrencePresetDescriptions = {
+    daily: t('eventForm.dailyHelp'),
+    weekly: t('eventForm.weeklyHelp'),
+    biweekly: t('eventForm.biweeklyHelp'),
+    monthly: t('eventForm.monthlyHelp'),
+  } satisfies Record<SimpleRecurrencePreset, string>
+  const recurrenceEditorModeOptions = [
+    {
+      value: 'simple',
+      label: t('eventForm.simple'),
+      description: t('eventForm.simpleHelp'),
+    },
+    {
+      value: 'advanced',
+      label: t('eventForm.advanced'),
+      description: t('eventForm.advancedHelp'),
+    },
+  ] satisfies Array<{
+    value: RecurrenceEditorMode
+    label: string
+    description: string
+  }>
+  const ordinalLabels = {
+    1: locale === 'pl' ? '1.' : '1st',
+    2: locale === 'pl' ? '2.' : '2nd',
+    3: locale === 'pl' ? '3.' : '3rd',
+    4: locale === 'pl' ? '4.' : '4th',
+    last: t('eventForm.last'),
+  } satisfies Record<RecurrenceOrdinal, string>
+  const eventTypeOptions = eventTypes
+    .filter((type) => type !== 'training')
+    .map((eventType) => ({
+      value: eventType,
+      label: t(`events.types.${eventType}`),
+    })) satisfies Array<{ value: EventType; label: string }>
+  const eventStatusOptions = eventStatuses.map((status) => ({
+    value: status,
+    label: t(`calendar.${status}`),
+  })) satisfies Array<{ value: EventStatus; label: string }>
+  const dayOfWeekLabels = Object.fromEntries(
+    daysOfWeekButtonOrder.map((day) => [day, t(`events.weekdays.${day}`)]),
+  ) as Record<DayOfWeek, string>
+  const shortDayLabels = Object.fromEntries(
+    daysOfWeekButtonOrder.map((day) => [
+      day,
+      new Intl.DateTimeFormat(displayLocales[locale], {
+        weekday: 'short',
+      }).format(new Date(2026, 8, 27 + day)),
+    ]),
+  ) as Record<DayOfWeek, string>
+  return {
+    recurrenceFrequencyLabels,
+    simpleRecurrencePresetLabels,
+    simpleRecurrencePresetDescriptions,
+    recurrenceEditorModeOptions,
+    ordinalLabels,
+    eventTypeOptions,
+    eventStatusOptions,
+    dayOfWeekLabels,
+    shortDayLabels,
+  }
+}
 const recurrenceDefaults = {
   frequency: 'weekly' as RecurrenceFrequency,
   interval: 1,
@@ -163,21 +181,6 @@ const asRecurrenceOrdinal = (value: string) =>
   (value === 'last' ? value : Number(value)) as RecurrenceOrdinal
 const asSimpleRecurrencePreset = (value: string) =>
   value as SimpleRecurrencePreset
-
-const eventTypeOptions = eventTypes
-  .filter((type) => type !== 'training')
-  .map((eventType) => ({
-    value: eventType,
-    label: eventTypeLabels[eventType],
-  })) satisfies Array<{ value: EventType; label: string }>
-
-const eventStatusOptions = eventStatuses.map((status) => ({
-  value: status,
-  label: eventStatusLabels[status],
-})) satisfies Array<{ value: EventStatus; label: string }>
-
-const pluralize = (word: string, count: number) =>
-  count === 1 ? word : `${word}s`
 
 const parseEventDate = (date: string | undefined) => {
   const match = date?.match(/^(\d{4})-(\d{2})-(\d{2})$/)
@@ -446,79 +449,37 @@ const getEventSpanDayCount = (
   )
 }
 
-const getEventDurationPreview = (
-  eventDate: string | undefined,
-  endDate: string | undefined,
-) => {
-  if (!endDate || endDate <= (eventDate ?? '')) return undefined
-
-  const dayCount = getEventSpanDayCount(eventDate, endDate)
-
-  return `spans ${dayCount} ${pluralize('day', dayCount)}`
-}
-
 const getRecurrencePreview = (
   recurrence: EventFormInput['recurrence'] | undefined,
   eventDate: string | undefined,
   endDate: string | undefined,
+  locale: Locale,
 ) => {
   if (!recurrence) return undefined
-
-  const interval = recurrence.interval ?? 1
-  const frequency = recurrence.frequency
-  const cadence =
-    interval === 1
-      ? `every ${recurrenceUnits[frequency]}`
-      : `every ${interval} ${pluralize(recurrenceUnits[frequency], interval)}`
-
-  let preview = `Repeats ${cadence}`
-
-  if (frequency === 'weekly') {
-    const selectedDays = [...(recurrence.daysOfWeek ?? [])]
-      .sort((left, right) => left - right)
-      .map((day) => dayOfWeekLabels[day])
-
-    preview +=
-      selectedDays.length > 0
-        ? ` on ${formatConjunctionList(selectedDays)}`
-        : ''
-  }
-
-  if (frequency === 'monthly') {
-    if (recurrence.monthlyMode === 'dayOfMonth' && recurrence.dayOfMonth) {
-      preview += ` on day ${recurrence.dayOfMonth}`
-    }
-
-    if (
-      recurrence.monthlyMode === 'weekdayPattern' &&
-      recurrence.ordinal &&
-      recurrence.weekday !== undefined
-    ) {
-      preview += ` on the ${ordinalLabels[recurrence.ordinal].toLowerCase()} ${dayOfWeekLabels[recurrence.weekday]}`
-    }
-  }
-
-  if (recurrence.end?.type === 'on_date') {
-    preview += ` until ${recurrence.end.date}`
-  }
-
-  if (recurrence.end?.type === 'after_occurrences') {
-    preview += ` for ${recurrence.end.count ?? 1} ${pluralize(
-      'occurrence',
-      recurrence.end.count ?? 1,
-    )}`
-  }
-
-  const durationPreview = getEventDurationPreview(eventDate, endDate)
-  if (durationPreview) preview = formatMetaText([preview, durationPreview])
-
+  const t = localeInstances[locale].t
+  const end =
+    recurrence.end?.type === 'on_date' && !isDateKey(recurrence.end.date ?? '')
+      ? undefined
+      : recurrence.end
+  let preview =
+    formatRecurrence(
+      { ...recurrence, interval: recurrence.interval ?? 1, end },
+      locale,
+    ) ?? ''
+  if (endDate && endDate > (eventDate ?? ''))
+    preview = formatMetaText([
+      preview,
+      t('eventForm.spans', { count: getEventSpanDayCount(eventDate, endDate) }),
+    ])
   const nextDates = getNextRecurrenceDates(recurrence, eventDate).map((date) =>
-    formatShortDate(date),
+    formatShortDate(date, locale),
   )
-
-  if (nextDates.length === 0) return `${preview}.`
-
-  return `${preview}. Upcoming dates: ${formatConjunctionList(nextDates)}${nextDates.length > 3 ? ' etc.' : '.'}`
+  return nextDates.length
+    ? t('eventForm.previewWithDates', {
+        summary: preview,
+        dates: formatConjunctionList(nextDates, locale),
+      })
+    : `${preview}.`
 }
 
 function RecurrenceModeSelector({
@@ -530,12 +491,15 @@ function RecurrenceModeSelector({
   onValueChange: (value: RecurrenceEditorMode) => void
   value: RecurrenceEditorMode
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+  const { recurrenceEditorModeOptions } = getEventFormOptions(locale)
   return (
     <div className="grid gap-2">
-      <TextLabel weight="semibold">Schedule setup</TextLabel>
+      <TextLabel weight="semibold">{t('eventForm.setup')}</TextLabel>
 
       <ChoiceButtonGroup
-        aria-label="Schedule setup mode"
+        aria-label={t('eventForm.setupMode')}
         disabled={disabled}
         layout="cards"
         onValueChange={onValueChange}
@@ -554,6 +518,19 @@ export function EventFormFields({
   disabled = false,
   trainingMode,
 }: Props) {
+  const t = useT()
+  const { locale } = useLocale()
+
+  const {
+    recurrenceFrequencyLabels,
+    simpleRecurrencePresetLabels,
+    simpleRecurrencePresetDescriptions,
+    ordinalLabels,
+    eventTypeOptions,
+    eventStatusOptions,
+    dayOfWeekLabels,
+    shortDayLabels,
+  } = getEventFormOptions(locale)
   const eventDate = useWatch({ control, name: 'date' })
   const endDate = useWatch({ control, name: 'endDate' })
   const eventTitle = useWatch({ control, name: 'title' })
@@ -570,24 +547,40 @@ export function EventFormFields({
   const recurring = useWatch({ control, name: 'recurring' })
   const recurrence = useWatch({ control, name: 'recurrence' })
   const { errors, submitCount } = useFormState({ control })
-  const recurrencePreview = getRecurrencePreview(recurrence, eventDate, endDate)
+  const recurrencePreview = getRecurrencePreview(
+    recurrence,
+    eventDate,
+    endDate,
+    locale,
+  )
   const essentialsSummary = formatMetaText([
-    eventTitle || (trainingMode ? 'Untitled session' : 'Untitled event'),
-    eventTypeLabels[eventType],
-    eventDate ? formatShortDateKey(eventDate) : 'No date',
+    eventTitle ||
+      (trainingMode
+        ? t('eventForm.untitledSession')
+        : t('eventForm.untitledEvent')),
+    t(`events.types.${eventType}`),
+    eventDate ? formatShortDateKey(eventDate, locale) : t('eventForm.noDate'),
   ])
   const logisticsSummary =
     formatMetaText([
       location,
       providerName,
-      totalCost !== undefined ? `${totalCost} total` : undefined,
-    ]) || 'Optional'
+      totalCost !== undefined
+        ? t('eventForm.totalSummary', {
+            amount: formatCurrencyAmount(totalCost, locale),
+          })
+        : undefined,
+    ]) || t('eventForm.optional')
   const notesSummary =
-    description || notesAfterCompletion ? 'Notes added' : 'Optional'
-  const horsesSummary = `${horseIds.length} ${pluralize('horse', horseIds.length)} selected`
+    description || notesAfterCompletion
+      ? t('eventForm.notesAdded')
+      : t('eventForm.optional')
+  const horsesSummary = t('eventForm.horsesSelected', {
+    count: horseIds.length,
+  })
   const recurrenceSummary = recurring
-    ? recurrencePreview || 'Repeating event'
-    : 'Does not repeat'
+    ? recurrencePreview || t('eventForm.repeating')
+    : t('eventForm.noRepeat')
   const essentialsInvalid = Boolean(
     errors.title ||
     errors.type ||
@@ -656,14 +649,16 @@ export function EventFormFields({
       <FormSection
         defaultOpen
         description={
-          trainingMode
-            ? 'Describe the training and set its timing.'
-            : 'Name the event and set its timing.'
+          trainingMode ? t('eventForm.trainingHelp') : t('eventForm.eventHelp')
         }
         invalid={essentialsInvalid}
         number={1}
         summary={essentialsSummary}
-        title={trainingMode ? 'Session details' : 'Event details'}
+        title={
+          trainingMode
+            ? t('eventForm.sessionDetails')
+            : t('eventForm.eventDetails')
+        }
         validationAttempt={submitCount}
       >
         <Controller
@@ -671,7 +666,9 @@ export function EventFormFields({
           control={control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Title</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                {t('eventForm.title')}
+              </FieldLabel>
 
               <Input
                 {...field}
@@ -683,7 +680,9 @@ export function EventFormFields({
                   fieldState.invalid ? 'event-title-error' : undefined
                 }
                 placeholder={
-                  trainingMode ? 'Flatwork session' : 'Farrier appointment'
+                  trainingMode
+                    ? t('eventForm.trainingExample')
+                    : t('eventForm.eventExample')
                 }
                 autoComplete="off"
               />
@@ -704,10 +703,10 @@ export function EventFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel>Type</FieldLabel>
+                <FieldLabel>{t('eventForm.type')}</FieldLabel>
 
                 <ChoiceButtonGroup
-                  aria-label="Event type"
+                  aria-label={t('eventForm.eventType')}
                   value={field.value}
                   options={eventTypeOptions}
                   onValueChange={(nextValue) =>
@@ -740,19 +739,20 @@ export function EventFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel>Status</FieldLabel>
+                <FieldLabel>{t('eventForm.status')}</FieldLabel>
 
                 <ChoiceButtonGroup
-                  aria-label={trainingMode ? 'Session status' : 'Event status'}
+                  aria-label={
+                    trainingMode
+                      ? t('eventForm.sessionStatus')
+                      : t('eventForm.eventStatus')
+                  }
                   value={field.value ?? 'planned'}
                   options={
                     trainingMode
                       ? eventStatusOptions.map((option) => ({
                           ...option,
-                          label:
-                            option.value === 'planned'
-                              ? 'Scheduled'
-                              : option.label,
+                          label: t(`training.status.${option.value}`),
                         }))
                       : eventStatusOptions
                   }
@@ -779,8 +779,8 @@ export function EventFormFields({
         {trainingMode && (
           <FieldDescription>
             {trainingMode === 'edit'
-              ? 'Record completion separately for each horse and date on the session page.'
-              : 'Completed confirms this date for your selected horses. Future repeats remain scheduled.'}
+              ? t('eventForm.trainingEditCompletionHelp')
+              : t('eventForm.trainingCreateCompletionHelp')}
           </FieldDescription>
         )}
         <FieldGrid columns={3}>
@@ -789,7 +789,9 @@ export function EventFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Date</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t('eventForm.date')}
+                </FieldLabel>
 
                 <Input
                   {...field}
@@ -817,7 +819,9 @@ export function EventFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>End date</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t('eventForm.endDate')}
+                </FieldLabel>
 
                 <Input
                   {...field}
@@ -832,8 +836,7 @@ export function EventFormFields({
                 />
 
                 <FieldDescription>
-                  Leave blank for a one-day event. An end date includes that
-                  full day.
+                  {t('eventForm.endDateHelp')}
                 </FieldDescription>
                 {fieldState.invalid && (
                   <FieldError
@@ -850,7 +853,9 @@ export function EventFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Time</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t('eventForm.time')}
+                </FieldLabel>
 
                 <Input
                   {...field}
@@ -863,9 +868,7 @@ export function EventFormFields({
                   }
                 />
 
-                <FieldDescription>
-                  Enter the yard-local time used by your stable.
-                </FieldDescription>
+                <FieldDescription>{t('eventForm.timeHelp')}</FieldDescription>
 
                 {fieldState.invalid && (
                   <FieldError
@@ -882,13 +885,13 @@ export function EventFormFields({
       <FormSection
         description={
           trainingMode
-            ? 'Choose the horses taking part in this session.'
-            : 'Choose every horse this event applies to.'
+            ? t('eventForm.trainingHorsesHelp')
+            : t('eventForm.eventHorsesHelp')
         }
         invalid={horsesInvalid}
         number={2}
         summary={horsesSummary}
-        title="Horses"
+        title={t('eventForm.horses')}
         validationAttempt={submitCount}
       >
         <Controller
@@ -902,13 +905,12 @@ export function EventFormFields({
                 fieldState.invalid ? 'event-horseIds-error' : undefined
               }
             >
-              <FieldLegend className="sr-only">Horses</FieldLegend>
+              <FieldLegend className="sr-only">
+                {t('eventForm.horses')}
+              </FieldLegend>
 
               {horses.length === 0 ? (
-                <FieldDescription>
-                  No horses are available in this stable. Add a horse before
-                  creating an event.
-                </FieldDescription>
+                <FieldDescription>{t('eventForm.noHorses')}</FieldDescription>
               ) : null}
               <FieldGrid breakpoint="sm" gap="compact">
                 {horses.map((horse) => {
@@ -951,13 +953,17 @@ export function EventFormFields({
       <FormSection
         description={
           trainingMode
-            ? 'Add a location, trainer, and costs when relevant.'
-            : 'Add a location, service provider, and costs when relevant.'
+            ? t('eventForm.trainingLogisticsHelp')
+            : t('eventForm.eventLogisticsHelp')
         }
         invalid={logisticsInvalid}
         number={3}
         summary={logisticsSummary}
-        title={trainingMode ? 'Place & trainer' : 'Place & provider'}
+        title={
+          trainingMode
+            ? t('eventForm.placeTrainer')
+            : t('eventForm.placeProvider')
+        }
         validationAttempt={submitCount}
       >
         <Controller
@@ -965,7 +971,9 @@ export function EventFormFields({
           control={control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Location</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                {t('eventForm.location')}
+              </FieldLabel>
 
               <Input
                 {...field}
@@ -977,7 +985,7 @@ export function EventFormFields({
                 aria-describedby={
                   fieldState.invalid ? 'event-location-error' : undefined
                 }
-                placeholder="Main arena"
+                placeholder={t('eventForm.locationExample')}
                 autoComplete="off"
               />
 
@@ -998,7 +1006,9 @@ export function EventFormFields({
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor={field.name}>
-                  {trainingMode ? 'Trainer' : 'Provider'}
+                  {trainingMode
+                    ? t('eventForm.trainer')
+                    : t('eventForm.provider')}
                 </FieldLabel>
 
                 <ProviderAutocomplete
@@ -1033,7 +1043,9 @@ export function EventFormFields({
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor={field.name}>
-                  {trainingMode ? 'Trainer phone' : 'Provider phone'}
+                  {trainingMode
+                    ? t('eventForm.trainerPhone')
+                    : t('eventForm.providerPhone')}
                 </FieldLabel>
 
                 <Input
@@ -1046,7 +1058,7 @@ export function EventFormFields({
                   aria-describedby={
                     fieldState.invalid ? 'event-providerPhone-error' : undefined
                   }
-                  placeholder="Provider contact number"
+                  placeholder={t('eventForm.providerPhoneExample')}
                   autoComplete="off"
                 />
 
@@ -1067,7 +1079,9 @@ export function EventFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Total cost</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t('eventForm.totalCost')}
+                </FieldLabel>
 
                 <Input
                   ref={field.ref}
@@ -1082,7 +1096,7 @@ export function EventFormFields({
                   aria-describedby={
                     fieldState.invalid ? 'event-totalCost-error' : undefined
                   }
-                  placeholder="Optional shared visit total"
+                  placeholder={t('eventForm.totalCostExample')}
                   autoComplete="off"
                   onBlur={field.onBlur}
                   onChange={(event) => {
@@ -1109,7 +1123,9 @@ export function EventFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Cost per horse</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t('eventForm.costPerHorse')}
+                </FieldLabel>
 
                 <Input
                   ref={field.ref}
@@ -1124,7 +1140,7 @@ export function EventFormFields({
                   aria-describedby={
                     fieldState.invalid ? 'event-costPerHorse-error' : undefined
                   }
-                  placeholder="Optional split amount"
+                  placeholder={t('eventForm.costPerHorseExample')}
                   autoComplete="off"
                   onBlur={field.onBlur}
                   onChange={(event) => {
@@ -1149,11 +1165,11 @@ export function EventFormFields({
       </FormSection>
 
       <FormSection
-        description="Turn a one-off event into a repeating schedule."
+        description={t('eventForm.repeatHelp')}
         invalid={recurrenceInvalid}
         number={4}
         summary={recurrenceSummary}
-        title="Repeat schedule"
+        title={t('eventForm.repeatSchedule')}
         validationAttempt={submitCount}
       >
         <Controller
@@ -1186,9 +1202,11 @@ export function EventFormFields({
                 }}
               />
               <div>
-                <FieldLabel htmlFor={field.name}>Recurring event</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t('eventForm.recurring')}
+                </FieldLabel>
                 <FieldDescription>
-                  Repeat this event on a schedule.
+                  {t('eventForm.recurringHelp')}
                 </FieldDescription>
               </div>
             </Field>
@@ -1204,7 +1222,7 @@ export function EventFormFields({
             return (
               <FieldSet>
                 <FieldLegend className="sr-only">
-                  Recurrence schedule
+                  {t('eventForm.recurrenceSchedule')}
                 </FieldLegend>
 
                 <RecurrenceModeSelector
@@ -1223,22 +1241,21 @@ export function EventFormFields({
                     <DashboardInlineHeader
                       as="h3"
                       className="border-b border-border-subtle pb-4"
-                      description="Start with a common schedule, then choose weekdays when needed."
-                      title="Choose a repeat pattern"
+                      description={t('eventForm.presetHelp')}
+                      title={t('eventForm.choosePattern')}
                       titleSize="sm"
                     />
 
                     <Field>
                       <FieldLabelRow>
-                        <FieldLabel>Repeat</FieldLabel>
-                        <FormHelpTooltip label="About simple recurrence presets">
-                          Start with a common schedule. Use advanced for custom
-                          intervals, monthly patterns, or end conditions.
+                        <FieldLabel>{t('eventForm.repeat')}</FieldLabel>
+                        <FormHelpTooltip label={t('eventForm.presetAbout')}>
+                          {t('eventForm.presetTooltip')}
                         </FormHelpTooltip>
                       </FieldLabelRow>
 
                       <ToggleGroup
-                        aria-label="Repeat pattern"
+                        aria-label={t('eventForm.repeatPattern')}
                         value={simplePreset ? [simplePreset] : []}
                         onValueChange={(values) => {
                           const nextValue = values.at(-1)
@@ -1279,14 +1296,18 @@ export function EventFormFields({
                             className="border-t border-border-subtle pt-4"
                           >
                             <FieldLabelRow>
-                              <FieldLabel>Days of week</FieldLabel>
-                              <FormHelpTooltip label="About weekly recurrence days">
-                                Choose one or more days this event repeats.
+                              <FieldLabel>
+                                {t('eventForm.daysOfWeek')}
+                              </FieldLabel>
+                              <FormHelpTooltip
+                                label={t('eventForm.weekdaysAbout')}
+                              >
+                                {t('eventForm.weekdaysHelp')}
                               </FormHelpTooltip>
                             </FieldLabelRow>
 
                             <ToggleGroup
-                              aria-label="Days of week"
+                              aria-label={t('eventForm.daysOfWeek')}
                               value={(daysField.value ?? []).map(String)}
                               onValueChange={(values) => {
                                 daysField.onChange(values.map(asDayOfWeek))
@@ -1331,8 +1352,8 @@ export function EventFormFields({
                     <DashboardInlineHeader
                       as="h3"
                       className="border-b border-border-subtle pb-4"
-                      description="Define the repeat pattern first, then decide when it ends."
-                      title="Build a custom schedule"
+                      description={t('eventForm.customHelp')}
+                      title={t('eventForm.customSchedule')}
                       titleSize="sm"
                     />
 
@@ -1340,8 +1361,8 @@ export function EventFormFields({
                       <div className="grid min-w-0 gap-5 lg:pr-6">
                         <FormStepHeader
                           number={1}
-                          title="Pattern"
-                          description="Set the frequency, interval, and applicable days."
+                          title={t('eventForm.pattern')}
+                          description={t('eventForm.patternHelp')}
                         />
 
                         <div className="grid gap-5 md:grid-cols-[max-content_max-content] md:items-start md:justify-start md:gap-x-10">
@@ -1351,11 +1372,11 @@ export function EventFormFields({
                             render={({ field: frequencyField, fieldState }) => (
                               <Field data-invalid={fieldState.invalid}>
                                 <FieldLabel size="compact">
-                                  Frequency
+                                  {t('eventForm.frequency')}
                                 </FieldLabel>
 
                                 <ToggleGroup
-                                  aria-label="Frequency"
+                                  aria-label={t('eventForm.frequency')}
                                   value={
                                     frequencyField.value
                                       ? [frequencyField.value]
@@ -1563,7 +1584,6 @@ export function EventFormFields({
                             render={({ field: intervalField, fieldState }) => {
                               const frequency =
                                 recurrence?.frequency ?? 'weekly'
-                              const unit = recurrenceUnits[frequency]
 
                               return (
                                 <Field
@@ -1574,11 +1594,13 @@ export function EventFormFields({
                                     htmlFor={intervalField.name}
                                     size="compact"
                                   >
-                                    Interval
+                                    {t('eventForm.interval')}
                                   </FieldLabel>
 
                                   <FieldInlineControl>
-                                    <FieldInlineText>Every</FieldInlineText>
+                                    <FieldInlineText>
+                                      {t('eventForm.every')}
+                                    </FieldInlineText>
                                     <Input
                                       ref={intervalField.ref}
                                       id={intervalField.name}
@@ -1605,10 +1627,9 @@ export function EventFormFields({
                                       }}
                                     />
                                     <FieldInlineText>
-                                      {pluralize(
-                                        unit,
-                                        intervalField.value ?? 1,
-                                      )}
+                                      {t(`eventForm.${frequency}Unit`, {
+                                        count: intervalField.value ?? 1,
+                                      })}
                                     </FieldInlineText>
                                   </FieldInlineControl>
 
@@ -1637,11 +1658,11 @@ export function EventFormFields({
                                 render={({ field: daysField, fieldState }) => (
                                   <Field data-invalid={fieldState.invalid}>
                                     <FieldLabel size="compact">
-                                      Days of week
+                                      {t('eventForm.daysOfWeek')}
                                     </FieldLabel>
 
                                     <ToggleGroup
-                                      aria-label="Days of week"
+                                      aria-label={t('eventForm.daysOfWeek')}
                                       value={(daysField.value ?? []).map(
                                         String,
                                       )}
@@ -1702,11 +1723,11 @@ export function EventFormFields({
                                   }) => (
                                     <Field data-invalid={fieldState.invalid}>
                                       <FieldLabel size="compact">
-                                        Repeat by
+                                        {t('eventForm.repeatBy')}
                                       </FieldLabel>
 
                                       <RadioGroup
-                                        aria-label="Repeat by"
+                                        aria-label={t('eventForm.repeatBy')}
                                         aria-invalid={fieldState.invalid}
                                         aria-describedby={
                                           fieldState.invalid
@@ -1801,7 +1822,7 @@ export function EventFormFields({
                                             value="dayOfMonth"
                                           />
                                           <FieldLabel htmlFor="recurrence-monthly-day">
-                                            Day of month
+                                            {t('eventForm.dayOfMonth')}
                                           </FieldLabel>
                                         </Field>
 
@@ -1811,7 +1832,7 @@ export function EventFormFields({
                                             value="weekdayPattern"
                                           />
                                           <FieldLabel htmlFor="recurrence-monthly-weekday">
-                                            Weekday pattern
+                                            {t('eventForm.weekdayPattern')}
                                           </FieldLabel>
                                         </Field>
                                       </RadioGroup>
@@ -1842,12 +1863,12 @@ export function EventFormFields({
                                             htmlFor={dayField.name}
                                             size="compact"
                                           >
-                                            Day of month
+                                            {t('eventForm.dayOfMonth')}
                                           </FieldLabel>
 
                                           <FieldInlineControl>
                                             <FieldInlineText>
-                                              Day
+                                              {t('eventForm.day')}
                                             </FieldInlineText>
                                             <Input
                                               ref={dayField.ref}
@@ -1887,7 +1908,7 @@ export function EventFormFields({
                                               }}
                                             />
                                             <FieldInlineText>
-                                              of every month
+                                              {t('eventForm.ofEveryMonth')}
                                             </FieldInlineText>
                                           </FieldInlineControl>
 
@@ -1913,12 +1934,13 @@ export function EventFormFields({
                                             data-invalid={fieldState.invalid}
                                           >
                                             <FieldLabel size="compact">
-                                              When a month does not have that
-                                              date
+                                              {t('eventForm.missingDate')}
                                             </FieldLabel>
 
                                             <RadioGroup
-                                              aria-label="Missing monthly date"
+                                              aria-label={t(
+                                                'eventForm.missingDateLabel',
+                                              )}
                                               aria-invalid={fieldState.invalid}
                                               aria-describedby={
                                                 fieldState.invalid
@@ -1940,7 +1962,7 @@ export function EventFormFields({
                                                   value="lastDayOfMonth"
                                                 />
                                                 <FieldLabel htmlFor="recurrence-missing-last-day">
-                                                  Use the last day of the month
+                                                  {t('eventForm.useLastDay')}
                                                 </FieldLabel>
                                               </Field>
 
@@ -1950,7 +1972,7 @@ export function EventFormFields({
                                                   value="skip"
                                                 />
                                                 <FieldLabel htmlFor="recurrence-missing-skip">
-                                                  Skip that month
+                                                  {t('eventForm.skipMonth')}
                                                 </FieldLabel>
                                               </Field>
                                             </RadioGroup>
@@ -1985,11 +2007,13 @@ export function EventFormFields({
                                           data-invalid={fieldState.invalid}
                                         >
                                           <FieldLabel size="compact">
-                                            Week of month
+                                            {t('eventForm.weekOfMonth')}
                                           </FieldLabel>
 
                                           <ToggleGroup
-                                            aria-label="Week of month"
+                                            aria-label={t(
+                                              'eventForm.weekOfMonth',
+                                            )}
                                             value={
                                               ordinalField.value
                                                 ? [String(ordinalField.value)]
@@ -2048,11 +2072,11 @@ export function EventFormFields({
                                           data-invalid={fieldState.invalid}
                                         >
                                           <FieldLabel size="compact">
-                                            Weekday
+                                            {t('eventForm.weekday')}
                                           </FieldLabel>
 
                                           <ToggleGroup
-                                            aria-label="Weekday"
+                                            aria-label={t('eventForm.weekday')}
                                             value={
                                               weekdayField.value !== undefined
                                                 ? [String(weekdayField.value)]
@@ -2111,8 +2135,8 @@ export function EventFormFields({
                       <div className="grid min-w-0 gap-5 border-t border-border-subtle pt-5 lg:border-t-0 lg:pt-0 lg:pl-6">
                         <FormStepHeader
                           number={2}
-                          title="End condition"
-                          description="Keep the schedule open, stop on a date, or limit the number of occurrences."
+                          title={t('eventForm.endCondition')}
+                          description={t('eventForm.endHelp')}
                         />
 
                         <Controller
@@ -2120,10 +2144,12 @@ export function EventFormFields({
                           control={control}
                           render={({ field: endField, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
-                              <FieldLabel size="compact">Ends</FieldLabel>
+                              <FieldLabel size="compact">
+                                {t('eventForm.ends')}
+                              </FieldLabel>
 
                               <RadioGroup
-                                aria-label="Repeat schedule ends"
+                                aria-label={t('eventForm.endsLabel')}
                                 aria-invalid={Boolean(
                                   fieldState.error?.message,
                                 )}
@@ -2154,7 +2180,7 @@ export function EventFormFields({
                                     value="never"
                                   />
                                   <FieldLabel htmlFor="recurrence-end-never">
-                                    Never
+                                    {t('eventForm.never')}
                                   </FieldLabel>
                                 </Field>
 
@@ -2164,7 +2190,7 @@ export function EventFormFields({
                                     value="on_date"
                                   />
                                   <FieldLabel htmlFor="recurrence-end-on-date">
-                                    On date
+                                    {t('eventForm.onDate')}
                                   </FieldLabel>
                                 </Field>
 
@@ -2174,7 +2200,7 @@ export function EventFormFields({
                                     value="after_occurrences"
                                   />
                                   <FieldLabel htmlFor="recurrence-end-after-occurrences">
-                                    After occurrences
+                                    {t('eventForm.afterOccurrences')}
                                   </FieldLabel>
                                 </Field>
                               </RadioGroup>
@@ -2202,7 +2228,7 @@ export function EventFormFields({
                                   htmlFor="recurrence-end-date"
                                   size="compact"
                                 >
-                                  End date
+                                  {t('eventForm.endDate')}
                                 </FieldLabel>
 
                                 <Input
@@ -2247,7 +2273,7 @@ export function EventFormFields({
                                   htmlFor="recurrence-end-count"
                                   size="compact"
                                 >
-                                  Occurrences
+                                  {t('eventForm.occurrences')}
                                 </FieldLabel>
 
                                 <Input
@@ -2292,7 +2318,9 @@ export function EventFormFields({
 
                 {recurrencePreview && (
                   <FieldGroup gap="compact">
-                    <TextLabel weight="semibold">Schedule summary</TextLabel>
+                    <TextLabel weight="semibold">
+                      {t('eventForm.scheduleSummary')}
+                    </TextLabel>
                     <p className="m-0 text-sm leading-relaxed text-foreground">
                       {recurrencePreview}
                     </p>
@@ -2305,11 +2333,11 @@ export function EventFormFields({
       </FormSection>
 
       <FormSection
-        description="Keep preparation notes and record the outcome."
+        description={t('eventForm.notesHelp')}
         invalid={notesInvalid}
         number={5}
         summary={notesSummary}
-        title="Notes & outcome"
+        title={t('eventForm.notesOutcome')}
         validationAttempt={submitCount}
       >
         <Controller
@@ -2317,7 +2345,9 @@ export function EventFormFields({
           control={control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Description</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                {t('eventForm.description')}
+              </FieldLabel>
 
               <Textarea
                 {...field}
@@ -2330,8 +2360,8 @@ export function EventFormFields({
                 }
                 placeholder={
                   trainingMode
-                    ? 'Notes for this session'
-                    : 'Notes for this event'
+                    ? t('eventForm.sessionNotes')
+                    : t('eventForm.eventNotes')
                 }
                 autoComplete="off"
               />
@@ -2352,7 +2382,7 @@ export function EventFormFields({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={field.name}>
-                Notes after completion
+                {t('eventForm.notesAfter')}
               </FieldLabel>
 
               <Textarea
@@ -2366,7 +2396,7 @@ export function EventFormFields({
                     ? 'event-notesAfterCompletion-error'
                     : undefined
                 }
-                placeholder="What was done, follow-up instructions, or next steps"
+                placeholder={t('eventForm.notesAfterExample')}
                 autoComplete="off"
               />
 

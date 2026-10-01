@@ -62,7 +62,7 @@ afterEach(() => vi.unstubAllEnvs())
 describe('invited account lifecycle', () => {
   it('repairs an existing empty profile from authenticated email claims at sign-in', async () => {
     const { asMember } = await fixture()
-    await asMember.action(api.users.syncCurrentUser)
+    await asMember.action(api.users.syncCurrentUser, {})
     expect(await asMember.query(api.users.getCurrentUser)).toMatchObject({
       email: 'member@example.com',
     })
@@ -104,7 +104,7 @@ describe('invited account lifecycle', () => {
       ],
     })
     const memberWithoutClaims = t.withIdentity({ subject: 'member' })
-    await memberWithoutClaims.action(api.users.syncCurrentUser)
+    await memberWithoutClaims.action(api.users.syncCurrentUser, {})
     expect(getClerkUser).toHaveBeenCalledWith('member')
     expect(
       await memberWithoutClaims.query(api.users.getCurrentUser),

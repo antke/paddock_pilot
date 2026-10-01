@@ -1,3 +1,5 @@
+import { useT } from '#/i18n/LocaleProvider'
+import { LanguageSelector } from '#/i18n/LanguageSelector'
 import { useId, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
@@ -16,28 +18,30 @@ export function CountryArrow() {
 }
 
 export function CountryHeader({ overlay = false }: { overlay?: boolean }) {
+  const t = useT()
   return (
     <header
       className={`country-header${overlay ? ' country-header-overlay' : ''}`}
     >
       <a href="#country-main" className="country-skip">
-        Skip to content
+        {t('navigation.skip')}
       </a>
-      <nav className="country-header-inner" aria-label="Public navigation">
+      <nav className="country-header-inner" aria-label={t('navigation.public')}>
         <Link
           className="country-wordmark"
           to="/"
-          aria-label="Paddock Pilot home"
+          aria-label={t('navigation.brandHome')}
         >
           <span>Paddock</span> <span>Pilot</span>
           <span className="country-wordmark-dot">.</span>
         </Link>
         <div className="country-header-actions">
+          <LanguageSelector compact />
           <Link className="country-text-link" to="/sign-in/$">
-            Sign in
+            {t('navigation.signIn')}
           </Link>
           <Link className="country-button country-button-small" to="/sign-up/$">
-            Create account
+            {t('navigation.createAccount')}
           </Link>
         </div>
       </nav>
@@ -50,6 +54,7 @@ export function CountryPage({ children }: { children: ReactNode }) {
 }
 
 export function CountryCareExample() {
+  const t = useT()
   const [completed, setCompleted] = useState(true)
   const id = useId()
 
@@ -60,37 +65,37 @@ export function CountryCareExample() {
       aria-labelledby={`${id}-title`}
     >
       <div className="country-care-top">
-        <h2 id={`${id}-title`}>Juniper’s care</h2>
-        <span className="country-example-label">Example</span>
+        <h2 id={`${id}-title`}>{t('landing.careTitle')}</h2>
+        <span className="country-example-label">{t('landing.example')}</span>
       </div>
       <div
         className="country-care-switch"
         role="group"
-        aria-label="Example visit status"
+        aria-label={t('landing.visitStatus')}
       >
         <button
           type="button"
           aria-pressed={!completed}
           onClick={() => setCompleted(false)}
         >
-          Planned
+          {t('landing.planned')}
         </button>
         <button
           type="button"
           aria-pressed={completed}
           onClick={() => setCompleted(true)}
         >
-          Completed
+          {t('landing.completed')}
         </button>
       </div>
       <div className="country-visit">
         <div className="country-visit-title">
-          <h3>Farrier visit</h3>
+          <h3>{t('landing.farrier')}</h3>
           {completed ? (
             <svg
               viewBox="0 0 24 24"
               fill="none"
-              aria-label="Completed"
+              aria-label={t('landing.completed')}
               role="img"
             >
               <circle
@@ -108,17 +113,13 @@ export function CountryCareExample() {
             </svg>
           ) : null}
         </div>
-        <p className="country-visit-date">Thursday · 10:30</p>
+        <p className="country-visit-date">{t('landing.visitTime')}</p>
         <div
           className="country-visit-note"
           aria-live="polite"
           aria-atomic="true"
         >
-          <p>
-            {completed
-              ? 'Trim completed. Next visit to be arranged.'
-              : 'Sam Taylor, farrier.'}
-          </p>
+          <p>{completed ? t('landing.trimDone') : t('landing.farrierName')}</p>
         </div>
       </div>
     </figure>
@@ -126,6 +127,7 @@ export function CountryCareExample() {
 }
 
 function CountryYardPhoto() {
+  const t = useT()
   return (
     <picture className="country-yard-photo">
       <source
@@ -137,7 +139,7 @@ function CountryYardPhoto() {
         src="/landing-lab/field-office-panorama-960.jpg"
         srcSet="/landing-lab/field-office-panorama-480.jpg 480w, /landing-lab/field-office-panorama-960.jpg 960w, /landing-lab/field-office-panorama-1600.jpg 1600w"
         sizes="100vw"
-        alt="A chestnut horse looking out over the stable gate in the evening light."
+        alt={t('landing.yardPhoto')}
         width="1600"
         height="872"
         fetchPriority="high"
@@ -152,6 +154,7 @@ export function CountryLandingHero({
 }: {
   composition?: CountryComposition
 }) {
+  const t = useT()
   return (
     <section
       className={`country-hero country-hero-${composition}`}
@@ -159,18 +162,15 @@ export function CountryLandingHero({
     >
       <div className="country-hero-title-group">
         <h1 id="country-hero-title">
-          <span>A little less admin.</span>
-          <span>A little more time</span>
-          <span>at the yard.</span>
+          <span>{t('landing.hero1')}</span>
+          <span>{t('landing.hero2')}</span>
+          <span>{t('landing.hero3')}</span>
         </h1>
       </div>
       <div className="country-hero-intro">
-        <p>
-          One shared place for your stable’s plans, horse records and everyday
-          care—so everyone knows what’s happening.
-        </p>
+        <p>{t('landing.intro')}</p>
         <Link className="country-button" to="/sign-up/$">
-          Create your account <CountryArrow />
+          {t('landing.createAccount')} <CountryArrow />
         </Link>
       </div>
       {composition === 'open-yard' ? <CountryCareExample /> : null}

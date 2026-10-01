@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { Show, SignInButton, UserButton } from '@clerk/tanstack-react-start'
 
 import { useAppUserState } from '#/components/layout/AppUserStateProvider'
@@ -58,6 +59,7 @@ export default function HeaderUser() {
 }
 
 function SignedInUserControls() {
+  const t = useT()
   const navigate = useNavigate()
 
   return (
@@ -67,17 +69,17 @@ function SignedInUserControls() {
       <UserButton>
         <UserButton.MenuItems>
           <UserButton.Action
-            label="Your profile"
+            label={t('navigation.profile')}
             labelIcon={<UserCircleIcon />}
             onClick={() => navigate({ to: '/profile' })}
           />
           <UserButton.Action
-            label="Manage stables"
+            label={t('navigation.manageStables')}
             labelIcon={<BuildingsIcon />}
             onClick={() => navigate({ to: '/stables' })}
           />
           <UserButton.Action
-            label="Plans and billing"
+            label={t('navigation.billing')}
             labelIcon={<CreditCardIcon />}
             onClick={() => navigate({ to: '/pricing' })}
           />
@@ -151,6 +153,7 @@ export function StableSwitcherView({
   canManage: boolean
   onOpen: (destination: StableDestination) => void
 }) {
+  const t = useT()
   const activeStable = stables.find((stable) => stable._id === activeStableId)
   return (
     <DropdownMenu>
@@ -160,21 +163,23 @@ export function StableSwitcherView({
             type="button"
             variant="ghost"
             size="sm"
-            aria-label={`Active stable: ${activeStable?.name ?? 'select stable'}`}
+            aria-label={t('navigation.activeStableName', {
+              name: activeStable?.name ?? t('navigation.selectStable'),
+            })}
             className="max-w-44"
           />
         }
       >
         <BuildingsIcon aria-hidden="true" />
         <span className="truncate">
-          {activeStable?.name ?? 'Select stable'}
+          {activeStable?.name ?? t('navigation.selectStable')}
         </span>
         <CaretDownIcon aria-hidden="true" />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-64">
         <DropdownMenuGroup>
-          <DropdownMenuLabel>Active stable</DropdownMenuLabel>
+          <DropdownMenuLabel>{t('navigation.activeStable')}</DropdownMenuLabel>
           <DropdownMenuRadioGroup
             value={activeStableId}
             onValueChange={onStableChange}
@@ -191,27 +196,27 @@ export function StableSwitcherView({
           <>
             <DropdownMenuItem onClick={() => onOpen('overview')}>
               <HouseIcon aria-hidden="true" />
-              Stable overview
+              {t('navigation.overview')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onOpen('members')}>
               <UsersThreeIcon aria-hidden="true" />
-              Stable people
+              {t('navigation.people')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onOpen('welcome')}>
               <ListChecksIcon aria-hidden="true" />
-              Getting started
+              {t('navigation.gettingStarted')}
             </DropdownMenuItem>
             {canManage && (
               <DropdownMenuItem onClick={() => onOpen('settings')}>
                 <GearIcon aria-hidden="true" />
-                Stable settings
+                {t('navigation.settings')}
               </DropdownMenuItem>
             )}
           </>
         )}
         <DropdownMenuItem onClick={() => onOpen('stables')}>
           <BuildingsIcon aria-hidden="true" />
-          Manage stables
+          {t('navigation.manageStables')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

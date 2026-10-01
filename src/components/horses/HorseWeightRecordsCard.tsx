@@ -1,3 +1,5 @@
+import { formatDecimal } from '#/lib/numberDisplay'
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { compareWeightRecordsNewestFirst } from 'shared/horses/weightRecordOrder'
 import { WeightRecordForm } from '#/components/horses/WeightRecordForm'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
@@ -40,6 +42,9 @@ export function HorseWeightRecordsCard({
   horse,
   onCreateActionChange,
 }: HorseWeightRecordsCardProps) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const { data: records } = useSuspenseQuery(
     convexQuery(api.horseWeightRecords.listForHorse, { horseId: horse._id }),
   )
@@ -61,26 +66,29 @@ export function HorseWeightRecordsCard({
         })
 
         showAppSuccessToast({
-          title: 'Weight record added',
-          description: <p>{horse.name}'s weight history was updated.</p>,
+          title: t('careRecords.weightAdded'),
+          description: (
+            <p>{t('careRecords.weightHistoryUpdated', { name: horse.name })}</p>
+          ),
         })
       } catch (err) {
         showAppErrorToast()
         throw err
       }
     },
-    [addWeightRecord, horse._id, horse.name],
+    [addWeightRecord, horse._id, horse.name, t],
   )
 
   const onRemoveWeightRecord = async (record: Doc<'horseWeightRecords'>) => {
     try {
       await removeWeightRecord({ id: record._id })
       showAppSuccessToast({
-        title: 'Weight record removed',
+        title: t('careRecords.weightRemoved'),
         description: (
           <p>
-            The record from {formatMediumTimestampDate(record.measuredAt)} was
-            removed.
+            {t('careRecords.recordRemoved', {
+              date: formatMediumTimestampDate(record.measuredAt, locale),
+            })}
           </p>
         ),
       })
@@ -116,6 +124,9 @@ export function HorseWeightRecordsView({
   onAdd: (values: WeightRecordFormSchema) => Promise<void>
   onRemove: (record: Doc<'horseWeightRecords'>) => Promise<void>
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const creating = useRef(false)
@@ -136,7 +147,10 @@ export function HorseWeightRecordsView({
     [records],
   )
   const latestRecord = orderedRecords[0]
-  const filterConfig = useMemo(createHorseWeightRecordListFilterConfig, [])
+  const filterConfig = useMemo(
+    () => createHorseWeightRecordListFilterConfig(locale),
+    [locale],
+  )
   const filtering = useListFiltering({
     items: orderedRecords,
     config: filterConfig,
@@ -150,9 +164,9 @@ export function HorseWeightRecordsView({
             if (!creating.current) setIsCreateOpen(open)
           }}
           isPending={isCreating}
-          triggerLabel="Add weight"
-          title="Add weight"
-          description="Record a weight measurement without losing your place in the list."
+          triggerLabel={t('careRecords.addWeight')}
+          title={t('careRecords.addWeight')}
+          description={t('careRecords.createWeightHelp')}
         >
           <WeightRecordForm
             key={horse._id}
@@ -168,6 +182,7 @@ export function HorseWeightRecordsView({
       isCreating,
       addAndClose,
       onPendingChange,
+      t,
     ],
   )
   const inlineCreateDialog = onCreateActionChange ? null : createDialog
@@ -178,8 +193,8 @@ export function HorseWeightRecordsView({
     <FilteredDashboardItemList
       config={filterConfig}
       filtering={filtering}
-      emptyMessage="No weight records have been added for this horse yet."
-      filteredEmptyMessage="No weight records match these filters."
+      emptyMessage={t('careRecords.weightEmpty')}
+      filteredEmptyMessage={t('careRecords.weightFilteredEmpty')}
       renderItem={(record) => (
         <WeightRecordRow
           key={record._id}
@@ -207,7 +222,7 @@ export function HorseWeightRecordsView({
           region.current = element
         }}
         role="group"
-        aria-label="Weight records"
+        aria-label={t('careRecords.weightRecords')}
         tabIndex={-1}
         className="grid gap-6"
       >
@@ -221,7 +236,7 @@ export function HorseWeightRecordsView({
         region.current = element
       }}
       role="group"
-      aria-label="Weight records"
+      aria-label={t('careRecords.weightRecords')}
       tabIndex={-1}
     >
       {content}
@@ -230,6 +245,9 @@ export function HorseWeightRecordsView({
 }
 
 function LatestWeightRecord({ record }: { record: Doc<'horseWeightRecords'> }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   return (
     <DashboardInlinePanel
       chrome="flat"
@@ -237,20 +255,20 @@ function LatestWeightRecord({ record }: { record: Doc<'horseWeightRecords'> }) {
       stack="default"
       textSize="sm"
     >
-      <TextLabel as="div">Latest record</TextLabel>
+      <TextLabel as="div">{t('careRecords.latestRecord')}</TextLabel>
       <DetailGrid columns={3}>
         <LatestWeightMetric
-          label="Weight"
-          value={`${record.weight} ${record.unit}`}
+          label={t('careRecords.weight')}
+          value={`${formatDecimal(record.weight, locale)} ${record.unit}`}
         />
         <LatestWeightMetric
-          label="Measured"
-          value={formatMediumTimestampDate(record.measuredAt)}
+          label={t('careRecords.measured')}
+          value={formatMediumTimestampDate(record.measuredAt, locale)}
         />
         {record.bodyConditionScore !== undefined && (
           <LatestWeightMetric
-            label="Body condition"
-            value={`${record.bodyConditionScore}/9`}
+            label={t('careRecords.bodyCondition')}
+            value={`${formatDecimal(record.bodyConditionScore, locale)}/9`}
           />
         )}
       </DetailGrid>
@@ -286,6 +304,9 @@ function WeightRecordRow({
   removalFocusTarget: () => HTMLElement | null
   onRemove: (record: Doc<'horseWeightRecords'>) => Promise<void>
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   return (
     <DashboardItemRecordCard
       interactive={false}
@@ -296,21 +317,28 @@ function WeightRecordRow({
         canManage ? (
           <HorseRecordRemoveAction
             removalFocusTarget={removalFocusTarget}
-            title="Remove this weight record?"
-            description={`The measurement from ${formatMediumTimestampDate(record.measuredAt)} will be removed permanently. This cannot be undone.`}
+            title={t('careRecords.removeWeight')}
+            description={t('careRecords.removeMeasurementHelp', {
+              date: formatMediumTimestampDate(record.measuredAt, locale),
+            })}
             onConfirm={() => onRemove(record)}
           />
         ) : undefined
       }
     >
       <DashboardItemRecordContent
-        title={`${record.weight} ${record.unit}`}
+        title={`${formatDecimal(record.weight, locale)} ${record.unit}`}
         titleSize="dense"
         meta={
           <>
-            <span>Measured {formatMediumTimestampDate(record.measuredAt)}</span>
+            <span>
+              {t('careRecords.measured')}
+              {formatMediumTimestampDate(record.measuredAt, locale)}
+            </span>
             {record.bodyConditionScore !== undefined && (
-              <span>BCS {record.bodyConditionScore}/9</span>
+              <span>
+                BCS {formatDecimal(record.bodyConditionScore, locale)}/9
+              </span>
             )}
           </>
         }

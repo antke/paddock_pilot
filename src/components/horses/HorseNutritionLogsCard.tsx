@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { NutritionLogForm } from '#/components/horses/NutritionLogForm'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { FilteredDashboardItemList } from '#/components/list-filtering/FilteredDashboardItemList'
@@ -38,6 +39,8 @@ export function HorseNutritionLogsCard({
   horse,
   onCreateActionChange,
 }: HorseNutritionLogsCardProps) {
+  const t = useT()
+
   const { data: logs } = useSuspenseQuery(
     convexQuery(api.horseNutritionLogs.listForHorse, { horseId: horse._id }),
   )
@@ -60,23 +63,29 @@ export function HorseNutritionLogsCard({
         })
 
         showAppSuccessToast({
-          title: 'Nutrition log added',
-          description: <p>{horse.name}'s nutrition history was updated.</p>,
+          title: t('careRecords.nutritionAdded'),
+          description: (
+            <p>
+              {t('careRecords.nutritionHistoryUpdated', { name: horse.name })}
+            </p>
+          ),
         })
       } catch (err) {
         showAppErrorToast()
         throw err
       }
     },
-    [addNutritionLog, horse._id, horse.name],
+    [addNutritionLog, horse._id, horse.name, t],
   )
 
   const onRemoveNutritionLog = async (log: Doc<'horseNutritionLogs'>) => {
     try {
       await removeNutritionLog({ id: log._id })
       showAppSuccessToast({
-        title: 'Nutrition log removed',
-        description: <p>{log.summary} was removed.</p>,
+        title: t('careRecords.nutritionRemoved'),
+        description: (
+          <p>{t('careRecords.namedRemoved', { name: log.summary })}</p>
+        ),
       })
     } catch (err) {
       showAppErrorToast()
@@ -110,6 +119,9 @@ export function HorseNutritionLogsView({
   onAdd: (values: NutritionLogFormSchema) => Promise<void>
   onRemove: (log: Doc<'horseNutritionLogs'>) => Promise<void>
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const creating = useRef(false)
@@ -125,7 +137,10 @@ export function HorseNutritionLogsView({
     },
     [onAdd],
   )
-  const filterConfig = useMemo(createHorseNutritionLogListFilterConfig, [])
+  const filterConfig = useMemo(
+    () => createHorseNutritionLogListFilterConfig(locale),
+    [locale],
+  )
   const filtering = useListFiltering({ items: logs, config: filterConfig })
   const createDialog = useMemo(
     () =>
@@ -136,9 +151,9 @@ export function HorseNutritionLogsView({
             if (!creating.current) setIsCreateOpen(open)
           }}
           isPending={isCreating}
-          triggerLabel="Add nutrition log"
-          title="Add nutrition log"
-          description="Keep a dated record of feeding changes."
+          triggerLabel={t('careRecords.addNutrition')}
+          title={t('careRecords.addNutrition')}
+          description={t('careRecords.createNutritionHelp')}
         >
           <NutritionLogForm
             horse={horse}
@@ -147,7 +162,15 @@ export function HorseNutritionLogsView({
           />
         </CreateRecordDialog>
       ) : null,
-    [canManage, horse, isCreateOpen, isCreating, addAndClose, onPendingChange],
+    [
+      canManage,
+      horse,
+      isCreateOpen,
+      isCreating,
+      addAndClose,
+      onPendingChange,
+      t,
+    ],
   )
   const inlineCreateDialog = onCreateActionChange ? null : createDialog
 
@@ -157,8 +180,8 @@ export function HorseNutritionLogsView({
     <FilteredDashboardItemList
       config={filterConfig}
       filtering={filtering}
-      emptyMessage="No nutrition changes have been logged for this horse yet."
-      filteredEmptyMessage="No nutrition logs match this search."
+      emptyMessage={t('careRecords.nutritionEmpty')}
+      filteredEmptyMessage={t('careRecords.nutritionFilteredEmpty')}
       renderItem={(log) => (
         <NutritionLogRow
           key={log._id}
@@ -185,7 +208,7 @@ export function HorseNutritionLogsView({
           region.current = element
         }}
         role="group"
-        aria-label="Nutrition history"
+        aria-label={t('careRecords.nutritionHistory')}
         tabIndex={-1}
         className="grid gap-6"
       >
@@ -199,7 +222,7 @@ export function HorseNutritionLogsView({
         region.current = element
       }}
       role="group"
-      aria-label="Nutrition history"
+      aria-label={t('careRecords.nutritionHistory')}
       tabIndex={-1}
     >
       {content}
@@ -218,6 +241,9 @@ function NutritionLogRow({
   removalFocusTarget: () => HTMLElement | null
   onRemove: (log: Doc<'horseNutritionLogs'>) => Promise<void>
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   return (
     <DashboardItemRecordCard
       interactive={false}
@@ -228,8 +254,8 @@ function NutritionLogRow({
         canManage ? (
           <HorseRecordRemoveAction
             removalFocusTarget={removalFocusTarget}
-            title={`Remove ${log.summary}?`}
-            description="This nutrition change will be removed from the horse history permanently. This cannot be undone."
+            title={t('careRecords.removeNamed', { name: log.summary })}
+            description={t('careRecords.removeNutritionHelp')}
             onConfirm={() => onRemove(log)}
           />
         ) : undefined
@@ -238,11 +264,17 @@ function NutritionLogRow({
       <DashboardItemRecordContent
         title={log.summary}
         titleSize="dense"
-        meta={<span>Logged {formatMediumTimestampDate(log.changedAt)}</span>}
+        meta={
+          <span>
+            {t('careRecords.loggedAt', {
+              date: formatMediumTimestampDate(log.changedAt, locale),
+            })}
+          </span>
+        }
         description={log.notes}
       >
         {log.feedingRoutineSnapshot && (
-          <DetailTextBlock label="Routine snapshot">
+          <DetailTextBlock label={t('careRecords.shortRoutineSnapshot')}>
             {log.feedingRoutineSnapshot}
           </DetailTextBlock>
         )}
@@ -253,12 +285,15 @@ function NutritionLogRow({
           <DetailListGrid>
             {Boolean(log.recommendedSnapshot?.length) && (
               <DetailListBlock
-                label="Recommended"
+                label={t('careRecords.recommended')}
                 items={log.recommendedSnapshot ?? []}
               />
             )}
             {Boolean(log.avoidSnapshot?.length) && (
-              <DetailListBlock label="Avoid" items={log.avoidSnapshot ?? []} />
+              <DetailListBlock
+                label={t('careRecords.avoid')}
+                items={log.avoidSnapshot ?? []}
+              />
             )}
           </DetailListGrid>
         )}

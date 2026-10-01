@@ -1,8 +1,8 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { Badge } from '#/components/ui/badge'
 import { BuildingsIcon } from '@phosphor-icons/react'
 import type { Doc } from 'convex/_generated/dataModel'
 import type { ComponentProps } from 'react'
-import { stableInvitationRoleLabels } from 'shared/stableInvitations/invitationSchema'
 
 type StableInvitationBadgeProps = Omit<
   ComponentProps<typeof Badge>,
@@ -36,14 +36,15 @@ const stableInvitationStatusVariant = {
 >
 
 export function StableInvitationRoleBadge({
-  role,
+  role: _role,
   ...props
 }: StableInvitationBadgeProps & {
   role: Doc<'stableInvitations'>['role']
 }) {
+  const t = useT()
   return (
     <Badge variant="secondary" {...props}>
-      {stableInvitationRoleLabels[role]}
+      {t('invitationFlow.member')}
     </Badge>
   )
 }
@@ -71,9 +72,10 @@ export function StableInvitationStatusBadge({
 }: StableInvitationBadgeProps & {
   status: StableInvitationStatus
 }) {
+  const t = useT()
   return (
     <Badge variant={stableInvitationStatusVariant[status]} {...props}>
-      {stableInvitationStatusLabels[status]}
+      {t(`invitationFlow.status.${status}`)}
     </Badge>
   )
 }
@@ -84,9 +86,10 @@ export function StableInvitationDeliveryStatusBadge({
 }: StableInvitationBadgeProps & {
   status: StableInvitationDeliveryStatus
 }) {
+  const t = useT()
   return (
     <Badge variant={stableInvitationDeliveryStatusVariant[status]} {...props}>
-      {stableInvitationDeliveryStatusLabels[status]}
+      {t(`invitationFlow.delivery.${status}`)}
     </Badge>
   )
 }
@@ -94,10 +97,11 @@ export function StableInvitationDeliveryStatusBadge({
 export function StableInvitationContextBadge(
   props: StableInvitationBadgeProps,
 ) {
+  const t = useT()
   return (
     <Badge variant="secondary" {...props}>
       <BuildingsIcon aria-hidden="true" />
-      Stable invitation
+      {t('invitationFlow.context')}
     </Badge>
   )
 }

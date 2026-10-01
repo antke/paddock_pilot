@@ -1,5 +1,6 @@
 import z from 'zod'
-import { trainingDetailsSchema } from '../training/trainingSchema'
+import { createTrainingSchemas } from '../training/trainingSchema'
+import type { TrainingValidationKey } from '../training/trainingSchema'
 
 export const eventTypes = [
   'competition',
@@ -52,251 +53,359 @@ export const dayOfWeekLabels = {
   6: 'Saturday',
 } satisfies Record<DayOfWeek, string>
 
-export const eventDateSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a valid date.')
+const defaultMessages = {
+  dateInvalid: 'Use a valid date.',
+  timeInvalid: 'Use a valid time.',
+  titleMin: 'Title must have minimum 1 character.',
+  titleMax: 'Title cannot be longer than 120 characters.',
+  descriptionMax: 'Description cannot be longer than 1000 characters.',
+  locationMax: 'Location cannot be longer than 200 characters.',
+  providerMax: 'Provider name cannot be longer than 100 characters.',
+  phoneMax: 'Provider phone cannot be longer than 50 characters.',
+  completionMax: 'Completion notes cannot be longer than 1000 characters.',
+  costMin: 'Cost cannot be negative.',
+  costMax: 'Cost is too high.',
+  horseRequired: 'Select at least one horse.',
+  horseUnique: 'Select each horse only once.',
+  occurrenceInteger: 'Occurrence count must be a whole number.',
+  occurrenceMin: 'Occurrence count must be at least 1.',
+  intervalInteger: 'Interval must be a whole number.',
+  intervalMin: 'Interval must be at least 1.',
+  dayInteger: 'Day of month must be a whole number.',
+  dayMin: 'Day of month must be at least 1.',
+  dayMax: 'Day of month cannot be greater than 31.',
+  weeklyDays: 'Select at least one day for weekly recurrence.',
+  monthlyMode: 'Choose how this monthly event repeats.',
+  monthlyDay: 'Choose a day of the month.',
+  missingDate: 'Choose what happens when a month does not have this date.',
+  monthWeek: 'Choose which week of the month.',
+  weekday: 'Choose a weekday.',
+  dateOrder: 'End date cannot be before the start date.',
+  recurrence: 'Choose recurrence details.',
+  textInvalid: 'Enter text.',
+  numberInvalid: 'Enter a valid number.',
+  choiceInvalid: 'Choose a valid option.',
+  listInvalid: 'Choose items from the list.',
+  booleanInvalid: 'Choose whether the event repeats.',
+} as const
+export type EventValidationKey = keyof typeof defaultMessages
+export function createEventSchemas(
+  message: (key: EventValidationKey) => string = (key) => defaultMessages[key],
+  trainingMessage?: (key: TrainingValidationKey) => string,
+) {
+  const { trainingDetailsSchema } = createTrainingSchemas(trainingMessage)
+  const eventDateSchema = z
+    .string({ error: message('textInvalid') })
+    .regex(/^\d{4}-\d{2}-\d{2}$/, message('dateInvalid'))
 
-export const eventOptionalDateSchema = z
-  .union([eventDateSchema, z.literal('')])
-  .optional()
-  .transform((val) => val || undefined)
+  const eventOptionalDateSchema = z
+    .union([eventDateSchema, z.literal('')], { error: message('dateInvalid') })
+    .optional()
+    .transform((val) => val || undefined)
 
-export const eventTimeSchema = z
-  .string()
-  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use a valid time.')
+  const eventTimeSchema = z
+    .string({ error: message('textInvalid') })
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, message('timeInvalid'))
 
-export const eventTypeSchema = z.enum(eventTypes)
-
-export const eventTitleSchema = z
-  .string()
-  .trim()
-  .min(1, 'Title must have minimum 1 character.')
-  .max(120, 'Title cannot be longer than 120 characters.')
-
-export const eventDescriptionSchema = z
-  .string()
-  .trim()
-  .max(1000, 'Description cannot be longer than 1000 characters.')
-
-export const eventLocationSchema = z
-  .string()
-  .trim()
-  .max(200, 'Location cannot be longer than 200 characters.')
-
-export const eventProviderNameSchema = z
-  .string()
-  .trim()
-  .max(100, 'Provider name cannot be longer than 100 characters.')
-
-export const eventProviderPhoneSchema = z
-  .string()
-  .trim()
-  .max(50, 'Provider phone cannot be longer than 50 characters.')
-
-export const eventNotesAfterCompletionSchema = z
-  .string()
-  .trim()
-  .max(1000, 'Completion notes cannot be longer than 1000 characters.')
-
-export const eventCostSchema = z
-  .union([z.number(), z.nan(), z.undefined()])
-  .transform((val) =>
-    val === undefined || Number.isNaN(val) ? undefined : val,
-  )
-  .pipe(
-    z
-      .number()
-      .min(0, 'Cost cannot be negative.')
-      .max(100000, 'Cost is too high.')
-      .optional(),
-  )
-
-export const eventStatusSchema = z.enum(eventStatuses)
-
-export const eventHorseIdsSchema = z
-  .array(z.string().min(1))
-  .min(1, 'Select at least one horse.')
-  .refine(
-    (horseIds) => new Set(horseIds).size === horseIds.length,
-    'Select each horse only once.',
-  )
-
-export const eventDayOfWeekSchema = z.union([
-  z.literal(0),
-  z.literal(1),
-  z.literal(2),
-  z.literal(3),
-  z.literal(4),
-  z.literal(5),
-  z.literal(6),
-])
-
-export const recurrenceEndSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('never') }),
-  z.object({ type: z.literal('on_date'), date: eventDateSchema }),
-  z.object({
-    type: z.literal('after_occurrences'),
-    count: z
-      .number()
-      .int('Occurrence count must be a whole number.')
-      .min(1, 'Occurrence count must be at least 1.'),
-  }),
-])
-
-export const recurrenceMonthlyModeSchema = z.enum(recurrenceMonthlyModes)
-
-export const recurrenceOrdinalSchema = z.union([
-  z.literal(1),
-  z.literal(2),
-  z.literal(3),
-  z.literal(4),
-  z.literal('last'),
-])
-
-export const recurrenceMissingDateStrategySchema = z.enum(
-  recurrenceMissingDateStrategies,
-)
-
-export const eventRecurrenceSchema = z
-  .object({
-    frequency: z.enum(recurrenceFrequencies),
-    interval: z
-      .number()
-      .int('Interval must be a whole number.')
-      .min(1, 'Interval must be at least 1.'),
-    daysOfWeek: z.array(eventDayOfWeekSchema).optional(),
-    monthlyMode: recurrenceMonthlyModeSchema.optional(),
-    dayOfMonth: z
-      .number()
-      .int('Day of month must be a whole number.')
-      .min(1, 'Day of month must be at least 1.')
-      .max(31, 'Day of month cannot be greater than 31.')
-      .optional(),
-    ordinal: recurrenceOrdinalSchema.optional(),
-    weekday: eventDayOfWeekSchema.optional(),
-    missingDateStrategy: recurrenceMissingDateStrategySchema.optional(),
-    end: recurrenceEndSchema.optional(),
+  const eventTypeSchema = z.enum(eventTypes, {
+    error: message('choiceInvalid'),
   })
-  .superRefine((recurrence, ctx) => {
-    if (
-      recurrence.frequency === 'weekly' &&
-      (!recurrence.daysOfWeek || recurrence.daysOfWeek.length === 0)
-    ) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'Select at least one day for weekly recurrence.',
-        path: ['daysOfWeek'],
-      })
-    }
 
-    if (recurrence.frequency !== 'monthly') return
+  const eventTitleSchema = z
+    .string({ error: message('textInvalid') })
+    .trim()
+    .min(1, message('titleMin'))
+    .max(120, message('titleMax'))
 
-    if (!recurrence.monthlyMode) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'Choose how this monthly event repeats.',
-        path: ['monthlyMode'],
-      })
-      return
-    }
+  const eventDescriptionSchema = z
+    .string({ error: message('textInvalid') })
+    .trim()
+    .max(1000, message('descriptionMax'))
 
-    if (recurrence.monthlyMode === 'dayOfMonth') {
-      if (!recurrence.dayOfMonth) {
-        ctx.addIssue({
-          code: 'custom',
-          message: 'Choose a day of the month.',
-          path: ['dayOfMonth'],
-        })
-      }
+  const eventLocationSchema = z
+    .string({ error: message('textInvalid') })
+    .trim()
+    .max(200, message('locationMax'))
 
+  const eventProviderNameSchema = z
+    .string({ error: message('textInvalid') })
+    .trim()
+    .max(100, message('providerMax'))
+
+  const eventProviderPhoneSchema = z
+    .string({ error: message('textInvalid') })
+    .trim()
+    .max(50, message('phoneMax'))
+
+  const eventNotesAfterCompletionSchema = z
+    .string({ error: message('textInvalid') })
+    .trim()
+    .max(1000, message('completionMax'))
+
+  const eventCostSchema = z
+    .union(
+      [z.number({ error: message('numberInvalid') }), z.nan(), z.undefined()],
+      { error: message('numberInvalid') },
+    )
+    .transform((val) =>
+      val === undefined || Number.isNaN(val) ? undefined : val,
+    )
+    .pipe(
+      z
+        .number({ error: message('numberInvalid') })
+        .min(0, message('costMin'))
+        .max(100000, message('costMax'))
+        .optional(),
+    )
+
+  const eventStatusSchema = z.enum(eventStatuses, {
+    error: message('choiceInvalid'),
+  })
+
+  const eventHorseIdsSchema = z
+    .array(z.string({ error: message('textInvalid') }).min(1), {
+      error: message('listInvalid'),
+    })
+    .min(1, message('horseRequired'))
+    .refine(
+      (horseIds) => new Set(horseIds).size === horseIds.length,
+      message('horseUnique'),
+    )
+
+  const eventDayOfWeekSchema = z.union(
+    [
+      z.literal(0),
+      z.literal(1),
+      z.literal(2),
+      z.literal(3),
+      z.literal(4),
+      z.literal(5),
+      z.literal(6),
+    ],
+    { error: message('choiceInvalid') },
+  )
+
+  const recurrenceEndSchema = z.discriminatedUnion(
+    'type',
+    [
+      z.object({ type: z.literal('never') }),
+      z.object({ type: z.literal('on_date'), date: eventDateSchema }),
+      z.object({
+        type: z.literal('after_occurrences'),
+        count: z
+          .number({ error: message('numberInvalid') })
+          .int(message('occurrenceInteger'))
+          .min(1, message('occurrenceMin')),
+      }),
+    ],
+    { error: message('choiceInvalid') },
+  )
+
+  const recurrenceMonthlyModeSchema = z.enum(recurrenceMonthlyModes, {
+    error: message('choiceInvalid'),
+  })
+
+  const recurrenceOrdinalSchema = z.union(
+    [z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal('last')],
+    { error: message('choiceInvalid') },
+  )
+
+  const recurrenceMissingDateStrategySchema = z.enum(
+    recurrenceMissingDateStrategies,
+    { error: message('choiceInvalid') },
+  )
+
+  const eventRecurrenceSchema = z
+    .object({
+      frequency: z.enum(recurrenceFrequencies, {
+        error: message('choiceInvalid'),
+      }),
+      interval: z
+        .number({ error: message('numberInvalid') })
+        .int(message('intervalInteger'))
+        .min(1, message('intervalMin')),
+      daysOfWeek: z
+        .array(eventDayOfWeekSchema, { error: message('listInvalid') })
+        .optional(),
+      monthlyMode: recurrenceMonthlyModeSchema.optional(),
+      dayOfMonth: z
+        .number({ error: message('numberInvalid') })
+        .int(message('dayInteger'))
+        .min(1, message('dayMin'))
+        .max(31, message('dayMax'))
+        .optional(),
+      ordinal: recurrenceOrdinalSchema.optional(),
+      weekday: eventDayOfWeekSchema.optional(),
+      missingDateStrategy: recurrenceMissingDateStrategySchema.optional(),
+      end: recurrenceEndSchema.optional(),
+    })
+    .superRefine((recurrence, ctx) => {
       if (
-        recurrence.dayOfMonth &&
-        recurrence.dayOfMonth >= 29 &&
-        !recurrence.missingDateStrategy
+        recurrence.frequency === 'weekly' &&
+        (!recurrence.daysOfWeek || recurrence.daysOfWeek.length === 0)
       ) {
         ctx.addIssue({
           code: 'custom',
-          message: 'Choose what happens when a month does not have this date.',
-          path: ['missingDateStrategy'],
+          message: message('weeklyDays'),
+          path: ['daysOfWeek'],
         })
       }
-    }
 
-    if (recurrence.monthlyMode === 'weekdayPattern') {
-      if (!recurrence.ordinal) {
+      if (recurrence.frequency !== 'monthly') return
+
+      if (!recurrence.monthlyMode) {
         ctx.addIssue({
           code: 'custom',
-          message: 'Choose which week of the month.',
-          path: ['ordinal'],
+          message: message('monthlyMode'),
+          path: ['monthlyMode'],
         })
+        return
       }
 
-      if (recurrence.weekday === undefined) {
-        ctx.addIssue({
-          code: 'custom',
-          message: 'Choose a weekday.',
-          path: ['weekday'],
-        })
+      if (recurrence.monthlyMode === 'dayOfMonth') {
+        if (!recurrence.dayOfMonth) {
+          ctx.addIssue({
+            code: 'custom',
+            message: message('monthlyDay'),
+            path: ['dayOfMonth'],
+          })
+        }
+
+        if (
+          recurrence.dayOfMonth &&
+          recurrence.dayOfMonth >= 29 &&
+          !recurrence.missingDateStrategy
+        ) {
+          ctx.addIssue({
+            code: 'custom',
+            message: message('missingDate'),
+            path: ['missingDateStrategy'],
+          })
+        }
       }
-    }
-  })
 
-const optionalText = <TSchema extends z.ZodString>(schema: TSchema) =>
-  schema.optional().transform((val) => val || undefined)
+      if (recurrence.monthlyMode === 'weekdayPattern') {
+        if (!recurrence.ordinal) {
+          ctx.addIssue({
+            code: 'custom',
+            message: message('monthWeek'),
+            path: ['ordinal'],
+          })
+        }
 
-const eventInputFieldsSchema = z.object({
-  stableId: z.string().min(1),
-  horseIds: eventHorseIdsSchema,
-  date: eventDateSchema,
-  endDate: eventOptionalDateSchema,
-  time: eventTimeSchema,
-  type: eventTypeSchema,
-  title: eventTitleSchema,
-  description: optionalText(eventDescriptionSchema),
-  location: optionalText(eventLocationSchema),
-  providerName: optionalText(eventProviderNameSchema),
-  providerPhone: optionalText(eventProviderPhoneSchema),
-  totalCost: eventCostSchema,
-  costPerHorse: eventCostSchema,
-  status: eventStatusSchema.optional(),
-  notesAfterCompletion: optionalText(eventNotesAfterCompletionSchema),
-  recurrence: eventRecurrenceSchema.optional(),
-  training: trainingDetailsSchema.optional(),
-})
-
-function validateEventDateRange(
-  event: z.infer<typeof eventInputFieldsSchema>,
-  ctx: z.RefinementCtx,
-) {
-  if (event.endDate && event.endDate < event.date) {
-    ctx.addIssue({
-      code: 'custom',
-      message: 'End date cannot be before the start date.',
-      path: ['endDate'],
+        if (recurrence.weekday === undefined) {
+          ctx.addIssue({
+            code: 'custom',
+            message: message('weekday'),
+            path: ['weekday'],
+          })
+        }
+      }
     })
-  }
-}
 
-export const eventInputSchema = eventInputFieldsSchema.superRefine(
-  validateEventDateRange,
-)
+  const optionalText = <TSchema extends z.ZodString>(schema: TSchema) =>
+    schema.optional().transform((val) => val || undefined)
 
-export const eventFormSchema = eventInputFieldsSchema
-  .extend({
-    recurring: z.boolean(),
+  const eventInputFieldsSchema = z.object({
+    stableId: z.string({ error: message('textInvalid') }).min(1),
+    horseIds: eventHorseIdsSchema,
+    date: eventDateSchema,
+    endDate: eventOptionalDateSchema,
+    time: eventTimeSchema,
+    type: eventTypeSchema,
+    title: eventTitleSchema,
+    description: optionalText(eventDescriptionSchema),
+    location: optionalText(eventLocationSchema),
+    providerName: optionalText(eventProviderNameSchema),
+    providerPhone: optionalText(eventProviderPhoneSchema),
+    totalCost: eventCostSchema,
+    costPerHorse: eventCostSchema,
+    status: eventStatusSchema.optional(),
+    notesAfterCompletion: optionalText(eventNotesAfterCompletionSchema),
+    recurrence: eventRecurrenceSchema.optional(),
+    training: trainingDetailsSchema.optional(),
   })
-  .superRefine((event, ctx) => {
-    validateEventDateRange(event, ctx)
 
-    if (event.recurring && !event.recurrence) {
+  function validateEventDateRange(
+    event: z.infer<typeof eventInputFieldsSchema>,
+    ctx: z.RefinementCtx,
+  ) {
+    if (event.endDate && event.endDate < event.date) {
       ctx.addIssue({
         code: 'custom',
-        message: 'Choose recurrence details.',
-        path: ['recurrence'],
+        message: message('dateOrder'),
+        path: ['endDate'],
       })
     }
-  })
+  }
 
+  const eventInputSchema = eventInputFieldsSchema.superRefine(
+    validateEventDateRange,
+  )
+
+  const eventFormSchema = eventInputFieldsSchema
+    .extend({
+      recurring: z.boolean({ error: message('booleanInvalid') }),
+    })
+    .superRefine((event, ctx) => {
+      validateEventDateRange(event, ctx)
+
+      if (event.recurring && !event.recurrence) {
+        ctx.addIssue({
+          code: 'custom',
+          message: message('recurrence'),
+          path: ['recurrence'],
+        })
+      }
+    })
+
+  return {
+    eventDateSchema,
+    eventOptionalDateSchema,
+    eventTimeSchema,
+    eventTypeSchema,
+    eventTitleSchema,
+    eventDescriptionSchema,
+    eventLocationSchema,
+    eventProviderNameSchema,
+    eventProviderPhoneSchema,
+    eventNotesAfterCompletionSchema,
+    eventCostSchema,
+    eventStatusSchema,
+    eventHorseIdsSchema,
+    eventDayOfWeekSchema,
+    recurrenceEndSchema,
+    recurrenceMonthlyModeSchema,
+    recurrenceOrdinalSchema,
+    recurrenceMissingDateStrategySchema,
+    eventRecurrenceSchema,
+    eventInputSchema,
+    eventFormSchema,
+  }
+}
+export const {
+  eventDateSchema,
+  eventOptionalDateSchema,
+  eventTimeSchema,
+  eventTypeSchema,
+  eventTitleSchema,
+  eventDescriptionSchema,
+  eventLocationSchema,
+  eventProviderNameSchema,
+  eventProviderPhoneSchema,
+  eventNotesAfterCompletionSchema,
+  eventCostSchema,
+  eventStatusSchema,
+  eventHorseIdsSchema,
+  eventDayOfWeekSchema,
+  recurrenceEndSchema,
+  recurrenceMonthlyModeSchema,
+  recurrenceOrdinalSchema,
+  recurrenceMissingDateStrategySchema,
+  eventRecurrenceSchema,
+  eventInputSchema,
+  eventFormSchema,
+} = createEventSchemas()
 export type EventType = (typeof eventTypes)[number]
 export type EventStatus = (typeof eventStatuses)[number]
 export type RecurrenceFrequency = (typeof recurrenceFrequencies)[number]

@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import type { ComponentProps, ReactNode } from 'react'
 import { useId } from 'react'
 
@@ -138,16 +139,18 @@ export function DashboardNavigation({
 
 export function DashboardSectionTabs<TTabId extends string>({
   activeId,
-  ariaLabel = 'Section views',
+  ariaLabel,
   items,
   onSelect,
   contentId,
   controlIdPrefix,
   ...navigationProps
 }: DashboardSectionTabsProps<TTabId>) {
+  const t = useT()
+
   return (
     <DashboardNavigation
-      ariaLabel={ariaLabel}
+      ariaLabel={ariaLabel ?? t('listControls.sectionViews')}
       role="group"
       {...navigationProps}
     >

@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import {
   createFileRoute,
   Outlet,
@@ -31,6 +32,8 @@ export const Route = createFileRoute(
   component: TrainingSession,
 })
 function TrainingSession() {
+  const t = useT()
+
   const { stableId, eventId } = Route.useParams()
   const { date } = Route.useSearch()
   const { pathname } = useLocation()
@@ -71,7 +74,7 @@ function TrainingSession() {
         variant="outline"
         className="justify-self-start"
       >
-        Back to training log
+        {t('trainingViews.back')}
       </ButtonLink>
       <EventDetail
         stableId={stableId}
@@ -90,7 +93,7 @@ function TrainingSession() {
       />
       <Field className="max-w-xs">
         <FieldLabel htmlFor="training-occurrence">
-          Session date to record
+          {t('trainingViews.sessionDate')}
         </FieldLabel>
         <Input
           id="training-occurrence"
@@ -109,22 +112,20 @@ function TrainingSession() {
       </Field>
       {data.event.recurrence && !data.event.training && (
         <p className="text-sm text-muted-foreground">
-          This is a legacy recurring session. Its old shared status does not
-          confirm individual dates. Review and record each horse’s session
-          below.
+          {t('trainingViews.legacyHelp')}
         </p>
       )}
       {data.pendingEventHorses.length > 0 && (
         <p className="text-sm text-muted-foreground">
-          Awaiting participation confirmation:{' '}
-          {data.pendingEventHorses
-            .map(
-              (row) =>
-                training.horses.find((horse) => horse._id === row.horseId)
-                  ?.name ?? 'Horse',
-            )
-            .join(', ')}
-          . Their owners can respond from the dashboard.
+          {t('trainingViews.pending', {
+            horses: data.pendingEventHorses
+              .map(
+                (row) =>
+                  training.horses.find((horse) => horse._id === row.horseId)
+                    ?.name ?? t('trainingViews.horse'),
+              )
+              .join(', '),
+          })}
         </p>
       )}
       {data.eventHorses.some(
@@ -132,7 +133,7 @@ function TrainingSession() {
       ) && (
         <details className="rounded-row bg-surface p-4">
           <summary className="cursor-pointer font-semibold">
-            Earlier per-horse notes
+            {t('trainingViews.earlierNotes')}
           </summary>
           <div className="mt-3 grid gap-3">
             {data.eventHorses
@@ -141,7 +142,7 @@ function TrainingSession() {
                 <div key={row._id}>
                   <p className="font-semibold">
                     {training.horses.find((horse) => horse._id === row.horseId)
-                      ?.name ?? 'Horse'}
+                      ?.name ?? t('trainingViews.horse')}
                   </p>
                   {row.requestedServiceNotes && (
                     <p>{row.requestedServiceNotes}</p>
@@ -153,10 +154,7 @@ function TrainingSession() {
         </details>
       )}
       {entries.length === 0 && (
-        <p role="status">
-          No session starts on this date. Choose a date in this session’s
-          schedule.
-        </p>
+        <p role="status">{t('trainingViews.noSession')}</p>
       )}
       {entries.map((entry) => (
         <TrainingRecordCard key={entry.key} entry={entry} />

@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { XIcon } from '@phosphor-icons/react'
 
@@ -36,6 +37,8 @@ export function ListFilterChips<TFacetId extends string = string>({
   className,
   fallbackFocus,
 }: ListFilterChipsProps<TFacetId>) {
+  const t = useT()
+
   const row = useRef<HTMLDivElement>(null)
   const clear = useRef<HTMLButtonElement>(null)
   const focused = useRef<{ node: HTMLButtonElement; index: number } | null>(
@@ -146,7 +149,7 @@ export function ListFilterChips<TFacetId extends string = string>({
               if (isFiltering) onReset()
             }}
           >
-            Clear all
+            {t('listControls.clear')}
           </Button>
         </ActionGroup>
       </div>
@@ -165,6 +168,8 @@ function ListFilterChipItem<TFacetId extends string = string>({
   onRemove: () => void
   title: string
 }) {
+  const t = useT()
+
   return (
     <Badge
       variant="filter"
@@ -179,7 +184,7 @@ function ListFilterChipItem<TFacetId extends string = string>({
         variant="subtle"
         size="chip-icon"
         data-filter-chip={chip.facetId}
-        aria-label={`Remove ${title} filter`}
+        aria-label={t('listControls.remove', { title })}
         disabled={disabled}
         onClick={onRemove}
       >

@@ -1,4 +1,5 @@
 import { cn } from '#/lib/utils'
+import { useT } from '#/i18n/LocaleProvider'
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
@@ -14,13 +15,14 @@ type ScrollableListProps = {
 
 function ScrollableList({
   children,
-  ariaLabel = 'Scrollable list',
+  ariaLabel,
   itemCount,
   visibleItemLimit = 5,
   estimatedItemHeightRem = 4.25,
   fillParent = false,
   className,
 }: ScrollableListProps) {
+  const t = useT()
   const viewportRef = useRef<HTMLDivElement>(null)
   const [scrollState, setScrollState] = useState({
     canScrollUp: false,
@@ -83,7 +85,11 @@ function ScrollableList({
         data-slot="scrollable-list-viewport"
         ref={viewportRef}
         role={usesViewportConstraint ? 'region' : undefined}
-        aria-label={usesViewportConstraint ? ariaLabel : undefined}
+        aria-label={
+          usesViewportConstraint
+            ? (ariaLabel ?? t('uiRemainder.scrollableList'))
+            : undefined
+        }
         tabIndex={usesViewportConstraint ? 0 : undefined}
         onScroll={updateScrollState}
         className={cn(

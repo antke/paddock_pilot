@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+import { LocaleProvider, useLocale, useT } from '#/i18n/LocaleProvider'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import {
   HeadContent,
@@ -113,22 +115,45 @@ export const Route = createRootRoute({
 })
 
 function NotFoundPage() {
+  const t = useT()
   return (
     <RouteStatusAlert
-      title="Page not found"
-      description="The page you are looking for does not exist or has moved."
+      title={t('common.notFoundTitle')}
+      description={t('common.notFoundDescription')}
       width="narrow"
-      actions={<ButtonLink to="/">Go home</ButtonLink>}
+      actions={<ButtonLink to="/">{t('common.home')}</ButtonLink>}
     />
   )
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  return (
+    <LocaleProvider>
+      <LocalizedRootDocument>{children}</LocalizedRootDocument>
+    </LocaleProvider>
+  )
+}
+
+function LocalizedRootDocument({ children }: { children: React.ReactNode }) {
+  const { locale } = useLocale()
   const { pathname } = useLocation()
+  const t = useT()
+  useEffect(() => {
+    const description = t('landing.siteDescription')
+    for (const selector of [
+      'meta[name="description"]',
+      'meta[property="og:description"]',
+      'meta[name="twitter:description"]',
+    ]) {
+      document.head
+        .querySelector(selector)
+        ?.setAttribute('content', description)
+    }
+  }, [locale, pathname, t])
   const isLandingLab = isLandingLabPath(pathname)
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />

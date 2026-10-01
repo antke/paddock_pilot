@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { Badge } from '#/components/ui/badge'
 import type { ComponentProps } from 'react'
 import type { StableDocumentFileState } from 'shared/stables/stableDocumentSchema'
@@ -13,12 +14,16 @@ export function DocumentFileStateBadge({
 }: DocumentBadgeProps & {
   fileState?: Exclude<StableDocumentFileState, 'available'>
 }) {
+  const t = useT()
+
   return (
     <Badge
       variant={fileState === 'unavailable' ? 'warning' : 'secondary'}
       {...props}
     >
-      {fileState === 'unavailable' ? 'File unavailable' : 'No file attached'}
+      {fileState === 'unavailable'
+        ? t('documents.unavailable')
+        : t('documents.noFile')}
     </Badge>
   )
 }

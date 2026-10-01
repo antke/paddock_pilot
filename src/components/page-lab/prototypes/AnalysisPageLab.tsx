@@ -1,3 +1,5 @@
+import { HorseComparisonExplorer } from '#/components/analysis/HorseComparisonExplorer'
+import { createHorseComparisonSample } from './horseComparisonFixtures'
 import { useId, useState } from 'react'
 import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
 import { StableAnalysisPageView } from '#/components/analysis/StableAnalysisPage'
@@ -68,6 +70,15 @@ export function AnalysisPageLab({ data: base }: { data: DashboardLabData }) {
         key={`${base.stable._id}-${scenario}`}
         analysis={analysis}
         data={data}
+        renderHorseComparison={(horseId) => (
+          <HorseComparisonExplorer
+            key={horseId}
+            horseId={horseId}
+            stableId={base.stable._id}
+            today={today}
+            sampleRecords={createHorseComparisonSample(today)}
+          />
+        )}
       />
     </>
   )

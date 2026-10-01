@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { useRef } from 'react'
 import type { Ref } from 'react'
 import { CheckIcon } from '@phosphor-icons/react'
@@ -15,7 +16,6 @@ import {
 import { Badge } from '#/components/ui/badge'
 import { Input } from '#/components/ui/input'
 import { cn } from '#/lib/utils'
-import { stableProviderTypeLabels } from 'shared/stables/stableProviderSchema'
 import type { Id } from 'convex/_generated/dataModel'
 
 type ProviderOption = {
@@ -63,6 +63,8 @@ export function ProviderAutocomplete({
   onValueChange,
   onProviderSelect,
 }: ProviderAutocompleteProps) {
+  const t = useT()
+
   const highlightedProvider = useRef<ProviderOption | undefined>(undefined)
   if (providers.length === 0) {
     return (
@@ -75,7 +77,7 @@ export function ProviderAutocomplete({
         disabled={disabled}
         aria-invalid={invalid}
         aria-describedby={describedBy}
-        placeholder="Provider name"
+        placeholder={t('eventForm.providerName')}
         autoComplete="off"
         onBlur={onBlur}
         onChange={(event) => onValueChange(event.target.value)}
@@ -101,7 +103,7 @@ export function ProviderAutocomplete({
 
         const searchableText = [
           provider.name,
-          stableProviderTypeLabels[provider.type],
+          t(`stables.providerTypes.${provider.type}`),
           provider.phone,
         ]
           .filter(Boolean)
@@ -131,15 +133,17 @@ export function ProviderAutocomplete({
         disabled={disabled}
         aria-invalid={invalid}
         aria-describedby={describedBy}
-        placeholder="Select or enter a provider"
+        placeholder={t('eventForm.selectProvider')}
         autoComplete="off"
-        triggerLabel="Show saved providers"
+        triggerLabel={t('eventForm.showProviders')}
         onBlur={onBlur}
       />
 
       <AutocompleteContent>
         <AutocompleteGroup>
-          <AutocompleteGroupLabel>Saved providers</AutocompleteGroupLabel>
+          <AutocompleteGroupLabel>
+            {t('eventForm.savedProviders')}
+          </AutocompleteGroupLabel>
           <AutocompleteList>
             {(provider: ProviderOption) => {
               const selected = provider.name === value
@@ -163,13 +167,13 @@ export function ProviderAutocomplete({
                       {provider.name}
                     </span>
                     <span className="block truncate text-xs text-muted-foreground">
-                      {provider.phone || 'No phone saved'}
+                      {provider.phone || t('eventForm.noPhone')}
                     </span>
                   </span>
 
                   <span className="flex items-center gap-2">
                     <Badge variant="neutral" size="micro">
-                      {stableProviderTypeLabels[provider.type]}
+                      {t(`stables.providerTypes.${provider.type}`)}
                     </Badge>
                     <CheckIcon
                       aria-hidden="true"
@@ -185,9 +189,7 @@ export function ProviderAutocomplete({
             }}
           </AutocompleteList>
         </AutocompleteGroup>
-        <AutocompleteEmpty>
-          No saved providers match. Keep typing to use a new provider.
-        </AutocompleteEmpty>
+        <AutocompleteEmpty>{t('eventForm.noProviders')}</AutocompleteEmpty>
       </AutocompleteContent>
     </AutocompleteRoot>
   )

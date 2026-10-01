@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { HealthIssueForm } from '#/components/horses/HealthIssueForm'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { FilteredDashboardItemList } from '#/components/list-filtering/FilteredDashboardItemList'
@@ -25,7 +26,6 @@ import { createHorseHealthIssueListFilterConfig } from './horseDetailListFilters
 import type { HorseDetailCreateActionChange } from './useHorseDetailCreateAction'
 import { useHorseDetailCreateAction } from './useHorseDetailCreateAction'
 import { HorseRecordRemoveAction } from './HorseRecordRemoveAction'
-import { horseHealthIssueSeverityLabels } from './horseCareLabels'
 
 type HorseHealthIssuesCardProps = {
   horse: Doc<'horses'>
@@ -36,6 +36,8 @@ export function HorseHealthIssuesCard({
   horse,
   onCreateActionChange,
 }: HorseHealthIssuesCardProps) {
+  const t = useT()
+
   const { data: issues } = useSuspenseQuery(
     convexQuery(api.horseHealthIssues.listForHorse, { horseId: horse._id }),
   )
@@ -55,7 +57,7 @@ export function HorseHealthIssuesCard({
       onAdd={async (data) => {
         try {
           await addIssue({ horseId: horse._id, ...data })
-          showAppSuccessToast({ title: 'Health issue added' })
+          showAppSuccessToast({ title: t('careRecords.issueAdded') })
         } catch (error) {
           showAppErrorToast()
           throw error
@@ -64,7 +66,7 @@ export function HorseHealthIssuesCard({
       onResolve={async (issue) => {
         try {
           await resolveIssue({ id: issue._id })
-          showAppSuccessToast({ title: 'Health issue resolved' })
+          showAppSuccessToast({ title: t('careRecords.issueResolved') })
         } catch (error) {
           showAppErrorToast()
           throw error
@@ -73,7 +75,7 @@ export function HorseHealthIssuesCard({
       onRemove={async (issue) => {
         try {
           await removeIssue({ id: issue._id })
-          showAppSuccessToast({ title: 'Health issue removed' })
+          showAppSuccessToast({ title: t('careRecords.issueRemoved') })
         } catch (error) {
           showAppErrorToast()
           throw error
@@ -100,6 +102,9 @@ export function HorseHealthIssuesCardView({
   onRemove,
   onCreateActionChange,
 }: HorseHealthIssuesCardViewProps) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const activeOperations = useRef(new Set<string>())
   const [operations, setOperations] = useState<
     Record<string, { pending: 'status' | 'remove' | null; failed: boolean }>
@@ -132,7 +137,10 @@ export function HorseHealthIssuesCardView({
   const [isCreating, setIsCreating] = useState(false)
   const listRegion = useRef<HTMLDivElement>(null)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const filterConfig = useMemo(createHorseHealthIssueListFilterConfig, [])
+  const filterConfig = useMemo(
+    () => createHorseHealthIssueListFilterConfig(locale),
+    [locale],
+  )
   const filtering = useListFiltering({
     items: issues,
     config: filterConfig,
@@ -153,9 +161,9 @@ export function HorseHealthIssuesCardView({
           open={isCreateOpen}
           isPending={isCreating}
           onOpenChange={setIsCreateOpen}
-          triggerLabel="Add health issue"
-          title="Create health issue"
-          description="Record a health note without losing your place in the list."
+          triggerLabel={t('careRecords.addHealthIssue')}
+          title={t('careRecords.createHealthIssue')}
+          description={t('careRecords.createHealthHelp')}
         >
           <HealthIssueForm
             onSubmit={onAddIssue}
@@ -163,7 +171,7 @@ export function HorseHealthIssuesCardView({
           />
         </CreateRecordDialog>
       ) : null,
-    [canManage, isCreateOpen, isCreating, onAddIssue],
+    [canManage, isCreateOpen, isCreating, onAddIssue, t],
   )
   const inlineCreateDialog = onCreateActionChange ? null : createDialog
 
@@ -173,8 +181,8 @@ export function HorseHealthIssuesCardView({
     <FilteredDashboardItemList
       config={filterConfig}
       filtering={filtering}
-      emptyMessage="No health issues have been added for this horse yet."
-      filteredEmptyMessage="No health issues match these filters."
+      emptyMessage={t('careRecords.healthEmpty')}
+      filteredEmptyMessage={t('careRecords.healthFilteredEmpty')}
       renderItem={(issue) => (
         <IssueRow
           key={issue._id}
@@ -195,7 +203,7 @@ export function HorseHealthIssuesCardView({
     <div
       ref={listRegion}
       role="region"
-      aria-label={`${horse.name}: health records`}
+      aria-label={t('careRecords.healthRegion', { name: horse.name })}
       tabIndex={-1}
       className="grid gap-5 outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
@@ -231,6 +239,9 @@ function IssueRow({
   onResolve: (issue: Doc<'horseHealthIssues'>) => Promise<void>
   onRemove: (issue: Doc<'horseHealthIssues'>) => Promise<void>
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const showSeverityBadge = issue.severity === 'high'
   const showStatusBadge = issue.status === 'resolved'
 
@@ -240,7 +251,7 @@ function IssueRow({
       footer={
         failed ? (
           <p role="alert" className="text-sm text-destructive">
-            Could not update this record. Please try again.
+            {t('careRecords.updateFailed')}
           </p>
         ) : undefined
       }
@@ -266,16 +277,20 @@ function IssueRow({
                 size="sm"
                 disabled={pending !== null}
                 aria-busy={pending === 'status' || undefined}
-                aria-label={`Resolve ${issue.title}`}
+                aria-label={t('careRecords.resolveNamed', {
+                  name: issue.title,
+                })}
                 onClick={() => void run('status', () => onResolve(issue))}
               >
-                {pending === 'status' ? 'Resolving…' : 'Resolve'}
+                {pending === 'status'
+                  ? t('careRecords.resolving')
+                  : t('careRecords.resolve')}
               </Button>
             )}
             <HorseRecordRemoveAction
               disabled={pending !== null}
-              title={`Remove ${issue.title}?`}
-              description="This health issue and its history will be removed permanently. This cannot be undone."
+              title={t('careRecords.removeNamed', { name: issue.title })}
+              description={t('careRecords.removeHealthHelp')}
               removalFocusTarget={removalFocusTarget}
               onConfirm={() => run('remove', () => onRemove(issue))}
             />
@@ -287,16 +302,26 @@ function IssueRow({
         title={issue.title}
         meta={
           <>
-            <span>Noted {formatMediumTimestampDate(issue.notedAt)}</span>
+            <span>
+              {t('careRecords.notedAt', {
+                date: formatMediumTimestampDate(issue.notedAt, locale),
+              })}
+            </span>
             {issue.severity && issue.severity !== 'high' && (
-              <span>{horseHealthIssueSeverityLabels[issue.severity]}</span>
+              <span>{t(`careLabels.severity.${issue.severity}`)}</span>
             )}
             {issue.resolvedAt && (
               <span>
-                Resolved {formatMediumTimestampDate(issue.resolvedAt)}
+                {t('careRecords.resolvedAt', {
+                  date: formatMediumTimestampDate(issue.resolvedAt, locale),
+                })}
               </span>
             )}
-            <span>Updated {formatMediumTimestampDate(issue.updatedAt)}</span>
+            <span>
+              {t('careRecords.updatedAt', {
+                date: formatMediumTimestampDate(issue.updatedAt, locale),
+              })}
+            </span>
           </>
         }
         description={issue.description}

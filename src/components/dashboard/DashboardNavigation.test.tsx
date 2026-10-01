@@ -57,34 +57,34 @@ describe('shared dashboard navigation contracts', () => {
         <SectionSample />
       </>,
     )
-    const regions = screen.getAllByRole('region', { name: 'Upcoming' })
+    const regions = screen.getAllByRole('tabpanel', { name: 'Upcoming' })
     expect(new Set(regions.map((region) => region.id)).size).toBe(2)
     for (const region of regions) {
       const control = document.getElementById(
         region.getAttribute('aria-labelledby')!,
       )
       expect(control?.getAttribute('aria-controls')).toBe(region.id)
-      expect(control?.getAttribute('aria-pressed')).toBe('true')
+      expect(control?.getAttribute('aria-selected')).toBe('true')
     }
   })
-  it('associates section buttons with a named content region and keeps the group name stable', async () => {
+  it('associates section tabs with a named panel and keeps the group name stable', async () => {
     render(<SectionSample />)
-    const group = screen.getByRole('group', { name: 'Horse section views' })
-    const upcoming = within(group).getByRole('button', { name: 'Upcoming' })
-    expect(upcoming.getAttribute('aria-pressed')).toBe('true')
-    const region = screen.getByRole('region', { name: 'Upcoming' })
+    const group = screen.getByRole('tablist', { name: 'Horse section views' })
+    const upcoming = within(group).getByRole('tab', { name: 'Upcoming' })
+    expect(upcoming.getAttribute('aria-selected')).toBe('true')
+    const region = screen.getByRole('tabpanel', { name: 'Upcoming' })
     expect(upcoming.getAttribute('aria-controls')).toBe(region.id)
     act(() => upcoming.focus())
     fireEvent.keyDown(upcoming, { key: 'ArrowRight' })
-    const history = within(group).getByRole('button', { name: 'History' })
+    const history = within(group).getByRole('tab', { name: 'History' })
     await waitFor(() => expect(document.activeElement).toBe(history))
-    expect(upcoming.getAttribute('aria-pressed')).toBe('true')
-    fireEvent.click(history)
-    expect(history.getAttribute('aria-pressed')).toBe('true')
+    expect(upcoming.getAttribute('aria-selected')).toBe('false')
+    // Tabs activate on keyboard focus, matching the production Base UI contract.
+    expect(history.getAttribute('aria-selected')).toBe('true')
     expect(
-      screen.getByRole('region', { name: 'History' }).textContent,
+      screen.getByRole('tabpanel', { name: 'History' }).textContent,
     ).toContain('Past sample visit')
-    expect(screen.getByRole('group', { name: 'Horse section views' })).toBe(
+    expect(screen.getByRole('tablist', { name: 'Horse section views' })).toBe(
       group,
     )
   })

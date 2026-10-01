@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { StableProviderForm } from '#/components/stables/StableProviderForm'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import {
@@ -30,6 +31,8 @@ import type { StableProviderFormSchema } from 'shared/stables/stableProviderSche
 import { StableProviderCard } from './StableProviderCard'
 
 export function StableProvidersCard({ stableId }: { stableId: Id<'stables'> }) {
+  const t = useT()
+
   const { data } = useSuspenseQuery(
     convexQuery(api.stableProviders.listForStable, { stableId }),
   )
@@ -43,22 +46,28 @@ export function StableProvidersCard({ stableId }: { stableId: Id<'stables'> }) {
       onAdd={async (values) => {
         await addProvider({ stableId, ...values })
         showAppSuccessToast({
-          title: 'Provider saved',
-          description: `${values.name} was added to the directory.`,
+          title: t('stables.providerSaved'),
+          description: t('stables.providerAddedDescription', {
+            name: values.name,
+          }),
         })
       }}
       onUpdate={async (provider, values) => {
         await updateProvider({ id: provider._id, ...values })
         showAppSuccessToast({
-          title: 'Provider updated',
-          description: `${values.name} is up to date.`,
+          title: t('stables.providerUpdated'),
+          description: t('stables.providerUpdatedDescription', {
+            name: values.name,
+          }),
         })
       }}
       onRemove={async (provider) => {
         await removeProvider({ id: provider._id })
         showAppSuccessToast({
-          title: 'Provider removed',
-          description: `${provider.name} was removed from the directory.`,
+          title: t('stables.providerRemoved'),
+          description: t('stables.providerRemovedDescription', {
+            name: provider.name,
+          }),
         })
       }}
     />
@@ -82,6 +91,8 @@ export function StableProvidersView({
   ) => Promise<void>
   onRemove: (provider: Doc<'stableProviders'>) => Promise<void>
 }) {
+  const t = useT()
+
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const creating = useRef(false)
   const directory = useRef<HTMLDivElement>(null)
@@ -89,10 +100,10 @@ export function StableProvidersView({
     <DashboardSectionCard
       ref={directory}
       role="group"
-      aria-label="Provider directory"
+      aria-label={t('stables.providerDirectory')}
       tabIndex={-1}
-      title="Provider directory"
-      description="Care contacts for event planning."
+      title={t('stables.providerDirectory')}
+      description={t('stables.providerDirectoryHelp')}
       actions={
         canManage ? (
           <CreateRecordDialog
@@ -100,9 +111,9 @@ export function StableProvidersView({
             onOpenChange={(open) => {
               if (!creating.current) setIsCreateOpen(open)
             }}
-            triggerLabel="Add provider"
-            title="Add provider"
-            description="Add a care contact to the stable provider directory."
+            triggerLabel={t('stables.addProvider')}
+            title={t('stables.addProvider')}
+            description={t('stables.addProviderHelp')}
           >
             <StableProviderForm
               onCancel={() => setIsCreateOpen(false)}
@@ -123,7 +134,7 @@ export function StableProvidersView({
     >
       <DashboardItemList gap="compact">
         {providers.length === 0 ? (
-          <DashboardEmptyState>No providers saved yet.</DashboardEmptyState>
+          <DashboardEmptyState>{t('stables.noProviders')}</DashboardEmptyState>
         ) : (
           providers.map((provider) => (
             <ProviderRow
@@ -157,6 +168,8 @@ function ProviderRow({
   onRemove: () => Promise<boolean>
   removalFocusTarget: () => HTMLElement | null
 }) {
+  const t = useT()
+
   const [isEditing, setIsEditing] = useState(false)
   const editTrigger = useRef<HTMLButtonElement>(null)
   const wasEditing = useRef(false)
@@ -191,7 +204,7 @@ function ProviderRow({
               size="sm"
               onClick={() => setIsEditing(true)}
             >
-              Edit
+              {t('stables.editAction')}
             </Button>
             <StableProviderRemoveAction
               providerName={provider.name}
@@ -217,6 +230,8 @@ export function StableProviderRemoveAction({
   onRemove: () => Promise<boolean>
   removalFocusTarget?: () => HTMLElement | null
 }) {
+  const t = useT()
+
   const [open, setOpen] = useState(false)
   const [pending, setPending] = useState(false)
   const [failed, setFailed] = useState(false)
@@ -261,7 +276,7 @@ export function StableProviderRemoveAction({
           />
         }
       >
-        Remove
+        {t('stables.remove')}
       </AlertDialogTrigger>
       <AlertDialogContent
         finalFocus={() =>
@@ -271,21 +286,25 @@ export function StableProviderRemoveAction({
         }
       >
         <AlertDialogHeader>
-          <AlertDialogTitle>Remove {providerName}?</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t('stables.remove')}
+            {providerName}?
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            This removes the contact from the shared provider directory. This
-            cannot be undone.
+            {t('stables.removeProviderHelp')}
           </AlertDialogDescription>
         </AlertDialogHeader>
         {failed && (
           <RouteStatusAlert
             tone="danger"
-            title="Could not remove provider"
-            description="Removal was not confirmed. Try again or cancel."
+            title={t('stables.removeProviderFailed')}
+            description={t('stables.removeNotConfirmed')}
           />
         )}
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={busy}>
+            {t('stables.cancel')}
+          </AlertDialogCancel>
           <AlertDialogAction
             action="delete"
             variant="destructive"
@@ -293,7 +312,7 @@ export function StableProviderRemoveAction({
             aria-busy={busy || undefined}
             onClick={() => void confirmRemove()}
           >
-            {busy ? 'Removing...' : 'Remove provider'}
+            {busy ? t('stables.removing') : t('stables.removeProvider')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

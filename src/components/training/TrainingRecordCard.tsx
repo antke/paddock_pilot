@@ -1,3 +1,7 @@
+import { getUserFacingErrorCode } from 'shared/i18n/errors'
+import type { UserFacingErrorCode } from 'shared/i18n/errors'
+import { formatMediumTimestampDateTime } from '#/lib/dateDisplay'
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { DashboardMetaList } from '#/components/dashboard/DashboardMetaList'
 import { InlineForm } from '#/components/forms/FormLayout'
 import { useState } from 'react'
@@ -5,11 +9,8 @@ import { useForm } from 'react-hook-form'
 import { useMutation } from 'convex/react'
 import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
-import {
-  trainingFormatLabels,
-  trainingRecordSchema,
-  trainingStatusLabels,
-} from 'shared/training/trainingSchema'
+import { createTrainingSchemas } from 'shared/training/trainingSchema'
+import type { TrainingValidationKey } from 'shared/training/trainingSchema'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { Field, FieldLabel } from '#/components/ui/field'
 import { Button } from '#/components/ui/button'
@@ -26,6 +27,9 @@ import type {
 import type { TrainingEntry } from './trainingCalendarData'
 
 export function TrainingRecordCard({ entry }: { entry: TrainingEntry }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const [editing, setEditing] = useState(false)
   const [saved, setSaved] = useState(false)
   const { horse, details, record, status } = entry
@@ -42,7 +46,9 @@ export function TrainingRecordCard({ entry }: { entry: TrainingEntry }) {
               setSaved(false)
             }}
           >
-            {record ? 'Update training record' : 'Record training'}
+            {record
+              ? t('trainingViews.updateRecord')
+              : t('trainingViews.record')}
           </Button>
         ) : undefined
       }
@@ -64,19 +70,21 @@ export function TrainingRecordCard({ entry }: { entry: TrainingEntry }) {
             ))}
           </div>
           <DashboardMetaList size="sm" separator="dot" gap="compact">
-            <span>{trainingFormatLabels[details.format]}</span>
+            <span>{t(`training.formats.${details.format}`)}</span>
             {details.durationMinutes && (
               <span className="tabular-nums">
-                {details.durationMinutes} minutes
+                {t('training.minutes', { count: details.durationMinutes })}
               </span>
             )}
-            {details.rider && <span>Rider: {details.rider}</span>}
+            {details.rider && (
+              <span>{t('training.rider', { name: details.rider })}</span>
+            )}
           </DashboardMetaList>
           <dl className="grid max-w-prose gap-5 text-sm leading-6 [overflow-wrap:anywhere]">
             {details.focus && (
               <div className="grid gap-1">
                 <dt className="text-xs font-medium leading-5 text-muted-foreground">
-                  Exercises / focus
+                  {t('trainingViews.focus')}
                 </dt>
                 <dd className="whitespace-pre-wrap">{details.focus}</dd>
               </div>
@@ -84,7 +92,7 @@ export function TrainingRecordCard({ entry }: { entry: TrainingEntry }) {
             {record?.outcome && (
               <div className="grid gap-1">
                 <dt className="text-xs font-medium leading-5 text-muted-foreground">
-                  What happened
+                  {t('trainingViews.outcome')}
                 </dt>
                 <dd className="whitespace-pre-wrap">{record.outcome}</dd>
               </div>
@@ -92,7 +100,7 @@ export function TrainingRecordCard({ entry }: { entry: TrainingEntry }) {
             {details.nextFocus && (
               <div className="grid gap-1">
                 <dt className="text-xs font-medium leading-5 text-muted-foreground">
-                  Focus next time
+                  {t('trainingViews.nextFocus')}
                 </dt>
                 <dd className="whitespace-pre-wrap">{details.nextFocus}</dd>
               </div>
@@ -100,15 +108,17 @@ export function TrainingRecordCard({ entry }: { entry: TrainingEntry }) {
           </dl>
           {record && (
             <p className="text-xs text-muted-foreground">
-              Last recorded {new Date(record.updatedAt).toLocaleString()}
+              {t('trainingViews.lastRecorded', {
+                date: formatMediumTimestampDateTime(record.updatedAt, locale),
+              })}
             </p>
           )}
           {!horse.canRecord && (
             <p className="text-sm text-muted-foreground">
-              The horse owner or stable admin can record this horse’s training.
+              {t('trainingViews.permission')}
             </p>
           )}
-          {saved && <p role="status">Training record saved.</p>}
+          {saved && <p role="status">{t('trainingViews.saved')}</p>}
         </>
       )}
     </DashboardSectionCard>
@@ -124,13 +134,17 @@ function TrainingRecordEditor({
   onCancel: () => void
   onSaved: () => void
 }) {
+  const t = useT()
+
   const saveRecord = useMutation(api.training.saveRecord)
   const [status, setStatus] = useState<Doc<'trainingRecords'>['status']>(
     entry.record?.status ??
       (entry.status === 'completed' ? 'completed' : 'planned'),
   )
   const [outcome, setOutcome] = useState(entry.record?.outcome ?? '')
-  const [error, setError] = useState<string>()
+  const [error, setError] = useState<TrainingValidationKey | 'save'>()
+  const [serverErrorCode, setServerErrorCode] = useState<UserFacingErrorCode>()
+  const { trainingRecordSchema } = createTrainingSchemas((key) => key)
   const [pending, setPending] = useState(false)
   const form = useForm<EventFormInput, unknown, EventFormSchema>({
     defaultValues: {
@@ -140,16 +154,18 @@ function TrainingRecordEditor({
   })
   return (
     <InlineForm
+      noValidate
       onSubmit={async (event) => {
         event.preventDefault()
         if (pending) return
+        setServerErrorCode(undefined)
         const parsed = trainingRecordSchema.safeParse({
           ...form.getValues('training'),
           status,
           outcome,
         })
         if (!parsed.success) {
-          setError(parsed.error.issues[0]?.message)
+          setError(parsed.error.issues[0]?.message as TrainingValidationKey)
           return
         }
         const {
@@ -161,6 +177,7 @@ function TrainingRecordEditor({
         setError(undefined)
         try {
           await saveRecord({
+            errorFormat: 'structured',
             eventId: entry.occurrence.event._id,
             horseId: entry.horse._id,
             date: entry.occurrence.startDate,
@@ -170,11 +187,9 @@ function TrainingRecordEditor({
           })
           onSaved()
         } catch (reason) {
-          setError(
-            reason instanceof Error
-              ? reason.message
-              : 'Could not save training. Please try again.',
-          )
+          console.error('Could not save training record', reason)
+          setServerErrorCode(getUserFacingErrorCode(reason))
+          setError('save')
         } finally {
           setPending(false)
         }
@@ -182,7 +197,7 @@ function TrainingRecordEditor({
     >
       <Field>
         <FieldLabel htmlFor={`status-${entry.horse._id}`}>
-          Status for this horse and date
+          {t('trainingViews.statusForHorse')}
         </FieldLabel>
         <Select
           id={`status-${entry.horse._id}`}
@@ -193,7 +208,7 @@ function TrainingRecordEditor({
           {(['planned', 'completed', 'cancelled', 'skipped'] as const).map(
             (value) => (
               <option key={value} value={value}>
-                {trainingStatusLabels[value]}
+                {t(`training.status.${value}`)}
               </option>
             ),
           )}
@@ -202,7 +217,7 @@ function TrainingRecordEditor({
       <TrainingFormFields control={form.control} disabled={pending} />
       <Field>
         <FieldLabel htmlFor={`outcome-${entry.horse._id}`}>
-          What happened / what went well
+          {t('trainingViews.outcomeField')}
         </FieldLabel>
         <Textarea
           id={`outcome-${entry.horse._id}`}
@@ -212,10 +227,20 @@ function TrainingRecordEditor({
           disabled={pending}
         />
       </Field>
-      <FormSubmissionError message={error} />
+      <FormSubmissionError
+        message={
+          error === 'save'
+            ? serverErrorCode
+              ? t(`serverErrors.${serverErrorCode}`)
+              : t('trainingViews.saveFailed')
+            : error
+              ? t(`trainingValidation.${error}`)
+              : undefined
+        }
+      />
       <div className="flex flex-wrap gap-2">
         <Button type="submit" disabled={pending}>
-          {pending ? 'Saving…' : 'Save training record'}
+          {pending ? t('trainingViews.saving') : t('trainingViews.saveRecord')}
         </Button>
         <Button
           type="button"
@@ -223,7 +248,7 @@ function TrainingRecordEditor({
           disabled={pending}
           onClick={onCancel}
         >
-          Cancel
+          {t('trainingViews.cancel')}
         </Button>
       </div>
     </InlineForm>

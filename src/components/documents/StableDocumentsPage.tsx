@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import {
@@ -20,6 +21,9 @@ type StableDocumentsPageProps = {
 }
 
 export function StableDocumentsPage({ stableId }: StableDocumentsPageProps) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const { data } = useSuspenseQuery(
     convexQuery(api.stableDocuments.listForStable, { stableId }),
   )
@@ -29,8 +33,8 @@ export function StableDocumentsPage({ stableId }: StableDocumentsPageProps) {
   const documents = data.documents as Array<DocumentListItem>
   const documentActions = useDocumentActions({ stableId })
   const filterConfig = useMemo(
-    () => createDocumentListFilterConfig({ horseOptions: horses }),
-    [horses],
+    () => createDocumentListFilterConfig({ horseOptions: horses, locale }),
+    [horses, locale],
   )
   const filtering = useListFiltering({
     items: documents,
@@ -40,7 +44,7 @@ export function StableDocumentsPage({ stableId }: StableDocumentsPageProps) {
   return (
     <DashboardPage>
       <DashboardPageHeader
-        title="Documents"
+        title={t('documents.documents')}
         actions={
           <DocumentUploadDialog
             canAddDocument={data.canManageStableDocuments}
@@ -54,8 +58,8 @@ export function StableDocumentsPage({ stableId }: StableDocumentsPageProps) {
         documents={filtering.items}
         emptyMessage={getListFilterEmptyMessage({
           filtering,
-          emptyMessage: 'No documents have been added yet.',
-          filteredEmptyMessage: 'No documents match these filters.',
+          emptyMessage: t('documents.empty'),
+          filteredEmptyMessage: t('documents.filteredEmpty'),
         })}
         listToolbar={
           <ListFilterControls

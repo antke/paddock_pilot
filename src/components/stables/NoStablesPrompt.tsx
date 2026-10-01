@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import type { ReactNode } from 'react'
 
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
@@ -10,16 +11,18 @@ type NoStablesPromptProps = {
 }
 
 export function NoStablesPrompt({
-  children = 'Create a stable to start adding horses, events, reminders, and records.',
+  children,
   chrome = 'cards',
 }: NoStablesPromptProps) {
+  const t = useT()
+
   return (
     <DashboardEmptyState
       chrome={chrome}
-      title="No stables yet"
-      actions={<ButtonLink to="/onboarding">Get started</ButtonLink>}
+      title={t('stables.empty')}
+      actions={<ButtonLink to="/onboarding">{t('stables.start')}</ButtonLink>}
     >
-      {children}
+      {children ?? t('stables.emptyHelp')}
     </DashboardEmptyState>
   )
 }

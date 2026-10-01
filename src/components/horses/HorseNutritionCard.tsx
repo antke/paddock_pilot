@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import {
   DetailGrid,
   DetailIconList,
@@ -21,6 +22,8 @@ export function HorseNutritionCard({
   horse,
   showHeader = true,
 }: HorseNutritionCardProps) {
+  const t = useT()
+
   const hasNutrition =
     hasText(horse.feedingRoutine) ||
     hasText(horse.nutritionNotes) ||
@@ -32,13 +35,19 @@ export function HorseNutritionCard({
   const content = (
     <>
       {horse.feedingRoutine && (
-        <DetailTextBlock label="Feeding routine" labelProps={{ size: 'sm' }}>
+        <DetailTextBlock
+          label={t('careRecords.feedingRoutine')}
+          labelProps={{ size: 'sm' }}
+        >
           {horse.feedingRoutine}
         </DetailTextBlock>
       )}
 
       {horse.nutritionNotes && (
-        <DetailTextBlock label="Nutrition notes" labelProps={{ size: 'sm' }}>
+        <DetailTextBlock
+          label={t('careRecords.nutritionNotes')}
+          labelProps={{ size: 'sm' }}
+        >
           {horse.nutritionNotes}
         </DetailTextBlock>
       )}
@@ -47,12 +56,12 @@ export function HorseNutritionCard({
         hasItems(horse.nutritionAvoid)) && (
         <DetailGrid breakpoint="md" gap="default">
           <NutritionList
-            title="Recommended"
+            title={t('careRecords.recommended')}
             items={horse.nutritionRecommended ?? []}
             tone="positive"
           />
           <NutritionList
-            title="Avoid"
+            title={t('careRecords.avoid')}
             items={horse.nutritionAvoid ?? []}
             tone="negative"
           />
@@ -64,7 +73,10 @@ export function HorseNutritionCard({
   if (!showHeader) return content
 
   return (
-    <DashboardSectionCard title="Nutrition" contentTextSize="sm">
+    <DashboardSectionCard
+      title={t('careRecords.nutrition')}
+      contentTextSize="sm"
+    >
       {content}
     </DashboardSectionCard>
   )

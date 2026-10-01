@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { DashboardTabbedCard } from '#/components/dashboard/DashboardTabbedCard'
 import type { ReactNode } from 'react'
 
@@ -23,10 +24,12 @@ export function HorseDetailSectionTabs<TTabId extends string>({
   items,
   onSelect,
 }: HorseDetailSectionTabsProps<TTabId>) {
+  const t = useT()
+
   return (
     <DashboardTabbedCard
       activeId={activeId}
-      ariaLabel="Horse section views"
+      ariaLabel={t('horseDetail.views')}
       items={items}
       onSelect={onSelect}
       actions={actions}

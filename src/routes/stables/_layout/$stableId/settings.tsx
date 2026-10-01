@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import {
   isStableSettingsTab,
   StableSettingsPage,
@@ -53,11 +54,13 @@ function RouteComponent() {
 }
 
 function StableSettingsError({ reset }: ErrorComponentProps) {
+  const t = useT()
+
   return (
     <RouteQueryErrorAlert
       reset={reset}
-      title="Stable settings couldn’t load"
-      description="Check your connection, then try again. No stable settings have been changed."
+      title={t('stables.settingsLoadFailed')}
+      description={t('stables.settingsLoadFailedHelp')}
     />
   )
 }

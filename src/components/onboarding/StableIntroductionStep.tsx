@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { BuildingsIcon } from '@phosphor-icons/react'
 import type { Doc } from 'convex/_generated/dataModel'
 
@@ -16,40 +17,47 @@ export function StableIntroductionStep({
   stable: Doc<'stables'>
   onContinue: () => void | Promise<void>
 }) {
+  const t = useT()
+
   return (
     <div className="grid gap-5">
       <Alert role="note">
         <BuildingsIcon aria-hidden="true" />
-        <AlertTitle>You’re connected to {stable.name}</AlertTitle>
-        <AlertDescription>
-          You can see shared stable information and coordinate events while
-          keeping control of your own horses and records.
-        </AlertDescription>
+        <AlertTitle>
+          {t('onboarding.connectedStable', { name: stable.name })}
+        </AlertTitle>
+        <AlertDescription>{t('onboarding.connectedHelp')}</AlertDescription>
       </Alert>
 
       <DetailGrid>
-        <DetailDisplayField label="Location" value={stable.location} />
         <DetailDisplayField
-          label="Primary contact"
-          value={stable.contactName || 'Not added yet'}
+          label={t('onboarding.location')}
+          value={stable.location}
         />
         <DetailDisplayField
-          label="Contact phone"
-          value={stable.contactPhone || 'Not added yet'}
+          label={t('onboarding.primaryContact')}
+          value={stable.contactName || t('onboarding.notAddedYet')}
         />
         <DetailDisplayField
-          label="Opening hours"
-          value={stable.openingHours || 'Not added yet'}
+          label={t('onboarding.contactPhone')}
+          value={stable.contactPhone || t('onboarding.notAddedYet')}
+        />
+        <DetailDisplayField
+          label={t('onboarding.openingHours')}
+          value={stable.openingHours || t('onboarding.notAddedYet')}
         />
       </DetailGrid>
 
       {stable.yardRules && (
-        <DetailDisplayField label="Yard rules" value={stable.yardRules} />
+        <DetailDisplayField
+          label={t('onboarding.yardRules')}
+          value={stable.yardRules}
+        />
       )}
 
       <DashboardActions align="end">
         <Button type="button" onClick={onContinue}>
-          Continue
+          {t('onboarding.continue')}
         </Button>
       </DashboardActions>
     </div>

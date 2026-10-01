@@ -23,7 +23,7 @@ describe('authenticated account and stable security flows', () => {
     const asNewUser = t.withIdentity(identity('new-user'))
 
     await expect(asNewUser.query(api.users.getCurrentUser)).resolves.toBeNull()
-    await asNewUser.mutation(api.users.ensureCurrentUser)
+    await asNewUser.mutation(api.users.ensureCurrentUser, {})
 
     const user = await asNewUser.query(api.users.getCurrentUser)
     expect(user).toMatchObject({
@@ -201,7 +201,7 @@ describe('authenticated account and stable security flows', () => {
     expect(pendingBefore).toHaveLength(1)
 
     const asPaidUser = t.withIdentity(identity('paid-user'))
-    await asPaidUser.mutation(api.users.ensureCurrentUser)
+    await asPaidUser.mutation(api.users.ensureCurrentUser, {})
 
     const subscriptions = await asPaidUser.query(
       api.userSubscriptions.getCurrent,
@@ -220,7 +220,7 @@ describe('authenticated account and stable security flows', () => {
 
   it('does not let an older billing event overwrite a newer snapshot', async () => {
     const asUser = t.withIdentity(identity('billing-user'))
-    await asUser.mutation(api.users.ensureCurrentUser)
+    await asUser.mutation(api.users.ensureCurrentUser, {})
 
     await t.mutation(internal.userSubscriptions.upsertForClerkUser, {
       clerkUserId: 'billing-user',
@@ -241,7 +241,7 @@ describe('authenticated account and stable security flows', () => {
 
   it('archives a stable without orphaning its records', async () => {
     const asOwner = t.withIdentity(identity('archive-owner'))
-    await asOwner.mutation(api.users.ensureCurrentUser)
+    await asOwner.mutation(api.users.ensureCurrentUser, {})
     const stableId = await asOwner.mutation(api.stables.add, {
       name: 'Archive Yard',
       location: 'Krakow',
@@ -270,7 +270,7 @@ describe('authenticated account and stable security flows', () => {
 
   it('tombstones deleted users and archives their owned stables', async () => {
     const asOwner = t.withIdentity(identity('deleted-owner'))
-    await asOwner.mutation(api.users.ensureCurrentUser)
+    await asOwner.mutation(api.users.ensureCurrentUser, {})
     const stableId = await asOwner.mutation(api.stables.add, {
       name: 'Preserved Yard',
       location: 'Lublin',
@@ -336,7 +336,7 @@ describe('authenticated account and stable security flows', () => {
 
   it('rejects profile storage objects that were not issued for the user', async () => {
     const asUser = t.withIdentity(identity('profile-user'))
-    await asUser.mutation(api.users.ensureCurrentUser)
+    await asUser.mutation(api.users.ensureCurrentUser, {})
     const storageId = await t.run(async (ctx) =>
       ctx.storage.store(
         new Blob(['not really an image'], { type: 'image/png' }),
@@ -533,7 +533,7 @@ describe('authenticated account and stable security flows', () => {
 
   it('rejects out-of-sequence onboarding transitions', async () => {
     const asOwner = t.withIdentity(identity('steps-owner'))
-    await asOwner.mutation(api.users.ensureCurrentUser)
+    await asOwner.mutation(api.users.ensureCurrentUser, {})
     const stableId = await asOwner.mutation(api.stables.add, {
       name: 'Stepper Yard',
       location: 'Poznan',
@@ -551,7 +551,7 @@ describe('authenticated account and stable security flows', () => {
 
   it('finds and completes resumable onboarding for an existing stable', async () => {
     const asOwner = t.withIdentity(identity('resume-owner'))
-    await asOwner.mutation(api.users.ensureCurrentUser)
+    await asOwner.mutation(api.users.ensureCurrentUser, {})
     const stableId = await asOwner.mutation(api.stables.add, {
       name: 'Resume Yard',
       location: 'Wroclaw',
@@ -597,8 +597,8 @@ describe('authenticated account and stable security flows', () => {
     const asMember = t.withIdentity(
       identity('invited-member', 'invited@example.com'),
     )
-    await asOwner.mutation(api.users.ensureCurrentUser)
-    await asMember.mutation(api.users.ensureCurrentUser)
+    await asOwner.mutation(api.users.ensureCurrentUser, {})
+    await asMember.mutation(api.users.ensureCurrentUser, {})
     const stableId = await asOwner.mutation(api.stables.add, {
       name: 'Invitation Yard',
       location: 'Sopot',
@@ -650,7 +650,7 @@ describe('authenticated account and stable security flows', () => {
 
   it('rejects malformed stable invitation emails in the mutation', async () => {
     const asOwner = t.withIdentity(identity('invalid-invite-owner'))
-    await asOwner.mutation(api.users.ensureCurrentUser)
+    await asOwner.mutation(api.users.ensureCurrentUser, {})
     const stableId = await asOwner.mutation(api.stables.add, {
       name: 'Validation Yard',
       location: 'Szczecin',

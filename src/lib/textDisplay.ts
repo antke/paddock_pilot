@@ -1,3 +1,6 @@
+import { displayLocales } from 'shared/i18n/locale'
+import type { Locale } from 'shared/i18n/locale'
+
 type TextDisplayPart = string | number | null | undefined | false
 
 export function formatMetaText(parts: Array<TextDisplayPart>) {
@@ -12,12 +15,14 @@ export function formatCommaList(parts: Array<TextDisplayPart>) {
   return parts.filter(isDisplayPart).join(', ')
 }
 
-export function formatConjunctionList(parts: Array<TextDisplayPart>) {
-  const displayParts = parts.filter(isDisplayPart)
-
-  if (displayParts.length <= 2) return displayParts.join(' and ')
-
-  return `${displayParts.slice(0, -1).join(', ')}, and ${displayParts.at(-1)}`
+export function formatConjunctionList(
+  parts: Array<TextDisplayPart>,
+  locale: Locale = 'en',
+) {
+  return new Intl.ListFormat(displayLocales[locale], {
+    style: 'long',
+    type: 'conjunction',
+  }).format(parts.filter(isDisplayPart).map(String))
 }
 
 function isDisplayPart(part: TextDisplayPart): part is string | number {

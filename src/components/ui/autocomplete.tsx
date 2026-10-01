@@ -1,7 +1,38 @@
+import { useEffect, useState } from 'react'
+import { useT } from '#/i18n/LocaleProvider'
 import { Autocomplete as AutocompletePrimitive } from '@base-ui/react/autocomplete'
 import { CaretDownIcon } from '@phosphor-icons/react'
 
 import { cn } from '#/lib/utils'
+
+/** Base UI 1.7 hard-codes both screen-reader dismiss labels with no public override.
+ * Scope this compatibility adapter to our input/portal containers. It changes only
+ * the label; the library continues to own focus, dismissal and popup behavior.
+ * Remove when Base UI exposes a localization prop for its internal dismiss button.
+ */
+function useAutocompleteDismissTranslation() {
+  const t = useT()
+  const [container, setContainer] = useState<HTMLDivElement | null>(null)
+  const label = t('common.close')
+  useEffect(() => {
+    if (!container) return
+    const update = () => {
+      container
+        .querySelectorAll<HTMLElement>(
+          'span[role="button"][aria-label="Dismiss"], [data-localized-autocomplete-dismiss]',
+        )
+        .forEach((button) => {
+          button.setAttribute('data-localized-autocomplete-dismiss', '')
+          button.setAttribute('aria-label', label)
+        })
+    }
+    update()
+    const observer = new MutationObserver(update)
+    observer.observe(container, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [container, label])
+  return setContainer
+}
 
 function AutocompleteRoot<TItemValue>({
   ...props
@@ -13,13 +44,16 @@ function AutocompleteRoot<TItemValue>({
 
 function AutocompleteInput({
   className,
-  triggerLabel = 'Show suggestions',
+  triggerLabel,
   ...props
 }: AutocompletePrimitive.Input.Props & {
   triggerLabel?: string
 }) {
+  const t = useT()
+  const dismissContainerRef = useAutocompleteDismissTranslation()
+
   return (
-    <div className="relative">
+    <div ref={dismissContainerRef} className="relative">
       <AutocompletePrimitive.Input
         data-slot="autocomplete-input"
         className={cn(
@@ -29,7 +63,7 @@ function AutocompleteInput({
         {...props}
       />
       <AutocompletePrimitive.Trigger
-        aria-label={triggerLabel}
+        aria-label={triggerLabel ?? t('listControls.showSuggestions')}
         className="app-control-focus group/autocomplete-trigger absolute top-1/2 right-1 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-transparent text-foreground/80 transition-[background-color,color,transform] duration-150 outline-none hover:bg-surface-muted hover:text-foreground active:scale-95 active:bg-surface-muted disabled:pointer-events-none disabled:opacity-50 data-popup-open:text-foreground motion-reduce:transition-none"
       >
         <CaretDownIcon
@@ -54,9 +88,11 @@ function AutocompleteContent({
     AutocompletePrimitive.Positioner.Props,
     'align' | 'alignOffset' | 'side' | 'sideOffset'
   >) {
+  const dismissContainerRef = useAutocompleteDismissTranslation()
   return (
     <AutocompletePrimitive.Portal>
       <AutocompletePrimitive.Positioner
+        ref={dismissContainerRef}
         className="isolate z-50 outline-none"
         align={align}
         alignOffset={alignOffset}

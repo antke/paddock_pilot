@@ -1,9 +1,9 @@
+import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { Badge } from '#/components/ui/badge'
 import { attentionLevelBadgeVariant } from '#/components/dashboard/semanticBadgeVariants'
 import { CheckIcon, ClockIcon, WarningIcon, XIcon } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
 import type { ComponentProps } from 'react'
-import { careReminderPriorityLabels } from 'shared/reminders/careReminderSchema'
 import type {
   CareReminderPriority,
   CareReminderStatus,
@@ -36,9 +36,10 @@ export function CareReminderPriorityBadge({
 }: CareReminderBadgeProps & {
   priority: CareReminderPriority
 }) {
+  const t = useT()
   return (
     <Badge variant={attentionLevelBadgeVariant[priority]} {...props}>
-      {careReminderPriorityLabels[priority]}
+      {t(`careLabels.priority.${priority}`)}
     </Badge>
   )
 }
@@ -51,6 +52,7 @@ export function CareReminderStatusBadge({
   status: CareReminderStatus
   overdue: boolean
 }) {
+  const { locale } = useLocale()
   const StatusIcon = overdue ? WarningIcon : careReminderStatusIcon[status]
 
   return (
@@ -59,7 +61,7 @@ export function CareReminderStatusBadge({
       {...props}
     >
       <StatusIcon aria-hidden="true" className="size-3" weight="bold" />
-      {getCareReminderStateLabel({ status, overdue })}
+      {getCareReminderStateLabel({ status, overdue }, locale)}
     </Badge>
   )
 }

@@ -97,6 +97,7 @@ function createFixtureHorses(): Array<DashboardLabHorse> {
       passportNumber: 'GBR-PP-4412',
       microchipNumber: '985141000441200',
       shoeingStatus: 'front_shoes',
+      profileImageUrl: '/landing-lab/juniper-portrait-960.jpg',
     }),
     createFixtureHorse({
       id: atlasId,
@@ -223,6 +224,20 @@ function createFixtureEvents(): Array<DashboardLabEvent> {
       horseIds: [atlasId],
       providerName: 'North County Equine Dental',
       notesAfterCompletion: 'Mild hooks corrected. Recheck in twelve months.',
+      status: 'completed',
+    }),
+    createFixtureEvent({
+      id: 'lab-event-farrier-previous',
+      title: 'Farrier reset',
+      type: 'hoof_trimming',
+      dateOffset: -16,
+      time: '08:15',
+      horseIds: [juniperId, atlasId],
+      providerName: 'Ben Carter',
+      providerPhone: '(555) 014-1902',
+      location: 'Wash bay',
+      costPerHorse: 95,
+      notesAfterCompletion: 'Trim completed. Next visit to be arranged.',
       status: 'completed',
     }),
   ]

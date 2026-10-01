@@ -1,3 +1,5 @@
+import { useT } from '#/i18n/LocaleProvider'
+import { LanguageSelector } from '#/i18n/LanguageSelector'
 import { Show } from '@clerk/tanstack-react-start'
 import type { ReactNode } from 'react'
 
@@ -39,16 +41,17 @@ export function HeaderView({
   navigation,
   accountActions,
   position,
-  navigationLabel = 'Primary navigation',
+  navigationLabel,
 }: {
   navigation: ReactNode
   accountActions: ReactNode
   position?: 'sticky' | 'static'
   navigationLabel?: string
 }) {
+  const t = useT()
   return (
     <AppHeader position={position}>
-      <AppHeaderNav aria-label={navigationLabel}>
+      <AppHeaderNav aria-label={navigationLabel ?? t('navigation.primary')}>
         <AppBrandLink>Paddock Pilot</AppBrandLink>
 
         <AppHeaderLinks>{navigation}</AppHeaderLinks>
@@ -56,6 +59,7 @@ export function HeaderView({
         <AppHeaderActions>
           <AppHeaderUtilityCluster>
             {accountActions}
+            <LanguageSelector compact />
             <ThemeToggle />
           </AppHeaderUtilityCluster>
         </AppHeaderActions>
@@ -69,17 +73,20 @@ function HeaderAccountActions({
 }: {
   devAuthBypassEnabled: boolean
 }) {
+  const t = useT()
   if (devAuthBypassEnabled) return <ClerkHeader />
 
   return (
     <>
       <Show when="signed-out">
         <ButtonLink to="/sign-in/$" variant="ghost" size="sm">
-          Sign in
+          {t('navigation.signIn')}
         </ButtonLink>
         <ButtonLink to="/sign-up/$" size="sm">
-          <span className="sm:hidden">Create</span>
-          <span className="hidden sm:inline">Create account</span>
+          <span className="sm:hidden">{t('navigation.create')}</span>
+          <span className="hidden sm:inline">
+            {t('navigation.createAccount')}
+          </span>
         </ButtonLink>
       </Show>
       <Show when="signed-in">
@@ -94,6 +101,7 @@ function HeaderNavigation({
 }: {
   devAuthBypassEnabled: boolean
 }) {
+  const t = useT()
   const { activeStable } = useAppUserState()
 
   const signedInNavigation = activeStable ? (
@@ -101,9 +109,11 @@ function HeaderNavigation({
   ) : (
     <>
       <HeaderNavigationLink to="/" exact>
-        Home
+        {t('navigation.home')}
       </HeaderNavigationLink>
-      <HeaderNavigationLink to="/stables">Stables</HeaderNavigationLink>
+      <HeaderNavigationLink to="/stables">
+        {t('navigation.stables')}
+      </HeaderNavigationLink>
     </>
   )
 
@@ -112,15 +122,21 @@ function HeaderNavigation({
       {devAuthBypassEnabled ? (
         <>
           <HeaderNavigationLink to="/" exact>
-            Home
+            {t('navigation.home')}
           </HeaderNavigationLink>
-          <HeaderNavigationLink to="/stables">Stables</HeaderNavigationLink>
-          <HeaderNavigationLink to="/pricing">Plans</HeaderNavigationLink>
+          <HeaderNavigationLink to="/stables">
+            {t('navigation.stables')}
+          </HeaderNavigationLink>
+          <HeaderNavigationLink to="/pricing">
+            {t('navigation.plans')}
+          </HeaderNavigationLink>
         </>
       ) : (
         <>
           <Show when="signed-out">
-            <HeaderNavigationLink to="/pricing">Plans</HeaderNavigationLink>
+            <HeaderNavigationLink to="/pricing">
+              {t('navigation.plans')}
+            </HeaderNavigationLink>
           </Show>
           <Show when="signed-in">{signedInNavigation}</Show>
         </>
@@ -136,6 +152,7 @@ export function ActiveStableNavigation({
   stableId: string
   pathname?: string
 }) {
+  const t = useT()
   const location = useLocation()
   const pathname = samplePath ?? location.pathname
   const stableBasePath = `/stables/${stableId}`
@@ -143,7 +160,7 @@ export function ActiveStableNavigation({
   return (
     <>
       <HeaderNavigationLink to="/" active={pathname === '/'}>
-        Home
+        {t('navigation.home')}
       </HeaderNavigationLink>
       <Link
         to="/stables/$stableId/horses"
@@ -158,7 +175,7 @@ export function ActiveStableNavigation({
             activeNavigationClassName,
         )}
       >
-        Horses
+        {t('navigation.horses')}
       </Link>
       <Link
         to="/stables/$stableId/reminders"
@@ -175,7 +192,7 @@ export function ActiveStableNavigation({
             activeNavigationClassName,
         )}
       >
-        Care
+        {t('navigation.care')}
       </Link>
       <Link
         to="/stables/$stableId/events"
@@ -190,7 +207,7 @@ export function ActiveStableNavigation({
             activeNavigationClassName,
         )}
       >
-        Events
+        {t('navigation.events')}
       </Link>
       <Link
         to="/stables/$stableId/training"
@@ -205,7 +222,7 @@ export function ActiveStableNavigation({
             activeNavigationClassName,
         )}
       >
-        Training log
+        {t('navigation.training')}
       </Link>
       <Link
         to="/stables/$stableId/documents"
@@ -220,7 +237,7 @@ export function ActiveStableNavigation({
             activeNavigationClassName,
         )}
       >
-        Documents
+        {t('navigation.documents')}
       </Link>
       <Link
         to="/stables/$stableId/analysis"
@@ -235,7 +252,7 @@ export function ActiveStableNavigation({
             activeNavigationClassName,
         )}
       >
-        Analysis
+        {t('navigation.analysis')}
       </Link>
     </>
   )

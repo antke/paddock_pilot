@@ -1,100 +1,87 @@
 import type { Doc } from 'convex/_generated/dataModel'
+import type { Locale } from 'shared/i18n/locale'
 import { formatMediumDateKey } from '#/lib/dateDisplay'
 import { formatCommaList } from '#/lib/textDisplay'
-import { dayOfWeekLabels, eventTypeLabels } from 'shared/events/eventSchema'
-import type { RecurrenceOrdinal } from 'shared/events/eventSchema'
+import { localeInstances } from '#/i18n/resources'
 
-const ordinalLabels = {
-  1: '1st',
-  2: '2nd',
-  3: '3rd',
-  4: '4th',
-  last: 'last',
-} satisfies Record<RecurrenceOrdinal, string>
-
-export function formatEventDate(date: string) {
-  return formatMediumDateKey(date)
+export function formatEventDate(date: string, locale: Locale = 'en') {
+  return formatMediumDateKey(date, locale)
 }
 
-export function formatEventDateRange(date: string, endDate?: string) {
-  if (!endDate || endDate <= date) return formatEventDate(date)
-
-  return `${formatEventDate(date)} – ${formatEventDate(endDate)}`
+export function formatEventDateRange(
+  date: string,
+  endDate?: string,
+  locale: Locale = 'en',
+) {
+  if (!endDate || endDate <= date) return formatEventDate(date, locale)
+  return `${formatEventDate(date, locale)} – ${formatEventDate(endDate, locale)}`
 }
 
 export function formatEventDateTime(
   date: string,
   time: string,
   endDate?: string,
+  locale: Locale = 'en',
 ) {
-  return `${formatEventDateRange(date, endDate)} at ${time}`
+  return localeInstances[locale].t('events.dateTime', {
+    date: formatEventDateRange(date, endDate, locale),
+    time,
+  })
 }
 
-export function formatEventType(type: Doc<'events'>['type']) {
-  return eventTypeLabels[type]
+export function formatEventType(
+  type: Doc<'events'>['type'],
+  locale: Locale = 'en',
+) {
+  return localeInstances[locale].t(`events.types.${type}`)
 }
 
-export function formatRecurrence(recurrence: Doc<'events'>['recurrence']) {
+export function formatRecurrence(
+  recurrence: Doc<'events'>['recurrence'],
+  locale: Locale = 'en',
+) {
   if (!recurrence) return null
-
-  const interval =
-    recurrence.interval === 1 ? 'Every' : `Every ${recurrence.interval}`
-
-  if (recurrence.frequency === 'daily') {
-    return formatRecurrenceEnd(`${interval} day`, recurrence.end)
-  }
-
+  const t = localeInstances[locale].t
+  const frequency = t(`events.${recurrence.frequency}`, {
+    count: recurrence.interval,
+  })
+  let summary: string = frequency
   if (recurrence.frequency === 'weekly') {
-    const days = recurrence.daysOfWeek
-      ?.map((day) => dayOfWeekLabels[day])
-      .filter(Boolean)
-
-    return formatRecurrenceEnd(
-      days?.length
-        ? `${interval} week on ${formatCommaList(days)}`
-        : `${interval} week`,
-      recurrence.end,
+    const days = recurrence.daysOfWeek?.map((day) =>
+      t(`events.weekdays.${day}`),
     )
+    if (days?.length)
+      summary = t('events.weeklyDays', {
+        frequency,
+        days: formatCommaList(days),
+      })
+  } else if (recurrence.frequency === 'monthly') {
+    if (recurrence.monthlyMode === 'weekdayPattern') {
+      if (recurrence.ordinal && recurrence.weekday !== undefined) {
+        // Polish weekday nouns have different grammatical genders.
+        const feminine = [0, 3, 6].includes(recurrence.weekday)
+        const ordinal = t(
+          `events.${feminine ? 'feminineOrdinals' : 'ordinals'}.${recurrence.ordinal}`,
+        )
+        summary = t('events.monthlyWeekday', {
+          frequency,
+          ordinal,
+          weekday: t(`events.weekdays.${recurrence.weekday}`),
+        })
+      }
+    } else if (recurrence.dayOfMonth)
+      summary = t('events.monthlyDay', {
+        frequency,
+        day: recurrence.dayOfMonth,
+      })
   }
-
-  if (recurrence.monthlyMode === 'weekdayPattern') {
-    const ordinal = recurrence.ordinal
-      ? ordinalLabels[recurrence.ordinal]
-      : null
-    const weekday =
-      recurrence.weekday === undefined
-        ? null
-        : dayOfWeekLabels[recurrence.weekday]
-
-    return formatRecurrenceEnd(
-      ordinal && weekday
-        ? `${interval} month on the ${ordinal} ${weekday}`
-        : `${interval} month`,
-      recurrence.end,
-    )
-  }
-
-  return formatRecurrenceEnd(
-    recurrence.dayOfMonth
-      ? `${interval} month on day ${recurrence.dayOfMonth}`
-      : `${interval} month`,
-    recurrence.end,
-  )
-}
-
-function formatRecurrenceEnd(
-  summary: string,
-  end: NonNullable<Doc<'events'>['recurrence']>['end'],
-) {
-  if (!end || end.type === 'never') return summary
-
-  if (end.type === 'on_date' && end.date) {
-    return `${summary}, until ${formatEventDate(end.date)}`
-  }
-
-  if (end.type === 'after_occurrences' && end.count) {
-    return `${summary}, ${end.count} times`
-  }
-
+  const end = recurrence.end
+  if (end?.type === 'on_date' && end.date)
+    return t('events.until', {
+      summary,
+      date: formatEventDate(end.date, locale),
+    })
+  if (end?.type === 'after_occurrences' && end.count)
+    return t('events.times', { summary, count: end.count })
   return summary
 }

@@ -247,6 +247,14 @@ Route ordinary deletion through `RecordRemoveAction` and the shared confirmation
 
 Horse editing uses a visible permission-gated header action, sticky save controls and confirmation before resetting dirty values. Choice groups have programmatic names, and invalid fields reference their error messages. Multiline horse lists preserve raw typing while synchronizing normalized arrays and reconcile external resets.
 
+### Time comparisons
+
+Use `TimeComparisonChart` for numeric rows and event/interval lanes on one continuous calendar-date axis. Keep units and numeric scales separate by row, use semantic chart colors, and show actual observations with straight connecting segments. A single measurement stays a point; missing observations stay absent. Context markers and overlapping intervals pack vertically while retaining their calendar positions. These are recorded relationships in time, without causal or health judgments.
+
+The chart owns rendering and responsive tick density. Its caller owns records, filtering, aggregation, units, localized labels and formatters, selected-record details, and an accessible record table. Preserve keyboard/tap selection and the underlying source records when aggregating bars. See the [shared chart contract](src/components/charts/README.md).
+
+`DateRangeControl` reuses labeled shared fields and stacks them on phones; its caller owns presets, validity and query bounds. Keep the comparison within one paper working section with existing serif section headings and controls. Record details remain open beneath the chart instead of adding nested summary cards. The horse implementation and evidence boundaries are recorded in [horse analysis](docs/features/horse-analysis-exploration.md).
+
 ### Demonstration and rollout
 
 The style lab preserves the component inventory and adds a clearly labeled sample schedule. Day selection changes the local schedule; the care action marks a sample grooming task complete and offers undo, with explicit feedback that no live record changed. These controls demonstrate shared primitives without suggesting server persistence.

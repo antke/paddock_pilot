@@ -1,3 +1,4 @@
+import type { Locale } from '../../../shared/i18n/locale'
 import { internal } from '../../_generated/api'
 import type { MutationCtx } from '../../_generated/server'
 import type { EmailRelation, EmailTemplate } from './types'
@@ -5,6 +6,7 @@ import type { EmailRelation, EmailTemplate } from './types'
 export const enqueueEmail = async (
   ctx: MutationCtx,
   input: {
+    locale?: Locale
     dedupeKey?: string
     recipient: string
     relation: EmailRelation
@@ -20,9 +22,17 @@ export const enqueueEmail = async (
     if (existingDelivery) return existingDelivery._id
   }
 
+  const recipient = await ctx.db
+    .query('users')
+    .withIndex('by_email', (q) =>
+      q.eq('email', input.recipient.trim().toLowerCase()),
+    )
+    .first()
+  const locale = recipient?.locale ?? input.locale ?? 'en'
   const now = Date.now()
   const deliveryId = await ctx.db.insert('emailDeliveries', {
     category: input.template.kind,
+    locale,
     recipient: input.recipient,
     idempotencyKey: crypto.randomUUID(),
     dedupeKey: input.dedupeKey,

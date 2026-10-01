@@ -1,11 +1,10 @@
+import { localeInstances } from '#/i18n/resources'
+import type { Locale } from 'shared/i18n/locale'
 import type {
   ListFilterConfig,
   ListFilterOption,
 } from '#/components/list-filtering/listFiltering'
-import {
-  stableDocumentTypeLabels,
-  stableDocumentTypes,
-} from 'shared/stables/stableDocumentSchema'
+import { stableDocumentTypes } from 'shared/stables/stableDocumentSchema'
 import type { StableDocumentType } from 'shared/stables/stableDocumentSchema'
 
 import type { DocumentHorseOption, DocumentListItem } from './DocumentsCard'
@@ -14,12 +13,26 @@ export type DocumentListFilterFacetId = 'scope' | 'type' | 'fileState'
 
 export function createDocumentListFilterConfig({
   horseOptions = [],
+  locale = 'en',
 }: {
+  locale?: Locale
   horseOptions?: ReadonlyArray<DocumentHorseOption>
 } = {}): ListFilterConfig<DocumentListItem, DocumentListFilterFacetId> {
+  const t = localeInstances[locale].t
+  const documentTypeFilterOptions = stableDocumentTypes.map((type) => ({
+    value: type,
+    label: t(`documents.types.${type}`),
+  })) satisfies ReadonlyArray<ListFilterOption>
+
+  const fileStateFilterOptions = [
+    { value: 'uploaded-file', label: t('documents.attached') },
+    { value: 'unavailable', label: t('documents.unavailable') },
+    { value: 'metadata-only', label: t('documents.noFile') },
+  ] satisfies ReadonlyArray<ListFilterOption>
+
   return {
-    searchLabel: 'Search documents',
-    searchPlaceholder: 'Search file name, notes, type, or linked records',
+    searchLabel: t('documents.search'),
+    searchPlaceholder: t('documents.searchPlaceholder'),
     searchFields: [
       {
         id: 'fileName',
@@ -34,7 +47,7 @@ export function createDocumentListFilterConfig({
       {
         id: 'labels',
         weight: 3,
-        getValues: (item) => [stableDocumentTypeLabels[item.document.type]],
+        getValues: (item) => [t(`documents.types.${item.document.type}`)],
       },
       {
         id: 'links',
@@ -47,10 +60,10 @@ export function createDocumentListFilterConfig({
         ? [
             {
               id: 'scope' as const,
-              label: 'Scope',
-              allLabel: 'All documents',
+              label: t('documents.scope'),
+              allLabel: t('documents.allDocuments'),
               options: [
-                { value: 'stable-wide', label: 'Stable-wide' },
+                { value: 'stable-wide', label: t('documents.stableWide') },
                 ...horseOptions.map((horse) => ({
                   value: horse._id,
                   label: horse.name,
@@ -65,8 +78,8 @@ export function createDocumentListFilterConfig({
         : []),
       {
         id: 'type',
-        label: 'Type',
-        allLabel: 'All types',
+        label: t('documents.type'),
+        allLabel: t('documents.allTypes'),
         options: documentTypeFilterOptions,
         matches: (item, selectedValue) =>
           isStableDocumentType(selectedValue) &&
@@ -74,25 +87,14 @@ export function createDocumentListFilterConfig({
       },
       {
         id: 'fileState',
-        label: 'File',
-        allLabel: 'All files',
+        label: t('documents.file'),
+        allLabel: t('documents.allFiles'),
         options: fileStateFilterOptions,
         matches: matchesFileStateFilter,
       },
     ],
   }
 }
-
-const documentTypeFilterOptions = stableDocumentTypes.map((type) => ({
-  value: type,
-  label: stableDocumentTypeLabels[type],
-})) satisfies ReadonlyArray<ListFilterOption>
-
-const fileStateFilterOptions = [
-  { value: 'uploaded-file', label: 'File attached' },
-  { value: 'unavailable', label: 'File unavailable' },
-  { value: 'metadata-only', label: 'No file attached' },
-] satisfies ReadonlyArray<ListFilterOption>
 
 function isStableDocumentType(value: string): value is StableDocumentType {
   return stableDocumentTypes.some((type) => type === value)

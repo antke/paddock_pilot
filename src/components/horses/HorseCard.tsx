@@ -1,3 +1,5 @@
+import { getHorseBreedLabel } from 'shared/i18n/horseBreedLabels'
+import { useLocale } from '#/i18n/LocaleProvider'
 import type { DashboardItemAccent } from '#/components/dashboard/DashboardItemCard'
 import {
   DashboardItemCard,
@@ -53,9 +55,12 @@ export function HorseCardContent({
   meta,
   linked = false,
 }: HorseCardContentProps) {
+  const { locale } = useLocale()
   const metaContent = [
     horse.ownerName ? <span key="owner">{horse.ownerName}</span> : undefined,
-    horse.breed ? <span key="breed">{horse.breed}</span> : undefined,
+    horse.breed ? (
+      <span key="breed">{getHorseBreedLabel(horse.breed, locale)}</span>
+    ) : undefined,
     meta,
   ].filter(
     (item): item is Exclude<ReactNode, null | undefined> =>

@@ -5,7 +5,10 @@ import {
   getNextSelectedFacets,
   hasActiveListFilterState,
 } from './listFiltering'
-import type { ListFilterConfig, ListFilterSelectedFacets } from './listFiltering'
+import type {
+  ListFilterConfig,
+  ListFilterSelectedFacets,
+} from './listFiltering'
 
 type TestItem = {
   title: string

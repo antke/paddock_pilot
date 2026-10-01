@@ -1,3 +1,5 @@
+import { getHorseBreedLabel } from 'shared/i18n/horseBreedLabels'
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import {
   DetailGrid,
   DetailPrintField,
@@ -19,18 +21,21 @@ import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
 import { Button } from '#/components/ui/button'
 import {
   formatMediumDateKey,
+  formatPartialDateKey,
   formatMediumTimestampDate,
 } from '#/lib/dateDisplay'
-import { formatCurrencyAmount, formatFileSize } from '#/lib/numberDisplay'
+import {
+  formatCurrencyAmount,
+  formatFileSize,
+  formatDecimal,
+} from '#/lib/numberDisplay'
 import { formatLineText, formatMetaText } from '#/lib/textDisplay'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { api } from 'convex/_generated/api'
-import type { Doc, Id } from 'convex/_generated/dataModel'
+import type { Id } from 'convex/_generated/dataModel'
 import type { ReactNode } from 'react'
 import type { FunctionReturnType } from 'convex/server'
-import { eventStatusLabels, eventTypeLabels } from 'shared/events/eventSchema'
-import { stableDocumentTypeLabels } from 'shared/stables/stableDocumentSchema'
 
 export type HorseCareSummaryData = FunctionReturnType<
   typeof api.horseCareSummary.getForHorse
@@ -40,18 +45,6 @@ type HorseCareSummaryPageProps = {
   stableId: string
   horseId: Id<'horses'>
 }
-
-const sexLabels = {
-  mare: 'Mare',
-  gelding: 'Gelding',
-  stallion: 'Stallion',
-} satisfies Record<NonNullable<Doc<'horses'>['sex']>, string>
-
-const shoeingStatusLabels = {
-  barefoot: 'Barefoot',
-  front_shoes: 'Front shoes',
-  full_set: 'Full set',
-} satisfies Record<NonNullable<Doc<'horses'>['shoeingStatus']>, string>
 
 export function HorseCareSummaryPage({ horseId }: HorseCareSummaryPageProps) {
   const { data: summary } = useSuspenseQuery(
@@ -68,11 +61,14 @@ export function HorseCareSummaryView({
   summary: HorseCareSummaryData
   onPrint?: () => void
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   if (!summary.horse) {
     return (
       <RouteEntityNotFoundAlert
         entity="horse"
-        description="This care summary is no longer available."
+        description={t('horseHistory.summaryGone')}
       />
     )
   }
@@ -90,174 +86,221 @@ export function HorseCareSummaryView({
     <PrintSummaryPage>
       <PrintSummaryHeader
         as="h2"
-        title={`${horse.name} — care summary`}
+        title={t('horseHistory.summaryTitle', { name: horse.name })}
         description={formatMetaText([
           stable.name,
-          `Generated ${formatMediumTimestampDate(Date.now())}`,
+          t('horseHistory.generated', {
+            date: formatMediumTimestampDate(Date.now(), locale),
+          }),
         ])}
         actions={
           <Button type="button" onClick={onPrint}>
-            Print summary
+            {t('horseHistory.print')}
           </Button>
         }
       />
 
-      <SummarySection title="Profile and identification">
+      <SummarySection title={t('horseHistory.profile')}>
         <DetailGrid>
-          <DetailPrintField label="Stable" value={stable.name} />
-          <DetailPrintField label="Owner" value={horse.ownerName} />
-          <DetailPrintField label="Age" value={age} />
-          <DetailPrintField label="Breed" value={horse.breed} />
           <DetailPrintField
-            label="Sex"
-            value={horse.sex ? sexLabels[horse.sex] : undefined}
+            label={t('horseHistory.stable')}
+            value={stable.name}
           />
-          <DetailPrintField label="Color" value={horse.color} />
-          <DetailPrintField label="Height" value={horse.height} />
-          <DetailPrintField label="Discipline" value={horse.discipline} />
           <DetailPrintField
-            label="Date of birth"
+            label={t('horseHistory.owner')}
+            value={horse.ownerName}
+          />
+          <DetailPrintField
+            label={t('horseHistory.age')}
+            value={age === undefined ? undefined : formatDecimal(age, locale)}
+          />
+          <DetailPrintField
+            label={t('horseHistory.breed')}
+            value={
+              horse.breed ? getHorseBreedLabel(horse.breed, locale) : undefined
+            }
+          />
+          <DetailPrintField
+            label={t('horseHistory.sex')}
+            value={horse.sex ? t(`horseForm.${horse.sex}`) : undefined}
+          />
+          <DetailPrintField
+            label={t('horseHistory.color')}
+            value={horse.color}
+          />
+          <DetailPrintField
+            label={t('horseHistory.height')}
+            value={horse.height}
+          />
+          <DetailPrintField
+            label={t('horseHistory.discipline')}
+            value={horse.discipline}
+          />
+          <DetailPrintField
+            label={t('horseHistory.birth')}
             value={
               horse.dateOfBirth
-                ? formatMediumDateKey(horse.dateOfBirth)
+                ? formatPartialDateKey(horse.dateOfBirth, locale)
                 : undefined
             }
           />
           <DetailPrintField
-            label="Passport number"
+            label={t('horseHistory.passport')}
             value={horse.passportNumber}
           />
           <DetailPrintField
-            label="Microchip number"
+            label={t('horseHistory.microchip')}
             value={horse.microchipNumber}
           />
           <DetailPrintField
-            label="Insurance provider"
+            label={t('horseHistory.insuranceProvider')}
             value={horse.insuranceProvider}
           />
           <DetailPrintField
-            label="Insurance policy"
+            label={t('horseHistory.insurancePolicy')}
             value={horse.insurancePolicyNumber}
           />
-          <DetailPrintField label="Sire" value={horse.sire} />
-          <DetailPrintField label="Dam" value={horse.dam} />
+          <DetailPrintField label={t('horseHistory.sire')} value={horse.sire} />
+          <DetailPrintField label={t('horseHistory.dam')} value={horse.dam} />
           <DetailPrintField
-            label="Shoeing status"
+            label={t('horseHistory.shoeing')}
             value={
               horse.shoeingStatus
-                ? shoeingStatusLabels[horse.shoeingStatus]
+                ? t(`horseForm.${horse.shoeingStatus}`)
                 : undefined
             }
           />
         </DetailGrid>
       </SummarySection>
 
-      <SummarySection title="Emergency and care contacts">
+      <SummarySection title={t('horseHistory.contacts')}>
         <DetailGrid>
-          <DetailPrintField label="Vet" value={horse.vetName} />
-          <DetailPrintField label="Vet phone" value={horse.vetPhone} />
-          <DetailPrintField label="Farrier" value={horse.farrierName} />
-          <DetailPrintField label="Farrier phone" value={horse.farrierPhone} />
-          <DetailPrintField label="Stable contact" value={stable.contactName} />
           <DetailPrintField
-            label="Stable contact phone"
+            label={t('horseHistory.vet')}
+            value={horse.vetName}
+          />
+          <DetailPrintField
+            label={t('horseHistory.vetPhone')}
+            value={horse.vetPhone}
+          />
+          <DetailPrintField
+            label={t('horseHistory.farrier')}
+            value={horse.farrierName}
+          />
+          <DetailPrintField
+            label={t('horseHistory.farrierPhone')}
+            value={horse.farrierPhone}
+          />
+          <DetailPrintField
+            label={t('horseHistory.stableContact')}
+            value={stable.contactName}
+          />
+          <DetailPrintField
+            label={t('horseHistory.stableContactPhone')}
             value={stable.contactPhone}
           />
           <DetailPrintField
-            label="Stable emergency phone"
+            label={t('horseHistory.stableEmergency')}
             value={stable.emergencyPhone}
           />
         </DetailGrid>
         {stableAddress.length > 0 && (
           <DetailPrintField
-            label="Stable postal address"
+            label={t('horseHistory.stableAddress')}
             value={formatLineText(stableAddress)}
             multiline
           />
         )}
         {horse.emergencyNotes && (
           <DetailPrintField
-            label="Emergency notes"
+            label={t('horseHistory.emergencyNotes')}
             value={horse.emergencyNotes}
             multiline
           />
         )}
         <DetailPrintField
-          label="Deworming notes"
+          label={t('horseHistory.dewormingNotes')}
           value={horse.dewormingNotes}
           multiline
         />
         <DetailPrintListBlock
-          label="Allergies or sensitivities"
+          label={t('horseHistory.allergies')}
           items={horse.allergies}
         />
       </SummarySection>
 
-      <SummarySection title="Nutrition profile">
+      <SummarySection title={t('horseHistory.nutritionProfile')}>
         {!horse.feedingRoutine &&
           !horse.nutritionNotes &&
           !horse.nutritionRecommended?.length &&
           !horse.nutritionAvoid?.length && (
             <PrintSummaryEmptyState>
-              No nutrition profile has been recorded.
+              {t('horseHistory.nutritionEmpty')}
             </PrintSummaryEmptyState>
           )}
         <DetailPrintField
-          label="Feeding routine"
+          label={t('horseHistory.feedingRoutine')}
           value={horse.feedingRoutine}
           multiline
         />
         <DetailPrintField
-          label="Nutrition notes"
+          label={t('horseHistory.nutritionNotes')}
           value={horse.nutritionNotes}
           multiline
         />
         <DetailPrintListBlock
-          label="Recommended"
+          label={t('horseHistory.recommended')}
           items={horse.nutritionRecommended}
         />
-        <DetailPrintListBlock label="Avoid" items={horse.nutritionAvoid} />
+        <DetailPrintListBlock
+          label={t('horseHistory.avoid')}
+          items={horse.nutritionAvoid}
+        />
       </SummarySection>
 
-      <SummarySection title="Active health and medication">
+      <SummarySection title={t('horseHistory.activeHealthMedication')}>
         <RecordList
-          emptyLabel="No active health issues."
+          emptyLabel={t('horseHistory.healthEmpty')}
           records={summary.activeHealthIssues.map((issue) => ({
             id: issue._id,
             title: issue.title,
             meta: formatMetaText([
-              issue.severity,
-              formatMediumTimestampDate(issue.notedAt),
+              issue.severity
+                ? t(`careLabels.severity.${issue.severity}`)
+                : undefined,
+              formatMediumTimestampDate(issue.notedAt, locale),
             ]),
             body: issue.description,
           }))}
         />
         <DashboardSectionDivider />
         <RecordList
-          emptyLabel="No active medication."
+          emptyLabel={t('horseHistory.medicationEmpty')}
           records={summary.activeMedicationRecords.map((record) => ({
             id: record._id,
             title: record.medicationName,
             meta: formatMetaText([
               record.dosage,
               record.frequency,
-              `Start date: ${formatMediumDateKey(record.startDate)}`,
+              t('horseHistory.startDate', {
+                date: formatMediumDateKey(record.startDate, locale),
+              }),
             ]),
             body: formatLineText([record.reason, record.notes]),
           }))}
         />
       </SummarySection>
 
-      <SummarySection title="Recent weight records">
+      <SummarySection title={t('horseHistory.recentWeights')}>
         <RecordList
-          emptyLabel="No weight records yet."
+          emptyLabel={t('horseHistory.weightEmpty')}
           records={summary.recentWeightRecords.map((record) => ({
             id: record._id,
-            title: `${record.weight} ${record.unit}`,
+            title: `${formatDecimal(record.weight, locale)} ${record.unit}`,
             meta: formatMetaText([
-              formatMediumTimestampDate(record.measuredAt),
+              formatMediumTimestampDate(record.measuredAt, locale),
               record.bodyConditionScore
-                ? `BCS ${record.bodyConditionScore}/9`
+                ? `BCS ${formatDecimal(record.bodyConditionScore, locale)}/9`
                 : undefined,
             ]),
             body: record.notes,
@@ -265,60 +308,68 @@ export function HorseCareSummaryView({
         />
       </SummarySection>
 
-      <SummarySection title="Recent care events">
+      <SummarySection title={t('horseHistory.recentCare')}>
         <RecordList
-          emptyLabel="No recent events."
+          emptyLabel={t('horseHistory.careEmpty')}
           records={summary.recentEvents.map(({ event, eventHorse }) => ({
             id: event._id,
             title: event.title,
             meta: formatMetaText([
-              eventTypeLabels[event.type],
-              eventStatusLabels[event.status ?? 'planned'],
-              formatMediumDateKey(event.date),
+              t(`events.types.${event.type}`),
+              t(`calendar.${event.status ?? 'planned'}`),
+              formatMediumDateKey(event.date, locale),
               event.providerName,
               event.totalCost !== undefined
-                ? `Total ${formatCurrencyAmount(event.totalCost)}`
+                ? t('horseHistory.total', {
+                    amount: formatCurrencyAmount(event.totalCost, locale),
+                  })
                 : undefined,
               event.costPerHorse !== undefined
-                ? `${formatCurrencyAmount(event.costPerHorse)} per horse`
+                ? t('horseHistory.perHorse', {
+                    amount: formatCurrencyAmount(event.costPerHorse, locale),
+                  })
                 : undefined,
             ]),
             body: formatLineText([
               event.notesAfterCompletion,
               eventHorse?.requestedServiceNotes
-                ? `Requested: ${eventHorse.requestedServiceNotes}`
+                ? t('horseHistory.requestedNotes', {
+                    notes: eventHorse.requestedServiceNotes,
+                  })
                 : undefined,
               eventHorse?.completionNotes
-                ? `Horse outcome: ${eventHorse.completionNotes}`
+                ? t('horseHistory.outcomeNotes', {
+                    notes: eventHorse.completionNotes,
+                  })
                 : undefined,
             ]),
           }))}
         />
       </SummarySection>
 
-      <SummarySection title="Recent nutrition changes">
+      <SummarySection title={t('horseHistory.recentNutrition')}>
         <RecordList
-          emptyLabel="No nutrition change logs."
+          emptyLabel={t('horseHistory.nutritionChangesEmpty')}
           records={summary.recentNutritionLogs.map((log) => ({
             id: log._id,
             title: log.summary,
-            meta: formatMediumTimestampDate(log.changedAt),
+            meta: formatMediumTimestampDate(log.changedAt, locale),
             body: log.notes,
           }))}
         />
       </SummarySection>
 
-      <SummarySection title="Documents">
+      <SummarySection title={t('horseHistory.documents')}>
         <RecordList
-          emptyLabel="No documents linked to this horse."
+          emptyLabel={t('horseHistory.documentsEmpty')}
           records={summary.documents.map((document) => ({
             id: document._id,
             title: document.fileName,
             meta: formatMetaText([
-              stableDocumentTypeLabels[document.type],
+              t(`documents.types.${document.type}`),
               document.contentType,
               document.size !== undefined
-                ? formatFileSize(document.size)
+                ? formatFileSize(document.size, locale)
                 : undefined,
             ]),
             body: document.notes,

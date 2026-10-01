@@ -1,3 +1,5 @@
+import { localeValidator } from '../shared/i18n/validators'
+import { stableAuditDetailsValidator } from '../shared/auditLogs/auditDetails'
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 import { emailCategories, emailProviderNames } from './libs/email/types'
@@ -32,6 +34,7 @@ export const userFields = {
   phone: v.optional(v.string()),
   profileImageId: v.optional(v.id('_storage')),
   timezone: v.optional(v.string()),
+  locale: v.optional(localeValidator),
   profileCompletedAt: v.optional(v.number()),
   onboardingVersion: v.optional(v.number()),
   deletedAt: v.optional(v.number()),
@@ -121,6 +124,7 @@ export const stableAuditLogFields = {
   entityType: v.string(),
   entityId: v.string(),
   summary: v.optional(v.string()),
+  details: v.optional(stableAuditDetailsValidator),
   createdAt: v.number(),
 }
 
@@ -242,6 +246,7 @@ export const emailTemplate = v.union(
 )
 
 const emailDeliveriesSchema = defineTable({
+  locale: v.optional(localeValidator),
   category: emailDeliveryCategory,
   recipient: v.string(),
   provider: v.optional(emailDeliveryProvider),
@@ -377,6 +382,7 @@ export const stableInvitationDeliveryStatus = v.union(
 )
 
 export const stableInvitationsFields = {
+  locale: v.optional(localeValidator),
   stableId: v.id('stables'),
   email: v.string(),
   role: stableInvitationRole,

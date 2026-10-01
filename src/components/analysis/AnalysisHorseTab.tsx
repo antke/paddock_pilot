@@ -1,3 +1,6 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
+import type { Locale } from 'shared/i18n/locale'
+import { localeInstances } from '#/i18n/resources'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
 import { DashboardMetric } from '#/components/dashboard/DashboardMetric'
@@ -21,12 +24,10 @@ import { CareReminderPriorityBadge } from '#/components/reminders/CareReminderBa
 import { Badge } from '#/components/ui/badge'
 import { ScrollableList } from '#/components/ui/scrollable-list'
 import { formatMediumTimestampDate } from '#/lib/dateDisplay'
-import { formatCountLabel } from '#/lib/numberDisplay'
+import { formatDecimal } from '#/lib/numberDisplay'
 import { formatMetaText } from '#/lib/textDisplay'
 import { cn } from '#/lib/utils'
 import type { ComponentProps, ReactNode } from 'react'
-import { eventTypeLabels } from 'shared/events/eventSchema'
-import { careReminderCategoryLabels } from 'shared/reminders/careReminderSchema'
 import type { LabTimelineSignal } from './analysisCentreData'
 import type {
   LabHorseCareCadence,
@@ -35,10 +36,7 @@ import type {
   LabHorseOutcomeGap,
   LabHorseWeightTrend,
 } from './analysisHorseData'
-import {
-  timelineSignalKindAccentColors,
-  timelineSignalKindLabels,
-} from './analysisTimelineSignalMeta'
+import { timelineSignalKindAccentColors } from './analysisTimelineSignalMeta'
 
 type LabHorse = DashboardLabData['horses'][number]
 type HorseEvent = LabHorseDeepDive['upcomingEvents'][number]
@@ -49,13 +47,16 @@ export function AnalysisHorseTab({
   horse,
   stableId,
   analysis,
+  comparison,
 }: {
+  comparison?: ReactNode
   horse: LabHorse
   stableId: DashboardLabData['stable']['_id']
   analysis: LabHorseDeepDive
 }) {
   return (
     <div className="grid gap-4 xl:grid-cols-3 xl:items-start">
+      {comparison}
       <HorseWellbeingSummaryPanel
         horse={horse}
         analysis={analysis}
@@ -140,36 +141,37 @@ function HorseWellbeingSummaryPanel({
   className?: string
   span?: ComponentProps<typeof DashboardSection>['span']
 }) {
+  const t = useT()
+
   const latestSignal = analysis.recentSignals[0]
   const metrics = [
     {
-      label: 'Active health',
+      label: t('analysisViews.activeHealth'),
       value: `${analysis.summary.activeIssueCount}`,
       detail:
         analysis.summary.highIssueCount > 0
-          ? formatCountLabel(
-              analysis.summary.highIssueCount,
-              'high-severity issue',
-            )
-          : 'No high-severity active issue',
+          ? t('analysisViews.highIssueCount', {
+              count: analysis.summary.highIssueCount,
+            })
+          : t('analysisViews.noHighHealth'),
       tone: analysis.summary.highIssueCount > 0 ? 'urgent' : 'steady',
     },
     {
-      label: 'Medication',
+      label: t('analysisViews.medication'),
       value: `${analysis.summary.activeMedicationCount}`,
-      detail: 'Active medication records',
+      detail: t('analysisViews.activeMedication'),
       tone: analysis.summary.activeMedicationCount > 0 ? 'urgent' : 'default',
     },
     {
-      label: 'Reminders',
+      label: t('analysisViews.reminders'),
       value: `${analysis.summary.overdueReminderCount}`,
-      detail: 'Overdue horse-specific reminders',
+      detail: t('analysisViews.overdueHorseReminders'),
       tone: analysis.summary.overdueReminderCount > 0 ? 'urgent' : 'steady',
     },
     {
-      label: 'Upcoming care',
+      label: t('analysisViews.upcomingCare'),
       value: `${analysis.summary.upcomingEventCount}`,
-      detail: 'Planned events in the next 30 days',
+      detail: t('analysisViews.plannedMonth'),
       tone: 'default',
     },
   ] as const satisfies ReadonlyArray<{
@@ -182,10 +184,12 @@ function HorseWellbeingSummaryPanel({
   return (
     <HorseAnalysisPanel
       title={horse.name}
-      description="Horse-specific health, progress, and wellbeing signals. Stable-level comparisons stay in the stable tab; this view follows one horse in detail."
+      description={t('analysisViews.horseHelp')}
       action={
         <Badge variant="outline">
-          {formatCountLabel(analysis.summary.signalCount, 'record')}
+          {t('analysisViews.recordCount', {
+            count: analysis.summary.signalCount,
+          })}
         </Badge>
       }
       className={className}
@@ -200,13 +204,13 @@ function HorseWellbeingSummaryPanel({
 
         <DashboardItemCard chrome="flat" className="grid content-start gap-2">
           <DashboardInlineHeader
-            title="Latest signal"
+            title={t('analysisViews.latestSignal')}
             aside={
               latestSignal ? (
                 <Badge
                   variant={latestSignal.urgent ? 'destructive' : 'secondary'}
                 >
-                  {timelineSignalKindLabels[latestSignal.kind]}
+                  {t(`analysisViews.${latestSignal.kind}`)}
                 </Badge>
               ) : null
             }
@@ -216,8 +220,7 @@ function HorseWellbeingSummaryPanel({
             <HorseSignalRow signal={latestSignal} compact />
           ) : (
             <DashboardEmptyState chrome="soft">
-              No horse-specific health, medication, nutrition, weight, or
-              reminder records yet.
+              {t('analysisViews.noHorseRecords')}
             </DashboardEmptyState>
           )}
         </DashboardItemCard>
@@ -260,16 +263,18 @@ function HorseHealthMedicationPanel({
   className?: string
   span?: ComponentProps<typeof DashboardSection>['span']
 }) {
+  const t = useT()
+
   const recordCount =
     analysis.healthSignals.length + analysis.medicationSignals.length
 
   return (
     <HorseAnalysisPanel
-      title="Health & medication"
-      description="Recent horse-specific health records and medication starts, separated from stable-wide workload views."
+      title={t('analysisViews.healthMedication')}
+      description={t('analysisViews.healthMedicationHelp')}
       action={
         <Badge variant="outline">
-          {formatCountLabel(recordCount, 'record')}
+          {t('analysisViews.recordCount', { count: recordCount })}
         </Badge>
       }
       className={className}
@@ -279,14 +284,14 @@ function HorseHealthMedicationPanel({
         <HorseHealthOverview analysis={analysis} />
         <div className="grid gap-4 lg:grid-cols-2">
           <HorseSignalGroup
-            title="Health records"
+            title={t('analysisViews.healthRecords')}
             signals={analysis.healthSignals}
-            emptyLabel="No health records for this horse yet."
+            emptyLabel={t('analysisViews.noHealth')}
           />
           <HorseSignalGroup
-            title="Medication records"
+            title={t('analysisViews.medicationRecords')}
             signals={analysis.medicationSignals}
-            emptyLabel="No medication records for this horse yet."
+            emptyLabel={t('analysisViews.noMedication')}
           />
         </div>
       </div>
@@ -295,12 +300,15 @@ function HorseHealthMedicationPanel({
 }
 
 function HorseHealthOverview({ analysis }: { analysis: LabHorseDeepDive }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const frequency = analysis.healthFrequency
 
   return (
     <DashboardItemCard chrome="flat" className="grid content-start gap-3">
       <DashboardInlineHeader
-        title="Health overview"
+        title={t('analysisViews.healthOverview')}
         aside={
           <Badge
             variant={
@@ -309,10 +317,9 @@ function HorseHealthOverview({ analysis }: { analysis: LabHorseDeepDive }) {
                 : 'secondary'
             }
           >
-            {formatCountLabel(
-              analysis.summary.activeIssueCount,
-              'active issue',
-            )}
+            {t('analysisViews.activeIssueCount', {
+              count: analysis.summary.activeIssueCount,
+            })}
           </Badge>
         }
         titleWeight="semibold"
@@ -320,22 +327,32 @@ function HorseHealthOverview({ analysis }: { analysis: LabHorseDeepDive }) {
       {frequency ? (
         <DetailKeyValueList>
           <DetailKeyValueRow
-            label="Total records"
+            label={t('analysisViews.totalRecords')}
             value={frequency.totalCount}
           />
-          <DetailKeyValueRow label="Resolved" value={frequency.resolvedCount} />
+          <DetailKeyValueRow
+            label={t('analysisViews.resolved')}
+            value={frequency.resolvedCount}
+          />
           {frequency.latestIssueTitle ? (
             <p className="pt-2 text-foreground">
-              Latest: {frequency.latestIssueTitle}
+              {t('analysisViews.latest', { title: frequency.latestIssueTitle })}
             </p>
           ) : null}
           {frequency.latestNotedAt ? (
-            <p>Noted {formatMediumTimestampDate(frequency.latestNotedAt)}</p>
+            <p>
+              {t('analysisViews.noted', {
+                date: formatMediumTimestampDate(
+                  frequency.latestNotedAt,
+                  locale,
+                ),
+              })}
+            </p>
           ) : null}
         </DetailKeyValueList>
       ) : (
         <DashboardEmptyState chrome="soft">
-          No health issue frequency data for this horse yet.
+          {t('analysisViews.noHealthFrequency')}
         </DashboardEmptyState>
       )}
     </DashboardItemCard>
@@ -343,24 +360,28 @@ function HorseHealthOverview({ analysis }: { analysis: LabHorseDeepDive }) {
 }
 
 function HorseProgressPanel({ analysis }: { analysis: LabHorseDeepDive }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const hasRecords =
     Boolean(analysis.weightTrend) || analysis.weightSignals.length > 0
 
   return (
     <HorseAnalysisPanel
-      title="Weight & condition"
-      description="Weight recordings and body condition changes belong in the horse tab, not the stable summary."
+      title={t('analysisViews.weightCondition')}
+      description={t('analysisViews.weightHelp')}
       action={
         analysis.weightTrend ? (
           <Badge variant="outline">
-            {analysis.weightTrend.latestWeight} {analysis.weightTrend.unit}
+            {formatDecimal(analysis.weightTrend.latestWeight, locale)}{' '}
+            {analysis.weightTrend.unit}
           </Badge>
         ) : undefined
       }
     >
       {!hasRecords ? (
         <DashboardEmptyState chrome="soft">
-          No weight or body condition records for this horse yet.
+          {t('analysisViews.noWeight')}
         </DashboardEmptyState>
       ) : (
         <DashboardLayoutStack gap="compact">
@@ -368,9 +389,9 @@ function HorseProgressPanel({ analysis }: { analysis: LabHorseDeepDive }) {
             <HorseWeightTrendCard trend={analysis.weightTrend} />
           ) : null}
           <HorseSignalGroup
-            title="Recent weight records"
+            title={t('analysisViews.recentWeight')}
             signals={analysis.weightSignals}
-            emptyLabel="No recent weight records in the timeline."
+            emptyLabel={t('analysisViews.noRecentWeight')}
           />
         </DashboardLayoutStack>
       )}
@@ -379,31 +400,42 @@ function HorseProgressPanel({ analysis }: { analysis: LabHorseDeepDive }) {
 }
 
 function HorseWeightTrendCard({ trend }: { trend: LabHorseWeightTrend }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   return (
     <DashboardItemCard chrome="flat" className="grid gap-3">
       <DashboardInlineHeader
-        title="Latest recording"
+        title={t('analysisViews.latestRecording')}
         aside={
           <Badge variant="secondary">
-            {trend.latestWeight} {trend.unit}
+            {formatDecimal(trend.latestWeight, locale)} {trend.unit}
           </Badge>
         }
         titleWeight="semibold"
       />
       <DashboardItemBodyText tone="muted">
-        Measured {formatMediumTimestampDate(trend.measuredAt)}
+        {t('analysisViews.measured', {
+          date: formatMediumTimestampDate(trend.measuredAt, locale),
+        })}
       </DashboardItemBodyText>
       {trend.weightChange !== undefined ? (
         <DashboardItemBodyText>
-          Weight change: {formatSignedNumber(trend.weightChange)} {trend.unit}
+          {t('analysisViews.weightChange', {
+            amount: formatSignedNumber(trend.weightChange, locale),
+            unit: trend.unit,
+          })}
         </DashboardItemBodyText>
       ) : null}
       {trend.latestBodyConditionScore !== undefined ? (
         <DashboardItemBodyText tone="muted">
-          Body condition {trend.latestBodyConditionScore}
-          {trend.bodyConditionChange !== undefined
-            ? ` (${formatSignedNumber(trend.bodyConditionChange)})`
-            : ''}
+          {t('analysisViews.bodyCondition', {
+            score: formatDecimal(trend.latestBodyConditionScore, locale),
+            change:
+              trend.bodyConditionChange !== undefined
+                ? ` (${formatSignedNumber(trend.bodyConditionChange, locale)})`
+                : '',
+          })}
         </DashboardItemBodyText>
       ) : null}
     </DashboardItemCard>
@@ -411,28 +443,30 @@ function HorseWeightTrendCard({ trend }: { trend: LabHorseWeightTrend }) {
 }
 
 function HorseNutritionPanel({ analysis }: { analysis: LabHorseDeepDive }) {
+  const t = useT()
+
   const signalCount =
     analysis.nutritionSignals.length + analysis.nutritionTimelineSignals.length
 
   return (
     <HorseAnalysisPanel
-      title="Nutrition signals"
-      description="Nutrition changes linked to this horse's weight or health records."
+      title={t('analysisViews.nutritionSignals')}
+      description={t('analysisViews.nutritionHelp')}
       action={
         <Badge variant="outline">
-          {formatCountLabel(signalCount, 'signal')}
+          {t('analysisViews.signalCount', { count: signalCount })}
         </Badge>
       }
     >
       {signalCount === 0 ? (
         <DashboardEmptyState chrome="soft">
-          No nutrition changes near this horse's health or weight records yet.
+          {t('analysisViews.noNutrition')}
         </DashboardEmptyState>
       ) : (
         <DashboardLayoutStack gap="compact">
           {analysis.nutritionSignals.length > 0 ? (
             <HorseAnalysisList
-              ariaLabel="Nutrition correlations"
+              ariaLabel={t('analysisViews.nutritionCorrelations')}
               itemCount={analysis.nutritionSignals.length}
               visibleItemLimit={4}
               estimatedItemHeightRem={6.5}
@@ -443,9 +477,9 @@ function HorseNutritionPanel({ analysis }: { analysis: LabHorseDeepDive }) {
             </HorseAnalysisList>
           ) : null}
           <HorseSignalGroup
-            title="Recent nutrition records"
+            title={t('analysisViews.recentNutrition')}
             signals={analysis.nutritionTimelineSignals}
-            emptyLabel="No recent nutrition records in the timeline."
+            emptyLabel={t('analysisViews.noRecentNutrition')}
           />
         </DashboardLayoutStack>
       )}
@@ -458,20 +492,28 @@ function HorseNutritionSignalRow({
 }: {
   signal: LabHorseNutritionSignal
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   return (
     <DashboardItemCard chrome="flat" className="grid gap-2">
       <DashboardInlineHeader
         title={signal.summary}
         aside={
           <Badge variant="outline">
-            {formatMediumTimestampDate(signal.changedAt)}
+            {formatMediumTimestampDate(signal.changedAt, locale)}
           </Badge>
         }
         titleWeight="semibold"
       />
       <DashboardItemBodyText tone="muted">
-        {formatCountLabel(signal.nearbyWeightCount, 'nearby weight record')} ·{' '}
-        {formatCountLabel(signal.nearbyHealthIssueCount, 'nearby health issue')}
+        {t('analysisViews.nearbyWeightCount', {
+          count: signal.nearbyWeightCount,
+        })}{' '}
+        ·{' '}
+        {t('analysisViews.nearbyHealthCount', {
+          count: signal.nearbyHealthIssueCount,
+        })}
       </DashboardItemBodyText>
     </DashboardItemCard>
   )
@@ -488,6 +530,8 @@ function HorseCarePlanPanel({
   className?: string
   span?: ComponentProps<typeof DashboardSection>['span']
 }) {
+  const t = useT()
+
   const itemCount =
     analysis.dueReminders.length +
     analysis.upcomingEvents.length +
@@ -495,11 +539,11 @@ function HorseCarePlanPanel({
 
   return (
     <HorseAnalysisPanel
-      title="Care plan"
-      description="Horse-specific reminders, upcoming appointments, and cadence checks."
+      title={t('analysisViews.carePlan')}
+      description={t('analysisViews.carePlanHelp')}
       action={
         <DashboardValueBadge>
-          {formatCountLabel(itemCount, 'item')}
+          {t('analysisViews.itemCount', { count: itemCount })}
         </DashboardValueBadge>
       }
       className={className}
@@ -507,7 +551,7 @@ function HorseCarePlanPanel({
     >
       {itemCount === 0 ? (
         <DashboardEmptyState chrome="soft">
-          No due reminders, upcoming events, or cadence checks for this horse.
+          {t('analysisViews.noCarePlan')}
         </DashboardEmptyState>
       ) : (
         <div className="grid gap-4 lg:grid-cols-3">
@@ -528,19 +572,21 @@ function HorseReminderGroup({
 }: {
   reminders: Array<HorseReminder>
 }) {
+  const t = useT()
+
   return (
     <DashboardSubsection
-      title="Due reminders"
+      title={t('analysisViews.dueReminders')}
       titleWeight="semibold"
       className="content-start"
     >
       {reminders.length === 0 ? (
         <DashboardEmptyState chrome="soft">
-          No due reminders.
+          {t('analysisViews.noDueReminders')}
         </DashboardEmptyState>
       ) : (
         <HorseAnalysisList
-          ariaLabel="Due horse reminders"
+          ariaLabel={t('analysisViews.dueHorseReminders')}
           itemCount={reminders.length}
           visibleItemLimit={4}
           estimatedItemHeightRem={5.75}
@@ -561,19 +607,21 @@ function HorseUpcomingEventGroup({
   events: Array<HorseEvent>
   stableId: DashboardLabData['stable']['_id']
 }) {
+  const t = useT()
+
   return (
     <DashboardSubsection
-      title="Upcoming events"
+      title={t('analysisViews.upcomingEvents')}
       titleWeight="semibold"
       className="content-start"
     >
       {events.length === 0 ? (
         <DashboardEmptyState chrome="soft">
-          No upcoming events.
+          {t('analysisViews.noUpcoming')}
         </DashboardEmptyState>
       ) : (
         <HorseAnalysisList
-          ariaLabel="Upcoming horse events"
+          ariaLabel={t('analysisViews.upcomingHorseEvents')}
           itemCount={events.length}
           visibleItemLimit={4}
           estimatedItemHeightRem={5.75}
@@ -588,19 +636,21 @@ function HorseUpcomingEventGroup({
 }
 
 function HorseCadenceGroup({ items }: { items: Array<LabHorseCareCadence> }) {
+  const t = useT()
+
   return (
     <DashboardSubsection
-      title="Care cadence"
+      title={t('analysisViews.careCadence')}
       titleWeight="semibold"
       className="content-start"
     >
       {items.length === 0 ? (
         <DashboardEmptyState chrome="soft">
-          No cadence data yet.
+          {t('analysisViews.noCadence')}
         </DashboardEmptyState>
       ) : (
         <HorseAnalysisList
-          ariaLabel="Horse care cadence"
+          ariaLabel={t('analysisViews.horseCadence')}
           itemCount={items.length}
           visibleItemLimit={4}
           estimatedItemHeightRem={5.75}
@@ -621,23 +671,25 @@ function HorseDocumentationPanel({
   analysis: LabHorseDeepDive
   stableId: DashboardLabData['stable']['_id']
 }) {
+  const t = useT()
+
   const gapCount =
     analysis.completionNotesNeeded.length +
     analysis.horseOutcomeNotesNeeded.length
 
   return (
     <HorseAnalysisPanel
-      title="Documentation gaps"
-      description="Completed care for this horse that still needs notes."
+      title={t('analysisViews.documentationGaps')}
+      description={t('analysisViews.documentationHelp')}
       action={
         <Badge variant={gapCount > 0 ? 'destructive' : 'secondary'}>
-          {formatCountLabel(gapCount, 'gap')}
+          {t('analysisViews.gapCount', { count: gapCount })}
         </Badge>
       }
     >
       {gapCount === 0 ? (
         <DashboardEmptyState chrome="soft">
-          No missing completion notes for this horse.
+          {t('analysisViews.noMissingNotes')}
         </DashboardEmptyState>
       ) : (
         <DashboardLayoutStack gap="compact">
@@ -662,12 +714,17 @@ function HorseDocumentationEventGroup({
   events: Array<HorseEvent>
   stableId: DashboardLabData['stable']['_id']
 }) {
+  const t = useT()
+
   if (events.length === 0) return null
 
   return (
-    <DashboardSubsection title="Event notes" titleWeight="semibold">
+    <DashboardSubsection
+      title={t('analysisViews.eventNotes')}
+      titleWeight="semibold"
+    >
       <HorseAnalysisList
-        ariaLabel="Events missing notes"
+        ariaLabel={t('analysisViews.eventsMissingNotes')}
         itemCount={events.length}
         visibleItemLimit={4}
         estimatedItemHeightRem={5.75}
@@ -692,12 +749,17 @@ function HorseOutcomeGapGroup({
   outcomes: Array<LabHorseOutcomeGap>
   stableId: DashboardLabData['stable']['_id']
 }) {
+  const t = useT()
+
   if (outcomes.length === 0) return null
 
   return (
-    <DashboardSubsection title="Horse outcome notes" titleWeight="semibold">
+    <DashboardSubsection
+      title={t('analysisViews.horseOutcomeNotes')}
+      titleWeight="semibold"
+    >
       <HorseAnalysisList
-        ariaLabel="Horse outcome notes"
+        ariaLabel={t('analysisViews.horseOutcomeNotes')}
         itemCount={outcomes.length}
         visibleItemLimit={4}
         estimatedItemHeightRem={5.25}
@@ -757,6 +819,9 @@ function HorseSignalRow({
   signal: LabTimelineSignal
   compact?: boolean
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   return (
     <DashboardItemCard
       chrome="flat"
@@ -774,22 +839,29 @@ function HorseSignalRow({
         <span className="min-w-0 break-words font-semibold">
           {signal.title}
         </span>
-        {signal.urgent ? <Badge variant="destructive">Urgent</Badge> : null}
+        {signal.urgent ? (
+          <Badge variant="destructive">{t('analysisViews.urgent')}</Badge>
+        ) : null}
       </div>
       <DashboardItemBodyText tone="muted" className="break-words">
-        {getHorseSignalDetail(signal)}
+        {getHorseSignalDetail(signal, locale)}
       </DashboardItemBodyText>
     </DashboardItemCard>
   )
 }
 
 function HorseReminderRow({ reminder }: { reminder: HorseReminder }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   return (
     <DashboardItemCard chrome="flat" className="grid gap-2">
       <DashboardInlineHeader title={reminder.title} titleWeight="semibold" />
       <DashboardItemBodyText tone="muted">
-        Due {formatEventDate(reminder.dueDate)} ·{' '}
-        {careReminderCategoryLabels[reminder.category]}
+        {t('analysisViews.due', {
+          date: formatEventDate(reminder.dueDate, locale),
+        })}{' '}
+        · {t(`careLabels.category.${reminder.category}`)}
       </DashboardItemBodyText>
       {reminder.priority === 'high' ? (
         <CareReminderPriorityBadge priority={reminder.priority} />
@@ -807,6 +879,8 @@ function HorseEventRow({
   stableId: DashboardLabData['stable']['_id']
   tone?: 'upcoming' | 'documentation'
 }) {
+  const t = useT()
+
   return (
     <EventRow
       event={event}
@@ -814,7 +888,7 @@ function HorseEventRow({
       chrome="soft"
       supplementalBadges={
         tone === 'documentation' ? (
-          <Badge variant="destructive">Notes needed</Badge>
+          <Badge variant="destructive">{t('analysisViews.notesNeeded')}</Badge>
         ) : undefined
       }
       variant="summary"
@@ -823,28 +897,30 @@ function HorseEventRow({
 }
 
 function HorseCadenceRow({ item }: { item: LabHorseCareCadence }) {
+  const t = useT()
+
   return (
     <DashboardItemCard chrome="flat" className="grid gap-2">
       <DashboardInlineHeader
-        title={eventTypeLabels[item.type]}
+        title={t(`events.types.${item.type}`)}
         aside={
           item.overdue ? (
-            <Badge variant="destructive">Overdue</Badge>
+            <Badge variant="destructive">{t('analysisViews.overdue')}</Badge>
           ) : undefined
         }
         titleWeight="semibold"
       />
       <DashboardItemBodyText tone="muted">
-        Expected every {item.expectedDays} days.
+        {t('analysisViews.expectedEvery', { count: item.expectedDays })}
       </DashboardItemBodyText>
       {item.daysSinceLast !== undefined ? (
         <DashboardItemBodyText tone="muted">
-          Last completed {item.daysSinceLast} days ago.
+          {t('analysisViews.completedAgo', { count: item.daysSinceLast })}
         </DashboardItemBodyText>
       ) : null}
       {item.daysUntilNext !== undefined ? (
         <DashboardItemBodyText>
-          Next planned in {item.daysUntilNext} days.
+          {t('analysisViews.plannedIn', { count: item.daysUntilNext })}
         </DashboardItemBodyText>
       ) : null}
     </DashboardItemCard>
@@ -858,6 +934,9 @@ function HorseOutcomeGapRow({
   outcome: LabHorseOutcomeGap
   stableId: DashboardLabData['stable']['_id']
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   return (
     <DashboardItemLinkCard
       to="/stables/$stableId/events/$eventId"
@@ -867,26 +946,31 @@ function HorseOutcomeGapRow({
     >
       <DashboardInlineHeader
         title={outcome.eventTitle}
-        aside={<Badge variant="destructive">Outcome note</Badge>}
+        aside={
+          <Badge variant="destructive">{t('analysisViews.outcomeNote')}</Badge>
+        }
         titleWeight="semibold"
       />
       <DashboardItemBodyText tone="muted">
-        {formatEventDate(outcome.eventDate)}
+        {formatEventDate(outcome.eventDate, locale)}
       </DashboardItemBodyText>
     </DashboardItemLinkCard>
   )
 }
 
-function getHorseSignalDetail(signal: LabTimelineSignal) {
+function getHorseSignalDetail(signal: LabTimelineSignal, locale: Locale) {
+  const t = localeInstances[locale].t
   return formatMetaText([
-    timelineSignalKindLabels[signal.kind],
-    formatEventDate(signal.date),
+    t(`analysisViews.${signal.kind}`),
+    formatEventDate(signal.date, locale),
     signal.detail,
   ])
 }
 
-function formatSignedNumber(value: number) {
+function formatSignedNumber(value: number, locale: Locale) {
   const rounded = Math.round(value * 10) / 10
 
-  return rounded > 0 ? `+${rounded}` : `${rounded}`
+  return rounded > 0
+    ? `+${formatDecimal(rounded, locale)}`
+    : formatDecimal(rounded, locale)
 }

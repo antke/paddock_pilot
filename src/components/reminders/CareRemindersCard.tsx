@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { DashboardRecordDetails } from '#/components/dashboard/DashboardRecordDetails'
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
@@ -14,12 +15,10 @@ import { Button } from '#/components/ui/button'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { RecordRemoveAction } from '#/components/list-layout/RecordRemoveAction'
 import { Spinner } from '#/components/ui/spinner'
-import { formatCountLabel } from '#/lib/numberDisplay'
 import { CheckIcon, XIcon } from '@phosphor-icons/react'
 import type { Doc } from 'convex/_generated/dataModel'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ElementType, ReactNode } from 'react'
-import { careReminderCategoryLabels } from 'shared/reminders/careReminderSchema'
 import {
   CareReminderPriorityBadge,
   CareReminderStatusBadge,
@@ -88,9 +87,11 @@ export function CareRemindersCard({
   isLoading = false,
   listToolbar,
   listFooter,
-  loadingLabel = 'Loading reminders...',
+  loadingLabel,
   onCreateActionChange,
 }: CareRemindersCardProps) {
+  const t = useT()
+
   const listRef = useRef<HTMLDivElement>(null)
   const removalFocusTarget = useCallback(() => listRef.current, [])
   const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -131,14 +132,14 @@ export function CareRemindersCard({
           onOpenChange={(open) => {
             if (!isCreating) setIsCreateOpen(open)
           }}
-          triggerLabel="Add reminder"
-          title="Add care reminder"
-          description="Choose who it applies to, what needs doing, and when."
+          triggerLabel={t('reminders.add')}
+          title={t('reminders.addCare')}
+          description={t('reminders.addHelp')}
         >
           {form}
         </CreateRecordDialog>
       ) : null,
-    [form, isCreateOpen, isCreating],
+    [form, isCreateOpen, isCreating, t],
   )
   const inlineCreateDialog = onCreateActionChange ? null : createDialog
 
@@ -163,7 +164,7 @@ export function CareRemindersCard({
       ref={listRef}
       tabIndex={-1}
       role="group"
-      aria-label="Care reminders"
+      aria-label={t('reminders.careReminders')}
       gap="loose"
     >
       {!showHeader && inlineCreateDialog}
@@ -175,11 +176,11 @@ export function CareRemindersCard({
           aria-live="polite"
           aria-atomic="true"
         >
-          {formatCountLabel(reminders.length, 'reminder')} shown
+          {t('reminders.shown', { count: reminders.length })}
         </p>
       )}
       {isLoading ? (
-        <DashboardLoadingState label={loadingLabel} />
+        <DashboardLoadingState label={loadingLabel ?? t('reminders.loading')} />
       ) : reminders.length === 0 ? (
         <DashboardEmptyState chrome={chrome}>
           {emptyMessage}
@@ -253,6 +254,8 @@ function ReminderRow({
   onRemove: (reminder: Doc<'careReminders'>) => Promise<void>
   chrome: DashboardChrome
 }) {
+  const t = useT()
+  const { locale } = useLocale()
   const { reminder } = item
   const overdue = isCareReminderOverdue(reminder)
   const dueState = getCareReminderDueState(reminder)
@@ -263,7 +266,7 @@ function ReminderRow({
   >(null)
   const pendingRef = useRef(false)
   const isUpdating = pendingAction !== null
-  const [actionError, setActionError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState(false)
 
   const runStatusAction = async (
     action: 'complete' | 'dismiss',
@@ -273,11 +276,11 @@ function ReminderRow({
     pendingRef.current = true
 
     try {
-      setActionError(null)
+      setActionError(false)
       setPendingAction(action)
       await callback(reminder)
     } catch {
-      setActionError('The reminder was not updated. Please try again.')
+      setActionError(true)
     } finally {
       pendingRef.current = false
       setPendingAction(null)
@@ -293,7 +296,7 @@ function ReminderRow({
       footer={
         actionError ? (
           <p role="alert" className="text-sm text-destructive">
-            {actionError}
+            {t('reminders.updateFailed')}
           </p>
         ) : undefined
       }
@@ -321,7 +324,12 @@ function ReminderRow({
                   size="sm"
                   disabled={isUpdating}
                   aria-busy={pendingAction === 'complete' || undefined}
-                  aria-label={`${pendingAction === 'complete' ? 'Completing' : 'Complete'} ${reminder.title}`}
+                  aria-label={t(
+                    pendingAction === 'complete'
+                      ? 'reminders.completingNamed'
+                      : 'reminders.completeNamed',
+                    { name: reminder.title },
+                  )}
                   onClick={() => void runStatusAction('complete', onComplete)}
                 >
                   {pendingAction === 'complete' ? (
@@ -329,7 +337,9 @@ function ReminderRow({
                   ) : (
                     <CheckIcon data-icon="inline-start" weight="bold" />
                   )}
-                  {pendingAction === 'complete' ? 'Completing…' : 'Complete'}
+                  {pendingAction === 'complete'
+                    ? t('reminders.completing')
+                    : t('reminders.complete')}
                 </Button>
                 <Button
                   type="button"
@@ -337,7 +347,12 @@ function ReminderRow({
                   variant="ghost"
                   disabled={isUpdating}
                   aria-busy={pendingAction === 'dismiss' || undefined}
-                  aria-label={`${pendingAction === 'dismiss' ? 'Dismissing' : 'Dismiss'} ${reminder.title}`}
+                  aria-label={t(
+                    pendingAction === 'dismiss'
+                      ? 'reminders.dismissingNamed'
+                      : 'reminders.dismissNamed',
+                    { name: reminder.title },
+                  )}
                   onClick={() => void runStatusAction('dismiss', onDismiss)}
                 >
                   {pendingAction === 'dismiss' ? (
@@ -345,14 +360,16 @@ function ReminderRow({
                   ) : (
                     <XIcon data-icon="inline-start" weight="bold" />
                   )}
-                  {pendingAction === 'dismiss' ? 'Dismissing…' : 'Dismiss'}
+                  {pendingAction === 'dismiss'
+                    ? t('reminders.dismissing')
+                    : t('reminders.dismiss')}
                 </Button>
               </>
             )}
             <RecordRemoveAction
-              title={`Remove “${reminder.title}”?`}
-              description="This permanently removes the reminder and cannot be undone."
-              confirmLabel="Remove reminder"
+              title={t('reminders.removeNamed', { name: reminder.title })}
+              description={t('reminders.removeHelp')}
+              confirmLabel={t('reminders.remove')}
               disabled={isUpdating}
               onConfirm={() => onRemove(reminder)}
               removalFocusTarget={removalFocusTarget}
@@ -375,10 +392,10 @@ function ReminderRow({
                     : undefined
               }
             >
-              {getCareReminderDueLabel(reminder)}
+              {getCareReminderDueLabel(reminder, undefined, locale)}
             </span>
             {item.horseName && <span>{item.horseName}</span>}
-            <span>{careReminderCategoryLabels[reminder.category]}</span>
+            <span>{t(`careLabels.category.${reminder.category}`)}</span>
           </>
         }
       >

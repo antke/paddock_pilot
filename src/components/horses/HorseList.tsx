@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { FilteredDashboardItemList } from '#/components/list-filtering/FilteredDashboardItemList'
 import { useListFiltering } from '#/components/list-filtering/useListFiltering'
 import { HorseCardLink } from './HorseCard'
@@ -6,6 +7,8 @@ import { NoHorsesPrompt } from './NoHorsesPrompt'
 import type { api } from 'convex/_generated/api'
 import type { FunctionReturnType } from 'convex/server'
 import { useMemo } from 'react'
+import type { Locale } from 'shared/i18n/locale'
+import { localeInstances } from '#/i18n/resources'
 
 type Props = {
   horses: ReadonlyArray<HorseListHorse>
@@ -14,24 +17,35 @@ type Props = {
 
 export type HorseListHorse = FunctionReturnType<typeof api.horses.list>[number]
 
-function getMatchedIdentifier(horse: HorseListHorse, query: string) {
+function getMatchedIdentifier(
+  horse: HorseListHorse,
+  query: string,
+  locale: Locale,
+) {
+  const t = localeInstances[locale].t
   const normalizedQuery = query.trim().toLocaleLowerCase()
 
   if (!normalizedQuery) return undefined
 
   if (horse.passportNumber?.toLocaleLowerCase().includes(normalizedQuery)) {
-    return { label: 'Passport', value: horse.passportNumber }
+    return { label: t('horseList.passport'), value: horse.passportNumber }
   }
 
   if (horse.microchipNumber?.toLocaleLowerCase().includes(normalizedQuery)) {
-    return { label: 'Microchip', value: horse.microchipNumber }
+    return { label: t('horseList.microchip'), value: horse.microchipNumber }
   }
 
   return undefined
 }
 
 export function HorseList({ horses, stableId }: Props) {
-  const filterConfig = useMemo(createHorseListFilterConfig, [])
+  const t = useT()
+  const { locale } = useLocale()
+
+  const filterConfig = useMemo(
+    () => createHorseListFilterConfig(locale),
+    [locale],
+  )
   const filtering = useListFiltering({ items: horses, config: filterConfig })
 
   return (
@@ -39,12 +53,16 @@ export function HorseList({ horses, stableId }: Props) {
       config={filterConfig}
       filtering={filtering}
       gap="loose"
-      emptyMessage="No horses have been added yet."
+      emptyMessage={t('horseList.none')}
       emptyState={<NoHorsesPrompt />}
-      filteredEmptyMessage="No horses match these filters."
+      filteredEmptyMessage={t('horseList.noMatches')}
       stickyFilters
       renderItem={(horse) => {
-        const matchedIdentifier = getMatchedIdentifier(horse, filtering.query)
+        const matchedIdentifier = getMatchedIdentifier(
+          horse,
+          filtering.query,
+          locale,
+        )
 
         return (
           <HorseCardLink

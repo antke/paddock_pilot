@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { CalendarEventChipLink } from '#/components/events/EventCalendar'
 import {
   Tooltip,
@@ -5,7 +6,6 @@ import {
   TooltipContent,
 } from '#/components/ui/tooltip'
 import { formatShortDateKey } from '#/lib/dateDisplay'
-import { trainingFormatLabels } from 'shared/training/trainingSchema'
 import { TrainingActivityTag, TrainingStatusBadge } from './TrainingBadges'
 import { formatTrainingTimeRange } from './trainingCalendarData'
 import type { TrainingEntry } from './trainingCalendarData'
@@ -19,11 +19,14 @@ export function TrainingEntryLink({
   stableId: string
   showHorseName?: boolean
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const { occurrence, horse, details, status, record } = entry
   const notes = [
-    { label: 'Exercises / focus', value: details.focus },
-    { label: 'What happened', value: record?.outcome },
-    { label: 'Next focus', value: details.nextFocus },
+    { label: t('training.focus'), value: details.focus },
+    { label: t('training.outcome'), value: record?.outcome },
+    { label: t('training.nextFocus'), value: details.nextFocus },
   ].filter((note) => note.value?.trim())
 
   return (
@@ -56,12 +59,15 @@ export function TrainingEntryLink({
         </span>
         <span className="grid gap-0.5 text-xs leading-5 text-muted-foreground">
           <span data-slot="training-entry-rider">
-            {details.rider ? `Rider: ${details.rider}` : 'Rider not specified'}
+            {details.rider
+              ? t('training.rider', { name: details.rider })
+              : t('training.noRider')}
           </span>
           <span data-slot="training-entry-timing" className="tabular-nums">
             {formatTrainingTimeRange(
               occurrence.event.time,
               details.durationMinutes,
+              locale,
             )}
           </span>
         </span>
@@ -78,18 +84,28 @@ export function TrainingEntryLink({
               {horse.name} · {occurrence.event.title}
             </span>
             <TrainingStatusBadge status={status} />
-            <span>{trainingFormatLabels[details.format]}</span>
+            <span>{t(`training.formats.${details.format}`)}</span>
             {details.durationMinutes && (
               <span className="tabular-nums">
-                {details.durationMinutes} min
-                {status === 'completed' ? '' : ' planned'}
+                {t(
+                  status === 'completed'
+                    ? 'training.minutes'
+                    : 'training.plannedMinutes',
+                  { count: details.durationMinutes },
+                )}
               </span>
             )}
             {occurrence.durationDays > 1 && (
-              <span>Through {formatShortDateKey(occurrence.endDate)}</span>
+              <span>
+                {t('training.through', {
+                  date: formatShortDateKey(occurrence.endDate, locale),
+                })}
+              </span>
             )}
             {occurrence.event.providerName && (
-              <span>Trainer: {occurrence.event.providerName}</span>
+              <span>
+                {t('training.trainer', { name: occurrence.event.providerName })}
+              </span>
             )}
           </div>
           {notes.length > 0 && (

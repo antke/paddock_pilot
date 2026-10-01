@@ -1,3 +1,4 @@
+import { useLocale, useT } from '#/i18n/LocaleProvider'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -54,7 +55,9 @@ export function StableBreadcrumbsView({
   labels?: StableBreadcrumbLabels
 }) {
   const { horseId, eventId } = getStableBreadcrumbEntityIds(pathAfterStable)
-  const items = createStableBreadcrumbItems(pathAfterStable, labels)
+  const t = useT()
+  const { locale } = useLocale()
+  const items = createStableBreadcrumbItems(pathAfterStable, labels, locale)
 
   return (
     <Breadcrumb>
@@ -62,11 +65,11 @@ export function StableBreadcrumbsView({
         <BreadcrumbItem>
           <BreadcrumbLink
             render={<Link to="/" activeOptions={{ exact: true }} />}
-            aria-label="Dashboard"
-            title="Dashboard"
+            aria-label={t('breadcrumbs.dashboard')}
+            title={t('breadcrumbs.dashboard')}
           >
             <HouseIcon aria-hidden="true" className="size-4" />
-            <span className="sr-only">Dashboard</span>
+            <span className="sr-only">{t('breadcrumbs.dashboard')}</span>
           </BreadcrumbLink>
         </BreadcrumbItem>
 

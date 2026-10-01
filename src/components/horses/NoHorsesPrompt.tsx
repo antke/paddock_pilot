@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import type { ReactNode } from 'react'
 
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
@@ -11,10 +12,12 @@ type NoHorsesPromptProps = {
 }
 
 export function NoHorsesPrompt({
-  children = 'Add a horse to start building this stable roster.',
+  children,
   chrome = 'cards',
   stableId,
 }: NoHorsesPromptProps) {
+  const t = useT()
+
   return (
     <DashboardEmptyState
       actions={
@@ -24,14 +27,14 @@ export function NoHorsesPrompt({
             params={{ stableId }}
             action="create"
           >
-            Add horse
+            {t('horseList.addHorse')}
           </ButtonLink>
         ) : undefined
       }
       chrome={chrome}
-      title="No horses added yet."
+      title={t('horseList.noneTitle')}
     >
-      {children}
+      {children ?? t('horseList.addHelp')}
     </DashboardEmptyState>
   )
 }

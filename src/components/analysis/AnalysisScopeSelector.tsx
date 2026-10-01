@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { useEffect, useId, useRef, useState } from 'react'
 import { Button } from '#/components/ui/button'
 import { Field, FieldLabel } from '#/components/ui/field'
@@ -21,6 +22,8 @@ export function AnalysisScopeSelector({
   items: Array<Scope>
   onSelect: (id: string) => void
 }) {
+  const t = useT()
+
   const id = useId()
   const selected = items.find((item) => item.id === activeId) ?? items[0]
   const [query, setQuery] = useState(selected?.label ?? '')
@@ -31,7 +34,7 @@ export function AnalysisScopeSelector({
   return (
     <div className="flex flex-wrap items-end gap-3">
       <Field className="w-full max-w-md">
-        <FieldLabel htmlFor={id}>Analyse stable or horse</FieldLabel>
+        <FieldLabel htmlFor={id}>{t('analysisViews.subject')}</FieldLabel>
         <AutocompleteRoot
           items={items}
           value={query}
@@ -61,8 +64,8 @@ export function AnalysisScopeSelector({
         >
           <AutocompleteInput
             id={id}
-            placeholder="Search stable or horse"
-            triggerLabel="Show analysis subjects"
+            placeholder={t('analysisViews.subjectSearch')}
+            triggerLabel={t('analysisViews.showSubjects')}
           />
           <AutocompleteContent>
             <AutocompleteList>
@@ -78,13 +81,15 @@ export function AnalysisScopeSelector({
                 </AutocompleteItem>
               )}
             </AutocompleteList>
-            <AutocompleteEmpty>No matching horse or stable.</AutocompleteEmpty>
+            <AutocompleteEmpty>
+              {t('analysisViews.noSubject')}
+            </AutocompleteEmpty>
           </AutocompleteContent>
         </AutocompleteRoot>
       </Field>
       {activeId !== items[0]?.id && (
         <Button variant="outline" onClick={() => onSelect(items[0].id)}>
-          Stable overview
+          {t('analysisViews.stableOverview')}
         </Button>
       )}
     </div>

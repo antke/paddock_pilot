@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 
@@ -20,14 +21,16 @@ export const Route = createFileRoute('/onboarding')({
 })
 
 function OnboardingRoute() {
+  const t = useT()
+
   const { stableId } = Route.useSearch()
 
   return (
     <AuthStateSwitch
       signedOut={
         <SignedOutRoutePrompt
-          title="Sign in to continue setup"
-          description="Your saved onboarding progress will be ready after you sign in."
+          title={t('onboarding.signInTitle')}
+          description={t('onboarding.signInHelp')}
         />
       }
       signedIn={<OnboardingGate stableId={stableId} />}
@@ -36,6 +39,8 @@ function OnboardingRoute() {
 }
 
 function OnboardingGate({ stableId }: { stableId?: string }) {
+  const t = useT()
+
   const user = useQuery(api.users.getCurrentUser)
 
   if (user === undefined) return <RoutePending />
@@ -43,8 +48,8 @@ function OnboardingGate({ stableId }: { stableId?: string }) {
     return (
       <RouteStatusAlert
         tone="muted"
-        title="Preparing your account"
-        description="Your sign-in is ready. We’re connecting your Paddock Pilot profile before setup begins."
+        title={t('onboarding.preparingAccount')}
+        description={t('onboarding.preparingAccountHelp')}
       />
     )
   }
@@ -57,6 +62,8 @@ function OnboardingGate({ stableId }: { stableId?: string }) {
 }
 
 function StableOnboardingGate({ stableId }: { stableId: string }) {
+  const t = useT()
+
   const resolvedStableId = useQuery(api.onboarding.resolveStableId, {
     stableId,
   })
@@ -65,8 +72,8 @@ function StableOnboardingGate({ stableId }: { stableId: string }) {
   if (!resolvedStableId) {
     return (
       <RouteStatusAlert
-        title="Onboarding could not be found"
-        description="This setup link is invalid or the stable is no longer available."
+        title={t('onboarding.notFound')}
+        description={t('onboarding.invalidLink')}
       />
     )
   }

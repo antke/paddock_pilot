@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { Badge } from '#/components/ui/badge'
 import { attentionLevelBadgeVariant } from '#/components/dashboard/semanticBadgeVariants'
 import { CheckIcon, ClockIcon } from '@phosphor-icons/react'
@@ -8,11 +9,6 @@ import type {
   HealthIssueStatus,
 } from 'shared/horses/healthIssueSchema'
 import type { MedicationRecordStatus } from 'shared/horses/medicationRecordSchema'
-import {
-  horseHealthIssueSeverityLabels,
-  horseHealthIssueStatusLabels,
-  horseMedicationStatusLabels,
-} from './horseCareLabels'
 
 type CareBadgeProps = Omit<
   ComponentProps<typeof Badge>,
@@ -62,9 +58,10 @@ export function HealthIssueSeverityBadge({
 }: CareBadgeProps & {
   severity: HealthIssueSeverity
 }) {
+  const t = useT()
   return (
     <Badge variant={attentionLevelBadgeVariant[severity]} {...props}>
-      {horseHealthIssueSeverityLabels[severity]}
+      {t(`careLabels.severity.${severity}`)}
     </Badge>
   )
 }
@@ -75,12 +72,13 @@ export function HealthIssueStatusBadge({
 }: CareBadgeProps & {
   status: HealthIssueStatus
 }) {
+  const t = useT()
   const StatusIcon = healthIssueStatusIcon[status]
 
   return (
     <Badge variant={healthIssueStatusVariant[status]} {...props}>
       <StatusIcon aria-hidden="true" className="size-3" weight="bold" />
-      {horseHealthIssueStatusLabels[status]}
+      {t(`careLabels.healthStatus.${status}`)}
     </Badge>
   )
 }
@@ -91,9 +89,10 @@ export function MedicationRecordStatusBadge({
 }: CareBadgeProps & {
   status: MedicationRecordStatus
 }) {
+  const t = useT()
   return (
     <Badge variant={medicationRecordStatusVariant[status]} {...props}>
-      {horseMedicationStatusLabels[status]}
+      {t(`careLabels.medicationStatus.${status}`)}
     </Badge>
   )
 }
@@ -104,9 +103,10 @@ export function HealthIssueKindBadge({
 }: CareBadgeProps & {
   status: HealthIssueStatus
 }) {
+  const t = useT()
   return (
     <Badge variant={healthIssueKindVariant[status]} {...props}>
-      Health issue
+      {t('careLabels.healthIssue')}
     </Badge>
   )
 }
@@ -117,25 +117,28 @@ export function MedicationRecordKindBadge({
 }: CareBadgeProps & {
   status: MedicationRecordStatus
 }) {
+  const t = useT()
   return (
     <Badge variant={medicationKindVariant[status]} {...props}>
-      Medication
+      {t('careLabels.medication')}
     </Badge>
   )
 }
 
 export function WeightRecordKindBadge(props: CareBadgeProps) {
+  const t = useT()
   return (
     <Badge variant="secondary" {...props}>
-      Weight
+      {t('careLabels.weight')}
     </Badge>
   )
 }
 
 export function NutritionLogKindBadge(props: CareBadgeProps) {
+  const t = useT()
   return (
     <Badge variant="secondary" {...props}>
-      Nutrition change
+      {t('careLabels.nutritionChange')}
     </Badge>
   )
 }
@@ -146,9 +149,10 @@ export function HorseHighIssueCountBadge({
 }: CareBadgeProps & {
   count: number
 }) {
+  const t = useT()
   return (
     <Badge variant="destructive" {...props}>
-      {count} high
+      {t('careLabels.highCount', { count })}
     </Badge>
   )
 }
@@ -159,9 +163,10 @@ export function HorseOverdueReminderCountBadge({
 }: CareBadgeProps & {
   count: number
 }) {
+  const t = useT()
   return (
     <Badge variant="warning" {...props}>
-      {count} overdue
+      {t('careLabels.overdueCount', { count })}
     </Badge>
   )
 }

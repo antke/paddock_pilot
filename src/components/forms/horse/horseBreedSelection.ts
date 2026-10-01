@@ -1,3 +1,8 @@
+import {
+  getHorseBreedLabel,
+  normalizeBreedSearch,
+} from 'shared/i18n/horseBreedLabels'
+import type { Locale } from 'shared/i18n/locale'
 import { horseBreeds } from 'shared/horses/horseBreeds'
 
 /** Keep canonical built-in names and reuse custom breeds saved in this stable. */
@@ -20,10 +25,17 @@ export function matchHorseBreed(
   value: string,
   existingBreed?: string,
   additionalBreeds: ReadonlyArray<string> = [],
+  locale: Locale = 'en',
 ) {
-  const query = value.trim().toLocaleLowerCase()
+  const query = normalizeBreedSearch(value)
   if (!query) return ''
-  return horseBreedOptions(existingBreed, additionalBreeds).find(
-    (breed) => breed.toLocaleLowerCase() === query,
+  const options = horseBreedOptions(existingBreed, additionalBreeds)
+  // Prefer an existing custom value over a colliding translated label.
+  return (
+    options.find((breed) => normalizeBreedSearch(breed) === query) ??
+    options.find(
+      (breed) =>
+        normalizeBreedSearch(getHorseBreedLabel(breed, locale)) === query,
+    )
   )
 }

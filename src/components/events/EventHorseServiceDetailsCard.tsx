@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DetailTextBlock } from '#/components/dashboard/DetailBlocks'
 import {
@@ -45,6 +46,8 @@ type EventHorseServiceDetailsCardProps = {
 export function EventHorseServiceDetailsCard({
   eventId,
 }: EventHorseServiceDetailsCardProps) {
+  const t = useT()
+
   const { data } = useSuspenseQuery(
     convexQuery(api.eventHorseDetails.listForEvent, {
       eventId: eventId as Id<'events'>,
@@ -59,11 +62,11 @@ export function EventHorseServiceDetailsCard({
       rows={data.rows}
       onSave={async (rowId, values) => {
         await updateDetails({ id: rowId, ...values })
-        showAppSuccessToast({ title: 'Horse service details saved' })
+        showAppSuccessToast({ title: t('eventViews.serviceSaved') })
       }}
       onWithdraw={async (rowId) => {
         await withdrawHorse({ eventHorseId: rowId })
-        showAppSuccessToast({ title: 'Horse withdrawn from event' })
+        showAppSuccessToast({ title: t('eventViews.horseWithdrawn') })
       }}
     />
   )
@@ -84,18 +87,19 @@ export function EventHorseServiceDetailsView({
   rows,
   onSave,
   onWithdraw,
-  withdrawalDescription = 'The horse will no longer count as participating in this event. The organiser will be notified.',
+  withdrawalDescription,
 }: EventHorseServiceDetailsViewProps) {
+  const t = useT()
   return (
     <DashboardSectionCard
-      title="Horse service notes"
+      title={t('eventViews.serviceNotes')}
       size="panel"
-      description="Record what each horse needs before a shared visit and what happened afterwards."
+      description={t('eventViews.serviceHelp')}
       descriptionSize="sm"
     >
       {rows.length === 0 ? (
         <DashboardEmptyState chrome="cards">
-          No horses are attached to this event.
+          {t('eventViews.noHorses')}
         </DashboardEmptyState>
       ) : (
         <DashboardItemList>
@@ -105,7 +109,9 @@ export function EventHorseServiceDetailsView({
               row={row}
               onSubmit={(values) => onSave(row.eventHorse._id, values)}
               onWithdraw={() => onWithdraw(row.eventHorse._id)}
-              withdrawalDescription={withdrawalDescription}
+              withdrawalDescription={
+                withdrawalDescription ?? t('eventViews.withdrawalHelp')
+              }
             />
           ))}
         </DashboardItemList>
@@ -125,6 +131,8 @@ function EventHorseServiceRow({
   onWithdraw: () => Promise<void>
   withdrawalDescription: string
 }) {
+  const t = useT()
+  const { locale } = useLocale()
   const [isEditing, setIsEditing] = useState(false)
   const [withdrawOpen, setWithdrawOpen] = useState(false)
   const [isWithdrawing, setIsWithdrawing] = useState(false)
@@ -172,7 +180,9 @@ function EventHorseServiceRow({
     <DashboardItemRecordCard
       ref={rowFocusTarget}
       role="group"
-      aria-label={`${horse?.name ?? 'Unknown horse'} service notes`}
+      aria-label={t('eventViews.serviceRegion', {
+        name: horse?.name ?? t('eventViews.unknownHorse'),
+      })}
       tabIndex={-1}
       chrome="flat"
       density="compact"
@@ -189,7 +199,9 @@ function EventHorseServiceRow({
                 size="sm"
                 onClick={() => setIsEditing(true)}
               >
-                {hasDetails ? 'Edit details' : 'Add details'}
+                {hasDetails
+                  ? t('eventViews.editDetails')
+                  : t('eventViews.addDetails')}
               </Button>
             )}
             {canWithdraw && (
@@ -212,7 +224,7 @@ function EventHorseServiceRow({
                     />
                   }
                 >
-                  Withdraw horse
+                  {t('eventViews.withdraw')}
                 </AlertDialogTrigger>
                 <AlertDialogContent
                   finalFocus={() =>
@@ -221,7 +233,9 @@ function EventHorseServiceRow({
                 >
                   <AlertDialogHeader>
                     <AlertDialogTitle>
-                      Withdraw {horse?.name ?? 'this horse'}?
+                      {horse?.name
+                        ? t('eventViews.withdrawNamed', { name: horse.name })
+                        : t('eventViews.withdrawUnnamed')}
                     </AlertDialogTitle>
                     <AlertDialogDescription>
                       {withdrawalDescription}
@@ -230,13 +244,13 @@ function EventHorseServiceRow({
                   {withdrawError && (
                     <RouteStatusAlert
                       tone="danger"
-                      title="Could not withdraw the horse"
-                      description="Withdrawal was not confirmed. Try again or close this dialog."
+                      title={t('eventViews.withdrawFailed')}
+                      description={t('eventViews.withdrawFailedHelp')}
                     />
                   )}
                   <AlertDialogFooter>
                     <AlertDialogCancel disabled={isWithdrawing}>
-                      Keep horse
+                      {t('eventViews.keepHorse')}
                     </AlertDialogCancel>
                     <AlertDialogAction
                       variant="destructive"
@@ -244,7 +258,9 @@ function EventHorseServiceRow({
                       aria-busy={isWithdrawing || undefined}
                       onClick={() => void confirmWithdrawal()}
                     >
-                      {isWithdrawing ? 'Withdrawing...' : 'Withdraw horse'}
+                      {isWithdrawing
+                        ? t('eventViews.withdrawing')
+                        : t('eventViews.withdraw')}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -267,26 +283,26 @@ function EventHorseServiceRow({
           ) : hasDetails ? (
             <>
               {eventHorse.requestedServiceNotes && (
-                <DetailTextBlock label="Requested service">
+                <DetailTextBlock label={t('eventViews.requestedService')}>
                   {eventHorse.requestedServiceNotes}
                 </DetailTextBlock>
               )}
               {eventHorse.completionNotes && (
-                <DetailTextBlock label="Outcome">
+                <DetailTextBlock label={t('eventViews.outcome')}>
                   {eventHorse.completionNotes}
                 </DetailTextBlock>
               )}
             </>
           ) : (
             <DashboardEmptyState chrome="soft" spacing="flush">
-              No per-horse service notes have been added yet.
+              {t('eventViews.noServiceNotes')}
             </DashboardEmptyState>
           )}
         </DashboardItemRecordFooter>
       }
     >
       <HorseCardContent
-        horse={horse ?? { name: 'Unknown horse' }}
+        horse={horse ?? { name: t('eventViews.unknownHorse') }}
         badges={
           eventHorse.status && eventHorse.status !== 'confirmed' ? (
             <EventHorseStatusBadge status={eventHorse.status} />
@@ -294,7 +310,9 @@ function EventHorseServiceRow({
         }
         meta={
           eventHorse.costShare !== undefined
-            ? `Cost ${formatCurrencyAmount(eventHorse.costShare)}`
+            ? t('eventViews.cost', {
+                amount: formatCurrencyAmount(eventHorse.costShare, locale),
+              })
             : undefined
         }
       />

@@ -74,3 +74,18 @@ function createHorse(overrides: Partial<Doc<'horses'>>): Doc<'horses'> {
     ...overrides,
   }
 }
+
+it('searches Polish breed names while preserving stored facets and English searches', () => {
+  const horses = [
+    createHorse({ name: 'Żaneta', breed: 'Thoroughbred', sex: 'mare' }),
+    createHorse({ name: 'Amber', breed: 'Arabian', sex: 'gelding' }),
+  ]
+  const polish = createHorseListFilterConfig('pl')
+  expect(searchHorseNames(horses, polish, 'pełna krew')).toEqual(['Żaneta'])
+  expect(searchHorseNames(horses, polish, 'Thoroughbred')).toEqual(['Żaneta'])
+  expect(
+    searchHorseNames(horses, createHorseListFilterConfig('en'), 'pełna krew'),
+  ).toEqual(['Żaneta'])
+  expect(polish.facets[0].options[0]).toEqual({ value: 'mare', label: 'Klacz' })
+  expect(horses[0].breed).toBe('Thoroughbred')
+})

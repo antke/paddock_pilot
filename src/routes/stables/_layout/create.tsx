@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { StableProfileForm } from '#/components/stables/StableProfileForm'
 import { showAppSuccessToast } from '#/components/ui/sonner'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
@@ -9,6 +10,8 @@ export const Route = createFileRoute('/stables/_layout/create')({
 })
 
 function RouteComponent() {
+  const t = useT()
+
   const addStable = useMutation(api.stables.add)
   const navigate = useNavigate()
   return (
@@ -17,8 +20,10 @@ function RouteComponent() {
       save={(values) => addStable(values)}
       onAcknowledged={(_, values) =>
         showAppSuccessToast({
-          title: 'Stable created',
-          description: <p>{values.name} is ready.</p>,
+          title: t('stables.created'),
+          description: (
+            <p>{t('stables.createdDescription', { name: values.name })}</p>
+          ),
         })
       }
       onSaved={(stableId) =>

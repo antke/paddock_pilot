@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '#/components/ui/button'
 import { DesktopIcon, MoonIcon, SunIcon } from '@phosphor-icons/react'
@@ -62,6 +63,7 @@ function applyThemeMode(mode: ThemeMode) {
 }
 
 export default function ThemeToggle() {
+  const t = useT()
   const [mode, setMode] = useState<ThemeMode>('light')
   const currentMode = useRef<ThemeMode>('light')
 
@@ -140,10 +142,7 @@ export default function ThemeToggle() {
     )
   }
 
-  const label =
-    mode === 'auto'
-      ? 'Theme mode: auto (system). Click to switch to light mode.'
-      : `Theme mode: ${mode}. Click to switch mode.`
+  const label = t(`theme.${mode}`)
 
   return (
     <Button

@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { useClerk } from '@clerk/tanstack-react-start'
 import { useState } from 'react'
 
@@ -13,6 +14,7 @@ export function AccountRecovery({
   retryFailed: boolean
   onRetry: () => void
 }) {
+  const t = useT()
   const { signOut } = useClerk()
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [signOutFailed, setSignOutFailed] = useState(false)
@@ -32,27 +34,21 @@ export function AccountRecovery({
 
   return (
     <RouteStatusAlert
-      title={<h1>Could not prepare your account</h1>}
+      title={<h1>{t('recovery.title')}</h1>}
       tone="danger"
       width="narrow"
       description={
         <div className="grid gap-3">
-          <p>
-            We couldn’t refresh your account details. Try again to continue. If
-            this keeps happening, reload the page or sign out and sign in again.
-          </p>
+          <p>{t('recovery.description')}</p>
           <p role="status" aria-live="polite">
             {isRetrying
-              ? 'Refreshing your account…'
+              ? t('recovery.refreshing')
               : retryFailed
-                ? 'Your account still couldn’t be refreshed. You can try reloading or signing in again.'
+                ? t('recovery.failed')
                 : null}
           </p>
           {signOutFailed ? (
-            <p role="alert">
-              We couldn’t sign you out. Check your connection and try again, or
-              reload the page.
-            </p>
+            <p role="alert">{t('recovery.signOutFailed')}</p>
           ) : null}
         </div>
       }
@@ -63,10 +59,10 @@ export function AccountRecovery({
             disabled={isRetrying || isSigningOut}
             aria-busy={isRetrying}
           >
-            {isRetrying ? 'Trying again…' : 'Try again'}
+            {isRetrying ? t('recovery.retrying') : t('common.retry')}
           </Button>
           <Button variant="outline" onClick={() => window.location.reload()}>
-            Reload page
+            {t('recovery.reload')}
           </Button>
           <Button
             variant="outline"
@@ -74,7 +70,7 @@ export function AccountRecovery({
             disabled={isSigningOut}
             aria-busy={isSigningOut}
           >
-            {isSigningOut ? 'Signing out…' : 'Sign out'}
+            {isSigningOut ? t('recovery.signingOut') : t('recovery.signOut')}
           </Button>
         </>
       }

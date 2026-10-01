@@ -1,3 +1,5 @@
+import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
+import { useT } from '#/i18n/LocaleProvider'
 import { InlineForm } from '#/components/forms/FormLayout'
 import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
 import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
@@ -10,7 +12,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { useId, useRef, useState } from 'react'
 import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
 import {
-  weightRecordFormSchema,
+  createWeightRecordSchemas,
   weightUnits,
 } from 'shared/horses/weightRecordSchema'
 import type {
@@ -42,6 +44,11 @@ export function WeightRecordForm({
   onSubmit,
   onPendingChange,
 }: WeightRecordFormProps) {
+  const t = useT()
+
+  const { weightRecordFormSchema } = createWeightRecordSchemas((key) =>
+    t(`careValidation.${key}`),
+  )
   const formId = useId()
   const pending = useRef(false)
   const [isPending, setIsPending] = useState(false)
@@ -55,6 +62,8 @@ export function WeightRecordForm({
       notes: '',
     },
   })
+
+  useLocalizedValidation(form)
 
   const submitWeightRecord = async (data: WeightRecordFormSchema) => {
     if (pending.current || disabled) return
@@ -81,7 +90,7 @@ export function WeightRecordForm({
   }
 
   return (
-    <InlineForm onSubmit={form.handleSubmit(submitWeightRecord)}>
+    <InlineForm noValidate onSubmit={form.handleSubmit(submitWeightRecord)}>
       <FieldGrid breakpoint="sm" template="trailing-sm">
         <Controller
           name="weight"
@@ -89,7 +98,7 @@ export function WeightRecordForm({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                Weight
+                {t('careRecords.weight')}
               </FieldLabel>
               <Input
                 ref={field.ref}
@@ -131,9 +140,9 @@ export function WeightRecordForm({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Unit</FieldLabel>
+              <FieldLabel>{t('careRecords.unit')}</FieldLabel>
               <ChoiceButtonGroup
-                aria-label="Weight unit"
+                aria-label={t('careRecords.weightUnit')}
                 value={field.value}
                 options={weightUnitOptions}
                 disabled={disabled || form.formState.isSubmitting || isPending}
@@ -163,7 +172,7 @@ export function WeightRecordForm({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                Measured date
+                {t('careRecords.measuredDate')}
               </FieldLabel>
               <Input
                 {...field}
@@ -193,7 +202,7 @@ export function WeightRecordForm({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                Body condition score (optional)
+                {t('careRecords.bcsOptional')}
               </FieldLabel>
               <Input
                 ref={field.ref}
@@ -211,7 +220,7 @@ export function WeightRecordForm({
                     ? `${formId}-${field.name}-error`
                     : undefined
                 }
-                placeholder="Optional, 1-9"
+                placeholder={t('careRecords.bcsExample')}
                 onBlur={field.onBlur}
                 onChange={(event) =>
                   field.onChange(
@@ -238,7 +247,7 @@ export function WeightRecordForm({
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
             <FieldLabel htmlFor={`${formId}-${field.name}`}>
-              Notes (optional)
+              {t('careRecords.notesOptional')}
             </FieldLabel>
             <Textarea
               {...field}
@@ -248,7 +257,7 @@ export function WeightRecordForm({
               aria-describedby={
                 fieldState.invalid ? `${formId}-${field.name}-error` : undefined
               }
-              placeholder="Tape method, body condition notes, feed context..."
+              placeholder={t('careRecords.weightNotesExample')}
               autoComplete="off"
             />
             {fieldState.invalid && (
@@ -262,18 +271,14 @@ export function WeightRecordForm({
       />
 
       <FormSubmissionError
-        message={
-          failed
-            ? 'Could not add this weight record. Your measurement is still here. Please try again.'
-            : undefined
-        }
+        message={failed ? t('careRecords.weightSaveFailed') : undefined}
       />
 
       <FormSubmitActions
         isSubmitting={form.formState.isSubmitting || isPending}
         disabled={disabled}
-        submitLabel="Add weight record"
-        submittingLabel="Adding..."
+        submitLabel={t('careRecords.addWeightRecord')}
+        submittingLabel={t('careRecords.adding')}
       />
     </InlineForm>
   )

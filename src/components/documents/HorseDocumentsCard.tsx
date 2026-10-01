@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import {
   getListFilterEmptyMessage,
   ListFilterControls,
@@ -18,6 +19,9 @@ type HorseDocumentsCardProps = {
 }
 
 export function HorseDocumentsCard({ horse }: HorseDocumentsCardProps) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const { data } = useSuspenseQuery(
     convexQuery(api.stableDocuments.listForHorse, { horseId: horse._id }),
   )
@@ -26,7 +30,10 @@ export function HorseDocumentsCard({ horse }: HorseDocumentsCardProps) {
     stableId: horse.stableId,
     fixedHorseId: horse._id,
   })
-  const filterConfig = useMemo(createDocumentListFilterConfig, [])
+  const filterConfig = useMemo(
+    () => createDocumentListFilterConfig({ locale }),
+    [locale],
+  )
   const filtering = useListFiltering({
     items: documents,
     config: filterConfig,
@@ -34,8 +41,8 @@ export function HorseDocumentsCard({ horse }: HorseDocumentsCardProps) {
 
   return (
     <DocumentsCard
-      title="Documents"
-      description="Passport scans, vaccination proof, insurance paperwork, vet reports, farrier notes, and dental records for this horse."
+      title={t('documents.documents')}
+      description={t('documents.horseDescription')}
       actions={
         <DocumentUploadDialog
           canAddDocument={data.canManage}
@@ -46,8 +53,8 @@ export function HorseDocumentsCard({ horse }: HorseDocumentsCardProps) {
       documents={filtering.items}
       emptyMessage={getListFilterEmptyMessage({
         filtering,
-        emptyMessage: 'No documents have been added for this horse yet.',
-        filteredEmptyMessage: 'No documents match these filters.',
+        emptyMessage: t('documents.horseEmpty'),
+        filteredEmptyMessage: t('documents.filteredEmpty'),
       })}
       listToolbar={
         <ListFilterControls

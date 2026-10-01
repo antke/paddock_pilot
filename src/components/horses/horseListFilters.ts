@@ -1,3 +1,6 @@
+import { localeInstances } from '#/i18n/resources'
+import type { Locale } from 'shared/i18n/locale'
+import { getHorseBreedLabel } from 'shared/i18n/horseBreedLabels'
 import type {
   ListFilterConfig,
   ListFilterOption,
@@ -6,13 +9,25 @@ import type { Doc } from 'convex/_generated/dataModel'
 
 export type HorseListFilterFacetId = 'sex' | 'shoeingStatus'
 
-export function createHorseListFilterConfig(): ListFilterConfig<
-  Doc<'horses'>,
-  HorseListFilterFacetId
-> {
+export function createHorseListFilterConfig(
+  locale: Locale = 'en',
+): ListFilterConfig<Doc<'horses'>, HorseListFilterFacetId> {
+  const t = localeInstances[locale].t
+  const horseSexFilterOptions = ['mare', 'gelding', 'stallion'].map(
+    (value) => ({
+      value,
+      label: t(`horseList.${value as 'mare' | 'gelding' | 'stallion'}`),
+    }),
+  ) satisfies ReadonlyArray<ListFilterOption>
+  const horseShoeingFilterOptions = ['barefoot', 'front_shoes', 'full_set'].map(
+    (value) => ({
+      value,
+      label: t(`horseList.${value as 'barefoot' | 'front_shoes' | 'full_set'}`),
+    }),
+  ) satisfies ReadonlyArray<ListFilterOption>
   return {
-    searchLabel: 'Search horses',
-    searchPlaceholder: 'Search name, owner, breed, discipline, or ID',
+    searchLabel: t('horseList.search'),
+    searchPlaceholder: t('horseList.searchHelp'),
     searchFields: [
       {
         id: 'name',
@@ -27,7 +42,12 @@ export function createHorseListFilterConfig(): ListFilterConfig<
       {
         id: 'profile',
         weight: 5,
-        getValues: (horse) => [horse.breed, horse.color, horse.discipline],
+        getValues: (horse) => [
+          horse.breed,
+          horse.breed ? getHorseBreedLabel(horse.breed, 'pl') : undefined,
+          horse.color,
+          horse.discipline,
+        ],
       },
       {
         id: 'identifiers',
@@ -38,15 +58,15 @@ export function createHorseListFilterConfig(): ListFilterConfig<
     facets: [
       {
         id: 'sex',
-        label: 'Sex',
-        allLabel: 'All sexes',
+        label: t('horseList.sex'),
+        allLabel: t('horseList.allSexes'),
         options: horseSexFilterOptions,
         matches: (horse, selectedValue) => horse.sex === selectedValue,
       },
       {
         id: 'shoeingStatus',
-        label: 'Shoeing',
-        allLabel: 'All shoeing statuses',
+        label: t('horseList.shoeing'),
+        allLabel: t('horseList.allShoeing'),
         options: horseShoeingFilterOptions,
         matches: (horse, selectedValue) =>
           horse.shoeingStatus === selectedValue,
@@ -54,15 +74,3 @@ export function createHorseListFilterConfig(): ListFilterConfig<
     ],
   }
 }
-
-const horseSexFilterOptions = [
-  { value: 'mare', label: 'Mare' },
-  { value: 'gelding', label: 'Gelding' },
-  { value: 'stallion', label: 'Stallion' },
-] satisfies ReadonlyArray<ListFilterOption>
-
-const horseShoeingFilterOptions = [
-  { value: 'barefoot', label: 'Barefoot' },
-  { value: 'front_shoes', label: 'Front shoes' },
-  { value: 'full_set', label: 'Full set' },
-] satisfies ReadonlyArray<ListFilterOption>

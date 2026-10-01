@@ -6,6 +6,7 @@ export function useAcknowledgedFormSave<TValues, TResult>({
   onSaved,
   saveError,
   continueError,
+  formatSaveError,
   onAcknowledged,
   onPendingChange,
 }: {
@@ -13,6 +14,7 @@ export function useAcknowledgedFormSave<TValues, TResult>({
   onSaved: (result: TResult) => void | Promise<void>
   saveError: string
   continueError: string
+  formatSaveError?: (error: unknown) => string
   onAcknowledged?: (result: TResult, values: TValues) => void
   onPendingChange?: (pending: boolean) => void
 }) {
@@ -25,7 +27,7 @@ export function useAcknowledgedFormSave<TValues, TResult>({
   const [phase, setPhase] = useState<'idle' | 'saving' | 'continuing'>('idle')
   const [acknowledged, setAcknowledged] = useState(false)
   const [completed, setCompleted] = useState(false)
-  const [error, setError] = useState<string>()
+  const [saveFailure, setSaveFailure] = useState<unknown>(undefined)
   const [errorKind, setErrorKind] = useState<'save' | 'continuation' | null>(
     null,
   )
@@ -41,8 +43,8 @@ export function useAcknowledgedFormSave<TValues, TResult>({
   }, [])
 
   const clearError = () => {
-    setError(undefined)
     setErrorKind(null)
+    setSaveFailure(undefined)
   }
   const isCurrent = (current: number) =>
     mounted.current && epoch.current === current
@@ -60,7 +62,6 @@ export function useAcknowledgedFormSave<TValues, TResult>({
       if (isCurrent(current)) setCompleted(true)
     } catch {
       if (isCurrent(current)) {
-        setError(continueError)
         setErrorKind('continuation')
       }
     }
@@ -88,9 +89,9 @@ export function useAcknowledgedFormSave<TValues, TResult>({
       let result: TResult
       try {
         result = await save(values)
-      } catch {
+      } catch (error) {
         if (isCurrent(current)) {
-          setError(saveError)
+          setSaveFailure(error)
           setErrorKind('save')
         }
         return
@@ -102,7 +103,6 @@ export function useAcknowledgedFormSave<TValues, TResult>({
       try {
         onAcknowledged?.(result, values)
       } catch {
-        setError(continueError)
         setErrorKind('continuation')
         return
       }
@@ -118,7 +118,12 @@ export function useAcknowledgedFormSave<TValues, TResult>({
     phase,
     acknowledged,
     completed,
-    error,
+    error:
+      errorKind === 'save'
+        ? (formatSaveError?.(saveFailure) ?? saveError)
+        : errorKind === 'continuation'
+          ? continueError
+          : undefined,
     errorKind,
     clearError,
   }

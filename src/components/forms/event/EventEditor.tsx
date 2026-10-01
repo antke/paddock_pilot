@@ -1,3 +1,7 @@
+import { getUserFacingErrorCode } from 'shared/i18n/errors'
+import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
+import { createEventSchemas } from 'shared/events/eventSchema'
+import { useT } from '#/i18n/LocaleProvider'
 import { useId } from 'react'
 import type { ComponentProps } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -11,7 +15,6 @@ import { FormSubmitButtons } from '#/components/forms/FormSubmitActions'
 import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
 import { useAcknowledgedFormSave } from '#/components/forms/useAcknowledgedFormSave'
 import { EventFormFields } from './EventFormFields'
-import { eventFormSchema } from './eventFormSchema'
 import type { EventFormInput, EventFormSchema } from './eventFormSchema'
 
 type Props = {
@@ -38,32 +41,61 @@ export function EventEditor({
   onSaved,
   onAcknowledged,
   onPendingChange,
-  completionMessage = 'Event saved.',
+  completionMessage,
 }: Props) {
+  const t = useT()
+
   const isTraining = feature === 'training'
-  const noun = isTraining ? 'training session' : 'event'
+  const { eventFormSchema } = createEventSchemas(
+    (key) => t(`eventValidation.${key}`),
+    (key) => t(`trainingValidation.${key}`),
+  )
   const formId = useId()
   const form = useForm<EventFormInput, unknown, EventFormSchema>({
     resolver: zodResolver(eventFormSchema),
     mode: 'onTouched',
     defaultValues: initialValues,
   })
+  useLocalizedValidation(form)
   const save = useAcknowledgedFormSave({
+    formatSaveError: (error) => {
+      const code = getUserFacingErrorCode(error)
+      return code
+        ? t(`serverErrors.${code}`)
+        : t(
+            isTraining
+              ? 'eventEditor.trainingSaveFailed'
+              : 'eventEditor.eventSaveFailed',
+          )
+    },
     save: onSave,
     onSaved,
     onAcknowledged,
     onPendingChange,
-    saveError: `Could not save ${noun}. Your entries are still here. Please try again.`,
+    saveError: t(
+      isTraining
+        ? 'eventEditor.trainingSaveFailed'
+        : 'eventEditor.eventSaveFailed',
+    ),
     continueError: isTraining
-      ? 'Training session saved, but its page could not be opened. Open the session to continue; your changes do not need to be saved again.'
-      : 'Event saved, but its page could not be opened. Open the event to continue; your changes do not need to be saved again.',
+      ? t('eventEditor.trainingContinueFailed')
+      : t('eventEditor.eventContinueFailed'),
   })
   const pending = save.pending || form.formState.isSubmitting
 
   return (
     <RouteFormCard
+      noValidate
       formId={formId}
-      title={mode === 'create' ? `Add ${noun}` : `Edit ${noun}`}
+      title={t(
+        isTraining
+          ? mode === 'create'
+            ? 'eventEditor.addTraining'
+            : 'eventEditor.editTraining'
+          : mode === 'create'
+            ? 'eventEditor.addEvent'
+            : 'eventEditor.editEvent',
+      )}
       stickyActions
       onSubmit={(event) => {
         if (pending || save.completed) {
@@ -85,11 +117,19 @@ export function EventEditor({
             submitLabel={
               save.completed
                 ? isTraining
-                  ? 'Training saved'
-                  : 'Event saved'
-                : `Open ${noun}`
+                  ? t('eventEditor.trainingSaved')
+                  : t('eventEditor.eventSaved')
+                : t(
+                    isTraining
+                      ? 'eventEditor.openTraining'
+                      : 'eventEditor.openEvent',
+                  )
             }
-            submittingLabel={isTraining ? 'Opening session…' : 'Opening event…'}
+            submittingLabel={
+              isTraining
+                ? t('eventEditor.openingTraining')
+                : t('eventEditor.openingEvent')
+            }
           />
         ) : (
           <RouteFormActions
@@ -102,17 +142,30 @@ export function EventEditor({
             resetConfirmation={
               form.formState.isDirty
                 ? {
-                    title: `Reset ${noun} changes?`,
-                    description:
-                      'Your unsaved entries will be replaced with the values from when you opened this form.',
-                    confirmLabel: 'Reset changes',
+                    title: t(
+                      isTraining
+                        ? 'eventEditor.resetTraining'
+                        : 'eventEditor.resetEvent',
+                    ),
+                    description: t('eventEditor.resetHelp'),
+                    confirmLabel: t('eventEditor.reset'),
                   }
                 : undefined
             }
-            submitLabel={
-              mode === 'create' ? `Create ${noun}` : `Update ${noun}`
+            submitLabel={t(
+              isTraining
+                ? mode === 'create'
+                  ? 'eventEditor.createTraining'
+                  : 'eventEditor.updateTraining'
+                : mode === 'create'
+                  ? 'eventEditor.createEvent'
+                  : 'eventEditor.updateEvent',
+            )}
+            submittingLabel={
+              mode === 'create'
+                ? t('eventEditor.creating')
+                : t('eventEditor.saving')
             }
-            submittingLabel={mode === 'create' ? 'Creating…' : 'Saving…'}
           />
         )
       }
@@ -128,7 +181,12 @@ export function EventEditor({
       <FormSubmissionError message={save.error} />
       {save.completed ? (
         <p role="status" className="text-sm text-foreground">
-          {completionMessage}
+          {completionMessage ??
+            t(
+              isTraining
+                ? 'eventEditor.trainingSavedSentence'
+                : 'eventEditor.eventSavedSentence',
+            )}
         </p>
       ) : null}
     </RouteFormCard>

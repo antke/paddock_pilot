@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { DownloadSimpleIcon } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 
@@ -22,10 +23,17 @@ export function DocumentDownloadAction({
   fileState,
   fileUrl,
 }: DocumentDownloadActionProps) {
+  const t = useT()
+
   const [isDownloading, setIsDownloading] = useState(false)
   const activeRequest = useRef<AbortController | null>(null)
   const isMounted = useRef(true)
-  const unavailableReason = getUnavailableReason(fileState)
+  const unavailableReason =
+    fileState === 'metadata-only'
+      ? t('documents.noFileReason')
+      : fileState === 'unavailable'
+        ? t('documents.unavailableReason')
+        : undefined
 
   useEffect(() => {
     isMounted.current = true
@@ -58,8 +66,8 @@ export function DocumentDownloadAction({
         return
 
       showAppErrorToast({
-        title: 'Could not download document',
-        description: <p>Check your connection, then try the download again.</p>,
+        title: t('documents.downloadFailed'),
+        description: <p>{t('documents.downloadRetry')}</p>,
       })
     } finally {
       if (activeRequest.current === controller) {
@@ -79,8 +87,16 @@ export function DocumentDownloadAction({
       aria-busy={isDownloading || undefined}
       aria-label={
         unavailableReason
-          ? `Download unavailable for ${fileName}: ${unavailableReason}`
-          : `${isDownloading ? 'Downloading' : 'Download'} ${fileName}`
+          ? t('documents.unavailableNamed', {
+              name: fileName,
+              reason: unavailableReason,
+            })
+          : t(
+              isDownloading
+                ? 'documents.downloadingNamed'
+                : 'documents.downloadNamed',
+              { name: fileName },
+            )
       }
       onClick={downloadDocument}
     >
@@ -93,7 +109,7 @@ export function DocumentDownloadAction({
           aria-hidden={true}
         />
       )}
-      {isDownloading ? 'Downloading…' : 'Download'}
+      {isDownloading ? t('documents.downloading') : t('documents.download')}
     </Button>
   )
 
@@ -106,7 +122,9 @@ export function DocumentDownloadAction({
           <span
             className="inline-flex"
             tabIndex={0}
-            aria-label={`Download unavailable: ${unavailableReason}`}
+            aria-label={t('documents.unavailableLabel', {
+              reason: unavailableReason,
+            })}
           />
         }
       >
@@ -115,13 +133,6 @@ export function DocumentDownloadAction({
       <TooltipContent>{unavailableReason}</TooltipContent>
     </Tooltip>
   )
-}
-
-function getUnavailableReason(fileState: StableDocumentFileState) {
-  if (fileState === 'metadata-only') return 'No file is attached'
-  if (fileState === 'unavailable') return 'The attached file is unavailable'
-
-  return undefined
 }
 
 function triggerBrowserDownload(file: Blob, fileName: string) {

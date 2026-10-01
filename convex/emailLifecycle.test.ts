@@ -88,7 +88,7 @@ describe('email lifecycle notifications', () => {
     const asUser = t.withIdentity(
       identity('account-lifecycle', 'account@example.com'),
     )
-    await asUser.mutation(api.users.ensureCurrentUser)
+    await asUser.mutation(api.users.ensureCurrentUser, {})
     await t.mutation(internal.users.upsertUser, {
       clerkId: 'account-lifecycle',
       email: 'account@example.com',
@@ -111,7 +111,7 @@ describe('email lifecycle notifications', () => {
 
   it('rate-limits immediate invitation resends', async () => {
     const asOwner = t.withIdentity(identity('resend-owner'))
-    await asOwner.mutation(api.users.ensureCurrentUser)
+    await asOwner.mutation(api.users.ensureCurrentUser, {})
     const stableId = await asOwner.mutation(api.stables.add, {
       name: 'Resend Yard',
       location: 'Warsaw',

@@ -1,3 +1,5 @@
+import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
+import { useT } from '#/i18n/LocaleProvider'
 import { InlineForm } from '#/components/forms/FormLayout'
 import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
 import { Field, FieldError, FieldGrid, FieldLabel } from '#/components/ui/field'
@@ -11,7 +13,7 @@ import { useMutation } from 'convex/react'
 import { useId, useRef, useState } from 'react'
 import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Controller, useForm } from 'react-hook-form'
-import { stableMemberDetailsFormSchema } from 'shared/stables/stableMemberSchema'
+import { createStableMemberSchemas } from 'shared/stables/stableMemberSchema'
 import type { StableMemberDetailsFormSchema } from 'shared/stables/stableMemberSchema'
 
 type StableMemberDetailsFormProps = {
@@ -29,14 +31,16 @@ export function StableMemberDetailsForm({
   onSaved,
   onPendingChange,
 }: StableMemberDetailsFormProps) {
+  const t = useT()
+
   const updateDetails = useMutation(api.stableMembers.updateDetails)
   const onSave = async (data: StableMemberDetailsFormSchema) => {
     try {
       await updateDetails({ id: member._id, ...data })
-      showAppSuccessToast({ title: 'Member details updated' })
+      showAppSuccessToast({ title: t('onboarding.memberUpdated') })
       return true
     } catch {
-      showAppErrorToast()
+      showAppErrorToast({ title: t('onboarding.memberSaveFailed') })
       return false
     }
   }
@@ -72,12 +76,17 @@ function MemberDetailsFields({
   onSaved,
   onPendingChange,
 }: StableMemberDetailsFormViewProps) {
+  const t = useT()
+
   const formId = useId()
   const pendingRef = useRef(false)
   const [isPending, setIsPending] = useState(false)
   const [saveError, setSaveError] = useState(false)
   const form = useForm<StableMemberDetailsFormSchema>({
-    resolver: zodResolver(stableMemberDetailsFormSchema),
+    resolver: zodResolver(
+      createStableMemberSchemas((key) => t(`stableValidation.${key}`))
+        .stableMemberDetailsFormSchema,
+    ),
     mode: 'onTouched',
     defaultValues: {
       displayNameOverride: member.displayNameOverride ?? '',
@@ -85,6 +94,7 @@ function MemberDetailsFields({
       emergencyContact: member.emergencyContact ?? '',
     },
   })
+  useLocalizedValidation(form)
 
   const onSubmit = async (data: StableMemberDetailsFormSchema) => {
     if (pendingRef.current) return
@@ -109,8 +119,7 @@ function MemberDetailsFields({
       {saveError && (
         <Alert variant="destructive">
           <AlertDescription>
-            Could not save member details. Your changes are still here. Please
-            try again.
+            {t('onboarding.memberSaveFailed')}
           </AlertDescription>
         </Alert>
       )}
@@ -121,7 +130,7 @@ function MemberDetailsFields({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                Yard display name
+                {t('onboarding.yardDisplayName')}
               </FieldLabel>
               <Input
                 {...field}
@@ -133,7 +142,7 @@ function MemberDetailsFields({
                     ? `${formId}-${field.name}-error`
                     : undefined
                 }
-                placeholder="Name used around the yard"
+                placeholder={t('onboarding.yardNamePlaceholder')}
               />
               {fieldState.invalid && (
                 <FieldError
@@ -150,7 +159,9 @@ function MemberDetailsFields({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={`${formId}-${field.name}`}>Phone</FieldLabel>
+              <FieldLabel htmlFor={`${formId}-${field.name}`}>
+                {t('onboarding.phone')}
+              </FieldLabel>
               <Input
                 {...field}
                 id={`${formId}-${field.name}`}
@@ -162,7 +173,7 @@ function MemberDetailsFields({
                     ? `${formId}-${field.name}-error`
                     : undefined
                 }
-                placeholder="Member phone number"
+                placeholder={t('onboarding.memberPhonePlaceholder')}
               />
               {fieldState.invalid && (
                 <FieldError
@@ -181,7 +192,7 @@ function MemberDetailsFields({
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
             <FieldLabel htmlFor={`${formId}-${field.name}`}>
-              Emergency contact
+              {t('onboarding.emergencyContact')}
             </FieldLabel>
             <Textarea
               {...field}
@@ -191,7 +202,7 @@ function MemberDetailsFields({
               aria-describedby={
                 fieldState.invalid ? `${formId}-${field.name}-error` : undefined
               }
-              placeholder="Who should be contacted in an emergency?"
+              placeholder={t('onboarding.emergencyContactPlaceholder')}
             />
             {fieldState.invalid && (
               <FieldError
@@ -207,8 +218,8 @@ function MemberDetailsFields({
         isSubmitting={form.formState.isSubmitting || isPending}
         onCancel={onCancel}
         cancelLabel={cancelLabel}
-        submitLabel="Save details"
-        submittingLabel="Saving..."
+        submitLabel={t('onboarding.saveDetails')}
+        submittingLabel={t('onboarding.saving')}
       />
     </InlineForm>
   )

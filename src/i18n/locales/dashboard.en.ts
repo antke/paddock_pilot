@@ -1,0 +1,53 @@
+export const dashboard = {
+  horses: 'Horses',
+  addHorse: 'Add horse',
+  viewAllHorses: 'View all horses',
+  needsCare: 'Needs care',
+  today: 'Today',
+  addEvent: 'Add event',
+  quietDay: 'A quieter day at the stable',
+  quietDayHelp:
+    'Nothing is scheduled right now. Take the extra breathing room and enjoy a slower day.',
+  week: 'Next 7 days',
+  weekHelp:
+    'Select a day to see calendar entries, including completed and cancelled events.',
+  weekSchedule: 'Seven-day schedule',
+  noEntries: 'No entries',
+  calendarEmpty: 'No calendar entries.',
+  dayEmpty: 'No calendar entries for this day.',
+  healthIssues: 'Health issues',
+  reminders: 'Care reminders',
+  attention: 'Needs attention',
+  remindersHelp: 'Due and overdue care within the next 14 days.',
+  attentionHelp:
+    'High-severity health issues and reminders due within 14 days.',
+  viewReminders: 'View reminders',
+  healthHorses: 'Horses with high-severity health issues',
+  showFewer: 'Show fewer horses',
+  showAllHealth: 'Show all {{count}} horses with health issues',
+  viewHorses: 'View horses',
+  noHealthIssues: 'No high-severity health issues.',
+  dueDate: 'Due {{date}}',
+  overdueDate: 'Overdue {{date}}',
+  noReminders: 'No reminders are due within 14 days.',
+  todayTraining: 'Today’s training',
+  viewTraining: 'View training log',
+  noTraining: 'No scheduled or completed training today.',
+  continues: 'Continues',
+  todayEntries_one: '{{count}} calendar entry today',
+  todayEntries_other: '{{count}} calendar entries today',
+  entries_one: '{{count}} entry',
+  entries_other: '{{count}} entries',
+  issues_one: '{{count}} high-severity issue',
+  issues_other: '{{count}} high-severity issues',
+  yardIssues_one: '{{count}} high-severity issue across the yard.',
+  yardIssues_other: '{{count}} high-severity issues across the yard.',
+  missingIssues_one:
+    '{{count}} additional high-severity issue is not included in this overview. The horse list opens all horse records, without identifying those missing issues.',
+  missingIssues_other:
+    '{{count}} additional high-severity issues are not included in this overview. The horse list opens all horse records, without identifying those missing issues.',
+  remainingReminders_one:
+    '{{count}} more reminder due within 14 days. Open View reminders to see the full list.',
+  remainingReminders_other:
+    '{{count}} more reminders due within 14 days. Open View reminders to see the full list.',
+} as const

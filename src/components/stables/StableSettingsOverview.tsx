@@ -1,3 +1,4 @@
+import { useLocale, useT } from '#/i18n/LocaleProvider'
 import type { ReactNode } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
@@ -17,14 +18,18 @@ export function StableSettingsOverview({
   stable,
   owner,
 }: Pick<StableSettingsData, 'stable' | 'owner'>) {
+  const t = useT()
+
   const archiveStable = useMutation(api.stables.remove)
   const navigate = useNavigate()
   const onArchive = async () => {
     try {
       await archiveStable({ id: stable._id })
       showAppSuccessToast({
-        title: 'Stable archived',
-        description: <p>{stable.name} is no longer available to members.</p>,
+        title: t('stables.archived'),
+        description: (
+          <p>{t('stables.archivedDescription', { name: stable.name })}</p>
+        ),
       })
       void navigate({ to: '/stables' })
       return true
@@ -51,6 +56,9 @@ export function StableSettingsOverviewContent({
   onArchive: () => boolean | Promise<boolean>
   editAction?: ReactNode
 }) {
+  const t = useT()
+
+  const { locale } = useLocale()
   const postalAddress = [
     stable.addressLine1,
     stable.addressLine2,
@@ -70,7 +78,7 @@ export function StableSettingsOverviewContent({
               action="edit"
               variant="outline"
             >
-              Edit stable
+              {t('stables.edit')}
             </ButtonLink>
           )
         }
@@ -78,18 +86,18 @@ export function StableSettingsOverviewContent({
         contentTextSize="sm"
       >
         <DetailDisplayField
-          label="Location"
+          label={t('stables.location')}
           value={stable.location}
           valueWeight="normal"
         />
         <DetailDisplayField
-          label="Owner"
-          value={formatStableUserName(owner)}
+          label={t('stables.owner')}
+          value={formatStableUserName(owner, locale)}
           valueWeight="normal"
         />
         {postalAddress.length > 0 && (
           <DetailDisplayField
-            label="Postal address"
+            label={t('stables.postalAddress')}
             span="sm2"
             value={formatLineText(postalAddress)}
             valueWeight="normal"
@@ -98,28 +106,28 @@ export function StableSettingsOverviewContent({
         )}
         {stable.contactName && (
           <DetailDisplayField
-            label="Contact"
+            label={t('stables.contact')}
             value={stable.contactName}
             valueWeight="normal"
           />
         )}
         {stable.contactPhone && (
           <DetailDisplayField
-            label="Contact phone"
+            label={t('stables.contactPhone')}
             value={stable.contactPhone}
             valueWeight="normal"
           />
         )}
         {stable.emergencyPhone && (
           <DetailDisplayField
-            label="Emergency phone"
+            label={t('stables.emergencyPhone')}
             value={stable.emergencyPhone}
             valueWeight="normal"
           />
         )}
         {stable.description && (
           <DetailDisplayField
-            label="Description"
+            label={t('stables.description')}
             span="sm2"
             value={stable.description}
             valueWeight="normal"
@@ -128,7 +136,7 @@ export function StableSettingsOverviewContent({
         )}
         {stable.openingHours && (
           <DetailDisplayField
-            label="Opening hours"
+            label={t('stables.openingHours')}
             span="sm2"
             value={stable.openingHours}
             valueWeight="normal"
@@ -137,7 +145,7 @@ export function StableSettingsOverviewContent({
         )}
         {stable.yardRules && (
           <DetailDisplayField
-            label="Yard rules"
+            label={t('stables.yardRules')}
             span="sm2"
             value={stable.yardRules}
             valueWeight="normal"

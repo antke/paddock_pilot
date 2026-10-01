@@ -1,3 +1,6 @@
+import { localeInstances } from '#/i18n/resources'
+import type { Locale } from 'shared/i18n/locale'
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
@@ -17,10 +20,9 @@ import { DocumentDownloadAction } from './DocumentDownloadAction'
 import { DocumentPreview } from './DocumentPreview'
 import { DocumentUploadForm } from './DocumentUploadForm'
 import type { DocumentUploadValues } from './DocumentUploadForm'
-import { formatCountLabel, formatFileSize } from '#/lib/numberDisplay'
+import { formatFileSize } from '#/lib/numberDisplay'
 import { formatMediumTimestampDate } from '#/lib/dateDisplay'
 import { formatConjunctionList } from '#/lib/textDisplay'
-import { stableDocumentTypeLabels } from 'shared/stables/stableDocumentSchema'
 import type { StableDocumentFileState } from 'shared/stables/stableDocumentSchema'
 
 export type DocumentListItem = {
@@ -62,6 +64,8 @@ export function DocumentUploadDialog({
   fixedHorseId,
   onAdd,
 }: DocumentUploadDialogProps) {
+  const t = useT()
+
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const uploading = useRef(false)
@@ -80,9 +84,9 @@ export function DocumentUploadDialog({
         if (!uploading.current) setIsCreateOpen(open)
       }}
       isPending={isUploading}
-      triggerLabel="Add document"
-      title="Add document"
-      description="Upload paperwork without losing your place in the document list."
+      triggerLabel={t('documents.add')}
+      title={t('documents.add')}
+      description={t('documents.uploadHelp')}
     >
       <DocumentUploadForm
         horseOptions={horseOptions}
@@ -108,11 +112,12 @@ export function DocumentsCard({
   chrome = 'soft',
   onRemove,
 }: DocumentsCardProps) {
+  const t = useT()
   const section = useRef<HTMLElement>(null)
   const documentList = (
     <>
       <p className="sr-only" role="status" aria-live="polite" aria-atomic>
-        {formatCountLabel(documents.length, 'document')}
+        {t('documents.count', { count: documents.length })}
       </p>
 
       {documents.length === 0 ? (
@@ -143,7 +148,7 @@ export function DocumentsCard({
           section.current = element
         }}
         role="group"
-        aria-label={title ?? 'Documents'}
+        aria-label={title ?? t('documents.documents')}
         tabIndex={-1}
         chrome="soft"
         as={as}
@@ -163,7 +168,7 @@ export function DocumentsCard({
         section.current = element
       }}
       role="group"
-      aria-label={title ?? 'Documents'}
+      aria-label={title ?? t('documents.documents')}
       tabIndex={-1}
       as={as}
       title={title}
@@ -189,6 +194,8 @@ function DocumentRow({
   removalFocusTarget: () => HTMLElement | null
   onRemove: (id: Id<'stableDocuments'>) => Promise<void>
 }) {
+  const t = useT()
+  const { locale } = useLocale()
   const { document } = item
   const RowHeading = headingLevel === 2 ? 'h2' : 'h3'
 
@@ -207,14 +214,20 @@ function DocumentRow({
       titleClassName="line-clamp-none break-words [overflow-wrap:anywhere]"
       meta={
         <>
-          <span>{stableDocumentTypeLabels[document.type]}</span>
-          <span>{getDocumentFormatLabel(document)}</span>
+          <span>{t(`documents.types.${document.type}`)}</span>
+          <span>{getDocumentFormatLabel(document, locale)}</span>
           {document.size !== undefined && (
-            <span>{formatFileSize(document.size)}</span>
+            <span>{formatFileSize(document.size, locale)}</span>
           )}
           {item.horseName && <span>{item.horseName}</span>}
-          {item.eventTitle && <span>Linked to {item.eventTitle}</span>}
-          <span>Added {formatMediumTimestampDate(document.createdAt)}</span>
+          {item.eventTitle && (
+            <span>{t('documents.linkedTo', { name: item.eventTitle })}</span>
+          )}
+          <span>
+            {t('documents.addedAt', {
+              date: formatMediumTimestampDate(document.createdAt, locale),
+            })}
+          </span>
         </>
       }
       metaSeparator="dot"
@@ -234,9 +247,9 @@ function DocumentRow({
               rel="noreferrer"
               variant="ghost"
               size="sm"
-              aria-label={`Open ${document.fileName} in a new tab`}
+              aria-label={t('documents.openNamed', { name: document.fileName })}
             >
-              Open file
+              {t('documents.open')}
             </ButtonAnchor>
           )}
           <DocumentDownloadAction
@@ -246,9 +259,9 @@ function DocumentRow({
           />
           {item.canManage && (
             <RecordRemoveAction
-              title={`Remove “${document.fileName}”?`}
-              description={getRemoveDescription(item)}
-              confirmLabel="Remove document"
+              title={t('documents.removeNamed', { name: document.fileName })}
+              description={getRemoveDescription(item, locale)}
+              confirmLabel={t('documents.remove')}
               onConfirm={() => onRemove(document._id)}
               removalFocusTarget={removalFocusTarget}
             />
@@ -259,22 +272,33 @@ function DocumentRow({
   )
 }
 
-function getRemoveDescription(item: DocumentListItem) {
+function getRemoveDescription(item: DocumentListItem, locale: Locale) {
+  const t = localeInstances[locale].t
   const consequences = [
-    item.fileState !== 'metadata-only' ? 'the uploaded file' : undefined,
-    item.horseName ? `the link to ${item.horseName}` : undefined,
-    item.eventTitle ? `the link to ${item.eventTitle}` : undefined,
+    item.fileState !== 'metadata-only'
+      ? t('documents.uploadedFile')
+      : undefined,
+    item.horseName
+      ? t('documents.linkTo', { name: item.horseName })
+      : undefined,
+    item.eventTitle
+      ? t('documents.linkTo', { name: item.eventTitle })
+      : undefined,
   ]
-  const consequenceCopy = formatConjunctionList(consequences)
+  const consequenceCopy = formatConjunctionList(consequences, locale)
 
   if (!consequenceCopy) {
-    return 'This document record will be removed permanently. This cannot be undone.'
+    return t('documents.removeRecordHelp')
   }
 
-  return `Removing this document also removes ${consequenceCopy} permanently. This cannot be undone.`
+  return t('documents.removeConsequences', { consequences: consequenceCopy })
 }
 
-function getDocumentFormatLabel(document: Doc<'stableDocuments'>) {
+function getDocumentFormatLabel(
+  document: Doc<'stableDocuments'>,
+  locale: Locale,
+) {
+  const t = localeInstances[locale].t
   const extension = document.fileName.split('.').pop()?.toLowerCase()
   const extensionLabel = extension
     ? documentExtensionLabels[extension]
@@ -288,7 +312,7 @@ function getDocumentFormatLabel(document: Doc<'stableDocuments'>) {
 
   if (mimeTypeLabel) return mimeTypeLabel
 
-  return 'File'
+  return t('documents.file')
 }
 
 const documentExtensionLabels: Record<string, string> = {

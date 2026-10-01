@@ -1,12 +1,11 @@
+import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
+import { useT } from '#/i18n/LocaleProvider'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from 'convex/react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { useId } from 'react'
-import {
-  stableNameSchema,
-  stableLocationSchema,
-} from 'shared/stables/stableSchema'
+import { createStableSchemas } from 'shared/stables/stableSchema'
 import { useOnboardingSave, OnboardingSaveError } from './onboardingAsync'
 import type { Doc, Id } from 'convex/_generated/dataModel'
 
@@ -22,12 +21,16 @@ import {
 import { Input } from '#/components/ui/input'
 import { api } from 'convex/_generated/api'
 
-const stableBasicsSchema = z.object({
-  name: stableNameSchema,
-  location: stableLocationSchema,
-})
+function createStableBasicsSchema(t: ReturnType<typeof useT>) {
+  const { stableNameSchema, stableLocationSchema } = createStableSchemas(
+    (key) => t(`stableValidation.${key}`),
+  )
+  return z.object({ name: stableNameSchema, location: stableLocationSchema })
+}
 
-export type StableBasicsValues = z.infer<typeof stableBasicsSchema>
+export type StableBasicsValues = z.infer<
+  ReturnType<typeof createStableBasicsSchema>
+>
 
 type StableBasicsStepProps = {
   stable?: Doc<'stables'>
@@ -58,22 +61,25 @@ export function StableBasicsStepView({
 }: StableBasicsStepProps & {
   onSave: (values: StableBasicsValues) => Promise<Id<'stables'>>
 }) {
+  const t = useT()
+
   const formId = useId()
   const save = useOnboardingSave({
     onSave,
     onSaved,
     failureMessage: stable
-      ? 'Could not save stable details. Your entries are still here. Try again.'
-      : 'Could not create the stable. Your entries are still here. Try again.',
+      ? t('onboarding.stableSaveFailed')
+      : t('onboarding.stableCreateFailed'),
   })
   const form = useForm<StableBasicsValues>({
-    resolver: zodResolver(stableBasicsSchema),
+    resolver: zodResolver(createStableBasicsSchema(t)),
     mode: 'onTouched',
     defaultValues: {
       name: stable?.name ?? '',
       location: stable?.location ?? '',
     },
   })
+  useLocalizedValidation(form)
 
   return (
     <InlineForm onSubmit={form.handleSubmit(save.run)}>
@@ -85,12 +91,12 @@ export function StableBasicsStepView({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                Stable name
+                {t('onboarding.stableName')}
               </FieldLabel>
               <Input
                 {...field}
                 id={`${formId}-${field.name}`}
-                placeholder="Cedar Ridge Barn"
+                placeholder={t('onboarding.stableExample')}
                 autoComplete="organization"
                 aria-invalid={fieldState.invalid}
                 aria-required="true"
@@ -117,12 +123,12 @@ export function StableBasicsStepView({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                Location
+                {t('onboarding.location')}
               </FieldLabel>
               <Input
                 {...field}
                 id={`${formId}-${field.name}`}
-                placeholder="Hudson Valley, NY"
+                placeholder={t('onboarding.locationExample')}
                 autoComplete="address-level2"
                 aria-invalid={fieldState.invalid}
                 aria-required="true"
@@ -134,7 +140,7 @@ export function StableBasicsStepView({
                 disabled={save.pending || save.acknowledged}
               />
               <FieldDescription>
-                A town, region or address people will recognise.
+                {t('onboarding.locationHelp')}
               </FieldDescription>
               {fieldState.invalid && (
                 <FieldError
@@ -152,12 +158,14 @@ export function StableBasicsStepView({
         isSubmitting={save.pending}
         submitLabel={
           save.acknowledged
-            ? 'Continue without saving again'
+            ? t('onboarding.continueSaved')
             : stable
-              ? 'Save stable details'
-              : 'Create stable and continue'
+              ? t('onboarding.saveStable')
+              : t('onboarding.createContinue')
         }
-        submittingLabel={stable ? 'Saving...' : 'Creating stable...'}
+        submittingLabel={
+          stable ? t('onboarding.saving') : t('onboarding.creating')
+        }
       />
     </InlineForm>
   )

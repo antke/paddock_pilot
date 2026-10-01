@@ -1,14 +1,12 @@
+import { localeInstances } from '#/i18n/resources'
+import type { Locale } from 'shared/i18n/locale'
+import { formatDecimal } from '#/lib/numberDisplay'
 import type {
   ListFilterConfig,
   ListFilterOption,
 } from '#/components/list-filtering/listFiltering'
 import type { Doc } from 'convex/_generated/dataModel'
-import {
-  eventStatuses,
-  eventStatusLabels,
-  eventTypes,
-  eventTypeLabels,
-} from 'shared/events/eventSchema'
+import { eventStatuses, eventTypes } from 'shared/events/eventSchema'
 import type { EventStatus, EventType } from 'shared/events/eventSchema'
 import {
   healthIssueSeverities,
@@ -20,29 +18,29 @@ import type {
 } from 'shared/horses/healthIssueSchema'
 import { medicationRecordStatuses } from 'shared/horses/medicationRecordSchema'
 import type { MedicationRecordStatus } from 'shared/horses/medicationRecordSchema'
-import {
-  horseHealthIssueSeverityLabels,
-  horseHealthIssueStatusLabels,
-  horseMedicationStatusLabels,
-} from './horseCareLabels'
 
 export type HorseActivityFilterFacetId = 'type' | 'status'
 export type HorseHealthIssueFilterFacetId = 'status' | 'severity'
 export type HorseMedicationRecordFilterFacetId = 'status'
 export type HorseWeightRecordFilterFacetId = 'unit' | 'bodyCondition'
 
-const weightUnitLabels = {
-  kg: 'Kilograms',
-  lb: 'Pounds',
-} satisfies Record<Doc<'horseWeightRecords'>['unit'], string>
-
-export function createHorseActivityListFilterConfig(): ListFilterConfig<
-  Doc<'events'>,
-  HorseActivityFilterFacetId
-> {
+export function createHorseActivityListFilterConfig(
+  locale: Locale = 'en',
+): ListFilterConfig<Doc<'events'>, HorseActivityFilterFacetId> {
+  const t = localeInstances[locale].t
+  const eventTypeFilterOptions = eventTypes
+    .filter((type) => type !== 'training')
+    .map((type) => ({
+      value: type,
+      label: t(`events.types.${type}`),
+    })) satisfies ReadonlyArray<ListFilterOption>
+  const eventStatusFilterOptions = eventStatuses.map((status) => ({
+    value: status,
+    label: t(`calendar.${status}`),
+  })) satisfies ReadonlyArray<ListFilterOption>
   return {
-    searchLabel: 'Search activity',
-    searchPlaceholder: 'Search title, location, provider, or notes',
+    searchLabel: t('careFilters.activitySearch'),
+    searchPlaceholder: t('careFilters.activityPlaceholder'),
     searchFields: [
       {
         id: 'title',
@@ -63,24 +61,24 @@ export function createHorseActivityListFilterConfig(): ListFilterConfig<
         id: 'labels',
         weight: 2,
         getValues: (event) => [
-          eventTypeLabels[event.type],
-          event.status ? eventStatusLabels[event.status] : undefined,
+          t(`events.types.${event.type}`),
+          event.status ? t(`calendar.${event.status}`) : undefined,
         ],
       },
     ],
     facets: [
       {
         id: 'type',
-        label: 'Type',
-        allLabel: 'All types',
+        label: t('careFilters.type'),
+        allLabel: t('careFilters.allTypes'),
         options: eventTypeFilterOptions,
         matches: (event, selectedValue) =>
           isEventType(selectedValue) && event.type === selectedValue,
       },
       {
         id: 'status',
-        label: 'Status',
-        allLabel: 'All statuses',
+        label: t('careFilters.status'),
+        allLabel: t('careFilters.allStatuses'),
         options: eventStatusFilterOptions,
         matches: (event, selectedValue) =>
           isEventStatus(selectedValue) && event.status === selectedValue,
@@ -89,13 +87,23 @@ export function createHorseActivityListFilterConfig(): ListFilterConfig<
   }
 }
 
-export function createHorseHealthIssueListFilterConfig(): ListFilterConfig<
-  Doc<'horseHealthIssues'>,
-  HorseHealthIssueFilterFacetId
-> {
+export function createHorseHealthIssueListFilterConfig(
+  locale: Locale = 'en',
+): ListFilterConfig<Doc<'horseHealthIssues'>, HorseHealthIssueFilterFacetId> {
+  const t = localeInstances[locale].t
+  const healthIssueStatusFilterOptions = healthIssueStatuses.map((status) => ({
+    value: status,
+    label: t(`careLabels.healthStatus.${status}`),
+  })) satisfies ReadonlyArray<ListFilterOption>
+  const healthIssueSeverityFilterOptions = healthIssueSeverities.map(
+    (severity) => ({
+      value: severity,
+      label: t(`careLabels.severity.${severity}`),
+    }),
+  ) satisfies ReadonlyArray<ListFilterOption>
   return {
-    searchLabel: 'Search health issues',
-    searchPlaceholder: 'Search title, description, status, or severity',
+    searchLabel: t('careFilters.healthSearch'),
+    searchPlaceholder: t('careFilters.healthPlaceholder'),
     searchFields: [
       {
         id: 'title',
@@ -111,9 +119,9 @@ export function createHorseHealthIssueListFilterConfig(): ListFilterConfig<
         id: 'labels',
         weight: 2,
         getValues: (issue) => [
-          horseHealthIssueStatusLabels[issue.status],
+          t(`careLabels.healthStatus.${issue.status}`),
           issue.severity
-            ? horseHealthIssueSeverityLabels[issue.severity]
+            ? t(`careLabels.severity.${issue.severity}`)
             : undefined,
         ],
       },
@@ -121,16 +129,16 @@ export function createHorseHealthIssueListFilterConfig(): ListFilterConfig<
     facets: [
       {
         id: 'status',
-        label: 'Status',
-        allLabel: 'All statuses',
+        label: t('careFilters.status'),
+        allLabel: t('careFilters.allStatuses'),
         options: healthIssueStatusFilterOptions,
         matches: (issue, selectedValue) =>
           isHealthIssueStatus(selectedValue) && issue.status === selectedValue,
       },
       {
         id: 'severity',
-        label: 'Severity',
-        allLabel: 'All severities',
+        label: t('careFilters.severity'),
+        allLabel: t('careFilters.allSeverities'),
         options: healthIssueSeverityFilterOptions,
         matches: (issue, selectedValue) =>
           isHealthIssueSeverity(selectedValue) &&
@@ -140,13 +148,22 @@ export function createHorseHealthIssueListFilterConfig(): ListFilterConfig<
   }
 }
 
-export function createHorseMedicationRecordListFilterConfig(): ListFilterConfig<
+export function createHorseMedicationRecordListFilterConfig(
+  locale: Locale = 'en',
+): ListFilterConfig<
   Doc<'horseMedicationRecords'>,
   HorseMedicationRecordFilterFacetId
 > {
+  const t = localeInstances[locale].t
+  const medicationStatusFilterOptions = medicationRecordStatuses.map(
+    (status) => ({
+      value: status,
+      label: t(`careLabels.medicationStatus.${status}`),
+    }),
+  ) satisfies ReadonlyArray<ListFilterOption>
   return {
-    searchLabel: 'Search medication',
-    searchPlaceholder: 'Search medication, dosage, provider, or notes',
+    searchLabel: t('careFilters.medicationSearch'),
+    searchPlaceholder: t('careFilters.medicationPlaceholder'),
     searchFields: [
       {
         id: 'medication',
@@ -167,14 +184,16 @@ export function createHorseMedicationRecordListFilterConfig(): ListFilterConfig<
       {
         id: 'status',
         weight: 2,
-        getValues: (record) => [horseMedicationStatusLabels[record.status]],
+        getValues: (record) => [
+          t(`careLabels.medicationStatus.${record.status}`),
+        ],
       },
     ],
     facets: [
       {
         id: 'status',
-        label: 'Status',
-        allLabel: 'All statuses',
+        label: t('careFilters.status'),
+        allLabel: t('careFilters.allStatuses'),
         options: medicationStatusFilterOptions,
         matches: (record, selectedValue) =>
           isMedicationRecordStatus(selectedValue) &&
@@ -184,12 +203,13 @@ export function createHorseMedicationRecordListFilterConfig(): ListFilterConfig<
   }
 }
 
-export function createHorseNutritionLogListFilterConfig(): ListFilterConfig<
-  Doc<'horseNutritionLogs'>
-> {
+export function createHorseNutritionLogListFilterConfig(
+  locale: Locale = 'en',
+): ListFilterConfig<Doc<'horseNutritionLogs'>> {
+  const t = localeInstances[locale].t
   return {
-    searchLabel: 'Search nutrition logs',
-    searchPlaceholder: 'Search summary, routine, recommendations, or notes',
+    searchLabel: t('careFilters.nutritionSearch'),
+    searchPlaceholder: t('careFilters.nutritionPlaceholder'),
     searchFields: [
       {
         id: 'summary',
@@ -211,25 +231,35 @@ export function createHorseNutritionLogListFilterConfig(): ListFilterConfig<
   }
 }
 
-export function createHorseWeightRecordListFilterConfig(): ListFilterConfig<
-  Doc<'horseWeightRecords'>,
-  HorseWeightRecordFilterFacetId
-> {
+export function createHorseWeightRecordListFilterConfig(
+  locale: Locale = 'en',
+): ListFilterConfig<Doc<'horseWeightRecords'>, HorseWeightRecordFilterFacetId> {
+  const t = localeInstances[locale].t
+  const weightUnitFilterOptions = [
+    { value: 'kg', label: t('careFilters.kg') },
+    { value: 'lb', label: t('careFilters.lb') },
+  ] satisfies ReadonlyArray<ListFilterOption>
+  const bodyConditionFilterOptions = [
+    { value: 'with-body-condition', label: t('careFilters.withBcs') },
+    { value: 'without-body-condition', label: t('careFilters.withoutBcs') },
+  ] satisfies ReadonlyArray<ListFilterOption>
   return {
-    searchLabel: 'Search weight records',
-    searchPlaceholder: 'Search weight, notes, unit, or body condition',
+    searchLabel: t('careFilters.weightSearch'),
+    searchPlaceholder: t('careFilters.weightPlaceholder'),
     searchFields: [
       {
         id: 'weight',
         weight: 12,
-        getValues: (record) => [`${record.weight} ${record.unit}`],
+        getValues: (record) => [
+          `${formatDecimal(record.weight, locale)} ${record.unit}`,
+        ],
       },
       {
         id: 'details',
         weight: 5,
         getValues: (record) => [
           record.notes,
-          weightUnitLabels[record.unit],
+          t(`careFilters.${record.unit}`),
           record.bodyConditionScore !== undefined
             ? `BCS ${record.bodyConditionScore}`
             : undefined,
@@ -239,62 +269,21 @@ export function createHorseWeightRecordListFilterConfig(): ListFilterConfig<
     facets: [
       {
         id: 'unit',
-        label: 'Unit',
-        allLabel: 'All units',
+        label: t('careFilters.unit'),
+        allLabel: t('careFilters.allUnits'),
         options: weightUnitFilterOptions,
         matches: (record, selectedValue) => record.unit === selectedValue,
       },
       {
         id: 'bodyCondition',
-        label: 'Body condition',
-        allLabel: 'All records',
+        label: t('careFilters.bodyCondition'),
+        allLabel: t('careFilters.allRecords'),
         options: bodyConditionFilterOptions,
         matches: matchesBodyConditionFilter,
       },
     ],
   }
 }
-
-const eventTypeFilterOptions = eventTypes
-  .filter((type) => type !== 'training')
-  .map((type) => ({
-    value: type,
-    label: eventTypeLabels[type],
-  })) satisfies ReadonlyArray<ListFilterOption>
-
-const eventStatusFilterOptions = eventStatuses.map((status) => ({
-  value: status,
-  label: eventStatusLabels[status],
-})) satisfies ReadonlyArray<ListFilterOption>
-
-const healthIssueStatusFilterOptions = healthIssueStatuses.map((status) => ({
-  value: status,
-  label: horseHealthIssueStatusLabels[status],
-})) satisfies ReadonlyArray<ListFilterOption>
-
-const healthIssueSeverityFilterOptions = healthIssueSeverities.map(
-  (severity) => ({
-    value: severity,
-    label: horseHealthIssueSeverityLabels[severity],
-  }),
-) satisfies ReadonlyArray<ListFilterOption>
-
-const medicationStatusFilterOptions = medicationRecordStatuses.map(
-  (status) => ({
-    value: status,
-    label: horseMedicationStatusLabels[status],
-  }),
-) satisfies ReadonlyArray<ListFilterOption>
-
-const weightUnitFilterOptions = [
-  { value: 'kg', label: weightUnitLabels.kg },
-  { value: 'lb', label: weightUnitLabels.lb },
-] satisfies ReadonlyArray<ListFilterOption>
-
-const bodyConditionFilterOptions = [
-  { value: 'with-body-condition', label: 'Has body condition' },
-  { value: 'without-body-condition', label: 'No body condition' },
-] satisfies ReadonlyArray<ListFilterOption>
 
 function isEventType(value: string): value is EventType {
   return eventTypes.some((type) => type === value)

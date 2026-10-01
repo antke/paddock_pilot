@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next'
+import { localeInstances } from '#/i18n/resources'
 import type { OnboardingStep, OnboardingStepStatus } from './OnboardingStepper'
 
 export type OnboardingRole = 'owner' | 'member'
@@ -14,33 +16,37 @@ export type OnboardingStepId =
 
 const accountStep = {
   id: 'account-profile',
-  label: 'About you',
+  label: 'onboarding.aboutYou',
 } as const
 
 const ownerSteps = [
-  { id: 'stable-basics', label: 'Stable' },
-  { id: 'stable-operations', label: 'Operations' },
-  { id: 'first-horse', label: 'First horse' },
-  { id: 'invite-team', label: 'Your team' },
-  { id: 'complete', label: 'Review' },
+  { id: 'stable-basics', label: 'onboarding.stable' },
+  { id: 'stable-operations', label: 'onboarding.operations' },
+  { id: 'first-horse', label: 'onboarding.firstHorse' },
+  { id: 'invite-team', label: 'onboarding.yourTeam' },
+  { id: 'complete', label: 'onboarding.review' },
 ] as const
 
 const memberSteps = [
-  { id: 'stable-introduction', label: 'Your stable' },
-  { id: 'member-details', label: 'Stable details' },
-  { id: 'first-horse', label: 'First horse' },
-  { id: 'complete', label: 'Review' },
+  { id: 'stable-introduction', label: 'onboarding.yourStable' },
+  { id: 'member-details', label: 'onboarding.stableDetails' },
+  { id: 'first-horse', label: 'onboarding.firstHorse' },
+  { id: 'complete', label: 'onboarding.review' },
 ] as const
 
 export function getOnboardingStepDefinitions(
   role: OnboardingRole,
   includeAccountProfile: boolean,
+  t: TFunction<'app'> = localeInstances.en.t,
 ) {
   const roleSteps = role === 'owner' ? ownerSteps : memberSteps
-  return includeAccountProfile ? [accountStep, ...roleSteps] : [...roleSteps]
+  return (
+    includeAccountProfile ? [accountStep, ...roleSteps] : [...roleSteps]
+  ).map((step) => ({ ...step, label: t(step.label) }))
 }
 
 export function createOnboardingStepperSteps(input: {
+  t?: TFunction<'app'>
   role: OnboardingRole
   includeAccountProfile: boolean
   currentStep: OnboardingStepId
@@ -50,6 +56,7 @@ export function createOnboardingStepperSteps(input: {
   const definitions = getOnboardingStepDefinitions(
     input.role,
     input.includeAccountProfile,
+    input.t,
   )
   const currentIndex = definitions.findIndex(
     (step) => step.id === input.currentStep,

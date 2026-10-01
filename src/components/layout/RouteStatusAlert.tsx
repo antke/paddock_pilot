@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import type { ComponentProps, ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
 
@@ -53,12 +54,6 @@ const routeStatusAlertWidthClassNames = {
   narrow: 'mx-auto max-w-xl',
 } satisfies Record<RouteStatusAlertWidth, string | undefined>
 
-const routeEntityNotFoundLabels = {
-  stable: 'Stable',
-  horse: 'Horse',
-  event: 'Event',
-} satisfies Record<RouteEntityNotFoundAlertEntity, string>
-
 export function RouteStatusAlert({
   title,
   description,
@@ -102,15 +97,12 @@ export function RouteEntityNotFoundAlert({
   description,
   ...props
 }: RouteEntityNotFoundAlertProps) {
-  const label = routeEntityNotFoundLabels[entity]
+  const t = useT()
 
   return (
     <RouteStatusAlert
-      title={`${label} not found`}
-      description={
-        description ??
-        `This ${entity} does not exist or is no longer available.`
-      }
+      title={t(`recovery.${entity}Title`)}
+      description={description ?? t(`recovery.${entity}Description`)}
       {...props}
     />
   )
@@ -123,6 +115,7 @@ export function RouteQueryErrorAlert({
   width,
   recoveryActions,
 }: RouteQueryErrorAlertProps) {
+  const t = useT()
   const queryErrorResetBoundary = useQueryErrorResetBoundary()
   const router = useRouter()
   const pending = useRef(false)
@@ -166,9 +159,7 @@ export function RouteQueryErrorAlert({
       description={
         <>
           {description}
-          {retryFailed ? (
-            <p>That retry couldn’t finish. Please try again.</p>
-          ) : null}
+          {retryFailed ? <p>{t('recovery.retryFailed')}</p> : null}
         </>
       }
       tone="danger"
@@ -181,7 +172,7 @@ export function RouteQueryErrorAlert({
             disabled={isPending}
             aria-busy={isPending}
           >
-            {isPending ? 'Trying again…' : 'Try again'}
+            {isPending ? t('recovery.retrying') : t('common.retry')}
           </Button>
           {recoveryActions}
         </>

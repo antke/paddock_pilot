@@ -1,3 +1,4 @@
+import { localeValidator } from '../shared/i18n/validators'
 import { ConvexError, v } from 'convex/values'
 import { createClerkClient } from '@clerk/backend'
 import type { Id } from './_generated/dataModel'
@@ -33,9 +34,19 @@ export const get = query({
   },
 })
 
+export const setLocale = mutation({
+  args: { locale: localeValidator },
+  handler: async (ctx, { locale }) => {
+    const user = await getUserFromIdentity(ctx)
+    if (!user || user.deletedAt !== undefined)
+      throw new ConvexError('User not authenticated')
+    await ctx.db.patch(user._id, { locale, updatedAt: Date.now() })
+  },
+})
+
 export const ensureCurrentUser = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: { locale: v.optional(localeValidator) },
+  handler: async (ctx, args) => {
     const identity = await requireAuth(ctx)
     const existingUser = await ctx.db
       .query('users')
@@ -46,6 +57,9 @@ export const ensureCurrentUser = mutation({
       throw new ConvexError('This account has been deleted')
     }
     if (existingUser) {
+      if (!existingUser.locale && args.locale) {
+        await ctx.db.patch(existingUser._id, { locale: args.locale })
+      }
       const email = identity.email?.trim().toLowerCase()
       if (email && email !== existingUser.email) {
         await ctx.db.patch(existingUser._id, { email, updatedAt: Date.now() })
@@ -60,6 +74,7 @@ export const ensureCurrentUser = mutation({
     const now = Date.now()
     const userId = await ctx.db.insert('users', {
       clerkId: identity.subject,
+      locale: args.locale,
       email: identity.email?.trim().toLowerCase() ?? '',
       firstName: identity.givenName ?? identity.name ?? 'Member',
       lastName: identity.familyName,
@@ -81,14 +96,16 @@ export const ensureCurrentUser = mutation({
 // This also repairs profiles created before the Clerk webhook arrived or when
 // the Convex JWT template did not include an email claim.
 export const syncCurrentUser = action({
-  args: {},
-  handler: async (ctx): Promise<Id<'users'>> => {
+  args: { locale: v.optional(localeValidator) },
+  handler: async (ctx, args): Promise<Id<'users'>> => {
     const identity = await ctx.auth.getUserIdentity()
     if (!identity) throw new ConvexError('User not authenticated')
 
     const secretKey = process.env.CLERK_SECRET_KEY
     if (!secretKey) {
-      return await ctx.runMutation(api.users.ensureCurrentUser, {})
+      return await ctx.runMutation(api.users.ensureCurrentUser, {
+        locale: args.locale,
+      })
     }
 
     const clerkUser = await createClerkClient({ secretKey }).users.getUser(
@@ -99,6 +116,7 @@ export const syncCurrentUser = action({
     )
     const userId = await ctx.runMutation(internal.users.upsertUser, {
       clerkId: identity.subject,
+      locale: args.locale,
       email: primaryEmail?.emailAddress ?? '',
       verifiedEmails: clerkUser.emailAddresses
         .filter((email) => email.verification?.status === 'verified')
@@ -114,6 +132,7 @@ export const syncCurrentUser = action({
 
 export const upsertUser = internalMutation({
   args: {
+    locale: v.optional(localeValidator),
     clerkId: v.string(),
     email: v.string(),
     verifiedEmails: v.optional(v.array(v.string())),
@@ -132,6 +151,7 @@ export const upsertUser = internalMutation({
       if (existingUser.deletedAt !== undefined) return
 
       await ctx.db.patch(existingUser._id, {
+        ...(!existingUser.locale && args.locale ? { locale: args.locale } : {}),
         email: args.email.trim().toLowerCase(),
         ...(args.verifiedEmails !== undefined && {
           verifiedEmails: args.verifiedEmails.map((email) =>

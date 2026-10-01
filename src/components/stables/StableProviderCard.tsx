@@ -5,7 +5,7 @@ import {
   DashboardItemRecordCard,
   DashboardItemRecordContent,
 } from '#/components/dashboard/DashboardItemCard'
-import { stableProviderTypeLabels } from 'shared/stables/stableProviderSchema'
+import { useT } from '#/i18n/LocaleProvider'
 
 export type StableProviderCardProvider = Pick<
   Doc<'stableProviders'>,
@@ -21,6 +21,7 @@ export function StableProviderCard({
   actions,
   provider,
 }: StableProviderCardProps) {
+  const t = useT()
   return (
     <DashboardItemRecordCard
       chrome="flat"
@@ -33,7 +34,7 @@ export function StableProviderCard({
         titleTone="default"
         meta={
           <>
-            <span>{stableProviderTypeLabels[provider.type]}</span>
+            <span>{t(`stables.providerTypes.${provider.type}`)}</span>
             {provider.phone && <span>{provider.phone}</span>}
             {provider.email && <span>{provider.email}</span>}
           </>

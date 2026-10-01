@@ -1,25 +1,34 @@
+import { localeInstances } from '#/i18n/resources'
+import type { Locale } from 'shared/i18n/locale'
 import type {
   ListFilterConfig,
   ListFilterOption,
 } from '#/components/list-filtering/listFiltering'
 import type { Doc } from 'convex/_generated/dataModel'
-import {
-  eventStatuses,
-  eventStatusLabels,
-  eventTypes,
-  eventTypeLabels,
-} from 'shared/events/eventSchema'
+import { eventStatuses, eventTypes } from 'shared/events/eventSchema'
 import type { EventStatus, EventType } from 'shared/events/eventSchema'
 
 export type EventListFilterFacetId = 'type' | 'status'
 
-export function createEventListFilterConfig(): ListFilterConfig<
-  Doc<'events'>,
-  EventListFilterFacetId
-> {
+export function createEventListFilterConfig(
+  locale: Locale = 'en',
+): ListFilterConfig<Doc<'events'>, EventListFilterFacetId> {
+  const t = localeInstances[locale].t
+  const eventTypeFilterOptions = eventTypes
+    .filter((type) => type !== 'training')
+    .map((type) => ({
+      value: type,
+      label: t(`events.types.${type}`),
+    })) satisfies ReadonlyArray<ListFilterOption & { value: EventType }>
+
+  const eventStatusFilterOptions = eventStatuses.map((status) => ({
+    value: status,
+    label: t(`calendar.${status}`),
+  })) satisfies ReadonlyArray<ListFilterOption & { value: EventStatus }>
+
   return {
-    searchLabel: 'Search events',
-    searchPlaceholder: 'Search title, location, provider, date, or notes',
+    searchLabel: t('eventViews.search'),
+    searchPlaceholder: t('eventViews.searchPlaceholder'),
     searchFields: [
       {
         id: 'title',
@@ -44,8 +53,8 @@ export function createEventListFilterConfig(): ListFilterConfig<
         id: 'labels',
         weight: 3,
         getValues: (event) => [
-          eventTypeLabels[event.type],
-          eventStatusLabels[event.status ?? 'planned'],
+          t(`events.types.${event.type}`),
+          t(`calendar.${event.status ?? 'planned'}`),
         ],
       },
       {
@@ -57,15 +66,15 @@ export function createEventListFilterConfig(): ListFilterConfig<
     facets: [
       {
         id: 'type',
-        label: 'Type',
-        allLabel: 'All event types',
+        label: t('eventViews.type'),
+        allLabel: t('eventViews.allTypes'),
         options: eventTypeFilterOptions,
         matches: (event, selectedValue) => event.type === selectedValue,
       },
       {
         id: 'status',
-        label: 'Status',
-        allLabel: 'All statuses',
+        label: t('eventViews.status'),
+        allLabel: t('eventViews.allStatuses'),
         options: eventStatusFilterOptions,
         matches: (event, selectedValue) =>
           (event.status ?? 'planned') === selectedValue,
@@ -73,15 +82,3 @@ export function createEventListFilterConfig(): ListFilterConfig<
     ],
   }
 }
-
-const eventTypeFilterOptions = eventTypes
-  .filter((type) => type !== 'training')
-  .map((type) => ({
-    value: type,
-    label: eventTypeLabels[type],
-  })) satisfies ReadonlyArray<ListFilterOption & { value: EventType }>
-
-const eventStatusFilterOptions = eventStatuses.map((status) => ({
-  value: status,
-  label: eventStatusLabels[status],
-})) satisfies ReadonlyArray<ListFilterOption & { value: EventStatus }>

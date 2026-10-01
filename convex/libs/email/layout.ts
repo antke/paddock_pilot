@@ -1,3 +1,6 @@
+import { getEmailCopy } from '../../../shared/i18n/email'
+import type { Locale } from '../../../shared/i18n/locale'
+
 // Keep email markup independent of React, CSS tooling, and external assets.
 // These colors inherit the public landing's field-journal identity.
 const paper = '#f7f1e5'
@@ -29,12 +32,15 @@ export const detailList = (items: Array<string>) =>
     : ''
 
 export const renderEmailLayout = (input: {
+  locale?: Locale
   preheader: string
   heading: string
   body: string
   action?: { label: string; url: string }
   note?: string
 }) => {
+  const locale = input.locale ?? 'en'
+  const messages = getEmailCopy(locale)
   const action = input.action
   const actionHtml = action
     ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 24px;"><tr><td bgcolor="${ink}" style="border-radius:4px;text-align:center;mso-padding-alt:16px 24px;">
@@ -42,11 +48,11 @@ export const renderEmailLayout = (input: {
 </td></tr></table>`
     : ''
   const fallback = action
-    ? `<p style="margin:24px 0 0;font-family:${sans};font-size:12px;line-height:19px;color:${copy};">If the button does not work, copy this link into your browser:<br><a href="${escapeHtml(action.url)}" style="color:${ink};text-decoration:underline;overflow-wrap:anywhere;word-break:break-all;">${escapeHtml(action.url)}</a></p>`
+    ? `<p style="margin:24px 0 0;font-family:${sans};font-size:12px;line-height:19px;color:${copy};">${escapeHtml(messages.fallback)}<br><a href="${escapeHtml(action.url)}" style="color:${ink};text-decoration:underline;overflow-wrap:anywhere;word-break:break-all;">${escapeHtml(action.url)}</a></p>`
     : ''
 
   return `<!doctype html>
-<html lang="en">
+<html lang="${locale}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -73,8 +79,8 @@ ${input.body}
 ${actionHtml}
 ${input.note ? `<p style="margin:0 0 24px;font-family:${sans};font-size:14px;line-height:22px;color:${copy};">${escapeHtml(input.note)}</p>` : ''}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding-top:24px;border-top:1px solid ${rule};">
-<p style="margin:0;font-family:${serif};font-size:18px;line-height:26px;color:${ink};">Good care is a shared effort.</p>
-<p style="margin:8px 0 0;font-family:${sans};font-size:12px;line-height:19px;color:${copy};">An account or stable update from Paddock Pilot.</p>
+<p style="margin:0;font-family:${serif};font-size:18px;line-height:26px;color:${ink};">${escapeHtml(messages.footer)}</p>
+<p style="margin:8px 0 0;font-family:${sans};font-size:12px;line-height:19px;color:${copy};">${escapeHtml(messages.footerNote)}</p>
 ${fallback}
 </td></tr></table>
 </td></tr></table>

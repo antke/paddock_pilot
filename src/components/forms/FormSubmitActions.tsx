@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import type { ComponentProps } from 'react'
 
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
@@ -27,7 +28,7 @@ export function FormSubmitActions({
   submitLabel,
   submittingLabel,
   onCancel,
-  cancelLabel = 'Cancel',
+  cancelLabel,
   disabled = false,
   sticky = false,
   className,
@@ -60,9 +61,10 @@ export function FormSubmitButtons({
   submitLabel,
   submittingLabel,
   onCancel,
-  cancelLabel = 'Cancel',
+  cancelLabel,
   disabled = false,
 }: FormSubmitButtonsProps) {
+  const t = useT()
   const actionDisabled = disabled || isSubmitting
 
   return (
@@ -74,7 +76,7 @@ export function FormSubmitButtons({
           disabled={actionDisabled}
           onClick={onCancel}
         >
-          {cancelLabel}
+          {cancelLabel ?? t('common.cancel')}
         </Button>
       )}
 

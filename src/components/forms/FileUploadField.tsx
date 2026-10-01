@@ -1,3 +1,6 @@
+import { useLocale, useT } from '#/i18n/LocaleProvider'
+import { formatFileSize } from '#/lib/numberDisplay'
+import type { TFunction } from 'i18next'
 import {
   FileIcon,
   ImageSquareIcon,
@@ -62,6 +65,8 @@ export function FileUploadField({
   className,
   ...props
 }: FileUploadFieldProps) {
+  const t = useT()
+  const { locale } = useLocale()
   const generatedId = useId()
   const inputId = props.id ?? `${generatedId}-file`
   const errorId = `${inputId}-error`
@@ -134,7 +139,7 @@ export function FileUploadField({
   }
 
   const typeLabel = selectedFile
-    ? getFileTypeLabel(selectedFile, kind)
+    ? getFileTypeLabel(selectedFile, kind, t)
     : undefined
 
   return (
@@ -142,7 +147,14 @@ export function FileUploadField({
       <FieldLabelRow>
         <FieldLabel htmlFor={inputId}>{label}</FieldLabel>
         {help && (
-          <FormHelpTooltip label={helpLabel ?? `About ${label}`}>
+          <FormHelpTooltip
+            label={
+              helpLabel ??
+              t('upload.about', {
+                label: typeof label === 'string' ? label : t('upload.file'),
+              })
+            }
+          >
             {help}
           </FormHelpTooltip>
         )}
@@ -172,13 +184,13 @@ export function FileUploadField({
           <AttachmentContent>
             <AttachmentTitle>{selectedFile.name}</AttachmentTitle>
             <AttachmentDescription>
-              {typeLabel} · {formatFileSize(selectedFile.size)}
+              {typeLabel} · {formatFileSize(selectedFile.size, locale)}
             </AttachmentDescription>
           </AttachmentContent>
           <AttachmentActions>
             <AttachmentAction
               type="button"
-              aria-label={`Remove ${selectedFile.name}`}
+              aria-label={t('upload.remove', { name: selectedFile.name })}
               disabled={props.disabled}
               onClick={clearSelection}
             >
@@ -188,7 +200,7 @@ export function FileUploadField({
           <AttachmentTrigger
             ref={controlRef}
             type="button"
-            aria-label={`Replace ${selectedFile.name}`}
+            aria-label={t('upload.replace', { name: selectedFile.name })}
             aria-invalid={invalid}
             aria-describedby={descriptionIds}
             disabled={props.disabled}
@@ -246,14 +258,14 @@ export function FileUploadField({
             <span className="text-sm font-bold text-foreground">
               {uploadLabel ??
                 (kind === 'image'
-                  ? 'Drop an image here or browse'
-                  : 'Drop a file here or browse')}
+                  ? t('upload.dropImage')
+                  : t('upload.dropFile'))}
             </span>
             <span className="text-xs leading-relaxed text-muted-foreground">
               {uploadDescription ??
                 (kind === 'image'
-                  ? 'JPG, PNG or WEBP'
-                  : 'Choose a file from your device')}
+                  ? t('upload.imageTypes')
+                  : t('upload.chooseFile'))}
             </span>
           </span>
         </button>
@@ -277,19 +289,16 @@ export function FileUploadField({
   )
 }
 
-function formatFileSize(size: number) {
-  if (size < 1024) return `${size} B`
-  if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`
-
-  return `${(size / (1024 * 1024)).toFixed(1)} MB`
-}
-
-function getFileTypeLabel(file: File, kind: 'file' | 'image') {
+function getFileTypeLabel(
+  file: File,
+  kind: 'file' | 'image',
+  t: TFunction<'app'>,
+) {
   const extension = file.name.split('.').pop()
 
   if (extension && extension !== file.name) {
     return extension.toUpperCase()
   }
 
-  return kind === 'image' ? 'Image' : 'File'
+  return kind === 'image' ? t('upload.image') : t('upload.file')
 }

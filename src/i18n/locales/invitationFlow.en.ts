@@ -1,0 +1,126 @@
+export const invitationFlow = {
+  switchAccount: 'Switch account',
+  refreshAccount: 'Refresh account',
+  unavailable: 'Invitation unavailable',
+  loadFailed: 'We couldn’t load this invitation',
+  loadFailedHelp:
+    'Check your connection and try again. Your invitation has not been changed.',
+  retry: 'Try again',
+  response: 'Invitation response',
+  notFound: 'Invitation not found',
+  notFoundHelp:
+    'This link is invalid or has been replaced. Ask the stable administrator for a fresh invitation.',
+  returnHome: 'Return home',
+  accepting: 'Accepting…',
+  declining: 'Declining…',
+  signInInvited: 'Sign in with the invited account',
+  signInContinue: 'Sign in to continue',
+  alreadyLinkedHelp:
+    'This invitation is already linked to an account. Sign in with that account to continue to the stable.',
+  preparing: 'Preparing your account',
+  preparingHelp:
+    'Your account is signed in. We are finishing the Paddock Pilot profile needed to review this invitation.',
+  wrongEmail: 'This invitation belongs to another email',
+  emailUnavailable: 'Your account email is not available yet',
+  emailUnavailableHelp:
+    'We couldn’t confirm a verified email for your signed-in account. Verify your email in your account settings, then refresh this page.',
+  ready: 'Ready to join',
+  readyHelp:
+    'Accept to join this stable and access its shared records, or decline. You can create your own stable after either choice.',
+  retryAccept: 'Try accepting again',
+  accept: 'Accept invitation',
+  retryDecline: 'Try declining again',
+  decline: 'Decline invitation',
+  declinedTitle: 'Invitation declined',
+  declinedSample:
+    'This sample invitation is declined. No real invitation or membership was changed.',
+  declinedHelp:
+    'This invitation no longer grants access to the stable. You can continue with your account or create a stable of your own.',
+  continue: 'Continue',
+  createOwn: 'Create my own stable',
+  expiredTitle: 'This invitation has expired',
+  expiredHelp:
+    'Ask the stable administrator to resend it. Resending creates a fresh link and another 14-day acceptance window.',
+  revokedTitle: 'This invitation was revoked',
+  revokedHelp:
+    'It can no longer be used. Contact the stable administrator if you still need access.',
+  alreadyUsed: 'This invitation has already been used',
+  alreadyAccepted: 'This invitation has already been accepted',
+  anotherAccount: 'It is linked to another account and cannot be used again.',
+  finishActivation: 'Finish activating your membership',
+  finishActivationHelp:
+    'Subscriptions are no longer required for stable access. Activate this previously accepted invitation to continue.',
+  retryActivate: 'Try activating again',
+  activate: 'Activate membership',
+  alreadyMember: 'You are already a member',
+  activeSample:
+    'This sample shows active membership. No real stable access was granted.',
+  activeAnnouncement: 'Your stable membership is active.',
+  declinedAnnouncement: 'Invitation declined.',
+  location: 'Location',
+  notSpecified: 'Not specified',
+  invitedBy: 'Invited by',
+  administrator: 'Stable administrator',
+  sentTo: 'Sent to',
+  expired: 'Expired',
+  expires: 'Expires',
+  summary: 'You have been invited to join this stable as a member.',
+  linkCopied: 'Invitation link copied',
+  copyFailed: 'Could not copy invitation link',
+  queuedAgain: 'Invitation queued again',
+  copy: 'Copy link',
+  resendFailed: 'Could not resend invitation',
+  revoked: 'Invitation revoked',
+  empty: 'No invitations yet.',
+  resendFailedHelp: 'Could not resend this invitation. Please try again.',
+  revokeFailedHelp: 'Could not revoke this invitation. Please try again.',
+  copyFailedHelp: 'Could not copy this link. Please try again.',
+  resending: 'Resending...',
+  resend: 'Resend',
+  revoke: 'Revoke',
+  revokeHelp:
+    'This link will stop working immediately. You can create another invitation later if they still need access.',
+  keep: 'Keep invitation',
+  revoking: 'Revoking...',
+  revokeInvitation: 'Revoke invitation',
+  emailNotSent: 'Email not sent',
+  context: 'Stable invitation',
+
+  useEmail:
+    'Use {{email}} so Paddock Pilot can connect this invitation to the right person.',
+  wrongEmailHelp:
+    'Sign in with {{email}} to accept it. Your current account has not been given access.',
+  welcome: 'Welcome to {{name}}',
+  activeHelp:
+    'Your access to {{name}} is active. Continue to this stable, or create one of your own.',
+  continueStable: 'Continue to {{name}}',
+  sampleAccepted: 'Sample invitation accepted. No real membership changed.',
+  sampleDeclined: 'Sample invitation declined. No real membership changed.',
+  acceptFailed:
+    'Could not accept this invitation. Your choice was not confirmed. Try again below.',
+  declineFailed:
+    'Could not decline this invitation. Your choice was not confirmed. Try again below.',
+  freshLink: 'A fresh link was created for {{email}}.',
+  revokedFor: '{{email}} can no longer accept this invite.',
+  revokeConfirm: 'Revoke invitation for {{email}}?',
+  lastSent: 'Last sent {{date}}',
+  expiresOn: 'Expires {{date}}',
+  expiredOn: 'Expired {{date}}',
+  deliveryError:
+    'Delivery failed. Check the address and try resending, or share the invitation link directly.',
+  member: 'Member',
+  status: {
+    pending: 'Pending',
+    accepted_pending_subscription: 'Accepted, ready to activate',
+    accepted: 'Accepted',
+    declined: 'Declined',
+    revoked: 'Revoked',
+    expired: 'Expired',
+  },
+  delivery: {
+    queued: 'Email queued',
+    sent: 'Email sent',
+    failed: 'Delivery failed',
+    skipped: 'Not sent in this environment',
+  },
+} as const

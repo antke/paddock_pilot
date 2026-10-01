@@ -1,34 +1,43 @@
 import { calculateHorseAge } from 'shared/horses/horseAge'
-import {
-  horseAgeSchema,
-  horseBreedSchema,
-  horseDateOfBirthSchema,
-  horseFormSchema as horseBaseFormSchema,
-} from 'shared/horses/horseSchema'
+import { createHorseSchemas } from 'shared/horses/horseSchema'
+import { localeInstances } from '#/i18n/resources'
+import type { Locale } from 'shared/i18n/locale'
 import z from 'zod'
 import { matchHorseBreed } from './horseBreedSelection'
-
-const optionalAgeSchema = z.literal('').or(horseAgeSchema)
 
 export const createHorseFormSchema = (
   existingBreed?: string,
   additionalBreeds: ReadonlyArray<string> = [],
-) =>
-  horseBaseFormSchema
+  locale: Locale = 'en',
+) => {
+  const t = localeInstances[locale].t
+  const {
+    horseAgeSchema,
+    horseBreedSchema,
+    horseDateOfBirthSchema,
+    horseFormSchema: horseBaseFormSchema,
+  } = createHorseSchemas((key) => t(`horseValidation.${key}`))
+  const optionalAgeSchema = z
+    .literal('', { error: t('horseValidation.ageInvalid') })
+    .or(horseAgeSchema)
+  return horseBaseFormSchema
     .extend({
       breed: horseBreedSchema
         .transform(
           (value) =>
-            matchHorseBreed(value, existingBreed, additionalBreeds) ?? value,
+            matchHorseBreed(value, existingBreed, additionalBreeds, locale) ??
+            value,
         )
         .refine(
           (value) =>
-            matchHorseBreed(value, existingBreed, additionalBreeds) !==
+            matchHorseBreed(value, existingBreed, additionalBreeds, locale) !==
             undefined,
-          'Choose a breed from the list, add a new breed, or clear this field.',
+          t('horseValidation.breedKnown'),
         ),
       age: optionalAgeSchema,
-      dateOfBirth: z.literal('').or(horseDateOfBirthSchema),
+      dateOfBirth: z
+        .literal('', { error: t('horseValidation.birthInvalid') })
+        .or(horseDateOfBirthSchema),
       profileImage: z
         .custom<FileList>()
         .nullish()
@@ -41,12 +50,12 @@ export const createHorseFormSchema = (
           ) {
             context.addIssue({
               code: 'custom',
-              message: 'Choose an image file.',
+              message: t('horseValidation.imageType'),
             })
           } else if (file.size > 5 * 1024 * 1024) {
             context.addIssue({
               code: 'custom',
-              message: 'Choose an image no larger than 5 MB.',
+              message: t('horseValidation.imageSize'),
             })
           }
         })
@@ -57,12 +66,12 @@ export const createHorseFormSchema = (
         context.addIssue({
           code: 'custom',
           path: ['dateOfBirth'],
-          message: 'Add a birth year or current age.',
+          message: t('horseValidation.birthOrAge'),
         })
         context.addIssue({
           code: 'custom',
           path: ['age'],
-          message: 'Add a current age or birth year.',
+          message: t('horseValidation.ageOrBirth'),
         })
         return
       }
@@ -75,7 +84,7 @@ export const createHorseFormSchema = (
           context.addIssue({
             code: 'custom',
             path: ['dateOfBirth'],
-            message: 'Use a valid date of birth.',
+            message: t('horseValidation.birthDateInvalid'),
           })
           return
         }
@@ -84,7 +93,7 @@ export const createHorseFormSchema = (
           context.addIssue({
             code: 'custom',
             path: ['dateOfBirth'],
-            message: 'Date of birth cannot be in the future.',
+            message: t('horseValidation.birthFuture'),
           })
         }
 
@@ -92,12 +101,12 @@ export const createHorseFormSchema = (
           context.addIssue({
             code: 'custom',
             path: ['dateOfBirth'],
-            message: 'Date of birth cannot be more than 100 years ago.',
+            message: t('horseValidation.birthOld'),
           })
         }
       }
     })
-
+}
 export const horseFormSchema = createHorseFormSchema()
 
 export type HorseFormSchema = z.infer<typeof horseFormSchema>

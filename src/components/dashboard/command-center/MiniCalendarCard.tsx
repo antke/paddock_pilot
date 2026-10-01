@@ -1,3 +1,5 @@
+import { formatShortWeekdayDate } from '#/lib/dateDisplay'
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import {
   calendarSelectedDayPanelClassName,
   calendarWeekDayButtonClassName,
@@ -40,6 +42,9 @@ export function MiniCalendarCard({
   showInlineEvents = false,
   chrome = 'soft',
 }: MiniCalendarCardProps) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const [selectedDayKey, setSelectedDayKey] = useState<string>()
   const selectedDay = data.weekDays.find((day) => day.key === selectedDayKey)
   const controlChrome = chrome
@@ -53,8 +58,8 @@ export function MiniCalendarCard({
       chrome={chrome}
       gap="compact"
       padding={chrome === 'cards' ? 'roomy' : 'default'}
-      title="Next 7 days"
-      description="Select a day to see calendar entries, including completed and cancelled events."
+      title={t('dashboard.week')}
+      description={t('dashboard.weekHelp')}
       descriptionSize="sm"
       size="panel"
       titleStyle="display"
@@ -77,7 +82,7 @@ export function MiniCalendarCard({
         <div
           data-slot="calendar-week-grid"
           role="group"
-          aria-label="Seven-day schedule"
+          aria-label={t('dashboard.weekSchedule')}
           className={calendarWeekGridClassName({ isCompact: true })}
         >
           {data.weekDays.map((day, index) => {
@@ -127,7 +132,9 @@ export function MiniCalendarCard({
                       className: 'lg:order-none',
                     })}
                   >
-                    {day.label}
+                    {index === 0
+                      ? t('dashboard.today')
+                      : formatShortWeekdayDate(day.date, locale)}
                   </span>
                   <span
                     data-slot="calendar-week-day-number"
@@ -147,8 +154,8 @@ export function MiniCalendarCard({
                     })}
                   >
                     {day.eventCount === 0
-                      ? 'No entries'
-                      : `${day.eventCount} ${day.eventCount === 1 ? 'entry' : 'entries'}`}
+                      ? t('dashboard.noEntries')
+                      : t('dashboard.entries', { count: day.eventCount })}
                   </span>
                 </DashboardInlinePanelButton>
                 {showSelectedDay && isSelected && (
@@ -189,6 +196,9 @@ function DayColumn({
   isToday: boolean
   chrome: DashboardCommandChrome
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   return (
     <DashboardInlinePanel
       data-slot="calendar-week-day-panel"
@@ -203,7 +213,9 @@ function DayColumn({
           data-slot="calendar-week-day-label"
           className={calendarWeekDayLabelClassName()}
         >
-          {day.label}
+          {isToday
+            ? t('dashboard.today')
+            : formatShortWeekdayDate(day.date, locale)}
         </p>
         <div className="mt-1 flex items-end justify-between gap-2">
           <p
@@ -216,7 +228,7 @@ function DayColumn({
             data-slot="calendar-week-day-meta"
             className={calendarWeekDayMetaClassName()}
           >
-            {day.eventCount === 0 ? 'No entries' : day.eventCount}
+            {day.eventCount === 0 ? t('dashboard.noEntries') : day.eventCount}
           </p>
         </div>
       </div>
@@ -228,7 +240,7 @@ function DayColumn({
             className={calendarWeekPaperClassName()}
             bodyClassName="text-xs leading-5"
           >
-            No calendar entries.
+            {t('dashboard.calendarEmpty')}
           </DashboardEmptyState>
         ) : (
           day.events.map((event) => (
@@ -263,6 +275,8 @@ function SelectedDayPanel({
   className?: string
   wrapperClassName?: string
 }) {
+  const t = useT()
+
   return (
     <div
       id={id}
@@ -283,7 +297,7 @@ function SelectedDayPanel({
             chrome={chrome}
             className={calendarWeekPaperClassName()}
           >
-            No calendar entries for this day.
+            {t('dashboard.dayEmpty')}
           </DashboardEmptyState>
         ) : (
           <DashboardItemList>

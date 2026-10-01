@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { DashboardBadgeList } from '#/components/dashboard/DashboardBadgeList'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardLayoutGrid } from '#/components/dashboard/DashboardLayoutGrid'
@@ -29,9 +30,7 @@ import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
 import type { FunctionReturnType } from 'convex/server'
 import { formatShortDateKey } from '#/lib/dateDisplay'
-import { formatCountLabel } from '#/lib/numberDisplay'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
-import { careReminderCategoryLabels } from 'shared/reminders/careReminderSchema'
 
 type UserCareOverview = FunctionReturnType<
   typeof api.userCareOverview.getForCurrentUser
@@ -58,6 +57,8 @@ type DashboardCareOverviewProps = {
 export function DashboardCareOverview({
   stableId,
 }: DashboardCareOverviewProps) {
+  const t = useT()
+
   const { today } = useLocalDateContext()
   const overviewArgs = stableId ? { stableId, today } : { today }
   const { data: overview } = useSuspenseQuery(
@@ -68,35 +69,37 @@ export function DashboardCareOverview({
     <DashboardSection
       chrome="soft"
       gap="compact"
-      title="Care command centre"
-      description="Reminders, attention items, and upcoming care for the selected stable."
+      title={t('uiRemainder.careCentre')}
+      description={t('uiRemainder.careHelp')}
       size="panel"
       descriptionSize="sm"
     >
       <DashboardMetricStrip>
         <OverviewMetric
-          title="Due reminders"
+          title={t('uiRemainder.dueReminders')}
           value={`${overview.summary.dueReminderCount}`}
         >
-          {`${overview.summary.overdueReminderCount} overdue`}
+          {t('uiRemainder.overdue', {
+            count: overview.summary.overdueReminderCount,
+          })}
         </OverviewMetric>
         <OverviewMetric
-          title="Upcoming care"
+          title={t('uiRemainder.upcomingCare')}
           value={`${overview.summary.upcomingEventCount}`}
         >
-          Planned in the next 14 days
+          {t('uiRemainder.plannedFortnight')}
         </OverviewMetric>
         <OverviewMetric
-          title="High alerts"
+          title={t('uiRemainder.highAlerts')}
           value={`${overview.summary.highSeverityIssueCount}`}
         >
-          Active high-severity issues
+          {t('uiRemainder.highIssues')}
         </OverviewMetric>
         <OverviewMetric
-          title="Active medication"
+          title={t('uiRemainder.activeMedication')}
           value={`${overview.summary.activeMedicationCount}`}
         >
-          Current medication courses
+          {t('uiRemainder.medicationCourses')}
         </OverviewMetric>
       </DashboardMetricStrip>
 
@@ -130,6 +133,9 @@ function OverviewMetric({
 }
 
 function DueReminderCard({ reminders }: { reminders: ReminderItem[] }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   return (
     <DashboardSection
       as="h3"
@@ -138,15 +144,15 @@ function DueReminderCard({ reminders }: { reminders: ReminderItem[] }) {
       contentAlign="start"
       gap="compact"
       padding="none"
-      title="Due reminders"
-      description="Pending reminders due soon for this stable."
+      title={t('uiRemainder.dueReminders')}
+      description={t('uiRemainder.remindersHelp')}
       size="panel"
       descriptionSize="sm"
     >
       <DashboardItemList gap="compact">
         {reminders.length === 0 ? (
           <DashboardEmptyState chrome="soft">
-            No reminders due in the next 14 days.
+            {t('uiRemainder.noReminders')}
           </DashboardEmptyState>
         ) : (
           reminders.map((reminder) => (
@@ -172,8 +178,12 @@ function DueReminderCard({ reminders }: { reminders: ReminderItem[] }) {
                 )}
               </DashboardBadgeList>
               <DashboardMetaList size="xs" separator="dot">
-                <span>Due {formatShortDateKey(reminder.dueDate)}</span>
-                <span>{careReminderCategoryLabels[reminder.category]}</span>
+                <span>
+                  {t('careLabels.dueDate', {
+                    date: formatShortDateKey(reminder.dueDate, locale),
+                  })}
+                </span>
+                <span>{t(`careLabels.category.${reminder.category}`)}</span>
                 <span>{reminder.stableName}</span>
                 {reminder.horseName && <span>{reminder.horseName}</span>}
               </DashboardMetaList>
@@ -186,6 +196,8 @@ function DueReminderCard({ reminders }: { reminders: ReminderItem[] }) {
 }
 
 function UpcomingEventCard({ events }: { events: EventItem[] }) {
+  const t = useT()
+
   return (
     <DashboardSection
       as="h3"
@@ -194,15 +206,15 @@ function UpcomingEventCard({ events }: { events: EventItem[] }) {
       contentAlign="start"
       gap="compact"
       padding="none"
-      title="Upcoming care"
-      description="Planned events for this stable."
+      title={t('uiRemainder.upcomingCare')}
+      description={t('uiRemainder.eventsHelp')}
       size="panel"
       descriptionSize="sm"
     >
       <DashboardItemList gap="compact">
         {events.length === 0 ? (
           <DashboardEmptyState chrome="soft">
-            No planned events in the next 14 days.
+            {t('uiRemainder.noEvents')}
           </DashboardEmptyState>
         ) : (
           events.map((event) => (
@@ -232,6 +244,8 @@ function UpcomingEventCard({ events }: { events: EventItem[] }) {
 }
 
 function AttentionHorseCard({ horses }: { horses: AttentionHorseItem[] }) {
+  const t = useT()
+
   return (
     <DashboardSection
       as="h3"
@@ -240,15 +254,15 @@ function AttentionHorseCard({ horses }: { horses: AttentionHorseItem[] }) {
       contentAlign="start"
       gap="compact"
       padding="none"
-      title="Horses needing attention"
-      description="Health, medication, and overdue reminder signals."
+      title={t('uiRemainder.attentionHorses')}
+      description={t('uiRemainder.attentionHelp')}
       size="panel"
       descriptionSize="sm"
     >
       <DashboardItemList gap="compact">
         {horses.length === 0 ? (
           <DashboardEmptyState chrome="soft">
-            No horse-level attention items right now.
+            {t('uiRemainder.noAttention')}
           </DashboardEmptyState>
         ) : (
           horses.map((horse) => (
@@ -278,14 +292,15 @@ function AttentionHorseCard({ horses }: { horses: AttentionHorseItem[] }) {
                 <>
                   <span>{horse.stableName}</span>
                   <span>
-                    {formatCountLabel(horse.activeIssueCount, 'active issue')}
+                    {t('analysisViews.activeIssueCount', {
+                      count: horse.activeIssueCount,
+                    })}
                   </span>
                   {horse.activeMedicationCount > 0 && (
                     <span>
-                      {formatCountLabel(
-                        horse.activeMedicationCount,
-                        'active medication',
-                      )}
+                      {t('uiRemainder.medications', {
+                        count: horse.activeMedicationCount,
+                      })}
                     </span>
                   )}
                 </>

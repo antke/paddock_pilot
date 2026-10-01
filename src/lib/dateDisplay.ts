@@ -1,50 +1,69 @@
-const dateDisplayLocale = 'en-GB'
+import { displayLocales } from '../../shared/i18n/locale'
+import type { Locale } from '../../shared/i18n/locale'
 
-const shortDateKeyFormatter = new Intl.DateTimeFormat(dateDisplayLocale, {
-  month: 'short',
-  day: 'numeric',
-})
+function createFormatters(locale: Locale) {
+  const dateDisplayLocale = displayLocales[locale]
 
-const mediumDateFormatter = new Intl.DateTimeFormat(dateDisplayLocale, {
-  month: 'short',
-  day: 'numeric',
-  year: 'numeric',
-})
+  const shortDateKeyFormatter = new Intl.DateTimeFormat(dateDisplayLocale, {
+    month: 'short',
+    day: 'numeric',
+  })
 
-const longDateKeyFormatter = new Intl.DateTimeFormat(dateDisplayLocale, {
-  month: 'long',
-  day: 'numeric',
-  year: 'numeric',
-})
+  const mediumDateFormatter = new Intl.DateTimeFormat(dateDisplayLocale, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
 
-const monthYearFormatter = new Intl.DateTimeFormat(dateDisplayLocale, {
-  month: 'long',
-  year: 'numeric',
-})
+  const longDateKeyFormatter = new Intl.DateTimeFormat(dateDisplayLocale, {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  })
 
-const shortMonthYearFormatter = new Intl.DateTimeFormat(dateDisplayLocale, {
-  month: 'short',
-  year: 'numeric',
-})
+  const monthYearFormatter = new Intl.DateTimeFormat(dateDisplayLocale, {
+    month: 'long',
+    year: 'numeric',
+  })
 
-const shortMonthFormatter = new Intl.DateTimeFormat(dateDisplayLocale, {
-  month: 'short',
-})
+  const shortMonthYearFormatter = new Intl.DateTimeFormat(dateDisplayLocale, {
+    month: 'short',
+    year: 'numeric',
+  })
 
-const shortWeekdayFormatter = new Intl.DateTimeFormat(dateDisplayLocale, {
-  weekday: 'short',
-})
+  const shortMonthFormatter = new Intl.DateTimeFormat(dateDisplayLocale, {
+    month: 'short',
+  })
 
-const timeFormatter = new Intl.DateTimeFormat(dateDisplayLocale, {
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: false,
-})
+  const shortWeekdayFormatter = new Intl.DateTimeFormat(dateDisplayLocale, {
+    weekday: 'short',
+  })
 
-const mediumDateTimeFormatter = new Intl.DateTimeFormat(dateDisplayLocale, {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-})
+  const timeFormatter = new Intl.DateTimeFormat(dateDisplayLocale, {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+
+  const mediumDateTimeFormatter = new Intl.DateTimeFormat(dateDisplayLocale, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  })
+
+  return {
+    shortDateKeyFormatter,
+    mediumDateFormatter,
+    longDateKeyFormatter,
+    monthYearFormatter,
+    shortMonthYearFormatter,
+    shortMonthFormatter,
+    shortWeekdayFormatter,
+    timeFormatter,
+    mediumDateTimeFormatter,
+  }
+}
+
+const formatters = { en: createFormatters('en'), pl: createFormatters('pl') }
 
 export function dateKeyToDate(dateKey: string) {
   return new Date(`${dateKey}T00:00:00`)
@@ -73,55 +92,81 @@ export function getTodayDateKey() {
   return formatDateKey(new Date())
 }
 
-export function formatShortDateKey(dateKey: string) {
-  return shortDateKeyFormatter.format(dateKeyToDate(dateKey))
+export function formatShortDateKey(dateKey: string, locale: Locale = 'en') {
+  return formatters[locale].shortDateKeyFormatter.format(dateKeyToDate(dateKey))
 }
 
-export function formatShortDate(date: Date) {
-  return shortDateKeyFormatter.format(date)
+export function formatShortDate(date: Date, locale: Locale = 'en') {
+  return formatters[locale].shortDateKeyFormatter.format(date)
 }
 
-export function formatShortWeekdayDate(date: Date) {
-  return shortWeekdayFormatter.format(date)
+export function formatShortWeekdayDate(date: Date, locale: Locale = 'en') {
+  return formatters[locale].shortWeekdayFormatter.format(date)
 }
 
-export function formatMediumDateKey(dateKey: string) {
-  return mediumDateFormatter.format(dateKeyToDate(dateKey))
+export function formatMediumDateKey(dateKey: string, locale: Locale = 'en') {
+  return formatters[locale].mediumDateFormatter.format(dateKeyToDate(dateKey))
 }
 
-export function formatLongDateKey(dateKey: string) {
-  return longDateKeyFormatter.format(dateKeyToDate(dateKey))
+export function formatLongDateKey(dateKey: string, locale: Locale = 'en') {
+  return formatters[locale].longDateKeyFormatter.format(dateKeyToDate(dateKey))
 }
 
-export function formatMonthYearDate(date: Date) {
-  return monthYearFormatter.format(date)
+export function formatMonthYearDate(date: Date, locale: Locale = 'en') {
+  return formatters[locale].monthYearFormatter.format(date)
 }
 
-export function formatMonthYearDateKey(dateKey: string) {
-  return formatMonthYearDate(dateKeyToDate(dateKey))
+export function formatMonthYearDateKey(dateKey: string, locale: Locale = 'en') {
+  return formatMonthYearDate(dateKeyToDate(dateKey), locale)
 }
 
-export function formatShortMonthYearDateKey(dateKey: string) {
-  return shortMonthYearFormatter.format(dateKeyToDate(dateKey))
+export function formatShortMonthYearDateKey(
+  dateKey: string,
+  locale: Locale = 'en',
+) {
+  return formatters[locale].shortMonthYearFormatter.format(
+    dateKeyToDate(dateKey),
+  )
 }
 
-export function formatMediumTimestampDate(timestamp: number) {
-  return mediumDateFormatter.format(new Date(timestamp))
+export function formatMediumTimestampDate(
+  timestamp: number,
+  locale: Locale = 'en',
+) {
+  return formatters[locale].mediumDateFormatter.format(new Date(timestamp))
 }
 
-export function formatMediumTimestampDateTime(timestamp: number) {
-  return mediumDateTimeFormatter.format(new Date(timestamp))
+export function formatMediumTimestampDateTime(
+  timestamp: number,
+  locale: Locale = 'en',
+) {
+  return formatters[locale].mediumDateTimeFormatter.format(new Date(timestamp))
 }
 
-export function formatTime(date: Date) {
-  return timeFormatter.format(date)
+export function formatTime(date: Date, locale: Locale = 'en') {
+  return formatters[locale].timeFormatter.format(date)
 }
 
-export function getDateBadgeParts(dateKey: string) {
+export function getDateBadgeParts(dateKey: string, locale: Locale = 'en') {
   const parsedDate = dateKeyToDate(dateKey)
 
   return {
-    month: shortMonthFormatter.format(parsedDate),
+    month: formatters[locale].shortMonthFormatter.format(parsedDate),
     day: `${parsedDate.getDate()}`,
   }
+}
+
+/** Preserve the precision of partial birth dates; do not invent a month or day. */
+export function formatPartialDateKey(value: string, locale: Locale = 'en') {
+  if (/^\d{4}$/.test(value)) return value
+  const monthOnly = /^\d{4}-\d{2}$/.test(value)
+  const dateKey = monthOnly ? `${value}-01` : value
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return value
+  const date = dateKeyToDate(dateKey)
+  // Preserve malformed legacy values instead of throwing or rolling into another month.
+  if (!Number.isFinite(date.getTime()) || formatDateKey(date) !== dateKey)
+    return value
+  return monthOnly
+    ? formatMonthYearDate(date, locale)
+    : formatMediumDateKey(dateKey, locale)
 }

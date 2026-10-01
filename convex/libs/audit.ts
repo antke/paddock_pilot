@@ -1,5 +1,6 @@
 import type { Id } from '../_generated/dataModel'
 import type { MutationCtx } from '../_generated/server'
+import type { StableAuditDetails } from '../../shared/auditLogs/auditDetails'
 
 export async function recordStableAudit(
   ctx: MutationCtx,
@@ -10,6 +11,7 @@ export async function recordStableAudit(
     entityType: string
     entityId: string
     summary?: string
+    details?: StableAuditDetails
   },
 ) {
   await ctx.db.insert('stableAuditLogs', {

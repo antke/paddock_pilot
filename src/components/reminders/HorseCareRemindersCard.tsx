@@ -1,3 +1,6 @@
+import { localeInstances } from '#/i18n/resources'
+import type { Locale } from 'shared/i18n/locale'
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import {
   getListFilterEmptyMessage,
   ListFilterControls,
@@ -25,6 +28,9 @@ export function HorseCareRemindersCard({
   horse,
   onCreateActionChange,
 }: HorseCareRemindersCardProps) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const { data } = useSuspenseQuery(
     convexQuery(api.careReminders.listForHorse, { horseId: horse._id }),
   )
@@ -47,10 +53,10 @@ export function HorseCareRemindersCard({
         })
 
         showAppSuccessToast({
-          title: 'Reminder added',
+          title: t('reminders.added'),
           description: (
             <p>
-              {values.title} is now linked to {horse.name}.
+              {t('reminders.linked', { title: values.title, name: horse.name })}
             </p>
           ),
         })
@@ -59,7 +65,7 @@ export function HorseCareRemindersCard({
         throw err
       }
     },
-    [addReminder, horse._id, horse.name, horse.stableId],
+    [addReminder, horse._id, horse.name, horse.stableId, t],
   )
 
   return (
@@ -68,9 +74,13 @@ export function HorseCareRemindersCard({
       records={data.reminders}
       canManage={data.canManage}
       onAdd={onAdd}
-      onComplete={(reminder) => completeWithToast(completeReminder, reminder)}
-      onDismiss={(reminder) => dismissWithToast(dismissReminder, reminder)}
-      onRemove={(reminder) => removeWithToast(removeReminder, reminder)}
+      onComplete={(reminder) =>
+        completeWithToast(completeReminder, reminder, locale)
+      }
+      onDismiss={(reminder) =>
+        dismissWithToast(dismissReminder, reminder, locale)
+      }
+      onRemove={(reminder) => removeWithToast(removeReminder, reminder, locale)}
       onCreateActionChange={onCreateActionChange}
     />
   )
@@ -95,12 +105,17 @@ export function HorseCareRemindersView({
   onRemove,
   onCreateActionChange,
 }: HorseCareRemindersViewProps) {
+  const t = useT()
+  const { locale } = useLocale()
   const reminders: Array<CareReminderListItem> = records.map((reminder) => ({
     reminder,
     horseName: horse.name,
     canManage: canManage,
   }))
-  const filterConfig = useMemo(createHorseCareReminderListFilterConfig, [])
+  const filterConfig = useMemo(
+    () => createHorseCareReminderListFilterConfig(locale),
+    [locale],
+  )
   const filtering = useListFiltering({
     items: reminders,
     config: filterConfig,
@@ -108,15 +123,15 @@ export function HorseCareRemindersView({
 
   return (
     <CareRemindersCard
-      title="Care reminders"
-      description="Track due checks, reviews, and follow-ups for this horse."
+      title={t('reminders.careReminders')}
+      description={t('reminders.horseHelp')}
       reminders={filtering.items}
       canAddReminder={canManage}
       fixedHorseId={horse._id}
       emptyMessage={getListFilterEmptyMessage({
         filtering,
-        emptyMessage: 'No reminders have been added for this horse yet.',
-        filteredEmptyMessage: 'No reminders match these filters.',
+        emptyMessage: t('reminders.horseEmpty'),
+        filteredEmptyMessage: t('reminders.filteredEmpty'),
       })}
       listToolbar={
         <ListFilterControls
@@ -142,12 +157,16 @@ const completeWithToast = async (
     id: Doc<'careReminders'>['_id']
   }) => Promise<unknown>,
   reminder: Doc<'careReminders'>,
+  locale: Locale,
 ) => {
+  const t = localeInstances[locale].t
   try {
     await completeReminder({ id: reminder._id })
     showAppSuccessToast({
-      title: 'Reminder completed',
-      description: <p>{reminder.title} was marked as complete.</p>,
+      title: t('reminders.completed'),
+      description: (
+        <p>{t('reminders.markedComplete', { name: reminder.title })}</p>
+      ),
     })
   } catch (err) {
     showAppErrorToast()
@@ -160,12 +179,16 @@ const dismissWithToast = async (
     id: Doc<'careReminders'>['_id']
   }) => Promise<unknown>,
   reminder: Doc<'careReminders'>,
+  locale: Locale,
 ) => {
+  const t = localeInstances[locale].t
   try {
     await dismissReminder({ id: reminder._id })
     showAppSuccessToast({
-      title: 'Reminder dismissed',
-      description: <p>{reminder.title} was dismissed.</p>,
+      title: t('reminders.dismissed'),
+      description: (
+        <p>{t('reminders.markedDismissed', { name: reminder.title })}</p>
+      ),
     })
   } catch (err) {
     showAppErrorToast()
@@ -178,12 +201,16 @@ const removeWithToast = async (
     id: Doc<'careReminders'>['_id']
   }) => Promise<unknown>,
   reminder: Doc<'careReminders'>,
+  locale: Locale,
 ) => {
+  const t = localeInstances[locale].t
   try {
     await removeReminder({ id: reminder._id })
     showAppSuccessToast({
-      title: 'Reminder removed',
-      description: <p>{reminder.title} was removed.</p>,
+      title: t('reminders.removed'),
+      description: (
+        <p>{t('reminders.markedRemoved', { name: reminder.title })}</p>
+      ),
     })
   } catch (err) {
     showAppErrorToast()

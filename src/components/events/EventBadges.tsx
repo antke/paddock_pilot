@@ -1,7 +1,7 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { Badge } from '#/components/ui/badge'
 import type { Doc } from 'convex/_generated/dataModel'
 import type { ComponentProps } from 'react'
-import { eventStatusLabels } from 'shared/events/eventSchema'
 import type { EventStatus } from 'shared/events/eventSchema'
 
 type EventBadgeProps = Omit<ComponentProps<typeof Badge>, 'children' | 'size'>
@@ -15,13 +15,6 @@ const eventStatusVariant = {
   EventStatus,
   NonNullable<ComponentProps<typeof Badge>['variant']>
 >
-
-const eventHorseStatusLabels = {
-  confirmed: 'Confirmed',
-  invited: 'Invited',
-  declined: 'Declined',
-  withdrawn: 'Withdrawn',
-} satisfies Record<EventHorseStatus, string>
 
 const eventHorseStatusVariant = {
   confirmed: 'outline',
@@ -39,9 +32,10 @@ export function EventStatusBadge({
 }: EventBadgeProps & {
   status: EventStatus
 }) {
+  const t = useT()
   return (
     <Badge variant={eventStatusVariant[status]} {...props}>
-      {eventStatusLabels[status]}
+      {t(`calendar.${status}`)}
     </Badge>
   )
 }
@@ -52,17 +46,19 @@ export function EventHorseStatusBadge({
 }: EventBadgeProps & {
   status?: Doc<'eventsHorses'>['status']
 }) {
+  const t = useT()
   return (
     <Badge variant={eventHorseStatusVariant[status]} {...props}>
-      {eventHorseStatusLabels[status]}
+      {t(`calendar.${status}`)}
     </Badge>
   )
 }
 
 export function EventKindBadge(props: EventBadgeProps) {
+  const t = useT()
   return (
     <Badge variant="secondary" {...props}>
-      Event
+      {t('calendar.event')}
     </Badge>
   )
 }

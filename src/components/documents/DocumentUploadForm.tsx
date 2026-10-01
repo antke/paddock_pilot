@@ -1,3 +1,5 @@
+import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
+import { useT } from '#/i18n/LocaleProvider'
 import { InlineForm } from '#/components/forms/FormLayout'
 import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
 import { FileUploadField } from '#/components/forms/FileUploadField'
@@ -12,8 +14,7 @@ import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Controller, useForm } from 'react-hook-form'
 import type { Control } from 'react-hook-form'
 import {
-  stableDocumentFormSchema,
-  stableDocumentTypeLabels,
+  createStableDocumentSchemas,
   stableDocumentTypes,
 } from 'shared/stables/stableDocumentSchema'
 import type { StableDocumentFormSchema } from 'shared/stables/stableDocumentSchema'
@@ -40,6 +41,11 @@ export function DocumentUploadForm({
   onSubmit,
   onPendingChange,
 }: DocumentUploadFormProps) {
+  const t = useT()
+
+  const { stableDocumentFormSchema } = createStableDocumentSchemas((key) =>
+    t(`documents.validation.${key}`),
+  )
   const formId = useId()
   const pending = useRef(false)
   const [isPending, setIsPending] = useState(false)
@@ -54,6 +60,7 @@ export function DocumentUploadForm({
       notes: '',
     },
   })
+  useLocalizedValidation(form)
   const selectedFile = form.watch('file')?.item(0)
   const showHorseSelect = !fixedHorseId && horseOptions.length > 0
 
@@ -94,13 +101,10 @@ export function DocumentUploadForm({
   }
 
   return (
-    <InlineForm onSubmit={form.handleSubmit(submit)}>
+    <InlineForm noValidate onSubmit={form.handleSubmit(submit)}>
       {failed && (
         <Alert variant="destructive">
-          <AlertDescription>
-            Could not add this document. Your file and details are still here.
-            Please try again.
-          </AlertDescription>
+          <AlertDescription>{t('documents.saveFailed')}</AlertDescription>
         </Alert>
       )}
       <DocumentFileField
@@ -116,7 +120,7 @@ export function DocumentUploadForm({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                Document name
+                {t('documents.name')}
               </FieldLabel>
               <Input
                 {...field}
@@ -128,7 +132,7 @@ export function DocumentUploadForm({
                     ? `${formId}-${field.name}-error`
                     : undefined
                 }
-                placeholder="Passport scan"
+                placeholder={t('documents.nameExample')}
                 autoComplete="off"
               />
               {fieldState.invalid && (
@@ -156,7 +160,7 @@ export function DocumentUploadForm({
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                  Horse (optional)
+                  {t('documents.horseOptional')}
                 </FieldLabel>
                 <Select
                   {...field}
@@ -169,7 +173,7 @@ export function DocumentUploadForm({
                       : undefined
                   }
                 >
-                  <option value="">Stable-wide document</option>
+                  <option value="">{t('documents.stableWideDocument')}</option>
                   {horseOptions.map((horse) => (
                     <option key={horse._id} value={horse._id}>
                       {horse.name}
@@ -194,7 +198,7 @@ export function DocumentUploadForm({
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
             <FieldLabel htmlFor={`${formId}-${field.name}`}>
-              Notes (optional)
+              {t('documents.notesOptional')}
             </FieldLabel>
             <Textarea
               {...field}
@@ -204,7 +208,7 @@ export function DocumentUploadForm({
               aria-describedby={
                 fieldState.invalid ? `${formId}-${field.name}-error` : undefined
               }
-              placeholder="Expiry dates, what the document proves, or when it was last checked"
+              placeholder={t('documents.notesExample')}
             />
             {fieldState.invalid && (
               <FieldError
@@ -218,8 +222,8 @@ export function DocumentUploadForm({
 
       <FormSubmitActions
         isSubmitting={form.formState.isSubmitting || isPending}
-        submitLabel="Add document"
-        submittingLabel="Uploading…"
+        submitLabel={t('documents.add')}
+        submittingLabel={t('documents.uploading')}
         sticky
       />
     </InlineForm>
@@ -235,13 +239,16 @@ function DocumentTypeField({
   control: Control<StableDocumentFormSchema>
   disabled: boolean
 }) {
+  const t = useT()
   return (
     <Controller
       name="type"
       control={control}
       render={({ field, fieldState }) => (
         <Field data-invalid={fieldState.invalid}>
-          <FieldLabel htmlFor={`${formId}-${field.name}`}>Type</FieldLabel>
+          <FieldLabel htmlFor={`${formId}-${field.name}`}>
+            {t('documents.type')}
+          </FieldLabel>
           <Select
             {...field}
             id={`${formId}-${field.name}`}
@@ -253,7 +260,7 @@ function DocumentTypeField({
           >
             {stableDocumentTypes.map((type) => (
               <option key={type} value={type}>
-                {stableDocumentTypeLabels[type]}
+                {t(`documents.types.${type}`)}
               </option>
             ))}
           </Select>
@@ -278,6 +285,7 @@ function DocumentFileField({
   control: Control<StableDocumentFormSchema>
   disabled: boolean
 }) {
+  const t = useT()
   return (
     <Controller
       name="file"
@@ -286,7 +294,7 @@ function DocumentFileField({
         <FileUploadField
           {...field}
           id={`${formId}-${field.name}`}
-          label="File (required)"
+          label={t('documents.fileRequired')}
           controlRef={ref}
           required
           disabled={disabled}

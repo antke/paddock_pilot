@@ -71,11 +71,7 @@ export const emailPreviewFixtures: Array<{
     template: {
       kind: 'event_details_changed',
       ...event,
-      changes: [
-        'Start time changed to 10:30 on 24 October.',
-        'Location changed to the covered yard.',
-        'Please bring horses in before the farrier arrives.',
-      ],
+      changes: ['time', 'location', 'horses'],
     },
   },
   {

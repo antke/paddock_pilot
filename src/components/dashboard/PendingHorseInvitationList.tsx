@@ -1,3 +1,4 @@
+import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { useId, useLayoutEffect, useRef, useState } from 'react'
 import type { FunctionReturnType } from 'convex/server'
 import type { api } from 'convex/_generated/api'
@@ -38,6 +39,8 @@ export function PendingHorseInvitationList({
   onDecline,
   showWhenEmpty = false,
 }: PendingHorseInvitationListProps) {
+  const t = useT()
+  const { locale } = useLocale()
   const listId = useId()
   const region = useRef<HTMLDivElement>(null)
   const rows = useRef(new Map<string, HTMLDivElement>())
@@ -47,7 +50,10 @@ export function PendingHorseInvitationList({
   const previousIds = useRef<Array<string>>([])
   const hasShownInvitations = useRef(invitations.length > 0)
   const [operations, setOperations] = useState<Record<string, Operation>>({})
-  const [acknowledgement, setAcknowledgement] = useState('')
+  const [acknowledgement, setAcknowledgement] = useState<{
+    item: PendingHorseInvitation
+    decision: Decision
+  }>()
   const visibleInvitations = invitations.filter(({ invitation }) => {
     const state = operations[invitation._id]
     return !(
@@ -90,7 +96,7 @@ export function PendingHorseInvitationList({
       ...state,
       [id]: { version, pending: decision },
     }))
-    setAcknowledgement('')
+    setAcknowledgement(undefined)
     try {
       await (decision === 'approve' ? onApprove(id) : onDecline(id))
       accepted.current.set(id, version)
@@ -98,9 +104,7 @@ export function PendingHorseInvitationList({
         ...state,
         [id]: { version, acknowledged: true },
       }))
-      setAcknowledgement(
-        `${item.horse?.name ?? 'Horse'}’s invitation to ${item.event?.title ?? 'the event'} was ${decision === 'approve' ? 'approved' : 'declined'}.`,
-      )
+      setAcknowledgement({ item, decision })
     } catch {
       setOperations((state) => ({
         ...state,
@@ -122,13 +126,13 @@ export function PendingHorseInvitationList({
     <div
       ref={region}
       role="region"
-      aria-label="Horse invitations"
+      aria-label={t('events.horseInvitations')}
       tabIndex={-1}
       className="outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <DashboardSectionCard
-        title="Horse invitations"
-        description="Approve or decline event invitations for your horses."
+        title={t('events.horseInvitations')}
+        description={t('events.horseInvitationsHelp')}
         descriptionSize="sm"
       >
         <p
@@ -137,11 +141,23 @@ export function PendingHorseInvitationList({
           aria-atomic="true"
           className={acknowledgement ? 'text-sm text-foreground' : 'sr-only'}
         >
-          {acknowledgement}
+          {acknowledgement &&
+            t(
+              acknowledgement.decision === 'approve'
+                ? 'events.approvedAnnouncement'
+                : 'events.declinedAnnouncement',
+              {
+                horse:
+                  acknowledgement.item.horse?.name ?? t('events.horseFallback'),
+                event:
+                  acknowledgement.item.event?.title ??
+                  t('events.eventAcknowledgementFallback'),
+              },
+            )}
         </p>
         {visibleInvitations.length === 0 ? (
           <DashboardEmptyState chrome="flat">
-            No pending horse invitations.
+            {t('events.noHorseInvitations')}
           </DashboardEmptyState>
         ) : (
           <DashboardItemList role="list">
@@ -152,7 +168,10 @@ export function PendingHorseInvitationList({
                 currentOperation?.version === invitationVersion(invitation)
                   ? currentOperation
                   : undefined
-              const target = `${horse?.name ?? 'Horse'} to ${event?.title ?? 'event'}`
+              const target = {
+                horse: horse?.name ?? t('events.horseFallback'),
+                event: event?.title ?? t('events.eventFallback'),
+              }
               const errorId = `${listId}-${invitation._id}-error`
               return (
                 <div
@@ -178,8 +197,11 @@ export function PendingHorseInvitationList({
                           role="alert"
                           className="text-sm text-destructive"
                         >
-                          Could not {state.failed} this invitation. Please try
-                          again.
+                          {t(
+                            state.failed === 'approve'
+                              ? 'events.approveFailed'
+                              : 'events.declineFailed',
+                          )}
                         </p>
                       ) : undefined
                     }
@@ -190,7 +212,12 @@ export function PendingHorseInvitationList({
                           variant="outline"
                           disabled={Boolean(state?.pending)}
                           aria-busy={state?.pending === 'decline' || undefined}
-                          aria-label={`${state?.pending === 'decline' ? 'Declining' : 'Decline'} invitation for ${target}`}
+                          aria-label={t(
+                            state?.pending === 'decline'
+                              ? 'events.decliningInvitation'
+                              : 'events.declineInvitation',
+                            target,
+                          )}
                           aria-describedby={state?.failed ? errorId : undefined}
                           onClick={() => void decide(item, 'decline')}
                         >
@@ -198,14 +225,19 @@ export function PendingHorseInvitationList({
                             <Spinner aria-hidden={true} />
                           )}{' '}
                           {state?.pending === 'decline'
-                            ? 'Declining…'
-                            : 'Decline'}
+                            ? t('events.declining')
+                            : t('events.decline')}
                         </Button>
                         <Button
                           type="button"
                           disabled={Boolean(state?.pending)}
                           aria-busy={state?.pending === 'approve' || undefined}
-                          aria-label={`${state?.pending === 'approve' ? 'Approving' : 'Approve'} invitation for ${target}`}
+                          aria-label={t(
+                            state?.pending === 'approve'
+                              ? 'events.approvingInvitation'
+                              : 'events.approveInvitation',
+                            target,
+                          )}
                           aria-describedby={state?.failed ? errorId : undefined}
                           onClick={() => void decide(item, 'approve')}
                         >
@@ -213,14 +245,14 @@ export function PendingHorseInvitationList({
                             <Spinner aria-hidden={true} />
                           )}{' '}
                           {state?.pending === 'approve'
-                            ? 'Approving…'
-                            : 'Approve'}
+                            ? t('events.approving')
+                            : t('events.approve')}
                         </Button>
                       </>
                     }
                   >
                     <DashboardItemRecordContent
-                      title={`${horse?.name ?? 'Horse'} invited to ${event?.title ?? 'event'}`}
+                      title={t('events.invitedTitle', target)}
                       titleSize="dense"
                       meta={
                         event && (
@@ -229,6 +261,7 @@ export function PendingHorseInvitationList({
                               event.date,
                               event.time,
                               event.endDate,
+                              locale,
                             )}
                           </span>
                         )

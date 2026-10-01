@@ -1,3 +1,4 @@
+import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { useId, useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { FunctionReturnType } from 'convex/server'
@@ -38,15 +39,17 @@ type Props = {
 }
 
 export function InvitationQueryErrorView({ onRetry }: { onRetry: () => void }) {
+  const t = useT()
+
   return (
     <DashboardPage width="compact">
-      <DashboardPageHeader title="Invitation unavailable" />
+      <DashboardPageHeader title={t('invitationFlow.unavailable')} />
       <InvitationNotice
-        title="We couldn’t load this invitation"
-        description="Check your connection and try again. Your invitation has not been changed."
+        title={t('invitationFlow.loadFailed')}
+        description={t('invitationFlow.loadFailedHelp')}
       >
         <Button type="button" onClick={onRetry}>
-          Try again
+          {t('invitationFlow.retry')}
         </Button>
       </InvitationNotice>
     </DashboardPage>
@@ -62,6 +65,8 @@ export function InvitationPageView({
   authActions = {},
   sample = false,
 }: Props) {
+  const t = useT()
+
   const [pending, setPending] = useState<Decision>()
   const [failed, setFailed] = useState<Decision>()
   const [acknowledged, setAcknowledged] = useState<Decision>()
@@ -111,17 +116,14 @@ export function InvitationPageView({
         <div
           ref={region}
           role="region"
-          aria-label="Invitation response"
+          aria-label={t('invitationFlow.response')}
           tabIndex={-1}
           className="outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <DashboardPageHeader title="Invitation not found" />
-          <p>
-            This link is invalid or has been replaced. Ask the stable
-            administrator for a fresh invitation.
-          </p>
+          <DashboardPageHeader title={t('invitationFlow.notFound')} />
+          <p>{t('invitationFlow.notFoundHelp')}</p>
           <DashboardActions>
-            <ButtonLink to="/">Return home</ButtonLink>
+            <ButtonLink to="/">{t('invitationFlow.returnHome')}</ButtonLink>
           </DashboardActions>
         </div>
       </DashboardPage>
@@ -156,8 +158,8 @@ export function InvitationPageView({
     >
       {pending === decision
         ? decision === 'accept'
-          ? 'Accepting…'
-          : 'Declining…'
+          ? t('invitationFlow.accepting')
+          : t('invitationFlow.declining')
         : label}
     </Button>
   )
@@ -173,13 +175,13 @@ export function InvitationPageView({
       <InvitationNotice
         title={
           pendingInvitation
-            ? 'Sign in with the invited account'
-            : 'Sign in to continue'
+            ? t('invitationFlow.signInInvited')
+            : t('invitationFlow.signInContinue')
         }
         description={
           pendingInvitation
-            ? `Use ${effective.emailHint} so Paddock Pilot can connect this invitation to the right person.`
-            : 'This invitation is already linked to an account. Sign in with that account to continue to the stable.'
+            ? t('invitationFlow.useEmail', { email: effective.emailHint })
+            : t('invitationFlow.alreadyLinkedHelp')
         }
       >
         {authActions.signIn}
@@ -189,23 +191,25 @@ export function InvitationPageView({
   } else if (signedIn && !effective.viewer) {
     content = (
       <InvitationNotice
-        title="Preparing your account"
-        description="Your account is signed in. We are finishing the Paddock Pilot profile needed to review this invitation."
+        title={t('invitationFlow.preparing')}
+        description={t('invitationFlow.preparingHelp')}
       />
     )
   } else if (effective.status === 'pending') {
     if (!effective.viewer?.emailMatches)
       content = effective.viewer?.hasEmail ? (
         <InvitationNotice
-          title="This invitation belongs to another email"
-          description={`Sign in with ${effective.emailHint} to accept it. Your current account has not been given access.`}
+          title={t('invitationFlow.wrongEmail')}
+          description={t('invitationFlow.wrongEmailHelp', {
+            email: effective.emailHint,
+          })}
         >
           {authActions.switchAccount}
         </InvitationNotice>
       ) : (
         <InvitationNotice
-          title="Your account email is not available yet"
-          description="We couldn’t confirm a verified email for your signed-in account. Verify your email in your account settings, then refresh this page."
+          title={t('invitationFlow.emailUnavailable')}
+          description={t('invitationFlow.emailUnavailableHelp')}
         >
           {authActions.refreshAccount}
         </InvitationNotice>
@@ -213,38 +217,40 @@ export function InvitationPageView({
     else
       content = (
         <InvitationNotice
-          title="Ready to join"
-          description="Accept to join this stable and access its shared records, or decline. You can create your own stable after either choice."
+          title={t('invitationFlow.ready')}
+          description={t('invitationFlow.readyHelp')}
         >
           {onAccept &&
             actionButton(
               'accept',
-              failed === 'accept' ? 'Try accepting again' : 'Accept invitation',
+              failed === 'accept'
+                ? t('invitationFlow.retryAccept')
+                : t('invitationFlow.accept'),
             )}
           {onDecline &&
             actionButton(
               'decline',
               failed === 'decline'
-                ? 'Try declining again'
-                : 'Decline invitation',
+                ? t('invitationFlow.retryDecline')
+                : t('invitationFlow.decline'),
             )}
         </InvitationNotice>
       )
   } else if (effective.status === 'declined') {
     content = (
       <InvitationNotice
-        title="Invitation declined"
+        title={t('invitationFlow.declinedTitle')}
         description={
           sample
-            ? 'This sample invitation is declined. No real invitation or membership was changed.'
-            : 'This invitation no longer grants access to the stable. You can continue with your account or create a stable of your own.'
+            ? t('invitationFlow.declinedSample')
+            : t('invitationFlow.declinedHelp')
         }
       >
         {effective.viewer?.isDeclinedByViewer && (
           <>
-            <ButtonLink to="/">Continue</ButtonLink>
+            <ButtonLink to="/">{t('invitationFlow.continue')}</ButtonLink>
             <ButtonLink to="/stables/create" variant="outline">
-              Create my own stable
+              {t('invitationFlow.createOwn')}
             </ButtonLink>
           </>
         )}
@@ -253,15 +259,15 @@ export function InvitationPageView({
   } else if (effective.status === 'expired') {
     content = (
       <InvitationNotice
-        title="This invitation has expired"
-        description="Ask the stable administrator to resend it. Resending creates a fresh link and another 14-day acceptance window."
+        title={t('invitationFlow.expiredTitle')}
+        description={t('invitationFlow.expiredHelp')}
       />
     )
   } else if (effective.status === 'revoked') {
     content = (
       <InvitationNotice
-        title="This invitation was revoked"
-        description="It can no longer be used. Contact the stable administrator if you still need access."
+        title={t('invitationFlow.revokedTitle')}
+        description={t('invitationFlow.revokedHelp')}
       />
     )
   } else if (!effective.viewer?.isAcceptedByViewer) {
@@ -269,10 +275,10 @@ export function InvitationPageView({
       <InvitationNotice
         title={
           effective.status === 'accepted'
-            ? 'This invitation has already been used'
-            : 'This invitation has already been accepted'
+            ? t('invitationFlow.alreadyUsed')
+            : t('invitationFlow.alreadyAccepted')
         }
-        description="It is linked to another account and cannot be used again."
+        description={t('invitationFlow.anotherAccount')}
       >
         {authActions.switchAccount}
       </InvitationNotice>
@@ -280,15 +286,15 @@ export function InvitationPageView({
   } else if (effective.status === 'accepted_pending_subscription') {
     content = (
       <InvitationNotice
-        title="Finish activating your membership"
-        description="Subscriptions are no longer required for stable access. Activate this previously accepted invitation to continue."
+        title={t('invitationFlow.finishActivation')}
+        description={t('invitationFlow.finishActivationHelp')}
       >
         {onAccept &&
           actionButton(
             'accept',
             failed === 'accept'
-              ? 'Try activating again'
-              : 'Activate membership',
+              ? t('invitationFlow.retryActivate')
+              : t('invitationFlow.activate'),
           )}
       </InvitationNotice>
     )
@@ -297,20 +303,20 @@ export function InvitationPageView({
       <InvitationNotice
         title={
           acknowledged === 'accept'
-            ? `Welcome to ${effective.stableName}`
-            : 'You are already a member'
+            ? t('invitationFlow.welcome', { name: effective.stableName })
+            : t('invitationFlow.alreadyMember')
         }
         description={
           sample
-            ? 'This sample shows active membership. No real stable access was granted.'
-            : `Your access to ${effective.stableName} is active. Continue to this stable, or create one of your own.`
+            ? t('invitationFlow.activeSample')
+            : t('invitationFlow.activeHelp', { name: effective.stableName })
         }
       >
         <ButtonLink to="/onboarding" search={{ stableId: effective.stableId }}>
-          Continue to {effective.stableName}
+          {t('invitationFlow.continueStable', { name: effective.stableName })}
         </ButtonLink>
         <ButtonLink to="/stables/create" variant="outline">
-          Create my own stable
+          {t('invitationFlow.createOwn')}
         </ButtonLink>
       </InvitationNotice>
     )
@@ -321,7 +327,7 @@ export function InvitationPageView({
       <div
         ref={region}
         role="region"
-        aria-label="Invitation response"
+        aria-label={t('invitationFlow.response')}
         tabIndex={-1}
         className="outline-none focus-visible:ring-2 focus-visible:ring-ring"
         onFocusCapture={(event) => {
@@ -331,18 +337,25 @@ export function InvitationPageView({
         <div aria-live="polite" aria-atomic="true" className="sr-only">
           {acknowledged
             ? sample
-              ? `Sample invitation ${acknowledged === 'accept' ? 'accepted' : 'declined'}. No real membership changed.`
+              ? t(
+                  acknowledged === 'accept'
+                    ? 'invitationFlow.sampleAccepted'
+                    : 'invitationFlow.sampleDeclined',
+                )
               : acknowledged === 'accept'
-                ? 'Your stable membership is active.'
-                : 'Invitation declined.'
+                ? t('invitationFlow.activeAnnouncement')
+                : t('invitationFlow.declinedAnnouncement')
             : ''}
         </div>
         {failed &&
           (effective.status === 'pending' ||
             effective.status === 'accepted_pending_subscription') && (
             <p id={errorId} role="alert" className="text-sm text-destructive">
-              Could not {failed} this invitation. Your choice was not confirmed.
-              Try again below.
+              {t(
+                failed === 'accept'
+                  ? 'invitationFlow.acceptFailed'
+                  : 'invitationFlow.declineFailed',
+              )}
             </p>
           )}
         {content}
@@ -375,23 +388,32 @@ function InvitationNotice({
 }
 
 function InvitationSummary({ preview }: { preview: FoundInvitationPreview }) {
+  const { locale } = useLocale()
+  const t = useT()
+
   const details = [
-    { label: 'Location', value: preview.stableLocation || 'Not specified' },
     {
-      label: 'Invited by',
-      value: preview.inviterName || 'Stable administrator',
+      label: t('invitationFlow.location'),
+      value: preview.stableLocation || t('invitationFlow.notSpecified'),
     },
-    { label: 'Sent to', value: preview.emailHint },
     {
-      label: preview.status === 'expired' ? 'Expired' : 'Expires',
-      value: formatMediumTimestampDate(preview.expiresAt),
+      label: t('invitationFlow.invitedBy'),
+      value: preview.inviterName || t('invitationFlow.administrator'),
+    },
+    { label: t('invitationFlow.sentTo'), value: preview.emailHint },
+    {
+      label:
+        preview.status === 'expired'
+          ? t('invitationFlow.expired')
+          : t('invitationFlow.expires'),
+      value: formatMediumTimestampDate(preview.expiresAt, locale),
     },
   ]
   return (
     <DashboardSectionCard
       as="h1"
       title={preview.stableName}
-      description="You have been invited to join this stable as a member."
+      description={t('invitationFlow.summary')}
       badges={<StableInvitationContextBadge />}
       contentGap="comfortable"
     >

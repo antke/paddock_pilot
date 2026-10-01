@@ -46,68 +46,115 @@ export const careReminderStatusLabels = {
   dismissed: 'Dismissed',
 } satisfies Record<CareReminderStatus, string>
 
-export const careReminderCategorySchema = z.enum(careReminderCategories)
-export const careReminderPrioritySchema = z.enum(careReminderPriorities)
-export const careReminderStatusSchema = z.enum(careReminderStatuses)
-export const careReminderFormTargetTypeSchema = z.enum(
-  careReminderFormTargetTypes,
-)
+const defaultMessages = {
+  titleRequired: 'Enter a reminder title.',
+  titleMax: 'Keep the title to 120 characters or fewer.',
+  notesMax: 'Keep notes to 1,000 characters or fewer.',
+  dueDate: 'Use a valid due date.',
+  horseRequired: 'Select at least one horse.',
+  textInvalid: 'Enter text.',
+  choiceInvalid: 'Choose a valid option.',
+  listInvalid: 'Choose horses from the list.',
+} as const
+export type CareReminderValidationKey = keyof typeof defaultMessages
+export function createCareReminderSchemas(
+  message: (key: CareReminderValidationKey) => string = (key) =>
+    defaultMessages[key],
+) {
+  const careReminderCategorySchema = z.enum(careReminderCategories, {
+    error: message('choiceInvalid'),
+  })
+  const careReminderPrioritySchema = z.enum(careReminderPriorities, {
+    error: message('choiceInvalid'),
+  })
+  const careReminderStatusSchema = z.enum(careReminderStatuses, {
+    error: message('choiceInvalid'),
+  })
+  const careReminderFormTargetTypeSchema = z.enum(careReminderFormTargetTypes, {
+    error: message('choiceInvalid'),
+  })
 
-export const careReminderTitleSchema = z
-  .string()
-  .trim()
-  .min(1, 'Enter a reminder title.')
-  .max(120, 'Keep the title to 120 characters or fewer.')
+  const careReminderTitleSchema = z
+    .string({ error: message('textInvalid') })
+    .trim()
+    .min(1, message('titleRequired'))
+    .max(120, message('titleMax'))
 
-export const careReminderDescriptionSchema = z
-  .string()
-  .trim()
-  .max(1000, 'Keep notes to 1,000 characters or fewer.')
+  const careReminderDescriptionSchema = z
+    .string({ error: message('textInvalid') })
+    .trim()
+    .max(1000, message('notesMax'))
 
-export const careReminderDueDateSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a valid due date.')
+  const careReminderDueDateSchema = z
+    .string({ error: message('textInvalid') })
+    .regex(/^\d{4}-\d{2}-\d{2}$/, message('dueDate'))
 
-const optionalText = <TSchema extends z.ZodString>(schema: TSchema) =>
-  schema.optional().transform((val) => val || undefined)
+  const optionalText = <TSchema extends z.ZodString>(schema: TSchema) =>
+    schema.optional().transform((val) => val || undefined)
 
-const optionalId = z
-  .string()
-  .trim()
-  .optional()
-  .transform((val) => val || undefined)
+  const optionalId = z
+    .string({ error: message('textInvalid') })
+    .trim()
+    .optional()
+    .transform((val) => val || undefined)
 
-export const careReminderInputSchema = z.object({
-  stableId: z.string().min(1),
-  horseId: optionalId,
-  eventId: optionalId,
-  title: careReminderTitleSchema,
-  description: optionalText(careReminderDescriptionSchema),
-  category: careReminderCategorySchema,
-  dueDate: careReminderDueDateSchema,
-  priority: careReminderPrioritySchema.optional(),
-  status: careReminderStatusSchema.default('pending'),
-})
-
-export const careReminderFormSchema = z
-  .object({
-    targetType: careReminderFormTargetTypeSchema,
-    horseIds: z.array(z.string()),
+  const careReminderInputSchema = z.object({
+    stableId: z.string({ error: message('textInvalid') }).min(1),
+    horseId: optionalId,
+    eventId: optionalId,
     title: careReminderTitleSchema,
-    description: careReminderDescriptionSchema,
+    description: optionalText(careReminderDescriptionSchema),
     category: careReminderCategorySchema,
     dueDate: careReminderDueDateSchema,
     priority: careReminderPrioritySchema.optional(),
+    status: careReminderStatusSchema.default('pending'),
   })
-  .superRefine((value, context) => {
-    if (value.targetType === 'horses' && value.horseIds.length === 0) {
-      context.addIssue({
-        code: 'custom',
-        path: ['horseIds'],
-        message: 'Select at least one horse.',
-      })
-    }
-  })
+
+  const careReminderFormSchema = z
+    .object({
+      targetType: careReminderFormTargetTypeSchema,
+      horseIds: z.array(z.string({ error: message('textInvalid') }), {
+        error: message('listInvalid'),
+      }),
+      title: careReminderTitleSchema,
+      description: careReminderDescriptionSchema,
+      category: careReminderCategorySchema,
+      dueDate: careReminderDueDateSchema,
+      priority: careReminderPrioritySchema.optional(),
+    })
+    .superRefine((value, context) => {
+      if (value.targetType === 'horses' && value.horseIds.length === 0) {
+        context.addIssue({
+          code: 'custom',
+          path: ['horseIds'],
+          message: message('horseRequired'),
+        })
+      }
+    })
+
+  return {
+    careReminderCategorySchema,
+    careReminderPrioritySchema,
+    careReminderStatusSchema,
+    careReminderFormTargetTypeSchema,
+    careReminderTitleSchema,
+    careReminderDescriptionSchema,
+    careReminderDueDateSchema,
+    careReminderInputSchema,
+    careReminderFormSchema,
+  }
+}
+export const {
+  careReminderCategorySchema,
+  careReminderPrioritySchema,
+  careReminderStatusSchema,
+  careReminderFormTargetTypeSchema,
+  careReminderTitleSchema,
+  careReminderDescriptionSchema,
+  careReminderDueDateSchema,
+  careReminderInputSchema,
+  careReminderFormSchema,
+} = createCareReminderSchemas()
 
 export type CareReminderCategory = (typeof careReminderCategories)[number]
 export type CareReminderPriority = (typeof careReminderPriorities)[number]

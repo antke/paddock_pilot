@@ -1,9 +1,9 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { isValidElement } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
-import { formatCountLabel } from '#/lib/numberDisplay'
 import { cn } from '#/lib/utils'
 
 import {
@@ -48,6 +48,8 @@ export function FilteredDashboardItemList<
   className,
   ...props
 }: FilteredDashboardItemListProps<TItem, TFacetId>) {
+  const t = useT()
+
   const usesGrid = itemLayout === 'grid'
 
   return (
@@ -65,7 +67,7 @@ export function FilteredDashboardItemList<
         aria-live="polite"
         aria-atomic="true"
       >
-        {formatCountLabel(filtering.items.length, 'result')}
+        {t('listControls.results', { count: filtering.items.length })}
       </p>
 
       {filtering.items.length === 0 ? (

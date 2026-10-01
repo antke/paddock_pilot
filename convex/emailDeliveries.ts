@@ -270,6 +270,7 @@ export const prepareSend = internalMutation({
         idempotencyKey: delivery.idempotencyKey,
         recipient: delivery.recipient,
         template: delivery.template,
+        locale: delivery.locale,
       },
     }
   },

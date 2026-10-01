@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
 import { ArchiveBoxIcon } from '@phosphor-icons/react'
 import { useRef, useState } from 'react'
@@ -26,6 +27,8 @@ export function StableArchiveCard({
   stableName,
   onArchive,
 }: StableArchiveCardProps) {
+  const t = useT()
+
   const [open, setOpen] = useState(false)
   const [isArchiving, setIsArchiving] = useState(false)
   const [archiveFailed, setArchiveFailed] = useState(false)
@@ -50,8 +53,8 @@ export function StableArchiveCard({
 
   return (
     <DashboardSectionCard
-      title="Archive stable"
-      description="Archive this stable when the team should no longer have access. Its records are preserved, but restoration currently requires support."
+      title={t('stables.archive')}
+      description={t('stables.archiveHelp')}
       actions={
         <AlertDialog
           open={open}
@@ -65,30 +68,30 @@ export function StableArchiveCard({
             render={<Button type="button" variant="destructive" />}
           >
             <ArchiveBoxIcon aria-hidden="true" />
-            Archive stable
+            {t('stables.archive')}
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogMedia>
                 <ArchiveBoxIcon aria-hidden="true" />
               </AlertDialogMedia>
-              <AlertDialogTitle>Archive {stableName}?</AlertDialogTitle>
+              <AlertDialogTitle>
+                {t('stables.archiveConfirm', { name: stableName })}
+              </AlertDialogTitle>
               <AlertDialogDescription>
-                Everyone immediately loses access to this stable. Horses,
-                events, documents and member history are preserved, but this
-                cannot currently be undone inside the app.
+                {t('stables.archiveConsequences')}
               </AlertDialogDescription>
             </AlertDialogHeader>
             {archiveFailed && (
               <RouteStatusAlert
                 tone="danger"
-                title="Could not archive the stable"
-                description="Archiving was not confirmed. Try again or cancel to keep this page open."
+                title={t('stables.archiveFailed')}
+                description={t('stables.archiveFailedHelp')}
               />
             )}
             <AlertDialogFooter>
               <AlertDialogCancel disabled={isArchiving}>
-                Cancel
+                {t('stables.cancel')}
               </AlertDialogCancel>
               <AlertDialogAction
                 variant="destructive"
@@ -97,7 +100,7 @@ export function StableArchiveCard({
                 onClick={handleArchive}
               >
                 <ArchiveBoxIcon aria-hidden="true" />
-                {isArchiving ? 'Archiving...' : 'Archive stable'}
+                {isArchiving ? t('stables.archiving') : t('stables.archive')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

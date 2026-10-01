@@ -1,3 +1,5 @@
+import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
+import { useT } from '#/i18n/LocaleProvider'
 import { InlineForm } from '#/components/forms/FormLayout'
 import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
 import { Field, FieldError, FieldGrid, FieldLabel } from '#/components/ui/field'
@@ -7,7 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useId, useRef, useState } from 'react'
 import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
 import { useForm } from 'react-hook-form'
-import { eventHorseDetailsFormSchema } from 'shared/events/eventHorseDetailsSchema'
+import { createEventHorseDetailsSchemas } from 'shared/events/eventHorseDetailsSchema'
 import type {
   EventHorseDetailsFormInput,
   EventHorseDetailsFormSchema,
@@ -24,6 +26,11 @@ export function EventHorseServiceDetailsForm({
   onSubmit,
   onCancel,
 }: EventHorseServiceDetailsFormProps) {
+  const t = useT()
+
+  const { eventHorseDetailsFormSchema } = createEventHorseDetailsSchemas(
+    (key) => t(`eventViews.validation.${key}`),
+  )
   const formId = useId()
   const submitting = useRef(false)
   const [saveError, setSaveError] = useState(false)
@@ -38,6 +45,7 @@ export function EventHorseServiceDetailsForm({
     defaultValues,
   })
 
+  useLocalizedValidation(form)
   const submit = async (values: EventHorseDetailsFormSchema) => {
     if (submitting.current) return
     submitting.current = true
@@ -54,19 +62,19 @@ export function EventHorseServiceDetailsForm({
   }
 
   return (
-    <InlineForm gap="compact" onSubmit={form.handleSubmit(submit)}>
+    <InlineForm noValidate gap="compact" onSubmit={form.handleSubmit(submit)}>
       {saveError && (
         <RouteStatusAlert
           tone="danger"
-          title="Could not save service details"
-          description="Your entries are still here. Try saving again."
+          title={t('eventViews.saveFailed')}
+          description={t('eventViews.saveFailedHelp')}
         />
       )}
       <Field
         data-invalid={Boolean(form.formState.errors.requestedServiceNotes)}
       >
         <FieldLabel htmlFor={`${formId}-requestedServiceNotes`}>
-          Requested notes
+          {t('eventViews.requestedNotes')}
         </FieldLabel>
         <Textarea
           autoFocus
@@ -79,7 +87,7 @@ export function EventHorseServiceDetailsForm({
               ? `${formId}-requestedServiceNotes-error`
               : undefined
           }
-          placeholder="What should the provider check or do for this horse?"
+          placeholder={t('eventViews.requestedPlaceholder')}
         />
         <FieldError
           id={`${formId}-requestedServiceNotes-error`}
@@ -89,7 +97,7 @@ export function EventHorseServiceDetailsForm({
 
       <Field data-invalid={Boolean(form.formState.errors.completionNotes)}>
         <FieldLabel htmlFor={`${formId}-completionNotes`}>
-          Outcome notes
+          {t('eventViews.outcomeNotes')}
         </FieldLabel>
         <Textarea
           id={`${formId}-completionNotes`}
@@ -101,7 +109,7 @@ export function EventHorseServiceDetailsForm({
               ? `${formId}-completionNotes-error`
               : undefined
           }
-          placeholder="What happened for this horse? Any aftercare or follow-up?"
+          placeholder={t('eventViews.outcomePlaceholder')}
         />
         <FieldError
           id={`${formId}-completionNotes-error`}
@@ -111,7 +119,9 @@ export function EventHorseServiceDetailsForm({
 
       <FieldGrid>
         <Field data-invalid={Boolean(form.formState.errors.costShare)}>
-          <FieldLabel htmlFor={`${formId}-costShare`}>Cost share</FieldLabel>
+          <FieldLabel htmlFor={`${formId}-costShare`}>
+            {t('eventViews.costShare')}
+          </FieldLabel>
           <Input
             id={`${formId}-costShare`}
             type="number"
@@ -124,7 +134,7 @@ export function EventHorseServiceDetailsForm({
                 ? `${formId}-costShare-error`
                 : undefined
             }
-            placeholder="Optional amount for this horse"
+            placeholder={t('eventViews.costPlaceholder')}
             {...form.register('costShare', { valueAsNumber: true })}
           />
           <FieldError
@@ -137,8 +147,8 @@ export function EventHorseServiceDetailsForm({
       <FormSubmitActions
         isSubmitting={isSaving || form.formState.isSubmitting}
         onCancel={onCancel}
-        submitLabel="Save details"
-        submittingLabel="Saving..."
+        submitLabel={t('eventViews.saveDetails')}
+        submittingLabel={t('eventViews.saving')}
       />
     </InlineForm>
   )

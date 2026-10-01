@@ -1,3 +1,6 @@
+import { useLocale } from '#/i18n/LocaleProvider'
+import { localeInstances } from '#/i18n/resources'
+import type { Locale } from 'shared/i18n/locale'
 import type { ReactNode } from 'react'
 
 import { DashboardBadgeList } from '#/components/dashboard/DashboardBadgeList'
@@ -5,14 +8,12 @@ import { DashboardItemLinkCard } from '#/components/dashboard/DashboardItemCard'
 import type { DashboardItemAccent } from '#/components/dashboard/DashboardItemCard'
 import { DashboardMetaList } from '#/components/dashboard/DashboardMetaList'
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
-import { formatCountLabel } from '#/lib/numberDisplay'
 import { cn } from '#/lib/utils'
 import type {
   EventRecurrence,
   EventStatus,
   EventType,
 } from 'shared/events/eventSchema'
-import { eventTypeLabels } from 'shared/events/eventSchema'
 import { EventStatusBadge } from './EventBadges'
 import { EventDateBadge } from './EventDateBadge'
 import { formatEventDateTime, formatRecurrence } from './eventDisplay'
@@ -135,8 +136,10 @@ function EventRowContent({
   supplementalMeta: Array<string | null | undefined>
   variant: EventRowVariant
 }) {
+  const { locale } = useLocale()
   const leading = getLeading(event, variant, density, leadingLabel)
   const metaItems = getMetaItems({
+    locale,
     event,
     horseCount,
     showLocation,
@@ -242,6 +245,7 @@ function getLeading(
 }
 
 function getMetaItems({
+  locale,
   event,
   horseCount,
   showLocation,
@@ -249,6 +253,7 @@ function getMetaItems({
   supplementalMeta,
   variant,
 }: {
+  locale: Locale
   event: EventRowEvent
   horseCount?: number
   showLocation: boolean
@@ -257,15 +262,17 @@ function getMetaItems({
   variant: EventRowVariant
 }) {
   const recurrenceSummary = showRecurrence
-    ? formatRecurrence(event.recurrence)
+    ? formatRecurrence(event.recurrence, locale)
     : null
 
   return [
-    eventTypeLabels[event.type],
+    localeInstances[locale].t(`events.types.${event.type}`),
     variant === 'compact' || variant === 'summary'
-      ? formatEventDateTime(event.date, event.time, event.endDate)
+      ? formatEventDateTime(event.date, event.time, event.endDate, locale)
       : null,
-    horseCount === undefined ? null : formatCountLabel(horseCount, 'horse'),
+    horseCount === undefined
+      ? null
+      : localeInstances[locale].t('calendar.horses', { count: horseCount }),
     showLocation ? event.location : null,
     recurrenceSummary,
     ...supplementalMeta,

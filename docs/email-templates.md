@@ -14,8 +14,8 @@ pnpm email:preview
 ```
 
 Open `.email-preview/index.html` in a browser. The gallery includes all ten email
-categories, all three participation responses, and a long-name example with
-Polish characters. Choose a template, toggle desktop/mobile width, open its
+categories in English and Polish, all three participation responses, and a long-name example with
+Polish characters. Preview filenames begin with `en-` or `pl-`. Choose a template, toggle desktop/mobile width, open its
 standalone HTML, or inspect/download its plain-text alternative.
 
 The gallery and individual `.html`/`.txt` files are generated from the production
@@ -63,3 +63,13 @@ placement. No live email-client or deliverability certification is implied.
 This styling change does not alter provider selection, API keys, DNS, webhooks,
 retry handling or which application events enqueue email. Sender display name
 and reply-to remain configured in the production Convex environment.
+
+## Language selection
+
+App email copy lives in `shared/i18n/email.en.ts` and `email.pl.ts`. The outbox stores
+an optional locale for each delivery. Known recipients use their saved account
+language; new invitees use the language chosen in the invitation form, defaulting
+to the sender's language. Retries retain the original delivery locale. Older queued
+messages without one remain English, and legacy event-change descriptions remain
+readable. See `docs/i18n/README.md` for implementation conventions and
+`docs/i18n/translation-review.md` for wording decisions and Clerk-auth-email limits.

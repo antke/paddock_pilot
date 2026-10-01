@@ -1,3 +1,5 @@
+import type { Locale } from 'shared/i18n/locale'
+import { localeInstances } from '#/i18n/resources'
 import { getTrainingEntries } from '#/components/training/trainingCalendarData'
 import { createEventOccurrences } from 'shared/events/eventOccurrences'
 import {
@@ -23,6 +25,7 @@ export function createDashboardCommandData({
   overview,
   todayKey,
   training,
+  locale = 'en',
 }: {
   stable: DashboardCommandStable
   stables: Array<DashboardCommandStable>
@@ -30,6 +33,7 @@ export function createDashboardCommandData({
   horses: Array<DashboardCommandHorse>
   overview: DashboardCommandOverview
   todayKey: string
+  locale?: Locale
   training?: DashboardTrainingData
 }): DashboardCommandData {
   const stableEvents = events
@@ -73,7 +77,10 @@ export function createDashboardCommandData({
     return {
       date,
       key,
-      label: index === 0 ? 'Today' : formatShortWeekdayDate(date),
+      label:
+        index === 0
+          ? localeInstances[locale].t('dashboard.today')
+          : formatShortWeekdayDate(date, locale),
       day: `${date.getDate()}`,
       eventCount: dayEvents.length,
       events: dayEvents,

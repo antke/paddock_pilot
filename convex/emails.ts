@@ -38,6 +38,7 @@ export const sendDelivery = internalAction({
       const content = createEmailContent(
         prepared.delivery.template,
         getConfiguredAppUrl(provider),
+        prepared.delivery.locale,
       )
       const message: EmailMessage = {
         ...content,

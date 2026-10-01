@@ -1,3 +1,5 @@
+import { useT } from '#/i18n/LocaleProvider'
+import { LanguageSelector } from '#/i18n/LanguageSelector'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
@@ -19,12 +21,13 @@ export const Route = createFileRoute('/profile')({
 })
 
 function ProfileRoute() {
+  const t = useT()
   return (
     <AuthStateSwitch
       signedOut={
         <SignedOutRoutePrompt
-          title="Sign in to edit your profile"
-          description="Your profile follows you across the stables you own and join."
+          title={t('profile.signInTitle')}
+          description={t('profile.signInDescription')}
         />
       }
       signedIn={<ProfilePage />}
@@ -33,6 +36,7 @@ function ProfileRoute() {
 }
 
 function ProfilePage() {
+  const t = useT()
   const { data: profile } = useSuspenseQuery(
     convexQuery(api.onboarding.getAccountProfile),
   )
@@ -41,29 +45,42 @@ function ProfilePage() {
 
   return (
     <DashboardPage>
-      <DashboardPageHeader title="Your profile" />
+      <DashboardPageHeader title={t('profile.title')} />
 
-      <DashboardSectionCard title="Profile details" contentGap="comfortable">
+      <DashboardSectionCard
+        title={t('profile.details')}
+        contentGap="comfortable"
+      >
         <AccountProfileForm
           initialValues={{
             displayName: profile.displayName,
             phone: profile.phone,
             profileImageUrl: profile.profileImageUrl,
           }}
-          submitLabel="Save profile"
-          onSaved={() => showAppSuccessToast({ title: 'Profile updated' })}
+          submitLabel={t('profile.save')}
+          onSaved={() => showAppSuccessToast({ title: t('profile.saved') })}
         />
+      </DashboardSectionCard>
+      <DashboardSectionCard
+        title={t('language.label')}
+        contentGap="comfortable"
+      >
+        <p>{t('language.description')}</p>
+        <div className="max-w-xs">
+          <LanguageSelector />
+        </div>
       </DashboardSectionCard>
     </DashboardPage>
   )
 }
 
 function ProfileError({ reset }: ErrorComponentProps) {
+  const t = useT()
   return (
     <RouteQueryErrorAlert
       reset={reset}
-      title="Your profile couldn’t load"
-      description="Check your connection, then try again. Your profile has not been changed."
+      title={t('profile.errorTitle')}
+      description={t('profile.errorDescription')}
       width="narrow"
     />
   )

@@ -121,6 +121,19 @@ describe('training records', () => {
       stableId: f.stableId,
     })
     expect(data.records).toHaveLength(3)
+    const timeline = await f.asMember.query(api.horseTimeline.listForHorse, {
+      horseId: f.horseId,
+    })
+    expect(timeline.entries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'event',
+          date: '2026-01-12',
+          description: 'Transitions',
+          trainingRecord: { status: 'completed', focus: 'Transitions' },
+        }),
+      ]),
+    )
     expect(
       data.records.find((record) => record.date === '2026-01-12'),
     ).toMatchObject({
@@ -137,6 +150,21 @@ describe('training records', () => {
         details,
       }),
     ).rejects.toThrow('Only the horse owner')
+    await expect(
+      f.asMember.mutation(api.training.saveRecord, {
+        eventId: id,
+        horseId: f.otherHorseId,
+        date: '2026-01-12',
+        status: 'completed',
+        details,
+        errorFormat: 'structured',
+      }),
+    ).rejects.toMatchObject({
+      data: {
+        code: 'trainingPermission',
+        message: 'Only the horse owner or stable admin can record its training',
+      },
+    })
     await expect(
       f.asOutsider.query(api.training.listForStable, { stableId: f.stableId }),
     ).rejects.toThrow()

@@ -1,3 +1,5 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
+import { getHorseBreedLabel } from 'shared/i18n/horseBreedLabels'
 import {
   DashboardNavigation,
   DashboardNavigationLinkItem,
@@ -49,27 +51,6 @@ export type HorseDetailSectionProps = {
   events: Array<Doc<'events'>>
 }
 
-export const sexLabels = {
-  mare: 'Mare',
-  gelding: 'Gelding',
-  stallion: 'Stallion',
-} satisfies Record<NonNullable<Doc<'horses'>['sex']>, string>
-
-export const shoeingStatusLabels = {
-  barefoot: 'Barefoot',
-  front_shoes: 'Front shoes',
-  full_set: 'Full set',
-} satisfies Record<NonNullable<Doc<'horses'>['shoeingStatus']>, string>
-
-const categoryItems = [
-  { id: 'profile', label: 'Profile' },
-  { id: 'activity', label: 'Activity' },
-  { id: 'training', label: 'Training' },
-  { id: 'care', label: 'Care' },
-  { id: 'nutrition', label: 'Nutrition' },
-  { id: 'documents', label: 'Documents' },
-] satisfies Array<{ id: HorseDetailCategory; label: string }>
-
 export function HorseDetail({
   stableId,
   horse,
@@ -79,6 +60,18 @@ export function HorseDetail({
   canManageHorse,
   children,
 }: HorseDetailProps) {
+  const t = useT()
+  const { locale } = useLocale()
+
+  const categoryItems = [
+    { id: 'profile', label: t('horseDetail.profile') },
+    { id: 'activity', label: t('horseDetail.activity') },
+    { id: 'training', label: t('horseDetail.training') },
+    { id: 'care', label: t('horseDetail.care') },
+    { id: 'nutrition', label: t('horseDetail.nutrition') },
+    { id: 'documents', label: t('horseDetail.documents') },
+  ] satisfies Array<{ id: HorseDetailCategory; label: string }>
+
   const { pathname } = useLocation()
   const search = useSearch({ strict: false })
   const navigate = useNavigate()
@@ -90,9 +83,11 @@ export function HorseDetail({
     pathAfterHorse.startsWith(path),
   )
   const heroDescription = formatMetaText([
-    horse.ownerName ? `Owner: ${horse.ownerName}` : undefined,
-    horse.breed,
-    horse.sex ? sexLabels[horse.sex] : undefined,
+    horse.ownerName
+      ? t('horseDetail.owner', { name: horse.ownerName })
+      : undefined,
+    horse.breed ? getHorseBreedLabel(horse.breed, locale) : undefined,
+    horse.sex ? t(`horseForm.${horse.sex}`) : undefined,
   ])
 
   return (
@@ -108,7 +103,7 @@ export function HorseDetail({
               params={{ stableId, horseId: horse._id }}
               variant="outline"
             >
-              Edit horse
+              {t('horseDetail.edit')}
             </ButtonLink>
           ) : undefined
         }
@@ -122,7 +117,7 @@ export function HorseDetail({
       >
         <div className="min-w-0 border-t border-border-subtle pt-4">
           <DashboardNavigation
-            ariaLabel={`${horse.name} sections`}
+            ariaLabel={t('horseDetail.sections', { name: horse.name })}
             inset={false}
             overflow="scroll"
           >
@@ -143,7 +138,7 @@ export function HorseDetail({
             ))}
             <DashboardNavigationMenuGroup
               active={moreSectionActive}
-              label="More"
+              label={t('horseDetail.more')}
               contentWidth="sm"
               variant="section"
             >
@@ -157,7 +152,7 @@ export function HorseDetail({
                   />
                 }
               >
-                Timeline
+                {t('horseDetail.timeline')}
               </DashboardNavigationMenuLink>
               <DashboardNavigationMenuLink
                 active={pathAfterHorse.startsWith('/care-summary')}
@@ -169,7 +164,7 @@ export function HorseDetail({
                   />
                 }
               >
-                Care summary
+                {t('horseDetail.summary')}
               </DashboardNavigationMenuLink>
             </DashboardNavigationMenuGroup>
           </DashboardNavigation>

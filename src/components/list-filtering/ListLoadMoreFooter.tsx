@@ -1,13 +1,11 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { Button } from '#/components/ui/button'
 import { Spinner } from '#/components/ui/spinner'
 import { cn } from '#/lib/utils'
 
 export type ListPaginationStatus =
-  | 'LoadingFirstPage'
-  | 'CanLoadMore'
-  | 'LoadingMore'
-  | 'Exhausted'
+  'LoadingFirstPage' | 'CanLoadMore' | 'LoadingMore' | 'Exhausted'
 
 type ListLoadMoreFooterProps = {
   status: ListPaginationStatus
@@ -22,10 +20,12 @@ export function ListLoadMoreFooter({
   status,
   onLoadMore,
   pageSize,
-  loadMoreLabel = 'Load more',
-  loadingLabel = 'Loading...',
+  loadMoreLabel,
+  loadingLabel,
   className,
 }: ListLoadMoreFooterProps) {
+  const t = useT()
+
   if (status === 'LoadingFirstPage' || status === 'Exhausted') return null
 
   const isLoading = status === 'LoadingMore'
@@ -45,7 +45,9 @@ export function ListLoadMoreFooter({
             aria-hidden={true}
           />
         )}
-        {isLoading ? loadingLabel : loadMoreLabel}
+        {isLoading
+          ? (loadingLabel ?? t('uiRemainder.loading'))
+          : (loadMoreLabel ?? t('uiRemainder.loadMore'))}
       </Button>
     </DashboardActions>
   )

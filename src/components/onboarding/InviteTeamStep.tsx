@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import type { ReactNode } from 'react'
 import { useOnboardingPending } from './onboardingAsync'
 import type { Doc, Id } from 'convex/_generated/dataModel'
@@ -38,11 +39,12 @@ export function InviteTeamStepView({
   onContinue,
   onDeferred,
 }: InviteTeamStepProps & { inviteForm: ReactNode; invitationList: ReactNode }) {
+  const t = useT()
+
   return (
     <div className="grid gap-5">
       <OnboardingLaterNote>
-        Your stable is ready to use. Invite someone now, or add people later
-        from the Members section in Stable settings.
+        {t('onboarding.inviteLaterHelp')}
       </OnboardingLaterNote>
 
       {inviteForm}
@@ -51,11 +53,13 @@ export function InviteTeamStepView({
       <DashboardActions align="end">
         {invitations.length === 0 && (
           <Button type="button" variant="outline" onClick={onDeferred}>
-            Do this later
+            {t('onboarding.later')}
           </Button>
         )}
         <Button type="button" onClick={onContinue}>
-          {invitations.length > 0 ? 'Continue' : 'I’m ready'}
+          {invitations.length > 0
+            ? t('onboarding.continue')
+            : t('onboarding.ready')}
         </Button>
       </DashboardActions>
     </div>

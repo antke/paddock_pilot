@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Card, CardContent, CardHeader } from '#/components/ui/card'
+import { DashboardSectionCard } from './DashboardSectionCard'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
 
 type Props<T extends string> = {
@@ -28,8 +28,10 @@ export function DashboardTabbedCard<T extends string>({
         if (item) onSelect(item.id)
       }}
     >
-      <Card>
-        <CardHeader className="@container/tabs-header">
+      <DashboardSectionCard
+        contentLayout="block"
+        headerClassName="@container/tabs-header"
+        headerContent={
           <div className="flex min-w-0 flex-col gap-3 @lg/tabs-header:flex-row @lg/tabs-header:items-start @lg/tabs-header:gap-6">
             <TabsList
               variant="line"
@@ -49,24 +51,23 @@ export function DashboardTabbedCard<T extends string>({
               </div>
             )}
           </div>
-        </CardHeader>
-        <CardContent>
-          {items.map((item) => (
-            <TabsContent
-              key={item.id}
-              value={item.id}
-              className="grid min-w-0 gap-6"
-            >
-              {item.description && (
-                <p className="text-sm text-muted-foreground">
-                  {item.description}
-                </p>
-              )}
-              {activeId === item.id && children}
-            </TabsContent>
-          ))}
-        </CardContent>
-      </Card>
+        }
+      >
+        {items.map((item) => (
+          <TabsContent
+            key={item.id}
+            value={item.id}
+            className="grid min-w-0 gap-6"
+          >
+            {item.description && (
+              <p className="text-sm text-muted-foreground">
+                {item.description}
+              </p>
+            )}
+            {activeId === item.id && children}
+          </TabsContent>
+        ))}
+      </DashboardSectionCard>
     </Tabs>
   )
 }

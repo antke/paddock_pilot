@@ -1,3 +1,5 @@
+import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
+import { useT } from '#/i18n/LocaleProvider'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from 'convex/react'
 import { Controller, useForm } from 'react-hook-form'
@@ -24,71 +26,78 @@ import {
 } from 'shared/horses/horseAge'
 import { OnboardingLaterNote } from './OnboardingLayout'
 
-const optionalNumber = z
-  .string()
-  .trim()
-  .refine((value) => !value || /^\d+$/.test(value), 'Use a whole number.')
+function createFirstHorseSchema(t: ReturnType<typeof useT>) {
+  const optionalNumber = z
+    .string()
+    .trim()
+    .refine(
+      (value) => !value || /^\d+$/.test(value),
+      t('onboarding.wholeNumber'),
+    )
 
-const firstHorseSchema = z
-  .object({
-    name: z.string().trim().min(1, 'Add the horse name.'),
-    birthYear: optionalNumber,
-    birthMonth: optionalNumber,
-    birthDay: optionalNumber,
-    age: optionalNumber,
-  })
-  .superRefine((values, context) => {
-    if (!values.birthYear && !values.age) {
-      context.addIssue({
-        code: 'custom',
-        path: ['birthYear'],
-        message: 'Add a birth year or current age.',
-      })
-      context.addIssue({
-        code: 'custom',
-        path: ['age'],
-        message: 'Add a current age or birth year.',
-      })
-      return
-    }
-    if (values.birthMonth && !values.birthYear) {
-      context.addIssue({
-        code: 'custom',
-        path: ['birthYear'],
-        message: 'Add the birth year before the month.',
-      })
-    }
-    if (values.birthDay && !values.birthMonth) {
-      context.addIssue({
-        code: 'custom',
-        path: ['birthMonth'],
-        message: 'Add the birth month before the day.',
-      })
-    }
-
-    const dateOfBirth = composeHorseBirthDate({
-      year: values.birthYear,
-      month: values.birthMonth,
-      day: values.birthDay,
+  return z
+    .object({
+      name: z.string().trim().min(1, t('onboarding.horseNameRequired')),
+      birthYear: optionalNumber,
+      birthMonth: optionalNumber,
+      birthDay: optionalNumber,
+      age: optionalNumber,
     })
-    const derivedAge = dateOfBirth
-      ? calculateHorseAge(dateOfBirth)
-      : Number(values.age)
-    if (
-      derivedAge === undefined ||
-      !Number.isInteger(derivedAge) ||
-      derivedAge < 0 ||
-      derivedAge > 100
-    ) {
-      context.addIssue({
-        code: 'custom',
-        path: [dateOfBirth ? 'birthYear' : 'age'],
-        message: 'Use a valid birth date or age from 0 to 100.',
-      })
-    }
-  })
+    .superRefine((values, context) => {
+      if (!values.birthYear && !values.age) {
+        context.addIssue({
+          code: 'custom',
+          path: ['birthYear'],
+          message: t('onboarding.birthYearOrAge'),
+        })
+        context.addIssue({
+          code: 'custom',
+          path: ['age'],
+          message: t('onboarding.ageOrBirthYear'),
+        })
+        return
+      }
+      if (values.birthMonth && !values.birthYear) {
+        context.addIssue({
+          code: 'custom',
+          path: ['birthYear'],
+          message: t('onboarding.yearBeforeMonth'),
+        })
+      }
+      if (values.birthDay && !values.birthMonth) {
+        context.addIssue({
+          code: 'custom',
+          path: ['birthMonth'],
+          message: t('onboarding.monthBeforeDay'),
+        })
+      }
 
-export type FirstHorseValues = z.infer<typeof firstHorseSchema>
+      const dateOfBirth = composeHorseBirthDate({
+        year: values.birthYear,
+        month: values.birthMonth,
+        day: values.birthDay,
+      })
+      const derivedAge = dateOfBirth
+        ? calculateHorseAge(dateOfBirth)
+        : Number(values.age)
+      if (
+        derivedAge === undefined ||
+        !Number.isInteger(derivedAge) ||
+        derivedAge < 0 ||
+        derivedAge > 100
+      ) {
+        context.addIssue({
+          code: 'custom',
+          path: [dateOfBirth ? 'birthYear' : 'age'],
+          message: t('onboarding.validAge'),
+        })
+      }
+    })
+}
+
+export type FirstHorseValues = z.infer<
+  ReturnType<typeof createFirstHorseSchema>
+>
 
 type FirstHorseStepProps = {
   horse?: Doc<'horses'>
@@ -119,11 +128,13 @@ export function FirstHorseStepView({
   horse,
   onDeferred,
   onSaved,
-  cancelLabel = 'Do this later',
+  cancelLabel,
   onSave,
 }: FirstHorseStepProps & {
   onSave: (values: FirstHorseSaveValues) => Promise<void>
 }) {
+  const t = useT()
+
   const formId = useId()
   const save = useOnboardingSave({
     onSave: async (values: FirstHorseValues) => {
@@ -140,12 +151,12 @@ export function FirstHorseStepView({
     },
     onSaved,
     failureMessage: horse
-      ? 'Could not update the horse. Your entries are still here. Try again.'
-      : 'Could not add the horse. Your entries are still here. Try again.',
+      ? t('onboarding.horseUpdateFailed')
+      : t('onboarding.horseAddFailed'),
   })
   const birthDate = splitHorseBirthDate(horse?.dateOfBirth)
   const form = useForm<FirstHorseValues>({
-    resolver: zodResolver(firstHorseSchema),
+    resolver: zodResolver(createFirstHorseSchema(t)),
     mode: 'onTouched',
     defaultValues: {
       name: horse?.name ?? '',
@@ -155,16 +166,15 @@ export function FirstHorseStepView({
       age: horse && !horse.dateOfBirth ? String(horse.age) : '',
     },
   })
+  useLocalizedValidation(form)
   const birthYear = form.watch('birthYear')
   const birthMonth = form.watch('birthMonth')
 
   return (
-    <InlineForm onSubmit={form.handleSubmit(save.run)}>
+    <InlineForm noValidate onSubmit={form.handleSubmit(save.run)}>
       <OnboardingSaveError message={save.error} />
       <OnboardingLaterNote>
-        Start with the essentials. You can add care routines, health history,
-        identification and documents from the horse’s profile whenever you’re
-        ready.
+        {t('onboarding.horseLaterHelp')}
       </OnboardingLaterNote>
 
       <Controller
@@ -173,7 +183,7 @@ export function FirstHorseStepView({
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
             <FieldLabel htmlFor={`${formId}-${field.name}`}>
-              Horse name
+              {t('onboarding.horseName')}
             </FieldLabel>
             <Input
               {...field}
@@ -198,13 +208,13 @@ export function FirstHorseStepView({
 
       <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(8rem,1fr)] lg:gap-y-2">
         <fieldset className="grid gap-3 lg:row-span-2 lg:grid-rows-subgrid">
-          <FieldLegend>Birth date</FieldLegend>
+          <FieldLegend>{t('onboarding.birthDate')}</FieldLegend>
           <div className="grid content-start gap-2">
             <div className="grid grid-cols-3 gap-2">
               <BirthPartField
                 control={form.control}
                 name="birthYear"
-                label="Year"
+                label={t('onboarding.year')}
                 placeholder="2016"
                 maxLength={4}
                 disabled={save.pending || save.acknowledged}
@@ -212,7 +222,7 @@ export function FirstHorseStepView({
               <BirthPartField
                 control={form.control}
                 name="birthMonth"
-                label="Month"
+                label={t('onboarding.month')}
                 placeholder="MM"
                 maxLength={2}
                 disabled={save.pending || save.acknowledged || !birthYear}
@@ -220,16 +230,13 @@ export function FirstHorseStepView({
               <BirthPartField
                 control={form.control}
                 name="birthDay"
-                label="Day"
+                label={t('onboarding.day')}
                 placeholder="DD"
                 maxLength={2}
                 disabled={save.pending || save.acknowledged || !birthMonth}
               />
             </div>
-            <FieldDescription>
-              The year is required when using a birth date. Month and day are
-              optional.
-            </FieldDescription>
+            <FieldDescription>{t('onboarding.birthDateHelp')}</FieldDescription>
           </div>
         </fieldset>
 
@@ -242,7 +249,7 @@ export function FirstHorseStepView({
               data-invalid={fieldState.invalid}
             >
               <FieldLabel htmlFor={`${formId}-${field.name}`} size="compact">
-                Or current age
+                {t('onboarding.orAge')}
               </FieldLabel>
               <Input
                 {...field}
@@ -261,7 +268,7 @@ export function FirstHorseStepView({
                 disabled={save.pending || save.acknowledged}
               />
               <FieldDescription>
-                If both are entered, the birth date is used.
+                {t('onboarding.birthDatePriority')}
               </FieldDescription>
               {fieldState.invalid && (
                 <FieldError
@@ -278,15 +285,15 @@ export function FirstHorseStepView({
         align="end"
         isSubmitting={save.pending}
         onCancel={onDeferred}
-        cancelLabel={cancelLabel}
+        cancelLabel={cancelLabel ?? t('onboarding.later')}
         submitLabel={
           save.acknowledged
-            ? 'Continue without saving again'
+            ? t('onboarding.continueSaved')
             : horse
-              ? 'Save horse details'
-              : 'Add horse and continue'
+              ? t('onboarding.saveHorse')
+              : t('onboarding.addHorseContinue')
         }
-        submittingLabel="Saving..."
+        submittingLabel={t('onboarding.saving')}
       />
     </InlineForm>
   )

@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '#/lib/utils'
 
@@ -8,6 +9,8 @@ export function DashboardRecordDetails({
   recordTitle,
   ...props
 }: ComponentProps<'details'> & { recordTitle: ReactNode }) {
+  const t = useT()
+
   return (
     <details
       data-slot="record-details"
@@ -15,7 +18,11 @@ export function DashboardRecordDetails({
       {...props}
     >
       <summary className="w-fit cursor-pointer rounded-control py-2 text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring pointer-coarse:min-h-11">
-        Details<span className="sr-only"> for {recordTitle}</span>
+        {t('reminders.details')}
+        <span className="sr-only">
+          {t('reminders.forPrefix')}
+          {recordTitle}
+        </span>
       </summary>
       <div className="max-w-prose whitespace-pre-wrap pb-2 text-sm leading-6 text-foreground">
         {children}

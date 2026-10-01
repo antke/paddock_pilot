@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { forwardRef } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 import { createLink } from '@tanstack/react-router'
@@ -19,9 +20,11 @@ export function FeatureAccessPrompt({
   title,
   description,
   badge = <DashboardFeatureBadge />,
-  primaryActionLabel = 'View plans',
+  primaryActionLabel,
   secondaryAction,
 }: FeatureAccessPromptProps) {
+  const t = useT()
+
   return (
     <DashboardSectionCard
       title={title}
@@ -30,7 +33,9 @@ export function FeatureAccessPrompt({
       descriptionSize="sm"
     >
       <DashboardActions align="start">
-        <ButtonLink to="/pricing">{primaryActionLabel}</ButtonLink>
+        <ButtonLink to="/pricing">
+          {primaryActionLabel ?? t('uiRemainder.viewPlans')}
+        </ButtonLink>
         {secondaryAction}
       </DashboardActions>
     </DashboardSectionCard>

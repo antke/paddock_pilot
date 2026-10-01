@@ -1,4 +1,6 @@
-import { useId } from 'react'
+import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
+import { useT } from '#/i18n/LocaleProvider'
+import { useId, useState } from 'react'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
 import { DashboardValueBadge } from '#/components/dashboard/DashboardBadges'
@@ -28,11 +30,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
 import {
   careReminderCategories,
-  careReminderCategoryLabels,
-  careReminderFormSchema,
+  createCareReminderSchemas,
   careReminderFormTargetTypes,
   careReminderPriorities,
-  careReminderPriorityLabels,
 } from 'shared/reminders/careReminderSchema'
 import type {
   CareReminderFormSchema,
@@ -82,16 +82,6 @@ const asTargetType = (value: string) => value as CareReminderFormTargetType
 
 const asPriority = (value: string) => value as CareReminderPriority
 
-const targetOptions = careReminderFormTargetTypes.map((targetType) => ({
-  value: targetType,
-  label: targetType === 'stable' ? 'Stable-wide' : 'Specific horses',
-})) satisfies Array<{ value: CareReminderFormTargetType; label: string }>
-
-const priorityOptions = careReminderPriorities.map((priority) => ({
-  value: priority,
-  label: careReminderPriorityLabels[priority],
-})) satisfies Array<{ value: CareReminderPriority; label: string }>
-
 export function CareReminderForm({
   horseOptions = [],
   fixedHorseId,
@@ -100,6 +90,25 @@ export function CareReminderForm({
   heading,
   presentation = 'panel',
 }: CareReminderFormProps) {
+  const t = useT()
+
+  const targetOptions = careReminderFormTargetTypes.map((targetType) => ({
+    value: targetType,
+    label:
+      targetType === 'stable'
+        ? t('reminders.stableWide')
+        : t('reminders.specificHorses'),
+  })) satisfies Array<{ value: CareReminderFormTargetType; label: string }>
+
+  const priorityOptions = careReminderPriorities.map((priority) => ({
+    value: priority,
+    label: t(`careLabels.priority.${priority}`),
+  })) satisfies Array<{ value: CareReminderPriority; label: string }>
+
+  const [failed, setFailed] = useState(false)
+  const { careReminderFormSchema } = createCareReminderSchemas((key) =>
+    t(`reminders.validation.${key}`),
+  )
   const formId = useId()
   const form = useForm<CareReminderFormSchema>({
     resolver: zodResolver(careReminderFormSchema),
@@ -119,16 +128,17 @@ export function CareReminderForm({
     control,
     register,
   } = form
+  useLocalizedValidation(form)
   const targetType = form.watch('targetType')
   const selectedHorseIds = form.watch('horseIds')
   const selectedHorseCount = selectedHorseIds.length
   const submitLabel =
     !fixedHorseId && targetType === 'horses' && selectedHorseCount !== 1
-      ? 'Add reminders'
-      : 'Add reminder'
+      ? t('reminders.addMany')
+      : t('reminders.add')
 
   const handleSubmit = form.handleSubmit(async (values) => {
-    form.clearErrors('root')
+    setFailed(false)
     const reminder = {
       title: values.title,
       description: values.description,
@@ -167,15 +177,13 @@ export function CareReminderForm({
         priority: values.priority,
       })
     } catch {
-      form.setError('root', {
-        message:
-          'Could not add this reminder. Your entries are still here; please try again.',
-      })
+      setFailed(true)
     }
   })
 
   return (
     <DashboardInlineForm
+      noValidate
       chrome={chrome}
       presentation={presentation}
       onSubmit={handleSubmit}
@@ -195,9 +203,9 @@ export function CareReminderForm({
           control={control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Applies to</FieldLabel>
+              <FieldLabel>{t('reminders.appliesTo')}</FieldLabel>
               <ChoiceButtonGroup
-                aria-label="Applies to"
+                aria-label={t('reminders.appliesTo')}
                 value={field.value}
                 options={targetOptions}
                 onValueChange={(nextValue) => {
@@ -219,9 +227,7 @@ export function CareReminderForm({
                     : undefined
                 }
               />
-              <FieldDescription>
-                Horse reminders appear in the selected horses’ care sections.
-              </FieldDescription>
+              <FieldDescription>{t('reminders.targetHelp')}</FieldDescription>
               {fieldState.invalid && (
                 <FieldError
                   id={`${formId}-${field.name}-error`}
@@ -244,15 +250,13 @@ export function CareReminderForm({
                 fieldState.invalid ? `${formId}-${field.name}-error` : undefined
               }
             >
-              <FieldLegend>Horses</FieldLegend>
+              <FieldLegend>{t('reminders.horses')}</FieldLegend>
               <FieldHeader>
                 <FieldHeaderContent>
-                  <FieldDescription>
-                    Create one reminder for each selected horse.
-                  </FieldDescription>
+                  <FieldDescription>{t('reminders.oneEach')}</FieldDescription>
                 </FieldHeaderContent>
                 <DashboardValueBadge variant="neutral">
-                  {field.value.length} selected
+                  {t('reminders.selected', { count: field.value.length })}
                 </DashboardValueBadge>
               </FieldHeader>
 
@@ -268,7 +272,7 @@ export function CareReminderForm({
                     field.onChange(horseOptions.map((horse) => horse.id))
                   }
                 >
-                  Select all
+                  {t('reminders.selectAll')}
                 </Button>
                 <Button
                   type="button"
@@ -277,12 +281,12 @@ export function CareReminderForm({
                   disabled={isSubmitting || field.value.length === 0}
                   onClick={() => field.onChange([])}
                 >
-                  Clear
+                  {t('reminders.clear')}
                 </Button>
               </DashboardActions>
 
               <ScrollableList
-                ariaLabel="Available horses"
+                ariaLabel={t('reminders.availableHorses')}
                 itemCount={horseOptions.length}
                 visibleItemLimit={3}
                 estimatedItemHeightRem={5.5}
@@ -327,11 +331,13 @@ export function CareReminderForm({
       )}
 
       <Field data-invalid={!!errors.title}>
-        <FieldLabel htmlFor={`${formId}-title`}>Title</FieldLabel>
+        <FieldLabel htmlFor={`${formId}-title`}>
+          {t('reminders.title')}
+        </FieldLabel>
         <Input
           id={`${formId}-title`}
           aria-required="true"
-          placeholder="Book next farrier visit"
+          placeholder={t('reminders.titleExample')}
           disabled={isSubmitting}
           aria-invalid={Boolean(errors.title)}
           aria-describedby={errors.title ? `${formId}-title-error` : undefined}
@@ -342,7 +348,9 @@ export function CareReminderForm({
 
       <FieldGrid>
         <Field data-invalid={!!errors.dueDate}>
-          <FieldLabel htmlFor={`${formId}-dueDate`}>Due date</FieldLabel>
+          <FieldLabel htmlFor={`${formId}-dueDate`}>
+            {t('reminders.dueDate')}
+          </FieldLabel>
           <Input
             id={`${formId}-dueDate`}
             aria-required="true"
@@ -361,7 +369,9 @@ export function CareReminderForm({
         </Field>
 
         <Field data-invalid={!!errors.category}>
-          <FieldLabel htmlFor={`${formId}-category`}>Category</FieldLabel>
+          <FieldLabel htmlFor={`${formId}-category`}>
+            {t('reminders.category')}
+          </FieldLabel>
           <Select
             id={`${formId}-category`}
             disabled={isSubmitting}
@@ -373,7 +383,7 @@ export function CareReminderForm({
           >
             {careReminderCategories.map((category) => (
               <option key={category} value={category}>
-                {careReminderCategoryLabels[category]}
+                {t(`careLabels.category.${category}`)}
               </option>
             ))}
           </Select>
@@ -389,9 +399,9 @@ export function CareReminderForm({
         control={control}
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel>Priority</FieldLabel>
+            <FieldLabel>{t('reminders.priority')}</FieldLabel>
             <ChoiceButtonGroup
-              aria-label="Priority"
+              aria-label={t('reminders.priority')}
               value={field.value}
               options={priorityOptions}
               onValueChange={(nextValue) =>
@@ -415,11 +425,11 @@ export function CareReminderForm({
 
       <Field data-invalid={!!errors.description}>
         <FieldLabel htmlFor={`${formId}-description`}>
-          Notes (optional)
+          {t('reminders.notesOptional')}
         </FieldLabel>
         <Textarea
           id={`${formId}-description`}
-          placeholder="What should be remembered or checked?"
+          placeholder={t('reminders.notesExample')}
           disabled={isSubmitting}
           aria-invalid={Boolean(errors.description)}
           aria-describedby={
@@ -433,11 +443,13 @@ export function CareReminderForm({
         />
       </Field>
 
-      {errors.root ? <FieldError errors={[errors.root]} /> : null}
+      {failed ? (
+        <FieldError errors={[{ message: t('reminders.saveFailed') }]} />
+      ) : null}
       <FormSubmitActions
         isSubmitting={isSubmitting}
         submitLabel={submitLabel}
-        submittingLabel="Adding…"
+        submittingLabel={t('reminders.adding')}
         sticky={presentation === 'plain'}
       />
     </DashboardInlineForm>

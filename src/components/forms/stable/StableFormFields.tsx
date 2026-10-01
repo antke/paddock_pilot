@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { FormHelpTooltip } from '#/components/forms/FormHelpTooltip'
 import { FormGroup } from '#/components/forms/FormLayout'
 import {
@@ -24,12 +25,14 @@ export function StableFormFields({
   disabled = false,
   headingLevel = 3,
 }: Props) {
+  const t = useT()
+
   return (
     <div className="grid gap-8">
       <FormGroup
         headingLevel={headingLevel}
-        title="Stable basics"
-        description="Stable name and location are required. All other details are optional."
+        title={t('stables.basics')}
+        description={t('stables.basicsHelp')}
       >
         <FieldGrid>
           <Controller
@@ -37,7 +40,9 @@ export function StableFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Stable name</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t('stables.name')}
+                </FieldLabel>
 
                 <Input
                   {...field}
@@ -51,7 +56,7 @@ export function StableFormFields({
                       ? `stable-${field.name}-error`
                       : undefined
                   }
-                  placeholder="Cedar Ridge Barn"
+                  placeholder={t('stables.nameExample')}
                   autoComplete="off"
                 />
 
@@ -69,7 +74,9 @@ export function StableFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Location</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t('stables.location')}
+                </FieldLabel>
 
                 <Input
                   {...field}
@@ -83,7 +90,7 @@ export function StableFormFields({
                       ? `stable-${field.name}-error`
                       : undefined
                   }
-                  placeholder="Town, area, or familiar yard location"
+                  placeholder={t('stables.locationPlaceholder')}
                   autoComplete="off"
                 />
 
@@ -101,8 +108,8 @@ export function StableFormFields({
 
       <FormGroup
         headingLevel={headingLevel}
-        title="Postal address"
-        description="Use the complete address for documents, visits, and directions."
+        title={t('stables.postalAddress')}
+        description={t('stables.addressHelp')}
       >
         <FieldGrid>
           <Controller
@@ -110,7 +117,9 @@ export function StableFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Address line 1</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t('stables.addressLine1')}
+                </FieldLabel>
 
                 <Input
                   {...field}
@@ -123,7 +132,7 @@ export function StableFormFields({
                       ? `stable-${field.name}-error`
                       : undefined
                   }
-                  placeholder="Yard name or street address"
+                  placeholder={t('stables.addressLine1Placeholder')}
                   autoComplete="address-line1"
                 />
 
@@ -141,7 +150,9 @@ export function StableFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Address line 2</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t('stables.addressLine2')}
+                </FieldLabel>
 
                 <Input
                   {...field}
@@ -154,7 +165,7 @@ export function StableFormFields({
                       ? `stable-${field.name}-error`
                       : undefined
                   }
-                  placeholder="Village, town, or county"
+                  placeholder={t('stables.addressLine2Placeholder')}
                   autoComplete="address-line2"
                 />
 
@@ -175,7 +186,9 @@ export function StableFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Postcode</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t('stables.postcode')}
+                </FieldLabel>
 
                 <Input
                   {...field}
@@ -188,7 +201,7 @@ export function StableFormFields({
                       ? `stable-${field.name}-error`
                       : undefined
                   }
-                  placeholder="Postcode"
+                  placeholder={t('stables.postcode')}
                   autoComplete="postal-code"
                 />
 
@@ -207,7 +220,9 @@ export function StableFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Country</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t('stables.country')}
+                </FieldLabel>
 
                 <Input
                   {...field}
@@ -220,7 +235,7 @@ export function StableFormFields({
                       ? `stable-${field.name}-error`
                       : undefined
                   }
-                  placeholder="Country"
+                  placeholder={t('stables.country')}
                   autoComplete="country-name"
                 />
 
@@ -238,8 +253,8 @@ export function StableFormFields({
 
       <FormGroup
         headingLevel={headingLevel}
-        title="Stable profile"
-        description="Add optional context that helps members recognise the yard."
+        title={t('stables.profile')}
+        description={t('stables.profileHelp')}
       >
         <Controller
           name="description"
@@ -247,10 +262,11 @@ export function StableFormFields({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabelRow>
-                <FieldLabel htmlFor={field.name}>Description</FieldLabel>
-                <FormHelpTooltip label="About stable description">
-                  Description is optional. Use it for notes that help identify
-                  the stable.
+                <FieldLabel htmlFor={field.name}>
+                  {t('stables.description')}
+                </FieldLabel>
+                <FormHelpTooltip label={t('stables.descriptionAbout')}>
+                  {t('stables.descriptionHelp')}
                 </FormHelpTooltip>
               </FieldLabelRow>
 
@@ -262,7 +278,7 @@ export function StableFormFields({
                 aria-describedby={
                   fieldState.invalid ? `stable-${field.name}-error` : undefined
                 }
-                placeholder="Share something about the stable"
+                placeholder={t('stables.descriptionPlaceholder')}
                 autoComplete="off"
                 minHeight="relaxed"
               />
@@ -280,8 +296,8 @@ export function StableFormFields({
 
       <FormGroup
         headingLevel={headingLevel}
-        title="Operations"
-        description="Keep the everyday and emergency contact details in one place."
+        title={t('stables.operations')}
+        description={t('stables.operationsHelp')}
       >
         <FieldGrid>
           <Controller
@@ -289,7 +305,9 @@ export function StableFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Contact name</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t('stables.contactName')}
+                </FieldLabel>
 
                 <Input
                   {...field}
@@ -302,7 +320,7 @@ export function StableFormFields({
                       ? `stable-${field.name}-error`
                       : undefined
                   }
-                  placeholder="Yard manager"
+                  placeholder={t('stables.yardManager')}
                   autoComplete="off"
                 />
 
@@ -321,7 +339,9 @@ export function StableFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Contact phone</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t('stables.contactPhone')}
+                </FieldLabel>
 
                 <Input
                   {...field}
@@ -355,7 +375,9 @@ export function StableFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Emergency phone</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t('stables.emergencyPhone')}
+                </FieldLabel>
 
                 <Input
                   {...field}
@@ -368,7 +390,7 @@ export function StableFormFields({
                       ? `stable-${field.name}-error`
                       : undefined
                   }
-                  placeholder="Emergency stable contact"
+                  placeholder={t('stables.emergencyPlaceholder')}
                   autoComplete="off"
                 />
 
@@ -389,7 +411,9 @@ export function StableFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Opening hours</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t('stables.openingHours')}
+                </FieldLabel>
 
                 <Textarea
                   {...field}
@@ -401,7 +425,7 @@ export function StableFormFields({
                       ? `stable-${field.name}-error`
                       : undefined
                   }
-                  placeholder="Weekdays 7:00-20:00, weekends by arrangement"
+                  placeholder={t('stables.openingHoursPlaceholder')}
                   autoComplete="off"
                   minHeight="relaxed"
                 />
@@ -420,7 +444,9 @@ export function StableFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Yard rules</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t('stables.yardRules')}
+                </FieldLabel>
 
                 <Textarea
                   {...field}
@@ -432,7 +458,7 @@ export function StableFormFields({
                       ? `stable-${field.name}-error`
                       : undefined
                   }
-                  placeholder="Shared rules for visiting, turnout, gates, equipment, or parking"
+                  placeholder={t('stables.yardRulesPlaceholder')}
                   autoComplete="off"
                   minHeight="relaxed"
                 />

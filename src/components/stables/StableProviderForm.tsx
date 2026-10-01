@@ -1,3 +1,5 @@
+import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
+import { useT } from '#/i18n/LocaleProvider'
 import { useId, useRef, useState } from 'react'
 import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
 import { InlineForm } from '#/components/forms/FormLayout'
@@ -10,8 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import type { Doc } from 'convex/_generated/dataModel'
 import { Controller, useForm } from 'react-hook-form'
 import {
-  stableProviderFormSchema,
-  stableProviderTypeLabels,
+  createStableProviderSchemas,
   stableProviderTypes,
 } from 'shared/stables/stableProviderSchema'
 import type {
@@ -26,22 +27,28 @@ type StableProviderFormProps = {
 }
 
 const asProviderType = (value: string) => value as StableProviderType
-const providerTypeOptions = stableProviderTypes.map((type) => ({
-  value: type,
-  label: stableProviderTypeLabels[type],
-}))
 
 export function StableProviderForm({
   provider,
   onSubmit,
   onCancel,
 }: StableProviderFormProps) {
+  const t = useT()
+  const providerTypeOptions = stableProviderTypes.map((type) => ({
+    value: type,
+    label: t(`stables.providerTypes.${type}`),
+  }))
+
   const formId = useId()
   const submitting = useRef(false)
   const [saving, setSaving] = useState(false)
   const [failed, setFailed] = useState(false)
   const form = useForm<StableProviderFormSchema>({
-    resolver: zodResolver(stableProviderFormSchema),
+    resolver: zodResolver(
+      createStableProviderSchemas((key) =>
+        t(`stables.providerValidation.${key}`),
+      ).stableProviderFormSchema,
+    ),
     mode: 'onTouched',
     defaultValues: {
       type: provider?.type ?? 'vet',
@@ -51,6 +58,8 @@ export function StableProviderForm({
       notes: provider?.notes ?? '',
     },
   })
+
+  useLocalizedValidation(form)
 
   const submit = async (values: StableProviderFormSchema) => {
     if (submitting.current) return
@@ -69,12 +78,12 @@ export function StableProviderForm({
   }
 
   return (
-    <InlineForm onSubmit={form.handleSubmit(submit)}>
+    <InlineForm noValidate onSubmit={form.handleSubmit(submit)}>
       {failed && (
         <RouteStatusAlert
           tone="danger"
-          title="Could not save provider"
-          description="Your entries are still here. Try saving again."
+          title={t('stables.providerSaveFailed')}
+          description={t('stables.providerSaveFailedHelp')}
         />
       )}
       <Controller
@@ -82,12 +91,12 @@ export function StableProviderForm({
         control={form.control}
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel>Provider type</FieldLabel>
+            <FieldLabel>{t('stables.providerType')}</FieldLabel>
             <ChoiceButtonGroup
               value={field.value}
               options={providerTypeOptions}
               disabled={saving || form.formState.isSubmitting}
-              aria-label="Provider type"
+              aria-label={t('stables.providerType')}
               aria-describedby={
                 fieldState.invalid ? `${formId}-type-error` : undefined
               }
@@ -106,13 +115,15 @@ export function StableProviderForm({
 
       <FieldGrid>
         <Field data-invalid={Boolean(form.formState.errors.name)}>
-          <FieldLabel htmlFor={`${formId}-name`}>Name</FieldLabel>
+          <FieldLabel htmlFor={`${formId}-name`}>
+            {t('stables.personName')}
+          </FieldLabel>
           <Input
             id={`${formId}-name`}
             autoFocus
             type="text"
             autoComplete="off"
-            placeholder="Provider name"
+            placeholder={t('stables.providerName')}
             disabled={saving || form.formState.isSubmitting}
             aria-invalid={Boolean(form.formState.errors.name)}
             aria-describedby={
@@ -129,12 +140,14 @@ export function StableProviderForm({
         </Field>
 
         <Field data-invalid={Boolean(form.formState.errors.phone)}>
-          <FieldLabel htmlFor={`${formId}-phone`}>Phone</FieldLabel>
+          <FieldLabel htmlFor={`${formId}-phone`}>
+            {t('stables.phone')}
+          </FieldLabel>
           <Input
             id={`${formId}-phone`}
             type="tel"
             autoComplete="off"
-            placeholder="Contact number"
+            placeholder={t('stables.contactNumber')}
             disabled={saving || form.formState.isSubmitting}
             aria-invalid={Boolean(form.formState.errors.phone)}
             aria-describedby={
@@ -152,12 +165,14 @@ export function StableProviderForm({
       </FieldGrid>
 
       <Field data-invalid={Boolean(form.formState.errors.email)}>
-        <FieldLabel htmlFor={`${formId}-email`}>Email</FieldLabel>
+        <FieldLabel htmlFor={`${formId}-email`}>
+          {t('stables.email')}
+        </FieldLabel>
         <Input
           id={`${formId}-email`}
           type="email"
           autoComplete="off"
-          placeholder="Optional email"
+          placeholder={t('stables.optionalEmail')}
           disabled={saving || form.formState.isSubmitting}
           aria-invalid={Boolean(form.formState.errors.email)}
           aria-describedby={
@@ -174,11 +189,13 @@ export function StableProviderForm({
       </Field>
 
       <Field data-invalid={Boolean(form.formState.errors.notes)}>
-        <FieldLabel htmlFor={`${formId}-notes`}>Notes</FieldLabel>
+        <FieldLabel htmlFor={`${formId}-notes`}>
+          {t('stables.notes')}
+        </FieldLabel>
         <Textarea
           id={`${formId}-notes`}
           autoComplete="off"
-          placeholder="Specialisms, preferred booking details, or reminders"
+          placeholder={t('stables.providerNotesPlaceholder')}
           disabled={saving || form.formState.isSubmitting}
           aria-invalid={Boolean(form.formState.errors.notes)}
           aria-describedby={
@@ -197,8 +214,8 @@ export function StableProviderForm({
       <FormSubmitActions
         isSubmitting={saving || form.formState.isSubmitting}
         onCancel={onCancel}
-        submitLabel="Save provider"
-        submittingLabel="Saving..."
+        submitLabel={t('stables.saveProvider')}
+        submittingLabel={t('stables.savingDots')}
       />
     </InlineForm>
   )

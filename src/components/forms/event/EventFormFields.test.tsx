@@ -88,7 +88,10 @@ describe('EventFormFields', () => {
     } as const
     render(<Harness recurrence={recurrence} onSubmit={onSubmit} />)
     openRepeat()
-    const daily = screen.getByRole('button', { name: /Every day/ })
+    const daily = screen.getByRole('button', {
+      name: /^Every day/,
+      pressed: true,
+    })
     expect(daily.getAttribute('aria-pressed')).toBe('true')
     fireEvent.submit(screen.getByRole('form', { name: 'Event' }))
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())

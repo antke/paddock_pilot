@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { EventEditor } from '#/components/forms/event/EventEditor'
 import { editEventEditorValues } from '#/components/forms/event/eventEditorValues'
 import {
@@ -20,6 +21,8 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
+  const t = useT()
+
   const { eventId, stableId } = Route.useParams()
 
   const { data: eventWithHorses } = useSuspenseQuery(
@@ -44,14 +47,14 @@ function RouteComponent() {
     return (
       <RouteStatusAlert
         tone="warning"
-        title="This event is read-only for you"
-        description="Only the stable owner or the member who created this event can edit its shared details."
+        title={t('trainingViews.readOnlyEvent')}
+        description={t('trainingViews.editPermission')}
         actions={
           <ButtonLink
             to="/stables/$stableId/events/$eventId"
             params={{ stableId, eventId }}
           >
-            Return to event
+            {t('uiRemainder.returnEvent')}
           </ButtonLink>
         }
       />
@@ -86,6 +89,8 @@ function EditEventForm({
   horses,
   providers,
 }: EditEventFormProps) {
+  const t = useT()
+
   const nav = useNavigate()
   const updateEvent = useMutation(api.events.update)
   return (
@@ -96,6 +101,7 @@ function EditEventForm({
       providers={providers}
       onSave={async (data) => {
         await updateEvent({
+          errorFormat: 'structured',
           id: event._id,
           stableId: event.stableId,
           horseIds: data.horseIds as Array<Id<'horses'>>,
@@ -118,8 +124,10 @@ function EditEventForm({
       }}
       onAcknowledged={(_eventId, data) => {
         showAppSuccessToast({
-          title: 'Event updated',
-          description: <p>{data.title} has been updated.</p>,
+          title: t('trainingViews.eventUpdated'),
+          description: (
+            <p>{t('trainingViews.updated', { title: data.title })}</p>
+          ),
         })
       }}
       onSaved={async (eventId) => {

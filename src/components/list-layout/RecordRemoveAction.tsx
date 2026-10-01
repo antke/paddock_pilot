@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,14 +26,16 @@ type RecordRemoveActionProps = {
 }
 
 export function RecordRemoveAction({
-  confirmLabel = 'Remove record',
+  confirmLabel,
   description,
   disabled = false,
   onConfirm,
   title,
-  triggerLabel = 'Remove',
+  triggerLabel,
   removalFocusTarget,
 }: RecordRemoveActionProps) {
+  const t = useT()
+
   const [open, setOpen] = useState(false)
   const [isRemoving, setIsRemoving] = useState(false)
   const [failed, setFailed] = useState(false)
@@ -84,7 +87,7 @@ export function RecordRemoveAction({
           />
         }
       >
-        {triggerLabel}
+        {triggerLabel ?? t('careRecords.remove')}
       </AlertDialogTrigger>
       <AlertDialogContent
         finalFocus={() =>
@@ -101,14 +104,12 @@ export function RecordRemoveAction({
         </AlertDialogHeader>
         {failed && (
           <Alert variant="destructive">
-            <AlertDescription>
-              Could not remove this record. Please try again.
-            </AlertDescription>
+            <AlertDescription>{t('careRecords.removeFailed')}</AlertDescription>
           </Alert>
         )}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={actionDisabled}>
-            Keep record
+            {t('careRecords.keepRecord')}
           </AlertDialogCancel>
           <AlertDialogAction
             type="button"
@@ -119,7 +120,9 @@ export function RecordRemoveAction({
             onClick={() => void confirmRemoval()}
           >
             {isRemoving && <Spinner aria-hidden={true} />}
-            {isRemoving ? 'Removing…' : confirmLabel}
+            {isRemoving
+              ? t('careRecords.removing')
+              : (confirmLabel ?? t('careRecords.removeRecord'))}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

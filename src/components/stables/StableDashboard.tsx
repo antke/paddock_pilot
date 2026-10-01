@@ -1,3 +1,4 @@
+import { useLocale } from '#/i18n/LocaleProvider'
 import { createDashboardCommandData } from '#/components/dashboard/command-center/dashboardData'
 import type {
   DashboardCommandEvent,
@@ -28,7 +29,9 @@ export function StableDashboard({
   todayKey,
   training,
 }: StableDashboardProps) {
+  const { locale } = useLocale()
   const data = createDashboardCommandData({
+    locale,
     stable,
     stables,
     horses,

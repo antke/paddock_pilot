@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { api } from 'convex/_generated/api'
 import { useMutation } from 'convex/react'
 import { useRef, useState } from 'react'
@@ -29,6 +30,8 @@ import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react'
 export type DeletedHorse = StableSettingsData['deletedHorses'][number]
 
 export function DeletedHorsesCard({ horses }: { horses: Array<DeletedHorse> }) {
+  const t = useT()
+
   const restoreHorse = useMutation(api.horses.restoreHorse)
   const permanentlyDeleteHorse = useMutation(api.horses.permanentlyDeleteHorse)
   return (
@@ -37,15 +40,15 @@ export function DeletedHorsesCard({ horses }: { horses: Array<DeletedHorse> }) {
       onRestore={async (horse) => {
         await restoreHorse({ id: horse._id })
         showAppSuccessToast({
-          title: 'Horse restored',
-          description: `${horse.name} is visible in the stable again.`,
+          title: t('stableSetup.restored'),
+          description: t('stableSetup.restoredHelp', { name: horse.name }),
         })
       }}
       onPermanentlyDelete={async (horse) => {
         await permanentlyDeleteHorse({ id: horse._id })
         showAppSuccessToast({
-          title: 'Horse permanently deleted',
-          description: `${horse.name} and its horse-specific records were removed.`,
+          title: t('stableSetup.deleted'),
+          description: t('stableSetup.deletedHelp', { name: horse.name }),
         })
       }}
     />
@@ -62,19 +65,21 @@ export function DeletedHorsesView({
   onRestore: (horse: DeletedHorse) => Promise<void>
   onPermanentlyDelete: (horse: DeletedHorse) => Promise<void>
 }) {
+  const t = useT()
+
   const section = useRef<HTMLDivElement>(null)
   return (
     <DashboardSectionCard
       ref={section}
       role="group"
-      aria-label="Deleted horses"
+      aria-label={t('stableSetup.deletedHorses')}
       tabIndex={-1}
-      title="Deleted horses"
-      description="Deleted horses are kept for 14 days, then become eligible for permanent removal. Restore a horse while it is still listed here."
+      title={t('stableSetup.deletedHorses')}
+      description={t('stableSetup.deletedHorsesHelp')}
     >
       {horses.length === 0 ? (
         <DashboardEmptyState>
-          No horses are waiting to be permanently deleted.
+          {t('stableSetup.deletedEmpty')}
         </DashboardEmptyState>
       ) : (
         <DashboardItemList gap="compact">
@@ -107,6 +112,9 @@ function DeletedHorseRow({
   onPermanentlyDelete: () => Promise<void>
   removalFocusTarget: () => HTMLElement | null
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const [pendingAction, setPendingAction] = useState<'restore' | 'delete'>()
   const [failedAction, setFailedAction] = useState<'restore' | 'delete'>()
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -136,7 +144,7 @@ function DeletedHorseRow({
       density="compact"
       interactive={false}
       role="group"
-      aria-label={`${horse.name}, deleted horse`}
+      aria-label={t('stableSetup.deletedHorseLabel', { name: horse.name })}
       actions={
         <>
           <Button
@@ -148,7 +156,9 @@ function DeletedHorseRow({
             onClick={() => void perform('restore')}
           >
             <ArrowCounterClockwiseIcon aria-hidden="true" />
-            {pendingAction === 'restore' ? 'Restoring...' : 'Restore'}
+            {pendingAction === 'restore'
+              ? t('stableSetup.restoring')
+              : t('stableSetup.restore')}
           </Button>
           {horse.canPermanentlyDelete && (
             <AlertDialog
@@ -172,7 +182,7 @@ function DeletedHorseRow({
                   />
                 }
               >
-                Delete permanently
+                {t('stableSetup.deletePermanently')}
               </AlertDialogTrigger>
               <AlertDialogContent
                 finalFocus={() =>
@@ -183,24 +193,22 @@ function DeletedHorseRow({
               >
                 <AlertDialogHeader>
                   <AlertDialogTitle>
-                    Permanently delete {horse.name}?
+                    {t('stableSetup.deleteQuestion', { name: horse.name })}
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    This cannot be undone. It removes horse-specific records and
-                    single-horse events. Events shared with other horses will
-                    remain.
+                    {t('stableSetup.deleteWarning')}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 {failedAction === 'delete' && (
                   <RouteStatusAlert
                     tone="danger"
-                    title="Could not permanently delete horse"
-                    description="Deletion was not confirmed. Try again or cancel."
+                    title={t('stableSetup.deleteFailed')}
+                    description={t('stableSetup.deleteFailedHelp')}
                   />
                 )}
                 <AlertDialogFooter>
                   <AlertDialogCancel disabled={pendingAction !== undefined}>
-                    Cancel
+                    {t('stableSetup.cancel')}
                   </AlertDialogCancel>
                   <AlertDialogAction
                     action="delete"
@@ -210,8 +218,8 @@ function DeletedHorseRow({
                     onClick={() => void perform('delete')}
                   >
                     {pendingAction === 'delete'
-                      ? 'Deleting...'
-                      : 'Delete permanently'}
+                      ? t('stableSetup.deleting')
+                      : t('stableSetup.deletePermanently')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -223,8 +231,8 @@ function DeletedHorseRow({
         failedAction === 'restore' ? (
           <RouteStatusAlert
             tone="danger"
-            title="Could not restore horse"
-            description="Restoration was not confirmed. Try restoring again."
+            title={t('stableSetup.restoreFailed')}
+            description={t('stableSetup.restoreFailedHelp')}
           />
         ) : undefined
       }
@@ -235,14 +243,17 @@ function DeletedHorseRow({
         meta={
           <>
             <span>
-              Deleted{' '}
-              {horse.deletedAt === undefined
-                ? 'date unavailable'
-                : formatMediumTimestampDate(horse.deletedAt)}
+              {t('stableSetup.deletedDate', {
+                date:
+                  horse.deletedAt === undefined
+                    ? t('stableSetup.dateUnavailable')
+                    : formatMediumTimestampDate(horse.deletedAt, locale),
+              })}
             </span>
             <span>
-              Eligible for permanent removal{' '}
-              {formatMediumTimestampDate(horse.purgeAt)}
+              {t('stableSetup.purgeDate', {
+                date: formatMediumTimestampDate(horse.purgeAt, locale),
+              })}
             </span>
           </>
         }

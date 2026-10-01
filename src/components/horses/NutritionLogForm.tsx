@@ -1,3 +1,5 @@
+import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
+import { useT } from '#/i18n/LocaleProvider'
 import { FormGroup, InlineForm } from '#/components/forms/FormLayout'
 import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
 import { Field, FieldError, FieldGrid, FieldLabel } from '#/components/ui/field'
@@ -10,7 +12,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { useId, useRef, useState } from 'react'
 import z from 'zod'
 import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
-import { nutritionLogFormSchema } from 'shared/horses/nutritionLogSchema'
+import { createNutritionLogSchemas } from 'shared/horses/nutritionLogSchema'
 import type { NutritionLogFormSchema } from 'shared/horses/nutritionLogSchema'
 
 type NutritionLogFormProps = {
@@ -29,21 +31,29 @@ const toStringList = (value: string) =>
     .map((item) => item.trim())
     .filter(Boolean)
 
-const nutritionListDraftSchema = z
-  .string()
-  .transform(toStringList)
-  .superRefine((items, context) => {
-    const result =
-      nutritionLogFormSchema.shape.recommendedSnapshot.safeParse(items)
-    if (!result.success)
-      for (const issue of result.error.issues)
-        context.addIssue({ code: 'custom', message: issue.message })
+function createNutritionDraftSchema(
+  nutritionLogFormSchema: ReturnType<
+    typeof createNutritionLogSchemas
+  >['nutritionLogFormSchema'],
+) {
+  const nutritionListDraftSchema = z
+    .string()
+    .transform(toStringList)
+    .superRefine((items, context) => {
+      const result =
+        nutritionLogFormSchema.shape.recommendedSnapshot.safeParse(items)
+      if (!result.success)
+        for (const issue of result.error.issues)
+          context.addIssue({ code: 'custom', message: issue.message })
+    })
+  const nutritionLogDraftSchema = nutritionLogFormSchema.extend({
+    recommendedSnapshot: nutritionListDraftSchema,
+    avoidSnapshot: nutritionListDraftSchema,
   })
-const nutritionLogDraftSchema = nutritionLogFormSchema.extend({
-  recommendedSnapshot: nutritionListDraftSchema,
-  avoidSnapshot: nutritionListDraftSchema,
-})
-type NutritionLogDraft = z.input<typeof nutritionLogDraftSchema>
+
+  return nutritionLogDraftSchema
+}
+type NutritionLogDraft = z.input<ReturnType<typeof createNutritionDraftSchema>>
 const getDefaults = (horse: Doc<'horses'>): NutritionLogDraft => ({
   changedDate: getTodayDateKey(),
   summary: '',
@@ -59,6 +69,14 @@ export function NutritionLogForm({
   onSubmit,
   onPendingChange,
 }: NutritionLogFormProps) {
+  const t = useT()
+
+  const { nutritionLogFormSchema } = createNutritionLogSchemas((key) =>
+    t(`careValidation.${key}`),
+  )
+  const nutritionLogDraftSchema = createNutritionDraftSchema(
+    nutritionLogFormSchema,
+  )
   const formId = useId()
   const pending = useRef(false)
   const [isPending, setIsPending] = useState(false)
@@ -68,6 +86,8 @@ export function NutritionLogForm({
     mode: 'onTouched',
     defaultValues: getDefaults(horse),
   })
+
+  useLocalizedValidation(form)
 
   const submitNutritionLog = async (data: NutritionLogFormSchema) => {
     if (pending.current || disabled) return
@@ -88,10 +108,10 @@ export function NutritionLogForm({
   }
 
   return (
-    <InlineForm onSubmit={form.handleSubmit(submitNutritionLog)}>
+    <InlineForm noValidate onSubmit={form.handleSubmit(submitNutritionLog)}>
       <FormGroup
-        title="Change"
-        description="Summarise what changed and when the new plan started."
+        title={t('careRecords.change')}
+        description={t('careRecords.changeHelp')}
       >
         <FieldGrid breakpoint="sm" template="trailing-md">
           <Controller
@@ -100,7 +120,7 @@ export function NutritionLogForm({
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                  Change summary
+                  {t('careRecords.changeSummary')}
                 </FieldLabel>
                 <Input
                   {...field}
@@ -114,7 +134,7 @@ export function NutritionLogForm({
                       ? `${formId}-${field.name}-error`
                       : undefined
                   }
-                  placeholder="Moved to soaked hay only"
+                  placeholder={t('careRecords.changeExample')}
                   autoComplete="off"
                 />
                 {fieldState.invalid && (
@@ -133,7 +153,7 @@ export function NutritionLogForm({
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                  Changed date
+                  {t('careRecords.changedDate')}
                 </FieldLabel>
                 <Input
                   {...field}
@@ -162,8 +182,8 @@ export function NutritionLogForm({
       </FormGroup>
 
       <FormGroup
-        title="Historical plan snapshot"
-        description="This adds a history entry only. It does not change the horse’s current feeding plan."
+        title={t('careRecords.historicalSnapshot')}
+        description={t('careRecords.historicalHelp')}
       >
         <Controller
           name="feedingRoutineSnapshot"
@@ -171,7 +191,7 @@ export function NutritionLogForm({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                Feeding routine snapshot
+                {t('careRecords.routineSnapshot')}
               </FieldLabel>
               <Textarea
                 {...field}
@@ -183,7 +203,7 @@ export function NutritionLogForm({
                     ? `${formId}-${field.name}-error`
                     : undefined
                 }
-                placeholder="The routine after this change..."
+                placeholder={t('careRecords.routineExample')}
                 autoComplete="off"
               />
               {fieldState.invalid && (
@@ -203,7 +223,7 @@ export function NutritionLogForm({
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                  Recommended after change
+                  {t('careRecords.recommendedAfter')}
                 </FieldLabel>
                 <Textarea
                   ref={field.ref}
@@ -219,7 +239,7 @@ export function NutritionLogForm({
                       ? `${formId}-${field.name}-error`
                       : undefined
                   }
-                  placeholder="One item per line"
+                  placeholder={t('careRecords.onePerLine')}
                   autoComplete="off"
                   onBlur={field.onBlur}
                   onChange={(event) => field.onChange(event.target.value)}
@@ -240,7 +260,7 @@ export function NutritionLogForm({
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                  Avoid after change
+                  {t('careRecords.avoidAfter')}
                 </FieldLabel>
                 <Textarea
                   ref={field.ref}
@@ -256,7 +276,7 @@ export function NutritionLogForm({
                       ? `${formId}-${field.name}-error`
                       : undefined
                   }
-                  placeholder="One item per line"
+                  placeholder={t('careRecords.onePerLine')}
                   autoComplete="off"
                   onBlur={field.onBlur}
                   onChange={(event) => field.onChange(event.target.value)}
@@ -278,7 +298,7 @@ export function NutritionLogForm({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                Notes (optional)
+                {t('careRecords.notesOptional')}
               </FieldLabel>
               <Textarea
                 {...field}
@@ -290,7 +310,7 @@ export function NutritionLogForm({
                     ? `${formId}-${field.name}-error`
                     : undefined
                 }
-                placeholder="Why it changed, what to monitor, transition details..."
+                placeholder={t('careRecords.changeNotesExample')}
                 autoComplete="off"
               />
               {fieldState.invalid && (
@@ -305,18 +325,14 @@ export function NutritionLogForm({
       </FormGroup>
 
       <FormSubmissionError
-        message={
-          failed
-            ? 'Could not add this nutrition log. Your notes are still here. Please try again.'
-            : undefined
-        }
+        message={failed ? t('careRecords.nutritionSaveFailed') : undefined}
       />
 
       <FormSubmitActions
         isSubmitting={form.formState.isSubmitting || isPending}
         disabled={disabled}
-        submitLabel="Add nutrition log"
-        submittingLabel="Adding..."
+        submitLabel={t('careRecords.addNutrition')}
+        submittingLabel={t('careRecords.adding')}
       />
     </InlineForm>
   )

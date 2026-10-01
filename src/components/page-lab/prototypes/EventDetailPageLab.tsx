@@ -13,7 +13,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '#/components/ui/breadcrumb'
-import { Link } from '@tanstack/react-router'
+import { Link, useSearch } from '@tanstack/react-router'
 
 type EventDetailPageLabProps = {
   data: DashboardLabData
@@ -22,9 +22,14 @@ type EventDetailPageLabProps = {
 export function EventDetailPageLab({ data }: EventDetailPageLabProps) {
   const fixtureMode = useDevAuthBypassEnabled()
   const [sample, setSample] = useState('standard')
-  const originalEvent = data.events.find(
+  const requestedEventId = (useSearch({ strict: false }) as { event?: string })
+    .event
+  const stableEvents = data.events.filter(
     (item) => item.stableId === data.stable._id,
   )
+  const originalEvent =
+    stableEvents.find((item) => item._id === requestedEventId) ??
+    stableEvents[0]
   const event =
     !originalEvent || !fixtureMode || sample === 'standard'
       ? originalEvent

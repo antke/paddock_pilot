@@ -1,3 +1,7 @@
+import { localizeAnalysisSignal } from './analysisSignalDisplay'
+import { useT, useLocale } from '#/i18n/LocaleProvider'
+import type { Locale } from 'shared/i18n/locale'
+import { localeInstances } from '#/i18n/resources'
 import { DashboardBadgeList } from '#/components/dashboard/DashboardBadgeList'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
@@ -26,7 +30,6 @@ import { FieldLabel } from '#/components/ui/field'
 import { ScrollableList } from '#/components/ui/scrollable-list'
 import { TextLabel } from '#/components/ui/text-label'
 import { cn } from '#/lib/utils'
-import { formatCountLabel } from '#/lib/numberDisplay'
 import { formatMetaText } from '#/lib/textDisplay'
 import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
 import { useNavigate } from '@tanstack/react-router'
@@ -34,7 +37,7 @@ import type { api } from 'convex/_generated/api'
 import type { FunctionReturnType } from 'convex/server'
 import type { ComponentProps, ReactNode } from 'react'
 import { useCallback, useState } from 'react'
-import { eventTypeLabels, eventTypes } from 'shared/events/eventSchema'
+import { eventTypes } from 'shared/events/eventSchema'
 import type { EventType } from 'shared/events/eventSchema'
 import { AnalysisHorseTab } from './AnalysisHorseTab'
 import { createAnalysisCentreData } from './analysisCentreData'
@@ -46,10 +49,7 @@ import type {
   LabTimelineSeriesKey,
 } from './analysisCentreData'
 import { createHorseAnalysisData } from './analysisHorseData'
-import {
-  timelineSignalKindAccentColors,
-  timelineSignalKindLabels,
-} from './analysisTimelineSignalMeta'
+import { timelineSignalKindAccentColors } from './analysisTimelineSignalMeta'
 import {
   StableActivityTimelineChart,
   stableTimelineEventTypeOptions,
@@ -80,41 +80,45 @@ type TimelineSeriesVisual =
   | 'round-square'
   | 'triangle'
 
-const stableTimelineSeriesOptions = [
-  {
-    key: 'all',
-    label: 'All blocks',
-    color: 'var(--chart-2)',
-    visual: 'round-square',
-  },
-  {
-    key: 'completed',
-    label: 'Completed blocks',
-    color: 'var(--primary)',
-    visual: 'round-square',
-  },
-  {
-    key: 'planned',
-    label: 'Planned blocks',
-    color: 'var(--chart-4)',
-    visual: 'round-square',
-  },
-] as const satisfies ReadonlyArray<{
-  key: StableEventSeriesKey
-  label: string
-  color: string
-  visual: TimelineSeriesVisual
-}>
+function getTimelineOptions(locale: Locale) {
+  const t = localeInstances[locale].t
+  const stableTimelineSeriesOptions = [
+    {
+      key: 'all',
+      label: t('analysisViews.allBlocks'),
+      color: 'var(--chart-2)',
+      visual: 'round-square',
+    },
+    {
+      key: 'completed',
+      label: t('analysisViews.completedBlocks'),
+      color: 'var(--primary)',
+      visual: 'round-square',
+    },
+    {
+      key: 'planned',
+      label: t('analysisViews.plannedBlocks'),
+      color: 'var(--chart-4)',
+      visual: 'round-square',
+    },
+  ] as const satisfies ReadonlyArray<{
+    key: StableEventSeriesKey
+    label: string
+    color: string
+    visual: TimelineSeriesVisual
+  }>
 
-const stableTimelineScaleOptions = [
-  { value: 'day', label: 'Day' },
-  { value: 'week', label: 'Week' },
-  { value: 'month', label: 'Month' },
-] as const satisfies ReadonlyArray<{
-  value: StableTimelineScale
-  label: string
-}>
+  const stableTimelineScaleOptions = [
+    { value: 'day', label: t('analysisViews.day') },
+    { value: 'week', label: t('analysisViews.week') },
+    { value: 'month', label: t('analysisViews.month') },
+  ] as const satisfies ReadonlyArray<{
+    value: StableTimelineScale
+    label: string
+  }>
 
+  return { stableTimelineSeriesOptions, stableTimelineScaleOptions }
+}
 const stableAnalysisTabValue = 'stable'
 const selectedPeriodOccurrenceListVisibleItemLimit = 5
 const selectedPeriodOccurrenceListEstimatedItemHeightRem = 5.25
@@ -138,20 +142,26 @@ type StableAttentionItem = {
 export function AnalysisCentre({
   data,
   stableAnalysis,
+  renderHorseComparison,
 }: {
   data: DashboardLabData
   stableAnalysis: StableAnalysis
+  renderHorseComparison?: (horseId: string) => ReactNode
 }) {
+  const { locale } = useLocale()
+
   const navigate = useNavigate()
   const timelineSignals: Array<LabTimelineSignal> = stableAnalysis.hasAccess
-    ? stableAnalysis.timelineSignals
+    ? stableAnalysis.timelineSignals.map((signal) =>
+        localizeAnalysisSignal(signal, locale),
+      )
     : []
   const unlockedStableAnalysis = stableAnalysis.hasAccess
     ? stableAnalysis
     : null
-  const analysis = createAnalysisCentreData(data, timelineSignals)
+  const analysis = createAnalysisCentreData(data, timelineSignals, locale)
   const stableAttentionItems = unlockedStableAnalysis
-    ? createStableAttentionItems(unlockedStableAnalysis)
+    ? createStableAttentionItems(unlockedStableAnalysis, locale)
     : []
   const [activeAnalysisTab, setActiveAnalysisTab] = useState(
     stableAnalysisTabValue,
@@ -192,6 +202,7 @@ export function AnalysisCentre({
   const timelinePeriods = getTimelinePeriods(
     analysis.timeline.buckets,
     timelineScale,
+    locale,
   )
   const selectedPeriod = getSelectedTimelinePeriod(
     timelinePeriods,
@@ -287,6 +298,7 @@ export function AnalysisCentre({
             horse={activeHorse}
             stableId={data.stable._id}
             analysis={activeHorseAnalysis}
+            comparison={renderHorseComparison?.(activeHorse._id)}
           />
         )}
       </div>
@@ -387,10 +399,12 @@ function StableActivityTimelinePanel({
   className?: string
   span?: ComponentProps<typeof DashboardSection>['span']
 }) {
+  const t = useT()
+
   return (
     <AnalysisPanel
-      title="Stable activity timeline"
-      description="A calendar-lane view of event durations and recurring occurrences. Overlaps stack vertically so pressure points are easier to scan."
+      title={t('analysisViews.timeline')}
+      description={t('analysisViews.timelineHelp')}
       className={className}
       span={span}
     >
@@ -414,8 +428,7 @@ function StableActivityTimelinePanel({
         </div>
 
         <p className="text-sm text-muted-foreground">
-          Display filters affect event blocks only. Period totals, care records
-          and the details below include all activity.
+          {t('analysisViews.filterHelp')}
         </p>
         <TimelineSeriesControls
           visibleSeries={visibleSeries}
@@ -437,6 +450,9 @@ function TimelineScaleControls({
   scale: StableTimelineScale
   onScaleChange: (scale: StableTimelineScale) => void
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   return (
     <DashboardItemCard
       chrome="flat"
@@ -445,17 +461,16 @@ function TimelineScaleControls({
     >
       <div className="grid gap-1">
         <TextLabel as="p" weight="semibold">
-          Calendar scale
+          {t('analysisViews.scale')}
         </TextLabel>
         <DashboardItemBodyText tone="muted">
-          Switch between readable day blocks and wider week/month planning
-          views.
+          {t('analysisViews.scaleHelp')}
         </DashboardItemBodyText>
       </div>
       <ChoiceButtonGroup
-        aria-label="Calendar scale"
+        aria-label={t('analysisViews.scale')}
         value={scale}
-        options={stableTimelineScaleOptions}
+        options={getTimelineOptions(locale).stableTimelineScaleOptions}
         onValueChange={onScaleChange}
         className="w-full justify-start [&>*]:min-w-0 [&>*]:flex-1 sm:w-auto sm:[&>*]:flex-none"
       />
@@ -472,55 +487,60 @@ function TimelineSeriesControls({
   onSeriesToggle: (seriesKey: StableEventSeriesKey) => void
   className?: string
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   return (
     <DashboardItemFieldsetCard
-      aria-label="Timeline blocks"
+      aria-label={t('analysisViews.blocksFilter')}
       chrome="flat"
       density="compact"
       className={cn('grid gap-3 p-3 md:p-4', className)}
     >
       <div className="grid gap-x-5 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
-        {stableTimelineSeriesOptions.map((option) => {
-          const active = visibleSeries.includes(option.key)
-          const isLastActiveSeries = active && visibleSeries.length === 1
-          const checkboxId = `timeline-series-${option.key}`
+        {getTimelineOptions(locale).stableTimelineSeriesOptions.map(
+          (option) => {
+            const active = visibleSeries.includes(option.key)
+            const isLastActiveSeries = active && visibleSeries.length === 1
+            const checkboxId = `timeline-series-${option.key}`
 
-          return (
-            <div
-              key={option.key}
-              className={cn(
-                'grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-2',
-                active ? 'opacity-100' : 'opacity-55',
-              )}
-            >
-              <Checkbox
-                id={checkboxId}
-                checked={active}
-                disabled={isLastActiveSeries}
-                onCheckedChange={(checked) => {
-                  if (typeof checked === 'boolean' && checked !== active) {
-                    onSeriesToggle(option.key)
-                  }
-                }}
-              />
-              <FieldLabel
-                htmlFor={checkboxId}
-                interactive={!isLastActiveSeries}
-                width="full"
+            return (
+              <div
+                key={option.key}
                 className={cn(
-                  'min-w-0 items-center gap-2',
-                  isLastActiveSeries && 'cursor-default opacity-70',
+                  'grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-2',
+                  active ? 'opacity-100' : 'opacity-55',
                 )}
               >
-                <TimelineSeriesMarker
-                  visual={option.visual}
-                  color={option.color}
+                <Checkbox
+                  id={checkboxId}
+                  checked={active}
+                  disabled={isLastActiveSeries}
+                  onCheckedChange={(checked) => {
+                    if (typeof checked === 'boolean' && checked !== active) {
+                      onSeriesToggle(option.key)
+                    }
+                  }}
                 />
-                <span className="truncate">{option.label}</span>
-              </FieldLabel>
-            </div>
-          )
-        })}
+                <FieldLabel
+                  htmlFor={checkboxId}
+                  interactive={!isLastActiveSeries}
+                  width="full"
+                  className={cn(
+                    'min-w-0 items-center gap-2',
+                    isLastActiveSeries && 'cursor-default opacity-70',
+                  )}
+                >
+                  <TimelineSeriesMarker
+                    visual={option.visual}
+                    color={option.color}
+                  />
+                  <span className="truncate">{option.label}</span>
+                </FieldLabel>
+              </div>
+            )
+          },
+        )}
       </div>
     </DashboardItemFieldsetCard>
   )
@@ -535,9 +555,11 @@ function TimelineEventTypeControls({
   onEventTypeToggle: (eventType: EventType) => void
   className?: string
 }) {
+  const t = useT()
+
   return (
     <DashboardItemFieldsetCard
-      aria-label="Timeline event categories"
+      aria-label={t('analysisViews.categoriesFilter')}
       chrome="flat"
       density="compact"
       className={cn('grid gap-3 p-3 md:p-4', className)}
@@ -576,7 +598,9 @@ function TimelineEventTypeControls({
                 )}
               >
                 <TimelineEventTypeIcon type={option.type} />
-                <span className="truncate">{eventTypeLabels[option.type]}</span>
+                <span className="truncate">
+                  {t(`events.types.${option.type}`)}
+                </span>
               </FieldLabel>
             </div>
           )
@@ -694,17 +718,17 @@ function SelectedTimelinePeriodPanel({
   className?: string
   span?: ComponentProps<typeof DashboardSection>['span']
 }) {
-  const unitLabel = getTimelineScaleUnitLabel(scale)
+  const t = useT()
 
   return (
     <AnalysisPanel
-      title={period ? period.label : `Selected timeline ${unitLabel}`}
-      description={`Select a ${unitLabel} column to inspect all activity in that ${unitLabel}, including blocks hidden by display filters. Select an event block to open its event page.`}
+      title={period ? period.label : t(`analysisViews.selected_${scale}`)}
+      description={t(`analysisViews.selectHelp_${scale}`)}
       action={
         period ? (
           <DashboardBadgeList>
             <Badge variant="outline">
-              {formatCountLabel(period.allEventCount, 'block')}
+              {t('analysisViews.blockCount', { count: period.allEventCount })}
             </Badge>
             {period.signalCount > 0 && (
               <Badge
@@ -712,7 +736,9 @@ function SelectedTimelinePeriodPanel({
                   period.urgentSignalCount > 0 ? 'destructive' : 'secondary'
                 }
               >
-                {formatCountLabel(period.signalCount, 'care record')}
+                {t('analysisViews.careRecordCount', {
+                  count: period.signalCount,
+                })}
               </Badge>
             )}
           </DashboardBadgeList>
@@ -723,7 +749,7 @@ function SelectedTimelinePeriodPanel({
     >
       {!period ? (
         <DashboardEmptyState chrome="soft">
-          Select a timeline {unitLabel} to preview overlapping event blocks.
+          {t(`analysisViews.selectEmpty_${scale}`)}
         </DashboardEmptyState>
       ) : (
         <div className="grid min-h-0 gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
@@ -731,11 +757,11 @@ function SelectedTimelinePeriodPanel({
 
           {period.occurrences.length === 0 ? (
             <DashboardEmptyState chrome="soft">
-              No event blocks overlap this {unitLabel}.
+              {t(`analysisViews.noOverlap_${scale}`)}
             </DashboardEmptyState>
           ) : (
             <AnalysisList
-              ariaLabel="All events in selected period"
+              ariaLabel={t('analysisViews.periodEvents')}
               itemCount={period.occurrences.length}
               visibleItemLimit={selectedPeriodOccurrenceListVisibleItemLimit}
               estimatedItemHeightRem={
@@ -765,29 +791,41 @@ function TimelinePeriodBreakdown({
   period: StableTimelinePeriod
   className?: string
 }) {
+  const t = useT()
+
   return (
     <div className={cn('grid min-h-0 content-start gap-3', className)}>
       <DashboardItemCard chrome="flat" className="grid gap-3">
         <DashboardInlineHeader
-          title={period.scale === 'day' ? 'Day mix' : 'Period mix'}
+          title={
+            period.scale === 'day'
+              ? t('analysisViews.dayMix')
+              : t('analysisViews.periodMix')
+          }
           titleWeight="semibold"
         />
         <DetailKeyValueList>
-          <DetailKeyValueRow label="Blocks" value={period.allEventCount} />
           <DetailKeyValueRow
-            label="Completed"
+            label={t('analysisViews.blocks')}
+            value={period.allEventCount}
+          />
+          <DetailKeyValueRow
+            label={t('analysisViews.completed')}
             value={period.completedEventCount}
           />
-          <DetailKeyValueRow label="Planned" value={period.plannedEventCount} />
+          <DetailKeyValueRow
+            label={t('analysisViews.planned')}
+            value={period.plannedEventCount}
+          />
           {period.signalCount > 0 && (
             <DetailKeyValueRow
-              label="Care records"
+              label={t('analysisViews.careRecords')}
               value={period.signalCount}
             />
           )}
           {period.urgentSignalCount > 0 && (
             <DetailKeyValueRow
-              label="Urgent"
+              label={t('analysisViews.urgent')}
               value={period.urgentSignalCount}
               className="text-destructive"
               valueClassName="font-semibold text-destructive"
@@ -802,6 +840,8 @@ function TimelinePeriodBreakdown({
 }
 
 function TimelineSignalDigest({ period }: { period: StableTimelinePeriod }) {
+  const t = useT()
+
   if (period.signalCount === 0) return null
 
   const urgentSignals = period.signals.filter((signal) => signal.urgent)
@@ -811,12 +851,12 @@ function TimelineSignalDigest({ period }: { period: StableTimelinePeriod }) {
   return (
     <DashboardItemCard chrome="flat" className="grid gap-3">
       <DashboardInlineHeader
-        title="Care record digest"
+        title={t('analysisViews.recordDigest')}
         aside={
           <Badge
             variant={period.urgentSignalCount > 0 ? 'destructive' : 'secondary'}
           >
-            {formatCountLabel(period.signalCount, 'care record')}
+            {t('analysisViews.careRecordCount', { count: period.signalCount })}
           </Badge>
         }
         titleWeight="semibold"
@@ -836,13 +876,13 @@ function TimelineSignalDigest({ period }: { period: StableTimelinePeriod }) {
                 backgroundColor: timelineSignalKindAccentColors[item.kind],
               }}
             />
-            {timelineSignalKindLabels[item.kind]} {item.count}
+            {t(`analysisViews.${item.kind}`)} {item.count}
           </Badge>
         ))}
       </DashboardBadgeList>
 
       <ScrollableList
-        ariaLabel="Care records in selected period"
+        ariaLabel={t('analysisViews.periodRecords')}
         itemCount={visibleSignals.length}
         visibleItemLimit={4}
         estimatedItemHeightRem={5.5}
@@ -866,6 +906,9 @@ function TimelineSignalRow({
   signal: LabTimelineSignal
   showDate: boolean
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   return (
     <DashboardInlinePanel
       chrome="flat"
@@ -884,10 +927,12 @@ function TimelineSignalRow({
         <span className="min-w-0 break-words text-sm font-medium">
           {signal.title}
         </span>
-        {signal.urgent && <Badge variant="destructive">Urgent</Badge>}
+        {signal.urgent && (
+          <Badge variant="destructive">{t('analysisViews.urgent')}</Badge>
+        )}
       </div>
       <p className="break-words text-xs leading-5 text-muted-foreground">
-        {getTimelineSignalDetail(signal, showDate)}
+        {getTimelineSignalDetail(signal, showDate, locale)}
       </p>
     </DashboardInlinePanel>
   )
@@ -902,6 +947,8 @@ function TimelineOccurrenceRow({
   period: StableTimelinePeriod
   stableId: DashboardLabData['stable']['_id']
 }) {
+  const t = useT()
+
   const event = occurrence.event
   const providerDetails = getProviderDetails(event)
   const startsBeforePeriod = occurrence.startDate < period.startKey
@@ -919,13 +966,13 @@ function TimelineOccurrenceRow({
       horseCount={event.horseIds.length}
       supplementalMeta={[
         occurrence.durationDays > 1
-          ? formatCountLabel(occurrence.durationDays, 'day')
+          ? t('analysisViews.dayCount', { count: occurrence.durationDays })
           : undefined,
-        occurrence.isRecurring ? 'Repeats' : undefined,
+        occurrence.isRecurring ? t('analysisViews.repeats') : undefined,
         startsBeforePeriod || endsAfterPeriod
-          ? `Continues through this ${getTimelineScaleUnitLabel(period.scale)}`
+          ? t(`analysisViews.continues_${period.scale}`)
           : undefined,
-        providerDetails ?? 'Provider details missing',
+        providerDetails ?? t('analysisViews.providerMissing'),
       ]}
       variant="summary"
     />
@@ -943,20 +990,22 @@ function StableNeedsAttentionPanel({
   className?: string
   span?: ComponentProps<typeof DashboardSection>['span']
 }) {
+  const t = useT()
+
   return (
     <AnalysisPanel
-      title="Needs attention"
-      description="Overdue care, high-severity issues, and missing follow-up notes that need a decision."
+      title={t('analysisViews.needsAttention')}
+      description={t('analysisViews.attentionHelp')}
       className={className}
       span={span}
     >
       {items.length === 0 ? (
         <DashboardEmptyState chrome="soft">
-          No urgent actions or missing follow-up notes.
+          {t('analysisViews.noAttention')}
         </DashboardEmptyState>
       ) : (
         <AnalysisList
-          ariaLabel="Stable needs attention"
+          ariaLabel={t('analysisViews.stableAttention')}
           itemCount={items.length}
           visibleItemLimit={stableAttentionListVisibleItemLimit}
           estimatedItemHeightRem={stableAttentionListEstimatedItemHeightRem}
@@ -1041,7 +1090,9 @@ function StableAttentionRow({
 
 function createStableAttentionItems(
   stableAnalysis: UnlockedStableAnalysis,
+  locale: Locale,
 ): Array<StableAttentionItem> {
+  const t = localeInstances[locale].t
   const urgentSignals = stableAnalysis.timelineSignals
     .filter((signal) => signal.urgent)
     .map((signal): StableAttentionItem => {
@@ -1054,14 +1105,16 @@ function createStableAttentionItems(
         meta: [
           signal.horseName,
           isReminder
-            ? `Due ${formatEventDate(signal.date)}`
-            : formatEventDate(signal.date),
+            ? t('analysisViews.due', {
+                date: formatEventDate(signal.date, locale),
+              })
+            : formatEventDate(signal.date, locale),
         ].filter((value): value is string => Boolean(value)),
         description: isReminder
           ? isOverdueReminder
-            ? 'This care reminder is overdue.'
-            : 'This care reminder has high priority.'
-          : 'This active health issue has high severity.',
+            ? t('analysisViews.reminderOverdue')
+            : t('analysisViews.reminderHigh')
+          : t('analysisViews.healthHigh'),
         priority: isOverdueReminder ? 0 : signal.kind === 'health' ? 1 : 2,
         date: signal.date,
         accent:
@@ -1081,14 +1134,20 @@ function createStableAttentionItems(
     .filter((item) => item.overdue)
     .map((item): StableAttentionItem => ({
       id: `cadence:${item.horseId}:${item.type}`,
-      title: `${eventTypeLabels[item.type]} care is overdue`,
+      title: t('analysisViews.overdueCare', {
+        type: t(`events.types.${item.type}`),
+      }),
       meta: [
         item.horseName,
         item.lastCompletedDate
-          ? `Last completed ${formatEventDate(item.lastCompletedDate)}`
+          ? t('analysisViews.lastCompleted', {
+              date: formatEventDate(item.lastCompletedDate, locale),
+            })
           : undefined,
       ].filter((value): value is string => Boolean(value)),
-      description: `The usual interval is ${formatCountLabel(item.expectedDays, 'day')}.`,
+      description: t('analysisViews.usualInterval', {
+        count: item.expectedDays,
+      }),
       priority: 3,
       date: item.lastCompletedDate ?? '',
       accent: 'warning',
@@ -1101,9 +1160,9 @@ function createStableAttentionItems(
   const missingEventNotes = stableAnalysis.completionNotesNeeded.map(
     (event): StableAttentionItem => ({
       id: `event-notes:${event._id}`,
-      title: `${event.title} needs follow-up notes`,
-      meta: [formatEventDate(event.date)],
-      description: 'The completed event has no aftercare notes.',
+      title: t('analysisViews.eventFollowup', { title: event.title }),
+      meta: [formatEventDate(event.date, locale)],
+      description: t('analysisViews.eventNotesMissing'),
       priority: 4,
       date: event.date,
       accent: 'warning',
@@ -1114,10 +1173,9 @@ function createStableAttentionItems(
   const missingHorseOutcomes = stableAnalysis.horseOutcomeNotesNeeded.map(
     (outcome): StableAttentionItem => ({
       id: `horse-outcome:${outcome.id}`,
-      title: `${outcome.horseName} needs an outcome note`,
-      meta: [outcome.eventTitle, formatEventDate(outcome.eventDate)],
-      description:
-        'This horse has no recorded outcome for the completed event.',
+      title: t('analysisViews.horseOutcome', { name: outcome.horseName }),
+      meta: [outcome.eventTitle, formatEventDate(outcome.eventDate, locale)],
+      description: t('analysisViews.horseOutcomeMissing'),
       priority: 5,
       date: outcome.eventDate,
       accent: 'warning',
@@ -1174,12 +1232,6 @@ function getPeriodContainingDate(
   )
 }
 
-function getTimelineScaleUnitLabel(scale: StableTimelineScale) {
-  if (scale === 'week') return 'week'
-  if (scale === 'month') return 'month'
-  return 'day'
-}
-
 function getActiveAnalysisTabValue(activeTab: string, horses: Array<LabHorse>) {
   if (activeTab === stableAnalysisTabValue) return activeTab
 
@@ -1198,10 +1250,15 @@ function getProviderDetails(event: LabEvent) {
   return formatMetaText([event.providerName, event.providerPhone]) || null
 }
 
-function getTimelineSignalDetail(signal: LabTimelineSignal, showDate: boolean) {
+function getTimelineSignalDetail(
+  signal: LabTimelineSignal,
+  showDate: boolean,
+  locale: Locale,
+) {
+  const t = localeInstances[locale].t
   return formatMetaText([
-    timelineSignalKindLabels[signal.kind],
-    showDate ? formatEventDate(signal.date) : undefined,
+    t(`analysisViews.${signal.kind}`),
+    showDate ? formatEventDate(signal.date, locale) : undefined,
     signal.horseName,
     signal.detail,
   ])

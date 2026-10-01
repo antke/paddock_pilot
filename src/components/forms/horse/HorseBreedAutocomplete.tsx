@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { CheckIcon } from '@phosphor-icons/react'
 import type { Ref } from 'react'
 import { useState, useRef } from 'react'
@@ -9,7 +10,10 @@ import {
   FieldDescription,
   FieldError,
 } from '#/components/ui/field'
-import { horseBreedSchema } from 'shared/horses/horseSchema'
+import {
+  getHorseBreedLabel,
+  matchesBreedSearch,
+} from 'shared/i18n/horseBreedLabels'
 
 import {
   AutocompleteContent,
@@ -53,9 +57,12 @@ export function HorseBreedAutocomplete({
   onBlur,
   onValueChange,
 }: HorseBreedAutocompleteProps) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const [adding, setAdding] = useState(false)
   const [draft, setDraft] = useState('')
-  const [error, setError] = useState<string>()
+  const [error, setError] = useState<'required' | 'tooLong'>()
   const addButton = useRef<HTMLButtonElement>(null)
   const breedOptions = horseBreedOptions(existingBreed, additionalBreeds)
   const closeEditor = () => {
@@ -65,16 +72,14 @@ export function HorseBreedAutocomplete({
   }
   const addBreed = () => {
     if (disabled) return
-    const result = horseBreedSchema
-      .min(1, 'Enter a breed name.')
-      .safeParse(draft)
-    if (!result.success) {
-      setError(result.error.issues[0].message)
+    const trimmed = draft.trim()
+    if (!trimmed || trimmed.length > 100) {
+      setError(!trimmed ? 'required' : 'tooLong')
       return
     }
     const breed =
-      matchHorseBreed(result.data, existingBreed, additionalBreeds) ??
-      result.data
+      matchHorseBreed(trimmed, existingBreed, additionalBreeds, locale) ??
+      trimmed
     onAddBreed(breed)
     onValueChange(breed)
     closeEditor()
@@ -86,6 +91,7 @@ export function HorseBreedAutocomplete({
       value,
       existingBreed,
       additionalBreeds,
+      locale,
     )
     if (selectedBreed !== undefined && selectedBreed !== value)
       onValueChange(selectedBreed)
@@ -98,11 +104,22 @@ export function HorseBreedAutocomplete({
         <div className="min-w-0 flex-1">
           <AutocompleteRoot
             items={breedOptions}
-            value={value}
+            value={getHorseBreedLabel(value, locale)}
             disabled={disabled}
             openOnInputClick
             autoHighlight
-            onValueChange={onValueChange}
+            itemToStringValue={(breed) => getHorseBreedLabel(breed, locale)}
+            filter={matchesBreedSearch}
+            onValueChange={(next) =>
+              onValueChange(
+                matchHorseBreed(
+                  next,
+                  existingBreed,
+                  additionalBreeds,
+                  locale,
+                ) ?? next,
+              )
+            }
           >
             <AutocompleteInput
               ref={inputRef}
@@ -111,15 +128,17 @@ export function HorseBreedAutocomplete({
               disabled={disabled}
               aria-invalid={invalid}
               aria-describedby={describedBy}
-              placeholder="Search horse breeds"
+              placeholder={t('horseList.searchBreeds')}
               autoComplete="off"
-              triggerLabel="Show horse breeds"
+              triggerLabel={t('horseList.showBreeds')}
               onBlur={commitKnownBreed}
             />
 
             <AutocompleteContent>
               <AutocompleteGroup>
-                <AutocompleteGroupLabel>Horse breeds</AutocompleteGroupLabel>
+                <AutocompleteGroupLabel>
+                  {t('horseList.breeds')}
+                </AutocompleteGroupLabel>
                 <AutocompleteList>
                   {(breed: string) => {
                     const selected = breed === value
@@ -130,8 +149,8 @@ export function HorseBreedAutocomplete({
                         value={breed}
                         className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3"
                       >
-                        <span className="truncate text-sm font-semibold text-foreground">
-                          {breed}
+                        <span className="whitespace-normal break-words text-sm font-semibold text-foreground">
+                          {getHorseBreedLabel(breed, locale)}
                         </span>
                         <CheckIcon
                           aria-hidden="true"
@@ -146,9 +165,7 @@ export function HorseBreedAutocomplete({
                   }}
                 </AutocompleteList>
               </AutocompleteGroup>
-              <AutocompleteEmpty>
-                No breed matches. Use Add breed to enter a local breed.
-              </AutocompleteEmpty>
+              <AutocompleteEmpty>{t('horseList.noBreeds')}</AutocompleteEmpty>
             </AutocompleteContent>
           </AutocompleteRoot>
         </div>
@@ -165,8 +182,12 @@ export function HorseBreedAutocomplete({
             if (adding) closeEditor()
             else {
               setDraft(
-                matchHorseBreed(value, existingBreed, additionalBreeds) ===
-                  undefined
+                matchHorseBreed(
+                  value,
+                  existingBreed,
+                  additionalBreeds,
+                  locale,
+                ) === undefined
                   ? value
                   : '',
               )
@@ -175,13 +196,15 @@ export function HorseBreedAutocomplete({
             }
           }}
         >
-          Add breed
+          {t('horseList.addBreed')}
         </Button>
       </div>
       {adding && (
         <div id={`${id}-add-breed`} className="grid gap-3">
           <Field data-invalid={Boolean(error)}>
-            <FieldLabel htmlFor={`${id}-new-name`}>New breed name</FieldLabel>
+            <FieldLabel htmlFor={`${id}-new-name`}>
+              {t('horseList.newBreed')}
+            </FieldLabel>
             <Input
               id={`${id}-new-name`}
               autoFocus
@@ -206,10 +229,17 @@ export function HorseBreedAutocomplete({
               }}
             />
             <FieldDescription id={`${id}-new-help`}>
-              This breed will be saved with the horse and suggested for other
-              horses in this stable.
+              {t('horseList.newBreedHelp')}
             </FieldDescription>
-            {error && <FieldError id={`${id}-new-error`}>{error}</FieldError>}
+            {error && (
+              <FieldError id={`${id}-new-error`}>
+                {t(
+                  error === 'required'
+                    ? 'horseList.breedRequired'
+                    : 'horseList.breedTooLong',
+                )}
+              </FieldError>
+            )}
           </Field>
           <div className="flex flex-wrap gap-2">
             <Button
@@ -218,7 +248,7 @@ export function HorseBreedAutocomplete({
               disabled={disabled}
               onClick={addBreed}
             >
-              Use breed
+              {t('horseList.useBreed')}
             </Button>
             <Button
               type="button"
@@ -227,7 +257,7 @@ export function HorseBreedAutocomplete({
               disabled={disabled}
               onClick={closeEditor}
             >
-              Cancel
+              {t('horseList.cancel')}
             </Button>
           </div>
         </div>

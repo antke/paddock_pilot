@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { formatEventDateRange } from '#/components/events/eventDisplay'
 import { EventRow } from '#/components/events/EventRow'
 import type {
@@ -25,13 +26,18 @@ export function EventLinkCard({
   className,
   accent = 'none',
 }: EventLinkCardProps) {
+  const t = useT()
+  const { locale } = useLocale()
+
   return (
     <EventRow
       event={event}
-      leadingLabel={dayKey && event.date < dayKey ? 'Continues' : undefined}
+      leadingLabel={
+        dayKey && event.date < dayKey ? t('dashboard.continues') : undefined
+      }
       supplementalMeta={
         event.endDate && event.endDate !== event.date
-          ? [formatEventDateRange(event.date, event.endDate)]
+          ? [formatEventDateRange(event.date, event.endDate, locale)]
           : []
       }
       density={density}

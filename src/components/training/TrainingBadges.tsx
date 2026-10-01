@@ -1,13 +1,10 @@
+import { useT } from '#/i18n/LocaleProvider'
 import {
   CheckCircleIcon,
   ClockIcon,
   QuestionIcon,
   ProhibitIcon,
 } from '@phosphor-icons/react'
-import {
-  trainingActivityLabels,
-  trainingStatusLabels,
-} from 'shared/training/trainingSchema'
 import type {
   TrainingActivity,
   TrainingDisplayStatus,
@@ -40,6 +37,7 @@ export function TrainingActivityTag({
 }: {
   activity: TrainingActivity
 }) {
+  const t = useT()
   const color = activityColors[activity]
   return (
     <span
@@ -49,7 +47,7 @@ export function TrainingActivityTag({
       }}
     >
       <TrainingActivityDot activity={activity} />
-      {trainingActivityLabels[activity]}
+      {t(`training.activities.${activity}`)}
     </span>
   )
 }
@@ -60,6 +58,7 @@ export function TrainingStatusBadge({
   status: TrainingDisplayStatus
   iconOnly?: boolean
 }) {
+  const t = useT()
   const Icon =
     status === 'completed'
       ? CheckCircleIcon
@@ -76,7 +75,7 @@ export function TrainingStatusBadge({
         className="size-5 shrink-0"
       />
       <span className={iconOnly ? 'sr-only' : undefined}>
-        {trainingStatusLabels[status]}
+        {t(`training.status.${status}`)}
       </span>
     </span>
   )

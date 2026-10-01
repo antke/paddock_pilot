@@ -1,10 +1,9 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { useState } from 'react'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
 import { formatShortDateKey } from '#/lib/dateDisplay'
-import { formatCountLabel } from '#/lib/numberDisplay'
-import { careReminderCategoryLabels } from 'shared/reminders/careReminderSchema'
 import type {
   DashboardCommandChrome,
   DashboardCommandData,
@@ -36,6 +35,9 @@ export function PriorityQueueCard({
   section = 'combined',
   onViewReminders,
 }: PriorityQueueCardProps) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const [expandedStableId, setExpandedStableId] = useState<string>()
   const expanded = expandedStableId === data.stable._id
   const attention = getDashboardAttention(data)
@@ -56,17 +58,17 @@ export function PriorityQueueCard({
       padding={chrome === 'cards' ? 'roomy' : 'default'}
       title={
         section === 'health'
-          ? 'Health issues'
+          ? t('dashboard.healthIssues')
           : section === 'reminders'
-            ? 'Care reminders'
-            : 'Needs attention'
+            ? t('dashboard.reminders')
+            : t('dashboard.attention')
       }
       description={
         section === 'health'
-          ? `${formatCountLabel(attention.healthIssueCount, 'high-severity issue')} across the yard.`
+          ? t('dashboard.yardIssues', { count: attention.healthIssueCount })
           : section === 'reminders'
-            ? 'Due and overdue care within the next 14 days.'
-            : 'High-severity health issues and reminders due within 14 days.'
+            ? t('dashboard.remindersHelp')
+            : t('dashboard.attentionHelp')
       }
       descriptionSize="sm"
       size="panel"
@@ -78,7 +80,7 @@ export function PriorityQueueCard({
             className="min-h-11"
             onClick={onViewReminders}
           >
-            View reminders
+            {t('dashboard.viewReminders')}
           </Button>
         ) : (
           <ButtonLink
@@ -88,7 +90,7 @@ export function PriorityQueueCard({
             size="sm"
             className="min-h-11"
           >
-            View reminders
+            {t('dashboard.viewReminders')}
           </ButtonLink>
         )
       }
@@ -98,18 +100,17 @@ export function PriorityQueueCard({
           {section === 'combined' && (
             <DashboardInlineHeader
               as="h3"
-              title="Health issues"
-              description={formatCountLabel(
-                attention.healthIssueCount,
-                'high-severity issue',
-              )}
+              title={t('dashboard.healthIssues')}
+              description={t('dashboard.issues', {
+                count: attention.healthIssueCount,
+              })}
             />
           )}
           <ScrollableList
             itemCount={healthHorses.length}
             visibleItemLimit={visibleItemLimit}
             estimatedItemHeightRem={5.5}
-            ariaLabel="Horses with high-severity health issues"
+            ariaLabel={t('dashboard.healthHorses')}
             className="gap-0"
           >
             {healthHorses.map((horse) => (
@@ -124,10 +125,7 @@ export function PriorityQueueCard({
               >
                 <DashboardItemCardContent
                   title={horse.horseName}
-                  meta={formatCountLabel(
-                    horse.highIssueCount,
-                    'high-severity issue',
-                  )}
+                  meta={t('dashboard.issues', { count: horse.highIssueCount })}
                   density="compact"
                 />
               </DashboardItemLinkCard>
@@ -145,25 +143,23 @@ export function PriorityQueueCard({
               }
             >
               {expanded
-                ? 'Show fewer horses'
-                : `Show all ${attention.healthHorses.length} horses with health issues`}
+                ? t('dashboard.showFewer')
+                : t('dashboard.showAllHealth', {
+                    count: attention.healthHorses.length,
+                  })}
             </Button>
           )}
           {attention.missingHealthIssueCount > 0 && (
             <DashboardEmptyState chrome="flat">
-              {formatCountLabel(
-                attention.missingHealthIssueCount,
-                'additional high-severity issue',
-              )}{' '}
-              {attention.missingHealthIssueCount === 1 ? 'is' : 'are'} not
-              included in this overview. The horse list opens all horse records,
-              without identifying those missing issues.
+              {t('dashboard.missingIssues', {
+                count: attention.missingHealthIssueCount,
+              })}
               <ButtonLink
                 to="/stables/$stableId/horses"
                 params={{ stableId: data.stable._id }}
                 variant="link"
               >
-                View horses
+                {t('dashboard.viewHorses')}
               </ButtonLink>
             </DashboardEmptyState>
           )}
@@ -171,14 +167,14 @@ export function PriorityQueueCard({
       )}
       {section === 'health' && attention.healthIssueCount === 0 && (
         <DashboardEmptyState chrome={chrome}>
-          No high-severity health issues.
+          {t('dashboard.noHealthIssues')}
         </DashboardEmptyState>
       )}
       {section !== 'health' &&
         (reminders.length > 0 ? (
           <div className="grid gap-2">
             {section === 'combined' && (
-              <DashboardInlineHeader as="h3" title="Care reminders" />
+              <DashboardInlineHeader as="h3" title={t('dashboard.reminders')} />
             )}
             <DashboardItemList gap="compact">
               {reminders.map((reminder) => (
@@ -195,12 +191,21 @@ export function PriorityQueueCard({
                     meta={
                       <>
                         <span>
-                          {reminder.overdue ? 'Overdue' : 'Due'}{' '}
-                          {formatShortDateKey(reminder.dueDate)}
+                          {t(
+                            reminder.overdue
+                              ? 'dashboard.overdueDate'
+                              : 'dashboard.dueDate',
+                            {
+                              date: formatShortDateKey(
+                                reminder.dueDate,
+                                locale,
+                              ),
+                            },
+                          )}
                         </span>
                         <span>{reminder.horseName}</span>
                         <span>
-                          {careReminderCategoryLabels[reminder.category]}
+                          {t(`careLabels.category.${reminder.category}`)}
                         </span>
                       </>
                     }
@@ -213,13 +218,12 @@ export function PriorityQueueCard({
           </div>
         ) : (
           <DashboardEmptyState chrome={chrome}>
-            No reminders are due within 14 days.
+            {t('dashboard.noReminders')}
           </DashboardEmptyState>
         ))}
       {section !== 'health' && remainingReminders > 0 && (
         <DashboardItemBodyText tone="muted">
-          {formatCountLabel(remainingReminders, 'more reminder')} due within 14
-          days. Open View reminders to see the full list.
+          {t('dashboard.remainingReminders', { count: remainingReminders })}
         </DashboardItemBodyText>
       )}
     </DashboardSection>

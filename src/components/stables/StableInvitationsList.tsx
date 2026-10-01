@@ -1,3 +1,4 @@
+import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import {
   DashboardItemCardContent,
@@ -41,15 +42,17 @@ type StableInvitationsListProps = {
 export function StableInvitationsList({
   invitations,
 }: StableInvitationsListProps) {
+  const t = useT()
+
   const revokeInvitation = useMutation(api.stableInvitations.revoke)
   const resendInvitation = useMutation(api.stableInvitations.resend)
   const copyInvitation = async (token: string) => {
     try {
       await copyTextToClipboard(getInvitationUrl(window.location.origin, token))
-      showAppSuccessToast({ title: 'Invitation link copied' })
+      showAppSuccessToast({ title: t('invitationFlow.linkCopied') })
     } catch {
-      showAppErrorToast({ title: 'Could not copy invitation link' })
-      throw new Error('Could not copy invitation link')
+      showAppErrorToast({ title: t('invitationFlow.copyFailed') })
+      throw new Error(t('invitationFlow.copyFailed'))
     }
   }
 
@@ -57,10 +60,12 @@ export function StableInvitationsList({
     try {
       const result = await resendInvitation({ id: invitation._id })
       showAppSuccessToast({
-        title: 'Invitation queued again',
-        description: <p>A fresh link was created for {invitation.email}.</p>,
+        title: t('invitationFlow.queuedAgain'),
+        description: (
+          <p>{t('invitationFlow.freshLink', { email: invitation.email })}</p>
+        ),
         action: {
-          label: 'Copy link',
+          label: t('invitationFlow.copy'),
           onClick: () => {
             // Copy reports its own toast; this action has no row error surface.
             void copyInvitation(result.token).catch(() => {})
@@ -69,7 +74,7 @@ export function StableInvitationsList({
       })
       return true
     } catch {
-      showAppErrorToast({ title: 'Could not resend invitation' })
+      showAppErrorToast({ title: t('invitationFlow.resendFailed') })
       return false
     }
   }
@@ -78,14 +83,14 @@ export function StableInvitationsList({
     try {
       await revokeInvitation({ id: invitation._id })
       showAppSuccessToast({
-        title: 'Invitation revoked',
+        title: t('invitationFlow.revoked'),
         description: (
-          <p>{invitation.email} can no longer accept this invite.</p>
+          <p>{t('invitationFlow.revokedFor', { email: invitation.email })}</p>
         ),
       })
       return true
     } catch {
-      showAppErrorToast()
+      showAppErrorToast({ title: t('invitationFlow.revokeFailedHelp') })
       return false
     }
   }
@@ -110,10 +115,12 @@ export function StableInvitationsListView({
   invitations,
   ...actions
 }: StableInvitationsListProps & InvitationActions) {
+  const t = useT()
+
   if (invitations.length === 0) {
     return (
       <DashboardEmptyState chrome="soft" spacing="flush">
-        No invitations yet.
+        {t('invitationFlow.empty')}
       </DashboardEmptyState>
     )
   }
@@ -137,30 +144,39 @@ function StableInvitationRow({
   onRevoke,
   onCopy,
 }: InvitationActions & { invitation: Doc<'stableInvitations'> }) {
+  const t = useT()
+
   const [pendingAction, setPendingAction] = useState<
     'resend' | 'revoke' | 'copy'
   >()
   const pendingRef = useRef(false)
   const [isRevokeOpen, setIsRevokeOpen] = useState(false)
-  const [actionError, setActionError] = useState<string>()
+  const [failedAction, setFailedAction] = useState<
+    'resend' | 'revoke' | 'copy'
+  >()
+  const actionError = failedAction
+    ? t(
+        failedAction === 'copy'
+          ? 'invitationFlow.copyFailedHelp'
+          : failedAction === 'resend'
+            ? 'invitationFlow.resendFailedHelp'
+            : 'invitationFlow.revokeFailedHelp',
+      )
+    : undefined
+  const { locale } = useLocale()
   const runAction = async (action: 'resend' | 'revoke' | 'copy') => {
     if (pendingRef.current) return
     pendingRef.current = true
     setPendingAction(action)
-    setActionError(undefined)
+    setFailedAction(undefined)
     try {
       if (action === 'copy') await onCopy(invitation.token)
       else if (action === 'resend') {
-        if (!(await onResend(invitation)))
-          setActionError('Could not resend this invitation. Please try again.')
+        if (!(await onResend(invitation))) setFailedAction('resend')
       } else if (await onRevoke(invitation)) setIsRevokeOpen(false)
-      else setActionError('Could not revoke this invitation. Please try again.')
+      else setFailedAction('revoke')
     } catch {
-      setActionError(
-        action === 'copy'
-          ? 'Could not copy this link. Please try again.'
-          : `Could not ${action} this invitation. Please try again.`,
-      )
+      setFailedAction(action)
     } finally {
       pendingRef.current = false
       setPendingAction(undefined)
@@ -202,7 +218,7 @@ function StableInvitationRow({
                 aria-busy={isPending || undefined}
                 onClick={() => void runAction('copy')}
               >
-                Copy link
+                {t('invitationFlow.copy')}
               </Button>
             )}
             {canResend && (
@@ -214,7 +230,9 @@ function StableInvitationRow({
                 aria-busy={isPending || undefined}
                 onClick={() => void runAction('resend')}
               >
-                {pendingAction === 'resend' ? 'Resending...' : 'Resend'}
+                {pendingAction === 'resend'
+                  ? t('invitationFlow.resending')
+                  : t('invitationFlow.resend')}
               </Button>
             )}
             {invitation.status === 'pending' && (
@@ -235,16 +253,17 @@ function StableInvitationRow({
                     />
                   }
                 >
-                  Revoke
+                  {t('invitationFlow.revoke')}
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
-                      Revoke invitation for {invitation.email}?
+                      {t('invitationFlow.revokeConfirm', {
+                        email: invitation.email,
+                      })}
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      This link will stop working immediately. You can create
-                      another invitation later if they still need access.
+                      {t('invitationFlow.revokeHelp')}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   {actionError && (
@@ -254,7 +273,7 @@ function StableInvitationRow({
                   )}
                   <AlertDialogFooter>
                     <AlertDialogCancel disabled={isPending}>
-                      Keep invitation
+                      {t('invitationFlow.keep')}
                     </AlertDialogCancel>
                     <AlertDialogAction
                       variant="destructive"
@@ -263,8 +282,8 @@ function StableInvitationRow({
                       onClick={() => void runAction('revoke')}
                     >
                       {pendingAction === 'revoke'
-                        ? 'Revoking...'
-                        : 'Revoke invitation'}
+                        ? t('invitationFlow.revoking')
+                        : t('invitationFlow.revokeInvitation')}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -283,8 +302,10 @@ function StableInvitationRow({
             )}
             {invitation.deliveryError && (
               <Alert variant="destructive">
-                <AlertTitle>Email not sent</AlertTitle>
-                <AlertDescription>{invitation.deliveryError}</AlertDescription>
+                <AlertTitle>{t('invitationFlow.emailNotSent')}</AlertTitle>
+                <AlertDescription>
+                  {t('invitationFlow.deliveryError')}
+                </AlertDescription>
               </Alert>
             )}
           </DashboardItemRecordFooter>
@@ -298,12 +319,23 @@ function StableInvitationRow({
         meta={
           <>
             <span>
-              {status === 'expired' ? 'Expired' : 'Expires'}{' '}
-              {formatMediumTimestampDate(invitation.expiresAt)}
+              {t(
+                status === 'expired'
+                  ? 'invitationFlow.expiredOn'
+                  : 'invitationFlow.expiresOn',
+                {
+                  date: formatMediumTimestampDate(invitation.expiresAt, locale),
+                },
+              )}
             </span>
             {invitation.lastSentAt && (
               <span>
-                Last sent {formatMediumTimestampDate(invitation.lastSentAt)}
+                {t('invitationFlow.lastSent', {
+                  date: formatMediumTimestampDate(
+                    invitation.lastSentAt,
+                    locale,
+                  ),
+                })}
               </span>
             )}
           </>

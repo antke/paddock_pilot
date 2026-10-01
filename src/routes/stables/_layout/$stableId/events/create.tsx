@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { EventEditor } from '#/components/forms/event/EventEditor'
 import { createEventEditorValues } from '#/components/forms/event/eventEditorValues'
 import { showAppSuccessToast } from '#/components/ui/sonner'
@@ -15,6 +16,8 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
+  const t = useT()
+
   const { stableId } = Route.useParams()
   const nav = useNavigate()
   const addEvent = useMutation(api.events.add)
@@ -37,6 +40,7 @@ function RouteComponent() {
       providers={providerData.providers}
       onSave={async (data) => {
         return addEvent({
+          errorFormat: 'structured',
           stableId: stableId as Id<'stables'>,
           horseIds: data.horseIds as Array<Id<'horses'>>,
           date: data.date,
@@ -57,8 +61,8 @@ function RouteComponent() {
       }}
       onAcknowledged={(_eventId, data) => {
         showAppSuccessToast({
-          title: 'Event created',
-          description: <p>{data.title} is ready.</p>,
+          title: t('trainingViews.eventCreated'),
+          description: <p>{t('trainingViews.ready', { title: data.title })}</p>,
         })
       }}
       onSaved={async (eventId) => {

@@ -1,9 +1,9 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { ButtonLink } from '#/components/ui/button'
-import { formatCountLabel } from '#/lib/numberDisplay'
 import { HorseList } from './HorseList'
 import type { HorseListHorse } from './HorseList'
 
@@ -13,23 +13,25 @@ type HorseListPageProps = {
 }
 
 export function HorseListPage({ horses, stableId }: HorseListPageProps) {
+  const t = useT()
+
   return (
     <DashboardPage>
       <DashboardPageHeader
-        title="Horses"
-        description={`${formatCountLabel(horses.length, 'horse')} in this stable.`}
+        title={t('horseList.horses')}
+        description={t('horseList.stableCount', { count: horses.length })}
         actions={
           <ButtonLink
             to="/stables/$stableId/horses/create"
             params={{ stableId }}
             action="create"
           >
-            Add horse
+            {t('horseList.addHorse')}
           </ButtonLink>
         }
       />
 
-      <DashboardSection aria-label="Horse list">
+      <DashboardSection aria-label={t('horseList.list')}>
         <HorseList horses={horses} stableId={stableId} />
       </DashboardSection>
 
@@ -42,7 +44,7 @@ export function HorseListPage({ horses, stableId }: HorseListPageProps) {
           params={{ stableId }}
           variant="subtle"
         >
-          Deleted horses
+          {t('horseList.deleted')}
         </ButtonLink>
       </DashboardActions>
     </DashboardPage>

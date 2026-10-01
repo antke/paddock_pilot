@@ -1,3 +1,4 @@
+import { useLocale } from '#/i18n/LocaleProvider'
 import { Navigate, useLocation } from '@tanstack/react-router'
 import { useAuth } from '@clerk/tanstack-react-start'
 import { api } from 'convex/_generated/api'
@@ -30,6 +31,7 @@ const AppUserStateContext = createContext<AppUserState | null>(null)
 const AppUserGateContext = createContext<ReactNode>(null)
 
 export function AppUserStateProvider({ children }: { children: ReactNode }) {
+  const { guestLocale, ready: localeReady } = useLocale()
   const { pathname } = useLocation()
   const { userId: clerkUserId } = useAuth()
   const { isAuthenticated, isLoading: isLoadingAuth } = useConvexAuth()
@@ -63,7 +65,12 @@ export function AppUserStateProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setSyncedUserId(undefined)
-    if (!isAuthenticated || !clerkUserId || identity?.subject !== clerkUserId) {
+    if (
+      !localeReady ||
+      !isAuthenticated ||
+      !clerkUserId ||
+      identity?.subject !== clerkUserId
+    ) {
       setSyncStatus('pending')
       return
     }
@@ -77,7 +84,7 @@ export function AppUserStateProvider({ children }: { children: ReactNode }) {
     }, 20_000)
     const bootstrapUser = async () => {
       try {
-        await syncCurrentUser()
+        await syncCurrentUser({ locale: guestLocale })
         if (!cancelled) {
           setSyncedUserId(clerkUserId)
           setSyncStatus('ready')
@@ -101,6 +108,8 @@ export function AppUserStateProvider({ children }: { children: ReactNode }) {
     syncCurrentUser,
     isAuthenticated,
     syncAttempt,
+    localeReady,
+    guestLocale,
   ])
 
   const routeStableId = getRouteStableId(pathname)

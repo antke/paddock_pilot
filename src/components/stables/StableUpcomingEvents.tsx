@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
@@ -19,12 +20,14 @@ export function StableUpcomingEvents({
   limit = 5,
   chrome = 'soft',
 }: StableUpcomingEventsProps) {
+  const t = useT()
+
   const upcomingEvents = getUpcomingEvents(events, new Date()).slice(0, limit)
 
   if (upcomingEvents.length === 0) {
     return (
-      <DashboardEmptyState chrome={chrome} title="No upcoming events.">
-        Add an event to start building this stable schedule.
+      <DashboardEmptyState chrome={chrome} title={t('calendar.noUpcoming')}>
+        {t('calendar.addEventHelp')}
       </DashboardEmptyState>
     )
   }
@@ -51,13 +54,14 @@ export function StableUpcomingEventsCard({
   limit,
   chrome = 'soft',
 }: StableUpcomingEventsProps) {
+  const t = useT()
   return (
     <DashboardSection
       as="h3"
       chrome={chrome}
       contentAlign="start"
-      title="Next upcoming events"
-      description="The next 5 scheduled items."
+      title={t('calendar.nextEvents')}
+      description={t('calendar.nextEventsHelp', { count: limit ?? 5 })}
       size="panel"
       descriptionSize="sm"
     >

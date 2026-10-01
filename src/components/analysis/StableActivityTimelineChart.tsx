@@ -1,3 +1,6 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
+import type { Locale } from 'shared/i18n/locale'
+import { localeInstances } from '#/i18n/resources'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { Button } from '#/components/ui/button'
 import {
@@ -48,7 +51,6 @@ import {
   TooltipTrigger,
 } from '#/components/ui/tooltip'
 import { dateKeyToDate, getTodayDateKey } from '#/lib/dateDisplay'
-import { formatCountLabel } from '#/lib/numberDisplay'
 import { cn } from '#/lib/utils'
 import {
   BellRingingIcon,
@@ -65,7 +67,6 @@ import {
   useRef,
   useState,
 } from 'react'
-import { eventStatusLabels, eventTypeLabels } from 'shared/events/eventSchema'
 import type {
   LabTimelineOccurrence,
   LabTimelineSeriesKey,
@@ -81,10 +82,7 @@ import type {
   StableTimelinePeriod,
   StableTimelineScale,
 } from './stableActivityTimelineScale'
-import {
-  timelineSignalKindAccentColors,
-  timelineSignalKindLabels,
-} from './analysisTimelineSignalMeta'
+import { timelineSignalKindAccentColors } from './analysisTimelineSignalMeta'
 
 type StableEventTimelineSeriesKey = Extract<
   LabTimelineSeriesKey,
@@ -157,12 +155,16 @@ export const stableTimelineEventTypeOptions = [
   shape: TimelineEventTypeShape
 }>
 
-const scaleDescription = {
-  day: 'Day columns are wide for reading individual care blocks.',
-  week: 'Week columns compress the schedule to compare recurring pressure.',
-  month: 'Month columns zoom out to reveal seasonal overlap patterns.',
-} satisfies Record<StableTimelineScale, string>
+function getScaleDescriptions(locale: Locale) {
+  const t = localeInstances[locale].t
+  const scaleDescription = {
+    day: t('analysisViews.dayDescription'),
+    week: t('analysisViews.weekDescription'),
+    month: t('analysisViews.monthDescription'),
+  } satisfies Record<StableTimelineScale, string>
 
+  return scaleDescription
+}
 const initialScrollState = {
   scrollLeft: 0,
   clientWidth: 0,
@@ -180,6 +182,9 @@ export function StableActivityTimelineChart({
   onEventOpen,
   className,
 }: StableActivityTimelineChartProps) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const viewportRef = useRef<HTMLDivElement>(null)
   const periodButtons = useRef(new Map<string, HTMLButtonElement>())
   const lastAutoScrolledPeriodKeyRef = useRef<string | null>(null)
@@ -340,14 +345,14 @@ export function StableActivityTimelineChart({
         <ActivityTimelineScrollArea
           ref={viewportRef}
           role="region"
-          aria-label="Stable activity calendar"
+          aria-label={t('analysisViews.calendar')}
           tabIndex={0}
           onScroll={updateScrollState}
         >
           <ActivityTimelineCanvas style={{ width: `${timelineWidthRem}rem` }}>
             <ActivityTimelineHeaderRow
               role="group"
-              aria-label="Timeline periods — use arrow keys to select"
+              aria-label={t('analysisViews.periodNavigation')}
               style={{ gridTemplateColumns }}
             >
               {periods.map((period, index) => (
@@ -385,7 +390,7 @@ export function StableActivityTimelineChart({
                     <CurrentPeriodTag scale={scale} />
                   ) : null}
                   <TextLabel size="micro" weight="semibold">
-                    {getScaleLabel(scale)}
+                    {getScaleLabel(scale, locale)}
                   </TextLabel>
                   <ActivityTimelinePeriodLabel>
                     {period.shortLabel}
@@ -400,7 +405,9 @@ export function StableActivityTimelineChart({
                 {periods.map((period) => (
                   <ActivityTimelineGridPeriodButton
                     key={period.key}
-                    aria-label={`Select ${period.label}`}
+                    aria-label={t('analysisViews.selectPeriod', {
+                      period: period.label,
+                    })}
                     onClick={() => onPeriodSelect(period)}
                     selected={selectedPeriodKey === period.key}
                     hasActivity={getTimelinePeriodActivityCount(period) > 0}
@@ -411,8 +418,8 @@ export function StableActivityTimelineChart({
               {blocks.length === 0 ? (
                 <ActivityTimelineEmptyState>
                   {occurrences.length === 0
-                    ? 'No events scheduled in this timeline yet.'
-                    : 'No event blocks match the selected timeline filters.'}
+                    ? t('analysisViews.noScheduled')
+                    : t('analysisViews.noFilteredEvents')}
                 </ActivityTimelineEmptyState>
               ) : (
                 blocks.map((block) => (
@@ -441,8 +448,8 @@ export function StableActivityTimelineChart({
       />
 
       <ActivityTimelineCaption>
-        {scaleDescription[scale]} Header icons summarise the event types and
-        care records present in each period.
+        {getScaleDescriptions(locale)[scale]}{' '}
+        {t('analysisViews.headerIconsHelp')}
       </ActivityTimelineCaption>
     </ActivityTimelineRoot>
   )
@@ -459,6 +466,9 @@ function TimelineOccurrenceBlock({
   selectedPeriod: StableTimelinePeriod | null
   onEventOpen: (eventId: string) => void
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const { occurrence } = block
   const event = occurrence.event
   const status = getEventStatus(event)
@@ -476,9 +486,11 @@ function TimelineOccurrenceBlock({
   )
   const topRem = block.laneIndex * laneHeightRem + 0.45
   const badges = [
-    occurrence.durationDays > 1 ? `${occurrence.durationDays}d` : null,
+    occurrence.durationDays > 1
+      ? t('analysisViews.shortDays', { count: occurrence.durationDays })
+      : null,
     block.occurrenceCount > 1 ? `${block.occurrenceCount}x` : null,
-    occurrence.isRecurring ? 'repeats' : null,
+    occurrence.isRecurring ? t('analysisViews.repeatBadge') : null,
   ].filter((badge): badge is string => badge !== null)
 
   return (
@@ -493,7 +505,7 @@ function TimelineOccurrenceBlock({
         width: `${widthRem}rem`,
         height: `${blockHeightRem}rem`,
       }}
-      title={`${event.title} · ${formatEventDateRange(occurrence.startDate, occurrence.endDate)}`}
+      title={`${event.title} · ${formatEventDateRange(occurrence.startDate, occurrence.endDate, locale)}`}
     >
       <ActivityTimelineEventTitle>
         <TimelineEventTypeIcon type={event.type} className="shrink-0" />
@@ -505,9 +517,9 @@ function TimelineOccurrenceBlock({
         separator="dot"
         className="min-w-0 overflow-hidden"
       >
-        <span className="truncate">{eventTypeLabels[event.type]}</span>
+        <span className="truncate">{t(`events.types.${event.type}`)}</span>
         <span>{event.time}</span>
-        <span>{eventStatusLabels[status]}</span>
+        <span>{t(`calendar.${status}`)}</span>
       </DashboardMetaList>
       {badges.length > 0 && (
         <ActivityTimelineEventBadgeRow>
@@ -527,15 +539,18 @@ function TimelinePeriodActivityIcons({
 }: {
   period: StableTimelinePeriod
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   if (getTimelinePeriodActivityCount(period) === 0) return null
 
-  const activitySummary = formatTimelinePeriodActivitySummary(period)
+  const activitySummary = formatTimelinePeriodActivitySummary(period, locale)
 
   return (
     <ActivityTimelineActivitySummary title={activitySummary}>
       <span className="sr-only">{activitySummary}</span>
       {period.eventTypeCounts.map((item) => {
-        const label = eventTypeLabels[item.type]
+        const label = t(`events.types.${item.type}`)
 
         return (
           <Tooltip key={item.type}>
@@ -556,7 +571,7 @@ function TimelinePeriodActivityIcons({
         )
       })}
       {period.signalKindCounts.map((item) => {
-        const label = timelineSignalKindLabels[item.kind]
+        const label = t(`analysisViews.${item.kind}`)
 
         return (
           <Tooltip key={item.kind}>
@@ -594,9 +609,11 @@ function TimelineSignalKindIcon({ kind }: { kind: LabTimelineSignalKind }) {
 }
 
 function CurrentPeriodTag({ scale }: { scale: StableTimelineScale }) {
+  const { locale } = useLocale()
+
   return (
     <ActivityTimelineCurrentPeriodBadge>
-      {getCurrentPeriodTagLabel(scale)}
+      {getCurrentPeriodTagLabel(scale, locale)}
     </ActivityTimelineCurrentPeriodBadge>
   )
 }
@@ -657,6 +674,9 @@ function TimelineOverviewNavigator({
   columnZoom: number
   onZoomChange: (direction: -1 | 1) => void
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const rangeId = useId()
   const railRef = useRef<HTMLDivElement>(null)
   const cancelDrag = useRef<(() => void) | null>(null)
@@ -731,11 +751,11 @@ function TimelineOverviewNavigator({
   return (
     <ActivityTimelineOverviewPanel>
       <DashboardInlineHeader
-        title="Timeline overview"
-        description="Drag the highlighted window or use its arrow keys to move. Zoom changes column width while keeping the same calendar area in view."
+        title={t('analysisViews.overview')}
+        description={t('analysisViews.overviewHelp')}
         aside={
           <Badge variant="neutral">
-            {formatCountLabel(periods.length, 'period')}
+            {t('analysisViews.periodCount', { count: periods.length })}
           </Badge>
         }
         titleClassName={textLabelVariants({
@@ -756,7 +776,7 @@ function TimelineOverviewNavigator({
           onClick={() => onZoomChange(1)}
           aria-describedby={rangeId}
         >
-          Zoom in
+          {t('analysisViews.zoomIn')}
         </Button>
         <Button
           type="button"
@@ -766,7 +786,7 @@ function TimelineOverviewNavigator({
           onClick={() => onZoomChange(-1)}
           aria-describedby={rangeId}
         >
-          Zoom out
+          {t('analysisViews.zoomOut')}
         </Button>
         <span
           id={rangeId}
@@ -774,9 +794,15 @@ function TimelineOverviewNavigator({
           className="text-sm text-muted-foreground"
         >
           {periods.length
-            ? `Visible columns ${firstVisible}–${lastVisible} of ${periods.length}.`
-            : 'No period columns.'}{' '}
-          Column zoom {Math.round(columnZoom * 100)}%.
+            ? t('analysisViews.visibleColumns', {
+                first: firstVisible,
+                last: lastVisible,
+                total: periods.length,
+              })
+            : t('analysisViews.noColumns')}{' '}
+          {t('analysisViews.columnZoom', {
+            percent: Math.round(columnZoom * 100),
+          })}
         </span>
       </DashboardActions>
 
@@ -790,7 +816,7 @@ function TimelineOverviewNavigator({
               <ActivityTimelineOverviewPeriodButton
                 key={period.key}
                 tabIndex={-1}
-                title={`${period.label} · ${formatTimelinePeriodActivitySummary(period)}`}
+                title={`${period.label} · ${formatTimelinePeriodActivitySummary(period, locale)}`}
                 onClick={() => onPeriodJump(index)}
                 density={density}
               />
@@ -812,7 +838,7 @@ function TimelineOverviewNavigator({
           }}
         />
         <ActivityTimelineWindowDrag
-          aria-label="Move visible timeline window"
+          aria-label={t('analysisViews.moveWindow')}
           aria-describedby={rangeId}
           aria-keyshortcuts="ArrowLeft ArrowRight"
           disabled={windowMetrics.widthRatio >= 1}
@@ -963,40 +989,38 @@ function getEventStatus(event: TimelineEvent): TimelineEventStatus {
   return event.status ?? 'planned'
 }
 
-function getScaleLabel(scale: StableTimelineScale) {
-  if (scale === 'week') return 'Week'
-  if (scale === 'month') return 'Month'
-  return 'Day'
+function getScaleLabel(scale: StableTimelineScale, locale: Locale) {
+  const t = localeInstances[locale].t
+  if (scale === 'week') return t('analysisViews.week')
+  if (scale === 'month') return t('analysisViews.month')
+  return t('analysisViews.day')
 }
 
-function getCurrentPeriodTagLabel(scale: StableTimelineScale) {
-  if (scale === 'week') return 'This week'
-  if (scale === 'month') return 'This month'
-  return 'Today'
+function getCurrentPeriodTagLabel(scale: StableTimelineScale, locale: Locale) {
+  const t = localeInstances[locale].t
+  if (scale === 'week') return t('analysisViews.thisWeek')
+  if (scale === 'month') return t('analysisViews.thisMonth')
+  return t('analysisViews.today')
 }
 
-function formatTimelinePeriodActivitySummary(period: StableTimelinePeriod) {
-  const eventTypeSummary = period.eventTypeCounts.map((item) =>
-    formatCountLabel(
-      item.count,
-      `${eventTypeLabels[item.type].toLowerCase()} event`,
+function formatTimelinePeriodActivitySummary(
+  period: StableTimelinePeriod,
+  locale: Locale,
+) {
+  const t = localeInstances[locale].t
+  const items = [
+    ...period.eventTypeCounts.map(
+      (item) => `${t(`events.types.${item.type}`)}: ${item.count}`,
     ),
-  )
-  const recordSummary = period.signalKindCounts.map((item) =>
-    formatCountLabel(
-      item.count,
-      `${timelineSignalKindLabels[item.kind].toLowerCase()} event`,
+    ...period.signalKindCounts.map(
+      (item) => `${t(`analysisViews.${item.kind}`)}: ${item.count}`,
     ),
-  )
-  const activitySummary = [...eventTypeSummary, ...recordSummary].join(', ')
-  const urgentSummary =
-    period.urgentSignalCount > 0
-      ? ` · ${formatCountLabel(period.urgentSignalCount, 'urgent event')}`
-      : ''
-
-  return activitySummary.length > 0
-    ? `${activitySummary}${urgentSummary}`
-    : 'No events'
+  ]
+  if (period.urgentSignalCount > 0)
+    items.push(
+      t('analysisViews.urgentCount', { count: period.urgentSignalCount }),
+    )
+  return items.join(', ') || t('analysisViews.noEvents')
 }
 
 function getTimelinePeriodActivityCount(period: StableTimelinePeriod) {

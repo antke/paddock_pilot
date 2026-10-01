@@ -1,3 +1,5 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
+import { getHorseBreedLabel } from 'shared/i18n/horseBreedLabels'
 import { FileUploadField } from '#/components/forms/FileUploadField'
 import { FormSection } from '#/components/forms/FormLayout'
 import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
@@ -43,37 +45,14 @@ type Props = {
 
 type HorseSexChoice = NonNullable<HorseFormSchema['sex']> | 'unspecified'
 
-const sexOptions = [
-  { value: 'unspecified', label: 'Not specified' },
-  { value: 'mare', label: 'Mare' },
-  { value: 'gelding', label: 'Gelding' },
-  { value: 'stallion', label: 'Stallion' },
-] satisfies Array<{ value: HorseSexChoice; label: string }>
-
 const toOptionalSex = (value: HorseSexChoice) =>
   value === 'unspecified' ? undefined : value
 
 type ShoeingStatusChoice =
   NonNullable<HorseFormSchema['shoeingStatus']> | 'unspecified'
 
-const shoeingOptions = [
-  { value: 'unspecified', label: 'Not specified' },
-  { value: 'barefoot', label: 'Barefoot' },
-  { value: 'front_shoes', label: 'Front shoes' },
-  { value: 'full_set', label: 'Full set' },
-] satisfies Array<{
-  value: ShoeingStatusChoice
-  label: string
-}>
-
 const toOptionalShoeingStatus = (value: ShoeingStatusChoice) =>
   value === 'unspecified' ? undefined : value
-
-const shoeingStatusLabels = {
-  barefoot: 'Barefoot',
-  front_shoes: 'Front shoes',
-  full_set: 'Full set',
-} satisfies Record<NonNullable<HorseFormSchema['shoeingStatus']>, string>
 
 export function HorseFormFields({
   control,
@@ -82,6 +61,32 @@ export function HorseFormFields({
   additionalBreeds,
   onAddBreed,
 }: Props) {
+  const t = useT()
+  const { locale } = useLocale()
+
+  const sexOptions = [
+    { value: 'unspecified', label: t('horseForm.unspecified') },
+    { value: 'mare', label: t('horseForm.mare') },
+    { value: 'gelding', label: t('horseForm.gelding') },
+    { value: 'stallion', label: t('horseForm.stallion') },
+  ] satisfies Array<{ value: HorseSexChoice; label: string }>
+
+  const shoeingOptions = [
+    { value: 'unspecified', label: t('horseForm.unspecified') },
+    { value: 'barefoot', label: t('horseForm.barefoot') },
+    { value: 'front_shoes', label: t('horseForm.front_shoes') },
+    { value: 'full_set', label: t('horseForm.full_set') },
+  ] satisfies Array<{
+    value: ShoeingStatusChoice
+    label: string
+  }>
+
+  const shoeingStatusLabels = {
+    barefoot: t('horseForm.barefoot'),
+    front_shoes: t('horseForm.front_shoes'),
+    full_set: t('horseForm.full_set'),
+  } satisfies Record<NonNullable<HorseFormSchema['shoeingStatus']>, string>
+
   const profileImageId = useId()
   const horseName = useWatch({ control, name: 'name' })
   const ownerName = useWatch({ control, name: 'ownerName' })
@@ -110,35 +115,35 @@ export function HorseFormFields({
       : statedAge
 
   const detailsSummary = formatMetaText([
-    horseName || 'Unnamed horse',
+    horseName || t('horseForm.unnamed'),
     ownerName,
     calculatedAge !== undefined && calculatedAge >= 0
-      ? `${calculatedAge} ${calculatedAge === 1 ? 'year' : 'years'}`
+      ? t('horseForm.years', { count: calculatedAge })
       : undefined,
   ])
   const careSummary =
     formatMetaText([
-      passportNumber ? 'Passport added' : undefined,
-      microchipNumber ? 'Microchip added' : undefined,
+      passportNumber ? t('horseForm.passportAdded') : undefined,
+      microchipNumber ? t('horseForm.microchipAdded') : undefined,
       vetName,
       farrierName,
-    ]) || 'Optional'
+    ]) || t('horseForm.optional')
   const profileSummary =
     formatMetaText([
-      breed,
+      breed ? getHorseBreedLabel(breed, locale) : undefined,
       discipline,
       shoeingStatus ? shoeingStatusLabels[shoeingStatus] : undefined,
       allergies?.length
-        ? `${allergies.length} ${allergies.length === 1 ? 'allergy' : 'allergies'}`
+        ? t('horseForm.allergyCount', { count: allergies.length })
         : undefined,
-    ]) || 'Optional'
+    ]) || t('horseForm.optional')
   const nutritionSummary =
     feedingRoutine ||
     nutritionNotes ||
     nutritionRecommended?.length ||
     nutritionAvoid?.length
-      ? 'Nutrition details added'
-      : 'Optional'
+      ? t('horseForm.nutritionAdded')
+      : t('horseForm.optional')
   const detailsInvalid = Boolean(
     errors.name ||
     errors.ownerName ||
@@ -180,11 +185,11 @@ export function HorseFormFields({
     <>
       <FormSection
         defaultOpen
-        description="Add the horse's identifying details and profile image."
+        description={t('horseForm.detailsHelp')}
         invalid={detailsInvalid}
         number={1}
         summary={detailsSummary}
-        title="Horse details"
+        title={t('horseForm.details')}
         validationAttempt={submitCount}
       >
         <FieldGroup gap="compact">
@@ -194,7 +199,9 @@ export function HorseFormFields({
               control={control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Horse name</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>
+                    {t('horseForm.name')}
+                  </FieldLabel>
 
                   <Input
                     {...field}
@@ -223,7 +230,9 @@ export function HorseFormFields({
               control={control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Owner name</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>
+                    {t('horseForm.owner')}
+                  </FieldLabel>
 
                   <Input
                     {...field}
@@ -257,10 +266,10 @@ export function HorseFormFields({
               control={control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Sex</FieldLabel>
+                  <FieldLabel>{t('horseForm.sex')}</FieldLabel>
 
                   <ChoiceButtonGroup
-                    aria-label="Sex"
+                    aria-label={t('horseForm.sex')}
                     value={field.value ?? 'unspecified'}
                     options={sexOptions}
                     disabled={disabled}
@@ -295,9 +304,9 @@ export function HorseFormFields({
                 <FileUploadField
                   id={`${profileImageId}-${name}`}
                   name={name}
-                  label="Profile picture"
-                  helpLabel="About horse profile picture"
-                  help="Upload an optional image up to 5 MB to show on horse cards."
+                  label={t('horseForm.picture')}
+                  helpLabel={t('horseForm.pictureLabel')}
+                  help={t('horseForm.pictureHelp')}
                   accept="image/*"
                   kind="image"
                   width="full"
@@ -316,15 +325,15 @@ export function HorseFormFields({
       </FormSection>
 
       <FormSection
-        description="Keep documents, insurance, and care contacts together."
+        description={t('horseForm.careHelp')}
         invalid={careInvalid}
         number={2}
         summary={careSummary}
-        title="Care & records"
+        title={t('horseForm.care')}
         validationAttempt={submitCount}
       >
         <FieldGroup gap="compact">
-          <CareRecordRow label="Identification">
+          <CareRecordRow label={t('horseForm.identification')}>
             <FieldGrid>
               <Controller
                 name="passportNumber"
@@ -332,7 +341,7 @@ export function HorseFormFields({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor={field.name}>
-                      Passport number
+                      {t('horseForm.passport')}
                     </FieldLabel>
 
                     <Input
@@ -345,7 +354,7 @@ export function HorseFormFields({
                       aria-describedby={
                         fieldState.invalid ? `${field.name}-error` : undefined
                       }
-                      placeholder="Passport or registration reference"
+                      placeholder={t('horseForm.passportPlaceholder')}
                       autoComplete="off"
                     />
 
@@ -365,7 +374,7 @@ export function HorseFormFields({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor={field.name}>
-                      Microchip number
+                      {t('horseForm.microchip')}
                     </FieldLabel>
 
                     <Input
@@ -378,7 +387,7 @@ export function HorseFormFields({
                       aria-describedby={
                         fieldState.invalid ? `${field.name}-error` : undefined
                       }
-                      placeholder="Microchip reference"
+                      placeholder={t('horseForm.microchipPlaceholder')}
                       autoComplete="off"
                     />
 
@@ -394,7 +403,7 @@ export function HorseFormFields({
             </FieldGrid>
           </CareRecordRow>
 
-          <CareRecordRow label="Insurance">
+          <CareRecordRow label={t('horseForm.insurance')}>
             <FieldGrid>
               <Controller
                 name="insuranceProvider"
@@ -402,7 +411,7 @@ export function HorseFormFields({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor={field.name}>
-                      Insurance provider
+                      {t('horseForm.insurer')}
                     </FieldLabel>
 
                     <Input
@@ -415,7 +424,7 @@ export function HorseFormFields({
                       aria-describedby={
                         fieldState.invalid ? `${field.name}-error` : undefined
                       }
-                      placeholder="Insurer name"
+                      placeholder={t('horseForm.insurerPlaceholder')}
                       autoComplete="off"
                     />
 
@@ -434,7 +443,7 @@ export function HorseFormFields({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor={field.name}>
-                      Insurance policy
+                      {t('horseForm.policy')}
                     </FieldLabel>
 
                     <Input
@@ -447,7 +456,7 @@ export function HorseFormFields({
                       aria-describedby={
                         fieldState.invalid ? `${field.name}-error` : undefined
                       }
-                      placeholder="Policy number"
+                      placeholder={t('horseForm.policyPlaceholder')}
                       autoComplete="off"
                     />
 
@@ -463,14 +472,16 @@ export function HorseFormFields({
             </FieldGrid>
           </CareRecordRow>
 
-          <CareRecordRow label="Veterinary">
+          <CareRecordRow label={t('horseForm.veterinary')}>
             <FieldGrid>
               <Controller
                 name="vetName"
                 control={control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>Vet name</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>
+                      {t('horseForm.vetName')}
+                    </FieldLabel>
                     <Input
                       {...field}
                       id={field.name}
@@ -498,7 +509,9 @@ export function HorseFormFields({
                 control={control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>Vet phone</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>
+                      {t('horseForm.vetPhone')}
+                    </FieldLabel>
                     <Input
                       {...field}
                       id={field.name}
@@ -524,14 +537,16 @@ export function HorseFormFields({
             </FieldGrid>
           </CareRecordRow>
 
-          <CareRecordRow label="Farrier">
+          <CareRecordRow label={t('horseForm.farrier')}>
             <FieldGrid>
               <Controller
                 name="farrierName"
                 control={control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>Farrier name</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>
+                      {t('horseForm.farrierName')}
+                    </FieldLabel>
                     <Input
                       {...field}
                       id={field.name}
@@ -559,7 +574,9 @@ export function HorseFormFields({
                 control={control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>Farrier phone</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>
+                      {t('horseForm.farrierPhone')}
+                    </FieldLabel>
                     <Input
                       {...field}
                       id={field.name}
@@ -585,13 +602,15 @@ export function HorseFormFields({
             </FieldGrid>
           </CareRecordRow>
 
-          <CareRecordRow label="Emergency">
+          <CareRecordRow label={t('horseForm.emergency')}>
             <Controller
               name="emergencyNotes"
               control={control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Emergency notes</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>
+                    {t('horseForm.emergencyNotes')}
+                  </FieldLabel>
 
                   <Textarea
                     {...field}
@@ -602,7 +621,7 @@ export function HorseFormFields({
                     aria-describedby={
                       fieldState.invalid ? `${field.name}-error` : undefined
                     }
-                    placeholder="Important notes for urgent care or service providers"
+                    placeholder={t('horseForm.emergencyPlaceholder')}
                     autoComplete="off"
                   />
 
@@ -620,11 +639,11 @@ export function HorseFormFields({
       </FormSection>
 
       <FormSection
-        description="Record breeding, hoof care, and ongoing health details."
+        description={t('horseForm.profileHelp')}
         invalid={profileInvalid}
         number={3}
         summary={profileSummary}
-        title="Profile & health"
+        title={t('horseForm.profile')}
         validationAttempt={submitCount}
       >
         <FieldGroup gap="compact">
@@ -634,7 +653,9 @@ export function HorseFormFields({
               control={control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Breed</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>
+                    {t('horseForm.breed')}
+                  </FieldLabel>
 
                   <HorseBreedAutocomplete
                     inputRef={field.ref}
@@ -668,7 +689,9 @@ export function HorseFormFields({
               control={control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Color</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>
+                    {t('horseForm.color')}
+                  </FieldLabel>
 
                   <Input
                     {...field}
@@ -680,7 +703,7 @@ export function HorseFormFields({
                     aria-describedby={
                       fieldState.invalid ? `${field.name}-error` : undefined
                     }
-                    placeholder="Chestnut"
+                    placeholder={t('horseForm.colorPlaceholder')}
                     autoComplete="off"
                   />
 
@@ -698,7 +721,9 @@ export function HorseFormFields({
               control={control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Height</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>
+                    {t('horseForm.height')}
+                  </FieldLabel>
 
                   <Input
                     {...field}
@@ -729,7 +754,9 @@ export function HorseFormFields({
               control={control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Discipline</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>
+                    {t('horseForm.discipline')}
+                  </FieldLabel>
 
                   <Input
                     {...field}
@@ -741,7 +768,7 @@ export function HorseFormFields({
                     aria-describedby={
                       fieldState.invalid ? `${field.name}-error` : undefined
                     }
-                    placeholder="Eventing"
+                    placeholder={t('horseForm.disciplinePlaceholder')}
                     autoComplete="off"
                   />
 
@@ -762,7 +789,9 @@ export function HorseFormFields({
               control={control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Sire</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>
+                    {t('horseForm.sire')}
+                  </FieldLabel>
                   <Input
                     {...field}
                     id={field.name}
@@ -772,7 +801,7 @@ export function HorseFormFields({
                     aria-describedby={
                       fieldState.invalid ? `${field.name}-error` : undefined
                     }
-                    placeholder="Sire name"
+                    placeholder={t('horseForm.sirePlaceholder')}
                     autoComplete="off"
                   />
                   {fieldState.invalid && (
@@ -790,7 +819,9 @@ export function HorseFormFields({
               control={control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Dam</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>
+                    {t('horseForm.dam')}
+                  </FieldLabel>
                   <Input
                     {...field}
                     id={field.name}
@@ -800,7 +831,7 @@ export function HorseFormFields({
                     aria-describedby={
                       fieldState.invalid ? `${field.name}-error` : undefined
                     }
-                    placeholder="Dam name"
+                    placeholder={t('horseForm.damPlaceholder')}
                     autoComplete="off"
                   />
                   {fieldState.invalid && (
@@ -820,10 +851,10 @@ export function HorseFormFields({
               control={control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Shoeing status</FieldLabel>
+                  <FieldLabel>{t('horseForm.shoeing')}</FieldLabel>
 
                   <ChoiceButtonGroup
-                    aria-label="Shoeing status"
+                    aria-label={t('horseForm.shoeing')}
                     value={field.value ?? 'unspecified'}
                     options={shoeingOptions}
                     disabled={disabled}
@@ -853,7 +884,9 @@ export function HorseFormFields({
               control={control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Deworming notes</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>
+                    {t('horseForm.deworming')}
+                  </FieldLabel>
 
                   <Textarea
                     {...field}
@@ -864,7 +897,7 @@ export function HorseFormFields({
                     aria-describedby={
                       fieldState.invalid ? `${field.name}-error` : undefined
                     }
-                    placeholder="Last worm count, product notes, or next check reminder"
+                    placeholder={t('horseForm.dewormingPlaceholder')}
                     autoComplete="off"
                   />
 
@@ -881,8 +914,8 @@ export function HorseFormFields({
             <HorseStringListField
               control={control}
               name="allergies"
-              label="Allergies or sensitivities"
-              placeholder={'One item per line\nPenicillin\nBee stings'}
+              label={t('horseForm.allergies')}
+              placeholder={t('horseForm.allergiesPlaceholder')}
               disabled={disabled}
             />
           </FieldGrid>
@@ -890,11 +923,11 @@ export function HorseFormFields({
       </FormSection>
 
       <FormSection
-        description="Document feeding routines, requirements, and restrictions."
+        description={t('horseForm.nutritionHelp')}
         invalid={nutritionInvalid}
         number={4}
         summary={nutritionSummary}
-        title="Nutrition"
+        title={t('horseForm.nutrition')}
         validationAttempt={submitCount}
       >
         <FieldGroup gap="compact">
@@ -904,7 +937,9 @@ export function HorseFormFields({
               control={control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Feeding routine</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>
+                    {t('horseForm.feeding')}
+                  </FieldLabel>
 
                   <Textarea
                     {...field}
@@ -915,7 +950,7 @@ export function HorseFormFields({
                     aria-describedby={
                       fieldState.invalid ? `${field.name}-error` : undefined
                     }
-                    placeholder="Morning hay, evening mash, turnout notes..."
+                    placeholder={t('horseForm.feedingPlaceholder')}
                     autoComplete="off"
                   />
 
@@ -934,7 +969,9 @@ export function HorseFormFields({
               control={control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Nutrition notes</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>
+                    {t('horseForm.nutritionNotes')}
+                  </FieldLabel>
 
                   <Textarea
                     {...field}
@@ -945,7 +982,7 @@ export function HorseFormFields({
                     aria-describedby={
                       fieldState.invalid ? `${field.name}-error` : undefined
                     }
-                    placeholder="Supplements, minerals, intolerance warnings, or special requirements"
+                    placeholder={t('horseForm.nutritionPlaceholder')}
                     autoComplete="off"
                   />
 
@@ -964,18 +1001,16 @@ export function HorseFormFields({
             <HorseStringListField
               control={control}
               name="nutritionRecommended"
-              label="Recommended or required"
-              placeholder={
-                'One item per line\nLow-sugar chaff\nJoint supplement'
-              }
+              label={t('horseForm.recommended')}
+              placeholder={t('horseForm.recommendedPlaceholder')}
               disabled={disabled}
             />
 
             <HorseStringListField
               control={control}
               name="nutritionAvoid"
-              label="Avoid or cannot eat"
-              placeholder={'One item per line\nOats\nHigh-sugar treats'}
+              label={t('horseForm.avoid')}
+              placeholder={t('horseForm.avoidPlaceholder')}
               disabled={disabled}
             />
           </FieldGrid>
@@ -992,6 +1027,8 @@ function BirthDateOrAgeFields({
   control: Control<HorseFormInput, unknown, HorseFormSchema>
   disabled: boolean
 }) {
+  const t = useT()
+
   const { field: dateField, fieldState: dateState } = useController({
     control,
     name: 'dateOfBirth',
@@ -1021,7 +1058,7 @@ function BirthDateOrAgeFields({
 
   return (
     <FieldSet>
-      <FieldLegend variant="label">Birth date or age</FieldLegend>
+      <FieldLegend variant="label">{t('horseForm.birthOrAge')}</FieldLegend>
       <FieldGrid breakpoint="lg" template="trailing-sm">
         <Field data-invalid={dateState.invalid}>
           <div className="grid grid-cols-[minmax(5rem,1fr)_minmax(4rem,0.7fr)_minmax(4rem,0.7fr)] gap-2">
@@ -1029,7 +1066,13 @@ function BirthDateOrAgeFields({
               <BirthDatePartInput
                 key={part}
                 id={`${dateField.name}-${part}`}
-                label={{ year: 'Year', month: 'Month', day: 'Day' }[part]}
+                label={
+                  {
+                    year: t('horseForm.year'),
+                    month: t('horseForm.month'),
+                    day: t('horseForm.day'),
+                  }[part]
+                }
                 value={birthDate[part]}
                 placeholder={{ year: '2016', month: 'MM', day: 'DD' }[part]}
                 maxLength={part === 'year' ? 4 : 2}
@@ -1052,7 +1095,7 @@ function BirthDateOrAgeFields({
             ))}
           </div>
           <FieldDescription id={`${dateField.name}-description`}>
-            Month and day are optional. Age alone estimates the birth year.
+            {t('horseForm.birthHelp')}
           </FieldDescription>
           {dateState.invalid && (
             <FieldError
@@ -1062,7 +1105,9 @@ function BirthDateOrAgeFields({
           )}
         </Field>
         <Field data-invalid={ageState.invalid}>
-          <FieldLabel htmlFor={ageField.name}>Or current age</FieldLabel>
+          <FieldLabel htmlFor={ageField.name}>
+            {t('horseForm.currentAge')}
+          </FieldLabel>
           <Input
             id={ageField.name}
             name="horse-age"
@@ -1092,7 +1137,7 @@ function BirthDateOrAgeFields({
             }}
           />
           <FieldDescription id={`${ageField.name}-description`}>
-            Updates the birth year.
+            {t('horseForm.ageHelp')}
           </FieldDescription>
           {ageState.invalid && (
             <FieldError

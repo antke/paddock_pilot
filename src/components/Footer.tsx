@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { Show } from '@clerk/tanstack-react-start'
 
 import { DashboardBrandWordmark } from './dashboard/DashboardDisplayHeading'
@@ -5,6 +6,7 @@ import { AppFooter, AppFooterInner } from './layout/AppShell'
 import { ButtonLink } from './ui/button'
 
 export default function Footer() {
+  const t = useT()
   const year = new Date().getFullYear()
 
   return (
@@ -15,23 +17,24 @@ export default function Footer() {
             Paddock Pilot
           </DashboardBrandWordmark>
           <p className="m-0 max-w-md text-sm leading-6">
-            Clearer horse records and care coordination for the yard.
+            {t('footer.description')}
           </p>
-          <p className="m-0 text-xs">
-            &copy; {year} Paddock Pilot. All rights reserved.
-          </p>
+          <p className="m-0 text-xs">{t('footer.copyright', { year })}</p>
         </div>
 
-        <nav aria-label="Footer navigation" className="flex flex-wrap gap-1">
+        <nav
+          aria-label={t('navigation.footer')}
+          className="flex flex-wrap gap-1"
+        >
           <ButtonLink to="/pricing" variant="ghost" size="sm">
-            Plans
+            {t('navigation.plans')}
           </ButtonLink>
           <Show when="signed-out">
             <ButtonLink to="/sign-in/$" variant="ghost" size="sm">
-              Sign in
+              {t('navigation.signIn')}
             </ButtonLink>
             <ButtonLink to="/sign-up/$" variant="outline" size="sm">
-              Create account
+              {t('navigation.createAccount')}
             </ButtonLink>
           </Show>
         </nav>

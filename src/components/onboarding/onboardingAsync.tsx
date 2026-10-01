@@ -2,6 +2,7 @@ import { createContext, useContext, useRef, useState } from 'react'
 import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { Button } from '#/components/ui/button'
+import { useT } from '#/i18n/LocaleProvider'
 
 export const OnboardingPendingContext = createContext<
   (pending: boolean) => void
@@ -18,10 +19,17 @@ export function useOnboardingSave<TValues, TResult>({
   onSaved: (result: TResult) => void | Promise<void>
   failureMessage: string
 }) {
+  const t = useT()
   const pendingRef = useRef(false)
   const saved = useRef<{ result: TResult } | null>(null)
   const [pending, setPending] = useState(false)
-  const [error, setError] = useState<string>()
+  const [failure, setFailure] = useState<'save' | 'continue'>()
+  const error =
+    failure === 'continue'
+      ? t('onboarding.savedContinueFailed')
+      : failure === 'save'
+        ? failureMessage
+        : undefined
   const [acknowledged, setAcknowledged] = useState(false)
   const setParentPending = useOnboardingPending()
   const run = async (values: TValues) => {
@@ -29,7 +37,7 @@ export function useOnboardingSave<TValues, TResult>({
     pendingRef.current = true
     setPending(true)
     setParentPending(true)
-    setError(undefined)
+    setFailure(undefined)
     try {
       if (!saved.current) {
         saved.current = { result: await onSave(values) }
@@ -39,11 +47,7 @@ export function useOnboardingSave<TValues, TResult>({
       saved.current = null
       setAcknowledged(false)
     } catch {
-      setError(
-        saved.current
-          ? 'Your changes were saved, but we could not continue. Try continuing again; your changes will not be saved twice.'
-          : failureMessage,
-      )
+      setFailure(saved.current ? 'continue' : 'save')
     } finally {
       pendingRef.current = false
       setPending(false)
@@ -55,24 +59,32 @@ export function useOnboardingSave<TValues, TResult>({
 
 /** Transition errors resolve locally; retry repeats only this transition. */
 export function useOnboardingAction() {
+  const t = useT()
   const lock = useRef(false)
   const retry = useRef<(() => Promise<void>) | null>(null)
   const [pending, setPending] = useState(false)
-  const [error, setError] = useState<string>()
+  const [failure, setFailure] = useState<'continue' | 'openStable'>()
+  const error = failure
+    ? t(
+        failure === 'openStable'
+          ? 'onboarding.openFailed'
+          : 'onboarding.continueFailed',
+      )
+    : undefined
   const run = async (
     operation: () => Promise<void>,
-    message = 'Could not continue. Your saved details are safe. Try again.',
+    message: 'continue' | 'openStable' = 'continue',
   ) => {
     if (lock.current) return
     lock.current = true
     setPending(true)
-    setError(undefined)
+    setFailure(undefined)
     retry.current = () => run(operation, message)
     try {
       await operation()
       retry.current = null
     } catch {
-      setError(message)
+      setFailure(message)
     } finally {
       lock.current = false
       setPending(false)
@@ -92,6 +104,7 @@ export function OnboardingTransitionError({
   onRetry?: () => void
   pending?: boolean
 }) {
+  const t = useT()
   return message ? (
     <>
       <FormSubmissionError message={message} />
@@ -102,7 +115,7 @@ export function OnboardingTransitionError({
           disabled={pending}
           onClick={onRetry}
         >
-          Try again
+          {t('onboarding.retry')}
         </Button>
       </DashboardActions>
     </>

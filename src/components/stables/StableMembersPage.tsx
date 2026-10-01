@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { useEffect, useRef, useState } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 import type { FunctionReturnType } from 'convex/server'
@@ -39,6 +40,8 @@ export function StableMembersPage({
   myDetails,
   renderDetailsForm = (props) => <StableMemberDetailsForm {...props} />,
 }: StableMembersPageProps) {
+  const t = useT()
+
   const [isEditingDetails, setIsEditingDetails] = useState(false)
   const editButtonRef = useRef<HTMLButtonElement>(null)
   const editorRef = useRef<HTMLDivElement>(null)
@@ -55,21 +58,24 @@ export function StableMembersPage({
   return (
     <>
       <DashboardPageHeader
-        title="Members"
-        description={`Everyone currently connected to ${stable.name}. Your contact and emergency details are visible only to you and the stable owner.`}
+        title={t('stables.members')}
+        description={t('stables.membersDescription', { name: stable.name })}
         badges={<StableMemberRoleBadge role={access.role} />}
       />
 
       <DashboardLayoutGrid variant="sidebar">
-        <DashboardSectionCard title="Stable directory" contentGap="compact">
+        <DashboardSectionCard
+          title={t('stables.directory')}
+          contentGap="compact"
+        >
           <DashboardItemList gap="flush">
             {people.length === 0 && (
               <DashboardEmptyState>
-                No members are listed for this stable.
+                {t('stables.noMembers')}
               </DashboardEmptyState>
             )}
             {people.map((person) => {
-              const name = formatPersonName(person)
+              const name = formatPersonName(person, t)
 
               return (
                 <StablePersonCard
@@ -84,11 +90,11 @@ export function StableMembersPage({
         </DashboardSectionCard>
 
         <DashboardSectionCard
-          title={myDetails ? 'Your yard profile' : 'Your role'}
+          title={
+            myDetails ? t('stables.yourYardProfile') : t('stables.yourRole')
+          }
           description={
-            myDetails
-              ? 'Keep the details the owner may need around the yard up to date.'
-              : 'You manage this stable and its membership.'
+            myDetails ? t('stables.profileCurrentHelp') : t('stables.ownerHelp')
           }
           actions={
             myDetails && !isEditingDetails ? (
@@ -100,7 +106,7 @@ export function StableMembersPage({
                 size="sm"
                 onClick={() => setIsEditingDetails(true)}
               >
-                Edit details
+                {t('stables.editDetails')}
               </Button>
             ) : undefined
           }
@@ -117,32 +123,29 @@ export function StableMembersPage({
             ) : (
               <DetailStack>
                 <DetailSummaryField
-                  label="Yard display name"
-                  value={myDetails.displayNameOverride || 'Not added yet'}
+                  label={t('stables.yardDisplayName')}
+                  value={myDetails.displayNameOverride || t('stables.notAdded')}
                 />
                 <DetailSummaryField
-                  label="Phone"
-                  value={myDetails.phone || 'Not added yet'}
+                  label={t('stables.phone')}
+                  value={myDetails.phone || t('stables.notAdded')}
                 />
                 <DetailSummaryField
-                  label="Emergency contact"
-                  value={myDetails.emergencyContact || 'Not added yet'}
+                  label={t('stables.emergencyContact')}
+                  value={myDetails.emergencyContact || t('stables.notAdded')}
                 />
               </DetailStack>
             )
           ) : (
             <DetailStack>
-              <p>
-                Invite members, update their details, and manage access from
-                Stable settings.
-              </p>
+              <p>{t('stables.manageMembersHelp')}</p>
               <ButtonLink
                 to="/stables/$stableId/settings"
                 params={{ stableId: stable._id }}
                 search={{ tab: 'members' }}
                 size="sm"
               >
-                Manage members
+                {t('stables.manageMembers')}
               </ButtonLink>
             </DetailStack>
           )}
@@ -152,12 +155,17 @@ export function StableMembersPage({
   )
 }
 
-function formatPersonName(person: StablePeople[number]) {
+function formatPersonName(
+  person: StablePeople[number],
+  t: ReturnType<typeof useT>,
+) {
   const accountName =
     person.user?.preferredName ||
     [person.user?.firstName, person.user?.lastName].filter(Boolean).join(' ')
 
   return (
-    person.membership?.displayNameOverride || accountName || 'Stable member'
+    person.membership?.displayNameOverride ||
+    accountName ||
+    t('stables.memberFallback')
   )
 }

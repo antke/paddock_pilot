@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { getEffectiveInvitationStatus } from 'shared/stableInvitations/invitationState'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -86,13 +87,14 @@ function MemberWelcomeData({
   const { data: member } = useSuspenseQuery(
     convexQuery(api.stableMembers.getMyDetails, { stableId: stable._id }),
   )
+  const t = useT()
 
   if (!member) {
     return (
       <RouteStatusAlert
         tone="danger"
-        title="Membership not found"
-        description="Your account is not connected to this stable as an active member."
+        title={t('listControls.membershipMissing')}
+        description={t('listControls.membershipMissingHelp')}
       />
     )
   }

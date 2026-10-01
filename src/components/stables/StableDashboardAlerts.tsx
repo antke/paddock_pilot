@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardBadgeList } from '#/components/dashboard/DashboardBadgeList'
 import { DashboardCountBadge } from '#/components/dashboard/DashboardBadges'
@@ -14,7 +15,6 @@ import { formatEventDate } from '#/components/events/eventDisplay'
 import { EventRow } from '#/components/events/EventRow'
 import { HealthIssueSeverityBadge } from '#/components/horses/HorseCareBadges'
 import { CareReminderStatusBadge } from '#/components/reminders/CareReminderBadges'
-import { stableInvitationStatusLabels } from '#/components/stables/StableInvitationBadges'
 import { formatCommaList, formatConjunctionList } from '#/lib/textDisplay'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import { convexQuery } from '@convex-dev/react-query'
@@ -23,8 +23,7 @@ import type { ComponentProps } from 'react'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import type { FunctionReturnType } from 'convex/server'
-import { stableInvitationRoleLabels } from 'shared/stableInvitations/invitationSchema'
-import { careReminderCategoryLabels } from 'shared/reminders/careReminderSchema'
+import { getProfileFieldLabel } from '#/i18n/profileFieldLabels'
 
 type StableDashboardAlerts = FunctionReturnType<
   typeof api.stableDashboardAlerts.getForStable
@@ -49,6 +48,9 @@ const alertRowTone = {
 export function StableDashboardAlerts({
   stableId,
 }: StableDashboardAlertsProps) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const { today } = useLocalDateContext()
   const { data: alerts } = useSuspenseQuery(
     convexQuery(api.stableDashboardAlerts.getForStable, {
@@ -60,19 +62,19 @@ export function StableDashboardAlerts({
     <DashboardSection
       chrome="soft"
       gap="compact"
-      title="Care alerts"
-      description="Quick checks for urgent care, missing details, follow-ups, and upcoming service coordination."
+      title={t('stableAlerts.title')}
+      description={t('stableAlerts.help')}
       size="panel"
       descriptionSize="sm"
       titleStyle="display"
     >
       <DashboardLayoutGrid variant="alertColumns">
         <AlertSection
-          title="Needs attention"
+          title={t('stableAlerts.attention')}
           count={alerts.summary.highSeverityIssueCount}
         >
           {alerts.highSeverityIssues.length === 0 ? (
-            <EmptyAlert>No high-severity active health issues.</EmptyAlert>
+            <EmptyAlert>{t('stableAlerts.noHealthIssues')}</EmptyAlert>
           ) : (
             alerts.highSeverityIssues.slice(0, 4).map((issue) => (
               <DashboardItemOpenLink
@@ -95,11 +97,11 @@ export function StableDashboardAlerts({
         </AlertSection>
 
         <AlertSection
-          title="Due reminders"
+          title={t('stableAlerts.dueReminders')}
           count={alerts.summary.dueReminderCount}
         >
           {alerts.dueReminders.length === 0 ? (
-            <EmptyAlert>No reminders due in the next 7 days.</EmptyAlert>
+            <EmptyAlert>{t('stableAlerts.noReminders')}</EmptyAlert>
           ) : (
             alerts.dueReminders.slice(0, 4).map((reminder) => (
               <DashboardItemOpenLink
@@ -118,9 +120,13 @@ export function StableDashboardAlerts({
                   )}
                 </DashboardBadgeList>
                 <DashboardMetaList separator="dot">
-                  <span>Due {formatEventDate(reminder.dueDate)}</span>
+                  <span>
+                    {t('stableAlerts.due', {
+                      date: formatEventDate(reminder.dueDate, locale),
+                    })}
+                  </span>
                   {reminder.horseName && <span>{reminder.horseName}</span>}
-                  <span>{careReminderCategoryLabels[reminder.category]}</span>
+                  <span>{t(`careLabels.category.${reminder.category}`)}</span>
                 </DashboardMetaList>
               </DashboardItemOpenLink>
             ))
@@ -128,11 +134,11 @@ export function StableDashboardAlerts({
         </AlertSection>
 
         <AlertSection
-          title="Upcoming care"
+          title={t('stableAlerts.upcomingCare')}
           count={alerts.summary.upcomingEventCount}
         >
           {alerts.upcomingEvents.length === 0 ? (
-            <EmptyAlert>No planned events in the next 30 days.</EmptyAlert>
+            <EmptyAlert>{t('stableAlerts.noEvents')}</EmptyAlert>
           ) : (
             alerts.upcomingEvents.slice(0, 4).map((event) => (
               <EventRow
@@ -157,13 +163,11 @@ export function StableDashboardAlerts({
         </AlertSection>
 
         <AlertSection
-          title="Profile gaps"
+          title={t('stableAlerts.profileGaps')}
           count={alerts.summary.profileGapCount}
         >
           {alerts.profileGaps.length === 0 ? (
-            <EmptyAlert>
-              Important horse profile details are filled in.
-            </EmptyAlert>
+            <EmptyAlert>{t('stableAlerts.profileComplete')}</EmptyAlert>
           ) : (
             alerts.profileGaps.slice(0, 4).map((horse) => (
               <DashboardItemOpenLink
@@ -177,8 +181,14 @@ export function StableDashboardAlerts({
                   {horse.horseName}
                 </DashboardItemOpenTitle>
                 <DashboardMetaList>
-                  Missing {formatCommaList(horse.missingFields.slice(0, 3))}
-                  {horse.missingFields.length > 3 ? '…' : ''}
+                  {t('stableAlerts.missing', {
+                    fields:
+                      formatCommaList(
+                        horse.missingFields
+                          .slice(0, 3)
+                          .map((field) => getProfileFieldLabel(field, locale)),
+                      ) + (horse.missingFields.length > 3 ? '…' : ''),
+                  })}
                 </DashboardMetaList>
               </DashboardItemOpenLink>
             ))
@@ -186,11 +196,11 @@ export function StableDashboardAlerts({
         </AlertSection>
 
         <AlertSection
-          title="Event follow-ups"
+          title={t('stableAlerts.followUps')}
           count={alerts.summary.completionNoteGapCount}
         >
           {alerts.completionNoteGaps.length === 0 ? (
-            <EmptyAlert>Completed events have aftercare notes.</EmptyAlert>
+            <EmptyAlert>{t('stableAlerts.followUpsComplete')}</EmptyAlert>
           ) : (
             alerts.completionNoteGaps.slice(0, 4).map((event) => (
               <DashboardItemOpenLink
@@ -202,7 +212,9 @@ export function StableDashboardAlerts({
               >
                 <DashboardItemOpenTitle>{event.title}</DashboardItemOpenTitle>
                 <DashboardMetaList>
-                  Completed {formatEventDate(event.date)} without notes.
+                  {t('stableAlerts.completedNoNotes', {
+                    date: formatEventDate(event.date, locale),
+                  })}
                 </DashboardMetaList>
               </DashboardItemOpenLink>
             ))
@@ -210,13 +222,11 @@ export function StableDashboardAlerts({
         </AlertSection>
 
         <AlertSection
-          title="Horse outcomes"
+          title={t('stableAlerts.outcomes')}
           count={alerts.summary.serviceOutcomeGapCount}
         >
           {alerts.serviceOutcomeGaps.length === 0 ? (
-            <EmptyAlert>
-              Completed shared visits have per-horse outcomes.
-            </EmptyAlert>
+            <EmptyAlert>{t('stableAlerts.outcomesComplete')}</EmptyAlert>
           ) : (
             alerts.serviceOutcomeGaps.slice(0, 4).map((row) => (
               <DashboardItemOpenLink
@@ -230,7 +240,7 @@ export function StableDashboardAlerts({
                   {row.eventTitle}
                 </DashboardItemOpenTitle>
                 <DashboardMetaList>
-                  Add outcome notes for {row.horseName}.
+                  {t('stableAlerts.addOutcome', { horse: row.horseName })}
                 </DashboardMetaList>
               </DashboardItemOpenLink>
             ))
@@ -238,11 +248,11 @@ export function StableDashboardAlerts({
         </AlertSection>
 
         <AlertSection
-          title="Provider details"
+          title={t('stableAlerts.providers')}
           count={alerts.summary.providerGapCount}
         >
           {alerts.providerGaps.length === 0 ? (
-            <EmptyAlert>Event provider details are filled in.</EmptyAlert>
+            <EmptyAlert>{t('stableAlerts.providersComplete')}</EmptyAlert>
           ) : (
             alerts.providerGaps.slice(0, 4).map((event) => (
               <DashboardItemOpenLink
@@ -254,12 +264,19 @@ export function StableDashboardAlerts({
               >
                 <DashboardItemOpenTitle>{event.title}</DashboardItemOpenTitle>
                 <DashboardMetaList>
-                  Missing{' '}
-                  {formatConjunctionList([
-                    event.missingProviderName ? 'provider name' : null,
-                    event.missingProviderPhone ? 'provider phone' : null,
-                  ])}
-                  .
+                  {t('stableAlerts.providerMissing', {
+                    fields: formatConjunctionList(
+                      [
+                        event.missingProviderName
+                          ? t('stableAlerts.providerName')
+                          : null,
+                        event.missingProviderPhone
+                          ? t('stableAlerts.providerPhone')
+                          : null,
+                      ],
+                      locale,
+                    ),
+                  })}
                 </DashboardMetaList>
               </DashboardItemOpenLink>
             ))
@@ -267,13 +284,11 @@ export function StableDashboardAlerts({
         </AlertSection>
 
         <AlertSection
-          title="Pending invites"
+          title={t('stableAlerts.pending')}
           count={alerts.summary.pendingInvitationCount}
         >
           {alerts.summary.pendingInvitationCount === 0 ? (
-            <EmptyAlert>
-              No pending stable or horse event invitations.
-            </EmptyAlert>
+            <EmptyAlert>{t('stableAlerts.pendingEmpty')}</EmptyAlert>
           ) : (
             <>
               {alerts.pendingStableInvitations.slice(0, 2).map((invitation) => (
@@ -289,9 +304,10 @@ export function StableDashboardAlerts({
                     {invitation.email}
                   </DashboardItemOpenTitle>
                   <DashboardMetaList>
-                    Stable {stableInvitationRoleLabels[invitation.role]}{' '}
-                    invitation is{' '}
-                    {stableInvitationStatusLabels[invitation.status]}.
+                    {t('stableAlerts.stableInvitation', {
+                      role: t('invitationFlow.member'),
+                      status: t(`invitationFlow.status.${invitation.status}`),
+                    })}
                   </DashboardMetaList>
                 </DashboardItemOpenLink>
               ))}
@@ -307,7 +323,9 @@ export function StableDashboardAlerts({
                     {invitation.eventTitle}
                   </DashboardItemOpenTitle>
                   <DashboardMetaList>
-                    Waiting for {invitation.horseName}.
+                    {t('stableAlerts.waitingHorse', {
+                      horse: invitation.horseName,
+                    })}
                   </DashboardMetaList>
                 </DashboardItemOpenLink>
               ))}

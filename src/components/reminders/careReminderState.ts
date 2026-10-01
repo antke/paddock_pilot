@@ -5,11 +5,7 @@ import type { Doc } from 'convex/_generated/dataModel'
 type CareReminderStateSource = Pick<Doc<'careReminders'>, 'dueDate' | 'status'>
 
 export type CareReminderDueState =
-  | 'inactive'
-  | 'overdue'
-  | 'today'
-  | 'soon'
-  | 'upcoming'
+  'inactive' | 'overdue' | 'today' | 'soon' | 'upcoming'
 
 const millisecondsPerDay = 24 * 60 * 60 * 1000
 const dueSoonWindowDays = 7

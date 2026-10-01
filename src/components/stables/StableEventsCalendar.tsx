@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import {
   CalendarDayCell,
   CalendarDayEventList,
@@ -26,7 +27,6 @@ import {
 } from '#/components/dashboard/DashboardSectionCard'
 import { Button } from '#/components/ui/button'
 import { getTodayDateKey } from '#/lib/dateDisplay'
-import { formatCountLabel } from '#/lib/numberDisplay'
 import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react'
 import {
   useEffect,
@@ -36,7 +36,8 @@ import {
   useRef,
   useState,
 } from 'react'
-import { eventStatusLabels } from 'shared/events/eventSchema'
+import type { Locale } from 'shared/i18n/locale'
+import { localeInstances } from '#/i18n/resources'
 import {
   addMonths,
   formatMonthLabel,
@@ -45,7 +46,7 @@ import {
   getMonthLeadingDayCount,
   groupCalendarOccurrencesByDate,
   startOfMonth,
-  weekdayLabels,
+  getWeekdayLabels,
 } from './stableDashboardDates'
 import type {
   StableCalendarDayOccurrence,
@@ -67,11 +68,14 @@ export function StableEventsCalendar({
   initialMonth,
   surface = 'panel',
 }: StableEventsCalendarProps) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const [visibleMonth, setVisibleMonth] = useState(() =>
     startOfMonth(initialMonth ?? new Date()),
   )
   const [selectedDateKey, setSelectedDateKey] = useState<string>()
-  const [calendarAnnouncement, setCalendarAnnouncement] = useState('')
+  const [announcedMonth, setAnnouncedMonth] = useState<Date>()
   const calendarRef = useRef<HTMLDivElement>(null)
   const lastFocusedRef = useRef<HTMLElement | null>(null)
   const selectedAgendaId = useId()
@@ -162,9 +166,7 @@ export function StableEventsCalendar({
     setVisibleMonth(month)
     setSelectedDateKey(undefined)
     selectedAgendaTriggerRef.current = null
-    setCalendarAnnouncement(
-      `${formatMonthLabel(month)}, ${formatCountLabel(getCalendarMonthOccurrences(events, month).length, 'event')} this month.`,
-    )
+    setAnnouncedMonth(month)
   }
 
   const closeSelectedAgenda = () => {
@@ -179,11 +181,15 @@ export function StableEventsCalendar({
       surface={surface}
       ref={calendarRef}
       role="region"
-      aria-label={`${formatMonthLabel(visibleMonth)} calendar`}
+      aria-label={t('calendar.monthRegion', {
+        month: formatMonthLabel(visibleMonth, locale),
+      })}
       tabIndex={-1}
       className="app-control-focus"
-      title={formatMonthLabel(visibleMonth)}
-      description={`${formatCountLabel(visibleMonthOccurrences.length, 'event')} this month`}
+      title={formatMonthLabel(visibleMonth, locale)}
+      description={t('calendar.monthCount', {
+        count: visibleMonthOccurrences.length,
+      })}
       descriptionSize="sm"
       contentGap="comfortable"
       actions={
@@ -195,7 +201,7 @@ export function StableEventsCalendar({
             onClick={() => selectMonth(addMonths(visibleMonth, -1))}
           >
             <CaretLeftIcon aria-hidden="true" />
-            Previous
+            {t('calendar.previous')}
           </Button>
           <Button
             type="button"
@@ -203,7 +209,7 @@ export function StableEventsCalendar({
             size="sm"
             onClick={() => selectMonth(startOfMonth(new Date()))}
           >
-            Today
+            {t('calendar.today')}
           </Button>
           <Button
             type="button"
@@ -211,26 +217,34 @@ export function StableEventsCalendar({
             size="sm"
             onClick={() => selectMonth(addMonths(visibleMonth, 1))}
           >
-            Next
+            {t('calendar.next')}
             <CaretRightIcon aria-hidden="true" />
           </Button>
         </>
       }
     >
       <p className="sr-only" aria-live="polite" aria-atomic="true">
-        {calendarAnnouncement}
+        {announcedMonth
+          ? t('calendar.monthAnnouncement', {
+              month: formatMonthLabel(announcedMonth, locale),
+              events: t('calendar.monthCount', {
+                count: getCalendarMonthOccurrences(events, announcedMonth)
+                  .length,
+              }),
+            })
+          : ''}
       </p>
 
       <DashboardSubsection
         as="h3"
         className="md:hidden"
         gap="compact"
-        title="Monthly agenda"
+        title={t('calendar.agenda')}
         data-calendar-view="mobile"
       >
         {visibleMonthOccurrences.length === 0 ? (
           <DashboardEmptyState chrome="flat" spacing="flush">
-            No events are scheduled this month.
+            {t('calendar.empty')}
           </DashboardEmptyState>
         ) : (
           <DashboardItemList gap="compact">
@@ -242,7 +256,11 @@ export function StableEventsCalendar({
                 horseCount={occurrence.event.horseIds.length}
                 supplementalMeta={
                   occurrence.durationDays > 1
-                    ? [`Through ${formatEventDate(occurrence.endDate)}`]
+                    ? [
+                        t('calendar.through', {
+                          date: formatEventDate(occurrence.endDate, locale),
+                        }),
+                      ]
                     : []
                 }
                 variant="agenda"
@@ -258,10 +276,12 @@ export function StableEventsCalendar({
         data-calendar-view="month"
         aria-colcount={7}
         aria-rowcount={calendarWeeks.length + 1}
-        aria-label={`${formatMonthLabel(visibleMonth)} event calendar`}
+        aria-label={t('calendar.monthTable', {
+          month: formatMonthLabel(visibleMonth, locale),
+        })}
       >
         <CalendarWeekdayRow role="row">
-          {weekdayLabels.map((weekday) => (
+          {getWeekdayLabels(locale).map((weekday) => (
             <CalendarWeekdayCell role="columnheader" key={weekday}>
               {weekday}
             </CalendarWeekdayCell>
@@ -282,7 +302,7 @@ export function StableEventsCalendar({
                   dateOccurrences.length - visibleEvents.length
                 const isToday = cell.key === todayKey
                 const isSelected = cell.key === selectedDateKey
-                const fullDate = formatEventDate(cell.key)
+                const fullDate = formatEventDate(cell.key, locale)
 
                 return (
                   <CalendarDayCell
@@ -317,7 +337,12 @@ export function StableEventsCalendar({
                         <CalendarMoreEventsButton
                           aria-controls={selectedAgendaId}
                           aria-expanded={isSelected}
-                          aria-label={`${isSelected ? 'Hide' : 'Show'} ${formatCountLabel(hiddenEventCount, 'additional event')} on ${fullDate}`}
+                          aria-label={t(
+                            isSelected
+                              ? 'calendar.hideMore'
+                              : 'calendar.showMore',
+                            { count: hiddenEventCount, date: fullDate },
+                          )}
                           onClick={(event) => {
                             if (isSelected) {
                               setSelectedDateKey(undefined)
@@ -330,8 +355,8 @@ export function StableEventsCalendar({
                           }}
                         >
                           {isSelected
-                            ? 'Hide day agenda'
-                            : `+${hiddenEventCount} more`}
+                            ? t('calendar.hideAgenda')
+                            : t('calendar.more', { count: hiddenEventCount })}
                         </CalendarMoreEventsButton>
                       )}
                     </CalendarDayEventList>
@@ -349,7 +374,9 @@ export function StableEventsCalendar({
           ref={selectedAgendaRef}
           role="region"
           data-calendar-view="selected"
-          aria-label={`Events on ${formatEventDate(selectedDateKey)}`}
+          aria-label={t('calendar.eventsOn', {
+            date: formatEventDate(selectedDateKey, locale),
+          })}
           tabIndex={-1}
           onKeyDown={(event) => {
             if (event.key === 'Escape') closeSelectedAgenda()
@@ -365,11 +392,13 @@ export function StableEventsCalendar({
                 size="sm"
                 onClick={closeSelectedAgenda}
               >
-                Close
+                {t('calendar.close')}
               </Button>
             }
             gap="compact"
-            title={`Events on ${formatEventDate(selectedDateKey)}`}
+            title={t('calendar.eventsOn', {
+              date: formatEventDate(selectedDateKey, locale),
+            })}
           >
             <DashboardItemList gap="compact">
               {selectedDayOccurrences.map((dayOccurrence) => (
@@ -378,12 +407,12 @@ export function StableEventsCalendar({
                   event={getOccurrenceDisplayEvent(dayOccurrence.occurrence)}
                   chrome="flat"
                   horseCount={dayOccurrence.occurrence.event.horseIds.length}
-                  leadingLabel={getDayOccurrenceLabel(dayOccurrence)}
+                  leadingLabel={getDayOccurrenceLabel(dayOccurrence, locale)}
                   showRecurrence={false}
                   supplementalMeta={
                     dayOccurrence.occurrence.durationDays > 1
                       ? [
-                          `${formatEventDate(dayOccurrence.occurrence.startDate)} – ${formatEventDate(dayOccurrence.occurrence.endDate)}`,
+                          `${formatEventDate(dayOccurrence.occurrence.startDate, locale)} – ${formatEventDate(dayOccurrence.occurrence.endDate, locale)}`,
                         ]
                       : []
                   }
@@ -403,19 +432,22 @@ function CalendarEventLink({
 }: {
   dayOccurrence: StableCalendarDayOccurrence
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const { occurrence } = dayOccurrence
   const event = occurrence.event
-  const timingLabel = getDayOccurrenceLabel(dayOccurrence)
+  const timingLabel = getDayOccurrenceLabel(dayOccurrence, locale)
   const statusLabel =
     event.status && event.status !== 'planned'
-      ? eventStatusLabels[event.status]
+      ? t(`calendar.${event.status}`)
       : null
 
   return (
     <CalendarEventChipLink
       to="/stables/$stableId/events/$eventId"
       params={{ stableId: event.stableId, eventId: event._id }}
-      aria-label={`${event.title}, ${formatEventDateTime(occurrence.startDate, event.time, occurrence.endDate)}${dayOccurrence.position === 'single' || dayOccurrence.position === 'start' ? '' : `, ${timingLabel.toLowerCase()} on ${formatEventDate(dayOccurrence.dateKey)}`}${statusLabel ? `, ${statusLabel.toLowerCase()}` : ''}`}
+      aria-label={`${event.title}, ${formatEventDateTime(occurrence.startDate, event.time, occurrence.endDate, locale)}${dayOccurrence.position === 'single' || dayOccurrence.position === 'start' ? '' : t('calendar.dayContext', { timing: timingLabel.toLowerCase(), date: formatEventDate(dayOccurrence.dateKey, locale) })}${statusLabel ? `, ${statusLabel.toLowerCase()}` : ''}`}
     >
       <CalendarEventChipTitle>{event.title}</CalendarEventChipTitle>
       <CalendarEventChipMeta>
@@ -433,14 +465,15 @@ function getOccurrenceDisplayEvent(occurrence: StableCalendarOccurrence) {
   }
 }
 
-function getDayOccurrenceLabel({
-  occurrence,
-  position,
-}: StableCalendarDayOccurrence) {
+function getDayOccurrenceLabel(
+  { occurrence, position }: StableCalendarDayOccurrence,
+  locale: Locale = 'en',
+) {
+  const t = localeInstances[locale].t
   if (position === 'single' || position === 'start')
     return occurrence.event.time
-  if (position === 'end') return 'Ends today'
-  return 'Continues'
+  if (position === 'end') return t('calendar.endsToday')
+  return t('calendar.continues')
 }
 
 function isRendered(element: HTMLElement | null): element is HTMLElement {

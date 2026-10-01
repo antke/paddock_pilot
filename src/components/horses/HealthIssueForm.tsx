@@ -1,4 +1,6 @@
-import { useId, useRef } from 'react'
+import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
+import { useT } from '#/i18n/LocaleProvider'
+import { useId, useRef, useState } from 'react'
 import { InlineForm } from '#/components/forms/FormLayout'
 import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
 import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
@@ -8,7 +10,7 @@ import { Input } from '#/components/ui/input'
 import { Textarea } from '#/components/ui/textarea'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
-import { healthIssueFormSchema } from 'shared/horses/healthIssueSchema'
+import { createHealthIssueSchemas } from 'shared/horses/healthIssueSchema'
 import type {
   HealthIssueFormSchema,
   HealthIssueSeverity,
@@ -27,18 +29,24 @@ const severityOptions = Object.keys(
 
 const asSeverity = (value: string) => value as HealthIssueSeverity
 
-const severityChoiceOptions = severityOptions.map((severity) => ({
-  value: severity,
-  label: horseHealthIssueSeverityLabels[severity],
-})) satisfies Array<{ value: HealthIssueSeverity; label: string }>
-
 export function HealthIssueForm({
   disabled = false,
   onPendingChange,
   onSubmit,
 }: HealthIssueFormProps) {
+  const t = useT()
+
+  const { healthIssueFormSchema } = createHealthIssueSchemas((key) =>
+    t(`careValidation.${key}`),
+  )
+  const severityChoiceOptions = severityOptions.map((severity) => ({
+    value: severity,
+    label: t(`careLabels.severity.${severity}`),
+  })) satisfies Array<{ value: HealthIssueSeverity; label: string }>
   const formId = useId()
+
   const submitting = useRef(false)
+  const [failed, setFailed] = useState(false)
   const form = useForm<HealthIssueFormSchema>({
     resolver: zodResolver(healthIssueFormSchema),
     mode: 'onTouched',
@@ -48,19 +56,18 @@ export function HealthIssueForm({
     },
   })
 
+  useLocalizedValidation(form)
+
   const submitIssue = async (data: HealthIssueFormSchema) => {
     if (submitting.current) return
     submitting.current = true
-    form.clearErrors('root')
+    setFailed(false)
     onPendingChange?.(true)
     try {
       await onSubmit(data)
       form.reset()
     } catch {
-      form.setError('root', {
-        message:
-          'Could not save this record. Your entries are still here; please try again.',
-      })
+      setFailed(true)
     } finally {
       submitting.current = false
       onPendingChange?.(false)
@@ -68,7 +75,7 @@ export function HealthIssueForm({
   }
 
   return (
-    <InlineForm onSubmit={form.handleSubmit(submitIssue)}>
+    <InlineForm noValidate onSubmit={form.handleSubmit(submitIssue)}>
       <FieldGrid>
         <Controller
           name="title"
@@ -76,7 +83,7 @@ export function HealthIssueForm({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                Issue title
+                {t('careRecords.issueTitle')}
               </FieldLabel>
               <Input
                 aria-required={[
@@ -94,7 +101,7 @@ export function HealthIssueForm({
                     ? `${formId}-${field.name}-error`
                     : undefined
                 }
-                placeholder="Chipped hoof, food intolerance..."
+                placeholder={t('careRecords.issueExample')}
                 autoComplete="off"
               />
               {fieldState.invalid && (
@@ -112,9 +119,9 @@ export function HealthIssueForm({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Severity (optional)</FieldLabel>
+              <FieldLabel>{t('careRecords.severityOptional')}</FieldLabel>
               <ChoiceButtonGroup
-                aria-label="Severity (optional)"
+                aria-label={t('careRecords.severityOptional')}
                 value={field.value}
                 options={severityChoiceOptions}
                 onValueChange={(nextValue) =>
@@ -145,7 +152,7 @@ export function HealthIssueForm({
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
             <FieldLabel htmlFor={`${formId}-${field.name}`}>
-              Description (optional)
+              {t('careRecords.descriptionOptional')}
             </FieldLabel>
             <Textarea
               {...field}
@@ -155,7 +162,7 @@ export function HealthIssueForm({
               aria-describedby={
                 fieldState.invalid ? `${formId}-${field.name}-error` : undefined
               }
-              placeholder="What should other owners, stable admins, vets, or farriers know?"
+              placeholder={t('careRecords.issueDescription')}
               autoComplete="off"
             />
             {fieldState.invalid && (
@@ -168,13 +175,15 @@ export function HealthIssueForm({
         )}
       />
 
-      <FormSubmissionError message={form.formState.errors.root?.message} />
+      <FormSubmissionError
+        message={failed ? t('careRecords.saveFailed') : undefined}
+      />
 
       <FormSubmitActions
         isSubmitting={form.formState.isSubmitting}
         disabled={disabled}
-        submitLabel="Add issue"
-        submittingLabel="Adding..."
+        submitLabel={t('careRecords.addIssue')}
+        submittingLabel={t('careRecords.adding')}
       />
     </InlineForm>
   )

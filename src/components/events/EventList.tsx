@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { FilteredDashboardItemList } from '#/components/list-filtering/FilteredDashboardItemList'
@@ -36,11 +37,17 @@ export function EventList({ stableId, chrome = 'soft' }: EventListProps) {
 export function EventTable({
   stableId,
   events,
-  emptyTitle = 'No events added yet.',
-  emptyDescription = 'Create an event to start building this stable schedule.',
+  emptyTitle,
+  emptyDescription,
   chrome = 'soft',
 }: EventTableProps) {
-  const filterConfig = useMemo(createEventListFilterConfig, [])
+  const t = useT()
+  const { locale } = useLocale()
+
+  const filterConfig = useMemo(
+    () => createEventListFilterConfig(locale),
+    [locale],
+  )
   const filtering = useListFiltering({ items: events, config: filterConfig })
 
   return (
@@ -48,13 +55,16 @@ export function EventTable({
       config={filterConfig}
       filtering={filtering}
       gap="compact"
-      emptyMessage={emptyDescription}
+      emptyMessage={emptyDescription ?? t('eventViews.emptyHelp')}
       emptyState={
-        <DashboardEmptyState chrome={chrome} title={emptyTitle}>
-          {emptyDescription}
+        <DashboardEmptyState
+          chrome={chrome}
+          title={emptyTitle ?? t('eventViews.empty')}
+        >
+          {emptyDescription ?? t('eventViews.emptyHelp')}
         </DashboardEmptyState>
       }
-      filteredEmptyMessage="No events match these filters."
+      filteredEmptyMessage={t('eventViews.filteredEmpty')}
       stickyFilters
       renderItem={(event) => (
         <EventRow

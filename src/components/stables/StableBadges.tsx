@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { Badge } from '#/components/ui/badge'
 import { cn } from '#/lib/utils'
 import type { Doc } from 'convex/_generated/dataModel'
@@ -27,13 +28,14 @@ export function StableMemberRoleBadge({
 }: StableBadgeProps & {
   role: Doc<'stableMembers'>['role']
 }) {
+  const t = useT()
   return (
     <Badge
       variant={stableMemberRoleVariant[role]}
       className={cn('min-w-20', className)}
       {...props}
     >
-      {stableMemberRoleLabels[role]}
+      {t(`stables.roles.${role}`)}
     </Badge>
   )
 }

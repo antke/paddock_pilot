@@ -1,3 +1,8 @@
+import { userFacingError } from './libs/userFacingError'
+import { getEmailCopy } from '../shared/i18n/email'
+import type { Locale } from '../shared/i18n/locale'
+import type { EventChangeCode } from '../shared/i18n/eventChanges'
+import { translateEventChange } from '../shared/i18n/eventChanges'
 import { ConvexError, v } from 'convex/values'
 import { isEqual, omit } from 'lodash'
 import { isDateKey } from '../shared/training/trainingSchema'
@@ -157,10 +162,10 @@ const sendEventInvitationEmails = async (
   )
 }
 
-const formatUserName = (user: Doc<'users'>) =>
+const formatUserName = (user: Doc<'users'>, locale?: Locale) =>
   user.preferredName ||
   [user.firstName, user.lastName].filter(Boolean).join(' ') ||
-  'A stable member'
+  getEmailCopy(locale).memberFallback
 
 const notifyEventOrganizerOfParticipation = async (
   ctx: MutationCtx,
@@ -183,7 +188,7 @@ const notifyEventOrganizerOfParticipation = async (
       kind: 'event_participation_update',
       eventTitle: input.event.title,
       horseName: input.horse.name,
-      actorName: formatUserName(input.actor),
+      actorName: formatUserName(input.actor, organizer.locale),
       status: input.status,
       stableId: input.event.stableId,
       eventId: input.event._id,
@@ -196,18 +201,18 @@ const getMaterialEventChanges = (
   next: ReturnType<typeof validateEventInput>,
   horsesChanged: boolean,
 ) => {
-  const changes: Array<string> = []
-  if (event.title !== next.title) changes.push('Event title changed')
+  const changes: Array<EventChangeCode> = []
+  if (event.title !== next.title) changes.push('title')
   if (event.date !== next.date || event.endDate !== next.endDate) {
-    changes.push('Event date changed')
+    changes.push('date')
   }
-  if (event.time !== next.time) changes.push('Event time changed')
-  if (event.location !== next.location) changes.push('Location changed')
+  if (event.time !== next.time) changes.push('time')
+  if (event.location !== next.location) changes.push('location')
   if ((event.status ?? 'planned') !== (next.status ?? 'planned')) {
-    changes.push('Event status changed')
+    changes.push('status')
   }
-  if (event.providerName !== next.providerName) changes.push('Provider changed')
-  if (horsesChanged) changes.push('Horse participation changed')
+  if (event.providerName !== next.providerName) changes.push('provider')
+  if (horsesChanged) changes.push('horses')
   return changes
 }
 
@@ -216,7 +221,7 @@ const notifyEventParticipantsOfChanges = async (
   input: {
     event: Doc<'events'>
     actorUserId: Id<'users'>
-    changes: Array<string>
+    changes: Array<EventChangeCode>
     horses: Array<Doc<'horses'>>
     nextTitle: string
     excludedOwnerIds?: Set<Id<'users'>>
@@ -447,7 +452,10 @@ export const listForHorse = query({
 })
 
 export const add = mutation({
-  args: { ...omit(eventFields, 'createdBy') },
+  args: {
+    ...omit(eventFields, 'createdBy'),
+    errorFormat: v.optional(v.literal('structured')),
+  },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx)
     const eventInput = validateEventInput(args)
@@ -462,9 +470,7 @@ export const add = mutation({
         horseOwnerIds: horses.map((horse) => horse.ownerId),
       })
     ) {
-      throw new ConvexError(
-        'A member-created event must include at least one of their horses',
-      )
+      throw userFacingError('eventNeedsOwnHorse', args.errorFormat)
     }
     const confirmedHorses = horses.filter(
       (horse) => access.role === 'owner' || horse.ownerId === user._id,
@@ -474,13 +480,13 @@ export const add = mutation({
     )
     if (eventInput.type === 'training') {
       if (!eventInput.training)
-        throw new ConvexError('Choose training activities')
+        throw userFacingError('chooseTrainingActivities', args.errorFormat)
       if (
         eventInput.status === 'completed' &&
         eventInput.date >
           new Date(Date.now() + 14 * 3600000).toISOString().slice(0, 10)
       ) {
-        throw new ConvexError('Future sessions cannot be completed')
+        throw userFacingError('futureTraining', args.errorFormat)
       }
     }
     const now = Date.now()
@@ -573,7 +579,11 @@ export const add = mutation({
 })
 
 export const update = mutation({
-  args: { id: v.id('events'), ...omit(eventFields, 'createdBy') },
+  args: {
+    id: v.id('events'),
+    ...omit(eventFields, 'createdBy'),
+    errorFormat: v.optional(v.literal('structured')),
+  },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx)
     const { id, ...updates } = args
@@ -599,9 +609,7 @@ export const update = mutation({
     }
 
     if ((event.type === 'training') !== (eventInput.type === 'training')) {
-      throw new ConvexError(
-        'Events and training sessions cannot be converted through this form',
-      )
+      throw userFacingError('eventTypeLocked', args.errorFormat)
     }
     if (event.type === 'training') {
       const records = await ctx.db
@@ -615,9 +623,7 @@ export const update = mutation({
           event.endDate !== eventInput.endDate ||
           !isEqual(event.recurrence, eventInput.recurrence))
       ) {
-        throw new ConvexError(
-          'This session has training history. Keep its schedule and create a new session for a different schedule.',
-        )
+        throw userFacingError('trainingScheduleLocked', args.errorFormat)
       }
       if (
         records.some(
@@ -626,9 +632,7 @@ export const update = mutation({
             !args.horseIds.includes(record.horseId),
         )
       )
-        throw new ConvexError(
-          'A horse with recorded training cannot be removed from this session',
-        )
+        throw userFacingError('trainingHorseLocked', args.errorFormat)
     }
 
     const horses = await getStableHorses(ctx, args.stableId, args.horseIds)
@@ -640,9 +644,7 @@ export const update = mutation({
         horseOwnerIds: horses.map((horse) => horse.ownerId),
       })
     ) {
-      throw new ConvexError(
-        'A member-managed event must retain at least one of their horses',
-      )
+      throw userFacingError('eventRetainsOwnHorse', args.errorFormat)
     }
     const nextHorseIds = new Set(args.horseIds)
     const existingEventHorses = await ctx.db
@@ -773,8 +775,14 @@ export const update = mutation({
       entityId: id,
       summary:
         materialChanges.length > 0
-          ? materialChanges.join(', ')
+          ? materialChanges
+              .map((change) => translateEventChange(change, 'en'))
+              .join(', ')
           : eventInput.title,
+      details:
+        materialChanges.length > 0
+          ? { kind: 'event_changes', changes: materialChanges }
+          : undefined,
     })
   },
 })

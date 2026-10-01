@@ -1,3 +1,4 @@
+import type { Locale } from 'shared/i18n/locale'
 import {
   dateKeyToDate,
   formatDateKey,
@@ -19,9 +20,12 @@ export type StableCalendarDayOccurrence = {
   position: 'single' | 'start' | 'middle' | 'end'
 }
 
-export const weekdayLabels = Array.from({ length: 7 }, (_, index) =>
-  formatShortWeekdayDate(new Date(2024, 0, index + 1)),
-)
+export function getWeekdayLabels(locale: Locale = 'en') {
+  return Array.from({ length: 7 }, (_, index) =>
+    formatShortWeekdayDate(new Date(2024, 0, index + 1), locale),
+  )
+}
+export const weekdayLabels = getWeekdayLabels()
 
 export function startOfMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1)
@@ -31,8 +35,8 @@ export function addMonths(date: Date, months: number) {
   return new Date(date.getFullYear(), date.getMonth() + months, 1)
 }
 
-export function formatMonthLabel(date: Date) {
-  return formatMonthYearDate(date)
+export function formatMonthLabel(date: Date, locale: Locale = 'en') {
+  return formatMonthYearDate(date, locale)
 }
 
 export function getMonthDays(monthDate: Date) {

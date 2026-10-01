@@ -1,3 +1,4 @@
+import { userFacingError } from './libs/userFacingError'
 import { ConvexError, v } from 'convex/values'
 import { query, mutation } from './_generated/server'
 import { assertCanViewStable, getCurrentUser } from './libs/stablePermissions'
@@ -65,6 +66,7 @@ export const listForStable = query({
 
 export const saveRecord = mutation({
   args: {
+    errorFormat: v.optional(v.literal('structured')),
     eventId: v.id('events'),
     horseId: v.id('horses'),
     date: v.string(),
@@ -81,7 +83,7 @@ export const saveRecord = mutation({
     const user = await getCurrentUser(ctx)
     const event = await ctx.db.get(args.eventId)
     if (!event || event.type !== 'training')
-      throw new ConvexError('Training session not found')
+      throw userFacingError('trainingNotFound', args.errorFormat)
     const access = await assertCanViewStable(ctx, event.stableId, user._id)
     const horse = await ctx.db.get(args.horseId)
     if (
@@ -89,7 +91,7 @@ export const saveRecord = mutation({
       horse.stableId !== event.stableId ||
       !event.horseIds.includes(horse._id)
     ) {
-      throw new ConvexError('This horse is not confirmed for this session')
+      throw userFacingError('trainingHorseUnconfirmed', args.errorFormat)
     }
     if (
       !canManageOwnedRecord({
@@ -98,9 +100,7 @@ export const saveRecord = mutation({
         ownerId: horse.ownerId,
       })
     ) {
-      throw new ConvexError(
-        'Only the horse owner or stable admin can record its training',
-      )
+      throw userFacingError('trainingPermission', args.errorFormat)
     }
     if (
       !isDateKey(args.date) ||
@@ -110,14 +110,14 @@ export const saveRecord = mutation({
         windowEnd: args.date,
       }).some((o) => o.startDate === args.date)
     ) {
-      throw new ConvexError('Choose a scheduled occurrence of this session')
+      throw userFacingError('trainingOccurrence', args.errorFormat)
     }
     // Allow the current local day anywhere on earth without trusting a client clock.
     const latestToday = new Date(Date.now() + 14 * 60 * 60 * 1000)
       .toISOString()
       .slice(0, 10)
     if (args.status === 'completed' && args.date > latestToday)
-      throw new ConvexError('Future sessions cannot be completed')
+      throw userFacingError('futureTraining', args.errorFormat)
     const parsed = trainingRecordSchema.safeParse({
       ...args.details,
       status: args.status,
@@ -158,6 +158,12 @@ export const saveRecord = mutation({
       entityType: 'event',
       entityId: event._id,
       summary: `${horse.name}: ${status} on ${args.date}`,
+      details: {
+        kind: 'training_recorded',
+        horseName: horse.name,
+        status,
+        date: args.date,
+      },
     })
   },
 })

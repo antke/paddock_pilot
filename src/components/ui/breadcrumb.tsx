@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import * as React from 'react'
 import { mergeProps } from '@base-ui/react/merge-props'
 import { useRender } from '@base-ui/react/use-render'
@@ -6,9 +7,10 @@ import { cn } from '#/lib/utils.ts'
 import { CaretRightIcon, DotsThreeIcon } from '@phosphor-icons/react'
 
 function Breadcrumb({ className, ...props }: React.ComponentProps<'nav'>) {
+  const t = useT()
   return (
     <nav
-      aria-label="breadcrumb"
+      aria-label={t('breadcrumbs.navigation')}
       data-slot="breadcrumb"
       className={cn('min-w-0 max-w-full', className)}
       {...props}
@@ -103,6 +105,7 @@ function BreadcrumbEllipsis({
   className,
   ...props
 }: React.ComponentProps<'span'>) {
+  const t = useT()
   return (
     <span
       data-slot="breadcrumb-ellipsis"
@@ -115,7 +118,7 @@ function BreadcrumbEllipsis({
       {...props}
     >
       <DotsThreeIcon />
-      <span className="sr-only">More</span>
+      <span className="sr-only">{t('breadcrumbs.more')}</span>
     </span>
   )
 }

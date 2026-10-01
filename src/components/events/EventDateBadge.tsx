@@ -1,3 +1,4 @@
+import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { cn } from '#/lib/utils'
 import { formatMediumDateKey, getDateBadgeParts } from '#/lib/dateDisplay'
 import { TextLabel } from '#/components/ui/text-label'
@@ -19,13 +20,22 @@ export function EventDateBadge({
   variant = 'compact',
   className,
 }: EventDateBadgeProps) {
-  const dateBadge = getDateBadgeParts(date)
+  const { locale } = useLocale()
+  const t = useT()
+  const dateBadge = getDateBadgeParts(date, locale)
 
   return (
     <time
       data-slot="event-date-badge"
       dateTime={time ? `${date}T${time}` : date}
-      aria-label={`${formatMediumDateKey(date)}${time ? ` at ${time}` : ''}`}
+      aria-label={
+        time
+          ? t('events.dateTime', {
+              date: formatMediumDateKey(date, locale),
+              time,
+            })
+          : formatMediumDateKey(date, locale)
+      }
       className={cn(
         'grid shrink-0 justify-items-center text-center',
         variant === 'compact' && 'app-row min-w-14 rounded-control px-2 py-1',

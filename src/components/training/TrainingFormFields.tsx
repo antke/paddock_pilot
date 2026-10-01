@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { useId } from 'react'
 import { Controller } from 'react-hook-form'
 import type { Control } from 'react-hook-form'
@@ -18,9 +19,7 @@ import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group'
 import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
 import {
   trainingActivities,
-  trainingActivityLabels,
   trainingFormats,
-  trainingFormatLabels,
 } from 'shared/training/trainingSchema'
 import { TrainingActivityDot } from './TrainingBadges'
 
@@ -31,6 +30,8 @@ export function TrainingFormFields({
   control: Control<EventFormInput, unknown, EventFormSchema>
   disabled: boolean
 }) {
+  const t = useT()
+
   const id = useId()
   return (
     <>
@@ -39,11 +40,11 @@ export function TrainingFormFields({
         name="training.activities"
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel>Type of work</FieldLabel>
+            <FieldLabel>{t('eventForm.workType')}</FieldLabel>
             <ToggleGroup
               multiple
               variant="outline"
-              aria-label="Type of work"
+              aria-label={t('eventForm.workType')}
               aria-invalid={fieldState.invalid}
               aria-describedby={`${id}-activities-help`}
               value={field.value ?? []}
@@ -60,12 +61,12 @@ export function TrainingFormFields({
                   className="gap-2 px-4"
                 >
                   <TrainingActivityDot activity={activity} />
-                  {trainingActivityLabels[activity]}
+                  {t(`training.activities.${activity}`)}
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>
             <FieldDescription id={`${id}-activities-help`}>
-              Select all activities practised in this session.
+              {t('eventForm.activitiesHelp')}
             </FieldDescription>
             <FieldError errors={[fieldState.error]} />
           </Field>
@@ -76,13 +77,13 @@ export function TrainingFormFields({
         name="training.format"
         render={({ field, fieldState }) => (
           <Field>
-            <FieldLabel>Session format</FieldLabel>
+            <FieldLabel>{t('eventForm.sessionFormat')}</FieldLabel>
             <ChoiceButtonGroup
-              aria-label="Session format"
+              aria-label={t('eventForm.sessionFormat')}
               value={field.value ?? 'regular'}
               options={trainingFormats.map((value) => ({
                 value,
-                label: trainingFormatLabels[value],
+                label: t(`training.formats.${value}`),
               }))}
               onValueChange={field.onChange}
               disabled={disabled}
@@ -98,7 +99,7 @@ export function TrainingFormFields({
           render={({ field, fieldState }) => (
             <Field>
               <FieldLabel htmlFor={`${id}-duration`}>
-                Duration (minutes)
+                {t('eventForm.duration')}
               </FieldLabel>
               <Input
                 id={`${id}-duration`}
@@ -123,7 +124,9 @@ export function TrainingFormFields({
           name="training.rider"
           render={({ field, fieldState }) => (
             <Field>
-              <FieldLabel htmlFor={`${id}-rider`}>Rider / handler</FieldLabel>
+              <FieldLabel htmlFor={`${id}-rider`}>
+                {t('eventForm.rider')}
+              </FieldLabel>
               <Input
                 {...field}
                 id={`${id}-rider`}
@@ -141,12 +144,14 @@ export function TrainingFormFields({
         name="training.focus"
         render={({ field, fieldState }) => (
           <Field>
-            <FieldLabel htmlFor={`${id}-focus`}>Exercises / focus</FieldLabel>
+            <FieldLabel htmlFor={`${id}-focus`}>
+              {t('eventForm.focus')}
+            </FieldLabel>
             <Textarea
               {...field}
               id={`${id}-focus`}
               value={field.value ?? ''}
-              placeholder="For example: transitions, rhythm, pole work"
+              placeholder={t('eventForm.focusExample')}
               maxLength={500}
               disabled={disabled}
             />
@@ -160,7 +165,7 @@ export function TrainingFormFields({
         render={({ field, fieldState }) => (
           <Field>
             <FieldLabel htmlFor={`${id}-next-focus`}>
-              Focus next time (optional)
+              {t('eventForm.nextFocus')}
             </FieldLabel>
             <Textarea
               {...field}

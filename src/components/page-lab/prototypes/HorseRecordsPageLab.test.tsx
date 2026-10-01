@@ -36,27 +36,25 @@ describe('actual horse record section samples', () => {
     })
     await router.load()
     render(<RouterProvider router={router} />)
-    await screen.findByRole('heading', { name: 'Care reminders', level: 2 })
+    await screen.findByRole('tabpanel', { name: 'Care reminders' })
     expect(
       await screen.findAllByRole('button', { name: 'Add reminder' }),
     ).not.toHaveLength(0)
-    fireEvent.click(screen.getByRole('button', { name: 'Health issues' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Health issues' }))
     expect(
-      await screen.findByRole('heading', { name: 'Health issues', level: 2 }),
+      await screen.findByRole('tabpanel', { name: 'Health issues' }),
     ).toBeTruthy()
     fireEvent.change(screen.getByLabelText('Sample section'), {
       target: { value: 'nutrition' },
     })
     expect(
-      await screen.findByRole('heading', { name: 'Nutrition', level: 2 }),
+      await screen.findByRole('tabpanel', { name: 'Nutrition' }),
     ).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Weight' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Weight' }))
+    expect(await screen.findByRole('tabpanel', { name: 'Weight' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('tab', { name: 'Medication' }))
     expect(
-      await screen.findByRole('heading', { name: 'Weight', level: 2 }),
-    ).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Medication' }))
-    expect(
-      await screen.findByRole('heading', { name: 'Medication', level: 2 }),
+      await screen.findByRole('tabpanel', { name: 'Medication' }),
     ).toBeTruthy()
     expect(useMutation).not.toHaveBeenCalled()
   })

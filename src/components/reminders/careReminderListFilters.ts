@@ -1,3 +1,5 @@
+import { localeInstances } from '#/i18n/resources'
+import type { Locale } from 'shared/i18n/locale'
 import type {
   ListFilterConfig,
   ListFilterFacet,
@@ -7,8 +9,6 @@ import type {
 import type { Id } from 'convex/_generated/dataModel'
 import {
   careReminderCategories,
-  careReminderCategoryLabels,
-  careReminderStatusLabels,
   careReminderStatuses,
 } from 'shared/reminders/careReminderSchema'
 import type {
@@ -17,10 +17,7 @@ import type {
 } from 'shared/reminders/careReminderSchema'
 
 import type { CareReminderListItem } from './CareRemindersCard'
-import {
-  careReminderOverdueLabel,
-  getCareReminderStateLabel,
-} from './careReminderDisplay'
+import { getCareReminderStateLabel } from './careReminderDisplay'
 import { isCareReminderOverdue } from './careReminderState'
 
 type CareReminderFilterHorseOption = {
@@ -65,10 +62,27 @@ export function getCareReminderListQueryArgs(
 
 export function createCareReminderListFilterConfig(
   horseOptions: ReadonlyArray<CareReminderFilterHorseOption>,
+  locale: Locale = 'en',
 ): ListFilterConfig<CareReminderListItem, CareReminderListFilterFacetId> {
+  const t = localeInstances[locale].t
+  const reminderStateFilterOptions = [
+    { value: 'overdue', label: t('careLabels.overdue') },
+    ...careReminderStatuses.map((status) => ({
+      value: status,
+      label: t(`careLabels.reminderStatus.${status}`),
+    })),
+  ] satisfies ReadonlyArray<ListFilterOption>
+
+  const reminderCategoryFilterOptions = careReminderCategories.map(
+    (category) => ({
+      value: category,
+      label: t(`careLabels.category.${category}`),
+    }),
+  ) satisfies ReadonlyArray<ListFilterOption>
+
   return {
-    searchLabel: 'Search reminders',
-    searchPlaceholder: 'Search title, notes, horse, or category',
+    searchLabel: t('reminders.search'),
+    searchPlaceholder: t('reminders.searchPlaceholder'),
     searchFields: [
       {
         id: 'title',
@@ -89,33 +103,36 @@ export function createCareReminderListFilterConfig(
         id: 'labels',
         weight: 2,
         getValues: (item) => [
-          careReminderCategoryLabels[item.reminder.category],
-          getCareReminderStateLabel({
-            status: item.reminder.status,
-            overdue: isCareReminderOverdue(item.reminder),
-          }),
+          t(`careLabels.category.${item.reminder.category}`),
+          getCareReminderStateLabel(
+            {
+              status: item.reminder.status,
+              overdue: isCareReminderOverdue(item.reminder),
+            },
+            locale,
+          ),
         ],
       },
     ],
     facets: [
       {
         id: 'horse',
-        label: 'Horse',
-        allLabel: 'All horses',
-        options: getHorseFilterOptions(horseOptions),
+        label: t('reminders.horse'),
+        allLabel: t('reminders.allHorses'),
+        options: getHorseFilterOptions(horseOptions, locale),
         matches: matchesHorseFilter,
       },
       {
         id: 'state',
-        label: 'State',
-        allLabel: 'All states',
+        label: t('reminders.state'),
+        allLabel: t('reminders.allStates'),
         options: reminderStateFilterOptions,
         matches: matchesStateFilter,
       },
       {
         id: 'category',
-        label: 'Category',
-        allLabel: 'All categories',
+        label: t('reminders.category'),
+        allLabel: t('reminders.allCategories'),
         options: reminderCategoryFilterOptions,
         matches: matchesCategoryFilter,
       },
@@ -123,15 +140,15 @@ export function createCareReminderListFilterConfig(
   }
 }
 
-export function createHorseCareReminderListFilterConfig(): ListFilterConfig<
-  CareReminderListItem,
-  HorseCareReminderListFilterFacetId
-> {
-  const config = createCareReminderListFilterConfig([])
+export function createHorseCareReminderListFilterConfig(
+  locale: Locale = 'en',
+): ListFilterConfig<CareReminderListItem, HorseCareReminderListFilterFacetId> {
+  const t = localeInstances[locale].t
+  const config = createCareReminderListFilterConfig([], locale)
 
   return {
     ...config,
-    searchPlaceholder: 'Search title, notes, category, or state',
+    searchPlaceholder: t('reminders.horseSearchPlaceholder'),
     facets: config.facets.filter(
       (
         facet,
@@ -145,9 +162,11 @@ export function createHorseCareReminderListFilterConfig(): ListFilterConfig<
 
 function getHorseFilterOptions(
   horseOptions: ReadonlyArray<CareReminderFilterHorseOption>,
+  locale: Locale = 'en',
 ) {
+  const t = localeInstances[locale].t
   return [
-    { value: stableWideHorseFilterValue, label: 'Stable-wide' },
+    { value: stableWideHorseFilterValue, label: t('reminders.stableWide') },
     ...horseOptions.map((horse) => ({
       value: getHorseFilterValue(horse.id),
       label: horse.name,
@@ -178,14 +197,6 @@ function matchesHorseFilter(item: CareReminderListItem, selectedValue: string) {
   )
 }
 
-const reminderStateFilterOptions = [
-  { value: 'overdue', label: careReminderOverdueLabel },
-  ...careReminderStatuses.map((status) => ({
-    value: status,
-    label: careReminderStatusLabels[status],
-  })),
-] satisfies ReadonlyArray<ListFilterOption>
-
 function matchesStateFilter(item: CareReminderListItem, selectedValue: string) {
   if (selectedValue === 'overdue') {
     return isCareReminderOverdue(item.reminder)
@@ -210,13 +221,6 @@ function getStateFilterArg(
 
   return undefined
 }
-
-const reminderCategoryFilterOptions = careReminderCategories.map(
-  (category) => ({
-    value: category,
-    label: careReminderCategoryLabels[category],
-  }),
-) satisfies ReadonlyArray<ListFilterOption>
 
 function matchesCategoryFilter(
   item: CareReminderListItem,

@@ -1,3 +1,4 @@
+import { localeValidator } from '../shared/i18n/validators'
 import { ConvexError, v } from 'convex/values'
 import {
   getEffectiveInvitationStatus,
@@ -36,6 +37,8 @@ const queueInvitationEmail = async (
   await enqueueEmail(ctx, {
     dedupeKey: `stable-invitation:${invitation._id}:${invitation.token}`,
     recipient: invitation.email,
+    locale:
+      invitation.locale ?? (await ctx.db.get(invitation.invitedBy))?.locale,
     relation: { type: 'stableInvitation', id: invitation._id },
     template: {
       kind: 'stable_invitation',
@@ -164,6 +167,7 @@ export const create = mutation({
     stableId: v.id('stables'),
     email: v.string(),
     role: newStableInvitationRole,
+    locale: v.optional(localeValidator),
   },
   handler: async (ctx, args) => {
     const { stable, userId } = await assertCanManageMembers(ctx, args.stableId)
@@ -237,6 +241,7 @@ export const create = mutation({
       status: 'pending',
       token: crypto.randomUUID(),
       invitedBy: userId,
+      locale: args.locale ?? (await ctx.db.get(userId))?.locale ?? 'en',
       createdAt: now,
       updatedAt: now,
       expiresAt: now + INVITATION_TTL_MS,

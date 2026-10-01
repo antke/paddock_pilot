@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
 import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
 import {
@@ -17,7 +18,6 @@ import type { Doc, Id } from 'convex/_generated/dataModel'
 import { useMutation, usePaginatedQuery } from 'convex/react'
 import { useCallback, useMemo, useState } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
-import { formatCountLabel } from '#/lib/numberDisplay'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import { CareRemindersCard } from './CareRemindersCard'
 import type { CareReminderSubmitData } from './CareReminderForm'
@@ -33,12 +33,14 @@ type StableRemindersPageProps = {
 }
 
 const reminderPageSize = 30
-const reminderLoadingLabel = 'Loading reminders...'
 
 export function StableRemindersPage({
   stableId,
   chrome = 'soft',
 }: StableRemindersPageProps) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const { today } = useLocalDateContext()
   const { data: stable } = useSuspenseQuery(
     convexQuery(api.stables.get, { id: stableId as Id<'stables'> }),
@@ -65,8 +67,8 @@ export function StableRemindersPage({
     [horses],
   )
   const filterConfig = useMemo(
-    () => createCareReminderListFilterConfig(horseOptions),
-    [horseOptions],
+    () => createCareReminderListFilterConfig(horseOptions, locale),
+    [horseOptions, locale],
   )
   const filtering = useListQueryState<CareReminderListFilterFacetId>()
   const reminderQueryArgs = useMemo(
@@ -105,11 +107,13 @@ export function StableRemindersPage({
           })
 
           showAppSuccessToast({
-            title: 'Reminders added',
+            title: t('reminders.addedMany'),
             description: (
               <p>
-                {values.title} was added for{' '}
-                {formatCountLabel(values.horseIds.length, 'horse')}.
+                {t('reminders.addedFor', {
+                  title: values.title,
+                  count: values.horseIds.length,
+                })}
               </p>
             ),
           })
@@ -126,15 +130,15 @@ export function StableRemindersPage({
         })
 
         showAppSuccessToast({
-          title: 'Reminder added',
-          description: <p>{values.title} is now on the care reminders list.</p>,
+          title: t('reminders.added'),
+          description: <p>{t('reminders.onList', { name: values.title })}</p>,
         })
       } catch (err) {
         showAppErrorToast()
         throw err
       }
     },
-    [addReminder, addReminderForHorses, stable],
+    [addReminder, addReminderForHorses, stable, t],
   )
 
   if (!stable) {
@@ -150,11 +154,11 @@ export function StableRemindersPage({
       showHeader={false}
       emptyMessage={getListFilterEmptyMessage({
         filtering,
-        emptyMessage: 'No care reminders have been added for this stable yet.',
-        filteredEmptyMessage: 'No reminders match these filters.',
+        emptyMessage: t('reminders.stableEmpty'),
+        filteredEmptyMessage: t('reminders.filteredEmpty'),
       })}
       isLoading={paginatedReminders.status === 'LoadingFirstPage'}
-      loadingLabel={reminderLoadingLabel}
+      loadingLabel={t('reminders.loading')}
       listToolbar={
         <ListFilterControls
           config={filterConfig}
@@ -167,27 +171,33 @@ export function StableRemindersPage({
           status={paginatedReminders.status}
           onLoadMore={paginatedReminders.loadMore}
           pageSize={reminderPageSize}
-          loadMoreLabel="Load more reminders"
-          loadingLabel={reminderLoadingLabel}
+          loadMoreLabel={t('reminders.loadMore')}
+          loadingLabel={t('reminders.loading')}
         />
       }
       onAdd={onAdd}
       onComplete={(reminder) =>
         runReminderActionWithToast(completeReminder, reminder, {
-          successTitle: 'Reminder completed',
-          successDescription: `${reminder.title} was marked as complete.`,
+          successTitle: t('reminders.completed'),
+          successDescription: t('reminders.markedComplete', {
+            name: reminder.title,
+          }),
         })
       }
       onDismiss={(reminder) =>
         runReminderActionWithToast(dismissReminder, reminder, {
-          successTitle: 'Reminder dismissed',
-          successDescription: `${reminder.title} was dismissed.`,
+          successTitle: t('reminders.dismissed'),
+          successDescription: t('reminders.markedDismissed', {
+            name: reminder.title,
+          }),
         })
       }
       onRemove={(reminder) =>
         runReminderActionWithToast(removeReminder, reminder, {
-          successTitle: 'Reminder removed',
-          successDescription: `${reminder.title} was removed.`,
+          successTitle: t('reminders.removed'),
+          successDescription: t('reminders.markedRemoved', {
+            name: reminder.title,
+          }),
         })
       }
     />
@@ -198,10 +208,14 @@ export function StableRemindersPage({
 export function StableRemindersPageView(
   props: ComponentProps<typeof CareRemindersCard>,
 ) {
+  const t = useT()
   const [createAction, setCreateAction] = useState<ReactNode | null>(null)
   return (
     <DashboardPage>
-      <DashboardPageHeader title="Care reminders" actions={createAction} />
+      <DashboardPageHeader
+        title={t('reminders.careReminders')}
+        actions={createAction}
+      />
       <DashboardSectionCard contentGap="loose">
         <CareRemindersCard
           {...props}

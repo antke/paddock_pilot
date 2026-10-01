@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { StableCommandCenter } from './command-center/StableCommandCenter'
 import type { DashboardCommandData } from './command-center/dashboardTypes'
 import { DashboardPage } from './DashboardPage'
@@ -17,12 +18,10 @@ type Props =
 
 /** Actual signed-in home composition; connected callers own queries and persistence. */
 export function AppDashboardView(props: Props) {
+  const t = useT()
+
   if (!props.data) {
-    return (
-      <NoStablesPrompt>
-        Create a stable to start using the dashboard.
-      </NoStablesPrompt>
-    )
+    return <NoStablesPrompt>{t('listControls.dashboardEmpty')}</NoStablesPrompt>
   }
   const { data, invitations, onApprove, onDecline } = props
   return (

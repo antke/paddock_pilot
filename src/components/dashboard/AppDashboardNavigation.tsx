@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import {
   DashboardNavigation,
   DashboardNavigationMenuButton,
@@ -17,6 +18,8 @@ export function AppDashboardNavigation({
   activeStableId,
   onActiveStableChange,
 }: AppDashboardNavigationProps = {}) {
+  const t = useT()
+
   const showStableSelector =
     stables.length > 0 && activeStableId && onActiveStableChange
   const activeStable = stables.find((stable) => stable._id === activeStableId)
@@ -24,10 +27,14 @@ export function AppDashboardNavigation({
   if (!showStableSelector) return null
 
   return (
-    <DashboardNavigation align="end" inset={false} ariaLabel="Stable selection">
+    <DashboardNavigation
+      align="end"
+      inset={false}
+      ariaLabel={t('uiRemainder.stableSelection')}
+    >
       <DashboardNavigationMenuGroup
         active
-        label={activeStable?.name ?? 'Select stable'}
+        label={activeStable?.name ?? t('uiRemainder.selectStable')}
         contentWidth="md"
       >
         {stables.map((stable) => (
@@ -41,7 +48,7 @@ export function AppDashboardNavigation({
             <span className="line-clamp-1">{stable.name}</span>
             {stable._id === activeStableId && (
               <TextLabel size="nano" weight="semibold" tracking="wide">
-                Active
+                {t('uiRemainder.active')}
               </TextLabel>
             )}
           </DashboardNavigationMenuButton>

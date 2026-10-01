@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
+import type * as RouterModule from '@tanstack/react-router'
 import type { ComponentProps } from 'react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PublicLandingPage } from './PublicLandingPage'
 
-vi.mock('@tanstack/react-router', () => ({
+vi.mock('@tanstack/react-router', async (importOriginal) => ({
+  ...(await importOriginal<typeof RouterModule>()),
   Link: ({ to, ...props }: ComponentProps<'a'> & { to: string }) => (
     <a href={to} {...props} />
   ),

@@ -1,3 +1,4 @@
+import { useLocale } from '#/i18n/LocaleProvider'
 import { createDashboardCommandData } from '#/components/dashboard/command-center/dashboardData'
 import { AppDashboardView } from './AppDashboardView'
 import { convexQuery } from '@convex-dev/react-query'
@@ -47,6 +48,7 @@ function AppDashboardData({
   stables: Array<Doc<'stables'>>
   events: Array<Doc<'events'>>
 }) {
+  const { locale } = useLocale()
   const { today } = useLocalDateContext()
   const { data: overview } = useSuspenseQuery(
     convexQuery(api.userCareOverview.getForCurrentUser, {
@@ -66,6 +68,7 @@ function AppDashboardData({
   const approveInvitation = useMutation(api.events.approveHorseInvitation)
   const declineInvitation = useMutation(api.events.declineHorseInvitation)
   const data = createDashboardCommandData({
+    locale,
     stable: activeStable,
     stables,
     events,

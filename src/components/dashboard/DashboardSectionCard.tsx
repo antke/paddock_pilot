@@ -42,6 +42,7 @@ type DashboardSectionCardProps = Omit<
     footer?: ReactNode
     footerClassName?: string
     headerClassName?: string
+    headerContent?: ReactNode
     size?: DashboardSectionHeaderProps['size']
     title?: DashboardSectionHeaderProps['title']
     width?: DashboardSectionCardWidth
@@ -112,6 +113,7 @@ export function DashboardSectionCard({
   footer,
   footerClassName,
   headerClassName,
+  headerContent,
   headingClassName,
   surface = 'panel',
   size = 'panel',
@@ -123,6 +125,7 @@ export function DashboardSectionCard({
   const hasContent = children !== undefined && children !== null
   const hasFooter = footer !== undefined && footer !== null
   const hasHeader =
+    headerContent !== undefined ||
     title !== undefined ||
     description !== undefined ||
     actions !== undefined ||
@@ -141,20 +144,22 @@ export function DashboardSectionCard({
     >
       {hasHeader && (
         <CardHeader className={headerClassName}>
-          <DashboardSectionHeader
-            actions={actions}
-            actionsClassName={actionsClassName}
-            as={as}
-            badges={badges}
-            description={description}
-            descriptionClassName={descriptionClassName}
-            descriptionSize={descriptionSize}
-            descriptionWidth={descriptionWidth}
-            headingClassName={headingClassName}
-            size={size}
-            title={title}
-            titleClassName={titleClassName}
-          />
+          {headerContent ?? (
+            <DashboardSectionHeader
+              actions={actions}
+              actionsClassName={actionsClassName}
+              as={as}
+              badges={badges}
+              description={description}
+              descriptionClassName={descriptionClassName}
+              descriptionSize={descriptionSize}
+              descriptionWidth={descriptionWidth}
+              headingClassName={headingClassName}
+              size={size}
+              title={title}
+              titleClassName={titleClassName}
+            />
+          )}
         </CardHeader>
       )}
 

@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 
-import type {
-  ListFilterSelectedFacets,
-  ListFilterState,
-} from './listFiltering'
+import type { ListFilterSelectedFacets, ListFilterState } from './listFiltering'
 import {
   getNextSelectedFacets,
   hasActiveListFilterState,

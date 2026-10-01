@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { useState } from 'react'
 import {
   RouteEntityNotFoundAlert,
@@ -24,6 +25,8 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
+  const t = useT()
+
   const { horseId, stableId } = Route.useParams()
 
   const { data: horse } = useSuspenseQuery(
@@ -40,14 +43,14 @@ function RouteComponent() {
     return (
       <RouteStatusAlert
         tone="warning"
-        title="This horse profile is read-only for you"
-        description="Members can edit only their own horses. The stable owner can manage every horse in the stable."
+        title={t('horseDeletion.readOnly')}
+        description={t('horseDeletion.readOnlyHelp')}
         actions={
           <ButtonLink
             to="/stables/$stableId/horses/$horseId"
             params={{ stableId, horseId }}
           >
-            Return to horse
+            {t('uiRemainder.returnHorse')}
           </ButtonLink>
         }
       />

@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { ButtonLink } from '#/components/ui/button'
 import { HorseCardLink } from '#/components/horses/HorseCard'
 import { NoHorsesPrompt } from '#/components/horses/NoHorsesPrompt'
@@ -24,6 +25,8 @@ export function HorseRosterCard({
   visibleItemLimit = 5,
   chrome = 'soft',
 }: HorseRosterCardProps) {
+  const t = useT()
+
   const horses = data.horses.slice(0, visibleItemLimit)
 
   return (
@@ -31,7 +34,7 @@ export function HorseRosterCard({
       chrome={chrome}
       className={cn('@container/horse-roster', className)}
       gap="compact"
-      title="Horses"
+      title={t('dashboard.horses')}
       size="panel"
       titleStyle="display"
       actions={
@@ -43,7 +46,7 @@ export function HorseRosterCard({
             size="sm"
             className="min-h-11"
           >
-            Add horse
+            {t('dashboard.addHorse')}
           </ButtonLink>
           <ButtonLink
             to="/stables/$stableId/horses"
@@ -52,7 +55,7 @@ export function HorseRosterCard({
             size="sm"
             className="min-h-11"
           >
-            View all horses
+            {t('dashboard.viewAllHorses')}
           </ButtonLink>
         </>
       }
@@ -77,6 +80,8 @@ function HorseRosterItem({
   data: DashboardCommandData
   horse: DashboardCommandHorse
 }) {
+  const t = useT()
+
   const attention = data.attentionHorses.find(
     (item) => item.horseId === horse._id,
   )
@@ -86,7 +91,9 @@ function HorseRosterItem({
       stableId={data.stable._id}
       horseId={horse._id}
       badges={
-        attention ? <Badge variant="warning">Needs care</Badge> : undefined
+        attention ? (
+          <Badge variant="warning">{t('dashboard.needsCare')}</Badge>
+        ) : undefined
       }
     />
   )

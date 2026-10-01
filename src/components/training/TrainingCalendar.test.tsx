@@ -17,6 +17,8 @@ import {
 import { afterEach, describe, expect, it } from 'vitest'
 import type { Doc, Id } from 'convex/_generated/dataModel'
 import { TrainingCalendar } from './TrainingCalendar'
+import { LocaleProvider } from '#/i18n/LocaleProvider'
+import { LanguageSelector } from '#/i18n/LanguageSelector'
 
 afterEach(() => {
   cleanup()
@@ -49,14 +51,17 @@ describe('training calendar controls', () => {
     const router = createRouter({
       routeTree: createRootRoute({
         component: () => (
-          <TrainingCalendar
-            stableId="stable"
-            horses={horses}
-            events={events}
-            records={[]}
-            initialDate="2026-01-05"
-            initialView="week"
-          />
+          <LocaleProvider>
+            <LanguageSelector />
+            <TrainingCalendar
+              stableId="stable"
+              horses={horses}
+              events={events}
+              records={[]}
+              initialDate="2026-01-05"
+              initialView="week"
+            />
+          </LocaleProvider>
         ),
       }),
       history: createMemoryHistory({ initialEntries: ['/'] }),
@@ -100,6 +105,26 @@ describe('training calendar controls', () => {
         .getByRole('button', { name: 'Atlas' })
         .getAttribute('aria-pressed'),
     ).toBe('true')
+    expect(localStorage.getItem('training-calendar-view')).toBe('week')
+    fireEvent.change(screen.getByRole('combobox', { name: 'Language' }), {
+      target: { value: 'pl' },
+    })
+    expect(screen.getByLabelText<HTMLSelectElement>('Rodzaj pracy').value).toBe(
+      'flatwork',
+    )
+    expect(
+      screen
+        .getByRole('button', { name: 'Atlas' })
+        .getAttribute('aria-pressed'),
+    ).toBe('true')
+    expect(screen.getByRole('table').textContent).toContain('Juniper session')
+    expect(screen.getByRole('table').textContent).not.toContain('Atlas session')
+    expect(
+      screen.getByRole('table', {
+        name: '5 sty – 11 sty — treningi według konia i dnia',
+      }),
+    ).toBeTruthy()
+    expect(screen.getByRole('heading', { name: '5 sty – 11 sty' })).toBeTruthy()
     expect(localStorage.getItem('training-calendar-view')).toBe('week')
   })
 })

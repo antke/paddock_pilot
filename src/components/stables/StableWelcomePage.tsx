@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { useId, useState } from 'react'
 import {
   ArrowRightIcon,
@@ -53,6 +54,8 @@ export function OwnerStableWelcomePage({
   invitationCount,
   providerCount,
 }: OwnerWelcomePageProps) {
+  const t = useT()
+
   const hasStableDetails = Boolean(
     stable.contactName ||
     stable.contactPhone ||
@@ -62,18 +65,23 @@ export function OwnerStableWelcomePage({
   )
   const steps = [
     {
-      title: 'Add operational stable details',
-      description: 'Contact information, opening hours and yard rules.',
+      title: t('stableSetup.operations'),
+      description: t('stableSetup.operationsHelp'),
       complete: hasStableDetails,
-      actionLabel: hasStableDetails ? 'Review details' : 'Add details',
+      actionLabel: hasStableDetails
+        ? t('stableSetup.reviewDetails')
+        : t('stableSetup.addDetails'),
       action: hasStableDetails ? ('edit' as const) : ('create' as const),
       to: '/stables/$stableId/edit' as const,
     },
     {
-      title: 'Add the first horse',
-      description: 'Create the first horse record for this stable.',
+      title: t('stableSetup.firstHorse'),
+      description: t('stableSetup.firstHorseHelp'),
       complete: horseCount > 0,
-      actionLabel: horseCount > 0 ? 'View horses' : 'Add horse',
+      actionLabel:
+        horseCount > 0
+          ? t('stableSetup.viewHorses')
+          : t('stableSetup.addHorse'),
       action: horseCount > 0 ? undefined : ('create' as const),
       to:
         horseCount > 0
@@ -81,15 +89,15 @@ export function OwnerStableWelcomePage({
           : ('/stables/$stableId/horses/create' as const),
     },
     {
-      title: 'Invite the first member',
-      description: 'Invite by email, then track delivery and acceptance.',
+      title: t('stableSetup.firstMember'),
+      description: t('stableSetup.firstMemberHelp'),
       complete: memberCount > 0 || invitationCount > 0,
       actionLabel:
         memberCount > 0
-          ? 'Manage members'
+          ? t('stableSetup.manageMembers')
           : invitationCount > 0
-            ? 'Review invitations'
-            : 'Invite member',
+            ? t('stableSetup.reviewInvitations')
+            : t('stableSetup.inviteMember'),
       action:
         memberCount > 0 || invitationCount > 0
           ? undefined
@@ -98,10 +106,13 @@ export function OwnerStableWelcomePage({
       search: { tab: 'members' as const },
     },
     {
-      title: 'Add a trusted provider',
-      description: 'Keep vet, farrier and other service contacts close.',
+      title: t('stableSetup.firstProvider'),
+      description: t('stableSetup.firstProviderHelp'),
       complete: providerCount > 0,
-      actionLabel: providerCount > 0 ? 'View providers' : 'Add provider',
+      actionLabel:
+        providerCount > 0
+          ? t('stableSetup.viewProviders')
+          : t('stableSetup.addProvider'),
       action: providerCount > 0 ? undefined : ('create' as const),
       to: '/stables/$stableId/settings' as const,
       search: { tab: 'providers' as const },
@@ -111,8 +122,8 @@ export function OwnerStableWelcomePage({
   return (
     <StableWelcomeLayout
       stable={stable}
-      title="Your stable is ready"
-      description="Set up the few things that make day-to-day coordination work. You can return to this checklist at any time."
+      title={t('stableSetup.ownerTitle')}
+      description={t('stableSetup.ownerHelp')}
       role="owner"
       steps={steps}
     />
@@ -125,6 +136,8 @@ export function MemberStableWelcomePage({
   ownHorseCount,
   renderDetailsForm,
 }: MemberWelcomePageProps) {
+  const t = useT()
+
   const detailsId = useId()
   const [isEditingDetails, setIsEditingDetails] = useState(
     !member.phone || !member.emergencyContact,
@@ -132,8 +145,8 @@ export function MemberStableWelcomePage({
   const hasMemberDetails = Boolean(member.phone && member.emergencyContact)
   const steps = [
     {
-      title: 'Complete your yard profile',
-      description: 'Add a phone number and an emergency contact for the owner.',
+      title: t('stableSetup.memberProfile'),
+      description: t('stableSetup.memberProfileHelp'),
       complete: hasMemberDetails,
       customAction: (
         <Button
@@ -145,15 +158,20 @@ export function MemberStableWelcomePage({
           size="sm"
           onClick={() => setIsEditingDetails((value) => !value)}
         >
-          {isEditingDetails ? 'Hide form' : 'Edit details'}
+          {isEditingDetails
+            ? t('stableSetup.hideForm')
+            : t('stableSetup.editDetails')}
         </Button>
       ),
     },
     {
-      title: 'Add your first horse',
-      description: 'Your horses unlock event planning and care records.',
+      title: t('stableSetup.ownHorse'),
+      description: t('stableSetup.ownHorseHelp'),
       complete: ownHorseCount > 0,
-      actionLabel: ownHorseCount > 0 ? 'View horses' : 'Add your horse',
+      actionLabel:
+        ownHorseCount > 0
+          ? t('stableSetup.viewHorses')
+          : t('stableSetup.addOwnHorse'),
       action: ownHorseCount > 0 ? undefined : ('create' as const),
       to:
         ownHorseCount > 0
@@ -166,16 +184,16 @@ export function MemberStableWelcomePage({
     <>
       <StableWelcomeLayout
         stable={stable}
-        title={`Welcome to ${stable.name}`}
-        description="You’re connected as a member. Complete your own setup, then you can coordinate events involving your horses with other members."
+        title={t('stableSetup.memberTitle', { name: stable.name })}
+        description={t('stableSetup.memberHelp')}
         role="member"
         steps={steps}
       />
 
       {isEditingDetails && (
         <DashboardSectionCard
-          title="Your private yard details"
-          description="Only you and the stable owner can maintain these details."
+          title={t('stableSetup.privateDetails')}
+          description={t('stableSetup.privateDetailsHelp')}
         >
           <div id={detailsId}>
             {renderDetailsForm ? (
@@ -196,19 +214,19 @@ export function MemberStableWelcomePage({
       )}
 
       <DashboardSectionCard
-        title="Know your stable"
-        description="These are useful reference points once your setup is complete."
+        title={t('stableSetup.knowStable')}
+        description={t('stableSetup.knowStableHelp')}
         contentLayout="twoColumn"
       >
         <WelcomeLinkCard
-          title="Stable overview"
-          description="Read contact details, opening hours and yard rules."
+          title={t('stableSetup.overview')}
+          description={t('stableSetup.overviewHelp')}
           to="/stables/$stableId"
           stableId={stable._id}
         />
         <WelcomeLinkCard
-          title="Stable people"
-          description="See the owner and the members you can coordinate with."
+          title={t('stableSetup.people')}
+          description={t('stableSetup.peopleHelp')}
           to="/stables/$stableId/members"
           stableId={stable._id}
         />
@@ -245,6 +263,8 @@ function StableWelcomeLayout({
   role: 'owner' | 'member'
   steps: Array<WelcomeStep>
 }) {
+  const t = useT()
+
   const completedCount = steps.filter((step) => step.complete).length
 
   return (
@@ -259,29 +279,35 @@ function StableWelcomeLayout({
             params={{ stableId: stable._id }}
             variant="outline"
           >
-            Open stable
+            {t('stableSetup.openStable')}
             <ArrowRightIcon />
           </ButtonLink>
         }
       />
 
       <DashboardSectionCard
-        title="Getting started"
-        description={`${completedCount} of ${steps.length} setup steps complete`}
+        title={t('stableSetup.gettingStarted')}
+        description={t('stableSetup.progress', {
+          completed: completedCount,
+          total: steps.length,
+        })}
         contentGap="comfortable"
       >
         <Progress
           value={completedCount}
           max={steps.length}
-          label={`${completedCount} of ${steps.length} setup steps complete`}
+          label={t('stableSetup.progress', {
+            completed: completedCount,
+            total: steps.length,
+          })}
         />
-        <DashboardItemList gap="flush" role="list" aria-label="Setup checklist">
-          {steps.map((step) => (
-            <WelcomeStepRow
-              key={step.title}
-              step={step}
-              stableId={stable._id}
-            />
+        <DashboardItemList
+          gap="flush"
+          role="list"
+          aria-label={t('stableSetup.checklist')}
+        >
+          {steps.map((step, index) => (
+            <WelcomeStepRow key={index} step={step} stableId={stable._id} />
           ))}
         </DashboardItemList>
       </DashboardSectionCard>
@@ -296,6 +322,8 @@ function WelcomeStepRow({
   step: WelcomeStep
   stableId: Stable['_id']
 }) {
+  const t = useT()
+
   const action =
     step.customAction ??
     (step.to && step.actionLabel ? (
@@ -318,7 +346,12 @@ function WelcomeStepRow({
       actions={action}
       interactive={false}
       role="listitem"
-      aria-label={`${step.title}: ${step.complete ? 'Complete' : 'Not complete'}`}
+      aria-label={t('stableSetup.stepState', {
+        title: step.title,
+        status: step.complete
+          ? t('stableSetup.complete')
+          : t('stableSetup.incomplete'),
+      })}
     >
       <DashboardItemCardContent
         title={step.title}

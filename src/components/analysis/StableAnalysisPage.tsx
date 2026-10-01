@@ -1,3 +1,6 @@
+import type { ReactNode } from 'react'
+import { HorseComparisonExplorer } from './HorseComparisonExplorer'
+import { useT } from '#/i18n/LocaleProvider'
 import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
 import { createDashboardLabData } from '#/components/dashboard-lab/dashboardLabData'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
@@ -39,13 +42,15 @@ export function StableAnalysisPage({ stableId }: StableAnalysisPageProps) {
 }
 
 function LockedAnalysis() {
+  const t = useT()
+
   return (
     <DashboardPage>
       <AnalysisPageHeader />
 
       <FeatureAccessPrompt
-        title="Analysis Centre is a Premium feature"
-        description="Upgrade to spot care gaps, health trends, missing follow-up notes, and upcoming service load across the stable."
+        title={t('analysisViews.premium')}
+        description={t('analysisViews.premiumHelp')}
       />
     </DashboardPage>
   )
@@ -76,15 +81,29 @@ function UnlockedAnalysisPage({
     overview,
   })
 
-  return <StableAnalysisPageView analysis={analysis} data={data} />
+  return (
+    <StableAnalysisPageView
+      analysis={analysis}
+      data={data}
+      renderHorseComparison={(horseId) => (
+        <HorseComparisonExplorer
+          key={horseId}
+          horseId={horseId}
+          stableId={stableId}
+        />
+      )}
+    />
+  )
 }
 
 export function StableAnalysisPageView({
   analysis,
   data,
+  renderHorseComparison,
 }: {
   analysis: StableAnalysis
   data?: DashboardLabData
+  renderHorseComparison?: (horseId: string) => ReactNode
 }) {
   if (!analysis.hasAccess) return <LockedAnalysis />
   if (!data) throw new Error('Unlocked analysis requires dashboard data')
@@ -94,6 +113,7 @@ export function StableAnalysisPageView({
         key={analysis.stable._id}
         data={data}
         stableAnalysis={analysis}
+        renderHorseComparison={renderHorseComparison}
       />
     </DashboardPage>
   )

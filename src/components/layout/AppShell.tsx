@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { useEffect, useImperativeHandle, useRef } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 
@@ -140,6 +141,7 @@ export function AppHeader({
 }
 
 export function AppSkipLink() {
+  const t = useT()
   return (
     <a
       href="#main-content"
@@ -162,7 +164,7 @@ export function AppSkipLink() {
         })
       }}
     >
-      Skip to content
+      {t('navigation.skip')}
     </a>
   )
 }
@@ -231,7 +233,7 @@ export function AppHeaderUtilityCluster({
   return (
     <div
       data-slot="app-header-utility-cluster"
-      className={cn('flex items-center gap-2 p-1', className)}
+      className={cn('flex flex-wrap items-center gap-2 p-1', className)}
       {...props}
     />
   )

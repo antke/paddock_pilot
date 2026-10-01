@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { Navigate, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
 import { useRef, useState } from 'react'
@@ -100,12 +101,14 @@ export function FirstStableOnboardingView({
   onStableCreated,
   connectedActions,
 }: FirstStableOnboardingViewProps) {
+  const t = useT()
+
   const [profileSaved, setProfileSaved] = useState(false)
   if (stables.length > 0) {
     return (
       <RouteStatusAlert
-        title="Your account is already connected"
-        description="Open one of your stables, or update the account profile that follows you across all of them."
+        title={t('onboarding.accountConnected')}
+        description={t('onboarding.accountConnectedHelp')}
         actions={
           connectedActions ?? (
             <>
@@ -113,13 +116,13 @@ export function FirstStableOnboardingView({
                 to="/stables/$stableId"
                 params={{ stableId: stables[0]._id }}
               >
-                Open {stables[0].name}
+                {t('onboarding.openStable', { name: stables[0].name })}
               </ButtonLink>
               <ButtonLink to="/profile" action="edit" variant="outline">
-                Edit profile
+                {t('onboarding.editProfile')}
               </ButtonLink>
               <ButtonLink to="/stables/create" variant="outline">
-                Create my own stable
+                {t('onboarding.createOwnStable')}
               </ButtonLink>
             </>
           )
@@ -134,8 +137,10 @@ export function FirstStableOnboardingView({
   const definitions = getOnboardingStepDefinitions(
     'owner',
     includeAccountProfile,
+    t,
   )
   const steps = createOnboardingStepperSteps({
+    t,
     role: 'owner',
     includeAccountProfile,
     currentStep,
@@ -147,11 +152,11 @@ export function FirstStableOnboardingView({
   if (currentStep === 'account-profile') {
     return (
       <OnboardingLayout
-        pageTitle="Welcome to Paddock Pilot"
-        pageDescription="A few calm steps will set up your account and first stable. Each step saves as you go."
+        pageTitle={t('onboarding.welcome')}
+        pageDescription={t('onboarding.welcomeHelp')}
         steps={steps}
-        title="Tell us about yourself"
-        description="Create the identity that will follow you across every stable you own or join."
+        title={t('onboarding.aboutYouTitle')}
+        description={t('onboarding.aboutYouHelp')}
       >
         <Profile
           initialValues={profile}
@@ -163,11 +168,11 @@ export function FirstStableOnboardingView({
 
   return (
     <OnboardingLayout
-      pageTitle="Create your first stable"
-      pageDescription="Start with the essentials. Operational details, horses and members follow in approachable steps."
+      pageTitle={t('onboarding.createFirst')}
+      pageDescription={t('onboarding.createFirstHelp')}
       steps={steps}
-      title={currentDefinition?.label ?? 'Stable basics'}
-      description="Give the stable a name and location. You can add the complete postal address later."
+      title={currentDefinition?.label ?? t('onboarding.stableBasics')}
+      description={t('onboarding.stableBasicsHelp')}
     >
       <Basics onSaved={onStableCreated} />
     </OnboardingLayout>
@@ -175,6 +180,8 @@ export function FirstStableOnboardingView({
 }
 
 function StableOnboarding({ stableId }: { stableId: Id<'stables'> }) {
+  const t = useT()
+
   const profile = useQuery(api.onboarding.getAccountProfile)
   const stable = useQuery(api.stables.get, { id: stableId })
   const access = useQuery(api.stables.getAccess, { id: stableId })
@@ -204,7 +211,7 @@ function StableOnboarding({ stableId }: { stableId: Id<'stables'> }) {
   }
 
   if (!profile || !stable) {
-    return <RouteStatusAlert title="Onboarding could not be found" />
+    return <RouteStatusAlert title={t('onboarding.notFound')} />
   }
 
   return (
@@ -290,6 +297,8 @@ export function StableOnboardingView({
   completeOnboarding,
   onOpenStable,
 }: StableOnboardingViewProps) {
+  const t = useT()
+
   const [reviewStep, setReviewStep] = useState<OnboardingStepId | null>(null)
   const transition = useOnboardingAction()
   const completed = useRef(false)
@@ -300,6 +309,7 @@ export function StableOnboardingView({
     ? ['account-profile', ...progress.completedSteps]
     : progress.completedSteps
   const progressSteps = createOnboardingStepperSteps({
+    t,
     role,
     includeAccountProfile: true,
     currentStep,
@@ -318,7 +328,7 @@ export function StableOnboardingView({
               : step.status,
       }))
     : progressSteps
-  const definitions = getOnboardingStepDefinitions(role, true)
+  const definitions = getOnboardingStepDefinitions(role, true, t)
   const displayStepIndex = definitions.findIndex(
     (step) => step.id === displayStep,
   )
@@ -358,11 +368,11 @@ export function StableOnboardingView({
     transitionError: transition.error,
     onRetry: transition.retry,
     pageTitle:
-      role === 'owner' ? `Set up ${stable.name}` : `Welcome to ${stable.name}`,
-    pageDescription:
       role === 'owner'
-        ? 'Build a useful starting point now, then let the stable records grow naturally.'
-        : 'Learn the stable, add the details that matter here, and begin with your own horses.',
+        ? t('onboarding.setUpStable', { name: stable.name })
+        : t('onboarding.welcomeStable', { name: stable.name }),
+    pageDescription:
+      role === 'owner' ? t('onboarding.ownerHelp') : t('onboarding.memberHelp'),
     steps,
     onStepSelect: selectReviewStep,
     onBack: reviewStep
@@ -376,8 +386,8 @@ export function StableOnboardingView({
     return (
       <OnboardingLayout
         {...sharedLayoutProps}
-        title="Tell us about yourself"
-        description="Your account profile is shared across every stable connection."
+        title={t('onboarding.aboutYouTitle')}
+        description={t('onboarding.sharedProfileHelp')}
       >
         <PendingProfile
           Form={Profile}
@@ -392,8 +402,8 @@ export function StableOnboardingView({
     return (
       <OnboardingLayout
         {...sharedLayoutProps}
-        title="Stable basics"
-        description="Correct the stable name or location, then return to your current step."
+        title={t('onboarding.stableBasics')}
+        description={t('onboarding.editBasicsHelp')}
       >
         <Basics stable={stable} onSaved={returnToCurrentStep} />
       </OnboardingLayout>
@@ -405,8 +415,8 @@ export function StableOnboardingView({
       <OnboardingLayout
         {...sharedLayoutProps}
         optional
-        title="How does the stable run?"
-        description="Add the contact and operational details people are most likely to need."
+        title={t('onboarding.operationsTitle')}
+        description={t('onboarding.operationsHelp')}
       >
         <Operations
           stable={stable}
@@ -420,7 +430,9 @@ export function StableOnboardingView({
               ? returnToCurrentStep()
               : advance('stable-operations', 'first-horse', true)
           }
-          cancelLabel={reviewStep ? 'Cancel' : 'Do this later'}
+          cancelLabel={
+            reviewStep ? t('onboarding.cancel') : t('onboarding.later')
+          }
         />
       </OnboardingLayout>
     )
@@ -430,8 +442,8 @@ export function StableOnboardingView({
     return (
       <OnboardingLayout
         {...sharedLayoutProps}
-        title={`Meet ${stable.name}`}
-        description="Here are the stable details that will help you get oriented."
+        title={t('onboarding.meetStable', { name: stable.name })}
+        description={t('onboarding.introductionHelp')}
       >
         <StableIntroductionStep
           stable={stable}
@@ -450,7 +462,7 @@ export function StableOnboardingView({
       return (
         <RouteStatusAlert
           tone="danger"
-          title="Membership details could not be found"
+          title={t('onboarding.memberNotFound')}
         />
       )
     }
@@ -459,19 +471,20 @@ export function StableOnboardingView({
       <OnboardingLayout
         {...sharedLayoutProps}
         optional
-        title="Your details at this stable"
-        description="These details belong to this membership and can differ at another stable."
+        title={t('onboarding.memberTitle')}
+        description={t('onboarding.memberHelpDetails')}
       >
         <div className="grid gap-5">
           <OnboardingLaterNote>
-            An emergency contact is useful around the yard, but you can add or
-            update it later from your stable profile.
+            {t('onboarding.emergencyLater')}
           </OnboardingLaterNote>
 
           <PendingMember
             Form={Member}
             member={member}
-            cancelLabel={reviewStep ? 'Cancel' : 'Do this later'}
+            cancelLabel={
+              reviewStep ? t('onboarding.cancel') : t('onboarding.later')
+            }
             onCancel={() => {
               return reviewStep
                 ? returnToCurrentStep()
@@ -497,18 +510,18 @@ export function StableOnboardingView({
         optional
         title={
           ownHorseCount > 0
-            ? 'Your first horse is ready'
-            : 'Add your first horse'
+            ? t('onboarding.horseReady')
+            : t('onboarding.addFirstHorse')
         }
         description={
           ownHorseCount > 0
-            ? 'A horse is already connected to your account in this stable.'
-            : 'Begin with identification. Care and health details can grow later.'
+            ? t('onboarding.horseReadyHelp')
+            : t('onboarding.horseStartHelp')
         }
       >
         {ownHorseCount > 0 && !reviewStep ? (
           <DashboardEmptyState
-            title="Horse connected"
+            title={t('onboarding.horseConnected')}
             actions={
               <Button
                 type="button"
@@ -519,12 +532,11 @@ export function StableOnboardingView({
                   )
                 }
               >
-                Continue
+                {t('onboarding.continue')}
               </Button>
             }
           >
-            You can continue onboarding and add more profile details whenever
-            you’re ready.
+            {t('onboarding.horseContinueHelp')}
           </DashboardEmptyState>
         ) : (
           <Horse
@@ -547,7 +559,9 @@ export function StableOnboardingView({
                     true,
                   )
             }
-            cancelLabel={reviewStep ? 'Cancel' : 'Do this later'}
+            cancelLabel={
+              reviewStep ? t('onboarding.cancel') : t('onboarding.later')
+            }
           />
         )}
       </OnboardingLayout>
@@ -559,8 +573,8 @@ export function StableOnboardingView({
       <OnboardingLayout
         {...sharedLayoutProps}
         optional
-        title="Bring in your team"
-        description="Invite members by email. Their access begins only after they accept."
+        title={t('onboarding.inviteTeam')}
+        description={t('onboarding.inviteTeamHelp')}
       >
         <Team
           stableId={stableId}
@@ -584,8 +598,8 @@ export function StableOnboardingView({
     <OnboardingLayout
       {...sharedLayoutProps}
       onBack={undefined}
-      title="Review and finish"
-      description="Check the information you have added. Every editable field can be corrected before you continue."
+      title={t('onboarding.reviewFinish')}
+      description={t('onboarding.reviewFinishHelp')}
     >
       <OnboardingReviewStep
         profile={profile}
@@ -602,7 +616,7 @@ export function StableOnboardingView({
               completed.current = true
             }
             await onOpenStable()
-          }, 'Could not open the stable. Try again; completed setup will not be submitted twice.')
+          }, 'openStable')
         }
       />
     </OnboardingLayout>

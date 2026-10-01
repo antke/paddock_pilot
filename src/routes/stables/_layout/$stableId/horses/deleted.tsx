@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DeletedHorsesCard } from '#/components/stables/DeletedHorsesCard'
@@ -15,6 +16,8 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
+  const t = useT()
+
   const { stableId } = Route.useParams()
   const { data: deletedHorses } = useSuspenseQuery(
     convexQuery(api.horses.listDeleted, {
@@ -25,14 +28,14 @@ function RouteComponent() {
   return (
     <DashboardPage>
       <DashboardPageHeader
-        title="Deleted horses"
+        title={t('horseDeletion.deletedHorses')}
         actions={
           <ButtonLink
             to="/stables/$stableId/horses"
             params={{ stableId }}
             variant="outline"
           >
-            Back to horses
+            {t('uiRemainder.backHorses')}
           </ButtonLink>
         }
       />

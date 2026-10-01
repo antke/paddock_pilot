@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import type { Doc } from 'convex/_generated/dataModel'
 import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
@@ -12,14 +13,16 @@ export function StableListPage({
 }: {
   stables: ReadonlyArray<Pick<Doc<'stables'>, '_id' | 'name' | 'location'>>
 }) {
+  const t = useT()
+
   return (
     <DashboardPage>
       <DashboardPageHeader
-        title="All stables"
+        title={t('stables.all')}
         actions={
           stables.length > 0 ? (
             <ButtonLink to="/stables/create" action="create">
-              Create stable
+              {t('stables.create')}
             </ButtonLink>
           ) : undefined
         }
@@ -27,7 +30,7 @@ export function StableListPage({
       {stables.length === 0 ? (
         <NoStablesPrompt chrome="flat" />
       ) : (
-        <DashboardSection aria-label="Stable list">
+        <DashboardSection aria-label={t('stables.list')}>
           <DashboardItemList>
             {stables.map((stable) => (
               <StableCardLink

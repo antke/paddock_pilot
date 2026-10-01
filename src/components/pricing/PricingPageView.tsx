@@ -1,3 +1,5 @@
+import { useT } from '#/i18n/LocaleProvider'
+import type { TFunction } from 'i18next'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
@@ -21,7 +23,7 @@ function PricingWidget({
 }
 
 class PricingTableBoundary extends Component<
-  { renderPricingTable: (attempt: number) => ReactNode },
+  { renderPricingTable: (attempt: number) => ReactNode; t: TFunction<'app'> },
   { hasError: boolean; attempt: number }
 > {
   state = { hasError: false, attempt: 0 }
@@ -47,17 +49,18 @@ class PricingTableBoundary extends Component<
     return { hasError: true }
   }
   render() {
+    const t = this.props.t
     return (
       <div
         ref={this.region}
         role="region"
-        aria-label="Plan options"
+        aria-label={t('pricing.options')}
         tabIndex={-1}
       >
         {this.state.hasError ? (
           <DashboardSectionCard
-            title="Plans couldn’t load"
-            description="Available plans couldn’t be loaded. Try again in a moment."
+            title={t('pricing.errorTitle')}
+            description={t('pricing.errorDescription')}
             footer={
               <Button
                 onClick={() =>
@@ -67,7 +70,7 @@ class PricingTableBoundary extends Component<
                   }))
                 }
               >
-                Retry loading plans
+                {t('pricing.retry')}
               </Button>
             }
           />
@@ -92,29 +95,30 @@ export function PricingPageView({
   returnTo?: string
   renderPricingTable: (attempt: number) => ReactNode
 }) {
+  const t = useT()
   const invitationPath = getInvitationReturnPath(returnTo)
   return (
     <DashboardPage width="narrow">
       <DashboardPageHeader
-        title="Plans"
+        title={t('navigation.plans')}
         description={
           billingEnabled
-            ? 'Review available plans and billing options.'
-            : 'Stable operations are available to every member during testing. When billing launches, the premium plan will add the Analysis Centre; all other current features remain part of the core product.'
+            ? t('pricing.description')
+            : t('pricing.testingDescription')
         }
         className="text-center"
         contentLayout="center"
         headingClassName="justify-items-center"
       />
       {billingEnabled ? (
-        <PricingTableBoundary renderPricingTable={renderPricingTable} />
+        <PricingTableBoundary t={t} renderPricingTable={renderPricingTable} />
       ) : (
         <PricingFallback />
       )}
       {invitationPath && (
         <DashboardActions align="center">
           <ButtonAnchor href={invitationPath} variant="outline">
-            Return to invitation
+            {t('pricing.return')}
           </ButtonAnchor>
         </DashboardActions>
       )}
@@ -123,23 +127,21 @@ export function PricingPageView({
 }
 
 function PricingFallback() {
+  const t = useT()
   return (
     <DashboardSectionCard
-      title="Testing access"
-      description="Billing is not enabled in this environment. Testers can use every current Paddock Pilot feature without choosing a plan or entering payment details."
-      badges={<Badge variant="secondary">Included</Badge>}
+      title={t('pricing.testingTitle')}
+      description={t('pricing.testingAccess')}
+      badges={<Badge variant="secondary">{t('pricing.included')}</Badge>}
       contentGap="comfortable"
       contentTextSize="sm"
-      footer={<ButtonLink to="/sign-up/$">Start setup</ButtonLink>}
+      footer={<ButtonLink to="/sign-up/$">{t('pricing.start')}</ButtonLink>}
     >
       <DashboardLayoutGrid variant="thirdsCompact">
         {[
-          ['Care records', 'Track reminders, visits, notes, and outcomes.'],
-          ['Stable team', 'Coordinate owners, providers, and members.'],
-          [
-            'Analysis centre',
-            'Review care gaps, cadence, and printable summaries.',
-          ],
+          [t('pricing.care'), t('pricing.careDescription')],
+          [t('pricing.team'), t('pricing.teamDescription')],
+          [t('pricing.analysis'), t('pricing.analysisDescription')],
         ].map(([title, description]) => (
           <DetailTextBlock
             key={title}

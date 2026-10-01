@@ -3,42 +3,78 @@ import z from 'zod'
 export const healthIssueStatuses = ['active', 'resolved'] as const
 export const healthIssueSeverities = ['low', 'medium', 'high'] as const
 
-export const healthIssueStatusSchema = z.enum(healthIssueStatuses)
-export const healthIssueSeveritySchema = z.enum(healthIssueSeverities)
+const defaultMessages = {
+  titleMin: 'Title must have minimum 1 character.',
+  titleMax: 'Title cannot be longer than 120 characters.',
+  descriptionMax: 'Description cannot be longer than 1000 characters.',
+  textInvalid: 'Enter text.',
+  choiceInvalid: 'Choose a valid option.',
+} as const
+export type HealthIssueValidationKey = keyof typeof defaultMessages
+export function createHealthIssueSchemas(
+  message: (key: HealthIssueValidationKey) => string = (key) =>
+    defaultMessages[key],
+) {
+  const healthIssueStatusSchema = z.enum(healthIssueStatuses, {
+    error: message('choiceInvalid'),
+  })
+  const healthIssueSeveritySchema = z.enum(healthIssueSeverities, {
+    error: message('choiceInvalid'),
+  })
 
-export const healthIssueTitleSchema = z
-  .string()
-  .trim()
-  .min(1, 'Title must have minimum 1 character.')
-  .max(120, 'Title cannot be longer than 120 characters.')
+  const healthIssueTitleSchema = z
+    .string({ error: message('textInvalid') })
+    .trim()
+    .min(1, message('titleMin'))
+    .max(120, message('titleMax'))
 
-export const healthIssueDescriptionSchema = z
-  .string()
-  .trim()
-  .max(1000, 'Description cannot be longer than 1000 characters.')
+  const healthIssueDescriptionSchema = z
+    .string({ error: message('textInvalid') })
+    .trim()
+    .max(1000, message('descriptionMax'))
 
-const optionalText = <TSchema extends z.ZodString>(schema: TSchema) =>
-  schema.optional().transform((value) => value || undefined)
+  const optionalText = <TSchema extends z.ZodString>(schema: TSchema) =>
+    schema.optional().transform((value) => value || undefined)
 
-export const healthIssueAddSchema = z.object({
-  horseId: z.string().min(1),
-  title: healthIssueTitleSchema,
-  description: optionalText(healthIssueDescriptionSchema),
-  severity: healthIssueSeveritySchema.optional(),
-})
+  const healthIssueAddSchema = z.object({
+    horseId: z.string({ error: message('textInvalid') }).min(1),
+    title: healthIssueTitleSchema,
+    description: optionalText(healthIssueDescriptionSchema),
+    severity: healthIssueSeveritySchema.optional(),
+  })
 
-export const healthIssueUpdateSchema = z.object({
-  title: healthIssueTitleSchema.optional(),
-  description: optionalText(healthIssueDescriptionSchema),
-  status: healthIssueStatusSchema.optional(),
-  severity: healthIssueSeveritySchema.optional(),
-})
+  const healthIssueUpdateSchema = z.object({
+    title: healthIssueTitleSchema.optional(),
+    description: optionalText(healthIssueDescriptionSchema),
+    status: healthIssueStatusSchema.optional(),
+    severity: healthIssueSeveritySchema.optional(),
+  })
 
-export const healthIssueFormSchema = z.object({
-  title: healthIssueTitleSchema,
-  description: healthIssueDescriptionSchema,
-  severity: healthIssueSeveritySchema.optional(),
-})
+  const healthIssueFormSchema = z.object({
+    title: healthIssueTitleSchema,
+    description: healthIssueDescriptionSchema,
+    severity: healthIssueSeveritySchema.optional(),
+  })
+
+  return {
+    healthIssueStatusSchema,
+    healthIssueSeveritySchema,
+    healthIssueTitleSchema,
+    healthIssueDescriptionSchema,
+    healthIssueAddSchema,
+    healthIssueUpdateSchema,
+    healthIssueFormSchema,
+  }
+}
+export const {
+  healthIssueStatusSchema,
+  healthIssueSeveritySchema,
+  healthIssueTitleSchema,
+  healthIssueDescriptionSchema,
+  healthIssueAddSchema,
+  healthIssueUpdateSchema,
+  healthIssueFormSchema,
+} = createHealthIssueSchemas()
 
 export type HealthIssueFormSchema = z.infer<typeof healthIssueFormSchema>
 export type HealthIssueSeverity = (typeof healthIssueSeverities)[number]

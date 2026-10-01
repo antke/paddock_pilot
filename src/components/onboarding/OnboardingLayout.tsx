@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { ArrowLeftIcon, SparkleIcon } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
@@ -44,15 +45,18 @@ export function OnboardingLayout({
   steps,
   title,
 }: OnboardingLayoutProps) {
+  const t = useT()
+
   const [childPending, setChildPending] = useState(false)
   const sectionRef = useRef<HTMLDivElement>(null)
-  const previousTitle = useRef(title)
+  const stepId = steps.find((step) => step.status === 'current')?.id
+  const previousStepId = useRef(stepId)
   useEffect(() => {
-    if (previousTitle.current !== title) {
-      previousTitle.current = title
+    if (previousStepId.current !== stepId) {
+      previousStepId.current = stepId
       sectionRef.current?.focus()
     }
-  }, [title])
+  }, [stepId])
   const busy = pending || childPending
   const blocked = busy || Boolean(transitionError)
   return (
@@ -69,7 +73,7 @@ export function OnboardingLayout({
               onClick={onBack}
             >
               <ArrowLeftIcon aria-hidden="true" />
-              Back
+              {t('onboarding.back')}
             </Button>
           ) : undefined
         }
@@ -84,15 +88,23 @@ export function OnboardingLayout({
         ref={sectionRef}
         tabIndex={-1}
         role="region"
-        aria-label={typeof title === 'string' ? title : 'Current setup step'}
+        aria-label={
+          typeof title === 'string' ? title : t('onboarding.currentStep')
+        }
         title={title}
         description={description}
-        badges={optional ? <Badge variant="secondary">Optional</Badge> : null}
+        badges={
+          optional ? (
+            <Badge variant="secondary">{t('onboarding.optional')}</Badge>
+          ) : null
+        }
         contentGap="comfortable"
       >
         {busy && (
           <p role="status" className="text-sm text-muted-foreground">
-            {pending ? 'Continuing…' : 'Saving…'}
+            {pending
+              ? t('onboarding.continuing')
+              : t('onboarding.savingStatus')}
           </p>
         )}
         <OnboardingTransitionError
@@ -111,10 +123,12 @@ export function OnboardingLayout({
 }
 
 export function OnboardingLaterNote({ children }: { children: ReactNode }) {
+  const t = useT()
+
   return (
     <Alert role="note">
       <SparkleIcon aria-hidden="true" />
-      <AlertTitle>You can do this later</AlertTitle>
+      <AlertTitle>{t('onboarding.laterTitle')}</AlertTitle>
       <AlertDescription>{children}</AlertDescription>
     </Alert>
   )

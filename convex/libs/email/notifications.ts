@@ -1,11 +1,13 @@
+import { getEmailCopy } from '../../../shared/i18n/email'
+import type { Locale } from '../../../shared/i18n/locale'
 import type { Doc } from '../../_generated/dataModel'
 import type { MutationCtx } from '../../_generated/server'
 import { enqueueEmail } from './outbox'
 
-const formatUserName = (user: Doc<'users'>) =>
+const formatUserName = (user: Doc<'users'>, locale?: Locale) =>
   user.preferredName ||
   [user.firstName, user.lastName].filter(Boolean).join(' ') ||
-  'Stable member'
+  getEmailCopy(locale).memberFallback
 
 const hasMailableAddress = (user: Doc<'users'>) =>
   user.email.trim().includes('@')
@@ -22,7 +24,7 @@ export const queueAccountWelcomeEmail = async (
     relation: { type: 'user', id: user._id },
     template: {
       kind: 'account_welcome',
-      displayName: formatUserName(user),
+      displayName: formatUserName(user, user.locale),
     },
   })
 }
@@ -39,7 +41,7 @@ export const queueAccountDeletedEmail = async (
     relation: { type: 'user', id: user._id },
     template: {
       kind: 'account_deleted',
-      displayName: formatUserName(user),
+      displayName: formatUserName(user, user.locale),
     },
   })
 }
@@ -82,7 +84,7 @@ export const queueMembershipActivatedEmails = async (
     relation: { type: 'stableInvitation', id: input.invitation._id },
     template: {
       kind: 'stable_invitation_accepted',
-      memberName: formatUserName(input.member),
+      memberName: formatUserName(input.member, owner.locale),
       stableId: input.stable._id,
       stableName: input.stable.name,
     },

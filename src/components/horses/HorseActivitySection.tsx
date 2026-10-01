@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { useMemo, useState } from 'react'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
@@ -21,23 +22,8 @@ import {
 
 const compactVisibleItemLimit = 5
 const expandedVisibleItemLimit = 12
-const activityTabs = [
-  {
-    id: 'upcoming',
-    label: 'Upcoming',
-    title: 'Upcoming activity',
-    description: 'Planned events dated today or later for this horse.',
-  },
-  {
-    id: 'history',
-    label: 'History',
-    title: 'Activity history',
-    description:
-      'Completed and cancelled events, plus events dated before today.',
-  },
-] as const
 
-type ActivityTab = (typeof activityTabs)[number]['id']
+type ActivityTab = 'upcoming' | 'history'
 
 export function HorseActivitySection(props: HorseDetailSectionProps) {
   return (
@@ -46,6 +32,23 @@ export function HorseActivitySection(props: HorseDetailSectionProps) {
 }
 
 function HorseActivity({ stableId, horse, events }: HorseDetailSectionProps) {
+  const t = useT()
+  const { locale } = useLocale()
+
+  const activityTabs = [
+    {
+      id: 'upcoming',
+      label: t('horseHistory.upcoming'),
+      title: t('horseHistory.upcomingActivity'),
+      description: t('horseHistory.upcomingHelp'),
+    },
+    {
+      id: 'history',
+      label: t('horseHistory.history'),
+      title: t('horseHistory.activityHistory'),
+      description: t('horseHistory.historyHelp'),
+    },
+  ] as const
   const [activeTab, setActiveTab] = useState<ActivityTab>('upcoming')
   const [historyExpanded, setHistoryExpanded] = useState(false)
   const { today } = useLocalDateContext()
@@ -53,7 +56,10 @@ function HorseActivity({ stableId, horse, events }: HorseDetailSectionProps) {
     () => groupHorseActivityEvents(events, today),
     [events, today],
   )
-  const filterConfig = useMemo(createHorseActivityListFilterConfig, [])
+  const filterConfig = useMemo(
+    () => createHorseActivityListFilterConfig(locale),
+    [locale],
+  )
   const filtering = useListFiltering({
     items: groups[activeTab],
     config: filterConfig,
@@ -81,7 +87,7 @@ function HorseActivity({ stableId, horse, events }: HorseDetailSectionProps) {
           params={{ stableId }}
           action="create"
         >
-          Add event
+          {t('horseHistory.addEvent')}
         </ButtonLink>
       }
     >
@@ -102,7 +108,9 @@ function HorseActivity({ stableId, horse, events }: HorseDetailSectionProps) {
                 size="sm"
                 onClick={() => setHistoryExpanded((expanded) => !expanded)}
               >
-                {historyExpanded ? 'Compact list' : 'Expand list'}
+                {historyExpanded
+                  ? t('horseHistory.compact')
+                  : t('horseHistory.expand')}
               </Button>
             </DashboardActions>
           ) : undefined
@@ -114,25 +122,31 @@ function HorseActivity({ stableId, horse, events }: HorseDetailSectionProps) {
             title={getListFilterEmptyMessage({
               filtering,
               emptyMessage: isHistory
-                ? 'No activity history yet.'
-                : 'No upcoming activity for this horse.',
+                ? t('horseHistory.historyEmpty')
+                : t('horseHistory.upcomingEmpty'),
               filteredEmptyMessage: isHistory
-                ? 'No activity history matches these filters.'
-                : 'No upcoming activity matches these filters.',
+                ? t('horseHistory.historyFilteredEmpty')
+                : t('horseHistory.upcomingFilteredEmpty'),
             })}
           >
             {getListFilterEmptyMessage({
               filtering,
               emptyMessage: isHistory
-                ? 'Completed, cancelled and earlier-dated events will appear here.'
-                : 'Create an event and select this horse to show it here.',
-              filteredEmptyMessage:
-                'Adjust the search or filters to see more activity.',
+                ? t('horseHistory.historyEmptyHelp')
+                : t('horseHistory.upcomingEmptyHelp'),
+              filteredEmptyMessage: t('horseHistory.filterHelp'),
             })}
           </DashboardEmptyState>
         ) : (
           <ScrollableList
-            ariaLabel={`${horse.name} — ${isHistory ? 'activity history' : 'upcoming activity'}`}
+            ariaLabel={t('horseHistory.activityRegion', {
+              name: horse.name,
+              view: t(
+                isHistory
+                  ? 'horseHistory.historyRegion'
+                  : 'horseHistory.upcomingRegion',
+              ),
+            })}
             className="gap-0"
             estimatedItemHeightRem={7.5}
             itemCount={visibleEvents.length}

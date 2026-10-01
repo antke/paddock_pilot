@@ -1,3 +1,6 @@
+import { useLocale, useT } from '#/i18n/LocaleProvider'
+import { formatMediumDateKey, formatMonthYearDateKey } from '#/lib/dateDisplay'
+import type { Locale } from 'shared/i18n/locale'
 import { getEffectiveInvitationStatus } from 'shared/stableInvitations/invitationState'
 import {
   CalendarCheckIcon,
@@ -45,6 +48,9 @@ export function OnboardingReviewStep({
   role: OnboardingRole
   stable: Doc<'stables'>
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const pendingInvitations = invitations.filter(
     (invitation) => getEffectiveInvitationStatus(invitation) === 'pending',
   )
@@ -52,78 +58,81 @@ export function OnboardingReviewStep({
     <div className="grid gap-5">
       <Alert role="note">
         <CheckCircleIcon aria-hidden="true" />
-        <AlertTitle>Review your setup</AlertTitle>
+        <AlertTitle>{t('onboarding.reviewTitle')}</AlertTitle>
         <AlertDescription>
-          Check the details below before opening {stable.name}. Use any pencil
-          button to make a correction without losing your progress.
+          {t('onboarding.reviewHelp', { name: stable.name })}
         </AlertDescription>
       </Alert>
 
       <div className="grid gap-4">
-        <ReviewSection title="About you">
+        <ReviewSection title={t('onboarding.aboutYou')}>
           <ReviewField
-            label="Preferred name"
+            label={t('onboarding.preferredName')}
             value={profile.displayName}
             onEdit={() => onEdit('account-profile')}
           />
           <ReviewField
-            label="Phone number"
-            value={profile.phone || 'Not added'}
+            label={t('onboarding.phoneNumber')}
+            value={profile.phone || t('onboarding.notAdded')}
             onEdit={() => onEdit('account-profile')}
           />
           <ReviewField
-            label="Profile image"
-            value={profile.profileImageUrl ? 'Added' : 'Not added'}
+            label={t('onboarding.profileImage')}
+            value={
+              profile.profileImageUrl
+                ? t('onboarding.added')
+                : t('onboarding.notAdded')
+            }
             onEdit={() => onEdit('account-profile')}
           />
         </ReviewSection>
 
-        <ReviewSection title="Stable">
+        <ReviewSection title={t('onboarding.stable')}>
           <ReviewField
-            label="Stable name"
+            label={t('onboarding.stableName')}
             value={stable.name}
             onEdit={
               role === 'owner' ? () => onEdit('stable-basics') : undefined
             }
           />
           <ReviewField
-            label="Location"
+            label={t('onboarding.location')}
             value={stable.location}
             onEdit={
               role === 'owner' ? () => onEdit('stable-basics') : undefined
             }
           />
           <ReviewField
-            label="Primary contact"
-            value={stable.contactName || 'Not added'}
+            label={t('onboarding.primaryContact')}
+            value={stable.contactName || t('onboarding.notAdded')}
             onEdit={
               role === 'owner' ? () => onEdit('stable-operations') : undefined
             }
           />
           <ReviewField
-            label="Contact phone"
-            value={stable.contactPhone || 'Not added'}
+            label={t('onboarding.contactPhone')}
+            value={stable.contactPhone || t('onboarding.notAdded')}
             onEdit={
               role === 'owner' ? () => onEdit('stable-operations') : undefined
             }
           />
           <ReviewField
-            label="Emergency phone"
-            value={stable.emergencyPhone || 'Not added'}
+            label={t('onboarding.emergencyPhone')}
+            value={stable.emergencyPhone || t('onboarding.notAdded')}
             onEdit={
               role === 'owner' ? () => onEdit('stable-operations') : undefined
             }
           />
           <ReviewField
-            label="Opening hours"
-            value={stable.openingHours || 'Not added'}
+            label={t('onboarding.openingHours')}
+            value={stable.openingHours || t('onboarding.notAdded')}
             onEdit={
               role === 'owner' ? () => onEdit('stable-operations') : undefined
             }
           />
           <ReviewField
-            label="Yard rules"
-            value={stable.yardRules || 'Not added'}
+            label={t('onboarding.yardRules')}
+            value={stable.yardRules || t('onboarding.notAdded')}
             onEdit={
               role === 'owner' ? () => onEdit('stable-operations') : undefined
             }
@@ -131,48 +140,52 @@ export function OnboardingReviewStep({
         </ReviewSection>
 
         {role === 'member' && member && (
-          <ReviewSection title="Your stable details">
+          <ReviewSection title={t('onboarding.yourStableDetails')}>
             <ReviewField
-              label="Phone number"
-              value={member.phone || 'Not added'}
+              label={t('onboarding.phoneNumber')}
+              value={member.phone || t('onboarding.notAdded')}
               onEdit={() => onEdit('member-details')}
             />
             <ReviewField
-              label="Emergency contact"
-              value={member.emergencyContact || 'Not added'}
+              label={t('onboarding.emergencyContact')}
+              value={member.emergencyContact || t('onboarding.notAdded')}
               onEdit={() => onEdit('member-details')}
             />
           </ReviewSection>
         )}
 
-        <ReviewSection title="First horse">
+        <ReviewSection title={t('onboarding.firstHorse')}>
           <ReviewField
-            label="Horse name"
-            value={horse?.name || 'Not added'}
+            label={t('onboarding.horseName')}
+            value={horse?.name || t('onboarding.notAdded')}
             onEdit={() => onEdit('first-horse')}
           />
           <ReviewField
-            label="Birth date"
-            value={formatBirthDate(horse?.dateOfBirth)}
+            label={t('onboarding.birthDate')}
+            value={formatBirthDate(t, locale, horse?.dateOfBirth)}
             onEdit={() => onEdit('first-horse')}
           />
           <ReviewField
-            label="Current age"
-            value={horse ? `${horse.age} years` : 'Not provided'}
+            label={t('onboarding.currentAge')}
+            value={
+              horse
+                ? t('onboarding.age', { count: horse.age })
+                : t('onboarding.notProvided')
+            }
             onEdit={() => onEdit('first-horse')}
           />
         </ReviewSection>
 
         {role === 'owner' && (
-          <ReviewSection title="Your team">
+          <ReviewSection title={t('onboarding.yourTeam')}>
             <ReviewField
-              label="Pending invitations"
+              label={t('onboarding.pendingInvitations')}
               value={
                 pendingInvitations.length > 0
                   ? pendingInvitations
                       .map((invitation) => invitation.email)
                       .join('\n')
-                  : 'No pending invitations'
+                  : t('onboarding.noPendingInvitations')
               }
               onEdit={() => onEdit('invite-team')}
             />
@@ -184,19 +197,26 @@ export function OnboardingReviewStep({
 
       <DashboardActions align="end">
         <Button type="button" onClick={onComplete}>
-          Open {stable.name}
+          {t('onboarding.openStable', { name: stable.name })}
         </Button>
       </DashboardActions>
     </div>
   )
 }
 
-function formatBirthDate(dateOfBirth?: string) {
-  if (!dateOfBirth) return 'Not provided'
+function formatBirthDate(
+  t: ReturnType<typeof useT>,
+  locale: Locale,
+  dateOfBirth?: string,
+) {
+  if (!dateOfBirth) return t('onboarding.notProvided')
   const parts = dateOfBirth.split('-')
-  if (parts.length === 1) return `${dateOfBirth} (year only)`
-  if (parts.length === 2) return `${dateOfBirth} (day not provided)`
-  return dateOfBirth
+  if (parts.length === 1) return t('onboarding.yearOnly', { date: dateOfBirth })
+  if (parts.length === 2)
+    return t('onboarding.dayNotProvided', {
+      date: formatMonthYearDateKey(`${dateOfBirth}-01`, locale),
+    })
+  return formatMediumDateKey(dateOfBirth, locale)
 }
 
 function ReviewSection({
@@ -225,6 +245,7 @@ function ReviewField({
   onEdit?: () => void
   value: ReactNode
 }) {
+  const t = useT()
   return (
     <div className="grid min-h-14 grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(7rem,0.7fr)_minmax(0,1fr)_auto] items-center gap-3 border-b border-border-subtle py-3 last:border-b-0">
       <TextLabel as="dt">{label}</TextLabel>
@@ -238,7 +259,7 @@ function ReviewField({
           variant="ghost"
           size="icon-sm"
           className="col-start-2 row-start-1 sm:col-start-3"
-          aria-label={`Edit ${label.toLowerCase()}`}
+          aria-label={t('onboarding.editField', { field: label })}
           onClick={onEdit}
         />
       )}
@@ -247,6 +268,8 @@ function ReviewField({
 }
 
 function NextSteps({ role }: { role: OnboardingRole }) {
+  const t = useT()
+
   const items: Array<{
     description: string
     icon: ReactNode
@@ -255,35 +278,35 @@ function NextSteps({ role }: { role: OnboardingRole }) {
     role === 'owner'
       ? [
           {
-            title: 'Grow the horse records',
-            description: 'Add care and health details over time.',
+            title: t('onboarding.growRecords'),
+            description: t('onboarding.growRecordsHelp'),
             icon: <HorseIcon />,
           },
           {
-            title: 'Bring in your team',
-            description: 'Invite and manage members from Stable settings.',
+            title: t('onboarding.inviteTeam'),
+            description: t('onboarding.manageMembersHelp'),
             icon: <UsersThreeIcon />,
           },
           {
-            title: 'Plan stable activity',
-            description: 'Create events and coordinate the horses involved.',
+            title: t('onboarding.planActivity'),
+            description: t('onboarding.planActivityHelp'),
             icon: <CalendarCheckIcon />,
           },
         ]
       : [
           {
-            title: 'Keep your horses current',
-            description: 'Add care and health details when ready.',
+            title: t('onboarding.keepCurrent'),
+            description: t('onboarding.keepCurrentHelp'),
             icon: <HorseIcon />,
           },
           {
-            title: 'Know the stable team',
-            description: 'See who you can coordinate with around the yard.',
+            title: t('onboarding.knowTeam'),
+            description: t('onboarding.knowTeamHelp'),
             icon: <UsersThreeIcon />,
           },
           {
-            title: 'Coordinate events',
-            description: 'Plan for your horses and invite others to join.',
+            title: t('onboarding.coordinateEvents'),
+            description: t('onboarding.coordinateEventsHelp'),
             icon: <CalendarCheckIcon />,
           },
         ]

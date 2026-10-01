@@ -1,3 +1,4 @@
+import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
@@ -38,7 +39,6 @@ import {
 } from '#/components/ui/field'
 import { Select } from '#/components/ui/select'
 import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
-import { formatCountLabel } from '#/lib/numberDisplay'
 import { formatCommaList } from '#/lib/textDisplay'
 import { StableInvitationsList } from './StableInvitationsList'
 import { StableInviteForm } from './StableInviteForm'
@@ -103,6 +103,9 @@ export function StableMembersSettingsCardView({
   renderDetailsForm: (props: DetailsFormSlotProps) => ReactNode
   renderRemoveMember: (props: RemoveMemberButtonProps) => ReactNode
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const [editingMemberId, setEditingMemberId] = useState<string>()
   const [isInviteOpen, setIsInviteOpen] = useState(false)
   const [isInviting, setIsInviting] = useState(false)
@@ -131,10 +134,10 @@ export function StableMembersSettingsCardView({
     <DashboardSectionCard
       ref={membersSection}
       role="group"
-      aria-label="Members"
+      aria-label={t('stables.members')}
       tabIndex={-1}
-      title="Members"
-      description="Review who can access this stable and invite new members."
+      title={t('stables.members')}
+      description={t('stables.membersAccessHelp')}
       actions={
         <CreateRecordDialog
           open={isInviteOpen}
@@ -142,9 +145,9 @@ export function StableMembersSettingsCardView({
             if (!invitePending.current) setIsInviteOpen(open)
           }}
           isPending={isInviting}
-          triggerLabel="Invite member"
-          title="Invite member"
-          description="Invite someone to help manage this stable."
+          triggerLabel={t('stables.inviteMember')}
+          title={t('stables.inviteMember')}
+          description={t('stables.inviteMemberHelp')}
         >
           {renderInviteForm({
             onCreated: () => setIsInviteOpen(false),
@@ -157,7 +160,7 @@ export function StableMembersSettingsCardView({
       }
       contentGap="loose"
     >
-      <DashboardSubsection title="Current members" gap="compact">
+      <DashboardSubsection title={t('stables.currentMembers')} gap="compact">
         <DashboardItemList gap="compact">
           {members.map((member) => {
             const membership = member.membership
@@ -167,15 +170,19 @@ export function StableMembersSettingsCardView({
             return (
               <StablePersonCard
                 key={membership?._id ?? 'owner'}
-                name={formatStableMemberName(member)}
+                name={formatStableMemberName(member, locale)}
                 photoUrl={member.user?.photoUrl}
                 role={member.role}
                 meta={
                   <>
-                    <span>{member.user?.email ?? 'No email available'}</span>
+                    <span>{member.user?.email ?? t('stables.noEmail')}</span>
                     {membership?.phone && <span>{membership.phone}</span>}
                     {membership?.emergencyContact && (
-                      <span>Emergency: {membership.emergencyContact}</span>
+                      <span>
+                        {t('stables.emergencyContactValue', {
+                          contact: membership.emergencyContact,
+                        })}
+                      </span>
                     )}
                   </>
                 }
@@ -201,7 +208,7 @@ export function StableMembersSettingsCardView({
                           setEditingMemberId(editableMembership._id)
                         }
                       >
-                        Edit details
+                        {t('stables.editDetails')}
                       </Button>
                       {renderRemoveMember({
                         member,
@@ -240,7 +247,7 @@ export function StableMembersSettingsCardView({
 
       <DashboardSectionDivider />
 
-      <DashboardSubsection title="Invitations">
+      <DashboardSubsection title={t('stables.invitations')}>
         {invitations}
       </DashboardSubsection>
     </DashboardSectionCard>
@@ -258,11 +265,14 @@ type RemoveMemberButtonProps = {
 }
 
 function RemoveMemberButton(props: RemoveMemberButtonProps) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const { member, membership, stableName } = props
   const removeMember = useMutation(
     api.stableMembers.removeWithHorseReassignment,
   )
-  const memberName = formatStableMemberName(member)
+  const memberName = formatStableMemberName(member, locale)
 
   const onRemove = async (reassignToUserId?: Doc<'users'>['_id']) => {
     try {
@@ -271,20 +281,23 @@ function RemoveMemberButton(props: RemoveMemberButtonProps) {
         reassignToUserId,
       })
       showAppSuccessToast({
-        title: 'Member removed',
+        title: t('stables.memberRemoved'),
         description: (
           <p>
-            {memberName} no longer has access to {stableName}.
+            {t('stables.memberAccessRemoved', {
+              name: memberName,
+              stable: stableName,
+            })}
             {result.reassignedHorseCount > 0 &&
-              ` ${result.reassignedHorseCount} horse${result.reassignedHorseCount === 1 ? '' : 's'} reassigned.`}
+              ` ${t('stables.reassigned', { count: result.reassignedHorseCount })}`}
           </p>
         ),
       })
       return true
     } catch {
       showAppErrorToast({
-        title: 'Could not remove member',
-        description: <p>Check the horse reassignment and try again.</p>,
+        title: t('stables.removeMemberFailed'),
+        description: <p>{t('stables.reassignmentCheck')}</p>,
       })
       return false
     }
@@ -305,6 +318,9 @@ export function RemoveMemberButtonView({
 }: RemoveMemberButtonProps & {
   onRemove: (reassignToUserId?: Doc<'users'>['_id']) => Promise<boolean>
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const [open, setOpen] = useState(false)
   const [reassignToUserId, setReassignToUserId] = useState('')
   const [isRemoving, setIsRemoving] = useState(false)
@@ -314,7 +330,7 @@ export function RemoveMemberButtonView({
   const reassignmentTargets = members.filter(
     (candidate) => candidate.user && candidate.user._id !== membership.userId,
   )
-  const memberName = formatStableMemberName(member)
+  const memberName = formatStableMemberName(member, locale)
 
   const pendingRef = useRef(false)
   const confirmRemoval = async () => {
@@ -364,7 +380,7 @@ export function RemoveMemberButtonView({
           />
         }
       >
-        Remove
+        {t('stables.remove')}
       </AlertDialogTrigger>
       <AlertDialogContent
         finalFocus={() =>
@@ -376,17 +392,19 @@ export function RemoveMemberButtonView({
         }
       >
         <AlertDialogHeader>
-          <AlertDialogTitle>Remove {memberName}?</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t('stables.remove')}
+            {memberName}?
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            They will immediately lose access to {stableName}.
+            {t('stables.removeMemberConsequences', { stable: stableName })}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         {removeError && (
           <Alert variant="destructive">
             <AlertDescription>
-              Could not remove this member. Check the horse reassignment and try
-              again.
+              {t('stables.removeMemberFailedHelp')}
             </AlertDescription>
           </Alert>
         )}
@@ -395,7 +413,7 @@ export function RemoveMemberButtonView({
             <FieldHeader>
               <FieldHeaderContent>
                 <FieldTitle>
-                  Reassign {formatCountLabel(horses.length, 'horse')} first
+                  {t('stables.reassignFirst', { count: horses.length })}
                 </FieldTitle>
                 <FieldDescription>
                   {formatCommaList(horses.map((horse) => horse.name))}
@@ -404,7 +422,7 @@ export function RemoveMemberButtonView({
             </FieldHeader>
             <Field>
               <FieldLabel htmlFor={`reassign-${membership._id}`}>
-                New owner
+                {t('stables.newOwner')}
               </FieldLabel>
               <Select
                 id={`reassign-${membership._id}`}
@@ -412,10 +430,10 @@ export function RemoveMemberButtonView({
                 disabled={isRemoving}
                 onChange={(event) => setReassignToUserId(event.target.value)}
               >
-                <option value="">Choose a stable member</option>
+                <option value="">{t('stables.chooseMember')}</option>
                 {reassignmentTargets.map((candidate) => (
                   <option key={candidate.user!._id} value={candidate.user!._id}>
-                    {formatStableMemberName(candidate)}
+                    {formatStableMemberName(candidate, locale)}
                   </option>
                 ))}
               </Select>
@@ -424,7 +442,9 @@ export function RemoveMemberButtonView({
         )}
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isRemoving}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isRemoving}>
+            {t('stables.cancel')}
+          </AlertDialogCancel>
           <AlertDialogAction
             action="delete"
             variant="destructive"
@@ -432,7 +452,7 @@ export function RemoveMemberButtonView({
             aria-busy={isRemoving || undefined}
             onClick={() => void confirmRemoval()}
           >
-            {isRemoving ? 'Removing...' : 'Remove member'}
+            {isRemoving ? t('stables.removing') : t('stables.removeMember')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

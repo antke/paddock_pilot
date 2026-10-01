@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { Table } from '#/components/ui/table'
 import { useEffect, useId, useState } from 'react'
 import type { Doc } from 'convex/_generated/dataModel'
@@ -30,7 +31,6 @@ import {
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import {
   trainingActivities,
-  trainingActivityLabels,
   trainingStatusLabels,
 } from 'shared/training/trainingSchema'
 import { getTrainingEntries, trainingWindow } from './trainingCalendarData'
@@ -58,6 +58,9 @@ export function TrainingCalendar({
   initialDate,
   initialView,
 }: Props) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const { today } = useLocalDateContext()
   const id = useId()
   const [view, setView] = useState<'week' | 'month'>(initialView ?? 'week')
@@ -103,8 +106,8 @@ export function TrainingCalendar({
   )
   const label =
     view === 'month'
-      ? formatMonthYearDate(dateKeyToDate(anchor))
-      : `${formatShortDateKey(period.start)} – ${formatShortDateKey(period.end)}`
+      ? formatMonthYearDate(dateKeyToDate(anchor), locale)
+      : `${formatShortDateKey(period.start, locale)} – ${formatShortDateKey(period.end, locale)}`
   const dayEntries = (date: string, horseId?: string) =>
     entries.filter(
       (entry) =>
@@ -142,39 +145,47 @@ export function TrainingCalendar({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div
           role="group"
-          aria-label="Calendar navigation"
+          aria-label={t('trainingViews.navigation')}
           className="flex items-center gap-2"
         >
           <Button
             variant="outline"
             size="sm"
             onClick={() => move(-1)}
-            aria-label={`Previous ${view}`}
+            aria-label={t(
+              view === 'week'
+                ? 'trainingViews.previousWeek'
+                : 'trainingViews.previousMonth',
+            )}
           >
             <CaretLeftIcon aria-hidden="true" />
-            Previous
+            {t('trainingViews.previous')}
           </Button>
           <Button variant="outline" size="sm" onClick={() => setAnchor(today)}>
-            Today
+            {t('trainingViews.today')}
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => move(1)}
-            aria-label={`Next ${view}`}
+            aria-label={t(
+              view === 'week'
+                ? 'trainingViews.nextWeek'
+                : 'trainingViews.nextMonth',
+            )}
           >
-            Next
+            {t('trainingViews.next')}
             <CaretRightIcon aria-hidden="true" />
           </Button>
         </div>
         <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           <ChoiceButtonGroup
-            aria-label="Calendar view"
+            aria-label={t('trainingViews.view')}
             className="w-auto"
             value={view}
             options={[
-              { value: 'week', label: 'Week' },
-              { value: 'month', label: 'Month' },
+              { value: 'week', label: t('trainingViews.week') },
+              { value: 'month', label: t('trainingViews.month') },
             ]}
             onValueChange={(value) => changeView(value)}
           />
@@ -184,7 +195,7 @@ export function TrainingCalendar({
             search={{ horseIds: fixedHorseId ? [fixedHorseId] : selected }}
             action="create"
           >
-            Add training session
+            {t('trainingViews.addSession')}
           </ButtonLink>
         </div>
       </div>
@@ -194,41 +205,51 @@ export function TrainingCalendar({
         >
           {!fixedHorseId && (
             <Field>
-              <FieldLabel htmlFor={`${id}-horses`}>Find horses</FieldLabel>
+              <FieldLabel htmlFor={`${id}-horses`}>
+                {t('trainingViews.findHorses')}
+              </FieldLabel>
               <Input
                 id={`${id}-horses`}
                 value={horseQuery}
                 onChange={(e) => setHorseQuery(e.target.value)}
-                placeholder="Search horses to select"
+                placeholder={t('trainingViews.searchHorses')}
               />
             </Field>
           )}
           <Field>
-            <FieldLabel htmlFor={`${id}-activity`}>Type of work</FieldLabel>
+            <FieldLabel htmlFor={`${id}-activity`}>
+              {t('trainingViews.workType')}
+            </FieldLabel>
             <Select
               id={`${id}-activity`}
               value={activity}
               onChange={(e) => setActivity(e.target.value)}
             >
-              <option value="all">All activities</option>
+              <option value="all">{t('trainingViews.allActivities')}</option>
               {trainingActivities.map((item) => (
                 <option key={item} value={item}>
-                  {trainingActivityLabels[item]}
+                  {t(`training.activities.${item}`)}
                 </option>
               ))}
             </Select>
           </Field>
           <Field>
-            <FieldLabel htmlFor={`${id}-status`}>Status</FieldLabel>
+            <FieldLabel htmlFor={`${id}-status`}>
+              {t('trainingViews.status')}
+            </FieldLabel>
             <Select
               id={`${id}-status`}
               value={status}
               onChange={(e) => setStatus(e.target.value)}
             >
-              <option value="all">All statuses</option>
-              {Object.entries(trainingStatusLabels).map(([value, name]) => (
+              <option value="all">{t('trainingViews.allStatuses')}</option>
+              {(
+                Object.keys(trainingStatusLabels) as Array<
+                  keyof typeof trainingStatusLabels
+                >
+              ).map((value) => (
                 <option key={value} value={value}>
-                  {name}
+                  {t(`training.status.${value}`)}
                 </option>
               ))}
             </Select>
@@ -237,7 +258,7 @@ export function TrainingCalendar({
         {!fixedHorseId && (
           <div
             role="group"
-            aria-label="Filter by horses"
+            aria-label={t('trainingViews.filterHorses')}
             className="flex flex-wrap gap-2"
           >
             <Button
@@ -246,7 +267,7 @@ export function TrainingCalendar({
               aria-pressed={selected.length === 0}
               onClick={() => setSelected([])}
             >
-              All horses
+              {t('trainingViews.allHorses')}
             </Button>
             {horses.some((h) => h.canRecord) && (
               <Button
@@ -258,7 +279,7 @@ export function TrainingCalendar({
                   )
                 }
               >
-                Horses I manage
+                {t('trainingViews.myHorses')}
               </Button>
             )}
             {horses
@@ -293,7 +314,7 @@ export function TrainingCalendar({
         )}
         <div
           className="flex flex-wrap gap-2"
-          aria-label="Activity colour legend"
+          aria-label={t('trainingViews.legend')}
         >
           {trainingActivities.map((item) => (
             <TrainingActivityTag key={item} activity={item} />
@@ -301,25 +322,29 @@ export function TrainingCalendar({
         </div>
       </div>
       {horses.length === 0 ? (
-        <DashboardEmptyState title="Add a horse to start a training log." />
+        <DashboardEmptyState title={t('trainingViews.addHorse')} />
       ) : (
         <>
           {entries.length === 0 && (
             <DashboardEmptyState
               chrome="flat"
-              title="No training matches this period and these filters."
+              title={t('trainingViews.noMatches')}
             >
-              Empty days mean no training recorded. Adjust the filters or add a
-              session.
+              {t('trainingViews.noMatchesHelp')}
             </DashboardEmptyState>
           )}
           {/* Small screens use the existing calendar's agenda pattern. */}
-          <div className="grid gap-5 md:hidden" aria-label="Training agenda">
+          <div
+            className="grid gap-5 md:hidden"
+            aria-label={t('trainingViews.agenda')}
+          >
             {period.days
               .filter((day) => dayEntries(day).length > 0)
               .map((day) => (
                 <section key={day} className="grid gap-2">
-                  <h3 className="font-semibold">{formatShortDateKey(day)}</h3>
+                  <h3 className="font-semibold">
+                    {formatShortDateKey(day, locale)}
+                  </h3>
                   {dayEntries(day).map((entry) => (
                     <TrainingEntryLink
                       key={entry.key}
@@ -335,16 +360,16 @@ export function TrainingCalendar({
               className="app-panel-strong hidden overflow-hidden md:block"
               tabIndex={0}
               role="region"
-              aria-label="Weekly training by horse"
+              aria-label={t('trainingViews.weekly')}
             >
               <Table className="w-full min-w-[68rem] table-fixed border-collapse text-sm">
                 <caption className="sr-only">
-                  {label}, training by horse and day
+                  {t('trainingViews.weeklyCaption', { period: label })}
                 </caption>
                 <thead>
                   <tr className="border-b border-border-subtle bg-surface-muted">
                     <th scope="col" className="w-32 p-3 text-left">
-                      Horse
+                      {t('trainingViews.horse')}
                     </th>
                     {period.days.map((day) => (
                       <th
@@ -353,8 +378,8 @@ export function TrainingCalendar({
                         className="p-3 text-left"
                         aria-current={day === today ? 'date' : undefined}
                       >
-                        {formatShortWeekdayDate(dateKeyToDate(day))}{' '}
-                        {formatShortDateKey(day)}
+                        {formatShortWeekdayDate(dateKeyToDate(day), locale)}{' '}
+                        {formatShortDateKey(day, locale)}
                       </th>
                     ))}
                   </tr>
@@ -384,7 +409,7 @@ export function TrainingCalendar({
                             ))}
                             {dayEntries(day, horse._id).length === 0 && (
                               <span className="text-xs text-muted-foreground">
-                                No training recorded
+                                {t('trainingViews.noRecorded')}
                               </span>
                             )}
                           </div>
@@ -399,16 +424,16 @@ export function TrainingCalendar({
             <CalendarShell
               className="hidden md:block"
               role="table"
-              aria-label="Monthly training calendar"
+              aria-label={t('trainingViews.monthly')}
             >
               <CalendarWeekdayRow role="row">
-                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(
-                  (day) => (
-                    <CalendarWeekdayCell role="columnheader" key={day}>
-                      {day}
-                    </CalendarWeekdayCell>
-                  ),
-                )}
+                {Array.from({ length: 7 }, (_, index) =>
+                  formatShortWeekdayDate(new Date(2026, 8, 28 + index), locale),
+                ).map((day) => (
+                  <CalendarWeekdayCell role="columnheader" key={day}>
+                    {day}
+                  </CalendarWeekdayCell>
+                ))}
               </CalendarWeekdayRow>
               <CalendarGrid role="rowgroup">
                 {Array.from({ length: monthCells.length / 7 }, (_, row) => (
@@ -424,7 +449,9 @@ export function TrainingCalendar({
                             <Button
                               variant="subtle"
                               size="sm"
-                              aria-label={`Inspect week of ${formatShortDateKey(day)}`}
+                              aria-label={t('trainingViews.inspectWeek', {
+                                date: formatShortDateKey(day, locale),
+                              })}
                               onClick={() => inspectWeek(day)}
                             >
                               <CalendarDayNumber isToday={day === today}>
@@ -446,7 +473,9 @@ export function TrainingCalendar({
                               <CalendarMoreEventsButton
                                 onClick={() => inspectWeek(day)}
                               >
-                                +{dayEntries(day).length - 2} more · View week
+                                {t('trainingViews.moreWeek', {
+                                  count: dayEntries(day).length - 2,
+                                })}
                               </CalendarMoreEventsButton>
                             )}
                           </CalendarDayEventList>

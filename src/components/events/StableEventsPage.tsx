@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import type { Doc } from 'convex/_generated/dataModel'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
@@ -13,11 +14,6 @@ export function parseEventsSearch(search: Record<string, unknown>): {
   return search.view === 'log' ? { view: 'log' } : {}
 }
 
-const views = [
-  { id: 'calendar', label: 'Calendar' },
-  { id: 'log', label: 'Event log' },
-] as const
-
 export function StableEventsPage({
   stableId,
   events,
@@ -29,13 +25,19 @@ export function StableEventsPage({
   view?: EventsView
   onViewChange: (view: EventsView) => void
 }) {
+  const t = useT()
+
+  const views = [
+    { id: 'calendar', label: t('eventViews.calendar') },
+    { id: 'log', label: t('eventViews.log') },
+  ] as const
   return (
     <DashboardPage>
-      <DashboardPageHeader title="Events" />
+      <DashboardPageHeader title={t('eventViews.events')} />
       <DashboardTabbedCard
         activeId={view}
         items={views}
-        ariaLabel="Events views"
+        ariaLabel={t('eventViews.views')}
         onSelect={onViewChange}
         actions={
           <ButtonLink
@@ -43,7 +45,7 @@ export function StableEventsPage({
             params={{ stableId }}
             action="create"
           >
-            Add event
+            {t('eventViews.add')}
           </ButtonLink>
         }
       >

@@ -1,13 +1,11 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { CheckIcon, ClockCounterClockwiseIcon } from '@phosphor-icons/react'
 import type { ComponentProps, CSSProperties } from 'react'
 
 import { cn } from '#/lib/utils'
 
 export type OnboardingStepStatus =
-  | 'completed'
-  | 'current'
-  | 'upcoming'
-  | 'deferred'
+  'completed' | 'current' | 'upcoming' | 'deferred'
 
 export type OnboardingStep = {
   id: string
@@ -26,9 +24,11 @@ export function OnboardingStepper({
   steps,
   ...props
 }: OnboardingStepperProps) {
+  const t = useT()
+
   return (
     <nav
-      aria-label="Onboarding progress"
+      aria-label={t('onboarding.progress')}
       data-slot="onboarding-stepper"
       className={cn(
         'overflow-hidden rounded-panel border border-border',
@@ -64,7 +64,7 @@ export function OnboardingStepper({
               <span className="grid min-w-0 gap-0.5 text-left">
                 <span
                   className={cn(
-                    'truncate text-sm font-semibold',
+                    'break-words text-sm font-semibold',
                     step.status === 'upcoming'
                       ? 'text-muted-foreground'
                       : 'text-foreground',
@@ -116,12 +116,14 @@ function StepMarker({
 }
 
 function StepStatusLabel({ status }: { status: OnboardingStepStatus }) {
+  const t = useT()
+
   if (status === 'current') return null
 
   const labels = {
-    completed: 'Complete',
-    deferred: 'Done later',
-    upcoming: 'Up next',
+    completed: t('onboarding.complete'),
+    deferred: t('onboarding.deferred'),
+    upcoming: t('onboarding.upcoming'),
   } satisfies Record<Exclude<OnboardingStepStatus, 'current'>, string>
 
   return <span className="text-xs text-muted-foreground">{labels[status]}</span>

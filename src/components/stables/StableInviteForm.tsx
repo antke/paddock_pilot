@@ -1,6 +1,16 @@
+import { Select } from '#/components/ui/select'
+import { useLocale, useT } from '#/i18n/LocaleProvider'
+import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
+import { isLocale } from '../../../shared/i18n/locale'
+import type { Locale } from '../../../shared/i18n/locale'
 import { InlineForm } from '#/components/forms/FormLayout'
 import { FormSubmitButtons } from '#/components/forms/FormSubmitActions'
-import { Field, FieldError, FieldLabel } from '#/components/ui/field'
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { copyTextToClipboard } from '#/lib/clipboard'
@@ -11,7 +21,7 @@ import { useMutation } from 'convex/react'
 import { useId, useRef, useState } from 'react'
 import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Controller, useForm } from 'react-hook-form'
-import { stableInvitationSchema } from 'shared/stableInvitations/invitationSchema'
+import { createStableInvitationSchema } from 'shared/stableInvitations/invitationSchema'
 import type { StableInvitationInput } from 'shared/stableInvitations/invitationSchema'
 import { getInvitationUrl } from 'shared/stableInvitations/invitationState'
 
@@ -26,23 +36,26 @@ export function StableInviteForm({
   onCreated,
   onPendingChange,
 }: StableInviteFormProps) {
+  const t = useT()
   const createInvitation = useMutation(api.stableInvitations.create)
   const copyInvitation = async (token: string) => {
     try {
       await copyTextToClipboard(getInvitationUrl(window.location.origin, token))
-      showAppSuccessToast({ title: 'Invitation link copied' })
+      showAppSuccessToast({ title: t('invitations.linkCopied') })
     } catch {
-      showAppErrorToast({ title: 'Could not copy invitation link' })
+      showAppErrorToast({ title: t('invitations.copyFailed') })
     }
   }
-  const onInvite = async (values: StableInvitationInput) => {
+  const onInvite = async (
+    values: StableInvitationInput & { locale?: Locale },
+  ) => {
     try {
       const result = await createInvitation({ stableId, ...values })
       showAppSuccessToast({
-        title: 'Invitation created',
-        description: <p>The email is queued for {values.email}.</p>,
+        title: t('invitations.created'),
+        description: <p>{t('invitations.queued', { email: values.email })}</p>,
         action: {
-          label: 'Copy link',
+          label: t('invitations.copy'),
           onClick: () => copyInvitation(result.token),
         },
       })
@@ -66,16 +79,23 @@ export function StableInviteFormView({
   onCreated,
   onPendingChange,
 }: {
-  onInvite: (values: StableInvitationInput) => Promise<boolean>
+  onInvite: (
+    values: StableInvitationInput & { locale?: Locale },
+  ) => Promise<boolean>
   onCreated?: () => void
   onPendingChange?: (pending: boolean) => void
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+  const [invitationLocale, setInvitationLocale] = useState<Locale>()
   const formId = useId()
   const pendingRef = useRef(false)
   const [isPending, setIsPending] = useState(false)
   const [inviteError, setInviteError] = useState(false)
   const form = useForm<StableInvitationInput>({
-    resolver: zodResolver(stableInvitationSchema),
+    resolver: zodResolver(
+      createStableInvitationSchema(t('invitations.invalidEmail')),
+    ),
     mode: 'onTouched',
     defaultValues: {
       email: '',
@@ -83,6 +103,7 @@ export function StableInviteFormView({
     },
   })
 
+  useLocalizedValidation(form)
   const onSubmit = form.handleSubmit(async (values) => {
     if (pendingRef.current) return
     pendingRef.current = true
@@ -90,7 +111,7 @@ export function StableInviteFormView({
     setInviteError(false)
     onPendingChange?.(true)
     try {
-      if (await onInvite(values)) {
+      if (await onInvite({ ...values, locale: invitationLocale ?? locale })) {
         form.reset()
         onCreated?.()
       } else setInviteError(true)
@@ -119,7 +140,7 @@ export function StableInviteFormView({
             data-invalid={fieldState.invalid}
           >
             <FieldLabel htmlFor={`${formId}-${field.name}`}>
-              Email address
+              {t('invitations.email')}
             </FieldLabel>
             <Input
               {...field}
@@ -143,19 +164,42 @@ export function StableInviteFormView({
         )}
       />
 
+      <Field className="sm:col-span-2">
+        <FieldLabel htmlFor={`${formId}-locale`}>
+          {t('invitations.language')}
+        </FieldLabel>
+        <Select
+          id={`${formId}-locale`}
+          value={invitationLocale ?? locale}
+          onChange={(event) => {
+            if (isLocale(event.target.value))
+              setInvitationLocale(event.target.value)
+          }}
+          disabled={isPending}
+          aria-describedby={`${formId}-locale-help`}
+        >
+          <option value="en" lang="en">
+            English
+          </option>
+          <option value="pl" lang="pl">
+            Polski
+          </option>
+        </Select>
+        <FieldDescription id={`${formId}-locale-help`}>
+          {t('invitations.languageHelp')}
+        </FieldDescription>
+      </Field>
+
       <div className="grid sm:col-start-2 sm:row-start-2">
         <FormSubmitButtons
           isSubmitting={form.formState.isSubmitting || isPending}
-          submitLabel="Invite"
-          submittingLabel="Inviting..."
+          submitLabel={t('invitations.invite')}
+          submittingLabel={t('invitations.inviting')}
         />
       </div>
       {inviteError && (
         <Alert variant="destructive" className="sm:col-span-2">
-          <AlertDescription>
-            Could not create the invitation. Check the email address and try
-            again.
-          </AlertDescription>
+          <AlertDescription>{t('invitations.failed')}</AlertDescription>
         </Alert>
       )}
     </InlineForm>

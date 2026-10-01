@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { Alert, AlertDescription } from '#/components/ui/alert'
@@ -38,6 +39,8 @@ export function HorseDeletionActions({
   onDeleted,
   ...props
 }: HorseDeletionActionsProps) {
+  const t = useT()
+
   const softDeleteHorse = useMutation(api.horses.deleteHorse)
   const toastedHorse = useRef<string | null>(null)
   return (
@@ -51,8 +54,8 @@ export function HorseDeletionActions({
         if (toastedHorse.current !== horse._id) {
           toastedHorse.current = horse._id
           showAppSuccessToast({
-            title: 'Horse moved to deleted horses',
-            description: `${horse.name} can be restored from stable settings for 14 days.`,
+            title: t('horseDeletion.moved'),
+            description: t('horseDeletion.movedHelp', { name: horse.name }),
           })
         }
         await onDeleted()
@@ -74,6 +77,8 @@ function HorseDeletionState({
   disabled = false,
   onPendingChange,
 }: HorseDeletionActionsViewProps) {
+  const t = useT()
+
   const [open, setOpen] = useState(false)
   const [isPending, setIsPending] = useState(false)
   const [acknowledged, setAcknowledged] = useState(false)
@@ -137,12 +142,16 @@ function HorseDeletionState({
   }
   const error =
     failure === 'delete'
-      ? 'Moving this horse was not confirmed. Please try again or cancel.'
+      ? t('horseDeletion.moveFailed')
       : failure === 'continue'
-        ? `${horse.name} was moved to deleted horses and can be restored from stable settings for 14 days. Could not continue to the next page. Retry continuing; the horse will not be moved again.`
+        ? t('horseDeletion.continueFailed', { name: horse.name })
         : undefined
-  const busyLabel = acknowledged ? 'Continuing…' : 'Moving…'
-  const actionLabel = acknowledged ? 'Retry continuing' : 'Move horse'
+  const busyLabel = acknowledged
+    ? t('horseDeletion.continuing')
+    : t('horseDeletion.moving')
+  const actionLabel = acknowledged
+    ? t('horseDeletion.retry')
+    : t('horseDeletion.move')
   const errorAlert = error && (
     <Alert variant="destructive">
       <AlertDescription>{error}</AlertDescription>
@@ -153,10 +162,10 @@ function HorseDeletionState({
     <DashboardSectionCard
       ref={section}
       role="group"
-      aria-label={`${horse.name} deletion`}
+      aria-label={t('horseDeletion.region', { name: horse.name })}
       tabIndex={-1}
-      title="Delete horse"
-      description="Use the 14-day deleted horses area for recoverable mistakes. Permanent deletion cannot be undone."
+      title={t('horseDeletion.delete')}
+      description={t('horseDeletion.help')}
       contentGap="compact"
     >
       {!open &&
@@ -165,8 +174,7 @@ function HorseDeletionState({
           errorAlert
         ) : (
           <p role="status">
-            {horse.name} was moved to deleted horses. Restoration is available
-            in stable settings for 14 days.
+            {t('horseDeletion.acknowledged', { name: horse.name })}
           </p>
         ))}
       <DashboardActions align="end">
@@ -178,7 +186,7 @@ function HorseDeletionState({
               onClick={() => void runDelete()}
             >
               {isPending && <Spinner aria-hidden={true} />}
-              {isPending ? busyLabel : 'Retry continuing'}
+              {isPending ? busyLabel : t('horseDeletion.retry')}
             </Button>
           )
         ) : (
@@ -201,7 +209,7 @@ function HorseDeletionState({
                 />
               }
             >
-              Move to deleted horses
+              {t('horseDeletion.moveAction')}
             </AlertDialogTrigger>
             <AlertDialogContent
               finalFocus={() =>
@@ -211,19 +219,21 @@ function HorseDeletionState({
               <AlertDialogHeader>
                 <AlertDialogTitle>
                   {acknowledged
-                    ? `${horse.name} moved to deleted horses`
-                    : `Move ${horse.name} to deleted horses?`}
+                    ? t('horseDeletion.movedTitle', { name: horse.name })
+                    : t('horseDeletion.moveQuestion', { name: horse.name })}
                 </AlertDialogTitle>
                 <AlertDialogDescription>
                   {acknowledged
-                    ? 'The move is confirmed. All records remain available for restoration from stable settings for 14 days.'
-                    : 'The horse disappears from daily views but all records remain available for restoration for 14 days.'}
+                    ? t('horseDeletion.confirmed')
+                    : t('horseDeletion.warning')}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               {errorAlert}
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={isPending}>
-                  {acknowledged ? 'Close' : 'Cancel'}
+                  {acknowledged
+                    ? t('horseDeletion.close')
+                    : t('horseDeletion.cancel')}
                 </AlertDialogCancel>
                 <AlertDialogAction
                   type="button"

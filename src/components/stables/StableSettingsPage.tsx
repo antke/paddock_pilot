@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
@@ -16,18 +17,14 @@ type StableSettingsPageProps = {
 }
 
 export type StableSettingsTab =
-  | 'overview'
-  | 'members'
-  | 'providers'
-  | 'deleted-horses'
-  | 'activity'
+  'overview' | 'members' | 'providers' | 'deleted-horses' | 'activity'
 
 const stableSettingsTabs = [
-  { value: 'overview', label: 'Overview' },
-  { value: 'members', label: 'Members' },
-  { value: 'providers', label: 'Providers' },
-  { value: 'deleted-horses', label: 'Deleted horses' },
-  { value: 'activity', label: 'Activity log' },
+  { value: 'overview', label: 'stables.overview' },
+  { value: 'members', label: 'stables.members' },
+  { value: 'providers', label: 'stables.providers' },
+  { value: 'deleted-horses', label: 'stables.deletedHorses' },
+  { value: 'activity', label: 'stables.activityLog' },
 ] as const satisfies ReadonlyArray<{
   value: StableSettingsTab
   label: string
@@ -50,9 +47,11 @@ export function StableSettingsLayout({
   children,
   ...tabsProps
 }: StableSettingsLayoutProps) {
+  const t = useT()
+
   return (
     <DashboardPage>
-      <DashboardPageHeader title="Stable settings" />
+      <DashboardPageHeader title={t('stables.settings')} />
 
       <Tabs className="min-w-0 max-w-full" {...tabsProps}>
         <div className="min-w-0 max-w-full overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:thin]">
@@ -62,7 +61,7 @@ export function StableSettingsLayout({
           >
             {stableSettingsTabs.map((tab) => (
               <TabsTrigger key={tab.value} value={tab.value}>
-                {tab.label}
+                {t(tab.label)}
               </TabsTrigger>
             ))}
           </TabsList>

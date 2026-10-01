@@ -1,5 +1,9 @@
+import type { AnalysisSignalDisplayData } from '../shared/i18n/analysisSignal'
 import { compareWeightRecordsNewestFirst } from '../shared/horses/weightRecordOrder'
-import { v } from 'convex/values'
+import { ConvexError, v } from 'convex/values'
+import { isDateKey } from '../shared/training/trainingSchema'
+import { dateInTimeZone, dateNumber } from '../shared/analysis/horseComparison'
+import { createHorseComparisonRecords } from './libs/horseComparisonRecords'
 import type { Doc, Id } from './_generated/dataModel'
 import { query } from './_generated/server'
 import { hasPremiumAnalyticsAccess } from './libs/entitlements'
@@ -86,6 +90,7 @@ type StableTimelineSignal = {
   horseId?: Id<'horses'>
   horseName?: string
   detail?: string
+  displayData?: AnalysisSignalDisplayData
   status?: string
   severity?: Doc<'horseHealthIssues'>['severity']
   priority?: Doc<'careReminders'>['priority']
@@ -163,6 +168,7 @@ const getStableTimelineSignals = ({
         horseId: record.horseId,
         horseName: horse?.name,
         detail: joinDetails([record.status, record.dosage, record.frequency]),
+        displayData: { dosage: record.dosage, frequency: record.frequency },
         status: record.status,
         urgent: false,
       }
@@ -196,6 +202,11 @@ const getStableTimelineSignals = ({
         horseId: record.horseId,
         horseName: horse?.name,
         detail: joinDetails(['Weight record', bodyCondition]),
+        displayData: {
+          weight: record.weight,
+          unit: record.unit,
+          bodyConditionScore: record.bodyConditionScore,
+        },
         urgent: false,
       }
     }),
@@ -798,6 +809,84 @@ export const getForStable = query({
       providerDetailsMissing: providerDetailsMissing
         .sort(compareEventDateAndTime)
         .slice(0, 8),
+    }
+  },
+})
+
+/** Complete horse-scoped evidence, separate from the capped stable summaries. */
+export const getHorseComparisons = query({
+  args: {
+    horseId: v.id('horses'),
+    start: v.string(),
+    end: v.string(),
+    timeZone: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const horse = await ctx.db.get(args.horseId)
+    if (!isActiveHorse(horse)) throw new ConvexError('Horse not found')
+    const access = await assertCanViewStable(ctx, horse.stableId)
+    if (!(await hasPremiumAnalyticsAccess(ctx, access.userId))) {
+      return { hasAccess: false as const, records: [] }
+    }
+    if (
+      !isDateKey(args.start) ||
+      !isDateKey(args.end) ||
+      args.start > args.end ||
+      dateNumber(args.end) - dateNumber(args.start) > 3660 * 86_400_000
+    ) {
+      throw new ConvexError('Choose a valid date range of up to ten years')
+    }
+    let today: string
+    try {
+      today = dateInTimeZone(Date.now(), args.timeZone)
+    } catch {
+      throw new ConvexError('Invalid time zone')
+    }
+    const [weights, nutrition, health, medications, training, allEvents] =
+      await Promise.all([
+        ctx.db
+          .query('horseWeightRecords')
+          .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
+          .collect(),
+        ctx.db
+          .query('horseNutritionLogs')
+          .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
+          .collect(),
+        ctx.db
+          .query('horseHealthIssues')
+          .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
+          .collect(),
+        ctx.db
+          .query('horseMedicationRecords')
+          .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
+          .collect(),
+        ctx.db
+          .query('trainingRecords')
+          .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
+          .collect(),
+        ctx.db
+          .query('events')
+          .withIndex('by_stable_id', (q) => q.eq('stableId', horse.stableId))
+          .collect(),
+      ])
+    const history = new Set(training.map((record) => record.eventId))
+    const events = allEvents.filter(
+      (event) => event.horseIds.includes(horse._id) || history.has(event._id),
+    )
+    return {
+      hasAccess: true as const,
+      records: createHorseComparisonRecords({
+        horse,
+        weights,
+        nutrition,
+        health,
+        medications,
+        training,
+        events,
+        range: args,
+        today,
+        timeZone: args.timeZone,
+      }),
     }
   },
 })

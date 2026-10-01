@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { useId } from 'react'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
@@ -7,6 +8,8 @@ import type { TrainingEntry } from '#/components/training/trainingCalendarData'
 import type { DashboardCommandData } from './dashboardTypes'
 
 export function TodayTrainingCard({ data }: { data: DashboardCommandData }) {
+  const t = useT()
+
   const headingId = useId()
   const byHorse = new Map<string, Array<TrainingEntry>>()
   for (const entry of data.todayTraining ?? []) {
@@ -18,7 +21,7 @@ export function TodayTrainingCard({ data }: { data: DashboardCommandData }) {
   return (
     <DashboardSection
       aria-labelledby={headingId}
-      title={<span id={headingId}>Today’s training</span>}
+      title={<span id={headingId}>{t('dashboard.todayTraining')}</span>}
       titleStyle="display"
       actions={
         <ButtonLink
@@ -28,13 +31,13 @@ export function TodayTrainingCard({ data }: { data: DashboardCommandData }) {
           size="sm"
           className="min-h-11"
         >
-          View training log
+          {t('dashboard.viewTraining')}
         </ButtonLink>
       }
     >
       {byHorse.size === 0 ? (
         <DashboardEmptyState chrome="flat">
-          No scheduled or completed training today.
+          {t('dashboard.noTraining')}
         </DashboardEmptyState>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">

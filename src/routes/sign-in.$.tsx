@@ -9,7 +9,7 @@ export const Route = createFileRoute('/sign-in/$')({
 function SignInPage() {
   return (
     <AuthPageShell>
-      <SignIn />
+      <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" />
     </AuthPageShell>
   )
 }

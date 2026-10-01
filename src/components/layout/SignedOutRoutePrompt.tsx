@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import type { ReactNode } from 'react'
 
 import { ButtonLink } from '#/components/ui/button'
@@ -13,9 +14,10 @@ type SignedOutRoutePromptProps = {
 export function SignedOutRoutePrompt({
   title,
   description,
-  actionLabel = 'Sign in',
+  actionLabel,
   actions,
 }: SignedOutRoutePromptProps) {
+  const t = useT()
   return (
     <RouteStatusAlert
       title={title}
@@ -23,7 +25,7 @@ export function SignedOutRoutePrompt({
       actions={
         actions ?? (
           <ButtonLink to="/sign-in/$" params={{ _splat: '' }}>
-            {actionLabel}
+            {actionLabel ?? t('navigation.signIn')}
           </ButtonLink>
         )
       }

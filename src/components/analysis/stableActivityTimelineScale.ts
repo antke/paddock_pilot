@@ -1,3 +1,5 @@
+import type { Locale } from 'shared/i18n/locale'
+import { localeInstances } from '#/i18n/resources'
 import type {
   LabEventTypeCount,
   LabTimelineBucket,
@@ -45,10 +47,11 @@ const oneDayInMs = 24 * 60 * 60 * 1000
 export function getTimelinePeriods(
   buckets: Array<LabTimelineBucket>,
   scale: StableTimelineScale,
+  locale: Locale = 'en',
 ): Array<StableTimelinePeriod> {
   if (scale === 'day') {
     return buckets.map((bucket) =>
-      createTimelinePeriod(scale, bucket.key, bucket.key, [bucket]),
+      createTimelinePeriod(scale, bucket.key, bucket.key, [bucket], locale),
     )
   }
 
@@ -68,6 +71,7 @@ export function getTimelinePeriods(
         periodStartKey,
         getPeriodEndKey(periodStartKey, scale),
         periodBuckets,
+        locale,
       ),
     )
     .sort((a, b) => a.startKey.localeCompare(b.startKey))
@@ -78,6 +82,7 @@ function createTimelinePeriod(
   startKey: string,
   endKey: string,
   buckets: Array<LabTimelineBucket>,
+  locale: Locale,
 ): StableTimelinePeriod {
   const occurrences = getUniquePeriodOccurrences(buckets, scale)
   const signals = getUniquePeriodSignals(buckets)
@@ -93,8 +98,8 @@ function createTimelinePeriod(
     scale,
     startKey,
     endKey,
-    label: getPeriodLabel(scale, startKey, endKey),
-    shortLabel: getPeriodShortLabel(scale, startKey, endKey),
+    label: getPeriodLabel(scale, startKey, endKey, locale),
+    shortLabel: getPeriodShortLabel(scale, startKey, endKey, locale),
     buckets,
     occurrences,
     allEventCount: occurrences.length,
@@ -240,20 +245,26 @@ function getPeriodLabel(
   scale: StableTimelineScale,
   startKey: string,
   _endKey: string,
+  locale: Locale,
 ) {
-  if (scale === 'week') return `Week of ${formatLongDateKey(startKey)}`
-  if (scale === 'month') return formatMonthYearDateKey(startKey)
-  return formatLongDateKey(startKey)
+  const t = localeInstances[locale].t
+  if (scale === 'week')
+    return t('analysisViews.weekOf', {
+      date: formatLongDateKey(startKey, locale),
+    })
+  if (scale === 'month') return formatMonthYearDateKey(startKey, locale)
+  return formatLongDateKey(startKey, locale)
 }
 
 function getPeriodShortLabel(
   scale: StableTimelineScale,
   startKey: string,
   endKey: string,
+  locale: Locale,
 ) {
-  if (scale === 'month') return formatShortMonthYearDateKey(startKey)
-  if (startKey === endKey) return formatShortDateKey(startKey)
-  return `${formatShortDateKey(startKey)}–${formatShortDateKey(endKey)}`
+  if (scale === 'month') return formatShortMonthYearDateKey(startKey, locale)
+  if (startKey === endKey) return formatShortDateKey(startKey, locale)
+  return `${formatShortDateKey(startKey, locale)}–${formatShortDateKey(endKey, locale)}`
 }
 
 function parseDayKey(dayKey: string) {

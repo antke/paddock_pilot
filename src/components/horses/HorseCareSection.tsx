@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import {
   DetailGrid,
   DetailTextBlock,
@@ -11,21 +12,6 @@ import { HorseHealthIssuesCard } from './HorseHealthIssuesCard'
 import { HorseDetailSectionTabs } from './HorseDetailSectionTabs'
 
 type CareTab = 'reminders' | 'health'
-
-const careTabs = [
-  {
-    id: 'reminders',
-    label: 'Care reminders',
-    title: 'Care reminders',
-    description: 'Track due checks, reviews, and follow-ups for this horse.',
-  },
-  {
-    id: 'health',
-    label: 'Health issues',
-    title: 'Health issues',
-    description: 'Track active and resolved health notes for this horse.',
-  },
-] as const
 
 type SectionActionRenderer = (
   onCreateActionChange: (action: ReactNode | null) => void,
@@ -45,6 +31,23 @@ export function HorseCareSection({
   renderReminders,
   renderHealthIssues,
 }: HorseCareSectionViewProps) {
+  const t = useT()
+
+  const careTabs = [
+    {
+      id: 'reminders',
+      label: t('careRecords.reminders'),
+      title: t('careRecords.reminders'),
+      description: t('careRecords.remindersHelp'),
+    },
+    {
+      id: 'health',
+      label: t('careRecords.healthIssues'),
+      title: t('careRecords.healthIssues'),
+      description: t('careRecords.healthHelp'),
+    },
+  ] as const
+
   const [localTab, setLocalTab] = useState<CareTab>('reminders')
   const activeTab = controlledTab ?? localTab
   const [headerAction, setHeaderAction] = useState<ReactNode>(null)
@@ -70,30 +73,39 @@ export function HorseCareSection({
             horse.emergencyNotes) && (
             <DashboardSection
               chrome="flat"
-              title="Care contacts"
+              title={t('careRecords.careContacts')}
               as="h3"
               size="compact"
               gap="compact"
             >
               <DetailGrid breakpoint="xl" columns={4} gap="default">
                 {horse.vetName && (
-                  <CareContact label="Vet" value={horse.vetName} />
+                  <CareContact
+                    label={t('careRecords.vet')}
+                    value={horse.vetName}
+                  />
                 )}
                 {horse.vetPhone && (
-                  <CareContact label="Vet phone" value={horse.vetPhone} />
+                  <CareContact
+                    label={t('careRecords.vetPhone')}
+                    value={horse.vetPhone}
+                  />
                 )}
                 {horse.farrierName && (
-                  <CareContact label="Farrier" value={horse.farrierName} />
+                  <CareContact
+                    label={t('careRecords.farrier')}
+                    value={horse.farrierName}
+                  />
                 )}
                 {horse.farrierPhone && (
                   <CareContact
-                    label="Farrier phone"
+                    label={t('careRecords.farrierPhone')}
                     value={horse.farrierPhone}
                   />
                 )}
                 {horse.emergencyNotes && (
                   <DetailTextBlock
-                    label="Emergency notes"
+                    label={t('careRecords.emergencyNotes')}
                     className="sm:col-span-2 xl:col-span-4"
                   >
                     {horse.emergencyNotes}

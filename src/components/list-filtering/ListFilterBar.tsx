@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import { FunnelSimpleIcon } from '@phosphor-icons/react'
@@ -45,6 +46,8 @@ export function ListFilterBar<TFacetId extends string = string>({
   sticky = false,
   onFocusWithinChange,
 }: ListFilterBarProps<TFacetId>) {
+  const t = useT()
+
   const idPrefix = useId()
   const searchId = `${idPrefix}-search`
   const panelId = `${idPrefix}-filters`
@@ -86,9 +89,10 @@ export function ListFilterBar<TFacetId extends string = string>({
   const activeChips = getActiveFacetChips(config, selectedFacets)
   const activeFacetCount = activeChips.length
   const hasFacets = config.facets.length > 0
-  const filterButtonLabel = `Toggle filters${
-    activeFacetCount > 0 ? `, ${activeFacetCount} active` : ''
-  }`
+  const filterButtonLabel =
+    activeFacetCount > 0
+      ? t('listControls.activeToggle', { count: activeFacetCount })
+      : t('listControls.toggle')
 
   return (
     <div
@@ -111,7 +115,7 @@ export function ListFilterBar<TFacetId extends string = string>({
         <div className={listFilterHeaderClassName}>
           <Field className="min-w-0">
             <FieldLabel htmlFor={searchId}>
-              {config.searchLabel ?? 'Search'}
+              {config.searchLabel ?? t('listControls.search')}
             </FieldLabel>
             <Input
               ref={search}
@@ -137,7 +141,9 @@ export function ListFilterBar<TFacetId extends string = string>({
               onClick={() => setIsPanelOpen((current) => !current)}
             >
               <FunnelSimpleIcon aria-hidden={true} weight="bold" />
-              <span className="hidden sm:inline">Filters</span>
+              <span className="hidden sm:inline">
+                {t('listControls.filters')}
+              </span>
               {activeFacetCount > 0 && (
                 <DashboardCountBadge count={activeFacetCount} />
               )}

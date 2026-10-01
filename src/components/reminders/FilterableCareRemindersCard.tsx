@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { useMemo } from 'react'
 import type { ComponentProps } from 'react'
 
@@ -22,9 +23,12 @@ export function FilterableCareRemindersCard({
   pageLayout = false,
   ...cardProps
 }: FilterableCareRemindersCardProps) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const filterConfig = useMemo(
-    () => createCareReminderListFilterConfig(horseOptions ?? []),
-    [horseOptions],
+    () => createCareReminderListFilterConfig(horseOptions ?? [], locale),
+    [horseOptions, locale],
   )
   const filtering = useListFiltering({
     items: reminders,
@@ -41,7 +45,7 @@ export function FilterableCareRemindersCard({
       emptyMessage={getListFilterEmptyMessage({
         filtering,
         emptyMessage,
-        filteredEmptyMessage: 'No reminders match these filters.',
+        filteredEmptyMessage: t('reminders.filteredEmpty'),
       })}
       listToolbar={
         <ListFilterControls

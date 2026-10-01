@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { HorseMedicationRecordsCard } from './HorseMedicationRecordsCard'
@@ -8,28 +9,6 @@ import { HorseWeightRecordsCard } from './HorseWeightRecordsCard'
 import { HorseDetailSectionTabs } from './HorseDetailSectionTabs'
 
 type NutritionTab = 'nutrition' | 'weight' | 'medication'
-
-const nutritionTabs = [
-  {
-    id: 'nutrition',
-    label: 'Nutrition',
-    title: 'Nutrition',
-    description:
-      'Review the current feeding plan and nutrition change history.',
-  },
-  {
-    id: 'weight',
-    label: 'Weight',
-    title: 'Weight',
-    description: 'Track weight changes and body condition over time.',
-  },
-  {
-    id: 'medication',
-    label: 'Medication',
-    title: 'Medication',
-    description: 'Manage active and historical medication records.',
-  },
-] as const
 
 type SectionActionRenderer = (
   onCreateActionChange: (action: ReactNode | null) => void,
@@ -47,6 +26,29 @@ export function HorseNutritionSection({
   renderWeight,
   renderMedication,
 }: HorseNutritionSectionViewProps) {
+  const t = useT()
+
+  const nutritionTabs = [
+    {
+      id: 'nutrition',
+      label: t('careRecords.nutrition'),
+      title: t('careRecords.nutrition'),
+      description: t('careRecords.nutritionHelp'),
+    },
+    {
+      id: 'weight',
+      label: t('careRecords.weight'),
+      title: t('careRecords.weight'),
+      description: t('careRecords.weightHelp'),
+    },
+    {
+      id: 'medication',
+      label: t('careRecords.medication'),
+      title: t('careRecords.medication'),
+      description: t('careRecords.medicationHelp'),
+    },
+  ] as const
+
   const [activeTab, setActiveTab] = useState<NutritionTab>('nutrition')
   const [headerAction, setHeaderAction] = useState<ReactNode>(null)
 

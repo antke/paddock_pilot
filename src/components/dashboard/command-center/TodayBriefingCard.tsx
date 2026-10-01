@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
 import type {
@@ -20,6 +21,8 @@ export function TodayBriefingCard({
   data,
   chrome = 'soft',
 }: TodayBriefingCardProps) {
+  const t = useT()
+
   const events = data.todayEvents
   const recordChrome = 'flat' as const
 
@@ -30,7 +33,7 @@ export function TodayBriefingCard({
       padding={chrome === 'cards' ? 'roomy' : 'default'}
     >
       <DashboardSectionHeader
-        title="Today"
+        title={t('dashboard.today')}
         size="section"
         titleStyle="display"
         actions={
@@ -41,7 +44,7 @@ export function TodayBriefingCard({
             size="sm"
             className="min-h-11"
           >
-            Add event
+            {t('dashboard.addEvent')}
           </ButtonLink>
         }
       />
@@ -50,12 +53,11 @@ export function TodayBriefingCard({
         <DashboardEmptyState
           chrome={recordChrome}
           className="h-full min-h-40 place-content-center justify-items-center px-6 py-8 text-center"
-          title="A quieter day at the stable"
+          title={t('dashboard.quietDay')}
           titleClassName="text-xl font-semibold tracking-normal md:text-2xl"
           bodyClassName="max-w-xl text-base text-muted-foreground md:text-lg"
         >
-          Nothing is scheduled right now. Take the extra breathing room and
-          enjoy a slower day.
+          {t('dashboard.quietDayHelp')}
         </DashboardEmptyState>
       ) : (
         <DashboardItemList>

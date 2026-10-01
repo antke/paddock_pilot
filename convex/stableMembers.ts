@@ -241,6 +241,15 @@ export const remove = mutation({
       entityType: 'stableMember',
       entityId: membership._id,
       summary: `Removed member ${membership.userId}`,
+      details: {
+        kind: 'member_removed',
+        memberName:
+          membership.displayNameOverride ||
+          member?.preferredName ||
+          [member?.firstName, member?.lastName].filter(Boolean).join(' ') ||
+          undefined,
+        reassignedHorseCount: 0,
+      },
     })
     if (member) {
       await queueMembershipRemovedEmail(ctx, { member, membership, stable })
@@ -308,6 +317,15 @@ export const removeWithHorseReassignment = mutation({
         horses.length > 0
           ? `Removed member and reassigned ${horses.length} horse${horses.length === 1 ? '' : 's'}`
           : `Removed member ${membership.userId}`,
+      details: {
+        kind: 'member_removed',
+        memberName:
+          membership.displayNameOverride ||
+          member?.preferredName ||
+          [member?.firstName, member?.lastName].filter(Boolean).join(' ') ||
+          undefined,
+        reassignedHorseCount: horses.length,
+      },
     })
     if (member) {
       await queueMembershipRemovedEmail(ctx, { member, membership, stable })

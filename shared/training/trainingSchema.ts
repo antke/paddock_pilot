@@ -23,27 +23,74 @@ export const trainingFormatLabels = {
   lesson: 'Trainer lesson',
   workshop: 'Workshop / clinic',
 }
-export const trainingDetailsSchema = z.object({
-  activities: z
-    .array(z.enum(trainingActivities))
-    .min(1, 'Choose at least one activity.')
-    .max(6),
-  format: z.enum(trainingFormats),
-  durationMinutes: z.number().int().min(1).max(1440).optional(),
-  rider: z.string().trim().max(100).optional(),
-  focus: z.string().trim().max(500).optional(),
-  nextFocus: z.string().trim().max(500).optional(),
-})
 export const trainingRecordStatuses = [
   'planned',
   'completed',
   'cancelled',
   'skipped',
 ] as const
-export const trainingRecordSchema = trainingDetailsSchema.extend({
-  status: z.enum(trainingRecordStatuses),
-  outcome: z.string().trim().max(1000).optional(),
-})
+
+const defaultMessages = {
+  activitiesMin: 'Choose at least one activity.',
+  activitiesMax: 'Choose no more than 6 activities.',
+  choiceInvalid: 'Choose a valid option.',
+  durationInteger: 'Duration must be a whole number of minutes.',
+  durationMin: 'Duration must be at least 1 minute.',
+  durationMax: 'Duration cannot exceed 1440 minutes.',
+  riderMax: 'Rider or handler name cannot exceed 100 characters.',
+  focusMax: 'Use 500 characters or fewer.',
+  outcomeMax: 'Use 1000 characters or fewer.',
+  textInvalid: 'Enter text.',
+  numberInvalid: 'Enter a valid number.',
+  listInvalid: 'Choose activities from the list.',
+} as const
+export type TrainingValidationKey = keyof typeof defaultMessages
+export function createTrainingSchemas(
+  message: (key: TrainingValidationKey) => string = (key) =>
+    defaultMessages[key],
+) {
+  const trainingDetailsSchema = z.object({
+    activities: z
+      .array(z.enum(trainingActivities, { error: message('choiceInvalid') }), {
+        error: message('listInvalid'),
+      })
+      .min(1, message('activitiesMin'))
+      .max(6, message('activitiesMax')),
+    format: z.enum(trainingFormats, { error: message('choiceInvalid') }),
+    durationMinutes: z
+      .number({ error: message('numberInvalid') })
+      .int(message('durationInteger'))
+      .min(1, message('durationMin'))
+      .max(1440, message('durationMax'))
+      .optional(),
+    rider: z
+      .string({ error: message('textInvalid') })
+      .trim()
+      .max(100, message('riderMax'))
+      .optional(),
+    focus: z
+      .string({ error: message('textInvalid') })
+      .trim()
+      .max(500, message('focusMax'))
+      .optional(),
+    nextFocus: z
+      .string({ error: message('textInvalid') })
+      .trim()
+      .max(500, message('focusMax'))
+      .optional(),
+  })
+  const trainingRecordSchema = trainingDetailsSchema.extend({
+    status: z.enum(trainingRecordStatuses, { error: message('choiceInvalid') }),
+    outcome: z
+      .string({ error: message('textInvalid') })
+      .trim()
+      .max(1000, message('outcomeMax'))
+      .optional(),
+  })
+  return { trainingDetailsSchema, trainingRecordSchema }
+}
+export const { trainingDetailsSchema, trainingRecordSchema } =
+  createTrainingSchemas()
 export type TrainingDetails = z.infer<typeof trainingDetailsSchema>
 export const defaultTrainingDetails: TrainingDetails = {
   activities: ['other'],

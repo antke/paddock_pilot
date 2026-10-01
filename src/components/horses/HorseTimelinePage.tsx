@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { formatEventDateTime } from '#/components/events/eventDisplay'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import {
@@ -16,6 +18,7 @@ import {
   EventStatusBadge,
 } from '#/components/events/EventBadges'
 import { ActivityTimelineListEntry } from '#/components/timeline/ActivityTimeline'
+import { TrainingStatusBadge } from '#/components/training/TrainingBadges'
 import {
   formatMediumDateKey,
   formatMediumTimestampDate,
@@ -25,7 +28,6 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import type { FunctionReturnType } from 'convex/server'
-import { eventTypeLabels } from 'shared/events/eventSchema'
 import {
   HealthIssueKindBadge,
   HealthIssueSeverityBadge,
@@ -38,9 +40,8 @@ import {
 import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
 import { ListFilterControls } from '#/components/list-filtering/ListFilterControls'
 import { useListFiltering } from '#/components/list-filtering/useListFiltering'
-import { formatCurrencyAmount } from '#/lib/numberDisplay'
-import { horseTimelineFilterConfig } from './horseTimelineFilters'
-import { horseHealthIssueSeverityLabels } from './horseCareLabels'
+import { formatCurrencyAmount, formatDecimal } from '#/lib/numberDisplay'
+import { createHorseTimelineFilterConfig } from './horseTimelineFilters'
 
 export type HorseTimeline = FunctionReturnType<
   typeof api.horseTimeline.listForHorse
@@ -63,6 +64,13 @@ export function HorseTimelinePage({ horseId }: HorseTimelinePageProps) {
 }
 
 export function HorseTimelineView({ timeline }: { timeline: HorseTimeline }) {
+  const t = useT()
+  const { locale } = useLocale()
+
+  const horseTimelineFilterConfig = useMemo(
+    () => createHorseTimelineFilterConfig(locale),
+    [locale],
+  )
   const filtering = useListFiltering({
     items: timeline.entries,
     config: horseTimelineFilterConfig,
@@ -71,7 +79,7 @@ export function HorseTimelineView({ timeline }: { timeline: HorseTimeline }) {
     return (
       <RouteEntityNotFoundAlert
         entity="horse"
-        description="This care history is no longer available."
+        description={t('horseHistory.careHistoryGone')}
       />
     )
   const entries = [...filtering.items].sort(
@@ -79,11 +87,11 @@ export function HorseTimelineView({ timeline }: { timeline: HorseTimeline }) {
   )
   return (
     <DashboardSectionCard
-      title="Timeline"
+      title={t('horseHistory.timeline')}
       description={
         timeline.horse
-          ? `A chronological care history for ${timeline.horse.name}.`
-          : 'A chronological care history for this horse.'
+          ? t('horseHistory.timelineHelp', { name: timeline.horse.name })
+          : t('horseHistory.timelineGenericHelp')
       }
       size="panel"
       contentGap="comfortable"
@@ -98,13 +106,13 @@ export function HorseTimelineView({ timeline }: { timeline: HorseTimeline }) {
         <DashboardEmptyState
           title={
             filtering.isFiltering
-              ? 'No matching records'
-              : 'No timeline entries yet'
+              ? t('horseHistory.noMatches')
+              : t('horseHistory.timelineEmpty')
           }
         >
           {filtering.isFiltering
-            ? 'Try another search or clear the filters.'
-            : 'Events and care records will appear here as the yard adds them.'}
+            ? t('horseHistory.clearFilters')
+            : t('horseHistory.timelineEmptyHelp')}
         </DashboardEmptyState>
       ) : (
         <DashboardItemList gap="compact">
@@ -145,14 +153,22 @@ function EventTimelineEntry({
 }: {
   entry: Extract<TimelineEntry, { kind: 'event' }>
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+  const training = 'trainingRecord' in entry ? entry.trainingRecord : undefined
+
   return (
     <ActivityTimelineListEntry
       accent={entry.status === 'completed' ? 'muted' : 'primary'}
       badges={
         <>
           <EventKindBadge />
-          {entry.status !== 'planned' && (
-            <EventStatusBadge status={entry.status} />
+          {training ? (
+            <TrainingStatusBadge status={training.status} />
+          ) : (
+            entry.status !== 'planned' && (
+              <EventStatusBadge status={entry.status} />
+            )
           )}
         </>
       }
@@ -160,13 +176,13 @@ function EventTimelineEntry({
       meta={
         <>
           <span>
-            {formatEventDateTime(entry.date, entry.time, entry.endDate)}
+            {formatEventDateTime(entry.date, entry.time, entry.endDate, locale)}
           </span>
-          <span>{eventTypeLabels[entry.eventType]}</span>
+          <span>{t(`events.types.${entry.eventType}`)}</span>
           {entry.providerName && <span>{entry.providerName}</span>}
         </>
       }
-      description={entry.description}
+      description={training ? training.focus : entry.description}
     >
       {entry.notesAfterCompletion && (
         <DashboardItemBodyText>
@@ -174,18 +190,29 @@ function EventTimelineEntry({
         </DashboardItemBodyText>
       )}
       {entry.requestedServiceNotes && (
-        <DetailTextBlock label="Requested for this horse">
+        <DetailTextBlock label={t('horseHistory.requested')}>
           {entry.requestedServiceNotes}
         </DetailTextBlock>
       )}
-      {entry.horseCompletionNotes && (
-        <DetailTextBlock label="Horse outcome">
-          {entry.horseCompletionNotes}
+      {training?.nextFocus ? (
+        <DetailTextBlock label={t('training.nextFocus')}>
+          {training.nextFocus}
         </DetailTextBlock>
+      ) : (
+        !training &&
+        entry.horseCompletionNotes && (
+          <DetailTextBlock label={t('horseHistory.outcome')}>
+            {entry.horseCompletionNotes}
+          </DetailTextBlock>
+        )
       )}
       {entry.costShare !== undefined && (
         <DashboardMetaList>
-          <span>Cost share: {formatCurrencyAmount(entry.costShare)}</span>
+          <span>
+            {t('horseHistory.costShare', {
+              amount: formatCurrencyAmount(entry.costShare, locale),
+            })}
+          </span>
         </DashboardMetaList>
       )}
     </ActivityTimelineListEntry>
@@ -197,6 +224,9 @@ function HealthIssueTimelineEntry({
 }: {
   entry: Extract<TimelineEntry, { kind: 'healthIssue' }>
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   return (
     <ActivityTimelineListEntry
       accent={
@@ -222,12 +252,20 @@ function HealthIssueTimelineEntry({
       title={entry.title}
       meta={
         <>
-          <span>Noted {formatMediumTimestampDate(entry.occurredAt)}</span>
+          <span>
+            {t('careRecords.notedAt', {
+              date: formatMediumTimestampDate(entry.occurredAt, locale),
+            })}
+          </span>
           {entry.severity && entry.severity !== 'high' && (
-            <span>{horseHealthIssueSeverityLabels[entry.severity]}</span>
+            <span>{t(`careLabels.severity.${entry.severity}`)}</span>
           )}
           {entry.resolvedAt && (
-            <span>Resolved {formatMediumTimestampDate(entry.resolvedAt)}</span>
+            <span>
+              {t('careRecords.resolvedAt', {
+                date: formatMediumTimestampDate(entry.resolvedAt, locale),
+              })}
+            </span>
           )}
         </>
       }
@@ -241,16 +279,23 @@ function WeightTimelineEntry({
 }: {
   entry: Extract<TimelineEntry, { kind: 'weightRecord' }>
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   return (
     <ActivityTimelineListEntry
       accent="muted"
       badges={<WeightRecordKindBadge />}
-      title={`${entry.weight} ${entry.unit}`}
+      title={`${formatDecimal(entry.weight, locale)} ${entry.unit}`}
       meta={
         <>
-          <span>Measured {formatMediumTimestampDate(entry.occurredAt)}</span>
+          <span>
+            {t('careRecords.measuredAt', {
+              date: formatMediumTimestampDate(entry.occurredAt, locale),
+            })}
+          </span>
           {entry.bodyConditionScore !== undefined && (
-            <span>BCS {entry.bodyConditionScore}/9</span>
+            <span>BCS {formatDecimal(entry.bodyConditionScore, locale)}/9</span>
           )}
         </>
       }
@@ -264,6 +309,9 @@ function MedicationTimelineEntry({
 }: {
   entry: Extract<TimelineEntry, { kind: 'medicationRecord' }>
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   return (
     <ActivityTimelineListEntry
       accent={entry.status === 'active' ? 'warning' : 'muted'}
@@ -278,11 +326,19 @@ function MedicationTimelineEntry({
       title={entry.medicationName}
       meta={
         <>
-          <span>Started {formatMediumDateKey(entry.startDate)}</span>
+          <span>
+            {t('careRecords.startedAt', {
+              date: formatMediumDateKey(entry.startDate, locale),
+            })}
+          </span>
           <span>{entry.dosage}</span>
           {entry.frequency && <span>{entry.frequency}</span>}
           {entry.endDate && (
-            <span>Ended {formatMediumDateKey(entry.endDate)}</span>
+            <span>
+              {t('careRecords.endedAt', {
+                date: formatMediumDateKey(entry.endDate, locale),
+              })}
+            </span>
           )}
           {entry.prescribedBy && <span>{entry.prescribedBy}</span>}
         </>
@@ -301,12 +357,21 @@ function NutritionTimelineEntry({
 }: {
   entry: Extract<TimelineEntry, { kind: 'nutritionLog' }>
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   return (
     <ActivityTimelineListEntry
       accent="primary"
       badges={<NutritionLogKindBadge />}
       title={entry.summary}
-      meta={<span>Logged {formatMediumTimestampDate(entry.occurredAt)}</span>}
+      meta={
+        <span>
+          {t('careRecords.loggedAt', {
+            date: formatMediumTimestampDate(entry.occurredAt, locale),
+          })}
+        </span>
+      }
       description={entry.notes}
     >
       {entry.feedingRoutineSnapshot && (
@@ -320,12 +385,15 @@ function NutritionTimelineEntry({
         <DetailListGrid>
           {Boolean(entry.recommendedSnapshot?.length) && (
             <DetailListBlock
-              label="Recommended"
+              label={t('horseHistory.recommended')}
               items={entry.recommendedSnapshot ?? []}
             />
           )}
           {Boolean(entry.avoidSnapshot?.length) && (
-            <DetailListBlock label="Avoid" items={entry.avoidSnapshot ?? []} />
+            <DetailListBlock
+              label={t('horseHistory.avoid')}
+              items={entry.avoidSnapshot ?? []}
+            />
           )}
         </DetailListGrid>
       )}

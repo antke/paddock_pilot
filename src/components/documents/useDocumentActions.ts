@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
@@ -13,6 +14,8 @@ export function useDocumentActions({
   stableId,
   fixedHorseId,
 }: UseDocumentActionsOptions) {
+  const t = useT()
+
   const generateUploadUrl = useMutation(api.stableDocuments.generateUploadUrl)
   const addDocument = useMutation(api.stableDocuments.add)
   const removeDocument = useMutation(api.stableDocuments.remove)
@@ -37,8 +40,7 @@ export function useDocumentActions({
 
       await addDocument({
         stableId,
-        horseId:
-          fixedHorseId ?? (values.horseId as Id<'horses'> | undefined),
+        horseId: fixedHorseId ?? (values.horseId as Id<'horses'> | undefined),
         storageId,
         type: values.type,
         fileName: values.fileName,
@@ -46,9 +48,9 @@ export function useDocumentActions({
         size: file.size,
         notes: values.notes,
       })
-      showAppSuccessToast({ title: 'Document added' })
+      showAppSuccessToast({ title: t('documents.added') })
     } catch (error) {
-      showAppErrorToast({ title: 'Could not add document' })
+      showAppErrorToast({ title: t('documents.addFailed') })
       throw error
     }
   }
@@ -56,9 +58,9 @@ export function useDocumentActions({
   const remove = async (id: Id<'stableDocuments'>) => {
     try {
       await removeDocument({ id })
-      showAppSuccessToast({ title: 'Document removed' })
+      showAppSuccessToast({ title: t('documents.removed') })
     } catch (error) {
-      showAppErrorToast({ title: 'Could not remove document' })
+      showAppErrorToast({ title: t('documents.removeFailed') })
       throw error
     }
   }

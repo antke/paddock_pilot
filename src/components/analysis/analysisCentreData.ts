@@ -1,3 +1,6 @@
+import type { AnalysisSignalDisplayData } from 'shared/i18n/analysisSignal'
+import type { Locale } from 'shared/i18n/locale'
+import { localeInstances } from '#/i18n/resources'
 import type {
   DashboardLabData,
   DashboardLabEvent,
@@ -48,6 +51,7 @@ export type LabTimelineSourceSignal = {
   horseId?: DashboardLabHorse['_id']
   horseName?: string
   detail?: string
+  displayData?: AnalysisSignalDisplayData
   status?: string
   severity?: 'low' | 'medium' | 'high'
   priority?: 'low' | 'medium' | 'high'
@@ -170,10 +174,12 @@ export type LabAnalysis = {
 export function createAnalysisCentreData(
   data: DashboardLabData,
   timelineSignals: Array<LabTimelineSourceSignal> = [],
+  locale: Locale = 'en',
 ): LabAnalysis {
+  const t = localeInstances[locale].t
   const today = getTodayDateKey()
   const nextThirtyDays = addDaysKey(today, 30)
-  const timeline = getTimeline(data.events, timelineSignals, today)
+  const timeline = getTimeline(data.events, timelineSignals, today, locale)
   const plannedEvents = data.events.filter(isPlannedEvent)
   const completedEvents = data.events.filter(
     (event) => event.status === 'completed',
@@ -190,7 +196,7 @@ export function createAnalysisCentreData(
     .filter((event) => !hasProviderDetails(event))
     .sort(compareEventDateAndTime)
     .slice(0, 8)
-  const horseProfileItems = getHorseProfileItems(data.horses)
+  const horseProfileItems = getHorseProfileItems(data.horses, locale)
   const profileGapCount = horseProfileItems.reduce(
     (count, horse) => count + horse.missingFields.length,
     0,
@@ -213,37 +219,45 @@ export function createAnalysisCentreData(
   return {
     metrics: [
       {
-        title: 'Horses flagged',
+        title: t('analysisViews.horsesFlagged'),
         value: `${horsesNeedingAttention.length}`,
-        description: `${data.overview.summary.highSeverityIssueCount} high-severity issues · ${profileGapCount} profile gaps`,
+        description: t('analysisViews.flaggedSummary', {
+          issues: data.overview.summary.highSeverityIssueCount,
+          gaps: profileGapCount,
+        }),
         tone: urgentCount > 0 ? 'urgent' : 'steady',
       },
       {
-        title: 'Active medication',
+        title: t('analysisViews.activeMedicationTitle'),
         value: `${data.overview.summary.activeMedicationCount}`,
-        description: 'Medication records currently in progress.',
+        description: t('analysisViews.medicationInProgress'),
         tone:
           data.overview.summary.activeMedicationCount > 0
             ? 'urgent'
             : 'default',
       },
       {
-        title: 'Upcoming care',
+        title: t('analysisViews.upcomingCare'),
         value: `${data.overview.summary.upcomingEventCount}`,
-        description: 'Planned events in the next two weeks.',
+        description: t('analysisViews.plannedFortnight'),
         tone: 'default',
       },
       {
-        title: 'Reminder load',
+        title: t('analysisViews.reminderLoad'),
         value: `${data.overview.summary.dueReminderCount}`,
-        description: `${data.overview.summary.overdueReminderCount} overdue reminders`,
+        description: t('analysisViews.overdueReminderCount', {
+          count: data.overview.summary.overdueReminderCount,
+        }),
         tone:
           data.overview.summary.overdueReminderCount > 0 ? 'urgent' : 'default',
       },
       {
-        title: 'Completion notes',
+        title: t('analysisViews.completionNotes'),
         value: `${completionCoverage.eventNoteCoveragePercent}%`,
-        description: `${completionCoverage.eventsWithNotesCount}/${completionCoverage.completedEventCount} completed events documented`,
+        description: t('analysisViews.documented', {
+          noted: completionCoverage.eventsWithNotesCount,
+          total: completionCoverage.completedEventCount,
+        }),
         tone:
           completionCoverage.eventNoteCoveragePercent < 75
             ? 'urgent'
@@ -350,6 +364,7 @@ function getTimeline(
   events: Array<DashboardLabEvent>,
   signals: Array<LabTimelineSourceSignal>,
   today: string,
+  locale: Locale,
 ): LabTimeline {
   const dayKeys = getTimelineDayKeys(events, signals, today)
   const windowStart = dayKeys[0] ?? today
@@ -404,8 +419,8 @@ function getTimeline(
 
     return {
       key: dayKey,
-      label: formatDayLabel(dayKey),
-      shortLabel: formatShortDayLabel(dayKey),
+      label: formatDayLabel(dayKey, locale),
+      shortLabel: formatShortDayLabel(dayKey, locale),
       allEventCount: bucketOccurrences.length,
       completedEventCount,
       plannedEventCount,
@@ -520,12 +535,12 @@ function getTimelineDayKeys(
   return keys
 }
 
-function formatDayLabel(dayKey: string) {
-  return formatLongDateKey(dayKey)
+function formatDayLabel(dayKey: string, locale: Locale) {
+  return formatLongDateKey(dayKey, locale)
 }
 
-function formatShortDayLabel(dayKey: string) {
-  return formatShortDateKey(dayKey)
+function formatShortDayLabel(dayKey: string, locale: Locale) {
+  return formatShortDateKey(dayKey, locale)
 }
 
 function getAttentionHorses(
@@ -587,9 +602,10 @@ function compareAttentionHorse(a: LabAttentionHorse, b: LabAttentionHorse) {
 
 function getHorseProfileItems(
   horses: Array<DashboardLabHorse>,
+  locale: Locale,
 ): Array<LabHorseProfileItem> {
   return horses.map((horse) => {
-    const missingFields = getMissingProfileFields(horse)
+    const missingFields = getMissingProfileFields(horse, locale)
     const completedFieldCount = profileFieldCount - missingFields.length
 
     return {
@@ -607,21 +623,27 @@ function getHorseProfileItems(
 
 const profileFieldCount = 8
 
-function getMissingProfileFields(horse: DashboardLabHorse) {
+function getMissingProfileFields(horse: DashboardLabHorse, locale: Locale) {
+  const t = localeInstances[locale].t
   const missingFields: Array<string> = []
 
-  if (!horse.dateOfBirth) missingFields.push('date of birth')
-  if (!horse.passportNumber) missingFields.push('passport number')
-  if (!horse.microchipNumber) missingFields.push('microchip number')
+  if (!horse.dateOfBirth) missingFields.push(t('analysisViews.dateOfBirth'))
+  if (!horse.passportNumber)
+    missingFields.push(t('analysisViews.passportNumber'))
+  if (!horse.microchipNumber)
+    missingFields.push(t('analysisViews.microchipNumber'))
   if (!horse.insuranceProvider || !horse.insurancePolicyNumber) {
-    missingFields.push('insurance details')
+    missingFields.push(t('analysisViews.insuranceDetails'))
   }
-  if (!horse.vetName && !horse.vetPhone) missingFields.push('vet contact')
+  if (!horse.vetName && !horse.vetPhone)
+    missingFields.push(t('analysisViews.vetContact'))
   if (!horse.farrierName && !horse.farrierPhone) {
-    missingFields.push('farrier contact')
+    missingFields.push(t('analysisViews.farrierContact'))
   }
-  if (!horse.emergencyNotes) missingFields.push('emergency notes')
-  if (!hasNutritionDetails(horse)) missingFields.push('nutrition notes')
+  if (!horse.emergencyNotes)
+    missingFields.push(t('analysisViews.emergencyNotes'))
+  if (!hasNutritionDetails(horse))
+    missingFields.push(t('analysisViews.nutritionNotes'))
 
   return missingFields
 }

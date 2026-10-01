@@ -14,6 +14,8 @@ import {
   RouterProvider,
 } from '@tanstack/react-router'
 import { useState } from 'react'
+import { LocaleProvider } from '#/i18n/LocaleProvider'
+import { LanguageSelector } from '#/i18n/LanguageSelector'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Id } from 'convex/_generated/dataModel'
 import { StableEventsCalendar } from './StableEventsCalendar'
@@ -23,6 +25,8 @@ const august = new Date(2026, 7, 1)
 let desktop = true
 let listeners: Set<() => void>
 beforeEach(() => {
+  localStorage.clear()
+  vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['en-GB'])
   desktop = true
   listeners = new Set()
   vi.stubGlobal('matchMedia', () => ({
@@ -73,6 +77,7 @@ function event(
 }
 async function setup(
   initial = Array.from({ length: 6 }, (_, index) => event(index)),
+  localized = false,
 ) {
   let update!: (events: Array<StableDashboardEvent>) => void
   let month!: (date: Date) => void
@@ -94,7 +99,16 @@ async function setup(
     history: createMemoryHistory({ initialEntries: ['/'] }),
   })
   await router.load()
-  render(<RouterProvider router={router} />)
+  render(
+    localized ? (
+      <LocaleProvider>
+        <LanguageSelector />
+        <RouterProvider router={router} />
+      </LocaleProvider>
+    ) : (
+      <RouterProvider router={router} />
+    ),
+  )
   return {
     update: (events: Array<StableDashboardEvent>) => act(() => update(events)),
     month: (date: Date) => act(() => month(date)),
@@ -243,4 +257,47 @@ describe('read-only month calendar', () => {
       screen.getByText('September 2026, 0 events this month.'),
     ).toBeTruthy()
   })
+})
+
+it('switches the selected agenda, weekday labels, counts, and announcements without losing the selected date or focus', async () => {
+  await setup(undefined, true)
+  open()
+  const englishAgenda = agenda()
+  const selector = screen.getByRole('combobox')
+  selector.focus()
+  fireEvent.change(selector, { target: { value: 'pl' } })
+  const polishAgenda = screen.getByRole('region', {
+    name: 'Wydarzenia w dniu 12 sie 2026',
+  })
+  expect(polishAgenda).toBe(englishAgenda)
+  expect(document.activeElement).toBe(selector)
+  const polishTable = screen.getByRole('table', {
+    name: 'Kalendarz wydarzeń: sierpień 2026',
+  })
+  expect(
+    within(polishTable)
+      .getAllByRole('columnheader')
+      .map((node) => node.textContent),
+  ).toEqual(['pon.', 'wt.', 'śr.', 'czw.', 'pt.', 'sob.', 'niedz.'])
+  expect(within(polishAgenda).getAllByRole('link')).toHaveLength(6)
+  expect(
+    screen
+      .getByRole('button', {
+        name: 'Ukryj 4 dodatkowe wydarzenia w dniu 12 sie 2026',
+      })
+      .getAttribute('aria-expanded'),
+  ).toBe('true')
+  fireEvent.click(screen.getByRole('button', { name: 'Następny' }))
+  expect(
+    screen.queryByRole('region', { name: 'Wydarzenia w dniu 12 sie 2026' }),
+  ).toBeNull()
+  expect(
+    screen.getByText('wrzesień 2026 — 0 wydarzeń w tym miesiącu.', {
+      exact: true,
+    }),
+  ).toBeTruthy()
+  fireEvent.change(selector, { target: { value: 'en' } })
+  expect(
+    screen.getByText('September 2026, 0 events this month.', { exact: true }),
+  ).toBeTruthy()
 })

@@ -1,3 +1,5 @@
+import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
+import { useT } from '#/i18n/LocaleProvider'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from 'convex/react'
 import { useId } from 'react'
@@ -17,7 +19,7 @@ import {
 import { Input } from '#/components/ui/input'
 import { Textarea } from '#/components/ui/textarea'
 import { api } from 'convex/_generated/api'
-import { stableOperationsFormSchema } from 'shared/stables/stableSchema'
+import { createStableSchemas } from 'shared/stables/stableSchema'
 import type { StableOperationsFormSchema } from 'shared/stables/stableSchema'
 import { OnboardingLaterNote } from './OnboardingLayout'
 
@@ -47,22 +49,26 @@ export function StableOperationsStep(props: StableOperationsStepProps) {
 }
 export function StableOperationsStepView({
   stable,
-  cancelLabel = 'Do this later',
+  cancelLabel,
   onDeferred,
   onSaved,
   onSave,
 }: StableOperationsStepProps & {
   onSave: (values: StableOperationsFormSchema) => Promise<void>
 }) {
+  const t = useT()
+
   const formId = useId()
   const save = useOnboardingSave({
     onSave,
     onSaved,
-    failureMessage:
-      'Could not save stable details. Your entries are still here. Try again.',
+    failureMessage: t('onboarding.stableSaveFailed'),
   })
   const form = useForm<StableOperationsFormSchema>({
-    resolver: zodResolver(stableOperationsFormSchema),
+    resolver: zodResolver(
+      createStableSchemas((key) => t(`stableValidation.${key}`))
+        .stableOperationsFormSchema,
+    ),
     defaultValues: {
       contactName: stable.contactName ?? '',
       contactPhone: stable.contactPhone ?? '',
@@ -71,14 +77,13 @@ export function StableOperationsStepView({
       yardRules: stable.yardRules ?? '',
     },
   })
+  useLocalizedValidation(form)
 
   return (
     <InlineForm onSubmit={form.handleSubmit(save.run)}>
       <OnboardingSaveError message={save.error} />
       <OnboardingLaterNote>
-        Add what the team needs from day one. Opening hours, yard rules and
-        additional contact details can all be completed later in Stable
-        settings.
+        {t('onboarding.operationsLaterHelp')}
       </OnboardingLaterNote>
 
       <FieldGrid>
@@ -88,7 +93,7 @@ export function StableOperationsStepView({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                Primary contact
+                {t('onboarding.primaryContact')}
               </FieldLabel>
               <Input
                 {...field}
@@ -99,7 +104,7 @@ export function StableOperationsStepView({
                     ? `${formId}-${field.name}-error`
                     : undefined
                 }
-                placeholder="Yard manager"
+                placeholder={t('onboarding.yardManager')}
                 disabled={save.pending || save.acknowledged}
               />
               {fieldState.invalid && (
@@ -117,7 +122,7 @@ export function StableOperationsStepView({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                Contact phone
+                {t('onboarding.contactPhone')}
               </FieldLabel>
               <Input
                 {...field}
@@ -129,7 +134,7 @@ export function StableOperationsStepView({
                     : undefined
                 }
                 type="tel"
-                placeholder="Optional"
+                placeholder={t('onboarding.optional')}
                 disabled={save.pending || save.acknowledged}
               />
               {fieldState.invalid && (
@@ -150,7 +155,7 @@ export function StableOperationsStepView({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                Emergency phone
+                {t('onboarding.emergencyPhone')}
               </FieldLabel>
               <Input
                 {...field}
@@ -162,7 +167,7 @@ export function StableOperationsStepView({
                     : undefined
                 }
                 type="tel"
-                placeholder="Optional"
+                placeholder={t('onboarding.optional')}
                 disabled={save.pending || save.acknowledged}
               />
               {fieldState.invalid && (
@@ -180,7 +185,7 @@ export function StableOperationsStepView({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                Opening hours
+                {t('onboarding.openingHours')}
               </FieldLabel>
               <Input
                 {...field}
@@ -191,7 +196,7 @@ export function StableOperationsStepView({
                     ? `${formId}-${field.name}-error`
                     : undefined
                 }
-                placeholder="6:00 AM – 8:30 PM"
+                placeholder={t('onboarding.hoursExample')}
                 disabled={save.pending || save.acknowledged}
               />
               {fieldState.invalid && (
@@ -211,7 +216,7 @@ export function StableOperationsStepView({
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
             <FieldLabel htmlFor={`${formId}-${field.name}`}>
-              Yard rules
+              {t('onboarding.yardRules')}
             </FieldLabel>
             <Textarea
               {...field}
@@ -220,13 +225,11 @@ export function StableOperationsStepView({
               aria-describedby={
                 fieldState.invalid ? `${formId}-${field.name}-error` : undefined
               }
-              placeholder="Share anything members should know when they arrive."
+              placeholder={t('onboarding.yardRulesPlaceholder')}
               minHeight="default"
               disabled={save.pending || save.acknowledged}
             />
-            <FieldDescription>
-              Keep this short for now; it can grow with the stable.
-            </FieldDescription>
+            <FieldDescription>{t('onboarding.yardRulesHelp')}</FieldDescription>
             {fieldState.invalid && (
               <FieldError
                 id={`${formId}-${field.name}-error`}
@@ -241,13 +244,13 @@ export function StableOperationsStepView({
         align="end"
         isSubmitting={save.pending}
         onCancel={onDeferred}
-        cancelLabel={cancelLabel}
+        cancelLabel={cancelLabel ?? t('onboarding.later')}
         submitLabel={
           save.acknowledged
-            ? 'Continue without saving again'
-            : 'Save and continue'
+            ? t('onboarding.continueSaved')
+            : t('onboarding.saveContinue')
         }
-        submittingLabel="Saving..."
+        submittingLabel={t('onboarding.saving')}
       />
     </InlineForm>
   )

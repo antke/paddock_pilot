@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { createFileRoute } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { convexQuery } from '@convex-dev/react-query'
@@ -18,6 +19,8 @@ export const Route = createFileRoute('/stables/_layout/$stableId/training/')({
   component: TrainingLog,
 })
 function TrainingLog() {
+  const t = useT()
+
   const { stableId } = Route.useParams()
   const { horseIds } = Route.useSearch()
   const { data } = useSuspenseQuery(
@@ -28,8 +31,8 @@ function TrainingLog() {
   return (
     <DashboardPage>
       <DashboardPageHeader
-        title="Training log"
-        description="Plan sessions, record completed work, and review each horse’s training."
+        title={t('trainingViews.log')}
+        description={t('trainingViews.logHelp')}
       />
       <TrainingCalendar
         key={`${stableId}:${horseIds?.join(',') ?? ''}`}

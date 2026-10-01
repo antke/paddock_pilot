@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { HorseListPage } from '#/components/horses/HorseListPage'
 import { RouteQueryErrorAlert } from '#/components/layout/RouteStatusAlert'
 import { convexQuery } from '@convex-dev/react-query'
@@ -22,11 +23,13 @@ function RouteComponent() {
 }
 
 function HorseListError({ reset }: ErrorComponentProps) {
+  const t = useT()
+
   return (
     <RouteQueryErrorAlert
       reset={reset}
-      title="The horse roster couldn’t load"
-      description="Check your connection, then try again. Your horse records have not been changed."
+      title={t('horseDeletion.rosterFailed')}
+      description={t('horseDeletion.rosterFailedHelp')}
     />
   )
 }

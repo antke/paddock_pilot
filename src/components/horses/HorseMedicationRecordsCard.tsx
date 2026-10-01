@@ -1,3 +1,4 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { MedicationRecordForm } from '#/components/horses/MedicationRecordForm'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { FilteredDashboardItemList } from '#/components/list-filtering/FilteredDashboardItemList'
@@ -37,6 +38,8 @@ export function HorseMedicationRecordsCard({
   horse,
   onCreateActionChange,
 }: HorseMedicationRecordsCardProps) {
+  const t = useT()
+
   const { today } = useLocalDateContext()
   const { data: records } = useSuspenseQuery(
     convexQuery(api.horseMedicationRecords.listForHorse, {
@@ -63,7 +66,7 @@ export function HorseMedicationRecordsCard({
       onAdd={async (data) => {
         try {
           await addMedicationRecord({ horseId: horse._id, ...data })
-          showAppSuccessToast({ title: 'Medication record added' })
+          showAppSuccessToast({ title: t('careRecords.medicationAdded') })
         } catch (error) {
           showAppErrorToast()
           throw error
@@ -72,7 +75,7 @@ export function HorseMedicationRecordsCard({
       onComplete={async (record) => {
         try {
           await completeMedicationRecord({ id: record._id, endDate: today })
-          showAppSuccessToast({ title: 'Medication completed' })
+          showAppSuccessToast({ title: t('careRecords.medicationCompleted') })
         } catch (error) {
           showAppErrorToast()
           throw error
@@ -81,7 +84,7 @@ export function HorseMedicationRecordsCard({
       onRemove={async (record) => {
         try {
           await removeMedicationRecord({ id: record._id })
-          showAppSuccessToast({ title: 'Medication record removed' })
+          showAppSuccessToast({ title: t('careRecords.medicationRemoved') })
         } catch (error) {
           showAppErrorToast()
           throw error
@@ -108,6 +111,9 @@ export function HorseMedicationRecordsCardView({
   onRemove,
   onCreateActionChange,
 }: HorseMedicationRecordsCardViewProps) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const activeOperations = useRef(new Set<string>())
   const [operations, setOperations] = useState<
     Record<string, { pending: 'status' | 'remove' | null; failed: boolean }>
@@ -142,7 +148,10 @@ export function HorseMedicationRecordsCardView({
   const { today } = useLocalDateContext()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const activeRecords = records.filter((record) => record.status === 'active')
-  const filterConfig = useMemo(createHorseMedicationRecordListFilterConfig, [])
+  const filterConfig = useMemo(
+    () => createHorseMedicationRecordListFilterConfig(locale),
+    [locale],
+  )
   const filtering = useListFiltering({
     items: records,
     config: filterConfig,
@@ -163,9 +172,9 @@ export function HorseMedicationRecordsCardView({
           open={isCreateOpen}
           isPending={isCreating}
           onOpenChange={setIsCreateOpen}
-          triggerLabel="Add medication"
-          title="Add medication"
-          description="Record a medication course without losing your place in the list."
+          triggerLabel={t('careRecords.addMedication')}
+          title={t('careRecords.addMedication')}
+          description={t('careRecords.createMedicationHelp')}
         >
           <MedicationRecordForm
             onSubmit={onAddMedicationRecord}
@@ -173,7 +182,7 @@ export function HorseMedicationRecordsCardView({
           />
         </CreateRecordDialog>
       ) : null,
-    [canManage, isCreateOpen, isCreating, onAddMedicationRecord],
+    [canManage, isCreateOpen, isCreating, onAddMedicationRecord, t],
   )
   const inlineCreateDialog = onCreateActionChange ? null : createDialog
 
@@ -183,8 +192,8 @@ export function HorseMedicationRecordsCardView({
     <FilteredDashboardItemList
       config={filterConfig}
       filtering={filtering}
-      emptyMessage="No medication records have been added for this horse yet."
-      filteredEmptyMessage="No medication records match these filters."
+      emptyMessage={t('careRecords.medicationEmpty')}
+      filteredEmptyMessage={t('careRecords.medicationFilteredEmpty')}
       renderItem={(record) => (
         <MedicationRecordRow
           key={record._id}
@@ -206,7 +215,7 @@ export function HorseMedicationRecordsCardView({
     <div
       ref={listRegion}
       role="region"
-      aria-label={`${horse.name}: medication records`}
+      aria-label={t('careRecords.medicationRegion', { name: horse.name })}
       tabIndex={-1}
       className="grid gap-5 outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
@@ -228,13 +237,15 @@ function ActiveMedicationPanel({
 }: {
   records: Array<Doc<'horseMedicationRecords'>>
 }) {
+  const t = useT()
+
   return (
     <DashboardSection
       as="h3"
       chrome="flat"
       gap="compact"
-      title="Active and planned medication"
-      description="Courses remain visible here while you search the history below."
+      title={t('careRecords.activeMedication')}
+      description={t('careRecords.activeMedicationHelp')}
       size="panel"
       descriptionSize="sm"
     >
@@ -252,6 +263,9 @@ function MedicationRecordSummary({
 }: {
   record: Doc<'horseMedicationRecords'>
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const { today } = useLocalDateContext()
   return (
     <div className="app-record grid gap-2">
@@ -266,8 +280,12 @@ function MedicationRecordSummary({
         {record.frequency && <span>{record.frequency}</span>}
         {record.startDate && (
           <span>
-            {record.startDate > today ? 'Starts' : 'Started'}{' '}
-            {formatMediumDateKey(record.startDate)}
+            {t(
+              record.startDate > today
+                ? 'careRecords.startsAt'
+                : 'careRecords.startedAt',
+              { date: formatMediumDateKey(record.startDate, locale) },
+            )}
           </span>
         )}
         {record.prescribedBy && <span>{record.prescribedBy}</span>}
@@ -300,13 +318,16 @@ function MedicationRecordRow({
   onComplete: (record: Doc<'horseMedicationRecords'>) => Promise<void>
   onRemove: (record: Doc<'horseMedicationRecords'>) => Promise<void>
 }) {
+  const t = useT()
+  const { locale } = useLocale()
+
   return (
     <DashboardItemRecordCard
       chrome="flat"
       footer={
         failed ? (
           <p role="alert" className="text-sm text-destructive">
-            Could not update this record. Please try again.
+            {t('careRecords.updateFailed')}
           </p>
         ) : undefined
       }
@@ -328,20 +349,26 @@ function MedicationRecordRow({
                 disabled={pending !== null || record.startDate > today}
                 title={
                   record.startDate > today
-                    ? 'A future course cannot be completed before its start date.'
+                    ? t('careRecords.futureCourse')
                     : undefined
                 }
                 aria-busy={pending === 'status' || undefined}
-                aria-label={`Complete ${record.medicationName}`}
+                aria-label={t('careRecords.completeNamed', {
+                  name: record.medicationName,
+                })}
                 onClick={() => void run('status', () => onComplete(record))}
               >
-                {pending === 'status' ? 'Completing…' : 'Complete'}
+                {pending === 'status'
+                  ? t('careRecords.completing')
+                  : t('careRecords.complete')}
               </Button>
             )}
             <HorseRecordRemoveAction
               disabled={pending !== null}
-              title={`Remove ${record.medicationName}?`}
-              description="This medication record will be removed from the horse history permanently. This cannot be undone."
+              title={t('careRecords.removeNamed', {
+                name: record.medicationName,
+              })}
+              description={t('careRecords.removeMedicationHelp')}
               removalFocusTarget={removalFocusTarget}
               onConfirm={() => run('remove', () => onRemove(record))}
             />
@@ -355,15 +382,23 @@ function MedicationRecordRow({
         meta={
           <>
             <span>
-              {record.startDate > today ? 'Starts' : 'Started'}{' '}
-              {formatMediumDateKey(record.startDate)}
+              {t(
+                record.startDate > today
+                  ? 'careRecords.startsAt'
+                  : 'careRecords.startedAt',
+                { date: formatMediumDateKey(record.startDate, locale) },
+              )}
             </span>
             <span>{record.dosage}</span>
             {record.frequency && <span>{record.frequency}</span>}
             {record.endDate && (
               <span>
-                {record.status === 'completed' ? 'Ended' : 'Planned end'}{' '}
-                {formatMediumDateKey(record.endDate)}
+                {t(
+                  record.status === 'completed'
+                    ? 'careRecords.endedAt'
+                    : 'careRecords.plannedEnd',
+                  { date: formatMediumDateKey(record.endDate, locale) },
+                )}
               </span>
             )}
             {record.prescribedBy && <span>{record.prescribedBy}</span>}

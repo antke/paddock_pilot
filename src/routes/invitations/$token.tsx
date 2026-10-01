@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { convexQuery } from '@convex-dev/react-query'
 import {
   useQueryErrorResetBoundary,
@@ -26,14 +27,19 @@ import type { InvitationPreview } from '#/components/invitations/InvitationPageV
 
 export const Route = createFileRoute('/invitations/$token')({
   component: InvitationPage,
-  pendingComponent: () => (
-    <DashboardPage width="compact">
-      <DashboardPageHeader title="Stable invitation" />
-      <RoutePending />
-    </DashboardPage>
-  ),
+  pendingComponent: InvitationPending,
   errorComponent: InvitationError,
 })
+
+function InvitationPending() {
+  const t = useT()
+  return (
+    <DashboardPage width="compact">
+      <DashboardPageHeader title={t('invitationFlow.context')} />
+      <RoutePending />
+    </DashboardPage>
+  )
+}
 
 function InvitationError({ reset }: ErrorComponentProps) {
   const queryBoundary = useQueryErrorResetBoundary()
@@ -48,6 +54,7 @@ function InvitationError({ reset }: ErrorComponentProps) {
 }
 
 function InvitationPage() {
+  const t = useT()
   const { token } = Route.useParams()
   const { data: preview } = useSuspenseQuery(
     convexQuery(api.stableInvitations.preview, { token }),
@@ -63,13 +70,13 @@ function InvitationPage() {
           authActions={{
             signIn: (
               <SignInButton forceRedirectUrl={returnTo}>
-                <Button type="button">Sign in</Button>
+                <Button type="button">{t('navigation.signIn')}</Button>
               </SignInButton>
             ),
             signUp: (
               <SignUpButton forceRedirectUrl={returnTo}>
                 <Button type="button" variant="outline">
-                  Create account
+                  {t('navigation.createAccount')}
                 </Button>
               </SignUpButton>
             ),
@@ -90,6 +97,7 @@ function ConnectedInvitation({
   token: string
   preview: InvitationPreview
 }) {
+  const t = useT()
   const accept = useMutation(api.stableInvitations.accept)
   const decline = useMutation(api.stableInvitations.decline)
   return (
@@ -106,13 +114,13 @@ function ConnectedInvitation({
         switchAccount: (
           <SignOutButton redirectUrl={getInvitationPath(token)}>
             <Button type="button" variant="outline">
-              Switch account
+              {t('invitationFlow.switchAccount')}
             </Button>
           </SignOutButton>
         ),
         refreshAccount: (
           <Button type="button" onClick={() => window.location.reload()}>
-            Refresh account
+            {t('invitationFlow.refreshAccount')}
           </Button>
         ),
       }}

@@ -123,6 +123,13 @@ export const listForHorse = query({
               .join(' · '),
             providerName: event.providerName,
             notesAfterCompletion: record.outcome,
+            // Keep legacy display fields for old clients; new clients render
+            // these raw values with their own language and status labels.
+            trainingRecord: {
+              status: record.status,
+              focus: record.details.focus,
+              nextFocus: record.details.nextFocus,
+            },
             requestedServiceNotes: undefined,
             horseCompletionNotes: record.details.nextFocus
               ? `Next focus: ${record.details.nextFocus}`

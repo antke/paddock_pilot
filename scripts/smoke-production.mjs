@@ -45,6 +45,13 @@ try {
     assert.match(response.headers.get('content-type') ?? '', /text\/html/)
     const html = await response.text()
     assert.match(html, /<html[\s>]/i, `${path} did not return an HTML document`)
+    // SSR is deliberately locale-neutral to account/browser state. The client
+    // resolves the preference after hydration; server requests cannot leak it.
+    assert.match(
+      html,
+      /<html\b[^>]*\blang="en"/i,
+      `${path} omitted the deterministic English shell language`,
+    )
     assert.match(html, /<\/html>/i, `${path} returned an incomplete document`)
     assert.match(
       html,

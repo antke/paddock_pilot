@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { DashboardValueBadge } from '#/components/dashboard/DashboardBadges'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import type { DashboardCommandData } from './dashboardTypes'
@@ -7,10 +8,11 @@ type ActiveStableHeaderProps = {
 }
 
 export function ActiveStableHeader({ data }: ActiveStableHeaderProps) {
-  const eventLabel =
-    data.todayEvents.length === 1
-      ? '1 calendar entry today'
-      : `${data.todayEvents.length} calendar entries today`
+  const t = useT()
+
+  const eventLabel = t('dashboard.todayEntries', {
+    count: data.todayEvents.length,
+  })
 
   return (
     <DashboardPageHeader

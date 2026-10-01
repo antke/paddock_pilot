@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { useTheme } from 'next-themes'
 import { Toaster as Sonner, toast } from 'sonner'
 import type { ExternalToast, ToasterProps } from 'sonner'
@@ -34,33 +35,51 @@ function showAppSuccessToast({ title, ...options }: AppSuccessToastOptions) {
 }
 
 function showAppErrorToast({
-  title = 'Oops! Something went wrong.',
-  description = <p>Please try again.</p>,
+  title,
+  description,
   ...options
 }: AppErrorToastOptions = {}) {
-  toast.error(title, {
+  toast.error(title ?? <DefaultToastMessage message="common.errorToast" />, {
     ...appToastOptions,
-    description,
+    description: description ?? (
+      <p>
+        <DefaultToastMessage message="common.tryAgain" />
+      </p>
+    ),
     ...options,
   })
 }
 
 function showAppValidationToast({
-  title = 'Check the form',
+  title,
   ...options
 }: AppValidationToastOptions = {}) {
-  toast.error(title, {
-    ...appToastOptions,
-    ...options,
-  })
+  toast.error(
+    title ?? <DefaultToastMessage message="common.validationToast" />,
+    {
+      ...appToastOptions,
+      ...options,
+    },
+  )
+}
+
+function DefaultToastMessage({
+  message,
+}: {
+  message: 'common.errorToast' | 'common.tryAgain' | 'common.validationToast'
+}) {
+  const t = useT()
+  return t(message)
 }
 
 const Toaster = ({ ...props }: ToasterProps) => {
+  const t = useT()
   const { theme = 'system' } = useTheme()
 
   return (
     <Sonner
       data-slot="toaster"
+      containerAriaLabel={t('common.notifications')}
       theme={theme as ToasterProps['theme']}
       className="toaster group"
       closeButton
@@ -100,6 +119,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         } as React.CSSProperties
       }
       toastOptions={{
+        closeButtonAriaLabel: t('common.closeNotification'),
         style: { paddingInlineEnd: '4rem', minHeight: '4rem' },
         classNames: {
           toast:

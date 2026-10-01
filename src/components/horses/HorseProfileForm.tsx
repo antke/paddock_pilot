@@ -1,3 +1,5 @@
+import { useT, useLocale } from '#/i18n/LocaleProvider'
+import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { useEffect, useId, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
@@ -48,6 +50,9 @@ export function HorseProfileForm({
   sampleNotice,
   breedSuggestions = [],
 }: HorseProfileFormProps) {
+  const t = useT()
+  const { locale } = useLocale()
+
   const formId = useId()
   const mounted = useRef(true)
   const pending = useRef(false)
@@ -59,7 +64,9 @@ export function HorseProfileForm({
     'idle' | 'uploading' | 'saving' | 'opening'
   >('idle')
   const [savedId, setSavedId] = useState<Id<'horses'>>()
-  const [error, setError] = useState<string>()
+  const [error, setError] = useState<
+    'openFailed' | 'uploadFailed' | 'saveFailed'
+  >()
   const pendingChange = useRef(onPendingChange)
   pendingChange.current = onPendingChange
   useEffect(() => {
@@ -74,11 +81,12 @@ export function HorseProfileForm({
   const existingBreed = mode === 'edit' ? initialValues?.breed : undefined
   const form = useForm<HorseFormInput, unknown, HorseFormSchema>({
     resolver: zodResolver(
-      createHorseFormSchema(existingBreed, additionalBreeds),
+      createHorseFormSchema(existingBreed, additionalBreeds, locale),
     ),
     mode: 'onTouched',
     defaultValues: horseProfileDefaults(initialValues),
   })
+  useLocalizedValidation(form)
   const isPending = phase !== 'idle'
   const finish = () => {
     pending.current = false
@@ -92,10 +100,7 @@ export function HorseProfileForm({
     try {
       await onSaved(id)
     } catch {
-      if (mounted.current)
-        setError(
-          'Your horse was saved, but the profile could not open. Try opening it again; nothing will be saved twice.',
-        )
+      if (mounted.current) setError('openFailed')
     }
   }
   const retryOpening = async () => {
@@ -124,10 +129,7 @@ export function HorseProfileForm({
           try {
             imageId = await uploadImage(file)
           } catch {
-            if (mounted.current)
-              setError(
-                'Could not upload the horse photo. Your details and selected photo are still here. Try saving again, or remove the photo.',
-              )
+            if (mounted.current) setError('uploadFailed')
             return
           }
           if (!mounted.current) return
@@ -140,10 +142,7 @@ export function HorseProfileForm({
       try {
         id = await save(values, imageId)
       } catch {
-        if (mounted.current)
-          setError(
-            'Could not save this horse. Your entries are still here. Try saving again; an already uploaded photo will be reused.',
-          )
+        if (mounted.current) setError('saveFailed')
         return
       }
       if (!mounted.current) return
@@ -156,8 +155,11 @@ export function HorseProfileForm({
   }
   return (
     <RouteFormCard
+      noValidate
       formId={formId}
-      title={mode === 'create' ? 'Add horse' : 'Edit horse profile'}
+      title={
+        mode === 'create' ? t('horseForm.addHorse') : t('horseForm.editHorse')
+      }
       embedded={embedded}
       stickyActions
       onSubmit={(event) => {
@@ -174,13 +176,15 @@ export function HorseProfileForm({
       }}
       actions={
         <>
-          <FormSubmissionError message={error} />
+          <FormSubmissionError
+            message={error ? t(`horseForm.${error}`) : undefined}
+          />
           {savedId ? (
             <>
               <p role="status" className="text-sm text-muted-foreground">
                 {sampleNotice
-                  ? 'Sample horse saved locally. No live record changed.'
-                  : 'Horse saved.'}
+                  ? t('horseForm.sampleSaved')
+                  : t('horseForm.saved')}
               </p>
               <Button
                 type="button"
@@ -188,7 +192,9 @@ export function HorseProfileForm({
                 disabled={isPending || disabled}
                 aria-busy={isPending || undefined}
               >
-                {isPending ? 'Opening profile…' : 'Open horse profile'}
+                {isPending
+                  ? t('horseForm.opening')
+                  : t('horseForm.openProfile')}
               </Button>
             </>
           ) : (
@@ -201,22 +207,28 @@ export function HorseProfileForm({
                 uploaded.current = undefined
                 setError(undefined)
               }}
-              resetLabel="Reset form"
+              resetLabel={t('horseForm.reset')}
               resetConfirmation={
                 form.formState.isDirty
                   ? {
-                      title: 'Discard your changes?',
+                      title: t('horseForm.discard'),
                       description:
                         mode === 'create'
-                          ? 'Clear the details entered for this new horse.'
-                          : 'Restore the horse details from before you started editing.',
-                      confirmLabel: 'Discard changes',
+                          ? t('horseForm.clearNew')
+                          : t('horseForm.restoreEdit'),
+                      confirmLabel: t('horseForm.discardAction'),
                     }
                   : undefined
               }
-              submitLabel={mode === 'create' ? 'Add horse' : 'Save changes'}
+              submitLabel={
+                mode === 'create'
+                  ? t('horseForm.addHorse')
+                  : t('horseForm.saveChanges')
+              }
               submittingLabel={
-                phase === 'uploading' ? 'Uploading photo…' : 'Saving horse…'
+                phase === 'uploading'
+                  ? t('horseForm.uploading')
+                  : t('horseForm.saving')
               }
             />
           )}
