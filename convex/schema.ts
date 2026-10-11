@@ -1,3 +1,4 @@
+import { horseOwnershipTables } from './horseOwnershipSchema'
 import { localeValidator } from '../shared/i18n/validators'
 import { stableAuditDetailsValidator } from '../shared/auditLogs/auditDetails'
 import { defineSchema, defineTable } from 'convex/server'
@@ -34,6 +35,9 @@ export const userFields = {
   phone: v.optional(v.string()),
   profileImageId: v.optional(v.id('_storage')),
   timezone: v.optional(v.string()),
+  reminderDigestEnabled: v.optional(v.boolean()),
+  reminderDigestTimezone: v.optional(v.string()),
+  lastReminderDigestDate: v.optional(v.string()),
   locale: v.optional(localeValidator),
   profileCompletedAt: v.optional(v.number()),
   onboardingVersion: v.optional(v.number()),
@@ -45,6 +49,7 @@ export const userFields = {
 const userSchema = defineTable({ ...userFields })
   .index('by_clerk_id', ['clerkId'])
   .index('by_email', ['email'])
+  .index('by_reminder_digest_enabled', ['reminderDigestEnabled'])
   .index('by_profile_image_id', ['profileImageId'])
 
 /**
@@ -103,6 +108,7 @@ export const stableOnboardingFields = {
   currentStep: v.string(),
   completedSteps: v.array(v.string()),
   deferredSteps: v.array(v.string()),
+  setupPromptDismissed: v.optional(v.boolean()),
   version: v.number(),
   completedAt: v.optional(v.number()),
   createdAt: v.number(),
@@ -151,6 +157,8 @@ export const emailDeliveryCategory = v.union(
   v.literal(emailCategories[7]),
   v.literal(emailCategories[8]),
   v.literal(emailCategories[9]),
+  v.literal(emailCategories[10]),
+  v.literal('horse_access_invitation'),
 )
 
 export const emailDeliveryStatus = v.union(
@@ -175,6 +183,10 @@ export const emailProviderEventStatus = v.union(
 
 export const emailRelation = v.union(
   v.object({
+    type: v.literal('horseInvitation'),
+    id: v.id('horseInvitations'),
+  }),
+  v.object({
     type: v.literal('stableInvitation'),
     id: v.id('stableInvitations'),
   }),
@@ -185,6 +197,28 @@ export const emailRelation = v.union(
 
 export const emailTemplate = v.union(
   v.object({
+    kind: v.literal('horse_access_invitation'),
+    horseName: v.string(),
+    invitationKind: v.union(
+      v.literal('carer'),
+      v.literal('claim'),
+      v.literal('transfer'),
+    ),
+    token: v.string(),
+  }),
+  v.object({
+    kind: v.literal('care_reminder_digest'),
+    date: v.string(),
+    timezone: v.string(),
+    stables: v.array(
+      v.object({
+        stableId: v.optional(v.id('stables')),
+        stableName: v.string(),
+        count: v.number(),
+      }),
+    ),
+  }),
+  v.object({
     kind: v.literal('stable_invitation'),
     stableName: v.string(),
     token: v.string(),
@@ -194,7 +228,7 @@ export const emailTemplate = v.union(
     eventId: v.id('events'),
     eventTitle: v.string(),
     horseNames: v.array(v.string()),
-    stableId: v.id('stables'),
+    stableId: v.optional(v.id('stables')),
   }),
   v.object({
     kind: v.literal('event_participation_update'),
@@ -202,7 +236,7 @@ export const emailTemplate = v.union(
     eventId: v.id('events'),
     eventTitle: v.string(),
     horseName: v.string(),
-    stableId: v.id('stables'),
+    stableId: v.optional(v.id('stables')),
     status: v.union(
       v.literal('approved'),
       v.literal('declined'),
@@ -214,7 +248,7 @@ export const emailTemplate = v.union(
     changes: v.array(v.string()),
     eventId: v.id('events'),
     eventTitle: v.string(),
-    stableId: v.id('stables'),
+    stableId: v.optional(v.id('stables')),
   }),
   v.object({
     kind: v.literal('stable_membership_activated'),
@@ -333,7 +367,8 @@ export const stableDocumentType = v.union(
 )
 
 export const stableDocumentsFields = {
-  stableId: v.id('stables'),
+  stableId: v.optional(v.id('stables')),
+  sourcePlacementId: v.optional(v.id('horsePlacements')),
   horseId: v.optional(v.id('horses')),
   eventId: v.optional(v.id('events')),
   storageId: v.optional(v.id('_storage')),
@@ -478,8 +513,12 @@ const userStorageObjectsSchema = defineTable({
  * HORSES
  */
 export const horsesFields = {
-  stableId: v.id('stables'),
-  ownerId: v.id('users'),
+  // Indexed projection of the active placement, never the ownership boundary.
+  stableId: v.optional(v.id('stables')),
+  ownerId: v.optional(v.id('users')),
+  custodianStableId: v.optional(v.id('stables')),
+  currentPlacementId: v.optional(v.id('horsePlacements')),
+  transitionId: v.optional(v.id('horseTransitions')),
   name: v.string(),
   ownerName: v.optional(v.string()),
   age: v.number(),
@@ -507,6 +546,8 @@ export const horsesFields = {
   dewormingNotes: v.optional(v.string()),
   allergies: v.optional(v.array(v.string())),
   emergencyNotes: v.optional(v.string()),
+  vetProviderId: v.optional(v.id('stableProviders')),
+  farrierProviderId: v.optional(v.id('stableProviders')),
   vetName: v.optional(v.string()),
   vetPhone: v.optional(v.string()),
   farrierName: v.optional(v.string()),
@@ -525,6 +566,7 @@ const horsesSchema = defineTable({
 })
   .index('by_stable_id', ['stableId'])
   .index('by_owner_id', ['ownerId'])
+  .index('by_custodian_stable_id', ['custodianStableId'])
   .index('by_deleted_at', ['deletedAt'])
   .index('by_profile_image_id', ['profileImageId'])
 
@@ -544,7 +586,8 @@ export const horseHealthIssueSeverity = v.union(
 
 export const horseHealthIssuesFields = {
   horseId: v.id('horses'),
-  stableId: v.id('stables'),
+  stableId: v.optional(v.id('stables')),
+  sourcePlacementId: v.optional(v.id('horsePlacements')),
   title: v.string(),
   description: v.optional(v.string()),
   status: horseHealthIssueStatus,
@@ -568,7 +611,8 @@ export const horseWeightUnit = v.union(v.literal('kg'), v.literal('lb'))
 
 export const horseWeightRecordsFields = {
   horseId: v.id('horses'),
-  stableId: v.id('stables'),
+  stableId: v.optional(v.id('stables')),
+  sourcePlacementId: v.optional(v.id('horsePlacements')),
   weight: v.number(),
   unit: horseWeightUnit,
   measuredAt: v.number(),
@@ -593,7 +637,8 @@ export const horseMedicationRecordStatus = v.union(
 
 export const horseMedicationRecordsFields = {
   horseId: v.id('horses'),
-  stableId: v.id('stables'),
+  stableId: v.optional(v.id('stables')),
+  sourcePlacementId: v.optional(v.id('horsePlacements')),
   medicationName: v.string(),
   dosage: v.string(),
   frequency: v.optional(v.string()),
@@ -620,7 +665,8 @@ const horseMedicationRecordsSchema = defineTable({
  */
 export const horseNutritionLogsFields = {
   horseId: v.id('horses'),
-  stableId: v.id('stables'),
+  stableId: v.optional(v.id('stables')),
+  sourcePlacementId: v.optional(v.id('horsePlacements')),
   changedAt: v.number(),
   summary: v.string(),
   feedingRoutineSnapshot: v.optional(v.string()),
@@ -720,7 +766,8 @@ export const trainingDetails = v.object({
 })
 
 const trainingRecordsSchema = defineTable({
-  stableId: v.id('stables'),
+  stableId: v.optional(v.id('stables')),
+  sourcePlacementId: v.optional(v.id('horsePlacements')),
   eventId: v.id('events'),
   horseId: v.id('horses'),
   date: v.string(),
@@ -744,7 +791,7 @@ const trainingRecordsSchema = defineTable({
 export const eventFields = {
   horseIds: v.array(v.id('horses')),
   createdBy: v.id('users'),
-  stableId: v.id('stables'),
+  stableId: v.optional(v.id('stables')),
   type: eventType,
   training: v.optional(trainingDetails),
   title: v.string(),
@@ -769,6 +816,23 @@ const eventsSchema = defineTable({ ...eventFields })
   .index('by_type', ['type'])
 
 export const eventHorsesFields = {
+  participationEndsAt: v.optional(v.string()),
+  sourcePlacementId: v.optional(v.id('horsePlacements')),
+  history: v.optional(
+    v.object({
+      title: v.string(),
+      type: eventType,
+      date: v.string(),
+      time: v.string(),
+      endDate: v.optional(v.string()),
+      recurrence: v.optional(eventRecurrenceSetup),
+      training: v.optional(trainingDetails),
+      status: v.optional(eventStatus),
+      providerName: v.optional(v.string()),
+      description: v.optional(v.string()),
+      notesAfterCompletion: v.optional(v.string()),
+    }),
+  ),
   eventId: v.id('events'),
   horseId: v.id('horses'),
   requestedServiceNotes: v.optional(v.string()),
@@ -827,7 +891,11 @@ export const careReminderStatus = v.union(
 )
 
 export const careRemindersFields = {
-  stableId: v.id('stables'),
+  assignedTo: v.optional(v.id('users')),
+  completedBy: v.optional(v.id('users')),
+  followUpReminderId: v.optional(v.id('careReminders')),
+  stableId: v.optional(v.id('stables')),
+  sourcePlacementId: v.optional(v.id('horsePlacements')),
   horseId: v.optional(v.id('horses')),
   eventId: v.optional(v.id('events')),
   title: v.string(),
@@ -855,6 +923,7 @@ const careRemindersSchema = defineTable({ ...careRemindersFields })
   })
 
 export default defineSchema({
+  ...horseOwnershipTables,
   users: userSchema,
   stables: stablesSchema,
   stableMembers: stableMembersSchema,
@@ -863,6 +932,14 @@ export default defineSchema({
   emailDeliveries: emailDeliveriesSchema,
   emailWebhookEvents: emailWebhookEventsSchema,
   stableProviders: stableProvidersSchema,
+  stableUpdates: defineTable({
+    stableId: v.id('stables'),
+    body: v.string(),
+    authorId: v.id('users'),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    expiresOn: v.optional(v.string()),
+  }).index('by_stable_created_at', ['stableId', 'createdAt']),
   stableDocuments: stableDocumentsSchema,
   stableInvitations: stableInvitationsSchema,
   userSubscriptions: userSubscriptionsSchema,

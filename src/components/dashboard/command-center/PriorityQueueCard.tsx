@@ -6,7 +6,7 @@ import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHea
 import { formatShortDateKey } from '#/lib/dateDisplay'
 import type {
   DashboardCommandChrome,
-  DashboardCommandData,
+  DashboardCareData,
 } from './dashboardTypes'
 import {
   DashboardItemBodyText,
@@ -20,7 +20,7 @@ import { getDashboardAttention } from './dashboardAttention'
 
 type PriorityQueueCardProps = {
   className?: string
-  data: DashboardCommandData
+  data: DashboardCareData
   visibleItemLimit?: number
   chrome?: DashboardCommandChrome
   section?: 'combined' | 'health' | 'reminders'
@@ -39,7 +39,8 @@ export function PriorityQueueCard({
   const { locale } = useLocale()
 
   const [expandedStableId, setExpandedStableId] = useState<string>()
-  const expanded = expandedStableId === data.stable._id
+  const contextId = data.stable?._id ?? 'personal'
+  const expanded = expandedStableId === contextId
   const attention = getDashboardAttention(data)
   const healthHorses = expanded
     ? attention.healthHorses
@@ -72,10 +73,11 @@ export function PriorityQueueCard({
       }
       descriptionSize="sm"
       size="panel"
+      headerLayout="inline"
       actions={
-        section === 'health' ? undefined : onViewReminders ? (
+        section === 'health' || !data.stable ? undefined : onViewReminders ? (
           <Button
-            variant="outline"
+            variant="link"
             size="sm"
             className="min-h-11"
             onClick={onViewReminders}
@@ -85,8 +87,8 @@ export function PriorityQueueCard({
         ) : (
           <ButtonLink
             to="/stables/$stableId/reminders"
-            params={{ stableId: data.stable._id }}
-            variant="outline"
+            params={{ stableId: data.stable?._id ?? '' }}
+            variant="link"
             size="sm"
             className="min-h-11"
           >
@@ -116,8 +118,8 @@ export function PriorityQueueCard({
             {healthHorses.map((horse) => (
               <DashboardItemLinkCard
                 key={horse.horseId}
-                to="/stables/$stableId/horses/$horseId/care"
-                params={{ stableId: horse.stableId, horseId: horse.horseId }}
+                to="/horses/$horseId/care"
+                params={{ horseId: horse.horseId }}
                 search={{ careView: 'health' }}
                 accent="danger"
                 density="compact"
@@ -139,7 +141,7 @@ export function PriorityQueueCard({
               className="min-h-11 whitespace-normal"
               aria-expanded={expanded}
               onClick={() =>
-                setExpandedStableId(expanded ? undefined : data.stable._id)
+                setExpandedStableId(expanded ? undefined : contextId)
               }
             >
               {expanded
@@ -155,8 +157,8 @@ export function PriorityQueueCard({
                 count: attention.missingHealthIssueCount,
               })}
               <ButtonLink
-                to="/stables/$stableId/horses"
-                params={{ stableId: data.stable._id }}
+                to={data.stable ? '/stables/$stableId/horses' : '/horses'}
+                params={{ stableId: data.stable?._id ?? '' }}
                 variant="link"
               >
                 {t('dashboard.viewHorses')}
@@ -180,8 +182,18 @@ export function PriorityQueueCard({
               {reminders.map((reminder) => (
                 <DashboardItemLinkCard
                   key={reminder.id}
-                  to="/stables/$stableId/reminders"
-                  params={{ stableId: reminder.stableId }}
+                  to={
+                    reminder.horseId
+                      ? '/horses/$horseId/care'
+                      : reminder.stableId
+                        ? '/stables/$stableId/reminders'
+                        : '/horses'
+                  }
+                  params={{
+                    horseId: reminder.horseId ?? '',
+                    stableId: reminder.stableId ?? '',
+                  }}
+                  search={{ reminderId: reminder.id }}
                   accent={reminder.overdue ? 'danger' : 'warning'}
                   density="compact"
                   chrome="flat"

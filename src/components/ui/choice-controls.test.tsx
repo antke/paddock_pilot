@@ -21,7 +21,7 @@ function ChoiceSample({
   layout,
   disabled = false,
 }: {
-  layout: 'compact' | 'cards'
+  layout: 'compact' | 'cards' | 'segmented'
   disabled?: boolean
 }) {
   const [value, setValue] = useState('planned')
@@ -54,7 +54,7 @@ function ChoiceSample({
 }
 
 describe('choice button semantics', () => {
-  it.each(['compact', 'cards'] as const)(
+  it.each(['compact', 'cards', 'segmented'] as const)(
     'keeps %s choices single and persistent with named error association',
     async (layout) => {
       render(<ChoiceSample layout={layout} />)

@@ -1,11 +1,9 @@
+import { getHorseAccess, assertCanEditHorseProfile } from './horsePermissions'
 import { ConvexError } from 'convex/values'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
 import { getUserFromIdentity, requireAuth } from './auth'
-import {
-  canManageOwnedRecord,
-  getStableCapabilities,
-} from '../../shared/stables/stableAccess'
+import { getStableCapabilities } from '../../shared/stables/stableAccess'
 import type {
   StableCapabilities,
   StableRole,
@@ -26,9 +24,10 @@ export const getCurrentUser = async (ctx: Ctx) => {
 
 export const getStableMembership = async (
   ctx: Ctx,
-  stableId: Id<'stables'>,
+  stableId: Id<'stables'> | undefined,
   userId: Id<'users'>,
 ) => {
+  if (!stableId) throw new ConvexError('A stable is required')
   const stable = await ctx.db.get(stableId)
   if (!stable) throw new ConvexError('Stable not found')
   if (stable.archivedAt !== undefined) {
@@ -57,7 +56,7 @@ export const getStableMembership = async (
 
 export const assertCanViewStable = async (
   ctx: Ctx,
-  stableId: Id<'stables'>,
+  stableId: Id<'stables'> | undefined,
   userId?: Id<'users'>,
 ) => {
   const currentUserId = userId ?? (await getCurrentUser(ctx))._id
@@ -75,7 +74,7 @@ export const assertCanViewStable = async (
 
 export const assertCanManageStable = async (
   ctx: Ctx,
-  stableId: Id<'stables'>,
+  stableId: Id<'stables'> | undefined,
   userId?: Id<'users'>,
 ) => {
   const access = await assertCanViewStable(ctx, stableId, userId)
@@ -97,41 +96,24 @@ export const assertCanManageStableDocuments = assertCanManageStable
 
 export const assertCanPermanentlyDeleteHorses = assertCanManageStable
 
-export const assertCanManageHorse = async (
-  ctx: Ctx,
-  horse: Doc<'horses'>,
-  userId?: Id<'users'>,
-) => {
-  if (horse.deletedAt !== undefined) {
-    throw new ConvexError('Horse is in the deleted horses area')
-  }
-
-  return assertCanManageDeletedHorse(ctx, horse, userId)
-}
+export const assertCanManageHorse = assertCanEditHorseProfile
 
 export const assertCanManageDeletedHorse = async (
   ctx: Ctx,
   horse: Doc<'horses'>,
   userId?: Id<'users'>,
 ) => {
-  const access = await assertCanViewStable(ctx, horse.stableId, userId)
-
-  if (
-    canManageOwnedRecord({
-      role: access.role,
-      userId: access.userId,
-      ownerId: horse.ownerId,
-    })
-  ) {
-    return access
-  }
-
-  throw new ConvexError('Not authorized to manage this horse')
+  const access = await getHorseAccess(ctx, horse, userId)
+  if (!access.canDelete)
+    throw new ConvexError(
+      'Only the horse owner can delete or restore this horse',
+    )
+  return access
 }
 
 export const assertCanCreateStableHorse = async (
   ctx: Ctx,
-  stableId: Id<'stables'>,
+  stableId: Id<'stables'> | undefined,
   userId?: Id<'users'>,
 ) => {
   return await assertCanViewStable(ctx, stableId, userId)
@@ -139,7 +121,7 @@ export const assertCanCreateStableHorse = async (
 
 export const assertIsStableParticipant = async (
   ctx: Ctx,
-  stableId: Id<'stables'>,
+  stableId: Id<'stables'> | undefined,
   userId: Id<'users'>,
 ) => {
   const access = await getStableMembership(ctx, stableId, userId)

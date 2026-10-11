@@ -37,6 +37,7 @@ afterEach(() => {
   cleanup()
   vi.useRealTimers()
   vi.restoreAllMocks()
+  vi.unstubAllGlobals()
 })
 
 async function openSample() {
@@ -109,18 +110,60 @@ describe('horse activity status/date contract', () => {
 })
 
 describe('actual horse activity sample', () => {
+  it('omits the duplicate Add event action in both mobile activity views', async () => {
+    vi.stubGlobal('matchMedia', () => ({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }))
+    await openSample()
+    expect(screen.queryByRole('link', { name: 'Add event' })).toBeNull()
+    fireEvent.click(screen.getByRole('tab', { name: 'Calendar' }))
+    expect(screen.queryByRole('link', { name: 'Add event' })).toBeNull()
+  })
+  it('shows all activity in calendar mode and preserves search when returning to the log', async () => {
+    await openSample()
+    fireEvent.click(screen.getByRole('tab', { name: 'Calendar' }))
+    expect(screen.getByRole('table', { name: /event calendar/ })).toBeTruthy()
+    expect(
+      screen
+        .getAllByRole('link', { name: /Sample planned schooling today/ })
+        .every((link) => link.getAttribute('href')?.includes('/events/')),
+    ).toBe(true)
+    expect(
+      screen.getAllByText('Sample completed visit today').length,
+    ).toBeGreaterThan(0)
+    expect(
+      screen.getAllByText('Sample planned schooling today').length,
+    ).toBeGreaterThan(0)
+    const search = screen.getByRole('searchbox', { name: 'Search activity' })
+    fireEvent.change(search, { target: { value: 'legacy' } })
+    expect(screen.queryByText('Sample completed visit today')).toBeNull()
+    expect(
+      screen.getAllByText('Sample legacy event without status').length,
+    ).toBeGreaterThan(0)
+    fireEvent.click(screen.getByRole('tab', { name: 'Log' }))
+    expect(
+      screen
+        .getByRole('searchbox', { name: 'Search activity' })
+        .getAttribute('value'),
+    ).toBe('legacy')
+    expect(screen.getByText('Sample legacy event without status')).toBeTruthy()
+    expect(screen.queryByText('Sample planned schooling today')).toBeNull()
+  })
+
   it('shows completed/cancelled events in truthful history and retains actual route links', async () => {
     await openSample()
     expect(screen.queryByText('Sample completed visit today')).toBeNull()
     expect(
       screen.getByRole('link', { name: 'Add event' }).getAttribute('href'),
     ).toContain('/events/create')
-    const history = screen.getByRole('tab', { name: 'History' })
+    const history = screen.getByRole('button', { name: 'History' })
     history.focus()
     fireEvent.click(history)
-    expect(history.getAttribute('aria-selected')).toBe('true')
+    expect(history.getAttribute('aria-pressed')).toBe('true')
     expect(document.activeElement).toBe(history)
-    expect(screen.getByRole('tabpanel', { name: 'History' })).toBeTruthy()
+    expect(screen.getByRole('tabpanel', { name: 'Log' })).toBeTruthy()
     expect(screen.getByText('Sample completed visit today')).toBeTruthy()
     expect(screen.getByText('Sample cancelled future lesson')).toBeTruthy()
     expect(screen.getByText('Sample earlier appointment')).toBeTruthy()
@@ -129,7 +172,7 @@ describe('actual horse activity sample', () => {
       screen
         .getByRole('link', { name: /Sample cancelled future lesson/ })
         .getAttribute('href'),
-    ).toContain('/training/sample-horse-activity-2')
+    ).toContain('/events/sample-horse-activity-2')
     expect(useMutation).not.toHaveBeenCalled()
   })
 
@@ -160,7 +203,7 @@ describe('actual horse activity sample', () => {
         .getByRole('region', { name: 'Juniper — upcoming activity' })
         .getAttribute('tabindex'),
     ).toBe('0')
-    fireEvent.click(screen.getByRole('tab', { name: 'History' }))
+    fireEvent.click(screen.getByRole('button', { name: 'History' }))
     const history = screen.getByRole('region', {
       name: 'Juniper — activity history',
     })
@@ -174,7 +217,7 @@ describe('actual horse activity sample', () => {
     expect(
       screen.getByText('No upcoming activity for this horse.'),
     ).toBeTruthy()
-    fireEvent.click(screen.getByRole('tab', { name: 'History' }))
+    fireEvent.click(screen.getByRole('button', { name: 'History' }))
     expect(screen.getByText('No activity history yet.')).toBeTruthy()
     fireEvent.change(scenario, { target: { value: 'missing' } })
     expect(screen.getByRole('alert').textContent).toContain(

@@ -5,6 +5,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from '@testing-library/react'
 import {
@@ -114,6 +115,38 @@ async function setup(
     month: (date: Date) => act(() => month(date)),
   }
 }
+
+it('opens frozen participations from both the desktop calendar and selected mobile day', async () => {
+  await setup([
+    event(0),
+    event(0, {
+      title: 'Juniper history',
+      contextHorseId: 'juniper',
+      contextParticipationId: 'former-participation',
+    }),
+  ])
+  const monthLink = within(table()).getByRole('link', {
+    name: /Juniper history/,
+  })
+  const mobile = document.querySelector(
+    '[data-calendar-view="mobile"]',
+  ) as HTMLElement
+  fireEvent.click(within(mobile).getByRole('button', { name: /^12 Aug 2026,/ }))
+  const mobileLink = within(mobile).getByRole('link', {
+    name: /Juniper history/,
+  })
+  for (const link of [monthLink, mobileLink]) {
+    const url = new URL(link.getAttribute('href')!, 'http://localhost')
+    expect(url.pathname).toBe('/events/event-0')
+    expect(url.searchParams.get('horseId')).toBe('juniper')
+    expect(url.searchParams.get('participationId')).toBe('former-participation')
+  }
+  expect(
+    within(table())
+      .getByRole('link', { name: /^Visit 0/ })
+      .getAttribute('href'),
+  ).toBe('/events/event-0')
+})
 function table() {
   return screen.getByRole('table', { name: 'August 2026 event calendar' })
 }
@@ -140,6 +173,42 @@ function resize(matches: boolean) {
 }
 
 describe('read-only month calendar', () => {
+  it('previews an occurrence on hover and keyboard focus without replacing its navigation link', async () => {
+    await setup([
+      event(0, {
+        description: 'Check comfort after turnout.',
+        providerName: 'Ben Carter',
+        location: 'Wash bay',
+        notesAfterCompletion: 'Trim completed without concerns.',
+        status: 'completed',
+        recurrence: { frequency: 'weekly', interval: 1, daysOfWeek: [3] },
+      }),
+    ])
+    const link = within(table()).getByRole('link', {
+      name: /Visit 0, 19 Aug 2026/,
+    })
+    expect(link.textContent).toBe('Visit 0')
+    fireEvent.mouseEnter(link)
+    fireEvent.mouseMove(link)
+    const preview = await screen.findByRole('tooltip')
+    expect(preview.textContent).toContain('19 Aug 2026 at 08:00')
+    expect(preview.textContent).toContain('Ben Carter')
+    expect(preview.textContent).toContain('Wash bay')
+    expect(preview.textContent).toContain('Check comfort after turnout.')
+    expect(preview.textContent).toContain('Trim completed without concerns.')
+    expect(link.getAttribute('aria-describedby')).toBe(preview.id)
+    expect(link.getAttribute('href')).toBe('/events/event-0')
+    fireEvent.keyDown(link, { key: 'Escape' })
+    await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull())
+    const nextOccurrence = within(table()).getByRole('link', {
+      name: /Visit 0, 26 Aug 2026/,
+    })
+    act(() => nextOccurrence.focus())
+    expect(await screen.findByRole('tooltip')).toBeTruthy()
+    act(() => screen.getByRole('button', { name: 'Outside calendar' }).focus())
+    await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull())
+  })
+
   it('exposes a seven-column table with empty cells and full date labels, preserving links', async () => {
     await setup()
     expect(screen.queryByRole('grid')).toBeNull()
@@ -164,9 +233,7 @@ describe('read-only month calendar', () => {
     const date = within(table()).getByRole('cell', { name: '12 Aug 2026' })
     const links = within(date).getAllByRole('link')
     expect(links).toHaveLength(2)
-    expect(links[0].getAttribute('href')).toBe(
-      '/stables/sample-stable/events/event-0',
-    )
+    expect(links[0].getAttribute('href')).toBe('/events/event-0')
     expect(links[0].hasAttribute('tabindex')).toBe(false)
   })
 
@@ -228,7 +295,7 @@ describe('read-only month calendar', () => {
     expect(document.activeElement).toBe(fallback())
     const mobile = document.querySelector('[data-calendar-view="mobile"]')!
     within(mobile as HTMLElement)
-      .getAllByRole('link')[0]
+      .getByRole('button', { name: /^12 Aug 2026,/ })
       .focus()
     resize(true)
     expect(document.activeElement).toBe(fallback())
@@ -257,6 +324,65 @@ describe('read-only month calendar', () => {
       screen.getByText('September 2026, 0 events this month.'),
     ).toBeTruthy()
   })
+})
+
+it('offers a mobile month grid and shows only the selected date, including repeat and multi-day occurrences', async () => {
+  desktop = false
+  await setup([
+    event(0, {
+      title: 'Weekly visit',
+      recurrence: { frequency: 'weekly', interval: 1, daysOfWeek: [3] },
+    }),
+    event(1, {
+      title: 'Three-day event',
+      date: '2026-08-11',
+      endDate: '2026-08-13',
+    }),
+  ])
+  const mobile = document.querySelector(
+    '[data-calendar-view="mobile"]',
+  ) as HTMLElement
+  const month = within(mobile).getByRole('table', {
+    name: 'Choose a day in August 2026',
+  })
+  for (const row of within(month).getAllByRole('row').slice(1)) {
+    expect(within(row).getAllByRole('cell')).toHaveLength(7)
+  }
+  expect(within(mobile).getByText('No events on this date.')).toBeTruthy()
+  const day = within(month).getByRole('button', {
+    name: '12 Aug 2026, 2 events',
+  })
+  day.focus()
+  fireEvent.click(day)
+  expect(day.getAttribute('aria-pressed')).toBe('true')
+  expect(document.activeElement).toBe(day)
+  expect(within(mobile).getAllByRole('link')).toHaveLength(2)
+  expect(
+    within(mobile).getByRole('heading', { name: 'Events on 12 Aug 2026' }),
+  ).toBeTruthy()
+  fireEvent.click(
+    within(month).getByRole('button', { name: '13 Aug 2026, 1 event' }),
+  )
+  expect(within(mobile).getAllByRole('link')).toHaveLength(1)
+  expect(within(mobile).getByText('Ends today')).toBeTruthy()
+  fireEvent.click(
+    within(month).getByRole('button', { name: '19 Aug 2026, 1 event' }),
+  )
+  expect(
+    within(mobile).getByRole('link', { name: /Weekly visit/ }),
+  ).toBeTruthy()
+  expect(
+    within(mobile).queryByRole('link', { name: /Three-day event/ }),
+  ).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+  expect(
+    within(mobile).getByRole('table', {
+      name: 'Choose a day in September 2026',
+    }),
+  ).toBeTruthy()
+  expect(
+    within(mobile).getByRole('heading', { name: 'Events on 1 Sept 2026' }),
+  ).toBeTruthy()
 })
 
 it('switches the selected agenda, weekday labels, counts, and announcements without losing the selected date or focus', async () => {

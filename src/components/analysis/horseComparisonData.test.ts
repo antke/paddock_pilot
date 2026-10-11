@@ -111,3 +111,49 @@ it('keeps years in actual record labels across historical ranges', () => {
     expect(earlier).not.toBe(later)
   }
 })
+
+it('uses monthly totals for a year while preserving exact weights and contributing training records', () => {
+  const year = { start: '2025-10-01', end: '2026-09-30' }
+  const data = createComparisonRows(
+    records,
+    horseComparisonPresets.weightTraining,
+    year,
+    'en',
+  )
+  expect(data.aggregation).toBe('monthly')
+  expect(data.rows.find((row) => row.id === 'training')?.points).toMatchObject([
+    {
+      date: '2026-02-01',
+      endDate: '2026-02-28',
+      value: 70,
+      recordIds: ['t1', 't2'],
+    },
+  ])
+  expect(data.rows.find((row) => row.id === 'weight')?.points[0].date).toBe(
+    '2026-02-03',
+  )
+  expect(
+    data.rows.find((row) => row.id === 'missingDuration')?.points[0].recordIds,
+  ).toEqual(['t3'])
+  expect(data.records.map((record) => record.id)).not.toContain('t4')
+})
+
+it('clips weekly bucket boundaries to the selected period without adding outside records', () => {
+  const selected = { start: '2026-02-04', end: '2026-04-04' }
+  const data = createComparisonRows(
+    records,
+    horseComparisonPresets.weightTraining,
+    selected,
+    'en',
+  )
+  expect(data.aggregation).toBe('weekly')
+  expect(
+    data.rows.find((row) => row.id === 'training')?.points[0],
+  ).toMatchObject({
+    date: '2026-02-04',
+    endDate: '2026-02-08',
+    value: 70,
+    recordIds: ['t1', 't2'],
+  })
+  expect(data.records.map((record) => record.id)).not.toContain('w1')
+})

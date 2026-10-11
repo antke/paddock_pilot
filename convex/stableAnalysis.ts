@@ -1,3 +1,6 @@
+import { horseEvent } from './libs/horseEventHistory'
+import { horseCareData } from './libs/horseCareData'
+import { assertCanReadHorse, getHorseAccess } from './libs/horsePermissions'
 import type { AnalysisSignalDisplayData } from '../shared/i18n/analysisSignal'
 import { compareWeightRecordsNewestFirst } from '../shared/horses/weightRecordOrder'
 import { ConvexError, v } from 'convex/values'
@@ -91,6 +94,8 @@ type StableTimelineSignal = {
   horseName?: string
   detail?: string
   displayData?: AnalysisSignalDisplayData
+  observationOrder?: number
+  reminderCategory?: Doc<'careReminders'>['category']
   status?: string
   severity?: Doc<'horseHealthIssues'>['severity']
   priority?: Doc<'careReminders'>['priority']
@@ -127,6 +132,7 @@ const getStableTimelineSignals = ({
   careReminders,
   today,
   timezoneOffsetMinutes,
+  timeZone,
 }: {
   horses: Array<Doc<'horses'>>
   healthIssues: Array<Doc<'horseHealthIssues'>>
@@ -136,8 +142,13 @@ const getStableTimelineSignals = ({
   careReminders: Array<Doc<'careReminders'>>
   today: string
   timezoneOffsetMinutes: number
+  timeZone?: string
 }): Array<StableTimelineSignal> => {
   const horsesById = new Map(horses.map((horse) => [horse._id, horse]))
+  const observationDate = (timestamp: number) =>
+    timeZone
+      ? dateInTimeZone(timestamp, timeZone)
+      : timestampToDateKey(timestamp, timezoneOffsetMinutes)
 
   return [
     ...healthIssues.map((issue): StableTimelineSignal => {
@@ -147,7 +158,7 @@ const getStableTimelineSignals = ({
       return {
         id: issue._id,
         kind: 'health',
-        date: timestampToDateKey(issue.notedAt, timezoneOffsetMinutes),
+        date: observationDate(issue.notedAt),
         title: issue.title,
         horseId: issue.horseId,
         horseName: horse?.name,
@@ -179,7 +190,7 @@ const getStableTimelineSignals = ({
       return {
         id: log._id,
         kind: 'nutrition',
-        date: timestampToDateKey(log.changedAt, timezoneOffsetMinutes),
+        date: observationDate(log.changedAt),
         title: log.summary,
         horseId: log.horseId,
         horseName: horse?.name,
@@ -187,29 +198,32 @@ const getStableTimelineSignals = ({
         urgent: false,
       }
     }),
-    ...weightRecords.map((record): StableTimelineSignal => {
-      const horse = horsesById.get(record.horseId)
-      const bodyCondition =
-        record.bodyConditionScore !== undefined
-          ? `BCS ${record.bodyConditionScore}`
-          : undefined
+    ...[...weightRecords]
+      .sort((a, b) => -compareWeightRecordsNewestFirst(a, b))
+      .map((record, observationOrder): StableTimelineSignal => {
+        const horse = horsesById.get(record.horseId)
+        const bodyCondition =
+          record.bodyConditionScore !== undefined
+            ? `BCS ${record.bodyConditionScore}`
+            : undefined
 
-      return {
-        id: record._id,
-        kind: 'weight',
-        date: timestampToDateKey(record.measuredAt, timezoneOffsetMinutes),
-        title: `${record.weight} ${record.unit}`,
-        horseId: record.horseId,
-        horseName: horse?.name,
-        detail: joinDetails(['Weight record', bodyCondition]),
-        displayData: {
-          weight: record.weight,
-          unit: record.unit,
-          bodyConditionScore: record.bodyConditionScore,
-        },
-        urgent: false,
-      }
-    }),
+        return {
+          id: record._id,
+          kind: 'weight',
+          observationOrder,
+          date: observationDate(record.measuredAt),
+          title: `${record.weight} ${record.unit}`,
+          horseId: record.horseId,
+          horseName: horse?.name,
+          detail: joinDetails(['Weight record', bodyCondition]),
+          displayData: {
+            weight: record.weight,
+            unit: record.unit,
+            bodyConditionScore: record.bodyConditionScore,
+          },
+          urgent: false,
+        }
+      }),
     ...careReminders.map((reminder): StableTimelineSignal => {
       const horse = reminder.horseId
         ? horsesById.get(reminder.horseId)
@@ -219,6 +233,7 @@ const getStableTimelineSignals = ({
       return {
         id: reminder._id,
         kind: 'reminder',
+        reminderCategory: reminder.category,
         date: reminder.dueDate,
         title: reminder.title,
         horseId: reminder.horseId,
@@ -258,6 +273,9 @@ const getWeightTrends = (
         previousWeight: previous?.weight,
         unit: latest.unit,
         measuredAt: latest.measuredAt,
+        latestRecordId: latest._id,
+        previousRecordId: previous?._id,
+        previousMeasuredAt: previous?.measuredAt,
         weightChange: previous ? latest.weight - previous.weight : undefined,
         latestBodyConditionScore: latest.bodyConditionScore,
         previousBodyConditionScore: previous?.bodyConditionScore,
@@ -533,9 +551,17 @@ export const getForStable = query({
     stableId: v.id('stables'),
     today: v.optional(v.string()),
     timezoneOffsetMinutes: v.optional(v.number()),
+    timeZone: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const access = await assertCanViewStable(ctx, args.stableId)
+    if (args.timeZone) {
+      try {
+        dateInTimeZone(Date.now(), args.timeZone)
+      } catch {
+        throw new ConvexError('Invalid time zone')
+      }
+    }
     const hasAccess = await hasPremiumAnalyticsAccess(ctx, access.userId)
 
     if (!hasAccess) {
@@ -546,47 +572,35 @@ export const getForStable = query({
       }
     }
 
-    const [
-      allHorses,
-      allEvents,
-      allHealthIssues,
-      allMedicationRecords,
-      allNutritionLogs,
-      allWeightRecords,
-      allCareReminders,
-    ] = await Promise.all([
-      ctx.db
-        .query('horses')
-        .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
-        .collect(),
-      ctx.db
-        .query('events')
-        .withIndex('by_stable_id_date', (q) => q.eq('stableId', args.stableId))
-        .collect(),
-      ctx.db
-        .query('horseHealthIssues')
-        .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
-        .collect(),
-      ctx.db
-        .query('horseMedicationRecords')
-        .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
-        .collect(),
-      ctx.db
-        .query('horseNutritionLogs')
-        .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
-        .collect(),
-      ctx.db
-        .query('horseWeightRecords')
-        .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
-        .collect(),
-      ctx.db
-        .query('careReminders')
-        .withIndex('by_stable_id_due_date', (q) =>
-          q.eq('stableId', args.stableId),
-        )
-        .collect(),
-    ])
-    const horses = allHorses.filter(isActiveHorse)
+    const allHorses = await ctx.db
+      .query('horses')
+      .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
+      .collect()
+    const horsePermissions = await Promise.all(
+      allHorses.map((horse) => getHorseAccess(ctx, horse, access.userId)),
+    )
+    const horses = allHorses.filter(
+      (horse, index) => isActiveHorse(horse) && horsePermissions[index].canRead,
+    )
+    const {
+      events: allEvents,
+      healthIssues: allHealthIssues,
+      medicationRecords: allMedicationRecords,
+      nutritionLogs: allNutritionLogs,
+      weightRecords: allWeightRecords,
+      reminders: horseReminders,
+      trainingOutcomes: allTrainingOutcomes,
+    } = await horseCareData(ctx, horses)
+    const stableReminders = await ctx.db
+      .query('careReminders')
+      .withIndex('by_stable_id_due_date', (q) =>
+        q.eq('stableId', args.stableId),
+      )
+      .collect()
+    const allCareReminders = [
+      ...horseReminders,
+      ...stableReminders.filter((r) => !r.horseId),
+    ]
     const activeHorseIds = new Set(horses.map((horse) => horse._id))
     const events = allEvents
       .filter(
@@ -736,10 +750,31 @@ export const getForStable = query({
       careReminders,
       today,
       timezoneOffsetMinutes: args.timezoneOffsetMinutes ?? 0,
+      timeZone: args.timeZone,
     })
     const overdueReminders = pendingReminders.filter(
       (reminder) => reminder.dueDate < today,
     )
+    // Every active horse is represented. These are current recorded statuses,
+    // independent of the historical exploration range and any ranked list.
+    const horseSummaries = horses.map((horse) => ({
+      horseId: horse._id,
+      horseName: horse.name,
+      latestWeight:
+        weightTrends.find((trend) => trend.horseId === horse._id) ?? null,
+      activeIssueCount: activeHealthIssues.filter(
+        (issue) => issue.horseId === horse._id,
+      ).length,
+      highIssueCount: activeHealthIssues.filter(
+        (issue) => issue.horseId === horse._id && issue.severity === 'high',
+      ).length,
+      activeMedicationCount: activeMedicationRecords.filter(
+        (record) => record.horseId === horse._id,
+      ).length,
+      overdueReminderCount: overdueReminders.filter(
+        (reminder) => reminder.horseId === horse._id,
+      ).length,
+    }))
     const upcomingReminders = pendingReminders
       .filter((reminder) => reminder.dueDate >= today)
       .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
@@ -749,6 +784,10 @@ export const getForStable = query({
       hasAccess: true as const,
       stable: access.stable,
       today,
+      horseSummaries,
+      trainingOutcomes: allTrainingOutcomes.filter((record) =>
+        activeHorseIds.has(record.horseId),
+      ),
       summary: {
         horseCount: horses.length,
         activeHealthIssueCount: activeHealthIssues.length,
@@ -793,22 +832,22 @@ export const getForStable = query({
         category: reminder.category,
         priority: reminder.priority,
       })),
-      weightTrends: weightTrends.slice(0, 8),
-      healthIssueFrequency: healthIssueFrequency.slice(0, 8),
-      careCadence: careCadence.slice(0, 10),
-      nutritionSignals: nutritionSignals.slice(0, 8),
+      weightTrends,
+      healthIssueFrequency,
+      careCadence,
+      nutritionSignals,
       completionCoverage,
-      horsesNeedingAttention: horsesNeedingAttention.slice(0, 8),
+      horsesNeedingAttention,
       upcomingEvents,
-      completionNotesNeeded: completionNotesNeeded
-        .sort(compareEventDateAndTime)
-        .slice(0, 8),
-      horseOutcomeNotesNeeded: horseOutcomeNotesNeeded
-        .sort((a, b) => a.eventDate.localeCompare(b.eventDate))
-        .slice(0, 8),
-      providerDetailsMissing: providerDetailsMissing
-        .sort(compareEventDateAndTime)
-        .slice(0, 8),
+      completionNotesNeeded: completionNotesNeeded.sort(
+        compareEventDateAndTime,
+      ),
+      horseOutcomeNotesNeeded: horseOutcomeNotesNeeded.sort((a, b) =>
+        a.eventDate.localeCompare(b.eventDate),
+      ),
+      providerDetailsMissing: providerDetailsMissing.sort(
+        compareEventDateAndTime,
+      ),
     }
   },
 })
@@ -824,7 +863,7 @@ export const getHorseComparisons = query({
   handler: async (ctx, args) => {
     const horse = await ctx.db.get(args.horseId)
     if (!isActiveHorse(horse)) throw new ConvexError('Horse not found')
-    const access = await assertCanViewStable(ctx, horse.stableId)
+    const access = await assertCanReadHorse(ctx, horse)
     if (!(await hasPremiumAnalyticsAccess(ctx, access.userId))) {
       return { hasAccess: false as const, records: [] }
     }
@@ -865,9 +904,17 @@ export const getHorseComparisons = query({
           .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
           .collect(),
         ctx.db
-          .query('events')
-          .withIndex('by_stable_id', (q) => q.eq('stableId', horse.stableId))
-          .collect(),
+          .query('eventsHorses')
+          .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
+          .collect()
+          .then(async (rows) => {
+            const events = await Promise.all(
+              rows.map((row) => horseEvent(ctx, row)),
+            )
+            return events.filter(
+              (event): event is Doc<'events'> => event !== null,
+            )
+          }),
       ])
     const history = new Set(training.map((record) => record.eventId))
     const events = allEvents.filter(

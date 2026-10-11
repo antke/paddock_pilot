@@ -44,7 +44,7 @@ describe('analysis weight chronology', () => {
           createdAt,
           weight,
           unit: 'kg',
-          measuredAt: Date.UTC(2026, 8, 19),
+          measuredAt: Date.UTC(2026, 0, 19, 22, 30),
         })
       return stableId
     })
@@ -62,5 +62,38 @@ describe('analysis weight chronology', () => {
       previousWeight: 500,
       weightChange: 10,
     })
+    // Today's summer offset would put this winter observation on the wrong day.
+    const owner = t.withIdentity({
+      subject: 'weight-owner',
+      email: 'weight@example.com',
+    })
+    const zoned = await owner.query(api.stableAnalysis.getForStable, {
+      stableId: sampleStableId,
+      today: '2026-09-19',
+      timezoneOffsetMinutes: -120,
+      timeZone: 'Europe/Warsaw',
+    })
+    if (!zoned.hasAccess) throw new Error('Missing sample entitlement')
+    expect(
+      zoned.timelineSignals
+        .filter((record) => record.kind === 'weight')
+        .map((record) => record.date),
+    ).toEqual(['2026-01-19', '2026-01-19'])
+    const horse = await owner.query(api.stableAnalysis.getHorseComparisons, {
+      horseId: zoned.weightTrends[0].horseId,
+      start: '2026-01-19',
+      end: '2026-01-19',
+      timeZone: 'Europe/Warsaw',
+    })
+    expect(horse.records.map((record) => record.date)).toEqual([
+      '2026-01-19',
+      '2026-01-19',
+    ])
+    await expect(
+      owner.query(api.stableAnalysis.getForStable, {
+        stableId: sampleStableId,
+        timeZone: 'invalid/timezone',
+      }),
+    ).rejects.toThrow('Invalid time zone')
   })
 })

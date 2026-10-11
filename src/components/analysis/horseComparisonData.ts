@@ -3,7 +3,12 @@ import type {
   ComparisonRange,
   HorseComparisonRecord,
 } from 'shared/analysis/horseComparison'
-import { recordOverlapsRange } from 'shared/analysis/horseComparison'
+import {
+  dateNumber,
+  dayMilliseconds,
+  shiftDate,
+  recordOverlapsRange,
+} from 'shared/analysis/horseComparison'
 import type { Locale } from 'shared/i18n/locale'
 import { localeInstances } from '#/i18n/resources'
 import { formatMediumDateKey } from '#/lib/dateDisplay'
@@ -33,10 +38,16 @@ export const contextKinds: Array<ComparisonKind> = [
   'competition',
 ]
 export const horseComparisonPresets = {
+  trainingHealth: {
+    measure: 'sessions',
+    context: 'health',
+    extra: 'medication',
+  },
+  trainingFeeding: { measure: 'sessions', context: 'nutrition', extra: 'none' },
+  trainingCare: { measure: 'minutes', context: 'health', extra: 'medication' },
   weightTraining: { measure: 'weight', context: 'training', extra: 'none' },
   feeding: { measure: 'weight', context: 'nutrition', extra: 'none' },
   condition: { measure: 'weight', context: 'condition', extra: 'none' },
-  trainingCare: { measure: 'minutes', context: 'health', extra: 'medication' },
 } as const
 export type HorseComparisonPreset = keyof typeof horseComparisonPresets
 export type HorseComparisonSelection = {
@@ -45,14 +56,14 @@ export type HorseComparisonSelection = {
   extra: ComparisonKind | 'none'
 }
 const colors: Record<ComparisonKind, string> = {
-  weight: 'var(--chart-1)',
-  condition: 'var(--chart-3)',
-  training: 'var(--chart-2)',
-  nutrition: 'var(--chart-4)',
-  health: 'var(--chart-5)',
-  medication: 'var(--chart-3)',
-  care: 'var(--chart-2)',
-  competition: 'var(--chart-4)',
+  weight: 'var(--analysis-weight)',
+  condition: 'var(--analysis-condition)',
+  training: 'var(--analysis-training)',
+  nutrition: 'var(--analysis-nutrition)',
+  health: 'var(--analysis-health)',
+  medication: 'var(--analysis-medication)',
+  care: 'var(--analysis-care)',
+  competition: 'var(--analysis-competition)',
 }
 
 export function comparisonRecordLabel(
@@ -107,6 +118,29 @@ export function createComparisonRows(
   showOtherTraining = false,
 ) {
   const t = localeInstances[locale].t
+  const days =
+    (dateNumber(range.end) - dateNumber(range.start)) / dayMilliseconds + 1
+  const aggregation = days > 180 ? 'monthly' : days > 45 ? 'weekly' : 'daily'
+  const bucket = (date: string) => {
+    if (aggregation === 'monthly') return date.slice(0, 7) + '-01'
+    if (aggregation === 'weekly')
+      return shiftDate(
+        date,
+        -((new Date(date + 'T00:00:00Z').getUTCDay() + 6) % 7),
+      )
+    return date
+  }
+  const bucketEnd = (date: string) =>
+    aggregation === 'monthly'
+      ? shiftDate(
+          new Date(
+            Date.UTC(Number(date.slice(0, 4)), Number(date.slice(5, 7)), 1),
+          )
+            .toISOString()
+            .slice(0, 10),
+          -1,
+        )
+      : shiftDate(date, aggregation === 'weekly' ? 6 : 0)
   const inRange = records
     .filter((record) => recordOverlapsRange(record, range))
     .sort((a, b) => a.date.localeCompare(b.date))
@@ -151,15 +185,12 @@ export function createComparisonRows(
       const byDate = new Map<string, Array<HorseComparisonRecord>>()
       for (const record of completed) {
         if (!counting && record.durationMinutes === undefined) continue
-        byDate.set(record.date, [...(byDate.get(record.date) ?? []), record])
+        const date = bucket(record.date)
+        byDate.set(date, [...(byDate.get(date) ?? []), record])
       }
       return {
         ...base,
-        label: t(
-          counting
-            ? 'horseComparison.measures.sessions'
-            : 'horseComparison.measures.minutes',
-        ),
+        label: `${t(counting ? 'horseComparison.measures.sessions' : 'horseComparison.measures.minutes')} · ${t(`horseComparison.aggregation.${aggregation}`)}`,
         unit: t(
           counting ? 'horseComparison.sessions' : 'horseComparison.minutes',
         ),
@@ -173,10 +204,11 @@ export function createComparisonRows(
               )
           return {
             id: `training:${date}`,
-            date,
+            date: date < range.start ? range.start : date,
+            endDate: bucketEnd(date) > range.end ? range.end : bucketEnd(date),
             value,
             recordIds: group.map((record) => record.id),
-            label: `${formatMediumDateKey(date, locale)} · ${value} ${t(counting ? 'horseComparison.sessions' : 'horseComparison.minutes')} · ${t('horseComparison.recordCount', { count: group.length })}`,
+            label: `${formatMediumDateKey(date < range.start ? range.start : date, locale)}${aggregation === 'daily' ? '' : ` – ${formatMediumDateKey(bucketEnd(date) > range.end ? range.end : bucketEnd(date), locale)}`} · ${value} ${t(counting ? 'horseComparison.sessions' : 'horseComparison.minutes')} · ${t('horseComparison.recordCount', { count: group.length })}`,
           }
         }),
       }
@@ -219,5 +251,6 @@ export function createComparisonRows(
     records: inRange.filter((record) => visibleIds.has(record.id)),
     completed,
     hasTraining: kinds.includes('training'),
+    aggregation,
   }
 }

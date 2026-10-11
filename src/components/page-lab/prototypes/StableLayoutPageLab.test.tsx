@@ -63,9 +63,7 @@ it('uses actual current-page semantics and native parent destinations inside the
     within(nav).getByRole('link', { name: 'Horses' }).getAttribute('href'),
   ).toBe('/stables/sample-stable/horses')
   const horse = within(nav).getByRole('link', { name: 'Juniper' })
-  expect(horse.getAttribute('href')).toBe(
-    '/stables/sample-stable/horses/sample-horse/profile',
-  )
+  expect(horse.getAttribute('href')).toBe('/horses/sample-horse/profile')
   fireEvent.click(horse)
   await waitFor(() => expect(current().textContent).toBe('Juniper'))
   expect(outerRouter.state.location.pathname).toBe('/')
@@ -82,7 +80,7 @@ it('updates fallback and long record labels without changing their actual destin
   let nav = screen.getByRole('navigation', { name: 'breadcrumb' })
   expect(
     within(nav).getByRole('link', { name: 'Horse' }).getAttribute('href'),
-  ).toBe('/stables/sample-stable/horses/sample-horse/profile')
+  ).toBe('/horses/sample-horse/profile')
   fireEvent.change(screen.getByLabelText('Sample record labels'), {
     target: { value: 'long' },
   })
@@ -111,6 +109,51 @@ it('updates fallback and long record labels without changing their actual destin
   expect(within(nav).getByRole('link', { name: 'Event' })).toBeTruthy()
   fireEvent.click(within(nav).getByRole('link', { name: 'Event' }))
   await waitFor(() => expect(current().textContent).toBe('Event'))
+})
+it('groups all stable destinations in one navigation and keeps section links addressable', async () => {
+  const outerRouter = await show()
+  fireEvent.change(screen.getByLabelText('Sample page'), {
+    target: { value: '/stable' },
+  })
+  const nav = await screen.findByRole('navigation', { name: 'Stable' })
+  expect(within(nav).getAllByRole('link')).toHaveLength(6)
+  expect(
+    within(nav)
+      .getByRole('link', { name: 'Contacts' })
+      .getAttribute('aria-current'),
+  ).toBe('page')
+  for (const [name, destination] of [
+    ['Contacts', '/stable?tab=contacts'],
+    ['People', '/stable?tab=people'],
+    ['Yard information', '/stable?tab=yard'],
+    ['Documents', '/documents'],
+    ['Analysis', '/analysis'],
+    ['Getting started', '/welcome'],
+  ]) {
+    expect(within(nav).getByRole('link', { name }).getAttribute('href')).toBe(
+      `/stables/sample-stable${destination}`,
+    )
+  }
+  expect(
+    screen.getByRole('link', { name: 'Stable settings' }).getAttribute('href'),
+  ).toBe('/stables/sample-stable/settings')
+  fireEvent.click(within(nav).getByRole('link', { name: 'People' }))
+  await waitFor(() =>
+    expect(
+      within(nav)
+        .getByRole('link', { name: 'People' })
+        .getAttribute('aria-current'),
+    ).toBe('page'),
+  )
+  expect(
+    within(nav)
+      .getByRole('link', { name: 'Contacts' })
+      .hasAttribute('aria-current'),
+  ).toBe(false)
+  expect(nav.querySelectorAll('[aria-current="page"]')).toHaveLength(1)
+  fireEvent.click(within(nav).getByRole('link', { name: 'Documents' }))
+  await waitFor(() => expect(current().textContent).toBe('Documents'))
+  expect(outerRouter.state.location.pathname).toBe('/')
 })
 it('keeps special list/create paths as their actual terminal pages', async () => {
   await show()

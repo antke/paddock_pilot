@@ -1,6 +1,6 @@
 import { useT } from '#/i18n/LocaleProvider'
 import type { ComponentProps, ReactNode } from 'react'
-import { useId } from 'react'
+import { useEffect, useId, useRef } from 'react'
 
 import {
   NavigationMenu,
@@ -62,11 +62,13 @@ type DashboardNavigationLinkItemProps = ComponentProps<
   typeof NavigationMenuLink
 > & {
   active?: boolean
+  itemClassName?: string
   variant?: 'default' | 'section'
 }
 
 type DashboardNavigationMenuGroupProps = {
   active?: boolean
+  itemClassName?: string
   children: ReactNode
   contentClassName?: string
   contentWidth?: DashboardNavigationMenuContentWidth
@@ -108,6 +110,56 @@ export function DashboardNavigation({
   const alignEnd = align === 'end'
   const alignAlways = alignEnd && alignMode === 'always'
   const alignResponsive = alignEnd && alignMode === 'responsive'
+  const listRef = useRef<HTMLUListElement>(null)
+
+  useEffect(() => {
+    const list = listRef.current
+    if (!list || overflow !== 'scroll') return
+    const revealActive = () => {
+      if (list.scrollWidth <= list.clientWidth) return
+      // A hidden desktop link may share its active state with a mobile menu trigger.
+      const active = Array.from(
+        list.querySelectorAll<HTMLElement>(
+          '[aria-current="page"], [aria-pressed="true"], [data-active]',
+        ),
+      ).find((item) => item.getBoundingClientRect().width > 0)
+      if (!active) return
+      const itemRect = active.getBoundingClientRect()
+      const listRect = list.getBoundingClientRect()
+      const clearance = 8
+      // Change only this horizontal strip; preserve page scroll and keyboard focus.
+      let nextScroll = list.scrollLeft
+      if (itemRect.left < listRect.left + clearance)
+        nextScroll += itemRect.left - listRect.left - clearance
+      else if (itemRect.right > listRect.right - clearance)
+        nextScroll += itemRect.right - listRect.right + clearance
+      list.scrollLeft = Math.max(
+        0,
+        Math.min(list.scrollWidth - list.clientWidth, nextScroll),
+      )
+    }
+    revealActive()
+    const mutations = new MutationObserver(revealActive)
+    mutations.observe(list, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ['aria-current', 'aria-pressed', 'data-active'],
+    })
+    const resize =
+      typeof ResizeObserver === 'undefined'
+        ? undefined
+        : new ResizeObserver(revealActive)
+    resize?.observe(list)
+    for (const item of list.children) resize?.observe(item)
+    window.addEventListener('resize', revealActive)
+    return () => {
+      mutations.disconnect()
+      resize?.disconnect()
+      window.removeEventListener('resize', revealActive)
+    }
+  }, [overflow])
 
   return (
     <NavigationMenu
@@ -122,10 +174,11 @@ export function DashboardNavigation({
       )}
     >
       <NavigationMenuList
+        ref={listRef}
         className={cn(
           dashboardNavigationListClassName,
           overflow === 'scroll' &&
-            'max-w-full flex-nowrap justify-start overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:thin]',
+            'max-w-full flex-nowrap justify-start overflow-x-auto overscroll-x-contain pb-3 [scrollbar-width:thin]',
           alignAlways && 'justify-end',
           alignResponsive && 'lg:justify-end',
           listClassName,
@@ -175,11 +228,12 @@ export function DashboardSectionTabs<TTabId extends string>({
 export function DashboardNavigationLinkItem({
   active,
   className,
+  itemClassName,
   variant = 'default',
   ...props
 }: DashboardNavigationLinkItemProps) {
   return (
-    <NavigationMenuItem>
+    <NavigationMenuItem className={itemClassName}>
       <NavigationMenuLink
         data-active={active || undefined}
         aria-current={active ? 'page' : undefined}
@@ -200,11 +254,12 @@ export function DashboardNavigationMenuGroup({
   contentClassName,
   contentWidth = 'auto',
   label,
+  itemClassName,
   triggerClassName,
   variant = 'default',
 }: DashboardNavigationMenuGroupProps) {
   return (
-    <NavigationMenuItem>
+    <NavigationMenuItem className={itemClassName}>
       <NavigationMenuTrigger
         data-active={active || undefined}
         className={cn(

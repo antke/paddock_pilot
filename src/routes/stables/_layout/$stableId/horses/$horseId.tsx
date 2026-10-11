@@ -36,6 +36,7 @@ function RouteComponent() {
       horse={horse}
       events={events}
       canManageHorse={permissions?.canManageHorse ?? false}
+      canAddRecords={permissions?.canAddRecords ?? false}
     >
       <Outlet />
     </HorseDetail>

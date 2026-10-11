@@ -11,6 +11,8 @@ export const emailCategories = [
   'stable_archived',
   'account_welcome',
   'account_deleted',
+  'care_reminder_digest',
+  'horse_access_invitation',
 ] as const
 
 export const emailProviderNames = ['console', 'resend'] as const
@@ -19,12 +21,29 @@ export type EmailCategory = (typeof emailCategories)[number]
 export type EmailProviderName = (typeof emailProviderNames)[number]
 
 export type EmailRelation =
+  | { type: 'horseInvitation'; id: Id<'horseInvitations'> }
   | { type: 'stableInvitation'; id: Id<'stableInvitations'> }
   | { type: 'event'; id: Id<'events'> }
   | { type: 'stable'; id: Id<'stables'> }
   | { type: 'user'; id: Id<'users'> }
 
 export type EmailTemplate =
+  | {
+      kind: 'horse_access_invitation'
+      horseName: string
+      invitationKind: 'carer' | 'claim' | 'transfer'
+      token: string
+    }
+  | {
+      kind: 'care_reminder_digest'
+      date: string
+      timezone: string
+      stables: Array<{
+        stableId?: Id<'stables'>
+        stableName: string
+        count: number
+      }>
+    }
   | {
       kind: 'stable_invitation'
       stableName: string
@@ -35,7 +54,7 @@ export type EmailTemplate =
       eventId: Id<'events'>
       eventTitle: string
       horseNames: Array<string>
-      stableId: Id<'stables'>
+      stableId?: Id<'stables'>
     }
   | {
       kind: 'event_participation_update'
@@ -43,7 +62,7 @@ export type EmailTemplate =
       eventId: Id<'events'>
       eventTitle: string
       horseName: string
-      stableId: Id<'stables'>
+      stableId?: Id<'stables'>
       status: 'approved' | 'declined' | 'withdrawn'
     }
   | {
@@ -51,7 +70,7 @@ export type EmailTemplate =
       changes: Array<string>
       eventId: Id<'events'>
       eventTitle: string
-      stableId: Id<'stables'>
+      stableId?: Id<'stables'>
     }
   | {
       kind: 'stable_membership_activated'

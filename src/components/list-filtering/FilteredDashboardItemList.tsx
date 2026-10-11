@@ -27,6 +27,7 @@ type FilteredDashboardItemListProps<
   filteredEmptyMessage: ReactNode
   hideControlsWhenEmpty?: boolean
   itemLayout?: 'grid' | 'list'
+  listActions?: ReactNode
   renderItem: (item: TItem) => ReactNode
   stickyFilters?: boolean
 }
@@ -43,6 +44,7 @@ export function FilteredDashboardItemList<
   gap = 'loose',
   hideControlsWhenEmpty = true,
   itemLayout = 'list',
+  listActions,
   renderItem,
   stickyFilters = false,
   className,
@@ -60,6 +62,8 @@ export function FilteredDashboardItemList<
         hideWhenEmpty={hideControlsWhenEmpty}
         sticky={stickyFilters}
       />
+
+      {listActions}
 
       <p
         className="sr-only"

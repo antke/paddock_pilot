@@ -70,15 +70,31 @@ export function FileUploadField({
   const generatedId = useId()
   const inputId = props.id ?? `${generatedId}-file`
   const errorId = `${inputId}-error`
+  const selectionId = `${inputId}-selection`
   const invalid = Boolean(errors?.length)
   const descriptionIds =
     [props['aria-describedby'], invalid ? errorId : undefined]
       .filter(Boolean)
       .join(' ') || undefined
   const internalInputRef = useRef<HTMLInputElement | null>(null)
+  const visibleControl = useRef<HTMLButtonElement | null>(null)
+  const restoreFocus = useRef(false)
   const [dragging, setDragging] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File>()
   const [previewUrl, setPreviewUrl] = useState<string>()
+
+  useEffect(() => {
+    if (restoreFocus.current) {
+      visibleControl.current?.focus({ preventScroll: true })
+      restoreFocus.current = false
+    }
+  }, [selectedFile])
+
+  const setControlRef = (element: HTMLButtonElement | null) => {
+    visibleControl.current = element
+    if (typeof controlRef === 'function') controlRef(element)
+    else if (controlRef) controlRef.current = element
+  }
 
   useEffect(() => {
     if (files !== undefined) {
@@ -114,11 +130,15 @@ export function FileUploadField({
   }
 
   const selectFiles = (nextFiles: FileList | null) => {
+    // Cancelling the native picker must keep a previously selected attachment.
+    if (!nextFiles?.length) return
+    restoreFocus.current = document.activeElement === visibleControl.current
     setSelectedFile(nextFiles?.[0])
     onFilesChange(nextFiles)
   }
 
   const clearSelection = () => {
+    restoreFocus.current = true
     if (internalInputRef.current) {
       internalInputRef.current.value = ''
     }
@@ -143,7 +163,11 @@ export function FileUploadField({
     : undefined
 
   return (
-    <Field data-slot="file-upload-field" data-invalid={invalid}>
+    <Field
+      data-slot="file-upload-field"
+      data-invalid={invalid}
+      className="min-w-0"
+    >
       <FieldLabelRow>
         <FieldLabel htmlFor={inputId}>{label}</FieldLabel>
         {help && (
@@ -162,9 +186,9 @@ export function FileUploadField({
 
       {selectedFile ? (
         <Attachment
-          state={invalid ? 'error' : 'done'}
+          state={invalid ? 'error' : 'ready'}
           className={cn(
-            'w-full flex-nowrap',
+            'w-full min-w-0 flex-nowrap',
             width === 'default' ? 'max-w-xl' : 'max-w-none',
             className,
           )}
@@ -186,6 +210,14 @@ export function FileUploadField({
             <AttachmentDescription>
               {typeLabel} · {formatFileSize(selectedFile.size, locale)}
             </AttachmentDescription>
+            {!invalid && (
+              <p
+                id={selectionId}
+                className="mt-1 text-xs leading-relaxed text-muted-foreground"
+              >
+                {t('upload.selected')}
+              </p>
+            )}
           </AttachmentContent>
           <AttachmentActions>
             <AttachmentAction
@@ -198,18 +230,20 @@ export function FileUploadField({
             </AttachmentAction>
           </AttachmentActions>
           <AttachmentTrigger
-            ref={controlRef}
+            ref={setControlRef}
             type="button"
             aria-label={t('upload.replace', { name: selectedFile.name })}
             aria-invalid={invalid}
-            aria-describedby={descriptionIds}
+            aria-describedby={[descriptionIds, !invalid && selectionId]
+              .filter(Boolean)
+              .join(' ')}
             disabled={props.disabled}
             onClick={openFilePicker}
           />
         </Attachment>
       ) : (
         <button
-          ref={controlRef}
+          ref={setControlRef}
           type="button"
           data-slot="file-upload-dropzone"
           data-dragging={dragging}
@@ -256,12 +290,33 @@ export function FileUploadField({
           </span>
           <span className="grid min-w-0 gap-1">
             <span className="text-sm font-bold text-foreground">
-              {uploadLabel ??
-                (kind === 'image'
-                  ? t('upload.dropImage')
-                  : t('upload.dropFile'))}
+              {dragging
+                ? t('upload.releaseToSelect')
+                : (uploadLabel ?? (
+                    <>
+                      <span className="md:hidden">
+                        {t(
+                          kind === 'image'
+                            ? 'upload.chooseImage'
+                            : 'upload.chooseFileLabel',
+                        )}
+                      </span>
+                      <span className="hidden md:inline">
+                        {t(
+                          kind === 'image'
+                            ? 'upload.dropImage'
+                            : 'upload.dropFile',
+                        )}
+                      </span>
+                    </>
+                  ))}
             </span>
-            <span className="text-xs leading-relaxed text-muted-foreground">
+            <span
+              className={cn(
+                'text-xs leading-relaxed text-muted-foreground',
+                kind === 'file' && !uploadDescription && 'hidden md:block',
+              )}
+            >
               {uploadDescription ??
                 (kind === 'image'
                   ? t('upload.imageTypes')
@@ -283,6 +338,12 @@ export function FileUploadField({
         aria-required={required || undefined}
         onChange={(event) => selectFiles(event.target.files)}
       />
+
+      <span role="status" aria-atomic="true" className="sr-only w-px!">
+        {selectedFile && !invalid
+          ? t('upload.selectedNamed', { name: selectedFile.name })
+          : ''}
+      </span>
 
       {invalid && <FieldError id={errorId} errors={errors} />}
     </Field>

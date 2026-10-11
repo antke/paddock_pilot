@@ -3,7 +3,7 @@ import type { ComponentProps } from 'react'
 
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { Button } from '#/components/ui/button'
-import { Spinner } from '#/components/ui/spinner'
+import { ActionFeedback } from '#/components/ui/action-feedback'
 import { cn } from '#/lib/utils'
 
 type FormSubmitActionsProps = Omit<
@@ -85,8 +85,11 @@ export function FormSubmitButtons({
         disabled={actionDisabled}
         aria-busy={isSubmitting || undefined}
       >
-        {isSubmitting && <Spinner aria-hidden={true} />}
-        {isSubmitting ? submittingLabel : submitLabel}
+        <ActionFeedback
+          label={submitLabel}
+          pendingLabel={submittingLabel}
+          pending={isSubmitting}
+        />
       </Button>
     </div>
   )

@@ -139,6 +139,7 @@ function createFixtureHorse(
   },
 ): DashboardLabHorse {
   return {
+    canRead: true,
     _id: input.id,
     _creationTime: createdAt,
     stableId,
@@ -330,6 +331,7 @@ function createFixtureOverview({
       ownerName: 'Mae Turner',
       breed: 'Dutch Warmblood',
       profileImageUrl: undefined,
+      canRead: true,
       stableId,
       stableName: 'Cedar Ridge Barn',
       activeIssueCount: 1,
@@ -343,6 +345,7 @@ function createFixtureOverview({
       ownerName: 'Mae Turner',
       breed: 'Irish Sport Horse',
       profileImageUrl: undefined,
+      canRead: true,
       stableId,
       stableName: 'Cedar Ridge Barn',
       activeIssueCount: 0,

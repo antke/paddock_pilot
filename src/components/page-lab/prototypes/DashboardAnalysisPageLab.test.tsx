@@ -100,8 +100,9 @@ it('switches the actual analysis view to locked and empty states without live mu
     ).toBeNull(),
   )
   expect(
-    await screen.findByRole('group', { name: 'Calendar scale' }),
+    await screen.findByText(/No appointments or care records in this period/),
   ).toBeTruthy()
+  expect(screen.queryByRole('group', { name: 'Calendar scale' })).toBeNull()
   expect(useMutation).not.toHaveBeenCalled()
 })
 
@@ -118,17 +119,18 @@ it('offers true empty command-center state through the shared dashboard composit
     within(training)
       .getByRole('link', { name: /Morning flatwork/ })
       .getAttribute('href'),
-  ).toContain('/training/sample-dashboard-training-0?date=')
+  ).toContain('/events/sample-dashboard-training-0?date=')
   expect(within(training).getByText('09:00–09:45')).toBeTruthy()
   expect(within(training).getByText('Completed')).toBeTruthy()
   expect(within(training).getByText('Scheduled')).toBeTruthy()
   fireEvent.change(await screen.findByLabelText('Sample dashboard'), {
     target: { value: 'empty' },
   })
+  expect(screen.getByRole('region', { name: 'Today’s training' })).toBeTruthy()
   expect(
-    await screen.findByText('No scheduled or completed training today.'),
+    screen.getByText('No scheduled or completed training today.'),
   ).toBeTruthy()
-  expect(await screen.findByText('A quieter day at the stable')).toBeTruthy()
+  expect(await screen.findByText('No events scheduled today.')).toBeTruthy()
   expect(screen.queryByText('Juniper')).toBeNull()
   expect(useMutation).not.toHaveBeenCalled()
 })

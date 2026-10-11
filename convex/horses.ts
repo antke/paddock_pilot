@@ -1,3 +1,15 @@
+import {
+  departurePreview,
+  startDeparture,
+  revokeHorseAccess,
+} from './horseTransitions'
+import {
+  accessibleHorses,
+  assertCanReadHorse,
+  getHorseAccess,
+  horseRosterSummary,
+  auditHorse,
+} from './libs/horsePermissions'
 import { ConvexError, v } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
 import type { MutationCtx } from './_generated/server'
@@ -5,21 +17,22 @@ import type { Doc, Id } from './_generated/dataModel'
 import { getUserFromIdentity } from './libs/auth'
 import { horsesFields } from './schema'
 import { horseInputSchema } from '../shared/horses/horseSchema'
+import {
+  resolveHorseContacts,
+  validateHorseContacts,
+} from './libs/horseContacts'
 import { calculateHorseAge } from '../shared/horses/horseAge'
 import { omit } from 'lodash'
 import {
   assertCanCreateStableHorse,
   assertCanManageDeletedHorse,
   assertCanManageHorse,
-  assertCanManageStable,
-  assertCanPermanentlyDeleteHorses,
   assertCanViewStable,
   assertIsStableParticipant,
   getCurrentUser,
 } from './libs/stablePermissions'
 import { isActiveHorse } from './libs/horseState'
 import { shouldDeleteEventWithHorse } from '../shared/horses/horseDeletion'
-import { canManageOwnedRecord } from '../shared/stables/stableAccess'
 import {
   assertStorageObjectCanBeClaimed,
   deleteStorageObjectIfUnreferenced,
@@ -47,6 +60,8 @@ const validateHorseInput = (args: {
   dewormingNotes?: string
   allergies?: Array<string>
   emergencyNotes?: string
+  vetProviderId?: Id<'stableProviders'>
+  farrierProviderId?: Id<'stableProviders'>
   vetName?: string
   vetPhone?: string
   farrierName?: string
@@ -77,6 +92,8 @@ const validateHorseInput = (args: {
     ...result.data,
     age,
     profileImageId: args.profileImageId,
+    vetProviderId: args.vetProviderId,
+    farrierProviderId: args.farrierProviderId,
   }
 }
 
@@ -106,12 +123,19 @@ export const list = query({
       .collect()
 
     return await Promise.all(
-      horses.filter(isActiveHorse).map(async (horse) => ({
-        ...horse,
-        profileImageUrl: horse.profileImageId
-          ? ((await ctx.storage.getUrl(horse.profileImageId)) ?? undefined)
-          : undefined,
-      })),
+      horses.filter(isActiveHorse).map(async (horse) => {
+        const access = await getHorseAccess(ctx, horse)
+        const visible = access.canRead
+          ? await resolveHorseContacts(ctx, horse)
+          : horseRosterSummary(horse)
+        return {
+          ...visible,
+          canRead: access.canRead as boolean | undefined,
+          profileImageUrl: horse.profileImageId
+            ? ((await ctx.storage.getUrl(horse.profileImageId)) ?? undefined)
+            : undefined,
+        }
+      }),
     )
   },
 })
@@ -126,10 +150,10 @@ export const get = query({
 
     if (!isActiveHorse(horse)) return null
 
-    await assertCanViewStable(ctx, horse.stableId)
+    await assertCanReadHorse(ctx, horse)
 
     return {
-      ...horse,
+      ...(await resolveHorseContacts(ctx, horse)),
       profileImageUrl: horse.profileImageId
         ? ((await ctx.storage.getUrl(horse.profileImageId)) ?? undefined)
         : undefined,
@@ -143,20 +167,16 @@ export const getPermissions = query({
     const horse = await ctx.db.get(args.id)
     if (!horse) return null
 
-    const access = await assertCanViewStable(ctx, horse.stableId)
-
+    const access = await getHorseAccess(ctx, horse)
+    if (!access.canRead && !access.canDelete) return null
     return {
-      canManageHorse: canManageOwnedRecord({
-        role: access.role,
-        userId: access.userId,
-        ownerId: horse.ownerId,
-      }),
-      canReassignOwner: access.role === 'owner',
+      ...access,
+      canManageHorse: access.canEditProfile,
+      canReassignOwner: access.canTransfer,
       canPermanentlyDelete:
-        access.role === 'owner' &&
+        access.canDelete &&
         horse.deletedAt !== undefined &&
         Date.now() >= horse.deletedAt + horseTrashRetentionMs,
-      role: access.role,
     }
   },
 })
@@ -173,24 +193,28 @@ export const generateProfileImageUploadUrl = mutation({
 
 export const add = mutation({
   args: {
-    ...omit(horsesFields, 'ownerId'),
-    stableId: v.id('stables'),
+    ...omit(
+      horsesFields,
+      'ownerId',
+      'custodianStableId',
+      'currentPlacementId',
+      'transitionId',
+    ),
+    stableId: v.optional(v.id('stables')),
     ownerId: v.optional(v.id('users')),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx)
-    const access = await assertCanCreateStableHorse(
-      ctx,
-      args.stableId,
-      user._id,
-    )
+    if (args.stableId)
+      await assertCanCreateStableHorse(ctx, args.stableId, user._id)
     const ownerId = args.ownerId ?? user._id
 
-    if (ownerId !== user._id && access.role !== 'owner') {
+    if (ownerId !== user._id) {
       throw new ConvexError('Members can only add horses for themselves')
     }
 
-    await assertIsStableParticipant(ctx, args.stableId, ownerId)
+    if (args.stableId)
+      await assertIsStableParticipant(ctx, args.stableId, ownerId)
     const owner = await ctx.db.get(ownerId)
     if (!owner) throw new ConvexError('Horse owner not found')
     const ownerName =
@@ -199,33 +223,42 @@ export const add = mutation({
       [owner.firstName, owner.lastName].filter(Boolean).join(' ')
 
     const horseInput = validateHorseInput({ ...args, ownerName })
+    await validateHorseContacts(ctx, args.stableId, horseInput)
     if (horseInput.profileImageId) {
       await assertHorseProfileImageCanBeClaimed(ctx, horseInput.profileImageId)
     }
 
-    return await ctx.db.insert('horses', {
+    const id = await ctx.db.insert('horses', {
       ...horseInput,
       ownerId,
       stableId: args.stableId,
     })
-  },
-})
-
-export const reassignOwner = mutation({
-  args: { id: v.id('horses'), ownerId: v.id('users') },
-  handler: async (ctx, args) => {
-    const horse = await ctx.db.get(args.id)
-    if (!horse) throw new ConvexError('Horse not found')
-
-    await assertCanManageStable(ctx, horse.stableId)
-    await assertIsStableParticipant(ctx, horse.stableId, args.ownerId)
-
-    await ctx.db.patch(horse._id, { ownerId: args.ownerId })
+    if (args.stableId) {
+      const placementId = await ctx.db.insert('horsePlacements', {
+        horseId: id,
+        stableId: args.stableId,
+        startedAt: Date.now(),
+        createdBy: user._id,
+      })
+      await ctx.db.patch(id, { currentPlacementId: placementId })
+    }
+    await auditHorse(ctx, id, user._id, 'horse.created')
+    return id
   },
 })
 
 export const update = mutation({
-  args: { id: v.id('horses'), ...omit(horsesFields, 'ownerId', 'stableId') },
+  args: {
+    id: v.id('horses'),
+    ...omit(
+      horsesFields,
+      'ownerId',
+      'stableId',
+      'custodianStableId',
+      'currentPlacementId',
+      'transitionId',
+    ),
+  },
   handler: async (ctx, args) => {
     const { id, ...updates } = args
     const horse = await ctx.db.get(id)
@@ -234,6 +267,7 @@ export const update = mutation({
     await assertCanManageHorse(ctx, horse)
 
     const horseInput = validateHorseInput(updates)
+    await validateHorseContacts(ctx, horse.stableId, horseInput)
     if (
       horseInput.profileImageId &&
       horseInput.profileImageId !== horse.profileImageId
@@ -285,22 +319,37 @@ export const listDeleted = query({
   handler: async (ctx, args) => {
     const access = await assertCanViewStable(ctx, args.stableId)
 
-    const horses = await ctx.db
+    const currentHorses = await ctx.db
       .query('horses')
       .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
       .collect()
-
+    const unclaimed =
+      access.role === 'owner'
+        ? await ctx.db
+            .query('horses')
+            .withIndex('by_custodian_stable_id', (q) =>
+              q.eq('custodianStableId', args.stableId),
+            )
+            .collect()
+        : []
+    const horses = [
+      ...new Map(
+        [...currentHorses, ...unclaimed].map((h) => [h._id, h]),
+      ).values(),
+    ]
     return horses
       .filter(
         (horse) =>
           horse.deletedAt !== undefined &&
-          (access.role === 'owner' || horse.ownerId === access.userId),
+          (horse.ownerId === access.userId ||
+            (!horse.ownerId && access.role === 'owner')),
       )
       .map((horse) => ({
         ...horse,
         purgeAt: horse.deletedAt! + horseTrashRetentionMs,
         canPermanentlyDelete:
-          access.role === 'owner' &&
+          (horse.ownerId === access.userId ||
+            (!horse.ownerId && access.role === 'owner')) &&
           Date.now() >= horse.deletedAt! + horseTrashRetentionMs,
       }))
       .sort((a, b) => b.deletedAt! - a.deletedAt!)
@@ -316,6 +365,14 @@ export const deleteHorse = mutation({
     const access = await assertCanManageDeletedHorse(ctx, horse)
     if (horse.deletedAt !== undefined) return
 
+    if (horse.currentPlacementId) {
+      const preview = await departurePreview(ctx, horse)
+      await startDeparture(ctx, horse, {
+        actorUserId: access.userId,
+        carryReminderIds: preview.reminders.map((r) => r._id),
+      })
+    }
+    await revokeHorseAccess(ctx, horse._id)
     await ctx.db.patch(args.id, {
       deletedAt: Date.now(),
       deletedBy: access.userId,
@@ -331,7 +388,24 @@ export const restoreHorse = mutation({
 
     await assertCanManageDeletedHorse(ctx, horse)
     if (horse.deletedAt === undefined) return
-
+    // An unclaimed horse returns to its custodian with a new placement. The
+    // previous placement and the stable's retained records remain immutable.
+    if (
+      !horse.ownerId &&
+      horse.custodianStableId &&
+      !horse.currentPlacementId
+    ) {
+      const placementId = await ctx.db.insert('horsePlacements', {
+        horseId: horse._id,
+        stableId: horse.custodianStableId,
+        createdBy: (await getCurrentUser(ctx))._id,
+        startedAt: Date.now(),
+      })
+      await ctx.db.patch(horse._id, {
+        stableId: horse.custodianStableId,
+        currentPlacementId: placementId,
+      })
+    }
     await ctx.db.patch(args.id, {
       deletedAt: undefined,
       deletedBy: undefined,
@@ -345,7 +419,7 @@ export const permanentlyDeleteHorse = mutation({
     const horse = await ctx.db.get(args.id)
     if (!horse) throw new ConvexError('Horse not found')
 
-    await assertCanPermanentlyDeleteHorses(ctx, horse.stableId)
+    await assertCanManageDeletedHorse(ctx, horse)
     if (horse.deletedAt === undefined) {
       throw new ConvexError('Move the horse to deleted horses first')
     }
@@ -379,6 +453,8 @@ async function permanentlyDeleteHorseData(
   ctx: MutationCtx,
   horse: Doc<'horses'>,
 ) {
+  if (horse.transitionId) return
+  await revokeHorseAccess(ctx, horse._id)
   const [
     healthIssues,
     weightRecords,
@@ -449,11 +525,13 @@ async function permanentlyDeleteHorseData(
       continue
     }
 
-    const deleteEvent = shouldDeleteEventWithHorse({
-      horseId: horse._id,
-      eventHorseIds: event.horseIds,
-      associatedHorseIds: rows.map((row) => row.horseId),
-    })
+    const deleteEvent =
+      !event.stableId &&
+      shouldDeleteEventWithHorse({
+        horseId: horse._id,
+        eventHorseIds: event.horseIds,
+        associatedHorseIds: rows.map((row) => row.horseId),
+      })
 
     if (!deleteEvent) {
       for (const association of rows.filter(
@@ -506,3 +584,37 @@ async function permanentlyDeleteHorseData(
     ),
   )
 }
+
+export const listMine = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUser(ctx)
+    return Promise.all(
+      (await accessibleHorses(ctx, user._id)).map(async (horse) => ({
+        ...horse,
+        access: await getHorseAccess(ctx, horse, user._id),
+        profileImageUrl: horse.profileImageId
+          ? await ctx.storage.getUrl(horse.profileImageId)
+          : null,
+      })),
+    )
+  },
+})
+
+export const listMyDeleted = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUser(ctx)
+    return (
+      await ctx.db
+        .query('horses')
+        .withIndex('by_owner_id', (q) => q.eq('ownerId', user._id))
+        .collect()
+    )
+      .filter((horse) => horse.deletedAt !== undefined)
+      .map((horse) => ({
+        ...horse,
+        purgeAt: horse.deletedAt! + horseTrashRetentionMs,
+      }))
+  },
+})

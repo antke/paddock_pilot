@@ -1,6 +1,7 @@
 import { createRouter as createTanStackRouter } from '@tanstack/react-router'
 import { RoutePending } from './components/layout/RoutePending'
 import { RouteError } from './components/layout/RouteError'
+import { installPageTransitions } from './components/layout/pageTransitions'
 import { routeTree } from './routeTree.gen'
 
 export function getRouter() {
@@ -12,10 +13,11 @@ export function getRouter() {
     defaultPreloadStaleTime: 0,
     defaultPendingComponent: RoutePending,
     defaultErrorComponent: RouteError,
-    defaultPendingMs: 0,
+    defaultPendingMs: 250,
     defaultPendingMinMs: 0,
   })
 
+  installPageTransitions(router)
   return router
 }
 

@@ -36,6 +36,7 @@ export type LabHorseOutcomeGap =
 
 export type LabHorseDeepDive = {
   attention: LabAttentionHorse | null
+  summaryComplete: boolean
   summary: {
     activeIssueCount: number
     highIssueCount: number
@@ -74,7 +75,7 @@ export function createHorseAnalysisData({
   stableAnalysis: LabUnlockedStableAnalysis | null
   timelineSignals: Array<LabTimelineSignal>
 }): LabHorseDeepDive {
-  const today = getTodayDateKey()
+  const today = stableAnalysis?.today ?? getTodayDateKey()
   const nextThirtyDays = addDaysKey(today, 30)
   const horseEvents = data.events.filter((event) =>
     event.horseIds.includes(horse._id),
@@ -87,16 +88,35 @@ export function createHorseAnalysisData({
         event.date <= nextThirtyDays,
     )
     .sort(compareEventDateAndTimeAscending)
-    .slice(0, 6)
   const completionNotesNeeded = horseEvents
     .filter(
       (event) => event.status === 'completed' && !event.notesAfterCompletion,
     )
     .sort(compareEventDateAndTimeDescending)
-    .slice(0, 6)
-  const dueReminders = data.dueReminders
-    .filter((reminder) => reminder.horseId === horse._id)
-    .slice(0, 6)
+  const dueReminders: Array<DashboardLabReminder> = stableAnalysis
+    ? timelineSignals
+        .filter(
+          (record) =>
+            record.horseId === horse._id &&
+            record.kind === 'reminder' &&
+            record.status === 'pending' &&
+            record.date <= nextThirtyDays &&
+            record.reminderCategory !== undefined,
+        )
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .map((record) => ({
+          id: record.id as DashboardLabReminder['id'],
+          stableId: data.stable._id,
+          stableName: data.stable.name,
+          horseId: horse._id,
+          horseName: horse.name,
+          title: record.title,
+          dueDate: record.date,
+          category: record.reminderCategory!,
+          priority: record.priority,
+          overdue: record.date < today,
+        }))
+    : data.dueReminders.filter((reminder) => reminder.horseId === horse._id)
   const horseSignals = timelineSignals
     .filter((signal) => signal.horseId === horse._id)
     .sort(compareTimelineSignalDescending)
@@ -119,6 +139,9 @@ export function createHorseAnalysisData({
     analysis.horsesNeedingAttention.find(
       (item) => item.horseId === horse._id,
     ) ?? null
+  const currentSummary = stableAnalysis?.horseSummaries?.find(
+    (item) => item.horseId === horse._id,
+  )
   const healthFrequency =
     stableAnalysis?.healthIssueFrequency.find(
       (item) => item.horseId === horse._id,
@@ -126,17 +149,28 @@ export function createHorseAnalysisData({
   const horseOutcomeNotesNeeded =
     stableAnalysis?.horseOutcomeNotesNeeded
       .filter((item) => item.horseId === horse._id)
-      .sort((a, b) => b.eventDate.localeCompare(a.eventDate))
-      .slice(0, 6) ?? []
+      .sort((a, b) => b.eventDate.localeCompare(a.eventDate)) ?? []
 
   return {
     attention,
+    summaryComplete: Boolean(currentSummary),
     summary: {
       activeIssueCount:
-        attention?.activeIssueCount ?? healthFrequency?.activeCount ?? 0,
-      highIssueCount: attention?.highIssueCount ?? 0,
-      activeMedicationCount: attention?.activeMedicationCount ?? 0,
-      overdueReminderCount: attention?.overdueReminderCount ?? 0,
+        currentSummary?.activeIssueCount ??
+        healthSignals.filter((record) => record.status === 'active').length,
+      highIssueCount:
+        currentSummary?.highIssueCount ??
+        healthSignals.filter(
+          (record) => record.status === 'active' && record.severity === 'high',
+        ).length,
+      activeMedicationCount:
+        currentSummary?.activeMedicationCount ??
+        medicationSignals.filter((record) => record.status === 'active').length,
+      overdueReminderCount:
+        currentSummary?.overdueReminderCount ??
+        reminderSignals.filter(
+          (record) => record.status === 'pending' && record.date < today,
+        ).length,
       upcomingEventCount: upcomingEvents.length,
       documentationGapCount:
         completionNotesNeeded.length + horseOutcomeNotesNeeded.length,
@@ -161,11 +195,106 @@ export function createHorseAnalysisData({
         (signal) => signal.horseId === horse._id,
       ) ?? [],
     careCadence:
-      stableAnalysis?.careCadence
-        .filter((item) => item.horseId === horse._id)
-        .slice(0, 6) ?? [],
+      stableAnalysis?.careCadence.filter(
+        (item) => item.horseId === horse._id,
+      ) ?? [],
     horseOutcomeNotesNeeded,
   }
+}
+
+/** Keep the historical observations and today's care status explicitly separate. */
+export function createStableHorseOverview({
+  horses,
+  stableAnalysis,
+  timelineSignals,
+  range,
+}: {
+  horses: Array<DashboardLabHorse>
+  stableAnalysis: LabUnlockedStableAnalysis | null
+  timelineSignals: Array<LabTimelineSignal>
+  range: { start: string; end: string }
+}) {
+  return horses.map((horse) => {
+    const current = stableAnalysis?.horseSummaries?.find(
+      (row) => row.horseId === horse._id,
+    )
+    const observations = timelineSignals
+      .filter(
+        (record) =>
+          record.horseId === horse._id &&
+          record.kind === 'weight' &&
+          record.date >= range.start &&
+          record.date <= range.end &&
+          record.displayData?.weight !== undefined &&
+          record.displayData.unit !== undefined,
+      )
+      .sort(
+        (a, b) =>
+          a.date.localeCompare(b.date) ||
+          (a.observationOrder ?? 0) - (b.observationOrder ?? 0),
+      )
+    const latest = observations.at(-1)
+    const first = observations[0]
+    // Match horse comparisons: retain every real observation and compare in kg,
+    // even when the first and last records were entered in different units.
+    const kilograms = (record: LabTimelineSignal) =>
+      record.displayData!.weight! *
+      (record.displayData!.unit === 'lb' ? 0.45359237 : 1)
+    const completed = (stableAnalysis?.trainingOutcomes ?? []).filter(
+      (record) =>
+        record.horseId === horse._id &&
+        record.date >= range.start &&
+        record.date <= range.end &&
+        record.status === 'completed',
+    )
+    const withDuration = completed.filter(
+      (record) => record.details.durationMinutes !== undefined,
+    )
+    return {
+      horseId: horse._id,
+      horseName: horse.name,
+      summaryComplete: Boolean(current),
+      latestWeight:
+        current?.latestWeight ??
+        stableAnalysis?.weightTrends.find((row) => row.horseId === horse._id) ??
+        null,
+      periodWeight:
+        latest && first
+          ? {
+              firstDate: first.date,
+              lastDate: latest.date,
+              firstWeight: kilograms(first),
+              lastWeight: kilograms(latest),
+              unit: 'kg' as const,
+              change:
+                observations.length > 1
+                  ? kilograms(latest) - kilograms(first)
+                  : null,
+              recordIds: observations.map((record) => record.id),
+            }
+          : null,
+      training: {
+        completedCount: completed.length,
+        withDurationCount: withDuration.length,
+        missingDurationCount: completed.length - withDuration.length,
+        recordedMinutes: withDuration.length
+          ? withDuration.reduce(
+              (total, record) => total + record.details.durationMinutes!,
+              0,
+            )
+          : null,
+        recordIds: completed.map((record) => record._id),
+      },
+      currentCare: current
+        ? {
+            activeIssueCount: current.activeIssueCount,
+            highIssueCount: current.highIssueCount,
+            activeMedicationCount: current.activeMedicationCount,
+            overdueReminderCount: current.overdueReminderCount,
+          }
+        : null,
+    }
+  })
 }
 
 function addDaysKey(dateKey: string, days: number) {

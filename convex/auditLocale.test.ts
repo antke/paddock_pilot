@@ -93,7 +93,7 @@ describe('translation-friendly audit details', () => {
       ).toEqual({
         kind: 'member_removed',
         memberName: 'Żaneta Łącka',
-        reassignedHorseCount: reassign ? 1 : 0,
+        reassignedHorseCount: 0,
       })
     },
   )

@@ -6,7 +6,7 @@ import {
   screen,
   within,
 } from '@testing-library/react'
-import { afterEach, expect, it } from 'vitest'
+import { afterEach, expect, it, vi } from 'vitest'
 import {
   createMemoryHistory,
   createRootRoute,
@@ -18,6 +18,8 @@ import { createDashboardLabFixtureData } from '#/components/dashboard-lab/dashbo
 import { createTodayTrainingSample } from '#/components/page-lab/prototypes/dashboardAnalysisFixtures'
 import { getTodayDateKey } from '#/lib/dateDisplay'
 
+vi.mock('convex/react', () => ({ useMutation: () => vi.fn() }))
+
 afterEach(() => {
   cleanup()
   localStorage.clear()
@@ -27,7 +29,7 @@ it('places Training after Activity and keeps the horse scope across calendar vie
   const data = createDashboardLabFixtureData()
   const horse = data.horses[0]
   const entries = createTodayTrainingSample(data, getTodayDateKey())
-  const path = `/stables/${data.stable._id}/horses/${horse._id}/training`
+  const path = `/horses/${horse._id}/training`
   const router = createRouter({
     routeTree: createRootRoute({
       component: () => (
@@ -37,7 +39,7 @@ it('places Training after Activity and keeps the horse scope across calendar vie
           events={[]}
           canManageHorse
           trainingData={{
-            horses: data.horses,
+            horses: data.horses.map((item) => ({ ...item, canRecord: true })),
             records: [],
             events: entries.map((entry) => entry.occurrence.event),
           }}
@@ -75,6 +77,6 @@ it('places Training after Activity and keeps the horse scope across calendar vie
   }
   const create = screen.getByRole('link', { name: 'Add training session' })
   expect(decodeURIComponent(create.getAttribute('href')!)).toContain(
-    `horseIds=["${horse._id}"]`,
+    `horseId=${horse._id}`,
   )
 })

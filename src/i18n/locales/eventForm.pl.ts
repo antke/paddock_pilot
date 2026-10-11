@@ -27,6 +27,8 @@ export const eventForm = {
   noRepeat: 'Nie powtarza się',
   trainingHelp: 'Opisz trening i ustal jego termin.',
   eventHelp: 'Nadaj wydarzeniu nazwę i ustal jego termin.',
+  essentialsHelp:
+    'Zacznij od szczegółów wydarzenia i wyboru koni. Pozostałe sekcje są opcjonalne.',
   sessionDetails: 'Szczegóły treningu',
   eventDetails: 'Szczegóły wydarzenia',
   title: 'Tytuł',
@@ -48,11 +50,14 @@ export const eventForm = {
     'Pozostaw puste dla wydarzenia jednodniowego. Data zakończenia obejmuje cały wskazany dzień.',
   time: 'Godzina',
   timeHelp: 'Podaj godzinę według czasu lokalnego stajni.',
+  personalTimeHelp: 'Podaj godzinę według czasu lokalnego miejsca wizyty.',
   trainingHorsesHelp: 'Wybierz konie biorące udział w tym treningu.',
   eventHorsesHelp: 'Wybierz wszystkie konie, których dotyczy wydarzenie.',
   horses: 'Konie',
   noHorses:
     'W tej stajni nie ma dostępnych koni. Dodaj konia przed utworzeniem wydarzenia.',
+  noPersonalHorses:
+    'Nie masz koni, dla których możesz planować wizyty. Dodaj swojego konia lub poproś jego właściciela o dostęp do edycji opieki.',
   trainingLogisticsHelp: 'W razie potrzeby dodaj miejsce, trenera i koszty.',
   eventLogisticsHelp: 'W razie potrzeby dodaj miejsce, specjalistę i koszty.',
   placeTrainer: 'Miejsce i trener',

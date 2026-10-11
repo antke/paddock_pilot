@@ -12,6 +12,17 @@ export const emailPreviewFixtures: Array<{
   label: string
   template: EmailTemplate
 }> = [
+  { id: 'horse-access-invitation', label: 'Horse access invitation', template: { kind: 'horse_access_invitation', invitationKind: 'carer', horseName: 'Juniper', token: 'example-horse-invitation' } },
+  {
+    id: 'care-reminder-digest',
+    label: 'Daily care reminder summary',
+    template: {
+      kind: 'care_reminder_digest',
+      date: '2026-10-01',
+      timezone: 'Europe/Warsaw',
+      stables: [{ stableId, stableName: 'Willow & Oak Stables', count: 3 }],
+    },
+  },
   {
     id: 'stable-invitation',
     label: 'Stable invitation',

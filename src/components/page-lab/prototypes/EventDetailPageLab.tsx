@@ -22,8 +22,13 @@ type EventDetailPageLabProps = {
 export function EventDetailPageLab({ data }: EventDetailPageLabProps) {
   const fixtureMode = useDevAuthBypassEnabled()
   const [sample, setSample] = useState('standard')
-  const requestedEventId = (useSearch({ strict: false }) as { event?: string })
-    .event
+  const requestedEventId = useSearch({
+    strict: false,
+    select: (search) =>
+      'event' in search && typeof search.event === 'string'
+        ? search.event
+        : undefined,
+  })
   const stableEvents = data.events.filter(
     (item) => item.stableId === data.stable._id,
   )

@@ -1,90 +1,241 @@
+import { cn } from '#/lib/utils'
+import { dashboardMobileRecordClassName } from '#/components/dashboard/dashboardChrome'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { CalendarEventChipLink } from '#/components/events/EventCalendar'
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from '#/components/ui/tooltip'
+import { formatEventDateTime } from '#/components/events/eventDisplay'
+import { TrainingEntryPreview } from './TrainingEntryPreview'
+import { TrainingCompletionControl } from './TrainingCompletionControl'
+import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import { formatShortDateKey } from '#/lib/dateDisplay'
-import { TrainingActivityTag, TrainingStatusBadge } from './TrainingBadges'
+import {
+  TrainingActivityDot,
+  TrainingActivityTag,
+  TrainingStatusBadge,
+} from './TrainingBadges'
 import { formatTrainingTimeRange } from './trainingCalendarData'
 import type { TrainingEntry } from './trainingCalendarData'
 
 export function TrainingEntryLink({
   entry,
-  stableId,
   showHorseName = true,
+  variant = 'record',
 }: {
   entry: TrainingEntry
-  stableId: string
+  stableId?: string
   showHorseName?: boolean
+  variant?: 'record' | 'month' | 'week' | 'summary'
 }) {
   const t = useT()
   const { locale } = useLocale()
+  const { today } = useLocalDateContext()
+  const canComplete =
+    entry.horse.canRecord && entry.occurrence.startDate <= today
 
   const { occurrence, horse, details, status, record } = entry
+  const showStatus = !canComplete || status !== 'completed'
+  const title = `${showHorseName ? `${horse.name} · ` : ''}${occurrence.event.title}`
+  const dateTime = formatEventDateTime(
+    occurrence.startDate,
+    occurrence.event.time,
+    occurrence.endDate,
+    locale,
+  )
   const notes = [
     { label: t('training.focus'), value: details.focus },
     { label: t('training.outcome'), value: record?.outcome },
     { label: t('training.nextFocus'), value: details.nextFocus },
   ].filter((note) => note.value?.trim())
+  const timing = details.durationMinutes
+    ? formatTrainingTimeRange(
+        occurrence.event.time,
+        details.durationMinutes,
+        locale,
+      )
+    : occurrence.event.time
 
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
+    <div className="relative min-w-0">
+      <TrainingEntryPreview
+        label={title}
+        trigger={
           <CalendarEventChipLink
-            to="/stables/$stableId/training/$eventId"
-            params={{ stableId, eventId: occurrence.eventId }}
-            search={{ date: occurrence.startDate }}
-          />
-        }
-        data-training-entry="compact"
-        className="min-w-0 gap-2 p-3 text-sm leading-5 [overflow-wrap:anywhere]"
-      >
-        <span className="flex min-w-0 flex-wrap items-start justify-between gap-2">
-          <span className="flex min-w-0 flex-wrap gap-1.5">
-            {details.activities.map((activity) => (
-              <TrainingActivityTag key={activity} activity={activity} />
-            ))}
-          </span>
-          <TrainingStatusBadge status={status} iconOnly />
-        </span>
-        <span
-          data-slot="training-entry-title"
-          className="text-sm font-bold leading-5 text-foreground"
-        >
-          {showHorseName && `${horse.name} · `}
-          {occurrence.event.title}
-        </span>
-        <span className="grid gap-0.5 text-xs leading-5 text-muted-foreground">
-          <span data-slot="training-entry-rider">
-            {details.rider
-              ? t('training.rider', { name: details.rider })
-              : t('training.noRider')}
-          </span>
-          <span data-slot="training-entry-timing" className="tabular-nums">
-            {formatTrainingTimeRange(
-              occurrence.event.time,
-              details.durationMinutes,
-              locale,
+            to="/events/$eventId"
+            params={{ eventId: occurrence.eventId }}
+            search={{
+              date: occurrence.startDate,
+              horseId: horse._id,
+              participationId: occurrence.event.contextParticipationId,
+            }}
+            data-training-entry={variant === 'record' ? 'compact' : variant}
+            aria-label={
+              variant === 'month'
+                ? `${title}, ${dateTime}, ${details.activities.map((activity) => t(`training.activities.${activity}`)).join(', ')}, ${t(`training.status.${status}`)}`
+                : undefined
+            }
+            className={cn(
+              variant === 'month'
+                ? '@container/training-card grid min-w-0 gap-1 p-2 text-xs leading-5'
+                : variant === 'summary'
+                  ? cn(
+                      'app-record min-h-16 min-w-0 border-0 bg-transparent px-0 py-3 text-sm leading-5 [overflow-wrap:anywhere]',
+                      dashboardMobileRecordClassName,
+                    )
+                  : 'min-w-0 content-start gap-2 p-2 text-sm leading-5 [overflow-wrap:anywhere]',
             )}
-          </span>
-        </span>
-      </TooltipTrigger>
-      <TooltipContent
-        side="right"
-        align="start"
-        sideOffset={8}
-        className="block max-h-[min(32rem,var(--available-height))] w-72 max-w-full overflow-y-auto p-4 text-sm font-normal leading-6"
+          >
+            {variant === 'summary' ? (
+              <span className="grid min-w-0 gap-1">
+                <span
+                  className={cn(
+                    'flex min-w-0 items-start justify-between gap-3',
+                    canComplete && 'min-h-8 pr-11',
+                  )}
+                >
+                  <span className="min-w-0 font-semibold">{horse.name}</span>
+                  {showStatus && <TrainingStatusBadge status={status} />}
+                </span>
+                <span className="text-muted-foreground">
+                  {details.activities
+                    .map((activity) => t(`training.activities.${activity}`))
+                    .join(' · ') || occurrence.event.title}
+                  {timing ? ` · ${timing}` : ''}
+                </span>
+                <span className="sr-only">{occurrence.event.title}</span>
+              </span>
+            ) : variant === 'month' ? (
+              <>
+                <span
+                  data-slot="training-entry-horse"
+                  className={cn(
+                    'flex min-h-8 min-w-0 items-center gap-1 font-semibold',
+                    canComplete && 'pr-10',
+                  )}
+                >
+                  <span className="min-w-0 flex-1 truncate">
+                    {showHorseName ? horse.name : occurrence.event.title}
+                  </span>
+                  {!canComplete && (
+                    <TrainingStatusBadge status={status} iconOnly />
+                  )}
+                </span>
+                <span className="flex min-w-0 items-center gap-1 text-muted-foreground">
+                  <TrainingActivityDot activity={details.activities[0]} />
+                  <span
+                    data-slot="training-entry-title"
+                    className="min-w-0 flex-1 truncate"
+                  >
+                    {showHorseName
+                      ? occurrence.event.title
+                      : details.activities
+                          .map((activity) =>
+                            t(`training.activities.${activity}`),
+                          )
+                          .join(' · ')}
+                  </span>
+                  {occurrence.event.time && (
+                    <span className="hidden shrink-0 tabular-nums @[8rem]/training-card:inline">
+                      {occurrence.event.time}
+                    </span>
+                  )}
+                </span>
+              </>
+            ) : variant === 'week' ? (
+              <span className="grid min-w-0 gap-2">
+                <span
+                  className={cn(
+                    'flex min-h-8 min-w-0 items-center gap-1',
+                    canComplete && 'pr-10',
+                  )}
+                >
+                  <TrainingActivityDot activity={details.activities[0]} />
+                  <span className="min-w-0 truncate text-xs text-muted-foreground">
+                    {details.activities
+                      .map((activity) => t(`training.activities.${activity}`))
+                      .join(' · ')}
+                  </span>
+                </span>
+                <span
+                  data-slot="training-entry-title"
+                  className="line-clamp-2 min-h-10 text-sm font-bold leading-5 text-foreground"
+                >
+                  {title}
+                </span>
+                <span className="grid min-w-0 gap-1 text-xs leading-5 text-muted-foreground">
+                  <span
+                    data-slot="training-entry-timing"
+                    className="whitespace-nowrap tabular-nums"
+                  >
+                    {timing}
+                  </span>
+                  {details.rider && (
+                    <span
+                      data-slot="training-entry-rider"
+                      className="line-clamp-2"
+                    >
+                      {t('training.rider', { name: details.rider })}
+                    </span>
+                  )}
+                  {showStatus && <TrainingStatusBadge status={status} />}
+                </span>
+              </span>
+            ) : (
+              <span className="grid min-w-0 gap-2">
+                <span
+                  className={cn(
+                    'flex min-w-0 flex-wrap items-start justify-between gap-2',
+                    canComplete && 'min-h-8 pr-10',
+                  )}
+                >
+                  <span className="flex min-w-0 flex-wrap gap-1.5">
+                    {details.activities.map((activity) => (
+                      <TrainingActivityTag key={activity} activity={activity} />
+                    ))}
+                  </span>
+                  {showStatus && <TrainingStatusBadge status={status} />}
+                </span>
+                <span
+                  data-slot="training-entry-title"
+                  className="text-sm font-bold leading-5 text-foreground"
+                >
+                  {title}
+                </span>
+                <span className="grid gap-0.5 text-xs leading-5 text-muted-foreground">
+                  {details.rider && (
+                    <span data-slot="training-entry-rider">
+                      {t('training.rider', { name: details.rider })}
+                    </span>
+                  )}
+                  <span
+                    data-slot="training-entry-timing"
+                    className="tabular-nums"
+                  >
+                    {timing}
+                  </span>
+                </span>
+              </span>
+            )}
+          </CalendarEventChipLink>
+        }
       >
         <div className="grid gap-3">
           <div className="grid gap-1">
             <span className="font-bold">
               {horse.name} · {occurrence.event.title}
             </span>
-            <TrainingStatusBadge status={status} />
+            <span className="flex flex-wrap gap-1.5">
+              {details.activities.map((activity) => (
+                <TrainingActivityTag key={activity} activity={activity} />
+              ))}
+            </span>
+            {showStatus && <TrainingStatusBadge status={status} />}
+            <span>{dateTime}</span>
             <span>{t(`training.formats.${details.format}`)}</span>
+            {details.rider && (
+              <span>{t('training.rider', { name: details.rider })}</span>
+            )}
+            {occurrence.event.location && (
+              <span>{occurrence.event.location}</span>
+            )}
             {details.durationMinutes && (
               <span className="tabular-nums">
                 {t(
@@ -108,6 +259,11 @@ export function TrainingEntryLink({
               </span>
             )}
           </div>
+          {occurrence.event.description && (
+            <p className="whitespace-pre-wrap">
+              {occurrence.event.description}
+            </p>
+          )}
           {notes.length > 0 && (
             <dl className="grid gap-3">
               {notes.map(({ label, value }) => (
@@ -119,7 +275,17 @@ export function TrainingEntryLink({
             </dl>
           )}
         </div>
-      </TooltipContent>
-    </Tooltip>
+        {canComplete && (
+          <div className="border-t border-border-subtle pt-2">
+            <TrainingCompletionControl entry={entry} labelled />
+          </div>
+        )}
+      </TrainingEntryPreview>
+      {canComplete && (
+        <div className="absolute right-0 top-0">
+          <TrainingCompletionControl entry={entry} />
+        </div>
+      )}
+    </div>
   )
 }

@@ -1,6 +1,8 @@
 import { useT } from '#/i18n/LocaleProvider'
 import { Show, SignInButton, UserButton } from '@clerk/tanstack-react-start'
+import { useRef, useState } from 'react'
 
+import { AccountPreferencesDialog } from '#/components/layout/AccountPreferencesDialog'
 import { useAppUserState } from '#/components/layout/AppUserStateProvider'
 import { useDevAuthBypassEnabled } from '#/lib/devAuthBypass'
 import { TextLabel } from '#/components/ui/text-label'
@@ -31,7 +33,15 @@ import type { Id } from 'convex/_generated/dataModel'
 import { api } from 'convex/_generated/api'
 import { useQuery } from 'convex/react'
 
-export default function HeaderUser() {
+type HeaderUserProps = {
+  compact?: boolean
+  showStableSwitcher?: boolean
+}
+
+export default function HeaderUser({
+  compact = true,
+  showStableSwitcher = true,
+}: HeaderUserProps) {
   const devAuthBypassEnabled = useDevAuthBypassEnabled()
 
   if (devAuthBypassEnabled) {
@@ -52,21 +62,52 @@ export default function HeaderUser() {
         <SignInButton />
       </Show>
       <Show when="signed-in">
-        <SignedInUserControls />
+        <SignedInUserControls
+          compact={compact}
+          showStableSwitcher={showStableSwitcher}
+        />
       </Show>
     </>
   )
 }
 
-function SignedInUserControls() {
+function SignedInUserControls({
+  compact,
+  showStableSwitcher,
+}: Required<HeaderUserProps>) {
   const t = useT()
   const navigate = useNavigate()
+  const controlsRef = useRef<HTMLDivElement>(null)
+  const [preferencesOpen, setPreferencesOpen] = useState(false)
 
   return (
-    <div className="flex items-center gap-1">
-      <StableSwitcher />
+    <div
+      ref={controlsRef}
+      className={
+        compact
+          ? 'flex min-w-0 items-center gap-1'
+          : 'flex w-full min-w-0 items-center gap-1'
+      }
+    >
+      {showStableSwitcher && <StableSwitcher />}
 
-      <UserButton>
+      <UserButton
+        showName={!compact}
+        appearance={{
+          elements: {
+            rootBox: { width: compact ? 'auto' : '100%', minWidth: 0 },
+            userButtonTrigger: compact
+              ? 'min-h-11 min-w-11 justify-center'
+              : 'min-h-12 w-full min-w-0 rounded-control px-2 text-left hover:bg-accent',
+            userButtonBox: compact
+              ? undefined
+              : 'w-full min-w-0 flex-row-reverse justify-end gap-3',
+            userButtonOuterIdentifier:
+              'min-w-0 flex-1 truncate text-left font-sans text-sm font-medium text-foreground',
+            avatarBox: 'size-8 shrink-0',
+          },
+        }}
+      >
         <UserButton.MenuItems>
           <UserButton.Action
             label={t('navigation.profile')}
@@ -83,8 +124,22 @@ function SignedInUserControls() {
             labelIcon={<CreditCardIcon />}
             onClick={() => navigate({ to: '/pricing' })}
           />
+          <UserButton.Action
+            label={t('navigation.accountPreferences')}
+            labelIcon={<GearIcon />}
+            onClick={() => setPreferencesOpen(true)}
+          />
         </UserButton.MenuItems>
       </UserButton>
+      <AccountPreferencesDialog
+        open={preferencesOpen}
+        onOpenChange={setPreferencesOpen}
+        finalFocus={() =>
+          controlsRef.current?.querySelector<HTMLElement>(
+            '.cl-userButtonTrigger',
+          ) ?? null
+        }
+      />
     </div>
   )
 }
@@ -125,13 +180,14 @@ function StableSwitcher() {
         if (!activeStableId) return
         const routes = {
           overview: '/stables/$stableId',
-          members: '/stables/$stableId/members',
+          members: '/stables/$stableId/stable',
           welcome: '/stables/$stableId/welcome',
           settings: '/stables/$stableId/settings',
         } as const
         void navigate({
           to: routes[destination],
           params: { stableId: activeStableId },
+          search: destination === 'members' ? { tab: 'people' } : {},
         })
       }}
     />
@@ -166,15 +222,15 @@ export function StableSwitcherView({
             aria-label={t('navigation.activeStableName', {
               name: activeStable?.name ?? t('navigation.selectStable'),
             })}
-            className="max-w-44"
+            className="min-h-11 min-w-11 max-w-44 px-2 sm:px-3"
           />
         }
       >
         <BuildingsIcon aria-hidden="true" />
-        <span className="truncate">
+        <span className="hidden truncate sm:inline">
           {activeStable?.name ?? t('navigation.selectStable')}
         </span>
-        <CaretDownIcon aria-hidden="true" />
+        <CaretDownIcon aria-hidden="true" className="hidden sm:block" />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-64">

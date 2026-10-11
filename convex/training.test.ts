@@ -67,6 +67,81 @@ const details = {
   focus: 'Transitions',
 }
 describe('training records', () => {
+  it('accepts calendar completion payloads and preserves stable session details when reopened', async () => {
+    const f = await setup()
+    const eventId = await f.asAdmin.mutation(api.events.add, {
+      stableId: f.stableId,
+      horseIds: [f.horseId, f.otherHorseId],
+      date: '2026-01-05',
+      time: '10:00',
+      title: 'Weekly lesson',
+      type: 'training',
+      training: details,
+      recurrence: { frequency: 'weekly', interval: 1, daysOfWeek: [1] },
+    })
+    const calendarTarget = {
+      eventId,
+      horseId: f.horseId,
+      date: '2026-01-12',
+      errorFormat: 'structured' as const,
+    }
+    await f.asMember.mutation(api.training.setStatus, {
+      ...calendarTarget,
+      status: 'completed',
+    })
+    await f.asMember.mutation(api.training.saveRecord, {
+      ...calendarTarget,
+      status: 'completed',
+      details: { ...details, durationMinutes: 35, rider: 'Member' },
+      outcome: 'More balanced',
+    })
+    await f.asMember.mutation(api.training.setStatus, {
+      ...calendarTarget,
+      status: 'planned',
+    })
+    let data = await f.asAdmin.query(api.training.listForStable, {
+      stableId: f.stableId,
+    })
+    expect(data.records).toHaveLength(1)
+    expect(data.records[0]).toMatchObject({
+      eventId,
+      horseId: f.horseId,
+      date: calendarTarget.date,
+      status: 'planned',
+      details: { ...details, durationMinutes: 35, rider: 'Member' },
+      outcome: 'More balanced',
+    })
+    await expect(
+      f.asMember.mutation(api.training.setStatus, {
+        ...calendarTarget,
+        horseId: f.otherHorseId,
+        status: 'completed',
+      }),
+    ).rejects.toMatchObject({ data: { code: 'trainingPermission' } })
+    await f.asAdmin.mutation(api.training.setStatus, {
+      ...calendarTarget,
+      horseId: f.otherHorseId,
+      status: 'completed',
+    })
+    await f.asAdmin.mutation(api.training.setStatus, {
+      ...calendarTarget,
+      horseId: f.otherHorseId,
+      status: 'planned',
+    })
+    data = await f.asAdmin.query(api.training.listForStable, {
+      stableId: f.stableId,
+    })
+    expect(data.records).toHaveLength(2)
+    expect(data.records.map((record) => record.date)).toEqual([
+      calendarTarget.date,
+      calendarTarget.date,
+    ])
+    expect(data.events[0]).toMatchObject({
+      status: 'planned',
+      training: details,
+    })
+  })
+
   it('separates events and records completion per horse and recurring date', async () => {
     const f = await setup()
     const id = await f.asAdmin.mutation(api.events.add, {

@@ -39,7 +39,7 @@ export function calendarDayCellClassName({
   className?: string
 } = {}) {
   return cn(
-    'min-h-28 border-r border-b border-border-subtle last:border-r-0',
+    'h-40 min-w-0 border-r border-b border-border-subtle last:border-r-0 md:pointer-coarse:h-56',
     muted ? 'bg-surface-muted' : 'bg-surface-elevated p-2.5',
     isToday && 'bg-surface-muted',
     isSelected && 'bg-selection-surface ring-2 ring-inset ring-selection',
@@ -49,7 +49,7 @@ export function calendarDayCellClassName({
 
 export function calendarMoreEventsButtonClassName(className?: string) {
   return cn(
-    'app-control-focus h-auto min-h-8 w-full justify-start rounded-control border-0 bg-surface-muted px-2 py-1 text-left text-xs font-semibold text-muted-foreground hover:bg-card hover:text-foreground focus-visible:outline-none',
+    'app-control-focus h-8 min-w-0 w-full justify-start truncate rounded-control border-0 bg-surface-muted px-2 py-1 text-left text-xs font-semibold text-muted-foreground hover:bg-card hover:text-foreground focus-visible:outline-none',
     className,
   )
 }
@@ -84,7 +84,17 @@ export function calendarEventChipClassName(className?: string) {
 }
 
 export function calendarEventChipTitleClassName(className?: string) {
-  return cn('truncate font-semibold leading-tight', className)
+  return cn('min-w-0 truncate font-semibold leading-tight', className)
+}
+
+/** Month cells reserve room for two single-line entries and an overflow action. */
+export function calendarCompactEventChipClassName(className?: string) {
+  return calendarEventChipClassName(
+    cn(
+      'flex h-7 min-w-0 w-full items-center gap-1.5 px-2 py-0 pointer-coarse:h-11',
+      className,
+    ),
+  )
 }
 
 export function calendarEventChipMetaClassName(className?: string) {

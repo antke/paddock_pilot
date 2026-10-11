@@ -1,0 +1,286 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@600&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+  #pp-mobile-prototype { --mp-paper:light-dark(#fcfbf8,#20251f); --mp-canvas:light-dark(#eeece8,#272a24); --mp-ink:light-dark(#30372f,#f0f3ea); --mp-muted:light-dark(#62695f,#bfc9b9); --mp-line:light-dark(#bec8c2,#586b60); --mp-input:light-dark(#7d8b83,#809287); --mp-green:light-dark(#285b43,#a9c7ab); --mp-on:light-dark(#fcfdfc,#15271d); --mp-selected:light-dark(#e4e6dc,#41493a); --mp-row:light-dark(#f3f2ee,#272a24); --mp-warning:light-dark(#87571f,#f0c27c); --mp-warning-bg:light-dark(#f1e2c8,#4e3c28); --mp-error:light-dark(#962f43,#f2a8b7); --mp-width:390px; color:var(--mp-ink); font:17px/1.35 'Alegreya Sans',sans-serif; padding:20px 8px; }
+  #pp-mobile-prototype * { box-sizing:border-box; }
+  #pp-mobile-prototype [hidden] { display:none !important; }
+  #pp-mobile-prototype .mp-caption { max-width:var(--mp-width); margin:0 auto 10px; color:var(--mp-muted); font-size:15px; }
+  #pp-mobile-prototype .mp-device { position:relative; display:flex; flex-direction:column; height:740px; width:100%; max-width:var(--mp-width); margin:auto; border:1px solid var(--mp-line); border-radius:12px; background:var(--mp-paper); overflow:hidden; }
+  #pp-mobile-prototype .mp-top { flex:none; padding:10px 16px; min-height:49px; display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--mp-line); font-weight:500; }
+  #pp-mobile-prototype .mp-top span:last-child { margin-left:auto; font-size:15px; color:var(--mp-muted); }
+  #pp-mobile-prototype .mp-main { min-height:0; flex:1; overflow:auto; overscroll-behavior:contain; scroll-padding:20px; padding:20px 18px 24px; scrollbar-width:thin; scrollbar-color:var(--mp-line) transparent; }
+  #pp-mobile-prototype h1 { font:600 32px/1.12 'Alegreya',serif; margin:0 0 4px; color:var(--mp-ink); }
+  #pp-mobile-prototype h2 { font:600 23px/1.2 'Alegreya',serif; margin:0; color:var(--mp-ink); }
+  #pp-mobile-prototype h3 { font:500 17px/1.35 'Alegreya Sans',sans-serif; margin:20px 0 8px; color:var(--mp-ink); }
+  #pp-mobile-prototype p { margin:0; }
+  #pp-mobile-prototype .mp-sub { color:var(--mp-muted); font-size:15px; }
+  #pp-mobile-prototype button,#pp-mobile-prototype input,#pp-mobile-prototype select,#pp-mobile-prototype textarea { font:inherit; }
+  #pp-mobile-prototype button { color:inherit; }
+  #pp-mobile-prototype button:active { filter:brightness(.94); }
+  #pp-mobile-prototype .mp-button { display:flex; align-items:center; justify-content:center; gap:8px; min-height:48px; border:0; border-radius:6px; background:var(--mp-green); color:var(--mp-on); padding:10px 14px; font-weight:500; text-align:center; }
+  #pp-mobile-prototype .mp-button.secondary { background:var(--mp-paper); color:var(--mp-ink); border:1px solid var(--mp-input); }
+  #pp-mobile-prototype .mp-shortcuts { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); gap:10px; margin:18px 0 26px; }
+  #pp-mobile-prototype .mp-shortcuts .mp-button { min-height:62px; }
+  #pp-mobile-prototype .mp-section { margin-top:22px; }
+  #pp-mobile-prototype .mp-section-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:4px; }
+  #pp-mobile-prototype .mp-link { display:inline-flex; align-items:center; justify-content:center; gap:4px; background:transparent; border:0; min-height:44px; padding:6px 0 6px 8px; color:var(--mp-green); font-size:15px; text-decoration:underline; text-underline-offset:3px; }
+  #pp-mobile-prototype .mp-list { list-style:none; margin:0; padding:0; display:grid; gap:2px; }
+  #pp-mobile-prototype .mp-record { display:flex; align-items:center; gap:10px; width:100%; min-height:64px; border:0; border-radius:8px; padding:10px 12px; text-align:left; background:var(--mp-row); }
+  #pp-mobile-prototype .mp-list li:nth-child(even) .mp-record { background:transparent; }
+  #pp-mobile-prototype .mp-record > span:first-child { flex:1; min-width:0; }
+  #pp-mobile-prototype .mp-record strong { display:block; font-weight:700; overflow-wrap:anywhere; }
+  #pp-mobile-prototype .mp-record .mp-sub { display:block; margin-top:2px; }
+  #pp-mobile-prototype .mp-record svg { flex:none; }
+  #pp-mobile-prototype .mp-status { font-size:13px; color:var(--mp-muted); white-space:nowrap; }
+  #pp-mobile-prototype .mp-status.done { color:var(--mp-green); }
+  #pp-mobile-prototype .mp-notice { width:100%; display:flex; align-items:center; gap:9px; margin-top:22px; min-height:48px; padding:12px; border:0; border-radius:8px; background:var(--mp-warning-bg); color:var(--mp-warning); text-align:left; }
+  #pp-mobile-prototype .mp-empty { color:var(--mp-muted); padding:10px 0; }
+  #pp-mobile-prototype .mp-nav { flex:none; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); border-top:1px solid var(--mp-line); padding:6px 6px max(9px,env(safe-area-inset-bottom,0px)); background:var(--mp-paper); }
+  #pp-mobile-prototype .mp-nav button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; min-width:0; min-height:54px; border:0; border-radius:8px; background:transparent; font-size:13px; padding:6px 2px; color:var(--mp-muted); }
+  #pp-mobile-prototype .mp-nav button[aria-current=page] { background:var(--mp-selected); color:var(--mp-ink); font-weight:700; }
+  #pp-mobile-prototype .mp-nav svg { width:21px; height:21px; }
+  #pp-mobile-prototype .mp-footer { flex:none; background:var(--mp-paper); border-top:1px solid var(--mp-line); padding:10px 16px max(10px,env(safe-area-inset-bottom,0px)); }
+  #pp-mobile-prototype .mp-footer .mp-button { width:100%; }
+  #pp-mobile-prototype .mp-form-head { display:flex; align-items:center; gap:12px; padding:8px 16px; min-height:60px; flex:none; border-bottom:1px solid var(--mp-line); }
+  #pp-mobile-prototype .mp-form-head h1 { font-size:24px; margin:0; }
+  #pp-mobile-prototype .mp-form-head button { min-width:44px; min-height:44px; border:0; background:transparent; padding:6px 0; text-align:left; color:var(--mp-green); }
+  #pp-mobile-prototype .mp-field { display:grid; gap:7px; margin-bottom:19px; }
+  #pp-mobile-prototype .mp-field label { font-weight:500; }
+  #pp-mobile-prototype .mp-field label span { font-weight:400; color:var(--mp-muted); }
+  #pp-mobile-prototype input,#pp-mobile-prototype select,#pp-mobile-prototype textarea { min-height:48px; min-width:0; max-width:100%; width:100%; border:1px solid var(--mp-input); border-radius:6px; background:var(--mp-paper); color:var(--mp-ink); padding:11px 12px; font-size:17px; caret-color:var(--mp-green); scroll-margin:18px; }
+  #pp-mobile-prototype textarea { resize:vertical; min-height:104px; }
+  #pp-mobile-prototype input::placeholder,#pp-mobile-prototype textarea::placeholder { color:var(--mp-muted); opacity:1; }
+  #pp-mobile-prototype .mp-pair { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  #pp-mobile-prototype .mp-checks { border:0; margin:0 0 20px; padding:0; }
+  #pp-mobile-prototype .mp-checks legend { margin-bottom:8px; font-weight:500; }
+  #pp-mobile-prototype .mp-checks label { display:flex; align-items:center; gap:10px; min-height:44px; }
+  #pp-mobile-prototype .mp-checks input { width:20px; height:20px; min-height:20px; accent-color:var(--mp-green); }
+  #pp-mobile-prototype .mp-segment { display:flex; gap:4px; background:var(--mp-canvas); padding:4px; border-radius:8px; margin:18px 0; }
+  #pp-mobile-prototype .mp-segment button { flex:1; border:0; min-height:44px; border-radius:6px; background:transparent; color:var(--mp-muted); }
+  #pp-mobile-prototype .mp-segment button[aria-pressed=true] { color:var(--mp-ink); background:var(--mp-paper); font-weight:700; }
+  #pp-mobile-prototype .mp-toast { flex:none; padding:10px 16px; color:var(--mp-green); background:var(--mp-selected); font-size:15px; }
+  #pp-mobile-prototype .mp-toast:empty { display:none; }
+  #pp-mobile-prototype .mp-kb { flex:none; background:var(--mp-canvas); border-top:1px solid var(--mp-line); padding:3px 6px 10px; }
+  #pp-mobile-prototype .mp-kb-bar { display:flex; align-items:center; justify-content:space-between; padding:0 8px; color:var(--mp-muted); font-size:13px; }
+  #pp-mobile-prototype .mp-kb-bar button { background:transparent; border:0; color:var(--mp-green); min-height:44px; min-width:44px; font-size:15px; }
+  #pp-mobile-prototype .mp-keys { display:flex; justify-content:center; gap:4px; margin-bottom:5px; }
+  #pp-mobile-prototype .mp-keys span { background:var(--mp-paper); border-radius:6px; flex:1; max-width:34px; height:30px; display:flex; align-items:center; justify-content:center; font-size:15px; }
+  #pp-mobile-prototype .mp-keys .mp-space { max-width:none; flex:5; }
+  #pp-mobile-prototype .mp-error { color:var(--mp-error); margin-bottom:14px; }
+  #pp-mobile-prototype .mp-overlay { position:absolute; inset:0; background:color-mix(in srgb,var(--mp-ink) 25%,transparent); display:flex; align-items:flex-end; z-index:5; }
+  #pp-mobile-prototype .mp-sheet { width:100%; background:var(--mp-paper); padding:24px 20px; border-radius:12px 12px 0 0; }
+  #pp-mobile-prototype .mp-sheet p { margin:12px 0 20px; }
+  #pp-mobile-prototype .mp-sheet .mp-button { width:100%; margin-top:10px; }
+  #pp-mobile-prototype dl { margin:20px 0; }
+  #pp-mobile-prototype dt { margin-top:15px; color:var(--mp-muted); font-size:15px; }
+  #pp-mobile-prototype dd { margin:3px 0 0; overflow-wrap:anywhere; }
+  #pp-mobile-prototype .mp-search { margin:18px 0; }
+  @media(max-width:360px) { #pp-mobile-prototype { padding:12px 0; } #pp-mobile-prototype .mp-main { padding-left:14px; padding-right:14px; } #pp-mobile-prototype .mp-shortcuts { gap:8px; } #pp-mobile-prototype .mp-button { padding:10px; } }
+</style>
+<div id="pp-mobile-prototype" class="viz-dotted-background" aria-label="Mobile task flow prototype">
+  <p class="mp-caption">Mobile · fictional sample data · changes stay in this preview</p>
+  <div class="mp-device" aria-label="Paddock Pilot mobile preview">
+    <div class="mp-top"><i data-lucide="house" aria-hidden="true"></i><span>Demo Yard</span><span>Paddock Pilot</span></div>
+    <header class="mp-form-head" hidden></header>
+    <div class="mp-toast" role="status" aria-live="polite"></div>
+    <main class="mp-main" aria-label="Today"></main>
+    <div class="mp-footer" hidden></div>
+    <nav class="mp-nav" aria-label="Main navigation"></nav>
+    <div class="mp-kb" hidden><div class="mp-kb-bar"><span>Keyboard preview</span><button type="button" class="cursor-interaction" data-keyboard-done>Done</button></div><div aria-hidden="true"><div class="mp-keys"><span>q</span><span>w</span><span>e</span><span>r</span><span>t</span><span>y</span><span>u</span><span>i</span><span>o</span><span>p</span></div><div class="mp-keys"><span>a</span><span>s</span><span>d</span><span>f</span><span>g</span><span>h</span><span>j</span><span>k</span><span>l</span></div><div class="mp-keys"><span>z</span><span>x</span><span>c</span><span>v</span><span>b</span><span>n</span><span>m</span></div><div class="mp-keys"><span>123</span><span class="mp-space">space</span><span>return</span></div></div></div>
+    <div class="mp-overlay" hidden><section class="mp-sheet" role="dialog" aria-modal="true" aria-labelledby="mp-discard-title"><h2 id="mp-discard-title">Discard this draft?</h2><p>Your changes have not been saved.</p><button type="button" class="mp-button cursor-interaction" data-keep>Keep editing</button><button type="button" class="mp-button secondary cursor-interaction" data-discard>Discard draft</button></section></div>
+  </div>
+</div>
+<script>
+(() => {
+  const root = document.getElementById('pp-mobile-prototype');
+  const main = root.querySelector('.mp-main');
+  const top = root.querySelector('.mp-top');
+  const head = root.querySelector('.mp-form-head');
+  const footer = root.querySelector('.mp-footer');
+  const nav = root.querySelector('.mp-nav');
+  const toast = root.querySelector('.mp-toast');
+  const keyboard = root.querySelector('.mp-kb');
+  const overlay = root.querySelector('.mp-overlay');
+  const options = { quiet:false, keyboardPreview:true, phoneWidth:390 };
+  const state = { screen:'today', range:'today', query:'', detail:null, origin:null, draft:null, initialDraft:'', dirty:false, saving:false, scroll:{}, notice:'' };
+  const horses = [{id:'bramble',name:'Bramble',meta:'Gelding · 12 years'},{id:'willow',name:'Willow',meta:'Mare · 9 years'},{id:'atlas',name:'Atlas',meta:'Gelding · 7 years'}];
+  const training = [{id:'t1',horse:'bramble',activity:'Flatwork',date:'2026-10-08',duration:'25',status:'Completed',notes:'Relaxed transitions; finished with a walk.'},{id:'t2',horse:'willow',activity:'Groundwork',date:'2026-10-08',duration:'',status:'Scheduled',notes:'17:00 · In-hand session'}];
+  const events = [{id:'e1',title:'Farrier visit',date:'2026-10-08',time:'15:00',horses:['bramble','willow'],notes:'Meet at the wash bay.'},{id:'e2',title:'Dentist visit',date:'2026-10-09',time:'09:00',horses:['atlas'],notes:''},{id:'e3',title:'Saddle fitting',date:'2026-10-12',time:'14:00',horses:['willow'],notes:''}];
+  const destinations = [['today','house','Today'],['events','calendar-days','Events'],['training','notebook-pen','Training'],['horses','list','Horses'],['more','menu','More']];
+  const escape = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const horseName = id => horses.find(h => h.id === id)?.name ?? 'Horse unavailable';
+  const icon = name => '<i data-lucide="'+name+'" aria-hidden="true"></i>';
+  const button = (label,action,kind='mp-button') => '<button type="button" class="'+kind+' cursor-interaction" data-action="'+action+'">'+label+'</button>';
+  const dateLabel = value => new Intl.DateTimeFormat('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(value+'T12:00:00Z'));
+  const currentTraining = () => options.quiet ? training.filter(t => t.new) : training;
+  const currentEvents = () => options.quiet ? events.filter(e => e.new || e.date !== '2026-10-08') : events;
+  const rows = content => '<ul class="mp-list">'+content+'</ul>';
+  const trainingRow = record => '<li><button type="button" class="mp-record cursor-interaction" data-training="'+record.id+'"><span><strong>'+escape(horseName(record.horse))+'</strong><span class="mp-sub">'+escape(record.activity)+(record.duration?' · '+escape(record.duration)+' min':'')+'</span></span><span class="mp-status '+(record.status==='Completed'?'done':'')+'">'+record.status+'</span>'+icon('chevron-right')+'</button></li>';
+  const eventRow = record => '<li><button type="button" class="mp-record cursor-interaction" data-event="'+record.id+'"><span><strong>'+escape(record.title)+'</strong><span class="mp-sub">'+escape(record.time)+' · '+escape(record.horses.map(horseName).join(' & '))+'</span></span>'+icon('chevron-right')+'</button></li>';
+  const horseRow = horse => '<li><button type="button" class="mp-record cursor-interaction" data-horse="'+horse.id+'"><span><strong>'+horse.name+'</strong><span class="mp-sub">'+horse.meta+'</span></span>'+icon('chevron-right')+'</button></li>';
+  function persist() {
+    window.openai?.setWidgetState?.({modelContent:{prototype:'Mobile task flow',screen:state.screen,quietDay:options.quiet},privateContent:{prototype:'mobile-task-flow',screen:destinations.some(d=>d[0]===state.screen)?state.screen:'today',range:state.range,quiet:options.quiet,phoneWidth:options.phoneWidth}})?.catch(() => {});
+  }
+  function restore(saved) {
+    if (saved?.prototype !== 'mobile-task-flow') return;
+    if (destinations.some(d=>d[0]===saved.screen)) state.screen=saved.screen;
+    state.range=saved.range==='week'?'week':'today'; options.quiet=!!saved.quiet;
+    if (Number.isFinite(saved.phoneWidth)) options.phoneWidth=Math.min(430,Math.max(320,saved.phoneWidth));
+  }
+  restore(window.openai?.widgetState?.privateContent);
+  window.addEventListener('openai:set_globals', event => {
+    if (state.draft) return;
+    restore(event.detail?.globals?.widgetState?.privateContent); render();
+  });
+  function topLevel(screen) {
+    state.scroll[state.screen]=main.scrollTop;
+    state.screen=screen; state.detail=null; state.notice=''; keyboard.hidden=true;
+    render(); persist();
+  }
+  function groupedEvents(items) {
+    if (!items.length) return '<p class="mp-empty">No events scheduled for this period.</p>';
+    const days=[...new Set(items.map(e=>e.date))].sort();
+    return days.map(day=>'<h3>'+dateLabel(day)+'</h3>'+rows(items.filter(e=>e.date===day).sort((a,b)=>a.time.localeCompare(b.time)).map(eventRow).join(''))).join('');
+  }
+  function todayView() {
+    const todaysTraining=currentTraining().filter(t=>t.date==='2026-10-08');
+    const todaysEvents=currentEvents().filter(e=>e.date==='2026-10-08');
+    return '<h1>Today</h1><p class="mp-sub">Thursday 8 October</p><div class="mp-shortcuts">'+button('Record completed<br>work','new-training')+button(icon('plus')+'Add event','new-event')+'</div>'+
+      '<section class="mp-section"><div class="mp-section-head"><h2>Training</h2>'+button('Training log','training','mp-link')+'</div>'+(todaysTraining.length?rows(todaysTraining.slice(0,2).map(trainingRow).join('')):'<p class="mp-empty">No training recorded or scheduled today.</p>')+'</section>'+
+      '<section class="mp-section"><div class="mp-section-head"><h2>Events</h2>'+button('All events','events','mp-link')+'</div>'+(todaysEvents.length?rows(todaysEvents.slice(0,2).map(eventRow).join('')):'<p class="mp-empty">No events scheduled today.</p>')+'</section>'+
+      '<section class="mp-section"><div class="mp-section-head"><h2>Horses</h2>'+button('All horses','horses','mp-link')+'</div>'+rows(horses.slice(0,2).map(horseRow).join(''))+'</section>'+
+      (options.quiet?'':button(icon('bell')+'1 care reminder due today'+icon('chevron-right'),'care','mp-notice'));
+  }
+  function listView(screen) {
+    if (screen==='training') return '<h1>Training</h1><p class="mp-sub">Demo Yard · training log</p><h3>Thu 8 October</h3>'+(currentTraining().length?rows(currentTraining().map(trainingRow).join('')):'<p class="mp-empty">No training recorded or scheduled today.</p>');
+    if (screen==='events') return '<h1>Events</h1><p class="mp-sub">Demo Yard · appointments and shared events</p><div class="mp-segment" aria-label="Event period">'+['today','week'].map(range=>'<button type="button" class="cursor-interaction" data-range="'+range+'" aria-pressed="'+(state.range===range)+'">'+(range==='today'?'Today':'Next 7 days')+'</button>').join('')+'</div>'+groupedEvents(currentEvents().filter(e=>state.range==='today'?e.date==='2026-10-08':e.date>'2026-10-08'&&e.date<='2026-10-15'));
+    if (screen==='horses') return '<h1>Horses</h1><p class="mp-sub">Demo Yard · 3 horses</p><div class="mp-search"><label for="mp-search">Find a horse</label><input id="mp-search" name="horse-search" type="search" autocomplete="off" placeholder="Horse name" value="'+escape(state.query)+'"></div><div data-horse-results>'+horseResults()+'</div>';
+    return '<h1>More</h1><p class="mp-sub">Demo Yard</p><div class="mp-section">'+rows([['care','Care reminders','1 due today'],['contacts','Contacts','Stable and emergency contacts'],['updates','Updates','Latest from your stable']].map(([action,label,sub])=>'<li>'+button('<span><strong>'+label+'</strong><span class="mp-sub">'+sub+'</span></span>'+icon('chevron-right'),action,'mp-record')+'</li>').join(''))+'</div>';
+  }
+  function horseResults() { const found=horses.filter(h=>h.name.toLowerCase().includes(state.query.trim().toLowerCase())); return found.length?rows(found.map(horseRow).join('')):'<p class="mp-empty">No horses match this name.</p>'; }
+  function field(label,name,type='text',value='',attrs='') { return '<div class="mp-field"><label for="mp-'+name+'">'+label+'</label><input id="mp-'+name+'" name="'+name+'" type="'+type+'" value="'+escape(value)+'" '+attrs+'></div>'; }
+  function formView() {
+    const d=state.draft;
+    const shared=field('Date','date','date',d.date,'required');
+    const notes='<div class="mp-field"><label for="mp-notes">Notes <span>· optional</span></label><textarea id="mp-notes" name="notes" maxlength="1000" placeholder="Anything useful to remember…">'+escape(d.notes)+'</textarea></div>';
+    if (state.screen==='form-training') return '<form id="mp-form">'+
+      '<div class="mp-field"><label for="mp-horse">Horse</label><select id="mp-horse" name="horse" required>'+horses.map(h=>'<option value="'+h.id+'" '+(d.horse===h.id?'selected':'')+'>'+h.name+'</option>').join('')+'</select></div>'+shared+
+      '<div class="mp-field"><label for="mp-activity">Activity</label><select id="mp-activity" name="activity" required>'+['Flatwork','Jumping','Groundwork','Hacking','Lunging','Other training'].map(a=>'<option '+(a===d.activity?'selected':'')+'>'+a+'</option>').join('')+'</select></div>'+
+      field('Duration in minutes <span>· optional</span>','duration','number',d.duration,'min="1" max="1440" step="1" inputmode="numeric" placeholder="e.g. 30"')+notes+'</form>';
+    return '<form id="mp-form">'+field('Event title','title','text',d.title,'required maxlength="100" autocomplete="off" placeholder="e.g. Vet visit"')+shared+field('Time','time','time',d.time,'required')+
+      '<fieldset class="mp-checks"><legend>Horses</legend>'+horses.map(h=>'<label><input type="checkbox" name="horses" value="'+h.id+'" '+(d.horses.includes(h.id)?'checked':'')+'>'+h.name+'</label>').join('')+'</fieldset>'+notes+'</form>';
+  }
+  function detailView() {
+    const d=state.detail;
+    if (d?.type==='horse') { const h=horses.find(h=>h.id===d.id); return '<h1>'+h.name+'</h1><p class="mp-sub">'+h.meta+' · Demo Yard</p><h3>Recent training</h3>'+rows(training.filter(t=>t.horse===h.id).map(trainingRow).join(''))+'<h3>Upcoming events</h3>'+groupedEvents(events.filter(e=>e.horses.includes(h.id)))+button('Record completed work','new-training','mp-button'); }
+    if (d?.type==='training') { const t=training.find(t=>t.id===d.id); return '<h1>'+escape(horseName(t.horse))+'</h1><p class="mp-sub">'+escape(t.activity)+'</p><dl><dt>Date</dt><dd>'+dateLabel(t.date)+'</dd><dt>Status</dt><dd>'+t.status+'</dd><dt>Duration</dt><dd>'+(t.duration?escape(t.duration)+' minutes':'Not recorded')+'</dd><dt>Notes</dt><dd>'+escape(t.notes||'No notes added.')+'</dd></dl>'; }
+    if (d?.type==='event') { const e=events.find(e=>e.id===d.id); return '<h1>'+escape(e.title)+'</h1><p class="mp-sub">Demo Yard</p><dl><dt>When</dt><dd>'+dateLabel(e.date)+' · '+escape(e.time)+'</dd><dt>Horses</dt><dd>'+escape(e.horses.map(horseName).join(', ')||'Stable event')+'</dd><dt>Notes</dt><dd>'+escape(e.notes||'No notes added.')+'</dd></dl>'; }
+    if (state.screen==='care') return '<h1>Care reminders</h1><p class="mp-sub">Demo Yard</p><h3>Due today</h3><div class="mp-record"><span><strong>Bramble · farrier</strong><span class="mp-sub">Scheduled today at 15:00</span></span></div>';
+    if (state.screen==='contacts') return '<h1>Contacts</h1><p class="mp-sub">Demo Yard</p><h3>Stable contacts</h3><p>No contact details included in this sample.</p>';
+    return '<h1>Updates</h1><p class="mp-sub">Demo Yard</p><h3>Arena maintenance</h3><p>The outdoor arena will be closed on Friday morning.</p>';
+  }
+  function render() {
+    root.style.setProperty('--mp-width',options.phoneWidth+'px');
+    const isForm=state.screen.startsWith('form-');
+    const isTop=destinations.some(d=>d[0]===state.screen);
+    top.hidden=isForm; head.hidden=isTop; nav.hidden=!isTop;
+    keyboard.hidden=true; toast.textContent=state.notice;
+    head.innerHTML=button(isForm?'Cancel':icon('arrow-left')+'Back',isForm?'cancel':'back','')+(isForm?'<h1>'+(state.screen==='form-training'?'Record completed work':'Add event')+'</h1>':'');
+    main.setAttribute('aria-label',isForm?(state.screen==='form-training'?'Record completed work':'Add event'):state.screen);
+    main.innerHTML=isForm?formView():state.screen==='today'?todayView():isTop?listView(state.screen):detailView();
+    nav.innerHTML=destinations.map(([key,ico,label])=>'<button type="button" class="cursor-interaction" data-action="'+key+'" '+(state.screen===key?'aria-current="page"':'')+'>'+icon(ico)+'<span>'+label+'</span></button>').join('');
+    footer.hidden=!(isForm||state.screen==='events'||state.screen==='training');
+    footer.innerHTML=isForm?'<button class="mp-button cursor-interaction" type="button" data-action="save">'+(state.screen==='form-training'?'Save training record':'Save event')+'</button>':state.screen==='events'?button(icon('plus')+'Add event','new-event'):state.screen==='training'?button(icon('plus')+'Record completed work','new-training'):'';
+    globalThis.lucide?.createIcons({attrs:{width:18,height:18}});
+    main.scrollTop=isForm?0:(state.scroll[state.screen]||0);
+    if (isForm) main.querySelector('form').addEventListener('submit',saveForm);
+  }
+  function openForm(type) {
+    state.origin={screen:state.screen,detail:state.detail,scroll:main.scrollTop};
+    state.scroll[state.screen]=main.scrollTop;
+    state.screen='form-'+type; state.notice=''; state.dirty=false;
+    state.draft=type==='training'?{horse:state.detail?.type==='horse'?state.detail.id:'bramble',activity:'Flatwork',date:'2026-10-08',duration:'',notes:''}:{title:'',date:'2026-10-08',time:'15:00',horses:[],notes:''};
+    state.initialDraft=JSON.stringify(state.draft); render(); head.querySelector('button').focus(); persist();
+  }
+  function readDraft() {
+    const form=main.querySelector('form'); if (!form) return;
+    const data=new FormData(form);
+    state.draft=state.screen==='form-training'?{horse:String(data.get('horse')),activity:String(data.get('activity')),date:String(data.get('date')),duration:String(data.get('duration')),notes:String(data.get('notes'))}:{title:String(data.get('title')),date:String(data.get('date')),time:String(data.get('time')),horses:data.getAll('horses').map(String),notes:String(data.get('notes'))};
+    state.dirty=JSON.stringify(state.draft)!==state.initialDraft;
+  }
+  function closeForm(message='') {
+    const origin=state.origin; state.draft=null; state.dirty=false; state.saving=false;
+    state.screen=origin?.screen||'today'; state.detail=origin?.detail||null; state.notice=message; keyboard.hidden=true;
+    render(); main.scrollTop=origin?.scroll||0;
+    const action=root.querySelector('[data-action="'+(message.startsWith('Event')?'new-event':'new-training')+'"]'); action?.focus({preventScroll:true});
+    persist();
+  }
+  async function saveForm(event) {
+    event.preventDefault(); if(state.saving || !main.querySelector('form').reportValidity()) return; readDraft(); state.saving=true;
+    const submit=footer.querySelector('button'); submit.disabled=true; submit.setAttribute('aria-busy','true'); submit.textContent='Saving…';
+    main.querySelectorAll('input,select,textarea').forEach(e=>e.disabled=true); head.querySelector('button').disabled=true;
+    keyboard.hidden=true;
+    await new Promise(resolve=>setTimeout(resolve,350));
+    const d=state.draft;
+    if(state.screen==='form-training') { training.unshift({id:'t'+Date.now(),...d,status:'Completed',new:true}); closeForm('Training record saved in this preview.'); }
+    else { events.unshift({id:'e'+Date.now(),...d,new:true}); closeForm('Event saved in this preview.'); }
+  }
+  const history=[];
+  function openDetail(screen,detail=null) {
+    history.push({screen:state.screen,detail:state.detail,scroll:main.scrollTop}); state.scroll[state.screen]=main.scrollTop;
+    state.screen=screen; state.detail=detail; state.notice=''; render(); main.scrollTop=0; head.querySelector('button')?.focus(); persist();
+  }
+  function setOverlay(show) {
+    overlay.hidden=!show;
+    [top,head,main,footer,nav,keyboard].forEach(el=>el.inert=show);
+    if(show) { keyboard.hidden=true; overlay.querySelector('[data-keep]').focus(); }
+    else head.querySelector('button')?.focus();
+  }
+  root.addEventListener('click',event=> {
+    const target=event.target.closest('button'); if(!target||state.saving) return;
+    if(target.matches('[data-keyboard-done]')) { keyboard.hidden=true; const notes=main.querySelector('textarea'); notes?.blur(); return; }
+    if(target.matches('[data-keep]')) { setOverlay(false); return; }
+    if(target.matches('[data-discard]')) { setOverlay(false); closeForm(); return; }
+    if(target.dataset.range) { state.range=target.dataset.range; state.scroll.events=0; render(); root.querySelector('[data-range="'+state.range+'"]').focus(); persist(); return; }
+    if(target.dataset.training) { openDetail('detail',{type:'training',id:target.dataset.training}); return; }
+    if(target.dataset.event) { openDetail('detail',{type:'event',id:target.dataset.event}); return; }
+    if(target.dataset.horse) { openDetail('detail',{type:'horse',id:target.dataset.horse}); return; }
+    const action=target.dataset.action;
+    if(destinations.some(d=>d[0]===action)) { history.length=0; topLevel(action); nav.querySelector('[aria-current=page]')?.focus({preventScroll:true}); }
+    else if(action==='new-training') openForm('training');
+    else if(action==='new-event') openForm('event');
+    else if(action==='save') saveForm(event);
+    else if(action==='cancel') { readDraft(); if(state.dirty) setOverlay(true); else closeForm(); }
+    else if(action==='back') { const prev=history.pop(); state.screen=prev?.screen||'today'; state.detail=prev?.detail||null; render(); main.scrollTop=prev?.scroll||0; nav.querySelector('[aria-current=page]')?.focus({preventScroll:true}); }
+    else if(['care','contacts','updates'].includes(action)) openDetail(action);
+  });
+  root.addEventListener('input',event=> {
+    if(event.target.id==='mp-search') { state.query=event.target.value; main.querySelector('[data-horse-results]').innerHTML=horseResults(); globalThis.lucide?.createIcons({attrs:{width:18,height:18}}); }
+    else if(state.draft) readDraft();
+  });
+  root.addEventListener('change',()=>{if(state.draft)readDraft();});
+  root.addEventListener('keydown',event=>{if(state.draft&&event.key==='Enter'&&event.target.matches('input:not([type=checkbox])')){event.preventDefault();saveForm(event);}});
+  root.addEventListener('focusin',event=> {
+    if (!state.draft || !options.keyboardPreview || !matchMedia('(pointer: fine)').matches) return;
+    if (event.target.matches('textarea,input:not([type=checkbox]):not([type=date]):not([type=time])')) {
+      keyboard.hidden=false;
+      requestAnimationFrame(()=>{
+        const field=event.target.closest('.mp-field'); if(!field)return;
+        const f=field.getBoundingClientRect(),m=main.getBoundingClientRect();
+        if(f.bottom>m.bottom-14)main.scrollTop+=f.bottom-m.bottom+14;
+        if(f.top<m.top+10)main.scrollTop-=m.top+10-f.top;
+      });
+    }
+  });
+  overlay.addEventListener('keydown',event=>{
+    if(event.key==='Escape'){event.preventDefault();setOverlay(false);}
+    if(event.key==='Tab'){const items=overlay.querySelectorAll('button');if(event.shiftKey&&document.activeElement===items[0]){event.preventDefault();items[1].focus();}else if(!event.shiftKey&&document.activeElement===items[1]){event.preventDefault();items[0].focus();}}
+  });
+  render();
+  if(globalThis.Tweak){
+    const tweak=new Tweak({container:root,onChange:()=>{if(state.draft)readDraft();render();persist();}});
+    tweak.addToggle(options,'quiet',{label:'Quiet day'});
+    tweak.addToggle(options,'keyboardPreview',{label:'Simulate keyboard when typing'});
+    tweak.addSlider(options,'phoneWidth',{label:'Phone width',min:320,max:430,step:10,unit:'px'});
+  }
+})();
+</script>

@@ -1,3 +1,11 @@
+import { DotsThreeIcon } from '@phosphor-icons/react'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '#/components/ui/dropdown-menu'
+import type { RefObject } from 'react'
 import { useT } from '#/i18n/LocaleProvider'
 import { StableProviderForm } from '#/components/stables/StableProviderForm'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
@@ -171,6 +179,7 @@ function ProviderRow({
   const t = useT()
 
   const [isEditing, setIsEditing] = useState(false)
+  const [removeOpen, setRemoveOpen] = useState(false)
   const editTrigger = useRef<HTMLButtonElement>(null)
   const wasEditing = useRef(false)
   useEffect(() => {
@@ -196,17 +205,37 @@ function ProviderRow({
       actions={
         canManage ? (
           <>
-            <Button
-              ref={editTrigger}
-              type="button"
-              action="edit"
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsEditing(true)}
-            >
-              {t('stables.editAction')}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    ref={editTrigger}
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={t('stables.providerActions', {
+                      name: provider.name,
+                    })}
+                  />
+                }
+              >
+                <DotsThreeIcon aria-hidden="true" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                  {t('stables.editAction')}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => setRemoveOpen(true)}
+                >
+                  {t('stables.remove')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <StableProviderRemoveAction
+              open={removeOpen}
+              onOpenChange={setRemoveOpen}
+              externalTrigger={editTrigger}
               providerName={provider.name}
               isRemoving={false}
               onRemove={onRemove}
@@ -220,11 +249,17 @@ function ProviderRow({
 }
 
 export function StableProviderRemoveAction({
+  open: controlledOpen,
+  onOpenChange,
+  externalTrigger,
   providerName,
   isRemoving,
   onRemove,
   removalFocusTarget,
 }: {
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  externalTrigger?: RefObject<HTMLButtonElement | null>
   providerName: string
   isRemoving: boolean
   onRemove: () => Promise<boolean>
@@ -232,7 +267,13 @@ export function StableProviderRemoveAction({
 }) {
   const t = useT()
 
-  const [open, setOpen] = useState(false)
+  const [localOpen, setLocalOpen] = useState(false)
+  const open = controlledOpen ?? localOpen
+  const setOpen = (value: boolean) => {
+    if (!value) setFailed(false)
+    setLocalOpen(value)
+    onOpenChange?.(value)
+  }
   const [pending, setPending] = useState(false)
   const [failed, setFailed] = useState(false)
   const removing = useRef(false)
@@ -264,25 +305,27 @@ export function StableProviderRemoveAction({
         }
       }}
     >
-      <AlertDialogTrigger
-        render={
-          <Button
-            ref={trigger}
-            type="button"
-            action="delete"
-            variant="ghost"
-            size="sm"
-            disabled={busy}
-          />
-        }
-      >
-        {t('stables.remove')}
-      </AlertDialogTrigger>
+      {!externalTrigger && (
+        <AlertDialogTrigger
+          render={
+            <Button
+              ref={trigger}
+              type="button"
+              action="delete"
+              variant="ghost"
+              size="sm"
+              disabled={busy}
+            />
+          }
+        >
+          {t('stables.remove')}
+        </AlertDialogTrigger>
+      )}
       <AlertDialogContent
         finalFocus={() =>
           trigger.current?.isConnected
             ? trigger.current
-            : removalFocusTarget?.()
+            : (externalTrigger?.current ?? removalFocusTarget?.())
         }
       >
         <AlertDialogHeader>

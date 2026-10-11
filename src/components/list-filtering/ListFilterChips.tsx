@@ -7,11 +7,11 @@ import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { cn } from '#/lib/utils'
 
-const CHIP_ROW_TRANSITION_MS = 200 // Keep in sync with app-height-collapse duration.
+const CHIP_ROW_TRANSITION_MS = 180 // Keep in sync with app-height-collapse duration.
 const listFilterChipClassName =
-  'max-w-full min-w-0 animate-in duration-200 fade-in-0 slide-in-from-top-1 zoom-in-95 motion-reduce:animate-none'
+  'max-w-full min-w-0 max-md:py-0 max-md:pr-0 pointer-coarse:py-0 pointer-coarse:pr-0 animate-in duration-200 fade-in-0 slide-in-from-top-1 zoom-in-95 motion-reduce:animate-none'
 const listFilterChipLabelClassName =
-  'shrink-0 font-semibold text-muted-foreground'
+  'min-w-0 max-w-[45%] shrink-0 truncate font-semibold text-muted-foreground'
 const listFilterChipValueClassName = 'min-w-0 max-w-48 truncate font-medium'
 
 export type ListFilterChip<TFacetId extends string = string> = {

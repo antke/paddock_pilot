@@ -7,6 +7,7 @@ import { ConvexQueryClient } from '@convex-dev/react-query'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ConvexProviderWithClerk } from 'convex/react-clerk'
 import { clerkAppearance } from './appearance'
+import { AccountQueryCacheBoundary } from './AccountQueryCacheBoundary'
 
 const CONVEX_URL = import.meta.env.VITE_CONVEX_URL
 if (!CONVEX_URL) throw new Error('Add your Convex URL to the .env.local file')
@@ -48,6 +49,18 @@ export default function ConvexClerkProvider({
       appearance={clerkAppearance}
       localization={locale === 'pl' ? polishLocalization : enUS}
     >
+      <AccountDataProvider>{children}</AccountDataProvider>
+    </ClerkProvider>
+  )
+}
+
+function AccountDataProvider({ children }: { children: React.ReactNode }) {
+  const { userId, isLoaded } = useAuth()
+  return (
+    <AccountQueryCacheBoundary
+      identity={isLoaded ? (userId ?? null) : undefined}
+      client={queryClient}
+    >
       <QueryClientProvider client={queryClient}>
         <ConvexProviderWithClerk
           client={convexQueryClient.convexClient}
@@ -57,6 +70,6 @@ export default function ConvexClerkProvider({
           {children}
         </ConvexProviderWithClerk>
       </QueryClientProvider>
-    </ClerkProvider>
+    </AccountQueryCacheBoundary>
   )
 }

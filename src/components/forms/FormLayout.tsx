@@ -38,7 +38,8 @@ type FormSectionProps = Omit<
   defaultOpen?: boolean
   description?: ReactNode
   invalid?: boolean
-  number: number
+  number?: number
+  optionalLabel?: ReactNode
   summary?: ReactNode
   title: ReactNode
   validationAttempt?: number
@@ -157,6 +158,7 @@ export function FormSection({
   description,
   invalid = false,
   number,
+  optionalLabel,
   summary,
   title,
   validationAttempt = 0,
@@ -229,41 +231,46 @@ export function FormSection({
     >
       <button
         type="button"
-        className="app-control-focus flex w-full cursor-pointer items-center gap-3 px-4 py-4 text-left hover:bg-primary/5 focus-visible:outline-none sm:px-5"
+        className="app-choice-feedback app-control-focus flex w-full cursor-pointer items-center gap-3 px-4 py-4 text-left hover:bg-primary/5 focus-visible:outline-none sm:px-5"
         aria-controls={contentId}
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
       >
-        <span
-          className={cn(
-            'grid size-8 shrink-0 place-items-center rounded-control border border-border-subtle bg-surface-muted font-sans text-xs font-semibold text-muted-foreground tabular-nums',
-            invalid &&
-              'border-destructive/35 bg-destructive/10 text-destructive',
-          )}
-          aria-hidden="true"
-        >
-          {String(number).padStart(2, '0')}
-        </span>
-
-        <span className="grid min-w-0 flex-1 gap-1">
+        {number !== undefined && (
           <span
             className={cn(
-              dashboardNestedHeadingClassName,
-              'text-lg leading-none',
+              'grid size-8 shrink-0 place-items-center rounded-control border border-border-subtle bg-surface-muted font-sans text-xs font-semibold text-muted-foreground tabular-nums',
+              invalid &&
+                'border-destructive/35 bg-destructive/10 text-destructive',
             )}
+            aria-hidden="true"
           >
-            {title}
-          </span>
-          {description && (
-            <span className="text-sm text-muted-foreground">{description}</span>
-          )}
-        </span>
-
-        {summary && (
-          <span className="hidden max-w-56 truncate text-right text-xs font-medium text-muted-foreground md:block">
-            {summary}
+            {String(number).padStart(2, '0')}
           </span>
         )}
+
+        <span className="grid min-w-0 flex-1 gap-1">
+          <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <span
+              className={cn(
+                dashboardNestedHeadingClassName,
+                'text-lg leading-none',
+              )}
+            >
+              {title}
+            </span>{' '}
+            {optionalLabel && (
+              <span className="text-sm font-normal text-muted-foreground">
+                {optionalLabel}
+              </span>
+            )}
+          </span>{' '}
+          {(!open && summary ? summary : description) && (
+            <span className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
+              {!open && summary ? summary : description}
+            </span>
+          )}
+        </span>
 
         <CaretDownIcon
           className={cn(

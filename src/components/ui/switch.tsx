@@ -25,7 +25,7 @@ function Switch({
       id={id}
       {...accessibleNameProps}
       className={cn(
-        'peer group/switch relative inline-flex shrink-0 cursor-pointer items-center rounded-full border border-input/80 p-px transition-[background-color,border-color,box-shadow] duration-150 outline-none after:absolute after:-inset-x-2 after:-inset-y-3.5 hover:border-primary/45 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20 data-[size=default]:h-5 data-[size=default]:w-9 data-[size=sm]:h-4 data-[size=sm]:w-7 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 data-checked:border-primary data-checked:bg-primary data-unchecked:bg-surface-muted data-disabled:cursor-not-allowed data-disabled:opacity-50',
+        'peer group/switch relative inline-flex shrink-0 cursor-pointer items-center rounded-full border border-input/80 p-px transition-[background-color,border-color,box-shadow] duration-150 motion-reduce:transition-none outline-none after:absolute after:-inset-x-2 after:-inset-y-3.5 hover:border-primary/45 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20 data-[size=default]:h-5 data-[size=default]:w-9 data-[size=sm]:h-4 data-[size=sm]:w-7 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 data-checked:border-primary data-checked:bg-primary data-unchecked:bg-surface-muted data-disabled:cursor-not-allowed data-disabled:opacity-50',
         className,
       )}
       {...props}

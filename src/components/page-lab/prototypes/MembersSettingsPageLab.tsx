@@ -319,9 +319,9 @@ function SampleMembersSettings({
         renderRemoveMember={(props) => (
           <RemoveMemberButtonView
             {...props}
-            onRemove={(newOwner) =>
+            onRemove={() =>
               perform(
-                `Member removed from this sample. ${props.horses.length} horses reassigned locally. No live access changed.`,
+                `${props.horses.length} horses left this sample stable with their owner.`,
                 () => {
                   setMembers((current) =>
                     current.filter(
@@ -329,14 +329,11 @@ function SampleMembersSettings({
                         person.membership?._id !== props.membership._id,
                     ),
                   )
-                  if (newOwner)
-                    setHorses((current) =>
-                      current.map((horse) =>
-                        horse.ownerId === props.membership.userId
-                          ? { ...horse, ownerId: newOwner }
-                          : horse,
-                      ),
-                    )
+                  setHorses((current) =>
+                    current.filter(
+                      (horse) => horse.ownerId !== props.membership.userId,
+                    ),
+                  )
                 },
               )
             }

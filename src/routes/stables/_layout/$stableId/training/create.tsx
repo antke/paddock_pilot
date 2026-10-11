@@ -1,3 +1,5 @@
+import { isDateKey } from 'shared/training/trainingSchema'
+import { getTodayDateKey } from '#/lib/dateDisplay'
 import { useT } from '#/i18n/LocaleProvider'
 import { EventEditor } from '#/components/forms/event/EventEditor'
 import { createEventEditorValues } from '#/components/forms/event/eventEditorValues'
@@ -14,7 +16,12 @@ export const Route = createFileRoute(
 )({
   validateSearch: (
     search: Record<string, unknown>,
-  ): { horseIds?: Array<string> } => ({
+  ): { horseIds?: Array<string>; date?: string; intent?: 'record' } => ({
+    date:
+      typeof search.date === 'string' && isDateKey(search.date)
+        ? search.date
+        : undefined,
+    intent: search.intent === 'record' ? 'record' : undefined,
     horseIds: Array.isArray(search.horseIds)
       ? search.horseIds.filter((id): id is string => typeof id === 'string')
       : undefined,
@@ -26,7 +33,7 @@ function RouteComponent() {
   const t = useT()
 
   const { stableId } = Route.useParams()
-  const { horseIds } = Route.useSearch()
+  const { horseIds, date, intent } = Route.useSearch()
   const nav = useNavigate()
   const addEvent = useMutation(api.events.add)
 
@@ -41,11 +48,14 @@ function RouteComponent() {
 
   return (
     <EventEditor
-      key={stableId}
+      key={`${stableId}:${intent ?? 'plan'}`}
       mode="create"
       feature="training"
       initialValues={{
         ...createEventEditorValues(stableId),
+        date: date ?? getTodayDateKey(),
+        status: intent === 'record' ? 'completed' : 'planned',
+        time: intent === 'record' ? new Date().toTimeString().slice(0, 5) : '',
         type: 'training',
         horseIds:
           horseIds?.filter((id) => horses.some((h) => h._id === id)) ?? [],

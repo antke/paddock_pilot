@@ -77,6 +77,9 @@ describe('DocumentDownloadAction', () => {
     expect(createObjectUrl).toHaveBeenCalledWith(file)
     expect(activatedLink?.download).toBe('Thistle Run passport.pdf')
     expect(activatedLink?.href).toBe('blob:downloaded-passport')
+    expect(screen.getByRole('status').textContent).toBe(
+      'Download started for Thistle Run passport.pdf.',
+    )
     await waitFor(() =>
       expect(revokeObjectUrl).toHaveBeenCalledWith('blob:downloaded-passport'),
     )
@@ -178,7 +181,10 @@ describe('DocumentDownloadAction', () => {
 
     expect(button.disabled).toBe(true)
     expect(button.title).toBe('')
-    expect(button.textContent).toBe('Download')
+    expect(button.querySelector('[aria-hidden="false"]')?.textContent).toBe(
+      'Download',
+    )
+    expect(screen.queryByRole('status')).toBeNull()
     expect(button.className).toContain('border-primary')
     expect(button.parentElement?.getAttribute('aria-label')).toBe(
       'Download unavailable: No file is attached',

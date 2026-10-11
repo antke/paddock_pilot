@@ -213,6 +213,13 @@ export function createAnalysisAuditSample(
           return {
             id: `sample-analysis-signal-${i}`,
             kind,
+            reminderCategory:
+              kind === 'reminder' ? ('other' as const) : undefined,
+            displayData:
+              kind === 'weight'
+                ? { weight: i === 8 ? 510 : 505, unit: 'kg' as const }
+                : undefined,
+            observationOrder: i === 8 ? timestamp : timestamp - 30 * 86400000,
             date: i < 10 ? today : dateOffset(today, -3),
             title: `Sample ${kind} record ${i + 1}`,
             horseId: horse._id,
@@ -247,6 +254,25 @@ export function createAnalysisAuditSample(
     hasAccess: true,
     stable: data.stable,
     today,
+    horseSummaries: data.horses.map((item) => ({
+      horseId: item._id,
+      horseName: item.name,
+      latestWeight: null,
+      activeIssueCount: timelineSignals.filter(
+        (record) => record.horseId === item._id && record.kind === 'health',
+      ).length,
+      highIssueCount: timelineSignals.filter(
+        (record) =>
+          record.horseId === item._id &&
+          record.kind === 'health' &&
+          record.severity === 'high',
+      ).length,
+      activeMedicationCount: timelineSignals.filter(
+        (record) => record.horseId === item._id && record.kind === 'medication',
+      ).length,
+      overdueReminderCount: 0,
+    })),
+    trainingOutcomes: [],
     summary: {
       horseCount: data.horses.length,
       activeHealthIssueCount: healthCount,
@@ -304,6 +330,11 @@ export function createAnalysisAuditSample(
               previousWeight: 505,
               unit: 'kg',
               measuredAt: timestamp,
+              latestRecordId:
+                'sample-weight-latest' as Id<'horseWeightRecords'>,
+              previousRecordId:
+                'sample-weight-previous' as Id<'horseWeightRecords'>,
+              previousMeasuredAt: timestamp - 30 * 86400000,
               weightChange: 5,
               latestBodyConditionScore: 5,
               previousBodyConditionScore: 5,
@@ -391,7 +422,7 @@ export function createTodayTrainingSample(
       _id: `sample-dashboard-training-${index}` as Id<'events'>,
       _creationTime: 0,
       stableId: data.stable._id,
-      createdBy: horse.ownerId,
+      createdBy: horse.ownerId!,
       horseIds: [horse._id],
       type: 'training',
       title: index === 0 ? 'Morning flatwork' : 'Trainer lesson',

@@ -4,6 +4,29 @@ Review log, 2026-09-29. The additional implementation correctness pass is comple
 The domain choices below remain suggestions for owner feedback; browser integration
 and print sign-off are tracked separately in progress.md.
 
+## Follow-up review: 2026-10-02
+
+Reviewed the new paired messages on `product-recap`: reminder actions and assignment,
+daily email summaries, stable setup, shared navigation, saved contacts, unsaved-change
+dialogs and stable updates. Interpolated names remain verbatim. The digest count uses
+a label followed by the number, avoiding an incorrectly inflected Polish count noun.
+
+Additional wording choices for feedback:
+
+- **Yard updates → Aktualności stajni.** Suitable for short notices; “Ogłoszenia
+  stajni” may better convey an operational notice board. Keep the singular field,
+  save/remove actions and navigation consistent if changing this choice.
+- **Follow-up reminder → kolejne przypomnienie; next due date → kolejny termin.**
+  These describe another scheduled task without implying a clinical follow-up visit.
+- **Outstanding → Do wykonania.** Includes pending overdue reminders as well as
+  upcoming work; “Zaległe” alone would incorrectly narrow the filter.
+- **Emergency contact number → numer alarmowy.** The setup help and dashboard action
+  describe the stable's own contact. “Numer kontaktowy w nagłych wypadkach” is more
+  explicit, but longer; owner feedback should settle this across contact surfaces.
+
+This source review does not establish rendered-layout or print sign-off for the new
+screens. Those checks remain separate from catalog correctness.
+
 ## Current choices that would benefit from feedback
 
 | English concept               | Current Polish                            | Reason / alternative                                                                                                                                                                          |

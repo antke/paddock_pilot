@@ -1,3 +1,4 @@
+import { getStableSetupSteps } from 'shared/stables/stableSetup'
 import { useT } from '#/i18n/LocaleProvider'
 import { useId, useState } from 'react'
 import {
@@ -33,7 +34,7 @@ type OwnerWelcomePageProps = {
   horseCount: number
   memberCount: number
   invitationCount: number
-  providerCount: number
+  providers: Array<{ type: string; phone?: string }>
 }
 
 type MemberWelcomePageProps = {
@@ -52,72 +53,46 @@ export function OwnerStableWelcomePage({
   horseCount,
   memberCount,
   invitationCount,
-  providerCount,
+  providers,
 }: OwnerWelcomePageProps) {
   const t = useT()
 
-  const hasStableDetails = Boolean(
-    stable.contactName ||
-    stable.contactPhone ||
-    stable.emergencyPhone ||
-    stable.yardRules ||
-    stable.openingHours,
-  )
-  const steps = [
-    {
-      title: t('stableSetup.operations'),
-      description: t('stableSetup.operationsHelp'),
-      complete: hasStableDetails,
-      actionLabel: hasStableDetails
-        ? t('stableSetup.reviewDetails')
-        : t('stableSetup.addDetails'),
-      action: hasStableDetails ? ('edit' as const) : ('create' as const),
-      to: '/stables/$stableId/edit' as const,
-    },
-    {
-      title: t('stableSetup.firstHorse'),
-      description: t('stableSetup.firstHorseHelp'),
-      complete: horseCount > 0,
-      actionLabel:
-        horseCount > 0
-          ? t('stableSetup.viewHorses')
-          : t('stableSetup.addHorse'),
-      action: horseCount > 0 ? undefined : ('create' as const),
-      to:
-        horseCount > 0
-          ? ('/stables/$stableId/horses' as const)
-          : ('/stables/$stableId/horses/create' as const),
-    },
-    {
-      title: t('stableSetup.firstMember'),
-      description: t('stableSetup.firstMemberHelp'),
-      complete: memberCount > 0 || invitationCount > 0,
-      actionLabel:
-        memberCount > 0
-          ? t('stableSetup.manageMembers')
-          : invitationCount > 0
-            ? t('stableSetup.reviewInvitations')
-            : t('stableSetup.inviteMember'),
-      action:
-        memberCount > 0 || invitationCount > 0
-          ? undefined
-          : ('create' as const),
-      to: '/stables/$stableId/settings' as const,
-      search: { tab: 'members' as const },
-    },
-    {
-      title: t('stableSetup.firstProvider'),
-      description: t('stableSetup.firstProviderHelp'),
-      complete: providerCount > 0,
-      actionLabel:
-        providerCount > 0
-          ? t('stableSetup.viewProviders')
-          : t('stableSetup.addProvider'),
-      action: providerCount > 0 ? undefined : ('create' as const),
-      to: '/stables/$stableId/settings' as const,
-      search: { tab: 'providers' as const },
-    },
-  ]
+  const status = getStableSetupSteps({
+    stable,
+    horseCount,
+    memberCount,
+    invitationCount,
+    providers,
+  })
+  const steps: Array<WelcomeStep> = status.map(({ id, complete }) => {
+    const target =
+      id === 'vet' || id === 'farrier'
+        ? {
+            to: '/stables/$stableId/stable' as const,
+            search: { tab: 'contacts' as const },
+          }
+        : id === 'horse'
+          ? {
+              to: horseCount
+                ? ('/stables/$stableId/horses' as const)
+                : ('/stables/$stableId/horses/create' as const),
+            }
+          : id === 'team'
+            ? {
+                to: '/stables/$stableId/settings' as const,
+                search: { tab: 'members' as const },
+              }
+            : { to: '/stables/$stableId/edit' as const }
+    return {
+      ...target,
+      title: t(`stableSetup.tasks.${id}`),
+      description: t(`stableSetup.taskHelp.${id}`),
+      complete,
+      actionLabel: complete
+        ? t('stableSetup.review')
+        : t('stableSetup.continueSetup'),
+    }
+  })
 
   return (
     <StableWelcomeLayout
@@ -221,13 +196,15 @@ export function MemberStableWelcomePage({
         <WelcomeLinkCard
           title={t('stableSetup.overview')}
           description={t('stableSetup.overviewHelp')}
-          to="/stables/$stableId"
+          to="/stables/$stableId/stable"
+          tab="yard"
           stableId={stable._id}
         />
         <WelcomeLinkCard
           title={t('stableSetup.people')}
           description={t('stableSetup.peopleHelp')}
-          to="/stables/$stableId/members"
+          to="/stables/$stableId/stable"
+          tab="people"
           stableId={stable._id}
         />
       </DashboardSectionCard>
@@ -246,7 +223,8 @@ type WelcomeStep = {
     | '/stables/$stableId/horses'
     | '/stables/$stableId/horses/create'
     | '/stables/$stableId/settings'
-  search?: { tab: 'members' | 'providers' }
+    | '/stables/$stableId/stable'
+  search?: { tab: 'members' | 'contacts' }
   customAction?: ReactNode
 }
 
@@ -380,17 +358,20 @@ function WelcomeLinkCard({
   title,
   description,
   to,
+  tab,
   stableId,
 }: {
   title: string
   description: string
-  to: '/stables/$stableId' | '/stables/$stableId/members'
+  to: '/stables/$stableId/stable'
+  tab: 'yard' | 'people'
   stableId: Stable['_id']
 }) {
   return (
     <DashboardItemLinkCard
       to={to}
       params={{ stableId }}
+      search={{ tab }}
       chrome="flat"
       density="compact"
     >

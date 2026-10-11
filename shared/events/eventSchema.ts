@@ -307,7 +307,10 @@ export function createEventSchemas(
     schema.optional().transform((val) => val || undefined)
 
   const eventInputFieldsSchema = z.object({
-    stableId: z.string({ error: message('textInvalid') }).min(1),
+    stableId: z
+      .string({ error: message('textInvalid') })
+      .min(1)
+      .optional(),
     horseIds: eventHorseIdsSchema,
     date: eventDateSchema,
     endDate: eventOptionalDateSchema,

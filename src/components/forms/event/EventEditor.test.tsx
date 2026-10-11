@@ -65,6 +65,80 @@ afterEach(() => {
 })
 
 describe('EventEditor production composition', () => {
+  it('treats registered optional fields as pristine, but protects real training edits', async () => {
+    const { title } = setup({
+      mode: 'create',
+      feature: 'training',
+      initialValues: {
+        ...createEventEditorValues(stableId),
+        type: 'training',
+        date: '2026-07-24',
+        time: '10:00',
+        horseIds: [horseId],
+        training: { activities: ['flatwork'], format: 'regular' },
+      },
+    })
+    const untouched = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(untouched)
+    expect(untouched.defaultPrevented).toBe(false)
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
+    expect(screen.queryByRole('alertdialog')).toBeNull()
+    fireEvent.change(title, { target: { value: 'Changed session' } })
+    const edited = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(edited)
+    expect(edited.defaultPrevented).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
+    expect(await screen.findByRole('alertdialog')).toBeTruthy()
+  })
+
+  it('records completed work with an automatic title and links training validation errors', async () => {
+    const { form, props } = setup({
+      mode: 'create',
+      feature: 'training',
+      initialValues: {
+        ...createEventEditorValues(stableId),
+        type: 'training',
+        status: 'completed',
+        date: '2026-07-24',
+        time: '10:00',
+        horseIds: [horseId],
+        training: { activities: ['flatwork'], format: 'regular' },
+      },
+    })
+    expect(
+      screen.getByRole('heading', { name: 'Add training log' }),
+    ).toBeTruthy()
+    const duration = screen.getByLabelText('Duration (minutes)')
+    fireEvent.change(duration, { target: { value: '0' } })
+    fireEvent.submit(form)
+    await waitFor(() =>
+      expect(duration.getAttribute('aria-invalid')).toBe('true'),
+    )
+    expect(
+      document.getElementById(duration.getAttribute('aria-describedby')!)
+        ?.textContent,
+    ).toBeTruthy()
+    expect(props.onSave).not.toHaveBeenCalled()
+    fireEvent.change(duration, { target: { value: '35' } })
+    fireEvent.change(screen.getByLabelText('What happened / what went well'), {
+      target: { value: 'Relaxed transitions' },
+    })
+    fireEvent.submit(form)
+    await waitFor(() =>
+      expect(props.onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Flatwork',
+          status: 'completed',
+          notesAfterCompletion: 'Relaxed transitions',
+          training: expect.objectContaining({ durationMinutes: 35 }),
+        }),
+      ),
+    )
+    const saved = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(saved)
+    expect(saved.defaultPrevented).toBe(false)
+  })
+
   it('uses empty create defaults and prevents invalid input from saving', async () => {
     const { form, title, props } = setup({
       mode: 'create',

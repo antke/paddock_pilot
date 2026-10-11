@@ -1,4 +1,9 @@
 export const horseForm = {
+  savedContactHelp:
+    'Choose a saved contact to keep their details up to date, or enter a one-off contact. Editing the phone keeps it only on this horse.',
+  copiedContactHelp:
+    'Choose a saved contact to copy their name and phone to this horse, or enter the details yourself. Later changes to the saved contact will not update this profile.',
+
   unspecified: 'Not specified',
   mare: 'Mare',
   gelding: 'Gelding',
@@ -15,6 +20,11 @@ export const horseForm = {
   details: 'Horse details',
   name: 'Horse name',
   owner: 'Owner name',
+  showOwnerSuggestions: 'Show owner name suggestions',
+  ownerSuggestionPlaceholder: 'Choose a name or enter another',
+  noOwnerSuggestions: 'No matching names. You can use the name you entered.',
+  ownerHelp:
+    'For display on the profile only. Changing this name does not transfer account ownership. After saving, manage ownership in People & stable.',
   sex: 'Sex',
   picture: 'Profile picture',
   pictureLabel: 'About horse profile picture',

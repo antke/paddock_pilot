@@ -20,6 +20,46 @@ export type TimeChartRow = {
   domain?: readonly [number, number]
 }
 
+export type TimeChartMark = {
+  point: TimeChartPoint
+  left: number
+  right: number
+  top: number
+  lane: number
+}
+
+/** One geometry source for the visible mark, highlight and pointer target. */
+export function timeChartMarkBounds(
+  type: TimeChartRow['type'],
+  mark: TimeChartMark,
+  bottom: number,
+) {
+  if (type === 'bar')
+    return {
+      x: mark.right > mark.left ? mark.left + 2 : mark.left - 3,
+      y: mark.top,
+      width: Math.max(
+        2,
+        mark.right > mark.left ? mark.right - mark.left - 4 : 6,
+      ),
+      height: Math.max(2, bottom - mark.top),
+    }
+  if (type === 'intervals')
+    return {
+      x: mark.left,
+      y: mark.top - 8,
+      width: Math.max(4, mark.right - mark.left),
+      height: 16,
+    }
+  const size = type === 'events' ? 12 : 8
+  return {
+    x: mark.left - size / 2,
+    y: mark.top - size / 2,
+    width: size,
+    height: size,
+  }
+}
+
 export function numericDomain(row: TimeChartRow): readonly [number, number] {
   if (row.domain) return row.domain
   const values = row.points.flatMap((point) =>
@@ -65,7 +105,7 @@ export function layoutContextPoints(
       const right = position(
         point.openEnd ? end : (point.endDate ?? point.date),
       )
-      let lane = laneEnds.findIndex((value) => value + 32 < left)
+      let lane = laneEnds.findIndex((value) => value + 44 < left)
       if (lane === -1) lane = laneEnds.length
       laneEnds[lane] = right
       return { point, left, right, lane }

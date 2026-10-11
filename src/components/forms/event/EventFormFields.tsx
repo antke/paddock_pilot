@@ -27,6 +27,7 @@ import {
   FieldSet,
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
+import { ButtonLink } from '#/components/ui/button'
 import { RadioGroup, RadioGroupItem } from '#/components/ui/radio-group'
 import { Switch } from '#/components/ui/switch'
 import { Textarea } from '#/components/ui/textarea'
@@ -61,7 +62,7 @@ type HorseOption = {
 }
 
 type ProviderOption = {
-  _id: Id<'stableProviders'>
+  _id: string
   type:
     'trainer' | 'vet' | 'farrier' | 'dentist' | 'physio' | 'saddler' | 'other'
   name: string
@@ -75,6 +76,8 @@ type Props = {
   providers?: Array<ProviderOption>
   disabled?: boolean
   trainingMode?: 'create' | 'edit'
+  scheduleOnly?: boolean
+  eventContext?: 'stable' | 'personal'
 }
 
 type RecurrenceEditorMode = 'simple' | 'advanced'
@@ -517,6 +520,8 @@ export function EventFormFields({
   providers = [],
   disabled = false,
   trainingMode,
+  scheduleOnly = false,
+  eventContext = 'stable',
 }: Props) {
   const t = useT()
   const { locale } = useLocale()
@@ -532,6 +537,7 @@ export function EventFormFields({
     shortDayLabels,
   } = getEventFormOptions(locale)
   const eventDate = useWatch({ control, name: 'date' })
+  const eventStatus = useWatch({ control, name: 'status' })
   const endDate = useWatch({ control, name: 'endDate' })
   const eventTitle = useWatch({ control, name: 'title' })
   const eventType = useWatch({ control, name: 'type' })
@@ -570,11 +576,13 @@ export function EventFormFields({
             amount: formatCurrencyAmount(totalCost, locale),
           })
         : undefined,
-    ]) || t('eventForm.optional')
+    ]) || (trainingMode ? t('eventForm.optional') : undefined)
   const notesSummary =
     description || notesAfterCompletion
       ? t('eventForm.notesAdded')
-      : t('eventForm.optional')
+      : trainingMode
+        ? t('eventForm.optional')
+        : undefined
   const horsesSummary = t('eventForm.horsesSelected', {
     count: horseIds.length,
   })
@@ -644,15 +652,275 @@ export function EventFormFields({
     )
   }
 
+  const titleField = (
+    <Controller
+      name="title"
+      control={control}
+      render={({ field, fieldState }) => (
+        <Field data-invalid={fieldState.invalid}>
+          <FieldLabel htmlFor={field.name}>{t('eventForm.title')}</FieldLabel>
+
+          <Input
+            {...field}
+            id={field.name}
+            type="text"
+            disabled={disabled}
+            aria-invalid={fieldState.invalid}
+            aria-describedby={
+              fieldState.invalid ? 'event-title-error' : undefined
+            }
+            placeholder={
+              trainingMode
+                ? t('eventForm.trainingExample')
+                : t('eventForm.eventExample')
+            }
+            autoComplete="off"
+          />
+
+          {trainingMode && (
+            <FieldDescription>{t('trainingViews.titleHelp')}</FieldDescription>
+          )}
+          {fieldState.invalid && (
+            <FieldError id="event-title-error" errors={[fieldState.error]} />
+          )}
+        </Field>
+      )}
+    />
+  )
+  const endDateField = (
+    <Controller
+      name="endDate"
+      control={control}
+      render={({ field, fieldState }) => (
+        <Field data-invalid={fieldState.invalid}>
+          <FieldLabel htmlFor={field.name}>{t('eventForm.endDate')}</FieldLabel>
+
+          <Input
+            {...field}
+            id={field.name}
+            value={field.value ?? ''}
+            type="date"
+            disabled={disabled}
+            aria-invalid={fieldState.invalid}
+            aria-describedby={
+              fieldState.invalid ? 'event-endDate-error' : undefined
+            }
+          />
+
+          <FieldDescription>{t('eventForm.endDateHelp')}</FieldDescription>
+          {fieldState.invalid && (
+            <FieldError id="event-endDate-error" errors={[fieldState.error]} />
+          )}
+        </Field>
+      )}
+    />
+  )
+  const dateFields = (
+    <FieldGrid columns={trainingMode ? 2 : 3}>
+      <Controller
+        name="date"
+        control={control}
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor={field.name}>{t('eventForm.date')}</FieldLabel>
+
+            <Input
+              {...field}
+              id={field.name}
+              type="date"
+              disabled={disabled}
+              aria-invalid={fieldState.invalid}
+              aria-describedby={
+                fieldState.invalid ? 'event-date-error' : undefined
+              }
+            />
+
+            {fieldState.invalid && (
+              <FieldError id="event-date-error" errors={[fieldState.error]} />
+            )}
+          </Field>
+        )}
+      />
+
+      {!trainingMode && endDateField}
+      <Controller
+        name="time"
+        control={control}
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor={field.name}>{t('eventForm.time')}</FieldLabel>
+
+            <Input
+              {...field}
+              id={field.name}
+              type="time"
+              disabled={disabled}
+              aria-invalid={fieldState.invalid}
+              aria-describedby={
+                fieldState.invalid ? 'event-time-error' : undefined
+              }
+            />
+
+            {!trainingMode && (
+              <FieldDescription>
+                {t(
+                  eventContext === 'personal'
+                    ? 'eventForm.personalTimeHelp'
+                    : 'eventForm.timeHelp',
+                )}
+              </FieldDescription>
+            )}
+
+            {fieldState.invalid && (
+              <FieldError id="event-time-error" errors={[fieldState.error]} />
+            )}
+          </Field>
+        )}
+      />
+    </FieldGrid>
+  )
+  const horseSection = (
+    <FormSection
+      defaultOpen={!trainingMode && horseIds.length === 0}
+      description={trainingMode ? undefined : t('eventForm.eventHorsesHelp')}
+      invalid={horsesInvalid}
+      summary={
+        horseIds.length
+          ? horses
+              .filter((horse) => horseIds.includes(horse._id))
+              .map((horse) => horse.name)
+              .join(', ')
+          : horsesSummary
+      }
+      title={t('eventForm.horses')}
+      validationAttempt={submitCount}
+    >
+      <Controller
+        name="horseIds"
+        control={control}
+        render={({ field, fieldState }) => (
+          <FieldSet
+            data-invalid={fieldState.invalid}
+            disabled={disabled}
+            aria-describedby={
+              fieldState.invalid ? 'event-horseIds-error' : undefined
+            }
+          >
+            <FieldLegend className="sr-only">
+              {t('eventForm.horses')}
+            </FieldLegend>
+
+            {horses.length === 0 ? (
+              <FieldGroup gap="compact">
+                <FieldDescription>
+                  {t(
+                    eventContext === 'personal'
+                      ? 'eventForm.noPersonalHorses'
+                      : 'eventForm.noHorses',
+                  )}
+                </FieldDescription>
+                {eventContext === 'personal' && (
+                  <div>
+                    <ButtonLink
+                      to="/horses/create"
+                      variant="outline"
+                      action="create"
+                    >
+                      {t('horseForm.addHorse')}
+                    </ButtonLink>
+                  </div>
+                )}
+              </FieldGroup>
+            ) : null}
+            <FieldGrid breakpoint="sm" gap="compact">
+              {horses.map((horse) => {
+                const horseId = horse._id
+                const checked = field.value.includes(horseId)
+
+                return (
+                  <HorseSelectionCard
+                    key={horseId}
+                    id={horseId}
+                    name={field.name}
+                    value={horseId}
+                    horse={horse}
+                    checked={checked}
+                    disabled={disabled}
+                    invalid={fieldState.invalid}
+                    onCheckedChange={(isChecked) => {
+                      field.onChange(
+                        isChecked
+                          ? [...field.value, horseId]
+                          : field.value.filter((id) => id !== horseId),
+                      )
+                    }}
+                  />
+                )
+              })}
+            </FieldGrid>
+
+            {fieldState.invalid && (
+              <FieldError
+                id="event-horseIds-error"
+                errors={[fieldState.error]}
+              />
+            )}
+          </FieldSet>
+        )}
+      />
+    </FormSection>
+  )
+  const outcomeField = (
+    <Controller
+      name="notesAfterCompletion"
+      control={control}
+      render={({ field, fieldState }) => (
+        <Field data-invalid={fieldState.invalid}>
+          <FieldLabel htmlFor={field.name}>
+            {t(
+              trainingMode
+                ? 'trainingViews.outcomeField'
+                : 'eventForm.notesAfter',
+            )}
+          </FieldLabel>
+
+          <Textarea
+            {...field}
+            id={field.name}
+            value={field.value ?? ''}
+            disabled={disabled}
+            aria-invalid={fieldState.invalid}
+            aria-describedby={
+              fieldState.invalid
+                ? 'event-notesAfterCompletion-error'
+                : undefined
+            }
+            placeholder={t('eventForm.notesAfterExample')}
+            autoComplete="off"
+          />
+
+          {fieldState.invalid && (
+            <FieldError
+              id="event-notesAfterCompletion-error"
+              errors={[fieldState.error]}
+            />
+          )}
+        </Field>
+      )}
+    />
+  )
   return (
     <>
+      {!trainingMode && (
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          {t('eventForm.essentialsHelp')}
+        </p>
+      )}
+      {trainingMode && horseSection}
       <FormSection
         defaultOpen
-        description={
-          trainingMode ? t('eventForm.trainingHelp') : t('eventForm.eventHelp')
-        }
+        description={trainingMode ? undefined : t('eventForm.eventHelp')}
         invalid={essentialsInvalid}
-        number={1}
         summary={essentialsSummary}
         title={
           trainingMode
@@ -661,41 +929,8 @@ export function EventFormFields({
         }
         validationAttempt={submitCount}
       >
-        <Controller
-          name="title"
-          control={control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>
-                {t('eventForm.title')}
-              </FieldLabel>
-
-              <Input
-                {...field}
-                id={field.name}
-                type="text"
-                disabled={disabled}
-                aria-invalid={fieldState.invalid}
-                aria-describedby={
-                  fieldState.invalid ? 'event-title-error' : undefined
-                }
-                placeholder={
-                  trainingMode
-                    ? t('eventForm.trainingExample')
-                    : t('eventForm.eventExample')
-                }
-                autoComplete="off"
-              />
-
-              {fieldState.invalid && (
-                <FieldError
-                  id="event-title-error"
-                  errors={[fieldState.error]}
-                />
-              )}
-            </Field>
-          )}
-        />
+        {trainingMode && dateFields}
+        {(!trainingMode || scheduleOnly) && titleField}
 
         {!trainingMode && (
           <Controller
@@ -729,8 +964,12 @@ export function EventFormFields({
             )}
           />
         )}
-        {trainingMode && (
-          <TrainingFormFields control={control} disabled={disabled} />
+        {trainingMode && !scheduleOnly && (
+          <TrainingFormFields
+            control={control}
+            disabled={disabled}
+            fields="essential"
+          />
         )}
 
         {trainingMode !== 'edit' && (
@@ -783,172 +1022,29 @@ export function EventFormFields({
               : t('eventForm.trainingCreateCompletionHelp')}
           </FieldDescription>
         )}
-        <FieldGrid columns={3}>
-          <Controller
-            name="date"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>
-                  {t('eventForm.date')}
-                </FieldLabel>
-
-                <Input
-                  {...field}
-                  id={field.name}
-                  type="date"
-                  disabled={disabled}
-                  aria-invalid={fieldState.invalid}
-                  aria-describedby={
-                    fieldState.invalid ? 'event-date-error' : undefined
-                  }
-                />
-
-                {fieldState.invalid && (
-                  <FieldError
-                    id="event-date-error"
-                    errors={[fieldState.error]}
-                  />
-                )}
-              </Field>
-            )}
-          />
-
-          <Controller
-            name="endDate"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>
-                  {t('eventForm.endDate')}
-                </FieldLabel>
-
-                <Input
-                  {...field}
-                  id={field.name}
-                  value={field.value ?? ''}
-                  type="date"
-                  disabled={disabled}
-                  aria-invalid={fieldState.invalid}
-                  aria-describedby={
-                    fieldState.invalid ? 'event-endDate-error' : undefined
-                  }
-                />
-
-                <FieldDescription>
-                  {t('eventForm.endDateHelp')}
-                </FieldDescription>
-                {fieldState.invalid && (
-                  <FieldError
-                    id="event-endDate-error"
-                    errors={[fieldState.error]}
-                  />
-                )}
-              </Field>
-            )}
-          />
-
-          <Controller
-            name="time"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>
-                  {t('eventForm.time')}
-                </FieldLabel>
-
-                <Input
-                  {...field}
-                  id={field.name}
-                  type="time"
-                  disabled={disabled}
-                  aria-invalid={fieldState.invalid}
-                  aria-describedby={
-                    fieldState.invalid ? 'event-time-error' : undefined
-                  }
-                />
-
-                <FieldDescription>{t('eventForm.timeHelp')}</FieldDescription>
-
-                {fieldState.invalid && (
-                  <FieldError
-                    id="event-time-error"
-                    errors={[fieldState.error]}
-                  />
-                )}
-              </Field>
-            )}
-          />
-        </FieldGrid>
+        {trainingMode &&
+          !scheduleOnly &&
+          eventStatus === 'completed' &&
+          outcomeField}
+        {!trainingMode && dateFields}
       </FormSection>
 
-      <FormSection
-        description={
-          trainingMode
-            ? t('eventForm.trainingHorsesHelp')
-            : t('eventForm.eventHorsesHelp')
-        }
-        invalid={horsesInvalid}
-        number={2}
-        summary={horsesSummary}
-        title={t('eventForm.horses')}
-        validationAttempt={submitCount}
-      >
-        <Controller
-          name="horseIds"
-          control={control}
-          render={({ field, fieldState }) => (
-            <FieldSet
-              data-invalid={fieldState.invalid}
-              disabled={disabled}
-              aria-describedby={
-                fieldState.invalid ? 'event-horseIds-error' : undefined
-              }
-            >
-              <FieldLegend className="sr-only">
-                {t('eventForm.horses')}
-              </FieldLegend>
-
-              {horses.length === 0 ? (
-                <FieldDescription>{t('eventForm.noHorses')}</FieldDescription>
-              ) : null}
-              <FieldGrid breakpoint="sm" gap="compact">
-                {horses.map((horse) => {
-                  const horseId = horse._id
-                  const checked = field.value.includes(horseId)
-
-                  return (
-                    <HorseSelectionCard
-                      key={horseId}
-                      id={horseId}
-                      name={field.name}
-                      value={horseId}
-                      horse={horse}
-                      checked={checked}
-                      disabled={disabled}
-                      invalid={fieldState.invalid}
-                      onCheckedChange={(isChecked) => {
-                        field.onChange(
-                          isChecked
-                            ? [...field.value, horseId]
-                            : field.value.filter((id) => id !== horseId),
-                        )
-                      }}
-                    />
-                  )
-                })}
-              </FieldGrid>
-
-              {fieldState.invalid && (
-                <FieldError
-                  id="event-horseIds-error"
-                  errors={[fieldState.error]}
-                />
-              )}
-            </FieldSet>
-          )}
-        />
-      </FormSection>
+      {trainingMode && !scheduleOnly && (
+        <FormSection
+          title={t('trainingViews.moreDetails')}
+          invalid={Boolean(errors.title || errors.endDate || errors.training)}
+          validationAttempt={submitCount}
+        >
+          {titleField}
+          <TrainingFormFields
+            control={control}
+            disabled={disabled}
+            fields="optional"
+          />
+          {endDateField}
+        </FormSection>
+      )}
+      {!trainingMode && horseSection}
 
       <FormSection
         description={
@@ -957,7 +1053,7 @@ export function EventFormFields({
             : t('eventForm.eventLogisticsHelp')
         }
         invalid={logisticsInvalid}
-        number={3}
+        optionalLabel={trainingMode ? undefined : t('eventForm.optional')}
         summary={logisticsSummary}
         title={
           trainingMode
@@ -1037,137 +1133,145 @@ export function EventFormFields({
             )}
           />
 
-          <Controller
-            name="providerPhone"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>
-                  {trainingMode
-                    ? t('eventForm.trainerPhone')
-                    : t('eventForm.providerPhone')}
-                </FieldLabel>
+          {!scheduleOnly && (
+            <Controller
+              name="providerPhone"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>
+                    {trainingMode
+                      ? t('eventForm.trainerPhone')
+                      : t('eventForm.providerPhone')}
+                  </FieldLabel>
 
-                <Input
-                  {...field}
-                  id={field.name}
-                  value={field.value ?? ''}
-                  type="tel"
-                  disabled={disabled}
-                  aria-invalid={fieldState.invalid}
-                  aria-describedby={
-                    fieldState.invalid ? 'event-providerPhone-error' : undefined
-                  }
-                  placeholder={t('eventForm.providerPhoneExample')}
-                  autoComplete="off"
-                />
-
-                {fieldState.invalid && (
-                  <FieldError
-                    id="event-providerPhone-error"
-                    errors={[fieldState.error]}
+                  <Input
+                    {...field}
+                    id={field.name}
+                    value={field.value ?? ''}
+                    type="tel"
+                    disabled={disabled}
+                    aria-invalid={fieldState.invalid}
+                    aria-describedby={
+                      fieldState.invalid
+                        ? 'event-providerPhone-error'
+                        : undefined
+                    }
+                    placeholder={t('eventForm.providerPhoneExample')}
+                    autoComplete="off"
                   />
-                )}
-              </Field>
-            )}
-          />
+
+                  {fieldState.invalid && (
+                    <FieldError
+                      id="event-providerPhone-error"
+                      errors={[fieldState.error]}
+                    />
+                  )}
+                </Field>
+              )}
+            />
+          )}
         </FieldGrid>
 
-        <FieldGrid>
-          <Controller
-            name="totalCost"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>
-                  {t('eventForm.totalCost')}
-                </FieldLabel>
+        {!scheduleOnly && (
+          <FieldGrid>
+            <Controller
+              name="totalCost"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>
+                    {t('eventForm.totalCost')}
+                  </FieldLabel>
 
-                <Input
-                  ref={field.ref}
-                  id={field.name}
-                  name={field.name}
-                  value={field.value ?? ''}
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  disabled={disabled}
-                  aria-invalid={fieldState.invalid}
-                  aria-describedby={
-                    fieldState.invalid ? 'event-totalCost-error' : undefined
-                  }
-                  placeholder={t('eventForm.totalCostExample')}
-                  autoComplete="off"
-                  onBlur={field.onBlur}
-                  onChange={(event) => {
-                    field.onChange(
-                      event.target.value === ''
-                        ? undefined
-                        : event.target.valueAsNumber,
-                    )
-                  }}
-                />
-
-                {fieldState.invalid && (
-                  <FieldError
-                    id="event-totalCost-error"
-                    errors={[fieldState.error]}
+                  <Input
+                    ref={field.ref}
+                    id={field.name}
+                    name={field.name}
+                    value={field.value ?? ''}
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    disabled={disabled}
+                    aria-invalid={fieldState.invalid}
+                    aria-describedby={
+                      fieldState.invalid ? 'event-totalCost-error' : undefined
+                    }
+                    placeholder={t('eventForm.totalCostExample')}
+                    autoComplete="off"
+                    onBlur={field.onBlur}
+                    onChange={(event) => {
+                      field.onChange(
+                        event.target.value === ''
+                          ? undefined
+                          : event.target.valueAsNumber,
+                      )
+                    }}
                   />
-                )}
-              </Field>
-            )}
-          />
 
-          <Controller
-            name="costPerHorse"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>
-                  {t('eventForm.costPerHorse')}
-                </FieldLabel>
+                  {fieldState.invalid && (
+                    <FieldError
+                      id="event-totalCost-error"
+                      errors={[fieldState.error]}
+                    />
+                  )}
+                </Field>
+              )}
+            />
 
-                <Input
-                  ref={field.ref}
-                  id={field.name}
-                  name={field.name}
-                  value={field.value ?? ''}
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  disabled={disabled}
-                  aria-invalid={fieldState.invalid}
-                  aria-describedby={
-                    fieldState.invalid ? 'event-costPerHorse-error' : undefined
-                  }
-                  placeholder={t('eventForm.costPerHorseExample')}
-                  autoComplete="off"
-                  onBlur={field.onBlur}
-                  onChange={(event) => {
-                    field.onChange(
-                      event.target.value === ''
-                        ? undefined
-                        : event.target.valueAsNumber,
-                    )
-                  }}
-                />
+            <Controller
+              name="costPerHorse"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>
+                    {t('eventForm.costPerHorse')}
+                  </FieldLabel>
 
-                {fieldState.invalid && (
-                  <FieldError
-                    id="event-costPerHorse-error"
-                    errors={[fieldState.error]}
+                  <Input
+                    ref={field.ref}
+                    id={field.name}
+                    name={field.name}
+                    value={field.value ?? ''}
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    disabled={disabled}
+                    aria-invalid={fieldState.invalid}
+                    aria-describedby={
+                      fieldState.invalid
+                        ? 'event-costPerHorse-error'
+                        : undefined
+                    }
+                    placeholder={t('eventForm.costPerHorseExample')}
+                    autoComplete="off"
+                    onBlur={field.onBlur}
+                    onChange={(event) => {
+                      field.onChange(
+                        event.target.value === ''
+                          ? undefined
+                          : event.target.valueAsNumber,
+                      )
+                    }}
                   />
-                )}
-              </Field>
-            )}
-          />
-        </FieldGrid>
+
+                  {fieldState.invalid && (
+                    <FieldError
+                      id="event-costPerHorse-error"
+                      errors={[fieldState.error]}
+                    />
+                  )}
+                </Field>
+              )}
+            />
+          </FieldGrid>
+        )}
       </FormSection>
 
       <FormSection
         description={t('eventForm.repeatHelp')}
         invalid={recurrenceInvalid}
-        number={4}
+        optionalLabel={trainingMode ? undefined : t('eventForm.optional')}
         summary={recurrenceSummary}
         title={t('eventForm.repeatSchedule')}
         validationAttempt={submitCount}
@@ -2332,84 +2436,56 @@ export function EventFormFields({
         />
       </FormSection>
 
-      <FormSection
-        description={t('eventForm.notesHelp')}
-        invalid={notesInvalid}
-        number={5}
-        summary={notesSummary}
-        title={t('eventForm.notesOutcome')}
-        validationAttempt={submitCount}
-      >
-        <Controller
-          name="description"
-          control={control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>
-                {t('eventForm.description')}
-              </FieldLabel>
-
-              <Textarea
-                {...field}
-                id={field.name}
-                value={field.value ?? ''}
-                disabled={disabled}
-                aria-invalid={fieldState.invalid}
-                aria-describedby={
-                  fieldState.invalid ? 'event-description-error' : undefined
-                }
-                placeholder={
-                  trainingMode
-                    ? t('eventForm.sessionNotes')
-                    : t('eventForm.eventNotes')
-                }
-                autoComplete="off"
-              />
-
-              {fieldState.invalid && (
-                <FieldError
-                  id="event-description-error"
-                  errors={[fieldState.error]}
-                />
-              )}
-            </Field>
+      {!scheduleOnly && (
+        <FormSection
+          description={t('eventForm.notesHelp')}
+          invalid={notesInvalid}
+          optionalLabel={trainingMode ? undefined : t('eventForm.optional')}
+          summary={notesSummary}
+          title={t(
+            trainingMode ? 'eventForm.description' : 'eventForm.notesOutcome',
           )}
-        />
+          validationAttempt={submitCount}
+        >
+          <Controller
+            name="description"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>
+                  {t('eventForm.description')}
+                </FieldLabel>
 
-        <Controller
-          name="notesAfterCompletion"
-          control={control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>
-                {t('eventForm.notesAfter')}
-              </FieldLabel>
-
-              <Textarea
-                {...field}
-                id={field.name}
-                value={field.value ?? ''}
-                disabled={disabled}
-                aria-invalid={fieldState.invalid}
-                aria-describedby={
-                  fieldState.invalid
-                    ? 'event-notesAfterCompletion-error'
-                    : undefined
-                }
-                placeholder={t('eventForm.notesAfterExample')}
-                autoComplete="off"
-              />
-
-              {fieldState.invalid && (
-                <FieldError
-                  id="event-notesAfterCompletion-error"
-                  errors={[fieldState.error]}
+                <Textarea
+                  {...field}
+                  id={field.name}
+                  value={field.value ?? ''}
+                  disabled={disabled}
+                  aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid ? 'event-description-error' : undefined
+                  }
+                  placeholder={
+                    trainingMode
+                      ? t('eventForm.sessionNotes')
+                      : t('eventForm.eventNotes')
+                  }
+                  autoComplete="off"
                 />
-              )}
-            </Field>
-          )}
-        />
-      </FormSection>
+
+                {fieldState.invalid && (
+                  <FieldError
+                    id="event-description-error"
+                    errors={[fieldState.error]}
+                  />
+                )}
+              </Field>
+            )}
+          />
+
+          {(!trainingMode || eventStatus !== 'completed') && outcomeField}
+        </FormSection>
+      )}
     </>
   )
 }

@@ -1,8 +1,10 @@
 # English/Polish release readiness
 
-Branch: `polish-translation`. Date: 2026-09-29.
-Code coverage is implemented; authenticated browser and print-pagination sign-off
-remain pending. No production deployment, commit, or real test email was performed.
+Implementation baseline: `polish-translation`, 2026-09-29. Follow-up audit:
+`product-recap`, 2026-10-02. Code coverage is implemented; independent-browser
+preference persistence and English print-pagination sign-off remain pending.
+Current-branch release checks are recorded in progress.md. No production deployment
+or real test email was performed for these checks.
 
 ## Rollout
 

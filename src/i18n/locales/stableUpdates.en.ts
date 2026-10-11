@@ -1,0 +1,26 @@
+export const stableUpdates = {
+  title: 'Yard updates',
+  add: 'Add update',
+  edit: 'Edit',
+  remove: 'Remove',
+  body: 'Update',
+  expires: 'Show through (optional)',
+  expiryHelp:
+    'The update stays visible through this date, then leaves the board.',
+  save: 'Save update',
+  saving: 'Saving…',
+  saved: 'Update saved',
+  removed: 'Update removed',
+  failed: 'Could not save this change. Your draft is still here; try again.',
+  removeFailed: 'Could not remove this update. Try again.',
+  empty:
+    'No current yard updates. Add a change the next person visiting should know.',
+  viewAll: 'View yard updates',
+  more: 'Older updates',
+  loading: 'Loading updates…',
+  authorUnavailable: 'Former member',
+  through: 'Visible through {{date}}',
+  removeTitle: 'Remove this update?',
+  removeDescription: 'It will be removed from the yard board for everyone.',
+  invalidBody: 'Write an update between 1 and 2000 characters.',
+} as const

@@ -2,22 +2,12 @@ import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { formatMediumDateKey, formatMonthYearDateKey } from '#/lib/dateDisplay'
 import type { Locale } from 'shared/i18n/locale'
 import { getEffectiveInvitationStatus } from 'shared/stableInvitations/invitationState'
-import {
-  CalendarCheckIcon,
-  CheckCircleIcon,
-  HorseIcon,
-  UsersThreeIcon,
-} from '@phosphor-icons/react'
+import { CheckCircleIcon } from '@phosphor-icons/react'
 import type { Doc } from 'convex/_generated/dataModel'
 import type { ReactNode } from 'react'
 
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
-import {
-  DashboardItemCardContent,
-  DashboardItemList,
-  DashboardItemRecordCard,
-} from '#/components/dashboard/DashboardItemCard'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Button } from '#/components/ui/button'
 import { TextLabel } from '#/components/ui/text-label'
@@ -193,8 +183,6 @@ export function OnboardingReviewStep({
         )}
       </div>
 
-      <NextSteps role={role} />
-
       <DashboardActions align="end">
         <Button type="button" onClick={onComplete}>
           {t('onboarding.openStable', { name: stable.name })}
@@ -264,73 +252,5 @@ function ReviewField({
         />
       )}
     </div>
-  )
-}
-
-function NextSteps({ role }: { role: OnboardingRole }) {
-  const t = useT()
-
-  const items: Array<{
-    description: string
-    icon: ReactNode
-    title: string
-  }> =
-    role === 'owner'
-      ? [
-          {
-            title: t('onboarding.growRecords'),
-            description: t('onboarding.growRecordsHelp'),
-            icon: <HorseIcon />,
-          },
-          {
-            title: t('onboarding.inviteTeam'),
-            description: t('onboarding.manageMembersHelp'),
-            icon: <UsersThreeIcon />,
-          },
-          {
-            title: t('onboarding.planActivity'),
-            description: t('onboarding.planActivityHelp'),
-            icon: <CalendarCheckIcon />,
-          },
-        ]
-      : [
-          {
-            title: t('onboarding.keepCurrent'),
-            description: t('onboarding.keepCurrentHelp'),
-            icon: <HorseIcon />,
-          },
-          {
-            title: t('onboarding.knowTeam'),
-            description: t('onboarding.knowTeamHelp'),
-            icon: <UsersThreeIcon />,
-          },
-          {
-            title: t('onboarding.coordinateEvents'),
-            description: t('onboarding.coordinateEventsHelp'),
-            icon: <CalendarCheckIcon />,
-          },
-        ]
-
-  return (
-    <DashboardItemList gap="compact">
-      {items.map((item) => (
-        <DashboardItemRecordCard
-          key={item.title}
-          chrome="flat"
-          density="compact"
-        >
-          <DashboardItemCardContent
-            leading={
-              <span className="text-primary [&_svg]:size-5" aria-hidden="true">
-                {item.icon}
-              </span>
-            }
-            title={item.title}
-            meta={item.description}
-            titleSize="sm"
-          />
-        </DashboardItemRecordCard>
-      ))}
-    </DashboardItemList>
   )
 }

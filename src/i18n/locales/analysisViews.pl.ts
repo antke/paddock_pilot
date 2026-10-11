@@ -1,4 +1,46 @@
 export const analysisViews = {
+  careUnknown: 'Bieżące zapisy opieki są niedostępne.',
+  currentCareToday: 'Bieżąca opieka · stan na dziś',
+  supportingRecords: 'Pozostałe zapisy',
+  supportingScope:
+    'Bieżąca opieka i cała zapisana historia. Daty porównania powyżej nie filtrują tych zapisów.',
+  currentCareCaveat: 'Liczby opisują zapisaną opiekę, nie ocenę zdrowia.',
+  latestMeasurement: 'Ostatni pomiar',
+  noMeasurement: 'Nie zapisano pomiaru masy',
+  recordedOpenHealth: 'Otwarte zapisy zdrowotne: {{count}}',
+  recordedMedication: 'Zapisy leków oznaczone jako aktywne: {{count}}',
+  recordedOverdue: 'Zaległe przypomnienia: {{count}}',
+  showCareRecords: 'Zobacz zapisy opieki',
+  historyPeriod: 'Okres historii',
+  historyScope:
+    'Daty obejmują zmiany u koni, zapisane treningi, aktywność i poniższe zapisy. Bieżąca opieka jest pokazana oddzielnie, na dziś.',
+  yardQuestion: 'Co zmieniło się w stajni?',
+  horseOverview: 'Wybierz konia do analizy',
+  horseOverviewHelp:
+    'Zmiany masy i ukończone treningi obejmują wybrany okres. Ostatni pomiar i bieżąca opieka mają własne daty.',
+  periodChange: 'Zmiana w okresie',
+  noComparableWeights: 'Za mało porównywalnych pomiarów',
+  completedTraining: 'Ukończone treningi',
+  durationCoverage: 'Czas zapisany dla {{known}} z {{total}} treningów',
+  unknownMinutes: 'Czas nieznany',
+  recordedMinutes: 'Zapisano {{count}} min',
+  horsesMeasured: 'Pomiar masy w tym okresie: {{measured}} z {{total}} koni.',
+  recordedActivity: 'Aktywność w wybranym okresie',
+  activityHelp:
+    'Wybierz okres, aby sprawdzić wizyty i zapisy opieki. Filtry wydarzeń obejmują wykres, liczby i listę wizyt. Zapisy opieki obejmują wszystkie kategorie.',
+  detailedTimeline: 'Szczegółowa oś wizyt',
+  eventFilters: 'Filtruj wizyty',
+  careAllCategories: 'Zapisy opieki · wszystkie kategorie',
+  noHorsesYet: 'Dodaj konia, aby zacząć zapisywać pomiary, treningi i opiekę.',
+  addFirstHorse: 'Dodaj konia',
+  noHistory:
+    'Brak wizyt i zapisów opieki w tym okresie. Wybierz inny okres lub otwórz konia, aby dodać zapis.',
+  coverageDates:
+    'Zapisana aktywność: {{start}} – {{end}}. Puste daty nie zawierają zapisanej aktywności.',
+  summaryUnavailable: 'Podsumowanie opieki niedostępne',
+  fitRecordedPeriod: 'Dopasuj do zapisów',
+  currentCareDetail: 'Szczegóły bieżącej opieki · na dziś',
+
   allBlocks: 'Wszystkie wydarzenia',
   completedBlocks: 'Zakończone wydarzenia',
   plannedBlocks: 'Zaplanowane wydarzenia',
@@ -19,13 +61,13 @@ export const analysisViews = {
   timelineHelp:
     'Kalendarz pokazuje czas trwania wydarzeń i ich powtórzenia. Nakładające się wydarzenia są ułożone jedno pod drugim, aby łatwiej zauważyć napięte terminy.',
   filterHelp:
-    'Filtry wyświetlania dotyczą tylko wydarzeń na osi czasu. Sumy dla okresu, wpisy o opiece i szczegóły poniżej obejmują całą aktywność.',
+    'Filtry wydarzeń obejmują wizyty, liczby i listy. Zapisy opieki obejmują wszystkie kategorie.',
   scale: 'Skala kalendarza',
   scaleHelp:
     'Przełączaj się między szczegółowym widokiem dziennym a widokiem tygodniowym lub miesięcznym.',
   blocksFilter: 'Wydarzenia na osi czasu',
   categoriesFilter: 'Kategorie wydarzeń na osi czasu',
-  periodEvents: 'Wszystkie wydarzenia w wybranym okresie',
+  periodEvents: 'Filtrowane wizyty w wybranym okresie',
   dayMix: 'Podsumowanie dnia',
   periodMix: 'Podsumowanie okresu',
   blocks: 'Wydarzenia',
@@ -80,12 +122,11 @@ export const analysisViews = {
   recentWeight: 'Ostatnie pomiary masy ciała',
   noRecentWeight: 'Brak ostatnich pomiarów masy ciała na osi czasu.',
   latestRecording: 'Ostatni pomiar',
-  nutritionSignals: 'Informacje o żywieniu',
+  nutritionSignals: 'Zmiany żywienia',
   nutritionHelp:
-    'Zmiany żywienia powiązane z pomiarami masy ciała lub wpisami o zdrowiu tego konia.',
-  noNutrition:
-    'Brak zmian żywienia w pobliżu dat wpisów o zdrowiu lub pomiarów masy ciała tego konia.',
-  nutritionCorrelations: 'Zbieżność zmian żywienia z innymi wpisami',
+    'Zapisy masy i zdrowia odnotowane w ciągu 14 dni od zmiany żywienia.',
+  noNutrition: 'Nie zapisano zmian żywienia dla tego konia.',
+  nutritionCorrelations: 'Zapisy w ciągu 14 dni',
   recentNutrition: 'Ostatnie wpisy o żywieniu',
   noRecentNutrition: 'Brak ostatnich wpisów o żywieniu na osi czasu.',
   carePlan: 'Plan opieki',
@@ -122,8 +163,7 @@ export const analysisViews = {
   calendar: 'Kalendarz aktywności stajni',
   periodNavigation: 'Okresy na osi czasu — wybieraj klawiszami strzałek',
   noScheduled: 'Na tej osi czasu nie ma jeszcze zaplanowanych wydarzeń.',
-  noFilteredEvents:
-    'Żadne wydarzenie nie pasuje do wybranych filtrów osi czasu.',
+  noFilteredEvents: 'Żadna wizyta nie pasuje do tych filtrów.',
   headerIconsHelp:
     'Ikony w nagłówkach pokazują rodzaje wydarzeń i wpisów o opiece w każdym okresie.',
   overview: 'Przegląd osi czasu',
@@ -177,29 +217,29 @@ export const analysisViews = {
   repeatBadge: 'cyklicznie',
   selected_day: 'Wybrany dzień na osi czasu',
   selectHelp_day:
-    'Wybierz kolumnę, aby zobaczyć całą aktywność w tym dniu, także wydarzenia ukryte przez filtry. Wybierz wydarzenie, aby otworzyć jego stronę.',
+    'Wybierz dzień, aby zobaczyć wizyty zgodne z filtrami i wszystkie zapisy opieki. Wybierz wizytę, aby ją otworzyć.',
   selectEmpty_day:
     'Wybierz dzień na osi czasu, aby zobaczyć nakładające się wydarzenia.',
   noOverlap_day: 'W tym dniu nie ma wydarzeń.',
   continues_day: 'Trwa w tym dniu',
   selected_week: 'Wybrany tydzień na osi czasu',
   selectHelp_week:
-    'Wybierz kolumnę, aby zobaczyć całą aktywność w tym tygodniu, także wydarzenia ukryte przez filtry. Wybierz wydarzenie, aby otworzyć jego stronę.',
+    'Wybierz tydzień, aby zobaczyć wizyty zgodne z filtrami i wszystkie zapisy opieki. Wybierz wizytę, aby ją otworzyć.',
   selectEmpty_week:
     'Wybierz tydzień na osi czasu, aby zobaczyć nakładające się wydarzenia.',
   noOverlap_week: 'W tym tygodniu nie ma wydarzeń.',
   continues_week: 'Trwa w tym tygodniu',
   selected_month: 'Wybrany miesiąc na osi czasu',
   selectHelp_month:
-    'Wybierz kolumnę, aby zobaczyć całą aktywność w tym miesiącu, także wydarzenia ukryte przez filtry. Wybierz wydarzenie, aby otworzyć jego stronę.',
+    'Wybierz miesiąc, aby zobaczyć wizyty zgodne z filtrami i wszystkie zapisy opieki. Wybierz wizytę, aby ją otworzyć.',
   selectEmpty_month:
     'Wybierz miesiąc na osi czasu, aby zobaczyć nakładające się wydarzenia.',
   noOverlap_month: 'W tym miesiącu nie ma wydarzeń.',
   continues_month: 'Trwa w tym miesiącu',
-  blockCount_one: '{{count}} wydarzenie',
-  blockCount_few: '{{count}} wydarzenia',
-  blockCount_many: '{{count}} wydarzeń',
-  blockCount_other: '{{count}} wydarzeń',
+  blockCount_one: '{{count}} wizyta',
+  blockCount_few: '{{count}} wizyty',
+  blockCount_many: '{{count}} wizyt',
+  blockCount_other: '{{count}} wizyty',
   careRecordCount_one: '{{count}} wpis o opiece',
   careRecordCount_few: '{{count}} wpisy o opiece',
   careRecordCount_many: '{{count}} wpisów o opiece',

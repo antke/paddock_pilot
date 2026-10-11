@@ -7,12 +7,16 @@ import {
   render,
   screen,
   within,
+  waitFor,
+  act,
 } from '@testing-library/react'
 import {
   createMemoryHistory,
   createRootRoute,
   createRouter,
   RouterProvider,
+  useLocation,
+  useRouter,
 } from '@tanstack/react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createDashboardLabFixtureData } from '#/components/dashboard-lab/dashboardLabFixtures'
@@ -38,9 +42,15 @@ const analysis = createAnalysisAuditSample(data, today)
 afterEach(() => {
   cleanup()
   localStorage.clear()
+  sessionStorage.clear()
   vi.restoreAllMocks()
 })
-async function show(locked = false, empty = false, localized = false) {
+async function show(
+  locked = false,
+  empty = false,
+  localized = false,
+  persistenceKey?: string,
+) {
   const sampleData = empty
     ? createDashboardAuditSample(data, 'empty', today)
     : data
@@ -52,6 +62,7 @@ async function show(locked = false, empty = false, localized = false) {
     component: () => (
       <StableAnalysisPageView
         data={sampleData}
+        persistenceKey={persistenceKey}
         analysis={
           locked
             ? {
@@ -69,7 +80,7 @@ async function show(locked = false, empty = false, localized = false) {
     history: createMemoryHistory({ initialEntries: ['/'] }),
   })
   await router.load()
-  render(
+  return render(
     localized ? (
       <LocaleProvider>
         <LanguageSelector />
@@ -82,6 +93,57 @@ async function show(locked = false, empty = false, localized = false) {
 }
 
 describe('actual analysis view', () => {
+  it('opens the linked horse instead of the remembered subject and follows browser history', async () => {
+    const horse = data.horses[0]
+    const key = 'analysis-linked-horse'
+    sessionStorage.setItem(`${key}:subject`, JSON.stringify('stable'))
+    function LinkedAnalysis() {
+      const location = useLocation()
+      const router = useRouter()
+      const horseId =
+        new URLSearchParams(location.searchStr).get('horseId') ?? undefined
+      return (
+        <StableAnalysisPageView
+          data={data}
+          analysis={analysis}
+          persistenceKey={key}
+          selectedHorseId={horseId}
+          onHorseChange={(next) =>
+            router.history.push(next ? `/?horseId=${next}` : '/')
+          }
+        />
+      )
+    }
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    const router = createRouter({
+      routeTree: createRootRoute({ component: LinkedAnalysis }),
+      history: createMemoryHistory({
+        initialEntries: [`/?horseId=${horse._id}`],
+      }),
+    })
+    await router.load()
+    render(<RouterProvider router={router} />)
+    await screen.findByRole('heading', { name: horse.name })
+    expect(
+      screen.getByRole<HTMLInputElement>('combobox', {
+        name: 'Analyse stable or horse',
+      }).value,
+    ).toBe(horse.name)
+    fireEvent.click(screen.getByRole('button', { name: 'Stable overview' }))
+    await screen.findByRole('heading', {
+      name: 'What changed across the yard?',
+    })
+    expect(router.state.location.searchStr).toBe('')
+    act(() => router.history.back())
+    await waitFor(() =>
+      expect(
+        screen.getByRole<HTMLInputElement>('combobox', {
+          name: 'Analyse stable or horse',
+        }).value,
+      ).toBe(horse.name),
+    )
+  })
+
   it('renders the real access prompt instead of an empty premium chart when locked', async () => {
     await show(true)
     expect(
@@ -93,12 +155,12 @@ describe('actual analysis view', () => {
     expect(screen.queryByRole('combobox')).toBeNull()
   })
 
-  it('names scale controls, keeps full period scope explicit, and exposes all care records', async () => {
+  it('keeps appointment filters consistent with counts and details while naming unfiltered care records', async () => {
     await show()
     const scale = await screen.findByRole('group', { name: 'Calendar scale' })
     expect(
       within(scale)
-        .getByRole('button', { name: 'Day' })
+        .getByRole('button', { name: 'Month' })
         .getAttribute('aria-pressed'),
     ).toBe('true')
     const region = screen.getByRole('region', {
@@ -107,21 +169,24 @@ describe('actual analysis view', () => {
     expect(region.tabIndex).toBe(0)
     expect(within(region).getByText('Sample reminder record 10')).toBeTruthy()
     expect(
-      screen.getByText(/Display filters affect event blocks only/),
+      screen.getByText(
+        /Event filters apply to the chart, counts and appointment list/,
+      ),
     ).toBeTruthy()
     fireEvent.click(screen.getByRole('checkbox', { name: 'Vet' }))
     expect(within(region).getByText('Sample reminder record 10')).toBeTruthy()
     for (const name of ['Training', 'Dentist', 'Hoof trimming', 'Massage'])
       fireEvent.click(screen.getByRole('checkbox', { name }))
     expect(
-      screen.getByText('No event blocks match the selected timeline filters.'),
+      screen.getByText('No appointments match these filters.'),
     ).toBeTruthy()
     expect(
-      screen.getByRole('region', { name: 'All events in selected period' })
-        .textContent,
-    ).toContain('Sample completed visit')
+      screen.queryByRole('region', {
+        name: 'Filtered appointments in selected period',
+      }),
+    ).toBeNull()
     expect(
-      screen.getByText(/Select an event block to open its event page/),
+      screen.getByText(/Select an appointment to open its event page/),
     ).toBeTruthy()
     fireEvent.click(within(scale).getByRole('button', { name: 'Week' }))
     expect(
@@ -132,6 +197,49 @@ describe('actual analysis view', () => {
     expect(
       screen.getByRole('region', { name: 'Stable activity calendar' }).tabIndex,
     ).toBe(0)
+  })
+
+  it('puts the overview before activity and keeps the selected dates when opening a horse', async () => {
+    await show()
+    const overview = screen.getByRole('heading', {
+      name: 'What changed across the yard?',
+    })
+    const activity = screen.getByRole('heading', {
+      name: 'Activity through the period',
+    })
+    expect(
+      overview.compareDocumentPosition(activity) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    fireEvent.change(screen.getByRole('combobox', { name: 'History period' }), {
+      target: { value: 'custom' },
+    })
+    fireEvent.change(screen.getByLabelText('From'), {
+      target: { value: '2025-10-01' },
+    })
+    fireEvent.change(screen.getByLabelText('To'), {
+      target: { value: '2026-09-30' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: data.horses[49].name }))
+    expect(
+      screen.getByRole('heading', { name: data.horses[49].name }),
+    ).toBeTruthy()
+    const subject = screen.getByRole('combobox', {
+      name: 'Analyse stable or horse',
+    })
+    fireEvent.focus(subject)
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Show analysis subjects' }),
+    )
+    fireEvent.change(subject, { target: { value: data.stable.name } })
+    fireEvent.keyDown(subject, { key: 'ArrowDown' })
+    fireEvent.keyDown(subject, { key: 'Enter' })
+    expect(screen.getByLabelText<HTMLInputElement>('From').value).toBe(
+      '2025-10-01',
+    )
+    expect(screen.getByLabelText<HTMLInputElement>('To').value).toBe(
+      '2026-09-30',
+    )
   })
 
   it('routes urgent health to health and cadence to reminders', async () => {
@@ -185,14 +293,14 @@ describe('actual analysis view', () => {
   it('distinguishes a genuinely empty timeline and uses singular period copy', async () => {
     await show(false, true)
     expect(
-      await screen.findByText('No events scheduled in this timeline yet.'),
+      await screen.findByText(/No appointments or care records in this period/),
     ).toBeTruthy()
     expect(
-      screen.queryByText(
-        'No event blocks match the selected timeline filters.',
-      ),
+      screen.queryByText('No appointments match these filters.'),
     ).toBeNull()
-    expect(screen.getByText('1 period')).toBeTruthy()
+    expect(
+      screen.getByText(/No appointments or care records in this period/),
+    ).toBeTruthy()
   })
 
   it('opens an event independently of period selection and retains pointer overview jumps', () => {
@@ -331,4 +439,62 @@ it('preserves timeline period, event filters and zoom when changing language', a
   expect(
     screen.getByRole('region', { name: 'Kalendarz aktywności stajni' }),
   ).toBeTruthy()
+})
+
+it('counts each recurring occurrence once in monthly totals and detail records, while keeping empty calendar days', () => {
+  const recurring = {
+    ...data.events[0],
+    date: '2026-09-01',
+    endDate: undefined,
+    recurrence: { frequency: 'daily' as const, interval: 1 },
+    status: 'planned' as const,
+  }
+  const timeline = createAnalysisCentreData(
+    { ...data, events: [recurring] },
+    [],
+    'en',
+    { start: '2026-09-01', end: '2026-09-30' },
+  ).timeline
+  const periods = getTimelinePeriods(timeline.buckets, 'month')
+  expect(timeline.buckets).toHaveLength(30)
+  expect(periods).toHaveLength(1)
+  expect(periods[0].allEventCount).toBe(30)
+  expect(periods[0].occurrences).toHaveLength(30)
+  expect(
+    new Set(periods[0].occurrences.map((record) => record.occurrenceKey)).size,
+  ).toBe(30)
+})
+
+it('restores subject and historical dates after leaving analysis and returns focus when changing scope', async () => {
+  const first = await show(false, false, false, 'test-stable-exploration')
+  fireEvent.change(screen.getByLabelText('History period'), {
+    target: { value: 'custom' },
+  })
+  fireEvent.change(screen.getByLabelText('From'), {
+    target: { value: '2025-10-01' },
+  })
+  fireEvent.change(screen.getByLabelText('To'), {
+    target: { value: '2026-09-30' },
+  })
+  const horse = screen.getByRole('button', {
+    name: data.horses[0].name,
+  })
+  horse.focus()
+  fireEvent.click(horse)
+  expect(document.activeElement).toBe(
+    screen.getByRole('combobox', { name: 'Analyse stable or horse' }),
+  )
+  first.unmount()
+  await show(false, false, false, 'test-stable-exploration')
+  expect(
+    screen.getByRole('heading', { name: data.horses[0].name }),
+  ).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Stable overview' }))
+  expect(document.activeElement).toBe(
+    screen.getByRole('combobox', { name: 'Analyse stable or horse' }),
+  )
+  expect(screen.getByLabelText<HTMLInputElement>('From').value).toBe(
+    '2025-10-01',
+  )
+  expect(screen.getByLabelText<HTMLInputElement>('To').value).toBe('2026-09-30')
 })

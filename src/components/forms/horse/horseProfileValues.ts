@@ -54,6 +54,9 @@ export function horseProfilePayload(
   return {
     ...details,
     age,
+    vetProviderId: values.vetProviderId as Id<'stableProviders'> | undefined,
+    farrierProviderId: values.farrierProviderId as
+      Id<'stableProviders'> | undefined,
     dateOfBirth: values.dateOfBirth || undefined,
     profileImageId,
   }

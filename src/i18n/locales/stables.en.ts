@@ -1,4 +1,12 @@
 export const stables = {
+  providerActions: 'Actions for {{name}}',
+  callProvider: 'Call {{name}}',
+  sharedTabs: {
+    contacts: 'Contacts',
+    people: 'People',
+    yard: 'Yard information',
+  },
+
   createdDescription: '{{name}} is ready.',
   updatedDescription: '{{name}} has been updated.',
   saveFailed:
@@ -124,10 +132,10 @@ export const stables = {
   invitations: 'Invitations',
   memberRemoved: 'Member removed',
   removeMemberFailed: 'Could not remove member',
-  reassignmentCheck: 'Check the horse reassignment and try again.',
+  reassignmentCheck: 'Refresh the member details and try again.',
   remove: 'Remove',
   removeMemberFailedHelp:
-    'Could not remove this member. Check the horse reassignment and try again.',
+    'Could not remove this member. Refresh the member details and try again.',
   newOwner: 'New owner',
   chooseMember: 'Choose a stable member',
   removing: 'Removing...',
@@ -149,7 +157,7 @@ export const stables = {
   providerUpdated: 'Provider updated',
   providerRemoved: 'Provider removed',
   providerDirectory: 'Provider directory',
-  providerDirectoryHelp: 'Care contacts for event planning.',
+  providerDirectoryHelp: 'Vets, farriers and other stable contacts.',
   addProvider: 'Add provider',
   addProviderHelp: 'Add a care contact to the stable provider directory.',
   noProviders: 'No providers saved yet.',

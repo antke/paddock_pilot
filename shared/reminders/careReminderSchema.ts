@@ -88,6 +88,13 @@ export function createCareReminderSchemas(
   const careReminderDueDateSchema = z
     .string({ error: message('textInvalid') })
     .regex(/^\d{4}-\d{2}-\d{2}$/, message('dueDate'))
+    .refine((value) => {
+      const date = new Date(`${value}T12:00:00Z`)
+      return (
+        !Number.isNaN(date.getTime()) &&
+        date.toISOString().slice(0, 10) === value
+      )
+    }, message('dueDate'))
 
   const optionalText = <TSchema extends z.ZodString>(schema: TSchema) =>
     schema.optional().transform((val) => val || undefined)
@@ -99,7 +106,10 @@ export function createCareReminderSchemas(
     .transform((val) => val || undefined)
 
   const careReminderInputSchema = z.object({
-    stableId: z.string({ error: message('textInvalid') }).min(1),
+    stableId: z
+      .string({ error: message('textInvalid') })
+      .min(1)
+      .optional(),
     horseId: optionalId,
     eventId: optionalId,
     title: careReminderTitleSchema,
@@ -112,6 +122,7 @@ export function createCareReminderSchemas(
 
   const careReminderFormSchema = z
     .object({
+      assignedTo: z.string().optional(),
       targetType: careReminderFormTargetTypeSchema,
       horseIds: z.array(z.string({ error: message('textInvalid') }), {
         error: message('listInvalid'),

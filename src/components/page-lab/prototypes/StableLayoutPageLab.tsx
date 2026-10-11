@@ -17,11 +17,19 @@ import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { Field, FieldGrid, FieldLabel } from '#/components/ui/field'
 import { Select } from '#/components/ui/select'
 import { useDevAuthBypassEnabled } from '#/lib/devAuthBypass'
+import {
+  StableDirectoryHeader,
+  stableDirectoryTabs,
+} from '#/components/stables/StableDirectoryHeader'
 
 const stableId = 'sample-stable'
 const base = `/stables/${stableId}`
 const paths = [
   { path: '', label: 'Stable overview' },
+  { path: '/stable', label: 'Stable directory navigation' },
+  { path: '/documents', label: 'Stable documents' },
+  { path: '/analysis', label: 'Stable analysis' },
+  { path: '/welcome', label: 'Getting started' },
   { path: '/horses', label: 'Horse list' },
   { path: '/horses/create', label: 'Add horse' },
   { path: '/horses/deleted', label: 'Deleted horses' },
@@ -72,18 +80,22 @@ function LocalStableLayoutRouter() {
   return <RouterProvider router={router} />
 }
 function LocalStableLayout() {
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const router = useRouter()
   const [labelMode, setLabelMode] = useState<keyof typeof labelSets>('standard')
-  const path = pathname.startsWith(base) ? pathname.slice(base.length) : ''
+  const path = pathname.startsWith(base)
+    ? pathname.slice(base.length)
+    : pathname.startsWith('/horses/')
+      ? pathname
+      : ''
   const labels = labelSets[labelMode]
   const title =
     createStableBreadcrumbItems(path, labels).at(-1)?.label ?? 'Overview'
   return (
     <div className="grid gap-6">
       <p className="text-sm text-muted-foreground">
-        Local stable layout sample. Breadcrumb links navigate only inside this
-        preview. No records are queried; the page body is a labeled placeholder.
+        Local stable layout sample. Links navigate only inside this preview. No
+        records are queried; the page body is a labeled placeholder.
       </p>
       <FieldGrid>
         <Field>
@@ -140,9 +152,21 @@ function LocalStableLayout() {
           }
         >
           <DashboardPage>
-            <DashboardPageHeader title={title} />
+            {path === '/stable' ? (
+              <StableDirectoryHeader
+                stableId={stableId}
+                name="Cedar Ridge Barn"
+                activeTab={
+                  stableDirectoryTabs.find((tab) => tab === search.tab) ??
+                  'contacts'
+                }
+                isOwner
+              />
+            ) : (
+              <DashboardPageHeader title={title} />
+            )}
             <DashboardEmptyState>
-              Sample page content. Use the breadcrumb links to inspect the
+              Sample page content. Use the navigation links to inspect the
               parent and current-page states.
             </DashboardEmptyState>
           </DashboardPage>

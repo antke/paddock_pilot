@@ -1,4 +1,5 @@
 export const careRecords = {
+  currentFeedingPlan: 'Aktualny plan żywienia',
   medicationField: 'Lek',
   saveFailed:
     'Nie udało się zapisać wpisu. Wprowadzone dane zostały zachowane. Spróbuj ponownie.',

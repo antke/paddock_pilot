@@ -64,7 +64,7 @@ describe('care reminder production-view sample', () => {
     fireEvent.click(complete)
     expect(
       screen.getByRole<HTMLButtonElement>('button', {
-        name: `Dismiss ${title}`,
+        name: `Actions for ${title}`,
       }).disabled,
     ).toBe(true)
     await screen.findByText('The reminder was not updated. Please try again.')
@@ -76,8 +76,26 @@ describe('care reminder production-view sample', () => {
     expect(
       screen.queryByRole('button', { name: `Complete ${title}` }),
     ).toBeNull()
+    expect(screen.queryByText(title)).toBeNull()
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Toggle filters, 1 active' }),
+    )
+    fireEvent.change(await screen.findByRole('combobox', { name: 'State' }), {
+      target: { value: 'completed' },
+    })
     const row = screen.getByText(title).closest('[role="listitem"]')!
     expect(within(row as HTMLElement).getByText('Completed')).toBeTruthy()
+    fireEvent.click(
+      within(row as HTMLElement).getByRole('button', { name: 'Reopen' }),
+    )
+    await screen.findByText(
+      'Sample reopening applied locally. No live reminder was saved or removed.',
+    )
+    expect(screen.queryByText(title)).toBeNull()
+    fireEvent.change(screen.getByRole('combobox', { name: 'State' }), {
+      target: { value: 'pending' },
+    })
+    await screen.findByRole('button', { name: `Complete ${title}` })
     expect(useMutation).not.toHaveBeenCalled()
   })
 
@@ -88,7 +106,10 @@ describe('care reminder production-view sample', () => {
     })
     expect(screen.queryByRole('button', { name: 'Add reminder' })).toBeNull()
     expect(screen.queryByRole('button', { name: /^Complete / })).toBeNull()
-    expect(screen.queryByRole('button', { name: /^Remove/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Remove' })).toBeNull()
+    expect(
+      screen.queryByRole('button', { name: `Actions for ${title}` }),
+    ).toBeNull()
     const search = screen.getByRole('searchbox', { name: 'Search reminders' })
     fireEvent.change(search, { target: { value: 'not-a-real-reminder' } })
     await screen.findByText('No reminders match these filters.')
@@ -103,6 +124,10 @@ describe('care reminder production-view sample', () => {
     fireEvent.change(screen.getByLabelText('Sample reminders'), {
       target: { value: 'empty' },
     })
+    await screen.findByText('No outstanding reminders.')
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Remove State: Outstanding filter' }),
+    )
     await screen.findByText(
       'No care reminders have been added for this stable yet.',
     )

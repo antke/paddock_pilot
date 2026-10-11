@@ -23,6 +23,7 @@ type EventRecurrence = {
 
 export type EventOccurrenceSource = {
   _id: string
+  contextParticipationId?: string
   date: string
   endDate?: string
   recurrence?: EventRecurrence
@@ -73,8 +74,11 @@ function createSingleOccurrence<TEvent extends EventOccurrenceSource>(
 
   return [
     {
-      occurrenceKey:
-        startDate === event.date ? String(event._id) : `${String(event._id)}:${startDate}`,
+      occurrenceKey: event.contextParticipationId
+        ? `${event.contextParticipationId}:${startDate}`
+        : startDate === event.date
+          ? String(event._id)
+          : `${String(event._id)}:${startDate}`,
       eventId: event._id,
       event,
       startDate,
@@ -122,7 +126,9 @@ function createDailyOccurrences<TEvent extends EventOccurrenceSource>(
     startDate <= lastStartDate && count < maxOccurrences;
     startDate = addDaysKey(startDate, interval), count += 1
   ) {
-    occurrences.push(...createSingleOccurrence(event, startDate, windowStart, windowEnd))
+    occurrences.push(
+      ...createSingleOccurrence(event, startDate, windowStart, windowEnd),
+    )
   }
 
   return occurrences
@@ -154,7 +160,9 @@ function createWeeklyOccurrences<TEvent extends EventOccurrenceSource>(
       selectedDays.has(getDayOfWeek(startDate)) &&
       weeksSinceStart % interval === 0
     ) {
-      occurrences.push(...createSingleOccurrence(event, startDate, windowStart, windowEnd))
+      occurrences.push(
+        ...createSingleOccurrence(event, startDate, windowStart, windowEnd),
+      )
       count += 1
     }
   }
@@ -178,7 +186,11 @@ function createMonthlyOccurrences<TEvent extends EventOccurrenceSource>(
     (lastParts.year - startParts.year) * 12 +
     (lastParts.monthIndex - startParts.monthIndex)
 
-  for (let monthOffset = 0, count = 0; monthOffset <= monthCount && count < maxOccurrences; monthOffset += 1) {
+  for (
+    let monthOffset = 0, count = 0;
+    monthOffset <= monthCount && count < maxOccurrences;
+    monthOffset += 1
+  ) {
     if (monthOffset % interval !== 0) continue
 
     const monthIndex = startParts.monthIndex + monthOffset
@@ -190,9 +202,12 @@ function createMonthlyOccurrences<TEvent extends EventOccurrenceSource>(
       normalizedMonthIndex,
     )
 
-    if (!startDate || startDate < event.date || startDate > lastStartDate) continue
+    if (!startDate || startDate < event.date || startDate > lastStartDate)
+      continue
 
-    occurrences.push(...createSingleOccurrence(event, startDate, windowStart, windowEnd))
+    occurrences.push(
+      ...createSingleOccurrence(event, startDate, windowStart, windowEnd),
+    )
     count += 1
   }
 
@@ -233,7 +248,8 @@ function getMonthlyCandidateDateKey(
     }
 
     const firstDayKey = formatDateKey(year, monthIndex, 1)
-    const firstMatchOffset = (recurrence.weekday - getDayOfWeek(firstDayKey) + 7) % 7
+    const firstMatchOffset =
+      (recurrence.weekday - getDayOfWeek(firstDayKey) + 7) % 7
     const dayOfMonth = firstMatchOffset + 1 + (recurrence.ordinal - 1) * 7
 
     if (dayOfMonth <= daysInMonth) {
@@ -245,7 +261,8 @@ function getMonthlyCandidateDateKey(
 }
 
 function getMaxOccurrenceCount(recurrence: EventRecurrence) {
-  if (recurrence.end?.type !== 'after_occurrences') return Number.POSITIVE_INFINITY
+  if (recurrence.end?.type !== 'after_occurrences')
+    return Number.POSITIVE_INFINITY
 
   return recurrence.end.count ?? 1
 }
@@ -290,14 +307,20 @@ function minDateKey(left: string, right: string) {
 }
 
 function daysBetween(startDate: string, endDate: string) {
-  return Math.round((getDateKeyTime(endDate) - getDateKeyTime(startDate)) / oneDayInMs)
+  return Math.round(
+    (getDateKeyTime(endDate) - getDateKeyTime(startDate)) / oneDayInMs,
+  )
 }
 
 function addDaysKey(dateKey: string, days: number) {
   const date = new Date(getDateKeyTime(dateKey))
   date.setUTCDate(date.getUTCDate() + days)
 
-  return formatDateKey(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  return formatDateKey(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+  )
 }
 
 function getDateKeyTime(dateKey: string) {

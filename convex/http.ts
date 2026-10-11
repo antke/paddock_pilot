@@ -1,7 +1,7 @@
 import { httpRouter } from 'convex/server'
 import type { WebhookEvent } from '@clerk/backend'
 import { httpAction } from './_generated/server'
-import { internal } from './_generated/api'
+import { api, internal } from './_generated/api'
 import { verifyWebhook } from '@clerk/backend/webhooks'
 import {
   translateResendWebhook,
@@ -9,6 +9,35 @@ import {
 } from './libs/email/resendWebhook'
 
 const http = httpRouter()
+http.route({
+  path: '/horse-document',
+  method: 'GET',
+  handler: httpAction(async (ctx, request) => {
+    if (!(await ctx.auth.getUserIdentity()))
+      return new Response('Unauthorized', { status: 401 })
+    try {
+      const id = new URL(request.url).searchParams.get('id') ?? ''
+      const document = await ctx.runQuery(
+        api.stableDocuments.authorizeDownload,
+        { id },
+      )
+      const blob = document.storageId
+        ? await ctx.storage.get(document.storageId)
+        : null
+      if (!blob) return new Response('Not found', { status: 404 })
+      return new Response(blob, {
+        headers: {
+          'Content-Type': blob.type || 'application/octet-stream',
+          'Cache-Control': 'private, no-store',
+          'X-Content-Type-Options': 'nosniff',
+          'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(document.fileName)}`,
+        },
+      })
+    } catch {
+      return new Response('Not found', { status: 404 })
+    }
+  }),
+})
 
 const getString = (value: unknown) =>
   typeof value === 'string' ? value : undefined

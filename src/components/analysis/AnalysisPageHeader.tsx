@@ -1,21 +1,14 @@
 import { useT } from '#/i18n/LocaleProvider'
-import { Construction } from 'lucide-react'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 
 export function AnalysisPageHeader() {
   const t = useT()
 
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-2">
       <DashboardPageHeader title={t('analysisViews.title')} />
-      <div
-        role="note"
-        className="flex items-center gap-4 rounded-panel border border-status-warning/30 bg-status-warning-surface p-5 text-status-warning sm:p-6"
-      >
-        <Construction aria-hidden="true" className="size-8 shrink-0" />
-        <p className="text-2xl font-bold leading-tight sm:text-3xl">
-          {t('analysisViews.workInProgress')}
-        </p>
+      <div role="note" className="text-sm text-muted-foreground">
+        <p>{t('analysisViews.workInProgress')}</p>
       </div>
     </div>
   )

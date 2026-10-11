@@ -37,10 +37,11 @@ export function EventDateBadge({
           : formatMediumDateKey(date, locale)
       }
       className={cn(
-        'grid shrink-0 justify-items-center text-center',
-        variant === 'compact' && 'app-row min-w-14 rounded-control px-2 py-1',
-        variant === 'rail' && 'app-row min-w-16 rounded-control px-3 py-2',
-        variant === 'hero' && 'app-row size-24 content-center gap-1 p-3',
+        'grid shrink-0 content-center justify-items-center gap-1 text-center',
+        variant === 'compact' &&
+          'app-row size-14 gap-0.5 rounded-control px-1 py-0.5',
+        variant === 'rail' && 'app-row size-16 rounded-control px-2 py-1',
+        variant === 'hero' && 'app-row size-24 p-3',
         className,
       )}
     >
@@ -54,8 +55,8 @@ export function EventDateBadge({
       </TextLabel>
       <span
         className={cn(
-          'font-semibold leading-none',
-          variant === 'hero' ? 'text-3xl tracking-normal' : 'text-lg',
+          'font-semibold',
+          variant === 'hero' ? 'text-3xl/none tracking-normal' : 'text-lg/none',
         )}
       >
         {dateBadge.day}
@@ -65,10 +66,7 @@ export function EventDateBadge({
           size="xs"
           weight={variant === 'hero' ? 'semibold' : 'medium'}
           tracking="none"
-          className={cn(
-            'mt-1 leading-none',
-            variant === 'hero' && 'mt-0 whitespace-nowrap',
-          )}
+          className="whitespace-nowrap leading-none"
         >
           {time}
         </TextLabel>

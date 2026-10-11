@@ -1,8 +1,35 @@
 export const horseComparison = {
+  questions: {
+    trainingHealth: 'Trening na tle zdrowia i leków',
+    trainingFeeding: 'Trening w okresie zmian żywienia',
+    weightTraining: 'Waga na tle treningów',
+    feeding: 'Waga w okresie zmian żywienia',
+    condition: 'Waga na tle kondycji ciała',
+    trainingCare: 'Trening na tle zdrowia i opieki',
+  },
+  customize: 'Dostosuj porównanie',
+  scope:
+    'Historia: {{start}} – {{end}}. Okres obejmuje porównanie i jego wpisy źródłowe.',
+  returnRange: 'Wróć do poprzedniego okresu',
+  fit: 'Dopasuj do okresu wpisów',
+  recordingCoverage:
+    '{{count}} widocznych wpisów · zapisano {{start}} – {{end}}',
+  nearbyRecords:
+    '{{count}} pobliskich punktów · {{start}} – {{end}} · zobacz wpisy',
+  aggregation: {
+    daily: 'Sumy dzienne',
+    weekly: 'Sumy tygodniowe',
+    monthly: 'Sumy miesięczne',
+  },
+
   title: 'Porównaj w czasie',
   help: 'Sprawdź pomiary, treningi i opiekę na wspólnej osi czasu. Wybierz wpis, aby zobaczyć szczegóły.',
+  conditionHelp:
+    'Kondycja ciała to zapisana ocena otłuszczenia w skali 1–9. Wyższy wynik oznacza więcej tkanki tłuszczowej.',
   preset: 'Proponowane porównanie',
   presets: {
+    trainingHealth: 'Treningi i zdrowie',
+    trainingFeeding: 'Trening i żywienie',
     weightTraining: 'Waga i trening',
     feeding: 'Zmiany żywienia',
     condition: 'Kondycja ciała',
@@ -42,6 +69,8 @@ export const horseComparison = {
   score: '1–9',
   minutes: 'min',
   sessions: 'treningi',
+  emptyHelp:
+    'Wybierz inny okres lub porównanie albo otwórz kartę konia, aby dodać zapis z datą.',
   noRecords: 'Brak wpisów w tym okresie.',
   noTraining: 'Brak zapisanych ukończonych treningów w tym okresie.',
   loading: 'Wczytywanie wpisów konia…',
@@ -51,15 +80,20 @@ export const horseComparison = {
   evidence:
     'Punkty oznaczają zapisane pomiary; linie ułatwiają odczyt. Zbieżność zmian w czasie nie dowodzi związku przyczynowego.',
   coverage: 'Czas zapisano dla {{recorded}} z {{total}} ukończonych treningów.',
+  totalsUnknown: '{{count}} ukończonych treningów · nie zapisano czasu',
+  singleWeight: '1 pomiar · {{last}} kg ({{end}})',
   totals: 'Ukończone treningi: {{count}} · zapisane minuty: {{minutes}}',
   weightSummary:
     'Pomiary: {{count}} · {{first}} kg ({{start}}) → {{last}} kg ({{end}})',
   changes: 'Zmiany żywienia: {{count}}',
-  showOtherTraining: 'Pokaż planowane, odwołane, pominięte i niepotwierdzone treningi',
+  showOtherTraining:
+    'Pokaż planowane, odwołane, pominięte i niepotwierdzone treningi',
   otherTraining: 'Pozostałe wpisy treningowe',
   missingDuration: 'Ukończone treningi bez zapisanego czasu',
   unknownDuration: 'Nie zapisano czasu trwania',
   recordCount: 'Liczba wpisów: {{count}}',
+  inspectSelection: 'Sprawdź wybrane zapisy ({{count}})',
+  backToChart: 'Wróć do wykresu',
   selected: 'Wybrane wpisy',
   chooseRecord:
     'Wybierz punkt, słupek lub wydarzenie, aby zobaczyć wpisy źródłowe.',

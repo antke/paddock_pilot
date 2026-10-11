@@ -79,8 +79,8 @@ export function StableDashboardAlerts({
             alerts.highSeverityIssues.slice(0, 4).map((issue) => (
               <DashboardItemOpenLink
                 key={issue.id}
-                to="/stables/$stableId/horses/$horseId"
-                params={{ stableId, horseId: issue.horseId }}
+                to="/horses/$horseId"
+                params={{ horseId: issue.horseId }}
                 tone={alertRowTone.attention}
                 density="compact"
               >
@@ -108,6 +108,7 @@ export function StableDashboardAlerts({
                 key={reminder.id}
                 to="/stables/$stableId/reminders"
                 params={{ stableId }}
+                search={{ reminderId: reminder.id }}
                 tone={alertRowTone[reminder.overdue ? 'attention' : 'due']}
                 density="compact"
               >
@@ -172,8 +173,8 @@ export function StableDashboardAlerts({
             alerts.profileGaps.slice(0, 4).map((horse) => (
               <DashboardItemOpenLink
                 key={horse.horseId}
-                to="/stables/$stableId/horses/$horseId/edit"
-                params={{ stableId, horseId: horse.horseId }}
+                to="/horses/$horseId/edit"
+                params={{ horseId: horse.horseId }}
                 tone={alertRowTone.stable}
                 density="compact"
               >

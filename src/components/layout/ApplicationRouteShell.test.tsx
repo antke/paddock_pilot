@@ -39,6 +39,25 @@ afterEach(() => {
 })
 
 describe('ApplicationRouteShell', () => {
+  it('preserves shell and navigation elements across signed-in Home, Events and Training', () => {
+    auth.state = 'signed-in'
+    const { container, rerender } = render(
+      <ApplicationRouteShell pathname="/">
+        <p>Home</p>
+      </ApplicationRouteShell>,
+    )
+    const shell = container.querySelector('[data-slot="app-shell"]')
+    const header = screen.getByRole('banner')
+    for (const pathname of ['/events', '/training', '/']) {
+      rerender(
+        <ApplicationRouteShell pathname={pathname}>
+          <p>{pathname}</p>
+        </ApplicationRouteShell>,
+      )
+      expect(container.querySelector('[data-slot="app-shell"]')).toBe(shell)
+      expect(screen.getByRole('banner')).toBe(header)
+    }
+  })
   it('lets the signed-out home page own its header, main, and footer', () => {
     const { container } = render(
       <ApplicationRouteShell pathname="/">

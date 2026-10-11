@@ -119,7 +119,7 @@ export function HorseWeightRecordsView({
   onRemove,
   onCreateActionChange,
 }: HorseWeightRecordsCardProps & {
-  records: Array<Doc<'horseWeightRecords'>>
+  records: Array<Doc<'horseWeightRecords'> & { canEdit?: boolean }>
   canManage: boolean
   onAdd: (values: WeightRecordFormSchema) => Promise<void>
   onRemove: (record: Doc<'horseWeightRecords'>) => Promise<void>
@@ -159,6 +159,7 @@ export function HorseWeightRecordsView({
     () =>
       canManage ? (
         <CreateRecordDialog
+          actionId="weight"
           open={isCreateOpen}
           onOpenChange={(open) => {
             if (!creating.current) setIsCreateOpen(open)
@@ -199,7 +200,7 @@ export function HorseWeightRecordsView({
         <WeightRecordRow
           key={record._id}
           record={record}
-          canManage={canManage}
+          canManage={canManage && record.canEdit !== false}
           onRemove={onRemove}
           removalFocusTarget={() => region.current}
         />

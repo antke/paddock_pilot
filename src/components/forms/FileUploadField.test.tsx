@@ -83,6 +83,34 @@ describe('FileUploadField', () => {
 
     expect(screen.getByText('passport.pdf')).toBeTruthy()
     expect(onFilesChange).toHaveBeenCalledWith([file])
+    expect(screen.getByRole('status').textContent).toBe(
+      'passport.pdf selected. Save the form to attach it.',
+    )
+    expect(screen.getByText('Selected · not saved yet')).toBeTruthy()
+  })
+
+  it('keeps keyboard focus on the attachment, preserves it on picker cancellation, and returns focus on removal', () => {
+    const changed = vi.fn()
+    const { container } = render(
+      <FileUploadField label="Passport" onFilesChange={changed} />,
+    )
+    screen.getByRole('button', { name: /drop a file/i }).focus()
+    const input = container.querySelector('input[type=file]')!
+    const file = new File(['record'], 'passport.pdf', {
+      type: 'application/pdf',
+    })
+    fireEvent.change(input, { target: { files: [file] } })
+    expect(document.activeElement).toBe(
+      screen.getByRole('button', { name: 'Replace passport.pdf' }),
+    )
+    fireEvent.change(input, { target: { files: [] } })
+    expect(screen.getByText('passport.pdf')).toBeTruthy()
+    expect(changed).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button', { name: 'Remove passport.pdf' }))
+    expect(document.activeElement).toBe(
+      screen.getByRole('button', { name: /drop a file/i }),
+    )
+    expect(screen.getByRole('status').textContent).toBe('')
   })
 
   it('clears the attachment preview when the parent form resets', () => {

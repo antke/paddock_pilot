@@ -32,7 +32,7 @@ function weightSamples(
     _creationTime: 0,
     horseId: horse._id,
     stableId: horse.stableId,
-    createdBy: horse.ownerId,
+    createdBy: horse.ownerId!,
     createdAt: sampleDate(index),
     measuredAt: sampleDate(index * 7),
     weight: index % 2 ? 1100 + index : 500 + index,
@@ -53,7 +53,7 @@ function nutritionSamples(
     _creationTime: 0,
     horseId: horse._id,
     stableId: horse.stableId,
-    createdBy: horse.ownerId,
+    createdBy: horse.ownerId!,
     createdAt: sampleDate(index),
     changedAt: sampleDate(index * 7),
     summary:
@@ -245,7 +245,7 @@ function LocalWeightRecords({ horse, onCreateActionChange }: SampleProps) {
           _creationTime: now,
           horseId: horse._id,
           stableId: horse.stableId,
-          createdBy: horse.ownerId,
+          createdBy: horse.ownerId!,
           createdAt: now,
           weight: values.weight,
           unit: values.unit,
@@ -257,7 +257,7 @@ function LocalWeightRecords({ horse, onCreateActionChange }: SampleProps) {
           [record, ...current].sort(compareWeightRecordsNewestFirst),
         )
       }, 'Weight record added to this sample only.'),
-    [simulate, horse._id, horse.stableId, horse.ownerId],
+    [simulate, horse._id, horse.stableId, horse.ownerId!],
   )
   const onRemove = useCallback(
     (record: Doc<'horseWeightRecords'>) =>
@@ -326,7 +326,7 @@ function LocalNutritionLogs({ horse, onCreateActionChange }: SampleProps) {
           _creationTime: now,
           horseId: horse._id,
           stableId: horse.stableId,
-          createdBy: horse.ownerId,
+          createdBy: horse.ownerId!,
           createdAt: now,
           changedAt: dateKeyToTimestamp(values.changedDate),
           summary: values.summary,
@@ -339,7 +339,7 @@ function LocalNutritionLogs({ horse, onCreateActionChange }: SampleProps) {
           [log, ...current].sort((a, b) => b.changedAt - a.changedAt),
         )
       }, 'History snapshot added locally. The horse’s current feeding plan is unchanged.'),
-    [simulate, horse._id, horse.stableId, horse.ownerId],
+    [simulate, horse._id, horse.stableId, horse.ownerId!],
   )
   const onRemove = useCallback(
     (log: Doc<'horseNutritionLogs'>) =>

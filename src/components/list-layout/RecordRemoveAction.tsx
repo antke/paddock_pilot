@@ -13,6 +13,7 @@ import {
 import { Button } from '#/components/ui/button'
 import { Spinner } from '#/components/ui/spinner'
 import { useRef, useState } from 'react'
+import type { RefObject } from 'react'
 import { Alert, AlertDescription } from '#/components/ui/alert'
 
 type RecordRemoveActionProps = {
@@ -22,7 +23,12 @@ type RecordRemoveActionProps = {
   onConfirm: () => Promise<void>
   title: string
   triggerLabel?: string
+  triggerAriaLabel?: string
+  cancelLabel?: string
   removalFocusTarget?: () => HTMLElement | null
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  externalTrigger?: RefObject<HTMLButtonElement | null>
 }
 
 export function RecordRemoveAction({
@@ -32,11 +38,22 @@ export function RecordRemoveAction({
   onConfirm,
   title,
   triggerLabel,
+  triggerAriaLabel,
+  cancelLabel,
   removalFocusTarget,
+  open: controlledOpen,
+  onOpenChange,
+  externalTrigger,
 }: RecordRemoveActionProps) {
   const t = useT()
 
-  const [open, setOpen] = useState(false)
+  const [localOpen, setLocalOpen] = useState(false)
+  const open = controlledOpen ?? localOpen
+  const setOpen = (value: boolean) => {
+    if (!value) setFailed(false)
+    setLocalOpen(value)
+    onOpenChange?.(value)
+  }
   const [isRemoving, setIsRemoving] = useState(false)
   const [failed, setFailed] = useState(false)
   const pending = useRef(false)
@@ -75,27 +92,30 @@ export function RecordRemoveAction({
         }
       }}
     >
-      <AlertDialogTrigger
-        disabled={actionDisabled}
-        render={
-          <Button
-            ref={trigger}
-            type="button"
-            action="delete"
-            variant="destructive"
-            size="sm"
-          />
-        }
-      >
-        {triggerLabel ?? t('careRecords.remove')}
-      </AlertDialogTrigger>
+      {!externalTrigger && (
+        <AlertDialogTrigger
+          disabled={actionDisabled}
+          aria-label={triggerAriaLabel}
+          render={
+            <Button
+              ref={trigger}
+              type="button"
+              action="delete"
+              variant="destructive"
+              size="sm"
+            />
+          }
+        >
+          {triggerLabel ?? t('careRecords.remove')}
+        </AlertDialogTrigger>
+      )}
       <AlertDialogContent
         finalFocus={() =>
           removed.current
             ? (removalFocusTarget?.() ?? trigger.current)
             : trigger.current?.isConnected
               ? trigger.current
-              : removalFocusTarget?.()
+              : (externalTrigger?.current ?? removalFocusTarget?.())
         }
       >
         <AlertDialogHeader>
@@ -109,7 +129,7 @@ export function RecordRemoveAction({
         )}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={actionDisabled}>
-            {t('careRecords.keepRecord')}
+            {cancelLabel ?? t('careRecords.keepRecord')}
           </AlertDialogCancel>
           <AlertDialogAction
             type="button"

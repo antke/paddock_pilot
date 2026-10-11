@@ -17,7 +17,7 @@ export function DashboardRecordDetails({
       className={cn('group/details', className)}
       {...props}
     >
-      <summary className="w-fit cursor-pointer rounded-control py-2 text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring pointer-coarse:min-h-11">
+      <summary className="app-disclosure-trigger w-fit cursor-pointer rounded-control py-2 text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring pointer-coarse:min-h-11">
         {t('reminders.details')}
         <span className="sr-only">
           {t('reminders.forPrefix')}

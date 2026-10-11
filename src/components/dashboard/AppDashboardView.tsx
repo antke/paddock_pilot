@@ -5,12 +5,15 @@ import { DashboardPage } from './DashboardPage'
 import { PendingHorseInvitationList } from './PendingHorseInvitationList'
 import type { PendingHorseInvitation } from './PendingHorseInvitationList'
 import { NoStablesPrompt } from '#/components/stables/NoStablesPrompt'
+import type { ReactNode } from 'react'
 
 type InvitationId = PendingHorseInvitation['invitation']['_id']
 type Props =
   | { data?: undefined }
   | {
       data: DashboardCommandData
+      setupNotice?: ReactNode
+      updates?: ReactNode
       invitations: Array<PendingHorseInvitation>
       onApprove: (id: InvitationId) => Promise<void>
       onDecline: (id: InvitationId) => Promise<void>
@@ -26,7 +29,11 @@ export function AppDashboardView(props: Props) {
   const { data, invitations, onApprove, onDecline } = props
   return (
     <DashboardPage>
-      <StableCommandCenter data={data} />
+      <StableCommandCenter
+        data={data}
+        setupNotice={props.setupNotice}
+        updates={props.updates}
+      />
       <PendingHorseInvitationList
         key={data.stable._id}
         invitations={invitations.filter(

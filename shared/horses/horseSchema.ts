@@ -115,6 +115,14 @@ export function createHorseSchemas(
     dewormingNotes: horseOptionalTextSchema,
     allergies: optionalStringList,
     emergencyNotes: horseOptionalTextSchema,
+    vetProviderId: z
+      .string()
+      .optional()
+      .transform((value) => value || undefined),
+    farrierProviderId: z
+      .string()
+      .optional()
+      .transform((value) => value || undefined),
     vetName: horseShortTextSchema,
     vetPhone: horsePhoneSchema,
     farrierName: horseShortTextSchema,
@@ -147,6 +155,14 @@ export function createHorseSchemas(
     dewormingNotes: optionalText(horseOptionalTextSchema),
     allergies: optionalStringList,
     emergencyNotes: optionalText(horseOptionalTextSchema),
+    vetProviderId: z
+      .string()
+      .optional()
+      .transform((value) => value || undefined),
+    farrierProviderId: z
+      .string()
+      .optional()
+      .transform((value) => value || undefined),
     vetName: optionalText(horseShortTextSchema),
     vetPhone: optionalText(horsePhoneSchema),
     farrierName: optionalText(horseShortTextSchema),

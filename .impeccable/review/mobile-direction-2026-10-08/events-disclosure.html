@@ -1,0 +1,85 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@600&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+  #pp-events-concept { --ev-paper:light-dark(#fcfbf8,#20251f); --ev-ink:light-dark(#30372f,#f0f3ea); --ev-muted:light-dark(#62695f,#bfc9b9); --ev-row:light-dark(#f3f2ee,#272a24); --ev-line:light-dark(#bec8c2,#586b60); --ev-green:light-dark(#285b43,#a9c7ab); --ev-on:light-dark(#fcfdfc,#15271d); padding:20px 12px; color:var(--ev-ink); font:17px/1.4 'Alegreya Sans',sans-serif; }
+  #pp-events-concept * { box-sizing:border-box; }
+  #pp-events-concept .ev-panel { max-width:690px; margin:auto; padding:24px; border-radius:12px; background:var(--ev-paper); }
+  #pp-events-concept .ev-head { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; }
+  #pp-events-concept h2 { font:600 26px/1.15 'Alegreya',serif; margin:0; }
+  #pp-events-concept h3 { margin:18px 0 10px; font:500 17px/1.4 'Alegreya Sans',sans-serif; }
+  #pp-events-concept button,#pp-events-concept input { font:inherit; }
+  #pp-events-concept button { color:inherit; }
+  #pp-events-concept .ev-add { min-height:44px; padding:8px 16px; border:0; border-radius:6px; background:var(--ev-green); color:var(--ev-on); display:inline-flex; align-items:center; gap:8px; }
+  #pp-events-concept .ev-record { display:flex; gap:16px; align-items:center; background:var(--ev-row); border-radius:8px; padding:13px 16px; }
+  #pp-events-concept .ev-record strong { font-weight:700; }
+  #pp-events-concept .ev-meta { color:var(--ev-muted); font-size:15px; }
+  #pp-events-concept .ev-time { min-width:44px; font-variant-numeric:tabular-nums; }
+  #pp-events-concept details { margin-top:14px; border-top:1px solid var(--ev-line); }
+  #pp-events-concept summary { min-height:52px; padding:12px 0; color:var(--ev-ink); }
+  #pp-events-concept .ev-count { color:var(--ev-muted); margin-left:8px; }
+  #pp-events-concept .ev-week { padding:0 0 12px; }
+  #pp-events-concept .ev-week h3 { margin-top:10px; color:var(--ev-muted); font-size:15px; }
+  #pp-events-concept .ev-bottom { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  #pp-events-concept .ev-link { border:0; background:transparent; color:var(--ev-green); text-decoration:underline; text-underline-offset:3px; min-height:44px; padding:6px 0; }
+  #pp-events-concept .ev-caption { max-width:690px; margin:0 auto 10px; color:var(--ev-muted); font-size:15px; }
+  #pp-events-concept .ev-extra { margin-top:12px; }
+  #pp-events-concept label { display:grid; gap:5px; margin:12px 0; }
+  #pp-events-concept input { background:var(--ev-paper); color:var(--ev-ink); min-width:0; width:100%; border:1px solid var(--ev-line); border-radius:6px; padding:10px; min-height:44px; }
+  #pp-events-concept [hidden] { display:none; }
+  #pp-events-concept .ev-live { font-size:15px; color:var(--ev-green); }
+  @media(max-width:420px) { #pp-events-concept { padding:12px 0; } #pp-events-concept .ev-panel { padding:18px; } }
+</style>
+<div id="pp-events-concept" class="viz-dotted-background" aria-label="Combined desktop events concept">
+  <p class="ev-caption">Desktop section · fictional sample data</p>
+  <section class="ev-panel" aria-labelledby="ev-title">
+    <header class="ev-head"><h2 id="ev-title">Events</h2><button class="ev-add cursor-interaction" type="button" data-ev-add><i data-lucide="plus" aria-hidden="true"></i>Add event</button></header>
+    <h3>Today · Thu 8 October</h3>
+    <div class="ev-today"><div class="ev-record"><span class="ev-time">15:00</span><div><strong>Farrier visit</strong><div class="ev-meta">Bramble & Willow</div></div></div></div>
+    <details>
+      <summary class="cursor-interaction">Next 7 days <span class="ev-count">2 events</span></summary>
+      <div class="ev-week"><p class="ev-meta">Tomorrow, 9 October – Thursday, 15 October</p><h3>Fri 9 October</h3><div class="ev-record"><span class="ev-time">09:00</span><div><strong>Dentist visit</strong><div class="ev-meta">Atlas</div></div></div><h3>Mon 12 October</h3><div class="ev-record"><span class="ev-time">14:00</span><div><strong>Saddle fitting</strong><div class="ev-meta">Willow</div></div></div></div>
+    </details>
+    <div class="ev-bottom"><button type="button" class="ev-link cursor-interaction" data-ev-calendar>Open full calendar</button><span class="ev-live" role="status"></span></div>
+    <div class="ev-extra" hidden></div>
+  </section>
+</div>
+<script>
+(() => {
+  const root = document.getElementById('pp-events-concept');
+  const extra = root.querySelector('.ev-extra');
+  const status = root.querySelector('[role="status"]');
+  const details = root.querySelector('details');
+  const saved = window.openai?.widgetState?.privateContent;
+  if (saved?.concept === 'events-disclosure') details.open = !!saved.expanded;
+  details.querySelector('summary').addEventListener('click', () => {
+    requestAnimationFrame(() => window.openai?.setWidgetState?.({modelContent:{concept:'Events with a week disclosure',weekExpanded:details.open},privateContent:{concept:'events-disclosure',expanded:details.open}})?.catch(() => {}));
+  });
+  window.addEventListener('openai:set_globals', event => {
+    const state = event.detail?.globals?.widgetState?.privateContent;
+    if (state?.concept === 'events-disclosure') details.open = !!state.expanded;
+  });
+  root.querySelector('[data-ev-add]').addEventListener('click', () => {
+    extra.hidden = false;
+    extra.innerHTML = '<form><label>Event title<input name="title" required maxlength="100" autocomplete="off" placeholder="e.g. Vet visit"></label><label>Time today<input name="time" type="time" required value="16:00"></label><div class="ev-head"><button class="ev-add cursor-interaction" type="button" data-ev-save>Add sample event</button><button class="ev-link cursor-interaction" type="button" data-ev-cancel>Cancel</button></div></form>';
+    extra.querySelector('input').focus();
+    extra.querySelector('[data-ev-cancel]').onclick = () => { extra.hidden = true; root.querySelector('[data-ev-add]').focus(); };
+    const save = event => {
+      event.preventDefault();
+      const form = extra.querySelector('form');
+      if (!form.reportValidity()) return;
+      const data = new FormData(form);
+      const row = document.createElement('div'); row.className = 'ev-record ev-extra';
+      const time = document.createElement('span'); time.className = 'ev-time'; time.textContent = String(data.get('time'));
+      const name = document.createElement('strong'); name.textContent = String(data.get('title'));
+      row.append(time, name); root.querySelector('.ev-today').append(row);
+      extra.hidden = true; status.textContent = 'Sample event added'; root.querySelector('[data-ev-add]').focus();
+    };
+    extra.querySelector('[data-ev-save]').onclick = save;
+    extra.querySelector('form').onsubmit = save;
+    extra.querySelector('form').onkeydown = event => { if(event.key==='Enter'&&event.target.matches('input'))save(event); };
+  });
+  root.querySelector('[data-ev-calendar]').addEventListener('click', () => {
+    details.open = true;
+    status.textContent = 'Full calendar remains a separate page.';
+  });
+})();
+</script>

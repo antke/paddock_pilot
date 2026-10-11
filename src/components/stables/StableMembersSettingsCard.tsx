@@ -1,3 +1,4 @@
+import { useOwnershipCopy } from '#/components/ownership/ownershipCopy'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
@@ -29,15 +30,12 @@ import {
 } from '#/components/ui/alert-dialog'
 import { Button } from '#/components/ui/button'
 import {
-  Field,
   FieldDescription,
   FieldHeader,
   FieldHeaderContent,
-  FieldLabel,
   FieldPanel,
   FieldTitle,
 } from '#/components/ui/field'
-import { Select } from '#/components/ui/select'
 import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { formatCommaList } from '#/lib/textDisplay'
 import { StableInvitationsList } from './StableInvitationsList'
@@ -308,8 +306,6 @@ function RemoveMemberButton(props: RemoveMemberButtonProps) {
 
 export function RemoveMemberButtonView({
   member,
-  membership,
-  members,
   horses,
   stableName,
   onRemove,
@@ -322,14 +318,11 @@ export function RemoveMemberButtonView({
   const { locale } = useLocale()
 
   const [open, setOpen] = useState(false)
-  const [reassignToUserId, setReassignToUserId] = useState('')
+  const c = useOwnershipCopy()
   const [isRemoving, setIsRemoving] = useState(false)
   const [removeError, setRemoveError] = useState(false)
   const removeTrigger = useRef<HTMLButtonElement>(null)
   const removalAccepted = useRef(false)
-  const reassignmentTargets = members.filter(
-    (candidate) => candidate.user && candidate.user._id !== membership.userId,
-  )
   const memberName = formatStableMemberName(member, locale)
 
   const pendingRef = useRef(false)
@@ -339,13 +332,7 @@ export function RemoveMemberButtonView({
     setIsRemoving(true)
     setRemoveError(false)
     try {
-      if (
-        await onRemove(
-          reassignToUserId
-            ? (reassignToUserId as Doc<'users'>['_id'])
-            : undefined,
-        )
-      ) {
+      if (await onRemove(undefined)) {
         removalAccepted.current = true
         setOpen(false)
       } else setRemoveError(true)
@@ -412,32 +399,12 @@ export function RemoveMemberButtonView({
           <FieldPanel>
             <FieldHeader>
               <FieldHeaderContent>
-                <FieldTitle>
-                  {t('stables.reassignFirst', { count: horses.length })}
-                </FieldTitle>
+                <FieldTitle>{c.departureHelp}</FieldTitle>
                 <FieldDescription>
                   {formatCommaList(horses.map((horse) => horse.name))}
                 </FieldDescription>
               </FieldHeaderContent>
             </FieldHeader>
-            <Field>
-              <FieldLabel htmlFor={`reassign-${membership._id}`}>
-                {t('stables.newOwner')}
-              </FieldLabel>
-              <Select
-                id={`reassign-${membership._id}`}
-                value={reassignToUserId}
-                disabled={isRemoving}
-                onChange={(event) => setReassignToUserId(event.target.value)}
-              >
-                <option value="">{t('stables.chooseMember')}</option>
-                {reassignmentTargets.map((candidate) => (
-                  <option key={candidate.user!._id} value={candidate.user!._id}>
-                    {formatStableMemberName(candidate, locale)}
-                  </option>
-                ))}
-              </Select>
-            </Field>
           </FieldPanel>
         )}
 
@@ -448,7 +415,7 @@ export function RemoveMemberButtonView({
           <AlertDialogAction
             action="delete"
             variant="destructive"
-            disabled={isRemoving || (horses.length > 0 && !reassignToUserId)}
+            disabled={isRemoving}
             aria-busy={isRemoving || undefined}
             onClick={() => void confirmRemoval()}
           >

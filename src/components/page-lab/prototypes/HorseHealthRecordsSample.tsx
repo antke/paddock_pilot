@@ -67,7 +67,7 @@ function LocalSample({
   const common = {
     horseId: horse._id,
     stableId: horse.stableId,
-    createdBy: horse.ownerId,
+    createdBy: horse.ownerId!,
     _creationTime: Date.now(),
     createdAt: Date.now(),
     updatedAt: Date.now(),

@@ -43,11 +43,56 @@ export function createDashboardCommandData({
       if (dateSort !== 0) return dateSort
       return a.time.localeCompare(b.time)
     })
+  const activity = createDashboardActivityData({
+    events: stableEvents,
+    todayKey,
+    locale,
+    training: training
+      ? {
+          ...training,
+          events: training.events.filter(
+            (event) => event.stableId === stable._id,
+          ),
+          records: training.records.filter(
+            (record) => record.stableId === stable._id,
+          ),
+        }
+      : undefined,
+  })
+
+  return {
+    ...activity,
+    stable,
+    stables,
+    events: stableEvents,
+    horses,
+    overview,
+    upcomingEvents: overview.upcomingEvents,
+    dueReminders: overview.dueReminders,
+    attentionHorses: overview.attentionHorses,
+    urgentCount:
+      overview.summary.overdueReminderCount +
+      overview.summary.highSeverityIssueCount,
+  }
+}
+
+/** Calendar projections shared by personal and stable dashboards. */
+export function createDashboardActivityData({
+  events,
+  training,
+  todayKey,
+  locale = 'en',
+}: {
+  events: Array<DashboardCommandEvent>
+  training?: DashboardTrainingData
+  todayKey: string
+  locale?: Locale
+}) {
   const today = dateKeyToDate(todayKey)
   const end = new Date(today)
   end.setDate(today.getDate() + 6)
   const occurrences = createEventOccurrences({
-    events: stableEvents,
+    events,
     windowStart: todayKey,
     windowEnd: formatDateKey(end),
   })
@@ -89,12 +134,8 @@ export function createDashboardCommandData({
 
   const todayTraining = training
     ? getTrainingEntries({
-        events: training.events.filter(
-          (event) => event.stableId === stable._id,
-        ),
-        records: training.records.filter(
-          (record) => record.stableId === stable._id,
-        ),
+        events: training.events,
+        records: training.records,
         horses: training.horses,
         start: todayKey,
         end: todayKey,
@@ -104,20 +145,5 @@ export function createDashboardCommandData({
       )
     : []
 
-  return {
-    todayTraining,
-    stable,
-    stables,
-    events: stableEvents,
-    horses,
-    overview,
-    upcomingEvents: overview.upcomingEvents,
-    dueReminders: overview.dueReminders,
-    attentionHorses: overview.attentionHorses,
-    todayEvents: weekDays[0].events,
-    weekDays,
-    urgentCount:
-      overview.summary.overdueReminderCount +
-      overview.summary.highSeverityIssueCount,
-  }
+  return { events, todayTraining, weekDays, todayEvents: weekDays[0].events }
 }

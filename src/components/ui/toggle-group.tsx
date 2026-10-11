@@ -76,7 +76,15 @@ function ToggleGroupItem({
       data-size={context.size || size}
       data-spacing={context.spacing}
       className={cn(
-        'shrink-0 group-data-[spacing=0]/toggle-group:px-2 focus:z-10 focus-visible:z-10 group-data-[spacing=0]/toggle-group:has-data-[icon=inline-end]:pr-1.5 group-data-[spacing=0]/toggle-group:has-data-[icon=inline-start]:pl-1.5 group-data-[orientation=horizontal]/toggle-group:data-[spacing=0]:data-[variant=outline]:border-l-0 group-data-[orientation=vertical]/toggle-group:data-[spacing=0]:data-[variant=outline]:border-t-0 group-data-[orientation=horizontal]/toggle-group:data-[spacing=0]:data-[variant=outline]:first:border-l group-data-[orientation=vertical]/toggle-group:data-[spacing=0]:first:border-t',
+        'relative shrink-0 group-data-[spacing=0]/toggle-group:px-2 focus:z-20 focus-visible:z-20 group-data-[spacing=0]/toggle-group:has-data-[icon=inline-end]:pr-1.5 group-data-[spacing=0]/toggle-group:has-data-[icon=inline-start]:pl-1.5',
+        context.spacing === 0 &&
+          (context.variant || variant) === 'outline' &&
+          'data-pressed:z-10',
+        context.spacing === 0 &&
+          (context.variant || variant) === 'outline' &&
+          (context.orientation === 'vertical'
+            ? '-mt-px first:mt-0'
+            : '-ml-px first:ml-0'),
         toggleVariants({
           variant: context.variant || variant,
           size: context.size || size,

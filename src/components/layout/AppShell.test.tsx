@@ -200,7 +200,7 @@ describe('application shell access', () => {
     document.documentElement.style.removeProperty('font-size')
   })
 
-  it('merges Calendar into Events and keeps Events active on legacy calendar routes', async () => {
+  it('keeps stable Home scoped and Events active on calendar routes', async () => {
     vi.stubGlobal('matchMedia', () => ({
       matches: false,
       addEventListener: vi.fn(),
@@ -234,11 +234,13 @@ describe('application shell access', () => {
       'Horses',
       'Care',
       'Events',
-      'Documents',
-      'Analysis',
+      'Training log',
+      'Stable',
     ])
       expect(within(nav).getByRole('link', { name })).toBeTruthy()
-    expect(within(nav).queryByRole('link', { name: 'Calendar' })).toBeNull()
+    expect(
+      within(nav).getByRole('link', { name: 'Home' }).getAttribute('href'),
+    ).toBe('/stables/sample-stable')
     expect(
       within(nav)
         .getByRole('link', { name: 'Events' })

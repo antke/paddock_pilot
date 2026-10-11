@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import {
   DetailField,
@@ -10,7 +11,8 @@ import { DashboardEntityHero } from '#/components/dashboard/DashboardEntityHero'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
-import { ButtonLink } from '#/components/ui/button'
+import { useSmallScreen } from '#/lib/useSmallScreen'
+import { EventEditAction } from './EventEditAction'
 import { HorseCardLink } from '#/components/horses/HorseCard'
 import type { Doc } from 'convex/_generated/dataModel'
 import type { EventStatus } from 'shared/events/eventSchema'
@@ -25,11 +27,15 @@ import { EventHorseServiceDetailsCard } from './EventHorseServiceDetailsCard'
 import { EventDateBadge } from './EventDateBadge'
 
 type EventDetailProps = {
-  stableId: string
+  stableId?: string
   event: Doc<'events'>
   horses: Array<Doc<'horses'>>
   canManageEvent: boolean
   showServiceDetails?: boolean
+  showHeader?: boolean
+  showHorses?: boolean
+  headerActions?: ReactNode
+  editSearch?: { date?: string; horseId?: string; participationId?: string }
 }
 
 export function EventDetail({
@@ -38,9 +44,14 @@ export function EventDetail({
   horses,
   canManageEvent,
   showServiceDetails = true,
+  showHeader = true,
+  showHorses = true,
+  headerActions,
+  editSearch,
 }: EventDetailProps) {
   const t = useT()
   const { locale } = useLocale()
+  const smallScreen = useSmallScreen()
 
   const recurrenceSummary = formatRecurrence(event.recurrence, locale)
   const eventStatus: EventStatus = event.status ?? 'planned'
@@ -53,35 +64,47 @@ export function EventDetail({
 
   return (
     <>
-      <DashboardEntityHero
-        title={event.title}
-        leading={
-          <EventDateBadge date={event.date} time={event.time} variant="hero" />
-        }
-        badges={
-          event.type !== 'training' && eventStatus !== 'planned' ? (
-            <EventStatusBadge status={eventStatus} />
-          ) : undefined
-        }
-        actions={
-          canManageEvent ? (
-            <ButtonLink
-              to={
-                event.type === 'training'
-                  ? '/stables/$stableId/training/$eventId/edit'
-                  : '/stables/$stableId/events/$eventId/edit'
-              }
-              params={{ stableId, eventId: event._id }}
-              action="edit"
-              variant="outline"
-            >
-              {event.type === 'training'
-                ? t('eventViews.editTraining')
-                : t('eventViews.edit')}
-            </ButtonLink>
-          ) : undefined
-        }
-      />
+      {showHeader && (
+        <DashboardEntityHero
+          title={event.title}
+          actionsLayout={headerActions ? 'inline' : 'stack'}
+          leading={
+            <EventDateBadge
+              date={event.date}
+              time={event.time}
+              variant="hero"
+            />
+          }
+          badges={
+            event.type !== 'training' && eventStatus !== 'planned' ? (
+              <EventStatusBadge status={eventStatus} />
+            ) : undefined
+          }
+          actions={
+            headerActions || (canManageEvent && !smallScreen) ? (
+              <>
+                {headerActions}
+                {canManageEvent && !smallScreen ? (
+                  <EventEditAction
+                    search={editSearch}
+                    eventId={event._id}
+                    training={event.type === 'training'}
+                  />
+                ) : undefined}
+              </>
+            ) : undefined
+          }
+        />
+      )}
+
+      {showHeader && canManageEvent && smallScreen && (
+        <EventEditAction
+          search={editSearch}
+          eventId={event._id}
+          training={event.type === 'training'}
+          mobile
+        />
+      )}
 
       <DashboardSectionCard contentGap="compact">
         <DetailPanelGrid
@@ -190,28 +213,30 @@ export function EventDetail({
         </DetailPanelGrid>
       </DashboardSectionCard>
 
-      <DashboardSectionCard
-        title={t('eventViews.horses')}
-        size="panel"
-        contentGap="comfortable"
-      >
-        {horses.length === 0 ? (
-          <DashboardEmptyState chrome="soft" spacing="flush">
-            {t('eventViews.noHorses')}
-          </DashboardEmptyState>
-        ) : (
-          <DashboardItemList gap="comfortable">
-            {horses.map((horse) => (
-              <HorseCardLink
-                key={horse._id}
-                horse={horse}
-                stableId={stableId}
-                horseId={horse._id}
-              />
-            ))}
-          </DashboardItemList>
-        )}
-      </DashboardSectionCard>
+      {showHorses && (
+        <DashboardSectionCard
+          title={t('eventViews.horses')}
+          size="panel"
+          contentGap="comfortable"
+        >
+          {horses.length === 0 ? (
+            <DashboardEmptyState chrome="soft" spacing="flush">
+              {t('eventViews.noHorses')}
+            </DashboardEmptyState>
+          ) : (
+            <DashboardItemList gap="comfortable">
+              {horses.map((horse) => (
+                <HorseCardLink
+                  key={horse._id}
+                  horse={horse}
+                  stableId={stableId}
+                  horseId={horse._id}
+                />
+              ))}
+            </DashboardItemList>
+          )}
+        </DashboardSectionCard>
+      )}
 
       {showServiceDetails && (
         <EventHorseServiceDetailsCard eventId={event._id} />

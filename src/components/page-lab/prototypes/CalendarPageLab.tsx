@@ -18,7 +18,7 @@ export function CalendarPageLab({ data }: { data: DashboardLabData }) {
             <ButtonLink
               to="/stables/$stableId/events/create"
               params={{ stableId: data.stable._id }}
-              action="create"
+              action="schedule"
             >
               Add event
             </ButtonLink>

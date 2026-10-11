@@ -14,6 +14,7 @@ import {
 
 type DashboardEntityHeroProps = {
   actions?: ReactNode
+  actionsLayout?: 'stack' | 'inline'
   badges?: ReactNode
   children?: ReactNode
   chrome?: DashboardChrome
@@ -22,10 +23,12 @@ type DashboardEntityHeroProps = {
   leading?: ReactNode
   media?: ReactNode
   title: ReactNode
+  compactOnMobile?: boolean
 }
 
 export function DashboardEntityHero({
   actions,
+  actionsLayout = 'stack',
   badges,
   children,
   chrome = 'flat',
@@ -34,11 +37,16 @@ export function DashboardEntityHero({
   leading,
   media,
   title,
+  compactOnMobile = false,
 }: DashboardEntityHeroProps) {
   return (
     <DashboardHeroSection
       chrome={chrome}
-      className={cn('grid gap-6', className)}
+      className={cn(
+        'grid gap-6',
+        compactOnMobile && 'gap-3 sm:gap-6',
+        className,
+      )}
     >
       <div
         className={cn(
@@ -46,7 +54,15 @@ export function DashboardEntityHero({
           media && 'lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-stretch',
         )}
       >
-        <DashboardHeroContent>
+        <DashboardHeroContent
+          className={
+            compactOnMobile
+              ? actionsLayout === 'inline'
+                ? 'grid-cols-1 items-center gap-3 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_auto]'
+                : 'grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:gap-6'
+              : undefined
+          }
+        >
           <div
             className={cn(
               'grid min-w-0 gap-4',
@@ -57,7 +73,12 @@ export function DashboardEntityHero({
             <DashboardHeroText>
               <DashboardHeroTitle>{title}</DashboardHeroTitle>
               {description && (
-                <p className="max-w-3xl text-sm font-medium leading-6 text-muted-foreground md:text-base">
+                <p
+                  className={cn(
+                    'max-w-3xl text-sm font-medium leading-6 text-muted-foreground md:text-base',
+                    compactOnMobile && 'hidden sm:block',
+                  )}
+                >
                   {description}
                 </p>
               )}
@@ -65,6 +86,11 @@ export function DashboardEntityHero({
           </div>
 
           <DashboardHeaderRail
+            className={
+              actionsLayout === 'inline'
+                ? 'w-full lg:w-auto lg:self-center'
+                : undefined
+            }
             top={
               badges ? (
                 <DashboardBadgeList align="end">{badges}</DashboardBadgeList>
@@ -72,7 +98,15 @@ export function DashboardEntityHero({
             }
             bottom={
               actions ? (
-                <DashboardHeroActions>{actions}</DashboardHeroActions>
+                <DashboardHeroActions
+                  className={
+                    actionsLayout === 'inline'
+                      ? 'flex w-full flex-wrap items-center gap-2 lg:w-auto'
+                      : undefined
+                  }
+                >
+                  {actions}
+                </DashboardHeroActions>
               ) : undefined
             }
           />

@@ -1,0 +1,214 @@
+{
+  "before": {
+    "scroll": 0,
+    "x": 16,
+    "top": 310,
+    "height": 889.375
+  },
+  "after": {
+    "scroll": 0,
+    "x": 16,
+    "top": 310,
+    "height": 889.375
+  },
+  "frames": [
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 10,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 27,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 43,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 60,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 77,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 93,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 110,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 127,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 144,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 160,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 177,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 195,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 211,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 227,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 243,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 260,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 277,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 293,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 310,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 327,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 343,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    },
+    {
+      "scroll": 0,
+      "x": 16,
+      "top": 310,
+      "height": 889.375,
+      "time": 360,
+      "animation": "app-section-arrive",
+      "transform": "none"
+    }
+  ]
+}

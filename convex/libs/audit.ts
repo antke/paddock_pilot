@@ -5,7 +5,7 @@ import type { StableAuditDetails } from '../../shared/auditLogs/auditDetails'
 export async function recordStableAudit(
   ctx: MutationCtx,
   input: {
-    stableId: Id<'stables'>
+    stableId: Id<'stables'> | undefined
     actorUserId: Id<'users'>
     action: string
     entityType: string
@@ -14,8 +14,10 @@ export async function recordStableAudit(
     details?: StableAuditDetails
   },
 ) {
+  if (!input.stableId) return
   await ctx.db.insert('stableAuditLogs', {
     ...input,
+    stableId: input.stableId,
     createdAt: Date.now(),
   })
 }

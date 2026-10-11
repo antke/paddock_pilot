@@ -1,3 +1,8 @@
+import { getHorseAccess } from './libs/horsePermissions'
+import {
+  getDigestClock,
+  getReminderDigestStables,
+} from './libs/email/reminderDigest'
 import { v } from 'convex/values'
 import { internal } from './_generated/api'
 import type { Doc } from './_generated/dataModel'
@@ -95,6 +100,47 @@ const getDeliverySkipReason = async (
   if (!template) return null
   if (!relation) return 'Email relation is missing.'
 
+  if (template.kind === 'horse_access_invitation') {
+    if (relation.type !== 'horseInvitation') return 'Invalid horse invitation.'
+    const invitation = await ctx.db.get(relation.id)
+    if (
+      !invitation ||
+      invitation.status !== 'pending' ||
+      invitation.expiresAt <= Date.now() ||
+      invitation.token !== template.token
+    )
+      return 'Horse invitation is no longer available.'
+    const horse = await ctx.db.get(invitation.horseId)
+    if (
+      !horse ||
+      horse.deletedAt !== undefined ||
+      horse.transitionId ||
+      horse.ownerId !== invitation.expectedOwnerId ||
+      horse.currentPlacementId !== invitation.expectedPlacementId
+    )
+      return 'Horse invitation context changed.'
+    return null
+  }
+  if (template.kind === 'care_reminder_digest') {
+    if (relation.type !== 'user') return 'Reminder recipient is invalid.'
+    const user = await ctx.db.get(relation.id)
+    if (
+      !user ||
+      user.deletedAt !== undefined ||
+      !user.reminderDigestEnabled ||
+      user.email !== delivery.recipient
+    )
+      return 'Reminder delivery is no longer enabled for this recipient.'
+    if (getDigestClock(Date.now(), template.timezone).date !== template.date)
+      return 'Reminder digest has expired.'
+    const stables = await getReminderDigestStables(ctx, user, template.date)
+    if (!stables.length) return 'No care reminders are currently due.'
+    // Rebuild immediately before sending: membership and completed work may change after queueing.
+    template.stables = stables
+    await ctx.db.patch(delivery._id, { template })
+    return null
+  }
+
   if (template.kind === 'stable_invitation') {
     if (relation.type !== 'stableInvitation') {
       return 'Invitation email relation is invalid.'
@@ -156,10 +202,43 @@ const getDeliverySkipReason = async (
     if (!event || event.stableId !== template.stableId) {
       return 'Event is no longer available.'
     }
-    const stable = await ctx.db.get(event.stableId)
-    if (!stable || stable.archivedAt !== undefined) {
-      return 'Stable is no longer available.'
+    if (event.stableId) {
+      const stable = await ctx.db.get(event.stableId)
+      if (!stable || stable.archivedAt !== undefined)
+        return 'Stable is no longer available.'
     }
+    const recipient = await ctx.db
+      .query('users')
+      .withIndex('by_email', (q) => q.eq('email', delivery.recipient))
+      .first()
+    if (!recipient || recipient.deletedAt !== undefined)
+      return 'Recipient is unavailable.'
+    let hasAccess = false
+    if (event.stableId && event.createdBy === recipient._id) {
+      const membership = await ctx.db
+        .query('stableMembers')
+        .withIndex('by_stable_id_user_id', (q) =>
+          q.eq('stableId', event.stableId!).eq('userId', recipient._id),
+        )
+        .unique()
+      hasAccess = membership?.role === 'member'
+    }
+    const rows = await ctx.db
+      .query('eventsHorses')
+      .withIndex('by_event_id', (q) => q.eq('eventId', event._id))
+      .collect()
+    const currentHorseIds = new Set([
+      ...event.horseIds,
+      ...rows
+        .filter((row) => !row.participationEndsAt && row.status === 'invited')
+        .map((row) => row.horseId),
+    ])
+    for (const horseId of currentHorseIds) {
+      const horse = await ctx.db.get(horseId)
+      if (horse && (await getHorseAccess(ctx, horse, recipient._id)).canRead)
+        hasAccess = true
+    }
+    if (!hasAccess) return 'Recipient no longer has access to this event.'
     return null
   }
 

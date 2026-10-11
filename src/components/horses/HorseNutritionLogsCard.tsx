@@ -114,7 +114,7 @@ export function HorseNutritionLogsView({
   onRemove,
   onCreateActionChange,
 }: HorseNutritionLogsCardProps & {
-  logs: Array<Doc<'horseNutritionLogs'>>
+  logs: Array<Doc<'horseNutritionLogs'> & { canEdit?: boolean }>
   canManage: boolean
   onAdd: (values: NutritionLogFormSchema) => Promise<void>
   onRemove: (log: Doc<'horseNutritionLogs'>) => Promise<void>
@@ -146,6 +146,7 @@ export function HorseNutritionLogsView({
     () =>
       canManage ? (
         <CreateRecordDialog
+          actionId="nutrition"
           open={isCreateOpen}
           onOpenChange={(open) => {
             if (!creating.current) setIsCreateOpen(open)
@@ -186,7 +187,7 @@ export function HorseNutritionLogsView({
         <NutritionLogRow
           key={log._id}
           log={log}
-          canManage={canManage}
+          canManage={canManage && log.canEdit !== false}
           onRemove={onRemove}
           removalFocusTarget={() => region.current}
         />

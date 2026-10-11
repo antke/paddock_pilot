@@ -6,7 +6,7 @@ export type HorseDetailSectionTabItem<TTabId extends string> = {
   id: TTabId
   label: string
   title: string
-  description: string
+  description?: string
 }
 
 type HorseDetailSectionTabsProps<TTabId extends string> = {

@@ -5,7 +5,7 @@ import { cn } from '#/lib/utils.ts'
 import { CaretRightIcon, CheckIcon } from '@phosphor-icons/react'
 
 const dropdownMenuItemClassName =
-  "relative flex cursor-pointer items-center gap-2 rounded-control px-2 py-2 text-xs font-medium outline-hidden select-none focus:bg-primary/8 focus:text-foreground data-inset:pl-7 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+  "relative flex max-md:min-h-11 pointer-coarse:min-h-11 max-md:text-sm pointer-coarse:text-sm cursor-pointer items-center gap-2 rounded-control px-2 py-2 text-xs font-medium app-choice-feedback outline-hidden select-none active:bg-primary/15 data-highlighted:bg-primary/8 focus:bg-primary/8 focus:text-foreground data-inset:pl-7 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
 
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
   return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />
@@ -44,7 +44,7 @@ function DropdownMenuContent({
         <MenuPrimitive.Popup
           data-slot="dropdown-menu-content"
           className={cn(
-            'z-50 max-h-(--available-height) w-(--anchor-width) min-w-32 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-row border border-border bg-popover p-1 text-popover-foreground shadow-control duration-100 outline-none data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:overflow-hidden data-closed:fade-out-0 data-closed:zoom-out-95 motion-reduce:animate-none motion-reduce:transition-none',
+            'z-50 max-h-(--available-height) w-(--anchor-width) min-w-32 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-row border border-border bg-popover p-1 text-popover-foreground shadow-control app-popup-motion outline-none data-closed:overflow-hidden motion-reduce:animate-none motion-reduce:transition-none',
             className,
           )}
           {...props}

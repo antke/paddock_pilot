@@ -1,4 +1,28 @@
 export const stableSetup = {
+  tasks: {
+    contact: 'Add a yard contact number',
+    emergency: 'Add an emergency contact number',
+    vet: 'Add a vet contact',
+    farrier: 'Add a farrier contact',
+    horse: 'Add the first horse',
+    team: 'Invite the first member',
+    yard: 'Add opening hours and yard rules',
+  },
+  taskHelp: {
+    contact: 'A number members can use for day-to-day questions.',
+    emergency: 'A number everyone can find quickly when help is needed.',
+    vet: 'Save a vet with a phone number. Horses can have their own providers.',
+    farrier:
+      'Save a farrier with a phone number for appointments and follow-ups.',
+    horse: 'Create the first horse record for this stable.',
+    team: 'Invite someone to share the stable’s plans and care.',
+    yard: 'Keep arrival times and practical instructions in one place.',
+  },
+  remaining: 'Still to set up: {{step}}.',
+  reviewSetup: 'Review setup',
+  dismissPrompt: 'Hide this prompt',
+  review: 'Review',
+  continueSetup: 'Continue',
   operations: 'Add operational stable details',
   operationsHelp: 'Contact information, opening hours and yard rules.',
   reviewDetails: 'Review details',
@@ -16,9 +40,9 @@ export const stableSetup = {
   firstProviderHelp: 'Keep vet, farrier and other service contacts close.',
   viewProviders: 'View providers',
   addProvider: 'Add provider',
-  ownerTitle: 'Your stable is ready',
+  ownerTitle: 'Stable setup',
   ownerHelp:
-    'Set up the few things that make day-to-day coordination work. You can return to this checklist at any time.',
+    'Optional steps for day-to-day coordination. Progress reflects your current records; return here whenever you need.',
   memberProfile: 'Complete your yard profile',
   memberProfileHelp:
     'Add a phone number and an emergency contact for the owner.',

@@ -8,19 +8,19 @@ web
 
 ## Users
 
-The primary users are owners and members of small stables, typically yards with fewer than ten horses. Stable owners carry broad responsibility for the yard, but regular members are active participants who are expected to contribute to day-to-day coordination and care.
+The primary users are individual horse owners and owners and members of small stables, typically yards with fewer than ten horses. An individual owner can use the complete horse-care workflow without their stable using the app. Stable owners carry broad responsibility for the yard, while members contribute to day-to-day coordination and care.
 
-Both roles need a dependable shared view of what is happening across the stable. The product is not primarily aimed at large professional sport stables with dedicated operational staff.
+Horse owners need a dependable history that stays with the horse when it changes stables. Stable participants also need a shared view of yard operations within their access rights. The product is not primarily aimed at large professional sport stables with dedicated operational staff.
 
 ## Product Purpose
 
-Paddock Pilot gives a small stable one shared operational home for horse and yard information. It should replace fragmented calendars, messages, notebooks, whiteboards, and memory with accessible schedules, care records, reminders, service-provider information, and shared updates.
+Paddock Pilot gives horse owners one lasting home for horse information and gives small stables a shared place for yard coordination. It replaces fragmented calendars, messages, notebooks, whiteboards, and memory with accessible schedules, care records, reminders, service-provider information, and shared updates.
 
 Success means owners and members can understand what needs attention, find the context required to act, divide responsibility, and coordinate care without relying on one person to carry the stable's operational memory.
 
 ## Positioning
 
-Paddock Pilot is a shared field office for small, community-run stables. It combines horse-centred care records with yard-wide coordination so the owner can remain accountable while members meaningfully share the work. This is distinct from a solo horse tracker and from enterprise stable-management software designed around dedicated staff.
+Paddock Pilot combines personal horse care with shared coordination for small, community-run stables. Each horse has one owner and a continuing record independent of where it lives. Connecting a stable adds yard coordination; inviting a carer adds help without requiring stable membership. The same account and horse records work throughout those changes.
 
 ## Operating Context
 
@@ -28,12 +28,15 @@ Paddock Pilot is a shared field office for small, community-run stables. It comb
 - Owners and members coordinate recurring horse care, stable events, shared appointments, and everyday yard work.
 - Users need central access to calendars, messages or updates, horse and stable information, and details for vets and other local service providers.
 - Care coordination spans planning the work, recording what happened, and handing useful context to the next person or provider.
+- A horse has zero or one current stable placement; a user can belong to several stables. Moving a horse changes its placement, not its identity or history.
+- Owners can invite viewer or editor carers independently of stable membership. A current stable admin sees the horse's history, while ordinary members see shared scheduling and the roster unless separately granted horse access.
 - Stable owners have wider operational and administrative responsibility, while members contribute within their role and their relationship to horses and records.
 
 ## Capabilities and Constraints
 
 - The existing web application includes authenticated accounts, stables, memberships and invitations; horse profiles and care records; events and calendars; reminders; documents; provider details; analysis; onboarding; activity records; and personal subscriptions.
-- Owners and members both require operational visibility. Administrative and write permissions remain scoped by stable role, record ownership, and relationship to the work; enforcement belongs on the server.
+- Horse ownership, carer grants, current placement and record provenance determine access. Stable membership alone does not grant access to private horse records. Enforcement belongs on the server.
+- Ownership transfers and claims require the recipient's acceptance. A departing horse keeps its complete history; the former stable retains an immutable copy of only its own contribution.
 - All users should retain access to the basic stable-coordination feature set. Subscriptions may unlock advanced or premium capabilities. Exact packaging and pricing remain product decisions rather than fixed commitments in this record.
 - Centralised communication is a confirmed product need. The current repository demonstrates transactional email and shared records, but does not establish a complete general-purpose messaging model; future work must distinguish shared updates, notifications, and direct messaging rather than assuming they are interchangeable.
 

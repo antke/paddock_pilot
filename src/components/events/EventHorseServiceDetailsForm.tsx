@@ -19,12 +19,14 @@ type EventHorseServiceDetailsFormProps = {
   defaultValues: EventHorseDetailsFormSchema
   onSubmit: (values: EventHorseDetailsFormSchema) => Promise<void>
   onCancel: () => void
+  training?: boolean
 }
 
 export function EventHorseServiceDetailsForm({
   defaultValues,
   onSubmit,
   onCancel,
+  training = false,
 }: EventHorseServiceDetailsFormProps) {
   const t = useT()
 
@@ -62,7 +64,12 @@ export function EventHorseServiceDetailsForm({
   }
 
   return (
-    <InlineForm noValidate gap="compact" onSubmit={form.handleSubmit(submit)}>
+    <InlineForm
+      data-mobile-inline-edit="true"
+      noValidate
+      gap="compact"
+      onSubmit={form.handleSubmit(submit)}
+    >
       {saveError && (
         <RouteStatusAlert
           tone="danger"
@@ -74,7 +81,11 @@ export function EventHorseServiceDetailsForm({
         data-invalid={Boolean(form.formState.errors.requestedServiceNotes)}
       >
         <FieldLabel htmlFor={`${formId}-requestedServiceNotes`}>
-          {t('eventViews.requestedNotes')}
+          {t(
+            training
+              ? 'trainingViews.beforeSession'
+              : 'eventViews.requestedNotes',
+          )}
         </FieldLabel>
         <Textarea
           autoFocus
@@ -87,7 +98,9 @@ export function EventHorseServiceDetailsForm({
               ? `${formId}-requestedServiceNotes-error`
               : undefined
           }
-          placeholder={t('eventViews.requestedPlaceholder')}
+          placeholder={
+            training ? undefined : t('eventViews.requestedPlaceholder')
+          }
         />
         <FieldError
           id={`${formId}-requestedServiceNotes-error`}
@@ -97,7 +110,9 @@ export function EventHorseServiceDetailsForm({
 
       <Field data-invalid={Boolean(form.formState.errors.completionNotes)}>
         <FieldLabel htmlFor={`${formId}-completionNotes`}>
-          {t('eventViews.outcomeNotes')}
+          {t(
+            training ? 'trainingViews.afterSession' : 'eventViews.outcomeNotes',
+          )}
         </FieldLabel>
         <Textarea
           id={`${formId}-completionNotes`}
@@ -109,7 +124,9 @@ export function EventHorseServiceDetailsForm({
               ? `${formId}-completionNotes-error`
               : undefined
           }
-          placeholder={t('eventViews.outcomePlaceholder')}
+          placeholder={
+            training ? undefined : t('eventViews.outcomePlaceholder')
+          }
         />
         <FieldError
           id={`${formId}-completionNotes-error`}

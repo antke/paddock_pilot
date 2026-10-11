@@ -38,6 +38,7 @@ export const renderEmailLayout = (input: {
   body: string
   action?: { label: string; url: string }
   note?: string
+  noteAction?: { label: string; url: string }
 }) => {
   const locale = input.locale ?? 'en'
   const messages = getEmailCopy(locale)
@@ -77,7 +78,7 @@ a:focus-visible { outline:2px solid #aa563e; outline-offset:4px; }
 <h1 class="email-heading" style="margin:0 0 24px;font-family:${serif};font-size:38px;line-height:44px;font-weight:normal;letter-spacing:-0.5px;color:${ink};">${escapeHtml(input.heading)}</h1>
 ${input.body}
 ${actionHtml}
-${input.note ? `<p style="margin:0 0 24px;font-family:${sans};font-size:14px;line-height:22px;color:${copy};">${escapeHtml(input.note)}</p>` : ''}
+${input.note ? `<p style="margin:0 0 24px;font-family:${sans};font-size:14px;line-height:22px;color:${copy};">${escapeHtml(input.note)}${input.noteAction ? ` <a href="${escapeHtml(input.noteAction.url)}" style="color:${ink};text-decoration:underline;">${escapeHtml(input.noteAction.label)}</a>` : ''}</p>` : ''}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding-top:24px;border-top:1px solid ${rule};">
 <p style="margin:0;font-family:${serif};font-size:18px;line-height:26px;color:${ink};">${escapeHtml(messages.footer)}</p>
 <p style="margin:8px 0 0;font-family:${sans};font-size:12px;line-height:19px;color:${copy};">${escapeHtml(messages.footerNote)}</p>

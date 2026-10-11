@@ -24,12 +24,10 @@ export function ApplicationRouteShell({
     </AppShell>
   )
 
-  if (pathname !== '/') return appShell
-
   return (
     <AuthStateSwitch
       signedIn={appShell}
-      signedOut={children}
+      signedOut={pathname === '/' ? children : appShell}
       loading={appShell}
     />
   )

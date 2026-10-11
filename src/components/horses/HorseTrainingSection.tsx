@@ -1,7 +1,8 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { convexQuery } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
-import type { Doc, Id } from 'convex/_generated/dataModel'
+import type { Doc } from 'convex/_generated/dataModel'
+import type { ReactNode } from 'react'
 import { TrainingCalendar } from '#/components/training/TrainingCalendar'
 import type { TrainingHorse } from '#/components/training/trainingCalendarData'
 
@@ -11,9 +12,10 @@ export type HorseTrainingData = {
   horses: Array<TrainingHorse>
 }
 type Props = {
-  stableId: string
+  stableId?: string
   horse: TrainingHorse
   data?: HorseTrainingData
+  renderMobileActions?: (canRecord: boolean) => ReactNode
 }
 
 export function HorseTrainingSection({ data, ...props }: Props) {
@@ -24,19 +26,18 @@ export function HorseTrainingSection({ data, ...props }: Props) {
   )
 }
 
-function ConnectedHorseTraining({ stableId, horse }: Omit<Props, 'data'>) {
+function ConnectedHorseTraining(props: Omit<Props, 'data'>) {
   const { data } = useSuspenseQuery(
-    convexQuery(api.training.listForStable, {
-      stableId: stableId as Id<'stables'>,
-    }),
+    convexQuery(api.training.listForHorse, { horseId: props.horse._id }),
   )
-  return <HorseTrainingLog stableId={stableId} horse={horse} data={data} />
+  return <HorseTrainingLog {...props} data={data} />
 }
 
 function HorseTrainingLog({
   stableId,
   horse,
   data,
+  renderMobileActions,
 }: Props & { data: HorseTrainingData }) {
   return (
     <TrainingCalendar
@@ -46,6 +47,7 @@ function HorseTrainingLog({
       records={data.records}
       horses={data.horses.filter((item) => item._id === horse._id)}
       fixedHorseId={horse._id}
+      renderMobileActions={renderMobileActions}
     />
   )
 }

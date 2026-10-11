@@ -5,10 +5,20 @@ import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { ButtonLink } from '#/components/ui/button'
 import { TrainingEntryLink } from '#/components/training/TrainingEntryLink'
 import type { TrainingEntry } from '#/components/training/trainingCalendarData'
-import type { DashboardCommandData } from './dashboardTypes'
+import type { DashboardActivityData } from './dashboardTypes'
+import { useTaskOriginState } from '#/components/layout/mobileTaskNavigation'
 
-export function TodayTrainingCard({ data }: { data: DashboardCommandData }) {
+export function TodayTrainingCard({
+  data,
+  compact = false,
+  canCreate = true,
+}: {
+  data: DashboardActivityData
+  compact?: boolean
+  canCreate?: boolean
+}) {
   const t = useT()
+  const taskState = useTaskOriginState()
 
   const headingId = useId()
   const byHorse = new Map<string, Array<TrainingEntry>>()
@@ -21,24 +31,51 @@ export function TodayTrainingCard({ data }: { data: DashboardCommandData }) {
   return (
     <DashboardSection
       aria-labelledby={headingId}
+      chrome={compact ? 'flat' : 'soft'}
       title={<span id={headingId}>{t('dashboard.todayTraining')}</span>}
       titleStyle="display"
+      headerLayout="inline"
       actions={
-        <ButtonLink
-          to="/stables/$stableId/training"
-          params={{ stableId: data.stable._id }}
-          variant="outline"
-          size="sm"
-          className="min-h-11"
-        >
-          {t('dashboard.viewTraining')}
-        </ButtonLink>
+        !compact &&
+        canCreate && (
+          <>
+            <ButtonLink
+              to={
+                data.stable
+                  ? '/stables/$stableId/training/create'
+                  : '/events/create'
+              }
+              params={{ stableId: data.stable?._id ?? '' }}
+              search={{
+                intent: 'record',
+                training: data.stable ? undefined : true,
+              }}
+              state={taskState}
+              action="record"
+              size="sm"
+              className="min-h-11"
+            >
+              {t('trainingViews.recordCompleted')}
+            </ButtonLink>
+          </>
+        )
       }
     >
       {byHorse.size === 0 ? (
-        <DashboardEmptyState chrome="flat">
+        <DashboardEmptyState chrome="flat" spacing="flush">
           {t('dashboard.noTraining')}
         </DashboardEmptyState>
+      ) : compact ? (
+        <div className="grid gap-3">
+          {data.todayTraining?.slice(0, 2).map((entry) => (
+            <TrainingEntryLink
+              key={entry.key}
+              entry={entry}
+              stableId={data.stable?._id}
+              variant="summary"
+            />
+          ))}
+        </div>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {[...byHorse.values()].map((entries) => (
@@ -53,7 +90,7 @@ export function TodayTrainingCard({ data }: { data: DashboardCommandData }) {
                 <TrainingEntryLink
                   key={entry.key}
                   entry={entry}
-                  stableId={data.stable._id}
+                  stableId={data.stable?._id}
                   showHorseName={false}
                 />
               ))}
@@ -61,6 +98,17 @@ export function TodayTrainingCard({ data }: { data: DashboardCommandData }) {
           ))}
         </div>
       )}
+      <ButtonLink
+        to={data.stable ? '/stables/$stableId/training' : '/training'}
+        params={{ stableId: data.stable?._id ?? '' }}
+        variant="link"
+        className="min-h-11 justify-self-start px-0"
+      >
+        {t('dashboard.viewTraining')}
+        {compact && (data.todayTraining?.length ?? 0) > 2
+          ? ` (${data.todayTraining?.length})`
+          : ''}
+      </ButtonLink>
     </DashboardSection>
   )
 }

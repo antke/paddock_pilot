@@ -22,14 +22,17 @@ export function TrainingPageLab({ data }: { data: DashboardLabData }) {
   )
   const [events, setEvents] = useState<Array<Doc<'events'>>>(() =>
     horses.flatMap((horse, horseIndex) =>
-      [0, 2, 4].map((offset, i) => ({
+      (horseIndex === 0 ? [0, 2, 4, 4] : [0, 2, 4]).map((offset, i) => ({
         _id: `sample-training-${horseIndex}-${i}` as Id<'events'>,
         _creationTime: 0,
         stableId: data.stable._id,
-        createdBy: horse.ownerId,
+        createdBy: horse.ownerId!,
         horseIds: [horse._id],
         type: 'training',
-        title: i === 1 ? 'Trainer lesson' : 'Training session',
+        title:
+          i === 1
+            ? 'Trainer lesson — transitions, balance and rhythm'
+            : 'Training session',
         date: formatDateKey(
           new Date(
             monday.getFullYear(),
@@ -40,10 +43,15 @@ export function TrainingPageLab({ data }: { data: DashboardLabData }) {
         time: '10:00',
         status: 'planned',
         training: {
-          activities: [trainingActivities[(horseIndex + i) % 5]],
+          activities:
+            i === 1
+              ? ['flatwork', 'jumping']
+              : i === 3
+                ? [...trainingActivities]
+                : [trainingActivities[(horseIndex + i) % 5]],
           format: i === 1 ? 'lesson' : 'regular',
           durationMinutes: 40,
-          rider: 'Sample rider',
+          rider: i === 2 ? undefined : 'Sample rider',
           focus: 'Rhythm and transitions',
           nextFocus: 'Practise balanced transitions',
         },

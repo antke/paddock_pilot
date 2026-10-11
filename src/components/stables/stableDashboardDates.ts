@@ -10,7 +10,10 @@ import type { Doc } from 'convex/_generated/dataModel'
 import { createEventOccurrences } from 'shared/events/eventOccurrences'
 import type { EventOccurrence } from 'shared/events/eventOccurrences'
 
-export type StableDashboardEvent = Doc<'events'>
+export type StableDashboardEvent = Doc<'events'> & {
+  contextHorseId?: string
+  contextParticipationId?: string
+}
 
 export type StableCalendarOccurrence = EventOccurrence<StableDashboardEvent>
 

@@ -9,6 +9,7 @@ import type {
   TrainingActivity,
   TrainingDisplayStatus,
 } from 'shared/training/trainingSchema'
+import { cn } from '#/lib/utils'
 
 const activityColors: Record<TrainingActivity, string> = {
   flatwork: 'var(--chart-1)',
@@ -34,20 +35,27 @@ export function TrainingActivityDot({
 
 export function TrainingActivityTag({
   activity,
+  truncate = false,
 }: {
   activity: TrainingActivity
+  truncate?: boolean
 }) {
   const t = useT()
   const color = activityColors[activity]
   return (
     <span
-      className="inline-flex max-w-full items-center gap-1.5 rounded-control px-2 py-0.5 text-xs font-medium leading-5 text-foreground [overflow-wrap:anywhere]"
+      className={cn(
+        'inline-flex max-w-full items-center gap-1.5 rounded-control px-2 py-0.5 text-xs font-medium leading-5 text-foreground [overflow-wrap:anywhere]',
+        truncate && 'min-w-0',
+      )}
       style={{
         backgroundColor: `color-mix(in oklab, ${color} 18%, var(--card))`,
       }}
     >
       <TrainingActivityDot activity={activity} />
-      {t(`training.activities.${activity}`)}
+      <span className={truncate ? 'truncate' : undefined}>
+        {t(`training.activities.${activity}`)}
+      </span>
     </span>
   )
 }
@@ -68,7 +76,12 @@ export function TrainingStatusBadge({
           ? QuestionIcon
           : ProhibitIcon
   return (
-    <span className="inline-flex min-w-0 items-start gap-1.5 text-xs font-medium leading-5">
+    <span
+      className={cn(
+        'inline-flex min-w-0 items-start gap-1.5 text-xs font-medium leading-5',
+        status === 'completed' && 'text-primary',
+      )}
+    >
       <Icon
         aria-hidden="true"
         weight={status === 'completed' ? 'fill' : 'regular'}

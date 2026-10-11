@@ -1,8 +1,34 @@
 export const horseComparison = {
+  questions: {
+    trainingHealth: 'Training around health and medication',
+    trainingFeeding: 'Training around feeding changes',
+    weightTraining: 'Weight alongside training',
+    feeding: 'Weight around feeding changes',
+    condition: 'Weight alongside body condition',
+    trainingCare: 'Training around health and care',
+  },
+  customize: 'Customize comparison',
+  scope:
+    'History: {{start}} – {{end}}. This period applies to the comparison and its source records.',
+  returnRange: 'Return to previous range',
+  fit: 'Fit recorded period',
+  recordingCoverage: '{{count}} shown records · recorded {{start}} – {{end}}',
+  nearbyRecords:
+    '{{count}} nearby marks · {{start}} – {{end}} · inspect records',
+  aggregation: {
+    daily: 'Daily totals',
+    weekly: 'Weekly totals',
+    monthly: 'Monthly totals',
+  },
+
   title: 'Compare over time',
   help: 'Explore measurements, training and care on the same calendar. Select a record to see its details.',
+  conditionHelp:
+    'Body condition is a recorded assessment of body fat on a 1–9 scale. Higher scores mean more body fat.',
   preset: 'Suggested comparison',
   presets: {
+    trainingHealth: 'Sessions & health',
+    trainingFeeding: 'Training & feeding',
     weightTraining: 'Weight & training',
     feeding: 'Feeding changes',
     condition: 'Body condition',
@@ -10,7 +36,7 @@ export const horseComparison = {
   },
   measure: 'Measure',
   context: 'Compare with',
-  extra: 'Additional context',
+  extra: 'Another dataset',
   none: 'None',
   measures: {
     weight: 'Weight',
@@ -42,6 +68,8 @@ export const horseComparison = {
   score: '1–9',
   minutes: 'min',
   sessions: 'sessions',
+  emptyHelp:
+    'Try another period or comparison, or open the horse to add a dated record.',
   noRecords: 'No records in this period.',
   noTraining: 'No completed training recorded in this period.',
   loading: 'Loading horse records…',
@@ -52,15 +80,20 @@ export const horseComparison = {
     'Points are recorded measurements; connecting lines are guides. Changes alongside one another do not establish a cause.',
   coverage:
     'Minutes recorded for {{recorded}} of {{total}} completed sessions.',
+  totalsUnknown: '{{count}} completed sessions · duration not recorded',
+  singleWeight: '1 measurement · {{last}} kg ({{end}})',
   totals: '{{count}} completed sessions · {{minutes}} recorded minutes',
   weightSummary:
     '{{count}} measurements · {{first}} kg ({{start}}) → {{last}} kg ({{end}})',
   changes: '{{count}} nutrition changes',
-  showOtherTraining: 'Show planned, cancelled, skipped and unconfirmed training',
+  showOtherTraining:
+    'Show planned, cancelled, skipped and unconfirmed training',
   otherTraining: 'Other training records',
   missingDuration: 'Completed sessions without a recorded duration',
   unknownDuration: 'Duration not recorded',
   recordCount: '{{count}} records',
+  inspectSelection: 'Inspect selected records ({{count}})',
+  backToChart: 'Back to chart',
   selected: 'Selected records',
   chooseRecord: 'Select a point, bar or event to inspect its source records.',
   openSource: 'Open source records',

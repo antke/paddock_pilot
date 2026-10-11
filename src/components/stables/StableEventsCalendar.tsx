@@ -5,7 +5,6 @@ import {
   CalendarDayHeader,
   CalendarDayNumber,
   CalendarEventChipLink,
-  CalendarEventChipMeta,
   CalendarEventChipTitle,
   CalendarGrid,
   CalendarMoreEventsButton,
@@ -14,19 +13,28 @@ import {
   CalendarWeekdayRow,
 } from '#/components/events/EventCalendar'
 import { EventRow } from '#/components/events/EventRow'
+import { CalendarEventTooltip } from '#/components/events/CalendarEventTooltip'
+import { CalendarItemTypeDot } from '#/components/events/CalendarItemTypeDot'
+import { calendarCompactEventChipClassName } from '#/components/events/EventCalendarChrome'
+import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
 import {
   formatEventDate,
   formatEventDateTime,
 } from '#/components/events/eventDisplay'
 import { DashboardCountBadge } from '#/components/dashboard/DashboardBadges'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
-import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
 import {
   DashboardSectionCard,
   DashboardSubsection,
 } from '#/components/dashboard/DashboardSectionCard'
 import { Button } from '#/components/ui/button'
-import { getTodayDateKey } from '#/lib/dateDisplay'
+import {
+  getTodayDateKey,
+  dateKeyToDate,
+  formatDateKey,
+} from '#/lib/dateDisplay'
+import { useSessionState } from '#/lib/useSessionState'
+import { isDateKey } from 'shared/training/trainingSchema'
 import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react'
 import {
   useEffect,
@@ -58,6 +66,7 @@ type StableEventsCalendarProps = {
   events: Array<StableDashboardEvent>
   surface?: 'flat' | 'panel'
   initialMonth?: Date
+  storageKey?: string
 }
 
 type CalendarCell =
@@ -67,18 +76,27 @@ export function StableEventsCalendar({
   events,
   initialMonth,
   surface = 'panel',
+  storageKey,
 }: StableEventsCalendarProps) {
   const t = useT()
   const { locale } = useLocale()
 
-  const [visibleMonth, setVisibleMonth] = useState(() =>
-    startOfMonth(initialMonth ?? new Date()),
+  const [visibleMonth, setVisibleMonth] = useSessionState<Date>(
+    storageKey,
+    () => startOfMonth(initialMonth ?? new Date()),
+    (value) =>
+      typeof value === 'string' && isDateKey(value)
+        ? startOfMonth(dateKeyToDate(value))
+        : undefined,
+    formatDateKey,
   )
   const [selectedDateKey, setSelectedDateKey] = useState<string>()
+  const [mobileDateKey, setMobileDateKey] = useState<string>()
   const [announcedMonth, setAnnouncedMonth] = useState<Date>()
   const calendarRef = useRef<HTMLDivElement>(null)
   const lastFocusedRef = useRef<HTMLElement | null>(null)
   const selectedAgendaId = useId()
+  const mobileAgendaId = useId()
   const selectedAgendaRef = useRef<HTMLDivElement>(null)
   const selectedAgendaTriggerRef = useRef<HTMLButtonElement>(null)
   const todayKey = getTodayDateKey()
@@ -94,6 +112,11 @@ export function StableEventsCalendar({
   const selectedDayOccurrences = selectedDateKey
     ? (occurrencesByDate.get(selectedDateKey) ?? [])
     : []
+  const monthKey = formatDateKey(visibleMonth).slice(0, 7)
+  const mobileSelectedDate =
+    mobileDateKey ??
+    (todayKey.startsWith(monthKey) ? todayKey : formatDateKey(visibleMonth))
+  const mobileDayOccurrences = occurrencesByDate.get(mobileSelectedDate) ?? []
   const leadingDays = getMonthLeadingDayCount(visibleMonth)
   const trailingDays = (7 - ((leadingDays + monthDays.length) % 7)) % 7
   const calendarCells: Array<CalendarCell> = [
@@ -165,6 +188,7 @@ export function StableEventsCalendar({
   const selectMonth = (month: Date) => {
     setVisibleMonth(month)
     setSelectedDateKey(undefined)
+    setMobileDateKey(undefined)
     selectedAgendaTriggerRef.current = null
     setAnnouncedMonth(month)
   }
@@ -235,40 +259,128 @@ export function StableEventsCalendar({
           : ''}
       </p>
 
-      <DashboardSubsection
-        as="h3"
-        className="md:hidden"
-        gap="compact"
-        title={t('calendar.agenda')}
-        data-calendar-view="mobile"
-      >
-        {visibleMonthOccurrences.length === 0 ? (
-          <DashboardEmptyState chrome="flat" spacing="flush">
-            {t('calendar.empty')}
-          </DashboardEmptyState>
-        ) : (
-          <DashboardItemList gap="compact">
-            {visibleMonthOccurrences.map((occurrence) => (
-              <EventRow
-                key={occurrence.occurrenceKey}
-                event={getOccurrenceDisplayEvent(occurrence)}
-                chrome="flat"
-                horseCount={occurrence.event.horseIds.length}
-                supplementalMeta={
-                  occurrence.durationDays > 1
-                    ? [
-                        t('calendar.through', {
-                          date: formatEventDate(occurrence.endDate, locale),
-                        }),
-                      ]
-                    : []
-                }
-                variant="agenda"
-              />
+      <div className="grid gap-4 md:hidden" data-calendar-view="mobile">
+        <CalendarShell
+          data-touch-grid="true"
+          role="table"
+          aria-label={t('calendar.chooseDay', {
+            month: formatMonthLabel(visibleMonth, locale),
+          })}
+        >
+          <CalendarWeekdayRow role="row">
+            {getWeekdayLabels(locale).map((weekday) => (
+              <CalendarWeekdayCell
+                role="columnheader"
+                key={weekday}
+                className="px-0 py-2"
+              >
+                {weekday}
+              </CalendarWeekdayCell>
             ))}
-          </DashboardItemList>
-        )}
-      </DashboardSubsection>
+          </CalendarWeekdayRow>
+          <CalendarGrid role="rowgroup">
+            {calendarWeeks.map((week, index) => (
+              <div role="row" className="contents" key={index}>
+                {week.map((cell) => {
+                  if (cell.kind === 'empty')
+                    return (
+                      <CalendarDayCell
+                        role="cell"
+                        muted
+                        key={cell.key}
+                        className="h-14"
+                      />
+                    )
+                  const count = occurrencesByDate.get(cell.key)?.length ?? 0
+                  const selected = cell.key === mobileSelectedDate
+                  return (
+                    <CalendarDayCell
+                      role="cell"
+                      key={cell.key}
+                      className="h-14 p-0"
+                      isToday={cell.key === todayKey}
+                    >
+                      <Button
+                        variant={selected ? 'secondary' : 'ghost'}
+                        className="h-full min-w-0 w-full flex-col gap-1 rounded-none border-0 px-0 py-1 text-sm [@media(pointer:coarse)]:min-w-0"
+                        aria-label={t('calendar.selectDay', {
+                          date: formatEventDate(cell.key, locale),
+                          count,
+                        })}
+                        aria-pressed={selected}
+                        aria-current={
+                          cell.key === todayKey ? 'date' : undefined
+                        }
+                        aria-controls={mobileAgendaId}
+                        onClick={() => setMobileDateKey(cell.key)}
+                      >
+                        <CalendarDayNumber isToday={cell.key === todayKey}>
+                          {cell.date.getDate()}
+                        </CalendarDayNumber>
+                        <span
+                          aria-hidden="true"
+                          className="flex h-1 items-center gap-0.5"
+                        >
+                          {Array.from(
+                            { length: Math.min(count, 3) },
+                            (_, dot) => (
+                              <span
+                                key={dot}
+                                className="size-1 rounded-full bg-primary"
+                              />
+                            ),
+                          )}
+                        </span>
+                      </Button>
+                    </CalendarDayCell>
+                  )
+                })}
+              </div>
+            ))}
+          </CalendarGrid>
+        </CalendarShell>
+        <DashboardSubsection
+          id={mobileAgendaId}
+          as="h3"
+          gap="compact"
+          title={t('calendar.eventsOn', {
+            date: formatEventDate(mobileSelectedDate, locale),
+          })}
+        >
+          <p className="sr-only" aria-live="polite" aria-atomic="true">
+            {t('calendar.selectDay', {
+              date: formatEventDate(mobileSelectedDate, locale),
+              count: mobileDayOccurrences.length,
+            })}
+          </p>
+          {mobileDayOccurrences.length === 0 ? (
+            <DashboardEmptyState chrome="flat" spacing="flush">
+              {t('calendar.dayEmpty')}
+            </DashboardEmptyState>
+          ) : (
+            <DashboardItemList gap="compact">
+              {mobileDayOccurrences.map((dayOccurrence) => (
+                <EventRow
+                  key={dayOccurrence.occurrence.occurrenceKey}
+                  event={getOccurrenceDisplayEvent(dayOccurrence.occurrence)}
+                  chrome="flat"
+                  horseCount={dayOccurrence.occurrence.event.horseIds.length}
+                  leadingLabel={getDayOccurrenceLabel(dayOccurrence, locale)}
+                  showRecurrence={false}
+                  supplementalMeta={
+                    dayOccurrence.occurrence.durationDays > 1
+                      ? [
+                          `${formatEventDate(dayOccurrence.occurrence.startDate, locale)} – ${formatEventDate(dayOccurrence.occurrence.endDate, locale)}`,
+                        ]
+                      : []
+                  }
+                  variant="contextual"
+                />
+              ))}
+            </DashboardItemList>
+          )}
+        </DashboardSubsection>
+      </div>
 
       <CalendarShell
         className="hidden md:block"
@@ -444,16 +556,47 @@ function CalendarEventLink({
       : null
 
   return (
-    <CalendarEventChipLink
-      to="/stables/$stableId/events/$eventId"
-      params={{ stableId: event.stableId, eventId: event._id }}
-      aria-label={`${event.title}, ${formatEventDateTime(occurrence.startDate, event.time, occurrence.endDate, locale)}${dayOccurrence.position === 'single' || dayOccurrence.position === 'start' ? '' : t('calendar.dayContext', { timing: timingLabel.toLowerCase(), date: formatEventDate(dayOccurrence.dateKey, locale) })}${statusLabel ? `, ${statusLabel.toLowerCase()}` : ''}`}
+    <CalendarEventTooltip
+      trigger={
+        <CalendarEventChipLink
+          to="/events/$eventId"
+          params={{ eventId: event._id }}
+          search={{
+            horseId: event.contextHorseId,
+            participationId: event.contextParticipationId,
+          }}
+          className={calendarCompactEventChipClassName()}
+          aria-label={`${event.title}, ${formatEventDateTime(occurrence.startDate, event.time, occurrence.endDate, locale)}${dayOccurrence.position === 'single' || dayOccurrence.position === 'start' ? '' : t('calendar.dayContext', { timing: timingLabel.toLowerCase(), date: formatEventDate(dayOccurrence.dateKey, locale) })}${statusLabel ? `, ${statusLabel.toLowerCase()}` : ''}, ${t(`events.types.${event.type}`)}`}
+        >
+          <CalendarItemTypeDot type={event.type} />
+          <CalendarEventChipTitle>{event.title}</CalendarEventChipTitle>
+        </CalendarEventChipLink>
+      }
     >
-      <CalendarEventChipTitle>{event.title}</CalendarEventChipTitle>
-      <CalendarEventChipMeta>
-        {[timingLabel, statusLabel].filter(Boolean).join(' · ')}
-      </CalendarEventChipMeta>
-    </CalendarEventChipLink>
+      <div className="grid gap-3">
+        <div className="grid gap-1">
+          <span className="font-bold">{event.title}</span>
+          <span>{t(`events.types.${event.type}`)}</span>
+          <span>{t(`calendar.${event.status ?? 'planned'}`)}</span>
+          <span>
+            {formatEventDateTime(
+              occurrence.startDate,
+              event.time,
+              occurrence.endDate,
+              locale,
+            )}
+          </span>
+          {event.providerName && <span>{event.providerName}</span>}
+          {event.location && <span>{event.location}</span>}
+        </div>
+        {event.description && (
+          <p className="whitespace-pre-wrap">{event.description}</p>
+        )}
+        {event.notesAfterCompletion && (
+          <p className="whitespace-pre-wrap">{event.notesAfterCompletion}</p>
+        )}
+      </div>
+    </CalendarEventTooltip>
   )
 }
 

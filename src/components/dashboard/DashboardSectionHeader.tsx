@@ -23,6 +23,7 @@ type DashboardSectionHeaderProps = {
   descriptionSize?: DashboardSectionHeaderDescriptionSize
   descriptionWidth?: DashboardSectionHeaderDescriptionWidth
   headingClassName?: string
+  layout?: 'default' | 'inline'
   size?: DashboardSectionHeaderSize
   titleClassName?: string
   titleStyle?: DashboardSectionHeaderTitleStyle
@@ -40,6 +41,7 @@ export function DashboardSectionHeader({
   descriptionSize = 'default',
   descriptionWidth = 'default',
   headingClassName,
+  layout = 'default',
   size = 'section',
   titleClassName,
   titleStyle = 'ui',
@@ -51,7 +53,9 @@ export function DashboardSectionHeader({
     <header
       data-slot="dashboard-section-header"
       className={cn(
-        'grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-stretch',
+        layout === 'inline'
+          ? 'flex flex-wrap items-center justify-between gap-x-6 gap-y-2'
+          : 'grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-stretch',
         className,
       )}
     >
@@ -101,6 +105,7 @@ export function DashboardSectionHeader({
       </div>
 
       <DashboardHeaderRail
+        className={layout === 'inline' ? 'max-w-full self-center' : undefined}
         top={
           badges ? (
             <DashboardBadgeList
@@ -116,7 +121,11 @@ export function DashboardSectionHeader({
           actions ? (
             <DashboardActions
               align="end"
-              className={cn('max-w-full justify-end', actionsClassName)}
+              className={cn(
+                'max-w-full',
+                layout === 'inline' ? 'justify-start' : 'justify-end',
+                actionsClassName,
+              )}
             >
               {actions}
             </DashboardActions>

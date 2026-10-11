@@ -1,3 +1,5 @@
+import { horseCareData } from './libs/horseCareData'
+import { getHorseAccess } from './libs/horsePermissions'
 import { v } from 'convex/values'
 import type { Doc, Id } from './_generated/dataModel'
 import { query } from './_generated/server'
@@ -62,36 +64,44 @@ export const getForStable = query({
   handler: async (ctx, args) => {
     const access = await assertCanViewStable(ctx, args.stableId)
 
-    const [horses, events, healthIssues, stableInvitations, careReminders] =
-      await Promise.all([
-        ctx.db
-          .query('horses')
-          .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
-          .collect(),
-        ctx.db
-          .query('events')
-          .withIndex('by_stable_id_date', (q) =>
-            q.eq('stableId', args.stableId),
-          )
-          .collect(),
-        ctx.db
-          .query('horseHealthIssues')
-          .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
-          .collect(),
-        access.role === 'owner'
-          ? ctx.db
-              .query('stableInvitations')
-              .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
-              .collect()
-          : Promise.resolve([]),
-        ctx.db
-          .query('careReminders')
-          .withIndex('by_stable_id_status_due_date', (q) =>
-            q.eq('stableId', args.stableId).eq('status', 'pending'),
-          )
-          .collect(),
-      ])
-    const activeHorses = horses.filter(isActiveHorse)
+    const [
+      horses,
+      events,
+      _legacyHealthIssues,
+      stableInvitations,
+      careReminders,
+    ] = await Promise.all([
+      ctx.db
+        .query('horses')
+        .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
+        .collect(),
+      ctx.db
+        .query('events')
+        .withIndex('by_stable_id_date', (q) => q.eq('stableId', args.stableId))
+        .collect(),
+      ctx.db
+        .query('horseHealthIssues')
+        .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
+        .collect(),
+      access.role === 'owner'
+        ? ctx.db
+            .query('stableInvitations')
+            .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
+            .collect()
+        : Promise.resolve([]),
+      ctx.db
+        .query('careReminders')
+        .withIndex('by_stable_id_status_due_date', (q) =>
+          q.eq('stableId', args.stableId).eq('status', 'pending'),
+        )
+        .collect(),
+    ])
+    const permissions = await Promise.all(
+      horses.map((horse) => getHorseAccess(ctx, horse)),
+    )
+    const activeHorses = horses.filter(
+      (horse, index) => isActiveHorse(horse) && permissions[index].canRead,
+    )
     const activeHorseIds = new Set(activeHorses.map((horse) => horse._id))
     const visibleEvents = events
       .filter(
@@ -99,10 +109,17 @@ export const getForStable = query({
           event.type !== 'training' && hasActiveHorse(event, activeHorseIds),
       )
       .map((event) => withActiveEventHorseIds(event, activeHorseIds))
+    const { healthIssues, reminders: horseReminders } = await horseCareData(
+      ctx,
+      activeHorses,
+    )
     const visibleHealthIssues = healthIssues.filter((issue) =>
       activeHorseIds.has(issue.horseId),
     )
-    const visibleCareReminders = careReminders.filter(
+    const visibleCareReminders = [
+      ...horseReminders.filter((r) => r.status === 'pending'),
+      ...careReminders.filter((r) => !r.horseId),
+    ].filter(
       (reminder) => !reminder.horseId || activeHorseIds.has(reminder.horseId),
     )
     const horsesById = new Map(activeHorses.map((horse) => [horse._id, horse]))

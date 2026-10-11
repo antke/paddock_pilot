@@ -77,6 +77,29 @@ describe('calendar month projection', () => {
     expect(getCalendarMonthOccurrences([], august2026)).toEqual([])
     expect(groupCalendarOccurrencesByDate([], august2026).size).toBe(0)
   })
+
+  it('keeps live and frozen recurring schedules distinct while honoring the snapshot cutoff', () => {
+    const live = createEvent('shared', '2026-08-03', '08:00', {
+      recurrence: { frequency: 'weekly', interval: 1, daysOfWeek: [1] },
+    })
+    const frozen = {
+      ...live,
+      contextParticipationId: 'juniper-old-participation',
+      recurrence: {
+        ...live.recurrence!,
+        end: { type: 'on_date' as const, date: '2026-08-10' },
+      },
+    }
+    const occurrences = getCalendarMonthOccurrences([live, frozen], august2026)
+    expect(new Set(occurrences.map((row) => row.occurrenceKey)).size).toBe(
+      occurrences.length,
+    )
+    expect(
+      occurrences
+        .filter((row) => row.event.contextParticipationId)
+        .map((row) => row.startDate),
+    ).toEqual(['2026-08-03', '2026-08-10'])
+  })
 })
 
 function createEvent(

@@ -52,6 +52,8 @@ export type LabTimelineSourceSignal = {
   horseName?: string
   detail?: string
   displayData?: AnalysisSignalDisplayData
+  observationOrder?: number
+  reminderCategory?: DashboardLabReminder['category']
   status?: string
   severity?: 'low' | 'medium' | 'high'
   priority?: 'low' | 'medium' | 'high'
@@ -175,11 +177,18 @@ export function createAnalysisCentreData(
   data: DashboardLabData,
   timelineSignals: Array<LabTimelineSourceSignal> = [],
   locale: Locale = 'en',
+  range?: { start: string; end: string },
 ): LabAnalysis {
   const t = localeInstances[locale].t
   const today = getTodayDateKey()
   const nextThirtyDays = addDaysKey(today, 30)
-  const timeline = getTimeline(data.events, timelineSignals, today, locale)
+  const timeline = getTimeline(
+    data.events,
+    timelineSignals,
+    today,
+    locale,
+    range,
+  )
   const plannedEvents = data.events.filter(isPlannedEvent)
   const completedEvents = data.events.filter(
     (event) => event.status === 'completed',
@@ -365,8 +374,15 @@ function getTimeline(
   signals: Array<LabTimelineSourceSignal>,
   today: string,
   locale: Locale,
+  range?: { start: string; end: string },
 ): LabTimeline {
-  const dayKeys = getTimelineDayKeys(events, signals, today)
+  const dayKeys = range
+    ? getHistoryDays(range)
+    : getTimelineDayKeys(events, signals, today)
+  if (range)
+    signals = signals.filter(
+      (signal) => signal.date >= range.start && signal.date <= range.end,
+    )
   const windowStart = dayKeys[0] ?? today
   const windowEnd = dayKeys[dayKeys.length - 1] ?? today
   const occurrences = createEventOccurrences({
@@ -741,4 +757,15 @@ function getCompletionCoverage(
         ? Math.round((eventsWithProviderCount / events.length) * 100)
         : 100,
   }
+}
+
+function getHistoryDays(range: { start: string; end: string }) {
+  const days: string[] = []
+  for (
+    let day = range.start;
+    day <= range.end && days.length < 3661;
+    day = addDaysKey(day, 1)
+  )
+    days.push(day)
+  return days
 }

@@ -87,7 +87,14 @@ function WelcomeScenarioPreview({
         horseCount={blank ? 0 : 1}
         memberCount={ready ? 2 : 0}
         invitationCount={0}
-        providerCount={ready ? 2 : 0}
+        providers={
+          ready
+            ? [
+                { type: 'vet', phone: '5550101111' },
+                { type: 'farrier', phone: '5550102222' },
+              ]
+            : []
+        }
       />
     )
   }

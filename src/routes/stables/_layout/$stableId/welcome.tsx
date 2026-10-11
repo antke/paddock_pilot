@@ -71,7 +71,7 @@ function OwnerWelcomeData({
             }) === 'pending',
         ).length
       }
-      providerCount={providers.providers.length}
+      providers={providers.providers}
     />
   )
 }

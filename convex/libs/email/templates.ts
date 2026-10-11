@@ -15,6 +15,7 @@ function renderMessage(
     list?: Array<string>
     action?: { label: string; url: string }
     note?: string
+    noteAction?: { label: string; url: string }
   },
 ): MessageContent {
   return {
@@ -29,6 +30,7 @@ function renderMessage(
         input.paragraphs.map(paragraph).join('') + detailList(input.list ?? []),
       action: input.action,
       note: input.note,
+      noteAction: input.noteAction,
     }),
   }
 }
@@ -65,8 +67,11 @@ export const createStableInvitationEmail = (input: {
   })
 }
 
-const getEventUrl = (appUrl: string, stableId: string, eventId: string) =>
-  `${appUrl}/stables/${encodeURIComponent(stableId)}/events/${encodeURIComponent(eventId)}`
+const getEventUrl = (
+  appUrl: string,
+  _stableId: string | undefined,
+  eventId: string,
+) => `${appUrl}/events/${encodeURIComponent(eventId)}`
 
 export const createEventHorseInvitationEmail = (input: {
   locale?: Locale
@@ -74,7 +79,7 @@ export const createEventHorseInvitationEmail = (input: {
   eventId: string
   eventTitle: string
   horseNames: Array<string>
-  stableId: string
+  stableId?: string
 }): MessageContent => {
   const copy = getEmailCopy(input.locale)
   const url = getEventUrl(input.appUrl, input.stableId, input.eventId)
@@ -104,7 +109,7 @@ export const createEventParticipationUpdateEmail = (input: {
   eventId: string
   eventTitle: string
   horseName: string
-  stableId: string
+  stableId?: string
   status: 'approved' | 'declined' | 'withdrawn'
 }): MessageContent => {
   const copy = getEmailCopy(input.locale)
@@ -137,7 +142,7 @@ export const createEventDetailsChangedEmail = (input: {
   changes: Array<string>
   eventId: string
   eventTitle: string
-  stableId: string
+  stableId?: string
 }): MessageContent => {
   const copy = getEmailCopy(input.locale)
   const url = getEventUrl(input.appUrl, input.stableId, input.eventId)
@@ -272,12 +277,72 @@ export const createAccountDeletedEmail = (input: {
   })
 }
 
+export const createCareReminderDigestEmail = (
+  input: Extract<EmailTemplate, { kind: 'care_reminder_digest' }> & {
+    appUrl: string
+    locale?: Locale
+  },
+): MessageContent => {
+  const copy = getEmailCopy(input.locale)
+  const profileUrl = `${input.appUrl}/profile`
+  const careUrl =
+    input.stables.length === 1 && input.stables[0].stableId
+      ? `${getStableUrl(input.appUrl, input.stables[0].stableId)}/reminders`
+      : `${input.appUrl}/horses`
+  const lines = input.stables.map(
+    (stable) =>
+      `${copy.digestCount(stable.stableName, stable.count)} — ${stable.stableId ? `${getStableUrl(input.appUrl, stable.stableId)}/reminders` : `${input.appUrl}/horses`}`,
+  )
+  return renderMessage(input.locale, {
+    category: 'care_reminder_digest',
+    subject: copy.digestSubject,
+    preheader: copy.digestBody,
+    heading: copy.digestHeading,
+    paragraphs: [copy.digestBody],
+    list: input.stables.map((stable) =>
+      copy.digestCount(stable.stableName, stable.count),
+    ),
+    action: {
+      label: copy.digestOpenCare,
+      url: careUrl,
+    },
+    note: copy.digestPreferences,
+    noteAction: { label: copy.digestSettings, url: profileUrl },
+    text: `${copy.digestBody}\n\n${lines.join('\n')}\n\n${copy.digestOpenCare}: ${careUrl}\n\n${copy.digestPreferences} ${profileUrl}`,
+  })
+}
+
 export const createEmailContent = (
   template: EmailTemplate,
   appUrl: string,
   locale: Locale = 'en',
 ): MessageContent => {
   switch (template.kind) {
+    case 'horse_access_invitation': {
+      const heading =
+        locale === 'pl'
+          ? 'Zaproszenie do opieki nad koniem'
+          : 'Horse access invitation'
+      const body =
+        locale === 'pl'
+          ? `Otrzymujesz zaproszenie dotyczące konia ${template.horseName}. Sprawdź uprawnienia przed akceptacją.`
+          : `You have an invitation for ${template.horseName}. Review the access and ownership details before accepting.`
+      const url = `${appUrl}/horse-invitations/${encodeURIComponent(template.token)}`
+      return renderMessage(locale, {
+        category: template.kind,
+        subject: heading,
+        heading,
+        preheader: body,
+        paragraphs: [body],
+        text: `${body} ${url}`,
+        action: {
+          label: locale === 'pl' ? 'Sprawdź zaproszenie' : 'Review invitation',
+          url,
+        },
+      })
+    }
+    case 'care_reminder_digest':
+      return createCareReminderDigestEmail({ appUrl, ...template, locale })
     case 'stable_invitation':
       return createStableInvitationEmail({ appUrl, ...template, locale })
     case 'event_horse_invitation':

@@ -1,7 +1,9 @@
+import { horseEvent } from './libs/horseEventHistory'
+import { resolveHorseContacts } from './libs/horseContacts'
 import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
 import { query } from './_generated/server'
-import { assertCanViewStable } from './libs/stablePermissions'
+import { assertCanReadHorse } from './libs/horsePermissions'
 
 const isEvent = (event: Doc<'events'> | null): event is Doc<'events'> =>
   event !== null
@@ -23,7 +25,7 @@ export const getForHorse = query({
     const horse = await ctx.db.get(args.horseId)
     if (!horse) return { horse: null, hasAccess: true as const }
 
-    const access = await assertCanViewStable(ctx, horse.stableId)
+    const access = await assertCanReadHorse(ctx, horse)
 
     const [
       healthIssues,
@@ -60,7 +62,7 @@ export const getForHorse = query({
     ])
     const confirmedEventRows = eventRows.filter(isConfirmedEventHorse)
     const events = await Promise.all(
-      confirmedEventRows.map((row) => ctx.db.get(row.eventId)),
+      confirmedEventRows.map((row) => horseEvent(ctx, row)),
     )
     const recentEvents = events
       .filter(isEvent)
@@ -76,7 +78,7 @@ export const getForHorse = query({
     return {
       hasAccess: true as const,
       stable: access.stable,
-      horse,
+      horse: await resolveHorseContacts(ctx, horse),
       activeHealthIssues: healthIssues
         .filter((issue) => issue.status === 'active')
         .sort((a, b) => b.notedAt - a.notedAt),

@@ -27,6 +27,7 @@ import {
 } from './PriorityQueueCard'
 import { TodayBriefingCard } from './TodayBriefingCard'
 import { createDashboardCommandData } from './dashboardData'
+import { BarnBoardGrid } from './BarnBoardGrid'
 
 beforeEach(() => {
   vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined)
@@ -80,12 +81,46 @@ function attentionData(): DashboardCommandData {
 }
 
 describe('dashboard attention access and counts', () => {
+  it('keeps urgent health available, brings training forward, and preserves reminder context', async () => {
+    const data = attentionData()
+    data.todayEvents = []
+    data.todayTraining = []
+    data.dueReminders = [
+      {
+        ...createDashboardLabFixtureData().dueReminders[0],
+        stableId: data.stable._id,
+      },
+    ]
+    await openView(<BarnBoardGrid data={data} />)
+    const health = await screen.findByRole('heading', { name: 'Health issues' })
+    const today = screen.getByRole('heading', { name: 'Events', level: 2 })
+    expect(
+      today.compareDocumentPosition(health) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    expect(screen.getByText('No events scheduled today.')).toBeTruthy()
+    expect(
+      screen.getByRole('heading', { name: 'Today’s training' }),
+    ).toBeTruthy()
+    expect(
+      screen
+        .getByRole('link', { name: 'Add training log' })
+        .getAttribute('href'),
+    ).toBe(`/stables/${data.stable._id}/training/create?intent=record`)
+    expect(screen.queryByText(/enjoy a slower day/)).toBeNull()
+    const reminder = data.dueReminders[0]
+    const links = screen.getAllByRole('link', {
+      name: new RegExp(reminder.title),
+    })
+    const link = links[0]
+    expect(link.getAttribute('href')).toContain(`reminderId=${reminder.id}`)
+    expect(screen.getByRole('link', { name: 'Contacts' })).toBeTruthy()
+  })
   it('opens high-severity horse care even when absent from the roster and exposes the complete named queue', async () => {
     const data = attentionData()
     await openView(<PriorityQueueCard data={data} />)
     const first = await screen.findByRole('link', { name: /Health horse 1/ })
     expect(first.getAttribute('href')).toBe(
-      `/stables/${data.stable._id}/horses/attention-0/care?careView=health`,
+      `/horses/attention-0/care?careView=health`,
     )
     expect(
       screen.getByText('No reminders are due within 14 days.'),
@@ -163,9 +198,7 @@ describe('dashboard occurrence presentation', () => {
     const link = await screen.findByRole('link', {
       name: /Sample continuing event/,
     })
-    expect(link.getAttribute('href')).toBe(
-      `/stables/${fixture.stable._id}/events/sample-series`,
-    )
+    expect(link.getAttribute('href')).toBe(`/events/sample-series`)
     expect(within(link).getByText('Continues')).toBeTruthy()
     expect(within(link).getByText('Cancelled')).toBeTruthy()
     expect(within(link).getByText(/27.*29/)).toBeTruthy()

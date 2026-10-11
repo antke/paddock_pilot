@@ -70,12 +70,14 @@ export function AnalysisPageLab({ data: base }: { data: DashboardLabData }) {
         key={`${base.stable._id}-${scenario}`}
         analysis={analysis}
         data={data}
-        renderHorseComparison={(horseId) => (
+        renderHorseComparison={(horseId, range, onRangeChange) => (
           <HorseComparisonExplorer
             key={horseId}
             horseId={horseId}
             stableId={base.stable._id}
             today={today}
+            range={range}
+            onRangeChange={onRangeChange}
             sampleRecords={createHorseComparisonSample(today)}
           />
         )}

@@ -2,6 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import { stableProviderInputSchema } from '../shared/stables/stableProviderSchema'
 import type { Doc } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
+import type { MutationCtx } from './_generated/server'
 import {
   assertCanManageProviders,
   assertCanViewStable,
@@ -37,11 +38,22 @@ const validateProviderInput = (args: {
   return result.data
 }
 
+// Put everyday care contacts first instead of sorting English role names.
+const providerOrder: Record<Doc<'stableProviders'>['type'], number> = {
+  vet: 0,
+  farrier: 1,
+  dentist: 2,
+  physio: 3,
+  saddler: 4,
+  trainer: 5,
+  other: 6,
+}
+
 const sortProviders = (
   a: Doc<'stableProviders'>,
   b: Doc<'stableProviders'>,
 ) => {
-  const typeSort = a.type.localeCompare(b.type)
+  const typeSort = providerOrder[a.type] - providerOrder[b.type]
 
   if (typeSort !== 0) return typeSort
 
@@ -113,6 +125,8 @@ export const update = mutation({
       notes: args.notes,
     })
 
+    if (provider.type !== input.type) await detachHorseReferences(ctx, provider)
+
     await ctx.db.patch(args.id, {
       type: input.type,
       name: input.name,
@@ -132,6 +146,30 @@ export const remove = mutation({
     if (!provider) throw new ConvexError('Provider not found')
 
     await assertCanManageProviders(ctx, provider.stableId, user._id)
+    await detachHorseReferences(ctx, provider)
     await ctx.db.delete(args.id)
   },
 })
+
+// Preserve the last current details when a provider is removed or changes role.
+// Event records keep their independent historical snapshots.
+async function detachHorseReferences(
+  ctx: MutationCtx,
+  provider: Doc<'stableProviders'>,
+) {
+  const horses = await ctx.db
+    .query('horses')
+    .withIndex('by_stable_id', (q) => q.eq('stableId', provider.stableId))
+    .collect()
+  for (const horse of horses) {
+    for (const kind of ['vet', 'farrier'] as const) {
+      if (horse[`${kind}ProviderId`] === provider._id) {
+        await ctx.db.patch(horse._id, {
+          [`${kind}ProviderId`]: undefined,
+          [`${kind}Name`]: provider.name,
+          [`${kind}Phone`]: provider.phone,
+        })
+      }
+    }
+  }
+}

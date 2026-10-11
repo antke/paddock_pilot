@@ -1,3 +1,12 @@
+import { useState } from 'react'
+import { useMutation } from 'convex/react'
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldLabel,
+} from '#/components/ui/field'
+import { Switch } from '#/components/ui/switch'
 import { useT } from '#/i18n/LocaleProvider'
 import { LanguageSelector } from '#/i18n/LanguageSelector'
 import { convexQuery } from '@convex-dev/react-query'
@@ -12,7 +21,7 @@ import { AuthStateSwitch } from '#/components/layout/AuthStateSwitch'
 import { RouteQueryErrorAlert } from '#/components/layout/RouteStatusAlert'
 import { SignedOutRoutePrompt } from '#/components/layout/SignedOutRoutePrompt'
 import { AccountProfileForm } from '#/components/onboarding/AccountProfileForm'
-import { showAppSuccessToast } from '#/components/ui/sonner'
+import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { api } from 'convex/_generated/api'
 
 export const Route = createFileRoute('/profile')({
@@ -37,11 +46,28 @@ function ProfileRoute() {
 
 function ProfilePage() {
   const t = useT()
+  const setReminderDigest = useMutation(api.users.setReminderDigest)
+  const [savingDigest, setSavingDigest] = useState(false)
   const { data: profile } = useSuspenseQuery(
     convexQuery(api.onboarding.getAccountProfile),
   )
 
   if (!profile) return null
+  const digestTimezone =
+    profile.reminderDigestTimezone ??
+    profile.timezone ??
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+  const updateDigest = async (enabled: boolean) => {
+    setSavingDigest(true)
+    try {
+      await setReminderDigest({ enabled, timezone: digestTimezone })
+      showAppSuccessToast({ title: t('profile.digestSaved') })
+    } catch {
+      showAppErrorToast({ title: t('profile.digestError') })
+    } finally {
+      setSavingDigest(false)
+    }
+  }
 
   return (
     <DashboardPage>
@@ -60,6 +86,28 @@ function ProfilePage() {
           submitLabel={t('profile.save')}
           onSaved={() => showAppSuccessToast({ title: t('profile.saved') })}
         />
+      </DashboardSectionCard>
+      <DashboardSectionCard
+        title={t('profile.notifications')}
+        contentGap="comfortable"
+      >
+        <Field orientation="horizontal">
+          <FieldContent>
+            <FieldLabel id="care-digest-label" htmlFor="care-digest">
+              {t('profile.digestLabel')}
+            </FieldLabel>
+            <FieldDescription id="care-digest-description">
+              {t('profile.digestDescription', { timezone: digestTimezone })}
+            </FieldDescription>
+          </FieldContent>
+          <Switch
+            id="care-digest"
+            aria-describedby="care-digest-description"
+            checked={profile.reminderDigestEnabled ?? false}
+            disabled={savingDigest}
+            onCheckedChange={updateDigest}
+          />
+        </Field>
       </DashboardSectionCard>
       <DashboardSectionCard
         title={t('language.label')}

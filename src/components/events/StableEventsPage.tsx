@@ -6,6 +6,9 @@ import { DashboardTabbedCard } from '#/components/dashboard/DashboardTabbedCard'
 import { StableEventsCalendar } from '#/components/stables/StableEventsCalendar'
 import { ButtonLink } from '#/components/ui/button'
 import { EventTable } from './EventList'
+import { useSmallScreen } from '#/lib/useSmallScreen'
+import { MobileActionBar } from '#/components/layout/MobileActionBar'
+import { useTaskOriginState } from '#/components/layout/mobileTaskNavigation'
 
 export type EventsView = 'calendar' | 'log'
 export function parseEventsSearch(search: Record<string, unknown>): {
@@ -26,6 +29,18 @@ export function StableEventsPage({
   onViewChange: (view: EventsView) => void
 }) {
   const t = useT()
+  const small = useSmallScreen()
+  const taskState = useTaskOriginState()
+  const addEvent = (
+    <ButtonLink
+      to="/stables/$stableId/events/create"
+      params={{ stableId }}
+      state={taskState}
+      action="schedule"
+    >
+      {t('eventViews.add')}
+    </ButtonLink>
+  )
 
   const views = [
     { id: 'calendar', label: t('eventViews.calendar') },
@@ -39,22 +54,19 @@ export function StableEventsPage({
         items={views}
         ariaLabel={t('eventViews.views')}
         onSelect={onViewChange}
-        actions={
-          <ButtonLink
-            to="/stables/$stableId/events/create"
-            params={{ stableId }}
-            action="create"
-          >
-            {t('eventViews.add')}
-          </ButtonLink>
-        }
+        actions={small ? undefined : addEvent}
       >
         {view === 'calendar' ? (
-          <StableEventsCalendar events={events} surface="flat" />
+          <StableEventsCalendar
+            events={events}
+            surface="flat"
+            storageKey={`paddock:events:${stableId}:month`}
+          />
         ) : (
           <EventTable stableId={stableId} events={events} />
         )}
       </DashboardTabbedCard>
+      {small && <MobileActionBar>{addEvent}</MobileActionBar>}
     </DashboardPage>
   )
 }

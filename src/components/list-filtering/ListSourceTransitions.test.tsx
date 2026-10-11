@@ -1,5 +1,12 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react'
 import {
   createMemoryHistory,
   createRootRoute,
@@ -14,6 +21,8 @@ import { EventTable } from '#/components/events/EventList'
 
 afterEach(() => {
   cleanup()
+  localStorage.removeItem('horse-list-density')
+  sessionStorage.clear()
   vi.restoreAllMocks()
 })
 
@@ -53,6 +62,40 @@ async function openList(kind: 'horses' | 'events', initiallyEmpty = false) {
   await screen.findByLabelText('Outside list')
   return { changeSource: (empty: boolean) => act(() => changeSource(empty)) }
 }
+
+it('keeps horse list density independent of filters and remembers it on return', async () => {
+  await openList('horses')
+  expect(
+    screen
+      .getByRole('switch', { name: 'Detailed rows' })
+      .getAttribute('aria-checked'),
+  ).toBe('true')
+  const horse = screen.getByRole('link', { name: /Juniper/ })
+  for (const detail of ['Age', '9', 'Mare', '16.1hh', 'Front shoes']) {
+    expect(within(horse).getByText(detail)).toBeTruthy()
+  }
+  const destination = horse.getAttribute('href')
+  fireEvent.change(screen.getByRole('searchbox'), {
+    target: { value: 'Juniper' },
+  })
+  fireEvent.click(screen.getByRole('switch', { name: 'Detailed rows' }))
+  for (const detail of ['Age', '9', 'Mare', '16.1hh', 'Front shoes']) {
+    expect(within(horse).queryByText(detail)).toBeNull()
+  }
+  expect(screen.getByRole<HTMLInputElement>('searchbox').value).toBe('Juniper')
+  expect(
+    screen.getByRole('link', { name: /Juniper/ }).getAttribute('href'),
+  ).toBe(destination)
+  expect(localStorage.getItem('horse-list-density')).toBe('compact')
+  cleanup()
+  await openList('horses')
+  expect(
+    screen
+      .getByRole('switch', { name: 'Detailed rows' })
+      .getAttribute('aria-checked'),
+  ).toBe('false')
+  expect(screen.getByRole<HTMLInputElement>('searchbox').value).toBe('Juniper')
+})
 
 describe.each(['horses', 'events'] as const)(
   '%s source transitions',

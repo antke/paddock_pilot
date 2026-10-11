@@ -34,7 +34,7 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-it.each([1184, 288])(
+it.each([1184, 288, 240])(
   'actual controls move reversibly and zoom around their center at %ipx',
   (clientWidth) => {
     const { container } = render(
@@ -71,8 +71,11 @@ it.each([1184, 288])(
     const marker = container.querySelector<HTMLElement>(
       '[data-slot="activity-timeline-window"]',
     )!
+    const initialCanvasWidth = viewport.scrollWidth
+    // A complete day fits at the initial scale, including narrow mobile viewports.
+    expect(initialCanvasWidth / periods.length).toBeLessThanOrEqual(clientWidth)
     expect(Number.parseFloat(marker.style.width)).toBeCloseTo(
-      (clientWidth / 37632) * 100,
+      (clientWidth / initialCanvasWidth) * 100,
       8,
     )
     fireEvent.keyDown(move, { key: 'ArrowRight' })
@@ -92,7 +95,7 @@ it.each([1184, 288])(
       (viewport.scrollLeft + clientWidth / 2) / viewport.scrollWidth,
     ).toBeCloseTo(center, 10)
     expect(Number.parseFloat(marker.style.width)).toBeLessThan(
-      (clientWidth / 37632) * 100,
+      (clientWidth / initialCanvasWidth) * 100,
     )
     expect(
       document.getElementById(move.getAttribute('aria-describedby')!)
@@ -100,7 +103,7 @@ it.each([1184, 288])(
     ).toContain('Column zoom 115%')
     for (let i = 0; i < 20; i++) fireEvent.click(zoomIn)
     expect(zoomIn.disabled).toBe(true)
-    expect(viewport.scrollWidth).toBeCloseTo(37632 * 2.2, 6)
+    expect(viewport.scrollWidth).toBeCloseTo(initialCanvasWidth * 2.2, 6)
     for (let i = 0; i < 20; i++) {
       fireEvent.click(zoomOut)
       expect(
@@ -112,7 +115,7 @@ it.each([1184, 288])(
       )
     }
     expect(zoomOut.disabled).toBe(true)
-    expect(viewport.scrollWidth).toBeCloseTo(37632 * 0.85, 6)
+    expect(viewport.scrollWidth).toBeCloseTo(initialCanvasWidth * 0.85, 6)
     expect(
       screen.queryByRole('button', { name: 'Resize visible timeline start' }),
     ).toBeNull()

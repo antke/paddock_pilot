@@ -1,4 +1,5 @@
 export const careRecords = {
+  currentFeedingPlan: 'Current feeding plan',
   medicationField: 'Medication',
   saveFailed:
     'Could not save this record. Your entries are still here; please try again.',

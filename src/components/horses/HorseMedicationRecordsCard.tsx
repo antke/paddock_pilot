@@ -95,7 +95,7 @@ export function HorseMedicationRecordsCard({
 }
 
 type HorseMedicationRecordsCardViewProps = HorseMedicationRecordsCardProps & {
-  records: Array<Doc<'horseMedicationRecords'>>
+  records: Array<Doc<'horseMedicationRecords'> & { canEdit?: boolean }>
   canManage: boolean
   onAdd: (data: MedicationRecordFormSchema) => Promise<void>
   onComplete: (record: Doc<'horseMedicationRecords'>) => Promise<void>
@@ -169,6 +169,7 @@ export function HorseMedicationRecordsCardView({
     () =>
       canManage ? (
         <CreateRecordDialog
+          actionId="medication"
           open={isCreateOpen}
           isPending={isCreating}
           onOpenChange={setIsCreateOpen}
@@ -201,7 +202,7 @@ export function HorseMedicationRecordsCardView({
           pending={operations[record._id]?.pending ?? null}
           failed={operations[record._id]?.failed ?? false}
           run={(kind, callback) => runRecordAction(record._id, kind, callback)}
-          canManage={canManage}
+          canManage={canManage && record.canEdit !== false}
           removalFocusTarget={() => listRegion.current}
           today={today}
           onComplete={onComplete}
@@ -235,7 +236,7 @@ export function HorseMedicationRecordsCardView({
 function ActiveMedicationPanel({
   records,
 }: {
-  records: Array<Doc<'horseMedicationRecords'>>
+  records: Array<Doc<'horseMedicationRecords'> & { canEdit?: boolean }>
 }) {
   const t = useT()
 

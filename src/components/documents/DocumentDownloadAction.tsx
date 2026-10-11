@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 
 import { Button } from '#/components/ui/button'
 import { showAppErrorToast } from '#/components/ui/sonner'
-import { Spinner } from '#/components/ui/spinner'
+import { ActionFeedback } from '#/components/ui/action-feedback'
+import { useTransientConfirmation } from '#/lib/useTransientConfirmation'
 import {
   Tooltip,
   TooltipContent,
@@ -26,6 +27,7 @@ export function DocumentDownloadAction({
   const t = useT()
 
   const [isDownloading, setIsDownloading] = useState(false)
+  const confirmation = useTransientConfirmation(`${fileUrl}:${fileName}`)
   const activeRequest = useRef<AbortController | null>(null)
   const isMounted = useRef(true)
   const unavailableReason =
@@ -48,6 +50,7 @@ export function DocumentDownloadAction({
 
     const controller = new AbortController()
     activeRequest.current = controller
+    confirmation.clear()
     setIsDownloading(true)
 
     try {
@@ -57,7 +60,9 @@ export function DocumentDownloadAction({
       }
 
       const file = await response.blob()
+      if (controller.signal.aborted || !isMounted.current) return
       triggerBrowserDownload(file, fileName)
+      confirmation.confirm()
     } catch (error) {
       if (
         controller.signal.aborted ||
@@ -100,20 +105,28 @@ export function DocumentDownloadAction({
       }
       onClick={downloadDocument}
     >
-      {isDownloading ? (
-        <Spinner data-icon="inline-start" aria-hidden={true} />
-      ) : (
-        <DownloadSimpleIcon
-          data-icon="inline-start"
-          weight="bold"
-          aria-hidden={true}
-        />
-      )}
-      {isDownloading ? t('documents.downloading') : t('documents.download')}
+      <ActionFeedback
+        label={t('documents.download')}
+        pendingLabel={t('documents.downloading')}
+        confirmedLabel={t('documents.downloadStarted')}
+        pending={isDownloading}
+        confirmed={confirmation.confirmed}
+        icon={<DownloadSimpleIcon weight="bold" aria-hidden="true" />}
+      />
     </Button>
   )
 
-  if (!unavailableReason) return downloadButton
+  if (!unavailableReason)
+    return (
+      <>
+        {downloadButton}
+        <span role="status" className="sr-only">
+          {confirmation.confirmed
+            ? t('documents.downloadStartedNamed', { name: fileName })
+            : ''}
+        </span>
+      </>
+    )
 
   return (
     <Tooltip>

@@ -1,3 +1,6 @@
+import { PhoneIcon } from '@phosphor-icons/react'
+import { buttonVariants } from '#/components/ui/button'
+import { ContactLink } from '#/components/ui/contact-link'
 import type { Doc } from 'convex/_generated/dataModel'
 import type { ReactNode } from 'react'
 
@@ -27,7 +30,22 @@ export function StableProviderCard({
       chrome="flat"
       density="compact"
       interactive={false}
-      actions={actions}
+      actions={
+        <>
+          {provider.phone && (
+            <ContactLink
+              kind="phone"
+              value={provider.phone}
+              className={buttonVariants({ variant: 'outline', size: 'sm' })}
+              aria-label={t('stables.callProvider', { name: provider.name })}
+            >
+              <PhoneIcon aria-hidden="true" />
+              {provider.phone}
+            </ContactLink>
+          )}
+          {actions}
+        </>
+      }
     >
       <DashboardItemRecordContent
         title={provider.name}
@@ -35,8 +53,9 @@ export function StableProviderCard({
         meta={
           <>
             <span>{t(`stables.providerTypes.${provider.type}`)}</span>
-            {provider.phone && <span>{provider.phone}</span>}
-            {provider.email && <span>{provider.email}</span>}
+            {provider.email && (
+              <ContactLink kind="email" value={provider.email} />
+            )}
           </>
         }
         metaSeparator="dot"

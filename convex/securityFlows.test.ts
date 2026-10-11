@@ -34,6 +34,39 @@ describe('authenticated account and stable security flows', () => {
     await expect(asNewUser.query(api.stables.list)).resolves.toEqual([])
   })
 
+  it('completes a personal profile and creates the first horse without stable membership', async () => {
+    const rider = t.withIdentity(identity('personal-rider'))
+    await rider.mutation(api.users.ensureCurrentUser, {})
+    await expect(
+      rider.query(api.onboarding.getAccountProfile),
+    ).resolves.toMatchObject({ isComplete: false })
+    await rider.mutation(api.onboarding.updateAccountProfile, {
+      preferredName: 'Personal Rider',
+    })
+    const profile = await rider.query(api.onboarding.getAccountProfile)
+    expect(profile).toMatchObject({
+      isComplete: true,
+      displayName: 'Personal Rider',
+    })
+    expect(
+      (await rider.query(api.users.getCurrentUser))?.profileCompletedAt,
+    ).toBe(profile?.profileCompletedAt)
+    await expect(rider.query(api.stables.list)).resolves.toEqual([])
+    await expect(
+      rider.query(api.onboarding.getNextIncompleteStable),
+    ).resolves.toBeNull()
+    const horseId = await rider.mutation(api.horses.add, {
+      name: 'Maple',
+      age: 8,
+    })
+    expect(await rider.query(api.horses.get, { id: horseId })).toMatchObject({
+      name: 'Maple',
+      ownerId: profile?._id,
+    })
+    await expect(rider.query(api.stables.list)).resolves.toEqual([])
+    await expect(rider.query(api.horses.listMine)).resolves.toHaveLength(1)
+  })
+
   it('keeps stable member access independent of subscription state', async () => {
     const fixture = await t.run(async (ctx) => {
       const now = Date.now()

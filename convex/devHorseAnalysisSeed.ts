@@ -19,6 +19,7 @@ export const seedYear = internalMutation({
     const horse = await ctx.db.get(args.horseId)
     if (!horse || horse.deletedAt !== undefined)
       throw new ConvexError('Active demo horse required')
+    if (!horse.stableId) throw new ConvexError('Demo horse requires a stable')
     const stable = await ctx.db.get(horse.stableId)
     if (
       stable?.name !== 'Paddock Pilot Demo Yard' ||
@@ -35,6 +36,7 @@ export const seedYear = internalMutation({
     const base = {
       horseId: horse._id,
       stableId: stable._id,
+      sourcePlacementId: horse.currentPlacementId,
       createdBy: stable.ownerId,
     }
     const now = Date.now()
@@ -147,6 +149,7 @@ export const seedYear = internalMutation({
       }
       if (!links.some((link) => link.eventId === eventId))
         await ctx.db.insert('eventsHorses', {
+          sourcePlacementId: horse.currentPlacementId,
           eventId,
           horseId: horse._id,
           status: 'confirmed',
@@ -162,6 +165,7 @@ export const seedYear = internalMutation({
         )
       ) {
         await ctx.db.insert('trainingRecords', {
+          sourcePlacementId: horse.currentPlacementId,
           ...row.training,
           eventId,
           horseId: horse._id,

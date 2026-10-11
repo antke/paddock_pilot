@@ -3,7 +3,6 @@ import type { Locale } from 'shared/i18n/locale'
 import { localeInstances } from '#/i18n/resources'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
-import { DashboardMetric } from '#/components/dashboard/DashboardMetric'
 import { DashboardValueBadge } from '#/components/dashboard/DashboardBadges'
 import {
   DashboardItemCard,
@@ -41,7 +40,6 @@ import { timelineSignalKindAccentColors } from './analysisTimelineSignalMeta'
 type LabHorse = DashboardLabData['horses'][number]
 type HorseEvent = LabHorseDeepDive['upcomingEvents'][number]
 type HorseReminder = LabHorseDeepDive['dueReminders'][number]
-type HorseMetricTone = 'default' | 'urgent' | 'steady'
 
 export function AnalysisHorseTab({
   horse,
@@ -54,19 +52,34 @@ export function AnalysisHorseTab({
   stableId: DashboardLabData['stable']['_id']
   analysis: LabHorseDeepDive
 }) {
+  const t = useT()
   return (
     <div className="grid gap-4 xl:grid-cols-3 xl:items-start">
-      {comparison}
       <HorseWellbeingSummaryPanel
         horse={horse}
         analysis={analysis}
         span="xl3"
       />
-      <HorseHealthMedicationPanel analysis={analysis} span="xl2" />
-      <HorseProgressPanel analysis={analysis} />
-      <HorseNutritionPanel analysis={analysis} />
-      <HorseCarePlanPanel analysis={analysis} stableId={stableId} span="xl2" />
-      <HorseDocumentationPanel analysis={analysis} stableId={stableId} />
+      {comparison}
+      <details className="group min-w-0 rounded-panel bg-card p-5 xl:col-span-3">
+        <summary className="app-disclosure-trigger cursor-pointer rounded-row py-2 text-lg font-semibold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
+          {t('analysisViews.supportingRecords')}
+        </summary>
+        <p className="mb-5 text-sm text-muted-foreground">
+          {t('analysisViews.supportingScope')}
+        </p>
+        <div className="grid gap-4 xl:grid-cols-3 xl:items-start">
+          <HorseHealthMedicationPanel analysis={analysis} span="xl2" />
+          <HorseProgressPanel analysis={analysis} />
+          <HorseNutritionPanel analysis={analysis} />
+          <HorseCarePlanPanel
+            analysis={analysis}
+            stableId={stableId}
+            span="xl2"
+          />
+          <HorseDocumentationPanel analysis={analysis} stableId={stableId} />
+        </div>
+      </details>
     </div>
   )
 }
@@ -143,114 +156,69 @@ function HorseWellbeingSummaryPanel({
 }) {
   const t = useT()
 
-  const latestSignal = analysis.recentSignals[0]
-  const metrics = [
-    {
-      label: t('analysisViews.activeHealth'),
-      value: `${analysis.summary.activeIssueCount}`,
-      detail:
-        analysis.summary.highIssueCount > 0
-          ? t('analysisViews.highIssueCount', {
-              count: analysis.summary.highIssueCount,
-            })
-          : t('analysisViews.noHighHealth'),
-      tone: analysis.summary.highIssueCount > 0 ? 'urgent' : 'steady',
-    },
-    {
-      label: t('analysisViews.medication'),
-      value: `${analysis.summary.activeMedicationCount}`,
-      detail: t('analysisViews.activeMedication'),
-      tone: analysis.summary.activeMedicationCount > 0 ? 'urgent' : 'default',
-    },
-    {
-      label: t('analysisViews.reminders'),
-      value: `${analysis.summary.overdueReminderCount}`,
-      detail: t('analysisViews.overdueHorseReminders'),
-      tone: analysis.summary.overdueReminderCount > 0 ? 'urgent' : 'steady',
-    },
-    {
-      label: t('analysisViews.upcomingCare'),
-      value: `${analysis.summary.upcomingEventCount}`,
-      detail: t('analysisViews.plannedMonth'),
-      tone: 'default',
-    },
-  ] as const satisfies ReadonlyArray<{
-    label: string
-    value: string
-    detail: string
-    tone: HorseMetricTone
-  }>
-
+  const { locale } = useLocale()
+  const trend = analysis.weightTrend
   return (
     <HorseAnalysisPanel
       title={horse.name}
-      description={t('analysisViews.horseHelp')}
-      action={
-        <Badge variant="outline">
-          {t('analysisViews.recordCount', {
-            count: analysis.summary.signalCount,
-          })}
-        </Badge>
-      }
+      description={t('analysisViews.currentCareToday')}
       className={className}
       span={span}
     >
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.7fr)]">
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {metrics.map((metric) => (
-            <HorseMetricCard key={metric.label} metric={metric} />
-          ))}
-        </div>
-
-        <DashboardItemCard chrome="flat" className="grid content-start gap-2">
-          <DashboardInlineHeader
-            title={t('analysisViews.latestSignal')}
-            aside={
-              latestSignal ? (
-                <Badge
-                  variant={latestSignal.urgent ? 'destructive' : 'secondary'}
-                >
-                  {t(`analysisViews.${latestSignal.kind}`)}
-                </Badge>
-              ) : null
-            }
-            titleWeight="semibold"
-          />
-          {latestSignal ? (
-            <HorseSignalRow signal={latestSignal} compact />
+      <div className="flex flex-wrap items-start justify-between gap-x-10 gap-y-4">
+        <div className="grid gap-1">
+          <p className="text-sm text-muted-foreground">
+            {t('analysisViews.latestMeasurement')}
+          </p>
+          {trend ? (
+            <>
+              <p className="text-xl font-semibold tabular-nums">
+                {formatDecimal(trend.latestWeight, locale)} {trend.unit}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {t('analysisViews.measured', {
+                  date: formatMediumTimestampDate(trend.measuredAt, locale),
+                })}
+              </p>
+            </>
           ) : (
-            <DashboardEmptyState chrome="soft">
-              {t('analysisViews.noHorseRecords')}
-            </DashboardEmptyState>
+            <p>{t('analysisViews.noMeasurement')}</p>
           )}
-        </DashboardItemCard>
+        </div>
+        <div className="grid gap-2 text-sm">
+          {analysis.summaryComplete ? (
+            <>
+              <p>
+                {t('analysisViews.recordedOpenHealth', {
+                  count: analysis.summary.activeIssueCount,
+                })}
+              </p>
+              <p>
+                {t('analysisViews.recordedMedication', {
+                  count: analysis.summary.activeMedicationCount,
+                })}
+              </p>
+              <p
+                className={
+                  analysis.summary.overdueReminderCount > 0
+                    ? 'font-semibold text-destructive'
+                    : undefined
+                }
+              >
+                {t('analysisViews.recordedOverdue', {
+                  count: analysis.summary.overdueReminderCount,
+                })}
+              </p>
+              <p className="text-muted-foreground">
+                {t('analysisViews.currentCareCaveat')}
+              </p>
+            </>
+          ) : (
+            <p>{t('analysisViews.careUnknown')}</p>
+          )}
+        </div>
       </div>
     </HorseAnalysisPanel>
-  )
-}
-
-function HorseMetricCard({
-  metric,
-}: {
-  metric: {
-    label: string
-    value: string
-    detail: string
-    tone: HorseMetricTone
-  }
-}) {
-  return (
-    <DashboardMetric
-      chrome="soft"
-      title={metric.label}
-      value={metric.value}
-      className={cn(
-        metric.tone === 'urgent' && 'border-destructive/35 bg-destructive/5',
-      )}
-      valueClassName={cn(metric.tone === 'urgent' && 'text-destructive')}
-    >
-      {metric.detail}
-    </DashboardMetric>
   )
 }
 
@@ -445,8 +413,10 @@ function HorseWeightTrendCard({ trend }: { trend: LabHorseWeightTrend }) {
 function HorseNutritionPanel({ analysis }: { analysis: LabHorseDeepDive }) {
   const t = useT()
 
-  const signalCount =
-    analysis.nutritionSignals.length + analysis.nutritionTimelineSignals.length
+  const signalCount = new Set([
+    ...analysis.nutritionSignals.map((record) => record.id),
+    ...analysis.nutritionTimelineSignals.map((record) => record.id),
+  ]).size
 
   return (
     <HorseAnalysisPanel

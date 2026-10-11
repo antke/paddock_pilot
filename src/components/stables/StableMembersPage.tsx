@@ -28,6 +28,7 @@ type StableMembersPageProps = {
   access: Pick<StableAccess, 'role'>
   people: StablePeople
   myDetails: MyDetails
+  embedded?: boolean
   renderDetailsForm?: (
     props: ComponentProps<typeof StableMemberDetailsForm>,
   ) => ReactNode
@@ -38,6 +39,7 @@ export function StableMembersPage({
   access,
   people,
   myDetails,
+  embedded = false,
   renderDetailsForm = (props) => <StableMemberDetailsForm {...props} />,
 }: StableMembersPageProps) {
   const t = useT()
@@ -57,11 +59,13 @@ export function StableMembersPage({
 
   return (
     <>
-      <DashboardPageHeader
-        title={t('stables.members')}
-        description={t('stables.membersDescription', { name: stable.name })}
-        badges={<StableMemberRoleBadge role={access.role} />}
-      />
+      {!embedded && (
+        <DashboardPageHeader
+          title={t('stables.members')}
+          description={t('stables.membersDescription', { name: stable.name })}
+          badges={<StableMemberRoleBadge role={access.role} />}
+        />
+      )}
 
       <DashboardLayoutGrid variant="sidebar">
         <DashboardSectionCard

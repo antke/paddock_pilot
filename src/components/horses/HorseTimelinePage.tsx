@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { formatEventDateTime } from '#/components/events/eventDisplay'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
@@ -42,6 +42,8 @@ import { ListFilterControls } from '#/components/list-filtering/ListFilterContro
 import { useListFiltering } from '#/components/list-filtering/useListFiltering'
 import { formatCurrencyAmount, formatDecimal } from '#/lib/numberDisplay'
 import { createHorseTimelineFilterConfig } from './horseTimelineFilters'
+import { HorseTimelineCalendar } from './HorseTimelineCalendar'
+import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
 
 export type HorseTimeline = FunctionReturnType<
   typeof api.horseTimeline.listForHorse
@@ -49,7 +51,7 @@ export type HorseTimeline = FunctionReturnType<
 export type TimelineEntry = HorseTimeline['entries'][number]
 
 type HorseTimelinePageProps = {
-  stableId: string
+  stableId?: string
   horseId: string
 }
 
@@ -66,6 +68,7 @@ export function HorseTimelinePage({ horseId }: HorseTimelinePageProps) {
 export function HorseTimelineView({ timeline }: { timeline: HorseTimeline }) {
   const t = useT()
   const { locale } = useLocale()
+  const [mode, setMode] = useState<'log' | 'calendar'>('log')
 
   const horseTimelineFilterConfig = useMemo(
     () => createHorseTimelineFilterConfig(locale),
@@ -95,6 +98,17 @@ export function HorseTimelineView({ timeline }: { timeline: HorseTimeline }) {
       }
       size="panel"
       contentGap="comfortable"
+      actions={
+        <ChoiceButtonGroup
+          aria-label={t('horseHistory.viewMode')}
+          value={mode}
+          options={[
+            { value: 'log', label: t('horseHistory.log') },
+            { value: 'calendar', label: t('horseHistory.calendar') },
+          ]}
+          onValueChange={setMode}
+        />
+      }
     >
       {timeline.entries.length > 0 && (
         <ListFilterControls
@@ -102,7 +116,27 @@ export function HorseTimelineView({ timeline }: { timeline: HorseTimeline }) {
           filtering={filtering}
         />
       )}
-      {entries.length === 0 ? (
+      {mode === 'calendar' ? (
+        <>
+          {filtering.isFiltering && entries.length === 0 && (
+            <DashboardEmptyState
+              chrome="flat"
+              title={t('horseHistory.noMatches')}
+            >
+              {t('horseHistory.clearFilters')}
+            </DashboardEmptyState>
+          )}
+          <HorseTimelineCalendar
+            entries={entries}
+            renderEntry={(entry) => (
+              <TimelineEntryCard
+                key={`${entry.kind}-${entry.id}`}
+                entry={entry}
+              />
+            )}
+          />
+        </>
+      ) : entries.length === 0 ? (
         <DashboardEmptyState
           title={
             filtering.isFiltering

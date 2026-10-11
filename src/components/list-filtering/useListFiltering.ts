@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import { useSessionState } from '#/lib/useSessionState'
 
 import {
   filterListItems,
@@ -15,6 +16,7 @@ type UseListFilteringArgs<TItem, TFacetId extends string = string> = {
   config: ListFilterConfig<TItem, TFacetId>
   initialQuery?: string
   initialFacets?: ListFilterSelectedFacets<TFacetId>
+  storageKey?: string
 }
 
 export function useListFiltering<TItem, TFacetId extends string = string>({
@@ -22,11 +24,34 @@ export function useListFiltering<TItem, TFacetId extends string = string>({
   config,
   initialQuery = '',
   initialFacets,
+  storageKey,
 }: UseListFilteringArgs<TItem, TFacetId>) {
-  const [query, setQuery] = useState(initialQuery)
-  const [selectedFacets, setSelectedFacets] = useState<
+  const [query, setQuery] = useSessionState(
+    storageKey ? `${storageKey}:query` : undefined,
+    initialQuery,
+    (value) =>
+      typeof value === 'string' && value.length < 1000 ? value : undefined,
+  )
+  const [selectedFacets, setSelectedFacets] = useSessionState<
     ListFilterSelectedFacets<TFacetId>
-  >(() => initialFacets ?? {})
+  >(
+    storageKey ? `${storageKey}:facets` : undefined,
+    () => initialFacets ?? {},
+    (value) => {
+      if (!value || typeof value !== 'object' || Array.isArray(value))
+        return undefined
+      const result: ListFilterSelectedFacets<TFacetId> = {}
+      for (const facet of config.facets) {
+        const selected = (value as Record<string, unknown>)[facet.id]
+        if (
+          typeof selected === 'string' &&
+          facet.options.some((option) => option.value === selected)
+        )
+          result[facet.id] = selected
+      }
+      return result
+    },
+  )
 
   const filteredItems = useMemo(
     () =>

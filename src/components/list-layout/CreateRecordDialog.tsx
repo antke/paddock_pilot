@@ -1,4 +1,5 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
+import { useRecordCreateActions } from './RecordCreateActionsContext'
 import type { ReactNode } from 'react'
 
 import {
@@ -23,6 +24,7 @@ type CreateRecordDialogProps = {
   children: ReactNode
   className?: string
   isPending?: boolean
+  actionId?: string
 }
 
 export function CreateRecordDialog({
@@ -34,9 +36,18 @@ export function CreateRecordDialog({
   children,
   className,
   isPending = false,
+  actionId,
 }: CreateRecordDialogProps) {
+  const pageActions = useRecordCreateActions()
   const desktopTrigger = useRef<HTMLButtonElement>(null)
   const floatingTrigger = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (actionId && pageActions?.requestedAction === actionId) {
+      onOpenChange(true)
+      pageActions.consumeAction()
+    }
+  }, [actionId, onOpenChange, pageActions])
 
   return (
     <Dialog
@@ -46,20 +57,28 @@ export function CreateRecordDialog({
         if (!isPending) onOpenChange(nextOpen)
       }}
     >
-      <RecordDialogDesktopTrigger triggerRef={desktopTrigger}>
-        {triggerLabel}
-      </RecordDialogDesktopTrigger>
-      <RecordDialogFloatingTrigger
-        triggerRef={floatingTrigger}
-        label={triggerLabel}
-      />
+      {!pageActions?.hideTriggers && (
+        <>
+          <RecordDialogDesktopTrigger triggerRef={desktopTrigger}>
+            {triggerLabel}
+          </RecordDialogDesktopTrigger>
+          <RecordDialogFloatingTrigger
+            triggerRef={floatingTrigger}
+            label={triggerLabel}
+          />
+        </>
+      )}
 
       <RecordDialogContent
         className={className}
         showCloseButton={!isPending}
         finalFocus={() =>
           // The opener can become hidden when the viewport crosses the mobile breakpoint.
-          [desktopTrigger.current, floatingTrigger.current].find(
+          [
+            desktopTrigger.current,
+            floatingTrigger.current,
+            pageActions?.returnFocus(),
+          ].find(
             (trigger) =>
               trigger?.isConnected && trigger.getClientRects().length > 0,
           ) ?? true

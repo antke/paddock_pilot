@@ -30,4 +30,18 @@ crons.interval(
   {},
 )
 
+crons.interval(
+  'queue daily care reminder digests',
+  { minutes: 30 },
+  internal.emailMaintenance.queueReminderDigests,
+  {},
+)
+
+crons.interval(
+  'resume horse departures',
+  { minutes: 5 },
+  internal.horseTransitions.resume,
+  {},
+)
+
 export default crons

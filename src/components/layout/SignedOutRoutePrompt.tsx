@@ -1,7 +1,9 @@
 import { useT } from '#/i18n/LocaleProvider'
 import type { ReactNode } from 'react'
+import { SignInButton } from '@clerk/tanstack-react-start'
+import { useLocation } from '@tanstack/react-router'
 
-import { ButtonLink } from '#/components/ui/button'
+import { Button } from '#/components/ui/button'
 import { RouteStatusAlert } from './RouteStatusAlert'
 
 type SignedOutRoutePromptProps = {
@@ -18,15 +20,18 @@ export function SignedOutRoutePrompt({
   actions,
 }: SignedOutRoutePromptProps) {
   const t = useT()
+  const { href } = useLocation()
   return (
     <RouteStatusAlert
       title={title}
       description={description}
       actions={
         actions ?? (
-          <ButtonLink to="/sign-in/$" params={{ _splat: '' }}>
-            {actionLabel ?? t('navigation.signIn')}
-          </ButtonLink>
+          <SignInButton forceRedirectUrl={href}>
+            <Button type="button">
+              {actionLabel ?? t('navigation.signIn')}
+            </Button>
+          </SignInButton>
         )
       }
     />

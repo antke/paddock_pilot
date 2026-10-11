@@ -7,6 +7,7 @@ import type { Id } from 'convex/_generated/dataModel'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { TrainingCalendar } from '#/components/training/TrainingCalendar'
+import { useSmallScreen } from '#/lib/useSmallScreen'
 
 export const Route = createFileRoute('/stables/_layout/$stableId/training/')({
   validateSearch: (
@@ -20,6 +21,7 @@ export const Route = createFileRoute('/stables/_layout/$stableId/training/')({
 })
 function TrainingLog() {
   const t = useT()
+  const small = useSmallScreen()
 
   const { stableId } = Route.useParams()
   const { horseIds } = Route.useSearch()
@@ -32,7 +34,7 @@ function TrainingLog() {
     <DashboardPage>
       <DashboardPageHeader
         title={t('trainingViews.log')}
-        description={t('trainingViews.logHelp')}
+        description={!small ? t('trainingViews.logHelp') : undefined}
       />
       <TrainingCalendar
         key={`${stableId}:${horseIds?.join(',') ?? ''}`}

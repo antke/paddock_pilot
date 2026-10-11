@@ -6,7 +6,10 @@ import {
   DetailTextBlock,
 } from '#/components/dashboard/DetailBlocks'
 import type { DetailTone } from '#/components/dashboard/DetailBlocks'
-import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
+import {
+  DashboardSectionCard,
+  DashboardSubsection,
+} from '#/components/dashboard/DashboardSectionCard'
 import { CheckIcon, XIcon } from '@phosphor-icons/react'
 import type { Doc } from 'convex/_generated/dataModel'
 
@@ -70,7 +73,16 @@ export function HorseNutritionCard({
     </>
   )
 
-  if (!showHeader) return content
+  if (!showHeader)
+    return (
+      <DashboardSubsection
+        title={t('careRecords.currentFeedingPlan')}
+        className="rounded-row bg-surface-muted p-4 sm:p-5"
+        contentClassName="grid gap-4 text-sm"
+      >
+        {content}
+      </DashboardSubsection>
+    )
 
   return (
     <DashboardSectionCard

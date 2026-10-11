@@ -13,6 +13,7 @@ import {
   AutocompleteRoot,
   AutocompleteInput,
   AutocompleteContent,
+  AutocompleteEmpty,
   AutocompleteList,
   AutocompleteItem,
 } from '#/components/ui/autocomplete'
@@ -31,6 +32,7 @@ it('translates both assistive dismiss controls while preserving the draft and di
       <AutocompleteRoot items={['Atlas', 'Łąka']}>
         <AutocompleteInput aria-label="Horse" triggerLabel="Show horses" />
         <AutocompleteContent>
+          <AutocompleteEmpty>No matches</AutocompleteEmpty>
           <AutocompleteList>
             {(item: string) => (
               <AutocompleteItem value={item} key={item}>
@@ -54,7 +56,15 @@ it('translates both assistive dismiss controls while preserving the draft and di
   await waitFor(() =>
     expect(screen.getAllByRole('button', { name: 'Close' })).toHaveLength(2),
   )
+  const emptyStatus = screen.getByRole('status')
+  expect(emptyStatus.getAttribute('aria-live')).toBe('polite')
+  expect(emptyStatus.childElementCount).toBe(0)
+  fireEvent.change(input, { target: { value: 'Unmatched' } })
+  await screen.findByText('No matches')
+  expect(emptyStatus.childElementCount).toBe(1)
   fireEvent.change(input, { target: { value: 'Ł' } })
+  await waitFor(() => expect(emptyStatus.childElementCount).toBe(0))
+  expect(screen.getByRole('status')).toBe(emptyStatus)
   await act(async () => {
     await changeLocale('pl')
   })

@@ -1,3 +1,8 @@
+import {
+  departurePreview,
+  startDeparture,
+  revokeHorseAccess,
+} from './horseTransitions'
 import { localeValidator } from '../shared/i18n/validators'
 import { ConvexError, v } from 'convex/values'
 import { createClerkClient } from '@clerk/backend'
@@ -41,6 +46,25 @@ export const setLocale = mutation({
     if (!user || user.deletedAt !== undefined)
       throw new ConvexError('User not authenticated')
     await ctx.db.patch(user._id, { locale, updatedAt: Date.now() })
+  },
+})
+
+export const setReminderDigest = mutation({
+  args: { enabled: v.boolean(), timezone: v.string() },
+  handler: async (ctx, { enabled, timezone }) => {
+    const user = await getUserFromIdentity(ctx)
+    if (!user || user.deletedAt !== undefined)
+      throw new ConvexError('User not authenticated')
+    try {
+      new Intl.DateTimeFormat('en', { timeZone: timezone }).format()
+    } catch {
+      throw new ConvexError('Invalid timezone')
+    }
+    await ctx.db.patch(user._id, {
+      reminderDigestEnabled: enabled,
+      reminderDigestTimezone: timezone,
+      updatedAt: Date.now(),
+    })
   },
 })
 
@@ -205,6 +229,29 @@ async function archiveOwnedStable(
   stableId: Id<'stables'>,
   now: number,
 ) {
+  const stable = await ctx.db.get(stableId)
+  if (stable) {
+    const horses = await ctx.db
+      .query('horses')
+      .withIndex('by_stable_id', (q) => q.eq('stableId', stableId))
+      .collect()
+    for (const horse of horses) {
+      if (horse.currentPlacementId && !horse.transitionId) {
+        const preview = await departurePreview(ctx, horse)
+        await startDeparture(ctx, horse, {
+          actorUserId: stable.ownerId,
+          carryReminderIds: preview.reminders.map((r) => r._id),
+        })
+      }
+      if (!horse.ownerId) {
+        await ctx.db.patch(horse._id, {
+          deletedAt: now,
+          deletedBy: stable.ownerId,
+        })
+        await revokeHorseAccess(ctx, horse._id)
+      }
+    }
+  }
   await ctx.db.patch(stableId, {
     archivedAt: now,
     archivedReason: 'owner_account_deleted',
@@ -244,13 +291,32 @@ export const deleteUser = internalMutation({
           .filter((q) => q.eq(q.field('stableId'), membership.stableId))
           .collect()
         for (const horse of horses) {
-          await ctx.db.patch(horse._id, { ownerId: stable.ownerId })
+          if (horse.currentPlacementId && !horse.transitionId) {
+            const preview = await departurePreview(ctx, horse)
+            await startDeparture(ctx, horse, {
+              actorUserId: user._id,
+              carryReminderIds: preview.reminders.map((r) => r._id),
+            })
+          }
         }
       }
       await removeOnboarding(ctx, membership.stableId, user._id)
       await ctx.db.delete(membership._id)
     }
 
+    const ownedHorses = await ctx.db
+      .query('horses')
+      .withIndex('by_owner_id', (q) => q.eq('ownerId', user._id))
+      .collect()
+    for (const horse of ownedHorses) {
+      await ctx.db.patch(horse._id, { deletedAt: now, deletedBy: user._id })
+      await revokeHorseAccess(ctx, horse._id)
+    }
+    const carerRows = await ctx.db
+      .query('horseCarers')
+      .withIndex('by_user_id', (q) => q.eq('userId', user._id))
+      .collect()
+    for (const carer of carerRows) await ctx.db.delete(carer._id)
     const remainingOnboarding = await ctx.db
       .query('stableOnboarding')
       .withIndex('by_user_id', (q) => q.eq('userId', user._id))
@@ -302,6 +368,9 @@ export const deleteUser = internalMutation({
       phone: undefined,
       profileImageId: undefined,
       timezone: undefined,
+      reminderDigestEnabled: false,
+      reminderDigestTimezone: undefined,
+      lastReminderDigestDate: undefined,
       deletedAt: now,
       updatedAt: now,
     })

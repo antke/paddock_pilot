@@ -6,7 +6,7 @@ import { useMutation } from 'convex/react'
 import type { DocumentUploadValues } from './DocumentUploadForm'
 
 type UseDocumentActionsOptions = {
-  stableId: Id<'stables'>
+  stableId?: Id<'stables'>
   fixedHorseId?: Id<'horses'>
 }
 

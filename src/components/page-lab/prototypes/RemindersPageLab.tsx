@@ -31,6 +31,7 @@ type LabReminderInput = {
   status: CareReminderDoc['status']
   horseId?: CareReminderDoc['horseId']
   completedAt?: CareReminderDoc['completedAt']
+  assignedTo?: CareReminderDoc['assignedTo']
 }
 
 export function RemindersPageLab({ data }: RemindersPageLabProps) {
@@ -99,9 +100,11 @@ function ReminderSample({
               priority: 'high',
               status: 'pending',
               horseId: primaryHorse?.id,
+              assignedTo: data.stable.ownerId,
             }),
             horseName: primaryHorse?.name,
             canManage: true,
+            assigneeName: 'Alex (sample)',
           },
           {
             reminder: createLabReminder({
@@ -181,8 +184,8 @@ function ReminderSample({
   return (
     <>
       <p className="text-sm text-muted-foreground">
-        Sample reminders · Add, complete, dismiss and remove affect this preview
-        only. No live records change.
+        Sample reminders · Changes affect this preview only. No live records
+        change.
       </p>
       <FieldGrid>
         <Field>
@@ -235,6 +238,7 @@ function ReminderSample({
         }
         canAddReminder={scenario !== 'read-only' && scenario !== 'loading'}
         horseOptions={horseOptions}
+        assigneeOptions={[{ id: data.stable.ownerId, name: 'Alex (sample)' }]}
         chrome="flat"
         isLoading={scenario === 'loading'}
         emptyMessage="No care reminders have been added for this stable yet."
@@ -249,6 +253,8 @@ function ReminderSample({
             const additions = horseIds.map((horseId) => ({
               reminder: createLabReminder({
                 ...values,
+                assignedTo: (values.assignedTo ||
+                  undefined) as CareReminderDoc['assignedTo'],
                 id: `added-${++serial.current}`,
                 stableId: data.stable._id,
                 createdBy: data.stable.ownerId,
@@ -258,21 +264,97 @@ function ReminderSample({
               horseName: horseOptions.find((horse) => horse.id === horseId)
                 ?.name,
               canManage: true,
+              assigneeName: values.assignedTo ? 'Alex (sample)' : undefined,
             }))
             setReminders((items) => [...additions, ...items])
           })
         }
-        onComplete={(reminder) =>
+        onComplete={(reminder, nextDueDate) =>
           apply('Sample completion', () =>
+            setReminders((items) => {
+              const current = items.find(
+                (item) => item.reminder._id === reminder._id,
+              )
+              if (!current || current.reminder.status === 'completed')
+                return items
+              const followUpId =
+                nextDueDate && !current.reminder.followUpReminderId
+                  ? (`lab-reminder-follow-up-${++serial.current}` as CareReminderDoc['_id'])
+                  : current.reminder.followUpReminderId
+              const updated = items.map((item) =>
+                item.reminder._id === reminder._id
+                  ? {
+                      ...item,
+                      completedByName: 'Alex (sample)',
+                      reminder: {
+                        ...item.reminder,
+                        status: 'completed' as const,
+                        completedAt: Date.now(),
+                        completedBy: data.stable.ownerId,
+                        followUpReminderId: followUpId,
+                      },
+                    }
+                  : item,
+              )
+              if (
+                nextDueDate &&
+                !current.reminder.followUpReminderId &&
+                followUpId
+              )
+                updated.push({
+                  ...current,
+                  reminder: {
+                    ...current.reminder,
+                    _id: followUpId,
+                    dueDate: nextDueDate,
+                    status: 'pending',
+                    completedAt: undefined,
+                    completedBy: undefined,
+                  },
+                })
+              return updated
+            }),
+          )
+        }
+        onEdit={(reminder, values) =>
+          apply('Sample edit', () =>
             setReminders((items) =>
               items.map((item) =>
                 item.reminder._id === reminder._id
                   ? {
                       ...item,
+                      assigneeName: values.assignedTo
+                        ? 'Alex (sample)'
+                        : undefined,
                       reminder: {
                         ...item.reminder,
-                        status: 'completed',
-                        completedAt: Date.now(),
+                        title: values.title,
+                        description: values.description,
+                        category: values.category,
+                        dueDate: values.dueDate,
+                        priority: values.priority,
+                        assignedTo: (values.assignedTo ||
+                          undefined) as CareReminderDoc['assignedTo'],
+                      },
+                    }
+                  : item,
+              ),
+            ),
+          )
+        }
+        onReopen={(reminder) =>
+          apply('Sample reopening', () =>
+            setReminders((items) =>
+              items.map((item) =>
+                item.reminder._id === reminder._id
+                  ? {
+                      ...item,
+                      completedByName: undefined,
+                      reminder: {
+                        ...item.reminder,
+                        status: 'pending',
+                        completedAt: undefined,
+                        completedBy: undefined,
                       },
                     }
                   : item,
@@ -322,6 +404,7 @@ function createLabReminder({
   status,
   horseId,
   completedAt,
+  assignedTo,
 }: LabReminderInput): CareReminderDoc {
   const createdAt = Date.now()
 
@@ -336,7 +419,8 @@ function createLabReminder({
     dueDate,
     ...(priority ? { priority } : {}),
     status,
-    ...(completedAt ? { completedAt } : {}),
+    ...(completedAt ? { completedAt, completedBy: createdBy } : {}),
+    assignedTo,
     createdBy,
     createdAt,
     updatedAt: createdAt,

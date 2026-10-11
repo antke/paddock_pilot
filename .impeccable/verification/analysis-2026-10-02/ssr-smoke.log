@@ -1,0 +1,6 @@
+PASS /: HTTP 200, complete server-rendered document
+PASS /sign-in: HTTP 200, complete server-rendered document
+PASS /sign-up: HTTP 200, complete server-rendered document
+PASS /pricing: HTTP 200, complete server-rendered document
+PASS /: HTTP 200, complete server-rendered document
+Production SSR smoke test passed (anonymous requests).

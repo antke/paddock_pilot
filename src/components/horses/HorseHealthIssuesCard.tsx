@@ -86,7 +86,7 @@ export function HorseHealthIssuesCard({
 }
 
 type HorseHealthIssuesCardViewProps = HorseHealthIssuesCardProps & {
-  issues: Array<Doc<'horseHealthIssues'>>
+  issues: Array<Doc<'horseHealthIssues'> & { canEdit?: boolean }>
   canManage: boolean
   onAdd: (data: HealthIssueFormSchema) => Promise<void>
   onResolve: (issue: Doc<'horseHealthIssues'>) => Promise<void>
@@ -158,6 +158,7 @@ export function HorseHealthIssuesCardView({
     () =>
       canManage ? (
         <CreateRecordDialog
+          actionId="health"
           open={isCreateOpen}
           isPending={isCreating}
           onOpenChange={setIsCreateOpen}
@@ -190,7 +191,7 @@ export function HorseHealthIssuesCardView({
           pending={operations[issue._id]?.pending ?? null}
           failed={operations[issue._id]?.failed ?? false}
           run={(kind, callback) => runRecordAction(issue._id, kind, callback)}
-          canManage={canManage}
+          canManage={canManage && issue.canEdit !== false}
           removalFocusTarget={() => listRegion.current}
           onResolve={onResolve}
           onRemove={onRemove}

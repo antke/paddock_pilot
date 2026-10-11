@@ -20,6 +20,7 @@ beforeEach(() => {
 })
 afterEach(() => {
   cleanup()
+  vi.useRealTimers()
   vi.restoreAllMocks()
 })
 
@@ -46,16 +47,18 @@ it('translates dirty horse validation and acknowledged-save errors without reset
   })
   fireEvent.change(screen.getByLabelText('Year'), { target: { value: '2018' } })
   fireEvent.click(screen.getByRole('button', { name: 'Mare' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Add horse' }))
-  await screen.findByText('Name must have minimum 1 character.')
-  // Allow the normal submit-time focus recovery to finish before testing language focus.
-  await waitFor(() =>
-    expect(document.activeElement).toBe(screen.getByLabelText('Horse name')),
-  )
-  // RHF schedules a second submit-focus pass; settle it before the next interaction.
+  // Finish validation and its deferred focus recovery before changing language.
+  // A real zero-delay timer can race React's commit under concurrent test load.
+  vi.useFakeTimers()
   await act(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 0))
+    fireEvent.click(screen.getByRole('button', { name: 'Add horse' }))
   })
+  await act(async () => {
+    await vi.runOnlyPendingTimersAsync()
+  })
+  vi.useRealTimers()
+  expect(screen.getByText('Name must have minimum 1 character.')).toBeTruthy()
+  expect(document.activeElement).toBe(screen.getByLabelText('Horse name'))
   const selector = screen.getByRole('combobox', { name: 'Language' })
   selector.focus()
   fireEvent.change(selector, { target: { value: 'pl' } })

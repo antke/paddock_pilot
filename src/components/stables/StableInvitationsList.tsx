@@ -19,6 +19,8 @@ import {
   AlertDialogTrigger,
 } from '#/components/ui/alert-dialog'
 import { Button } from '#/components/ui/button'
+import { ActionFeedback } from '#/components/ui/action-feedback'
+import { useTransientConfirmation } from '#/lib/useTransientConfirmation'
 import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { copyTextToClipboard } from '#/lib/clipboard'
 import { formatMediumTimestampDate } from '#/lib/dateDisplay'
@@ -150,6 +152,7 @@ function StableInvitationRow({
     'resend' | 'revoke' | 'copy'
   >()
   const pendingRef = useRef(false)
+  const copyConfirmation = useTransientConfirmation(invitation.token)
   const [isRevokeOpen, setIsRevokeOpen] = useState(false)
   const [failedAction, setFailedAction] = useState<
     'resend' | 'revoke' | 'copy'
@@ -170,8 +173,11 @@ function StableInvitationRow({
     setPendingAction(action)
     setFailedAction(undefined)
     try {
-      if (action === 'copy') await onCopy(invitation.token)
-      else if (action === 'resend') {
+      if (action === 'copy') {
+        copyConfirmation.clear()
+        await onCopy(invitation.token)
+        copyConfirmation.confirm()
+      } else if (action === 'resend') {
         if (!(await onResend(invitation))) setFailedAction('resend')
       } else if (await onRevoke(invitation)) setIsRevokeOpen(false)
       else setFailedAction('revoke')
@@ -215,10 +221,16 @@ function StableInvitationRow({
                 variant="ghost"
                 size="sm"
                 disabled={isPending}
-                aria-busy={isPending || undefined}
+                aria-busy={pendingAction === 'copy' || undefined}
                 onClick={() => void runAction('copy')}
               >
-                {t('invitationFlow.copy')}
+                <ActionFeedback
+                  label={t('invitationFlow.copy')}
+                  pendingLabel={t('common.copying')}
+                  confirmedLabel={t('common.copied')}
+                  pending={pendingAction === 'copy'}
+                  confirmed={copyConfirmation.confirmed}
+                />
               </Button>
             )}
             {canResend && (

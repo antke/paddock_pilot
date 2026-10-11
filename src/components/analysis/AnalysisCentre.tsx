@@ -1,3 +1,14 @@
+import { Button, ButtonLink } from '#/components/ui/button'
+import { DateRangeControl } from '#/components/ui/date-range-control'
+import { getTodayDateKey, formatMediumDateKey } from '#/lib/dateDisplay'
+import {
+  shiftDate,
+  dateNumber,
+  dayMilliseconds,
+} from 'shared/analysis/horseComparison'
+import { isDateKey } from 'shared/training/trainingSchema'
+import type { ComparisonRange } from 'shared/analysis/horseComparison'
+import { StableHistoryOverview } from './StableHistoryOverview'
 import { localizeAnalysisSignal } from './analysisSignalDisplay'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import type { Locale } from 'shared/i18n/locale'
@@ -13,7 +24,6 @@ import {
   DashboardItemLinkCard,
   DashboardItemRecordContent,
 } from '#/components/dashboard/DashboardItemCard'
-import { DashboardLayoutStack } from '#/components/dashboard/DashboardLayoutGrid'
 import { AnalysisScopeSelector } from './AnalysisScopeSelector'
 import { AnalysisPageHeader } from './AnalysisPageHeader'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
@@ -36,7 +46,16 @@ import { useNavigate } from '@tanstack/react-router'
 import type { api } from 'convex/_generated/api'
 import type { FunctionReturnType } from 'convex/server'
 import type { ComponentProps, ReactNode } from 'react'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
+import {
+  useAnalysisSessionState,
+  decodeAnalysisRange,
+  decodePeriod,
+  decodeId,
+  decodeDate,
+  decodeChoice,
+  decodeChoices,
+} from './analysisSessionState'
 import { eventTypes } from 'shared/events/eventSchema'
 import type { EventType } from 'shared/events/eventSchema'
 import { AnalysisHorseTab } from './AnalysisHorseTab'
@@ -48,7 +67,10 @@ import type {
   LabTimelineSignal,
   LabTimelineSeriesKey,
 } from './analysisCentreData'
-import { createHorseAnalysisData } from './analysisHorseData'
+import {
+  createHorseAnalysisData,
+  createStableHorseOverview,
+} from './analysisHorseData'
 import { timelineSignalKindAccentColors } from './analysisTimelineSignalMeta'
 import {
   StableActivityTimelineChart,
@@ -139,17 +161,53 @@ type StableAttentionItem = {
     | { kind: 'event'; eventId: string }
 }
 
+export type AnalysisScopeProps = {
+  selectedHorseId?: string
+  onHorseChange?: (horseId: string | undefined) => void
+}
+
 export function AnalysisCentre({
   data,
   stableAnalysis,
   renderHorseComparison,
+  persistenceKey,
+  selectedHorseId,
+  onHorseChange,
 }: {
   data: DashboardLabData
   stableAnalysis: StableAnalysis
-  renderHorseComparison?: (horseId: string) => ReactNode
-}) {
+  persistenceKey?: string
+  renderHorseComparison?: (
+    horseId: string,
+    range: ComparisonRange,
+    onRangeChange: (range: ComparisonRange) => void,
+  ) => ReactNode
+} & AnalysisScopeProps) {
   const { locale } = useLocale()
-
+  const t = useT()
+  const today = getTodayDateKey()
+  const sessionField = (field: string) =>
+    persistenceKey ? `${persistenceKey}:${field}` : undefined
+  const [historyRange, setHistoryRange] =
+    useAnalysisSessionState<ComparisonRange>(
+      sessionField('range'),
+      () => ({
+        start: shiftDate(today, -89),
+        end: today,
+      }),
+      decodeAnalysisRange,
+    )
+  const [historyPreset, setHistoryPreset] = useAnalysisSessionState<string>(
+    sessionField('period'),
+    '90',
+    decodePeriod,
+  )
+  const validRange =
+    isDateKey(historyRange.start) &&
+    isDateKey(historyRange.end) &&
+    historyRange.start <= historyRange.end &&
+    dateNumber(historyRange.end) - dateNumber(historyRange.start) <=
+      3660 * dayMilliseconds
   const navigate = useNavigate()
   const timelineSignals: Array<LabTimelineSignal> = stableAnalysis.hasAccess
     ? stableAnalysis.timelineSignals.map((signal) =>
@@ -160,26 +218,75 @@ export function AnalysisCentre({
     ? stableAnalysis
     : null
   const analysis = createAnalysisCentreData(data, timelineSignals, locale)
+  const historyAnalysis = createAnalysisCentreData(
+    data,
+    timelineSignals,
+    locale,
+    validRange ? historyRange : { start: today, end: today },
+  )
+  const allCoveredBuckets = historyAnalysis.timeline.buckets.filter(
+    (bucket) => bucket.allEventCount > 0 || bucket.signalCount > 0,
+  )
+  const horseOverview = createStableHorseOverview({
+    horses: data.horses,
+    stableAnalysis: unlockedStableAnalysis,
+    timelineSignals,
+    range: historyRange,
+  })
   const stableAttentionItems = unlockedStableAnalysis
     ? createStableAttentionItems(unlockedStableAnalysis, locale)
     : []
-  const [activeAnalysisTab, setActiveAnalysisTab] = useState(
+  const [activeAnalysisTab, setActiveAnalysisTab] = useAnalysisSessionState(
+    sessionField('subject'),
     stableAnalysisTabValue,
+    decodeId,
   )
-  const [selectedTimelineDateKey, setSelectedTimelineDateKey] = useState<
-    string | null
-  >(null)
-  const [timelineScale, setTimelineScale] = useState<StableTimelineScale>('day')
-  const [visibleSeries, setVisibleSeries] = useState<
+  const [selectedTimelineDateKey, setSelectedTimelineDateKey] =
+    useAnalysisSessionState<string | null>(
+      sessionField('selectedDate'),
+      null,
+      decodeDate,
+    )
+  const [timelineScale, setTimelineScale] =
+    useAnalysisSessionState<StableTimelineScale>(
+      sessionField('scale'),
+      'month',
+      decodeChoice(['day', 'week', 'month']),
+    )
+  const [visibleSeries, setVisibleSeries] = useAnalysisSessionState<
     Array<StableEventSeriesKey>
-  >(['all'])
-  const [visibleEventTypes, setVisibleEventTypes] = useState<Array<EventType>>([
-    ...eventTypes,
-  ])
+  >(
+    sessionField('statuses'),
+    ['all'],
+    decodeChoices(['all', 'completed', 'planned']),
+  )
+  const [visibleEventTypes, setVisibleEventTypes] = useAnalysisSessionState<
+    Array<EventType>
+  >(sessionField('eventTypes'), [...eventTypes], decodeChoices(eventTypes))
   const activeTabValue = getActiveAnalysisTabValue(
-    activeAnalysisTab,
+    onHorseChange
+      ? selectedHorseId
+        ? getHorseAnalysisTabValue(selectedHorseId)
+        : stableAnalysisTabValue
+      : activeAnalysisTab,
     data.horses,
   )
+  const scopeRef = useRef<HTMLDivElement>(null)
+  const focusScopeAfterChange = useRef(false)
+  const handleScopeChange = (value: string) => {
+    focusScopeAfterChange.current = true
+    setActiveAnalysisTab(value)
+    onHorseChange?.(
+      data.horses.find((horse) => getHorseAnalysisTabValue(horse._id) === value)
+        ?._id,
+    )
+  }
+  useEffect(() => {
+    if (focusScopeAfterChange.current) {
+      scopeRef.current?.querySelector<HTMLInputElement>('input')?.focus()
+      focusScopeAfterChange.current = false
+    }
+  }, [activeTabValue])
   const activeHorse = data.horses.find(
     (horse) => getHorseAnalysisTabValue(horse._id) === activeTabValue,
   )
@@ -199,14 +306,28 @@ export function AnalysisCentre({
       label: horse.name,
     })),
   ]
+  const filteredBuckets = historyAnalysis.timeline.buckets.map((bucket) => ({
+    ...bucket,
+    occurrences: bucket.occurrences.filter(
+      (occurrence) =>
+        visibleEventTypes.includes(occurrence.event.type) &&
+        (visibleSeries.includes('all') ||
+          visibleSeries.includes(
+            (occurrence.event.status ?? 'planned') as StableEventSeriesKey,
+          )),
+    ),
+  }))
+  const coveredBuckets = filteredBuckets.filter(
+    (bucket) => bucket.occurrences.length > 0 || bucket.signals.length > 0,
+  )
   const timelinePeriods = getTimelinePeriods(
-    analysis.timeline.buckets,
+    filteredBuckets,
     timelineScale,
     locale,
   )
   const selectedPeriod = getSelectedTimelinePeriod(
     timelinePeriods,
-    analysis.timeline,
+    historyAnalysis.timeline,
     selectedTimelineDateKey,
   )
   const handlePeriodSelect = useCallback((period: StableTimelinePeriod) => {
@@ -221,11 +342,15 @@ export function AnalysisCentre({
   const handleEventOpen = useCallback(
     (eventId: string) => {
       void navigate({
-        to: '/stables/$stableId/events/$eventId',
+        to:
+          data.events.find((event) => event._id === eventId)?.type ===
+          'training'
+            ? '/stables/$stableId/training/$eventId'
+            : '/stables/$stableId/events/$eventId',
         params: { stableId: data.stable._id, eventId },
       })
     },
-    [data.stable._id, navigate],
+    [data.stable._id, data.events, navigate],
   )
   const handleSeriesToggle = useCallback((seriesKey: StableEventSeriesKey) => {
     setVisibleSeries((currentSeries) => {
@@ -256,40 +381,191 @@ export function AnalysisCentre({
       <AnalysisPageHeader />
 
       <div className="grid gap-3">
-        <AnalysisScopeSelector
-          activeId={activeTabValue}
-          items={analysisTabItems}
-          onSelect={setActiveAnalysisTab}
-        />
+        <div ref={scopeRef}>
+          <AnalysisScopeSelector
+            activeId={activeTabValue}
+            items={analysisTabItems}
+            onSelect={handleScopeChange}
+          />
+        </div>
 
         {activeTabValue === stableAnalysisTabValue && (
-          <div className="grid gap-4 xl:grid-cols-3">
-            <StableActivityTimelinePanel
-              timeline={analysis.timeline}
-              periods={timelinePeriods}
-              timelineScale={timelineScale}
-              visibleSeries={visibleSeries}
-              visibleEventTypes={visibleEventTypes}
-              selectedPeriodKey={selectedPeriod?.key ?? null}
-              onTimelineScaleChange={handleTimelineScaleChange}
-              onPeriodSelect={handlePeriodSelect}
-              onEventOpen={handleEventOpen}
-              onSeriesToggle={handleSeriesToggle}
-              onEventTypeToggle={handleEventTypeToggle}
-              span="xl3"
-            />
-
-            <SelectedTimelinePeriodPanel
-              period={selectedPeriod}
-              scale={timelineScale}
-              stableId={data.stable._id}
-              span="xl3"
-            />
-            <StableNeedsAttentionPanel
-              items={stableAttentionItems}
-              stableId={data.stable._id}
-              span="xl3"
-            />
+          <div className="grid min-w-0 gap-6">
+            <AnalysisPanel
+              title={data.stable.name}
+              description={t('analysisViews.historyScope')}
+            >
+              <DateRangeControl
+                start={historyRange.start}
+                end={historyRange.end}
+                preset={historyPreset}
+                onChange={(range) => {
+                  setHistoryRange(range)
+                  setHistoryPreset('custom')
+                }}
+                onPresetChange={(preset) => {
+                  setHistoryPreset(preset)
+                  if (preset !== 'custom') {
+                    setHistoryRange({
+                      start: shiftDate(today, 1 - Number(preset)),
+                      end: today,
+                    })
+                    setTimelineScale(Number(preset) > 90 ? 'month' : 'week')
+                  }
+                }}
+                presets={[30, 90, 365]
+                  .map<{ value: string; label: string }>((days) => ({
+                    value: String(days),
+                    label:
+                      days === 365
+                        ? t('horseComparison.year')
+                        : t('horseComparison.days', { count: days }),
+                  }))
+                  .concat({
+                    value: 'custom',
+                    label: t('horseComparison.custom'),
+                  })}
+                labels={{
+                  period: t('analysisViews.historyPeriod'),
+                  start: t('horseComparison.start'),
+                  end: t('horseComparison.end'),
+                  error: t('horseComparison.rangeError'),
+                }}
+                invalid={!validRange}
+              />
+              <p className="mt-3 text-sm tabular-nums">
+                {isDateKey(historyRange.start) &&
+                  formatMediumDateKey(historyRange.start, locale)}{' '}
+                –{' '}
+                {isDateKey(historyRange.end) &&
+                  formatMediumDateKey(historyRange.end, locale)}
+              </p>
+            </AnalysisPanel>
+            {validRange && (
+              <>
+                {horseOverview.length === 0 ? (
+                  <DashboardEmptyState>
+                    <p>{t('analysisViews.noHorsesYet')}</p>
+                    <ButtonLink
+                      className="mt-3"
+                      variant="outline"
+                      to="/stables/$stableId/horses/create"
+                      params={{ stableId: data.stable._id }}
+                    >
+                      {t('analysisViews.addFirstHorse')}
+                    </ButtonLink>
+                  </DashboardEmptyState>
+                ) : (
+                  <StableHistoryOverview
+                    horses={horseOverview}
+                    onHorseSelect={(horseId) =>
+                      handleScopeChange(getHorseAnalysisTabValue(horseId))
+                    }
+                  />
+                )}
+                <AnalysisPanel
+                  title={t('analysisViews.recordedActivity')}
+                  description={t('analysisViews.activityHelp')}
+                >
+                  <div className="grid gap-4">
+                    {allCoveredBuckets.length > 0 && (
+                      <>
+                        <TimelineScaleControls
+                          scale={timelineScale}
+                          onScaleChange={handleTimelineScaleChange}
+                        />
+                        <details>
+                          <summary className="app-disclosure-trigger cursor-pointer py-2 font-semibold focus-visible:outline-2 focus-visible:outline-ring">
+                            {t('analysisViews.eventFilters')}
+                          </summary>
+                          <div className="grid gap-3 pt-3">
+                            <TimelineSeriesControls
+                              visibleSeries={visibleSeries}
+                              onSeriesToggle={handleSeriesToggle}
+                            />
+                            <TimelineEventTypeControls
+                              visibleEventTypes={visibleEventTypes}
+                              onEventTypeToggle={handleEventTypeToggle}
+                            />
+                          </div>
+                        </details>
+                      </>
+                    )}
+                    {coveredBuckets.length > 0 && (
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                        <p>
+                          {t('analysisViews.coverageDates', {
+                            start: formatMediumDateKey(
+                              coveredBuckets[0].key,
+                              locale,
+                            ),
+                            end: formatMediumDateKey(
+                              coveredBuckets.at(-1)!.key,
+                              locale,
+                            ),
+                          })}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setHistoryRange({
+                              start: coveredBuckets[0].key,
+                              end: coveredBuckets.at(-1)!.key,
+                            })
+                            setHistoryPreset('custom')
+                          }}
+                        >
+                          {t('analysisViews.fitRecordedPeriod')}
+                        </Button>
+                      </div>
+                    )}
+                    <StableActivityOverview
+                      periods={timelinePeriods}
+                      selectedPeriodKey={selectedPeriod?.key ?? null}
+                      onSelect={handlePeriodSelect}
+                    />
+                  </div>
+                </AnalysisPanel>
+                {allCoveredBuckets.length > 0 && (
+                  <>
+                    <SelectedTimelinePeriodPanel
+                      period={selectedPeriod}
+                      scale={timelineScale}
+                      stableId={data.stable._id}
+                    />
+                    <details className="min-w-0 rounded-lg border border-border p-4 md:p-6">
+                      <summary className="app-disclosure-trigger cursor-pointer font-semibold focus-visible:outline-2 focus-visible:outline-ring">
+                        {t('analysisViews.detailedTimeline')}
+                      </summary>
+                      <div className="mt-5 min-w-0">
+                        <StableActivityTimelineChart
+                          periods={timelinePeriods}
+                          occurrences={historyAnalysis.timeline.occurrences}
+                          scale={timelineScale}
+                          visibleSeries={visibleSeries}
+                          visibleEventTypes={visibleEventTypes}
+                          selectedPeriodKey={selectedPeriod?.key ?? null}
+                          onPeriodSelect={handlePeriodSelect}
+                          onEventOpen={handleEventOpen}
+                        />
+                      </div>
+                    </details>
+                  </>
+                )}
+              </>
+            )}
+            <details className="rounded-lg border border-border p-4 md:p-6">
+              <summary className="app-disclosure-trigger cursor-pointer font-semibold focus-visible:outline-2 focus-visible:outline-ring">
+                {t('analysisViews.currentCareDetail')}
+              </summary>
+              <div className="mt-5">
+                <StableNeedsAttentionPanel
+                  items={stableAttentionItems}
+                  stableId={data.stable._id}
+                />
+              </div>
+            </details>
           </div>
         )}
 
@@ -298,7 +574,14 @@ export function AnalysisCentre({
             horse={activeHorse}
             stableId={data.stable._id}
             analysis={activeHorseAnalysis}
-            comparison={renderHorseComparison?.(activeHorse._id)}
+            comparison={renderHorseComparison?.(
+              activeHorse._id,
+              historyRange,
+              (range) => {
+                setHistoryRange(range)
+                setHistoryPreset('custom')
+              },
+            )}
           />
         )}
       </div>
@@ -367,79 +650,6 @@ function AnalysisList({
     >
       {children}
     </ScrollableList>
-  )
-}
-
-function StableActivityTimelinePanel({
-  timeline,
-  periods,
-  timelineScale,
-  visibleSeries,
-  visibleEventTypes,
-  selectedPeriodKey,
-  onTimelineScaleChange,
-  onPeriodSelect,
-  onEventOpen,
-  onSeriesToggle,
-  onEventTypeToggle,
-  className,
-  span,
-}: {
-  timeline: LabTimeline
-  periods: Array<StableTimelinePeriod>
-  timelineScale: StableTimelineScale
-  visibleSeries: Array<StableEventSeriesKey>
-  visibleEventTypes: Array<EventType>
-  selectedPeriodKey: string | null
-  onTimelineScaleChange: (scale: StableTimelineScale) => void
-  onPeriodSelect: (period: StableTimelinePeriod) => void
-  onEventOpen: (eventId: string) => void
-  onSeriesToggle: (seriesKey: StableEventSeriesKey) => void
-  onEventTypeToggle: (eventType: EventType) => void
-  className?: string
-  span?: ComponentProps<typeof DashboardSection>['span']
-}) {
-  const t = useT()
-
-  return (
-    <AnalysisPanel
-      title={t('analysisViews.timeline')}
-      description={t('analysisViews.timelineHelp')}
-      className={className}
-      span={span}
-    >
-      <DashboardLayoutStack gap="compact">
-        <TimelineScaleControls
-          scale={timelineScale}
-          onScaleChange={onTimelineScaleChange}
-        />
-
-        <div className="min-w-0">
-          <StableActivityTimelineChart
-            periods={periods}
-            occurrences={timeline.occurrences}
-            scale={timelineScale}
-            visibleSeries={visibleSeries}
-            visibleEventTypes={visibleEventTypes}
-            selectedPeriodKey={selectedPeriodKey}
-            onPeriodSelect={onPeriodSelect}
-            onEventOpen={onEventOpen}
-          />
-        </div>
-
-        <p className="text-sm text-muted-foreground">
-          {t('analysisViews.filterHelp')}
-        </p>
-        <TimelineSeriesControls
-          visibleSeries={visibleSeries}
-          onSeriesToggle={onSeriesToggle}
-        />
-        <TimelineEventTypeControls
-          visibleEventTypes={visibleEventTypes}
-          onEventTypeToggle={onEventTypeToggle}
-        />
-      </DashboardLayoutStack>
-    </AnalysisPanel>
   )
 }
 
@@ -851,7 +1061,7 @@ function TimelineSignalDigest({ period }: { period: StableTimelinePeriod }) {
   return (
     <DashboardItemCard chrome="flat" className="grid gap-3">
       <DashboardInlineHeader
-        title={t('analysisViews.recordDigest')}
+        title={t('analysisViews.careAllCategories')}
         aside={
           <Badge
             variant={period.urgentSignalCount > 0 ? 'destructive' : 'secondary'}
@@ -1046,8 +1256,8 @@ function StableAttentionRow({
   if (item.target.kind === 'horse-care') {
     return (
       <DashboardItemLinkCard
-        to="/stables/$stableId/horses/$horseId/care"
-        params={{ stableId, horseId: item.target.horseId }}
+        to="/horses/$horseId/care"
+        params={{ horseId: item.target.horseId }}
         search={{ careView: item.target.careView }}
         accent={item.accent}
         chrome="flat"
@@ -1242,7 +1452,7 @@ function getActiveAnalysisTabValue(activeTab: string, horses: Array<LabHorse>) {
   return horseTabExists ? activeTab : stableAnalysisTabValue
 }
 
-function getHorseAnalysisTabValue(horseId: LabHorse['_id']) {
+function getHorseAnalysisTabValue(horseId: string) {
   return `horse:${horseId}`
 }
 
@@ -1262,4 +1472,76 @@ function getTimelineSignalDetail(
     signal.horseName,
     signal.detail,
   ])
+}
+
+function StableActivityOverview({
+  periods,
+  selectedPeriodKey,
+  onSelect,
+}: {
+  periods: StableTimelinePeriod[]
+  selectedPeriodKey: string | null
+  onSelect: (period: StableTimelinePeriod) => void
+}) {
+  const t = useT()
+  const max = Math.max(
+    1,
+    ...periods.map((period) => period.allEventCount + period.signalCount),
+  )
+  const populated = periods.filter(
+    (period) => period.allEventCount + period.signalCount > 0,
+  )
+  if (!populated.length)
+    return (
+      <DashboardEmptyState>{t('analysisViews.noHistory')}</DashboardEmptyState>
+    )
+  return (
+    <div className="grid gap-3">
+      <div
+        className="flex items-end gap-1 overflow-x-auto rounded-lg bg-[var(--analysis-surface)] p-3"
+        role="group"
+        aria-label={t('analysisViews.recordedActivity')}
+      >
+        {periods.map((period) => (
+          <Button
+            variant="ghost"
+            key={period.key}
+            type="button"
+            aria-pressed={period.key === selectedPeriodKey}
+            onClick={() => onSelect(period)}
+            aria-label={`${period.label}: ${t('analysisViews.blockCount', { count: period.allEventCount })}, ${t('analysisViews.careRecordCount', { count: period.signalCount })}`}
+            className="group grid h-auto min-w-11 flex-1 cursor-pointer gap-2 rounded p-1 text-center outline-offset-2 hover:bg-primary/8 focus-visible:outline-2 focus-visible:outline-ring aria-pressed:bg-primary/10 aria-pressed:outline-2 aria-pressed:outline-primary"
+          >
+            <span className="text-xs tabular-nums">
+              {period.allEventCount + period.signalCount}
+            </span>
+            <span
+              className="flex h-24 items-end justify-center gap-0.5"
+              aria-hidden="true"
+            >
+              <span
+                className="w-2/5 rounded-t-sm bg-[var(--analysis-training)]"
+                style={{ height: `${(period.allEventCount / max) * 100}%` }}
+              />
+              <span
+                className="w-2/5 rounded-t-sm bg-[var(--analysis-care)]"
+                style={{ height: `${(period.signalCount / max) * 100}%` }}
+              />
+            </span>
+            <span className="text-xs">{period.shortLabel}</span>
+          </Button>
+        ))}
+      </div>
+      <p className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+        <span>
+          <span className="mr-1 inline-block size-2 bg-[var(--analysis-training)]" />
+          {t('analysisViews.blocks')}
+        </span>
+        <span>
+          <span className="mr-1 inline-block size-2 bg-[var(--analysis-care)]" />
+          {t('analysisViews.careAllCategories')}
+        </span>
+      </p>
+    </div>
+  )
 }

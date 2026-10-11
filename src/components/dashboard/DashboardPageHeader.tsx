@@ -10,7 +10,7 @@ import { DashboardHeaderRail } from './DashboardHeaderRail'
 type DashboardPageHeaderTitleSize = 'default' | 'detail'
 type DashboardPageHeaderDescriptionSize = 'sm' | 'base'
 type DashboardPageHeaderDescriptionWidth = 'default' | 'narrow'
-type DashboardPageHeaderContentLayout = 'center' | 'default' | 'wide'
+type DashboardPageHeaderContentLayout = 'center' | 'default' | 'inline' | 'wide'
 
 type DashboardPageHeaderProps = {
   title: ReactNode
@@ -52,6 +52,7 @@ export function DashboardPageHeader({
   const contentLayoutClassName = {
     center: 'flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-center',
     default: 'grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-stretch',
+    inline: 'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4',
     wide: 'grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-stretch',
   } satisfies Record<DashboardPageHeaderContentLayout, string>
 

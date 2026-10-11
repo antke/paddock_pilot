@@ -1,4 +1,9 @@
 export const horseForm = {
+  savedContactHelp:
+    'Wybierz zapisany kontakt, aby korzystać z aktualnych danych, lub wpisz jednorazowy kontakt. Zmiana telefonu zapisze go tylko przy tym koniu.',
+  copiedContactHelp:
+    'Wybierz zapisany kontakt, aby skopiować jego nazwę i telefon do profilu konia, lub wpisz dane samodzielnie. Późniejsze zmiany kontaktu nie zaktualizują tego profilu.',
+
   unspecified: 'Nie podano',
   mare: 'Klacz',
   gelding: 'Wałach',
@@ -15,6 +20,11 @@ export const horseForm = {
   details: 'Dane konia',
   name: 'Imię konia',
   owner: 'Imię i nazwisko właściciela',
+  showOwnerSuggestions: 'Pokaż proponowane imiona i nazwiska właścicieli',
+  ownerSuggestionPlaceholder: 'Wybierz osobę lub wpisz inne dane',
+  noOwnerSuggestions: 'Brak pasujących osób. Możesz użyć wpisanych danych.',
+  ownerHelp:
+    'To tylko dane wyświetlane w profilu. Ich zmiana nie przenosi własności między kontami. Po zapisaniu zarządzaj własnością w sekcji Osoby i stajnia.',
   sex: 'Płeć',
   picture: 'Zdjęcie profilowe',
   pictureLabel: 'Informacje o zdjęciu profilowym konia',

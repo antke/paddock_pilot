@@ -214,6 +214,10 @@ function StableOnboarding({ stableId }: { stableId: Id<'stables'> }) {
     return <RouteStatusAlert title={t('onboarding.notFound')} />
   }
 
+  if ('completedAt' in progress && progress.completedAt !== undefined) {
+    return <Navigate to="/stables/$stableId" params={{ stableId }} replace />
+  }
+
   return (
     <StableOnboardingView
       key={stableId}

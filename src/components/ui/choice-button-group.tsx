@@ -9,7 +9,7 @@ type ChoiceButtonOption<TValue extends string> = {
   description?: ReactNode
 }
 
-type ChoiceButtonGroupLayout = 'compact' | 'cards'
+type ChoiceButtonGroupLayout = 'compact' | 'cards' | 'segmented'
 
 type ChoiceButtonGroupProps<TValue extends string> = {
   value?: TValue
@@ -39,6 +39,7 @@ export function ChoiceButtonGroup<TValue extends string>({
       data-slot="choice-button-group"
       value={value ? [value] : []}
       variant="outline"
+      spacing={layout === 'segmented' ? 0 : 2}
       onValueChange={(values) => {
         const nextValue = values.at(-1)
         const option = options.find((item) => item.value === nextValue)
@@ -50,6 +51,7 @@ export function ChoiceButtonGroup<TValue extends string>({
       className={cn(
         layout === 'compact' && 'flex w-full flex-wrap gap-2',
         layout === 'cards' && 'grid w-full gap-2 sm:grid-cols-2',
+        layout === 'segmented' && 'inline-flex w-auto flex-nowrap gap-0',
         className,
       )}
       disabled={disabled}
@@ -63,6 +65,8 @@ export function ChoiceButtonGroup<TValue extends string>({
           value={option.value}
           className={cn(
             layout === 'compact' && 'px-4',
+            layout === 'segmented' &&
+              'rounded-none first:rounded-l-control last:rounded-r-control',
             layout === 'cards' &&
               'h-auto min-h-20 w-full flex-col items-start gap-1 px-4 py-3 text-left whitespace-normal',
           )}

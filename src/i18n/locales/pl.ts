@@ -1,3 +1,4 @@
+import { stableUpdates } from './stableUpdates.pl'
 import { horseComparison } from './horseComparison.pl'
 import { serverErrors } from './serverErrors.pl'
 import { uiRemainder } from './uiRemainder.pl'
@@ -30,8 +31,11 @@ import { stables } from './stables.pl'
 import { events } from './events.pl'
 import { invitationFlow } from './invitationFlow.pl'
 import { onboarding } from './onboarding.pl'
+import { navigationShell } from './navigationShell.pl'
 
 export const pl = {
+  navigationShell,
+  stableUpdates,
   horseComparison,
   serverErrors,
   uiRemainder,
@@ -231,6 +235,11 @@ export const pl = {
     imageTooLarge: 'Wybierz zdjęcie o rozmiarze nie większym niż 5 MB.',
   },
   upload: {
+    selected: 'Wybrano · jeszcze nie zapisano',
+    selectedNamed: 'Wybrano plik {{name}}. Zapisz formularz, aby go dołączyć.',
+    releaseToSelect: 'Upuść, aby wybrać plik',
+    chooseImage: 'Wybierz zdjęcie',
+    chooseFileLabel: 'Wybierz plik',
     about: 'Pomoc: {{label}}',
     remove: 'Usuń {{name}}',
     replace: 'Zmień plik {{name}}',
@@ -274,6 +283,11 @@ export const pl = {
     retry: 'Zapisz język ponownie',
   },
   navigation: {
+    accountPreferences: 'Preferencje',
+    stable: 'Stajnia',
+    today: 'Dzisiaj',
+    calendar: 'Kalendarz',
+
     primary: 'Nawigacja główna',
     public: 'Nawigacja strony',
     footer: 'Nawigacja w stopce',
@@ -313,6 +327,12 @@ export const pl = {
     dark: 'Motyw: ciemny. Kliknij, aby zmienić motyw.',
   },
   profile: {
+    notifications: 'Przypomnienia e-mail',
+    digestLabel: 'Codzienne podsumowanie opieki',
+    digestDescription:
+      'Jeden e-mail około 09:00 ({{timezone}}), gdy w którejś z Twoich stajni jest opieka do wykonania lub zaległa. Domyślnie wyłączone; przypomnienia są zawsze dostępne w Opiece.',
+    digestSaved: 'Zapisano ustawienie e-mail',
+    digestError: 'Nie udało się zapisać ustawienia e-mail. Spróbuj ponownie.',
     signInTitle: 'Zaloguj się, aby edytować swój profil',
     signInDescription:
       'Twój profil jest wspólny dla wszystkich stajni, które prowadzisz lub do których należysz.',
@@ -325,6 +345,10 @@ export const pl = {
       'Sprawdź połączenie i spróbuj ponownie. Twój profil nie został zmieniony.',
   },
   common: {
+    unsavedTitle: 'Wyjść bez zapisywania?',
+    unsavedHelp:
+      'Zmiany nie zostały zapisane. Zostań, aby je dokończyć, lub wyjdź i je odrzuć.',
+    leaveWithoutSaving: 'Wyjdź bez zapisywania',
     close: 'Zamknij',
     keepEditing: 'Kontynuuj edycję',
     reset: 'Wyczyść',
@@ -338,6 +362,8 @@ export const pl = {
     pageErrorDescription:
       'Spróbuj ponownie. Jeśli problem się powtarza, wróć na stronę główną.',
     retry: 'Spróbuj ponownie',
+    copied: 'Skopiowano',
+    copying: 'Kopiowanie…',
     home: 'Strona główna',
     cancel: 'Anuluj',
     save: 'Zapisz',

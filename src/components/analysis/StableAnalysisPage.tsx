@@ -1,3 +1,5 @@
+import { analysisSessionKey } from './analysisSessionState'
+import type { ComparisonRange } from 'shared/analysis/horseComparison'
 import type { ReactNode } from 'react'
 import { HorseComparisonExplorer } from './HorseComparisonExplorer'
 import { useT } from '#/i18n/LocaleProvider'
@@ -12,6 +14,7 @@ import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import type { FunctionReturnType } from 'convex/server'
 import { AnalysisCentre } from './AnalysisCentre'
+import type { AnalysisScopeProps } from './AnalysisCentre'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
 
 export type StableAnalysis = FunctionReturnType<
@@ -21,14 +24,18 @@ type UnlockedAnalysis = Extract<StableAnalysis, { hasAccess: true }>
 
 type StableAnalysisPageProps = {
   stableId: string
-}
+} & AnalysisScopeProps
 
-export function StableAnalysisPage({ stableId }: StableAnalysisPageProps) {
+export function StableAnalysisPage({
+  stableId,
+  ...scope
+}: StableAnalysisPageProps) {
   const localDateContext = useLocalDateContext()
   const { data: analysis } = useSuspenseQuery(
     convexQuery(api.stableAnalysis.getForStable, {
       stableId: stableId as Id<'stables'>,
       ...localDateContext,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     }),
   )
 
@@ -37,7 +44,11 @@ export function StableAnalysisPage({ stableId }: StableAnalysisPageProps) {
   }
 
   return (
-    <UnlockedAnalysisPage analysis={analysis} today={localDateContext.today} />
+    <UnlockedAnalysisPage
+      analysis={analysis}
+      today={localDateContext.today}
+      {...scope}
+    />
   )
 }
 
@@ -59,10 +70,11 @@ function LockedAnalysis() {
 function UnlockedAnalysisPage({
   analysis,
   today,
+  ...scope
 }: {
   analysis: UnlockedAnalysis
   today: string
-}) {
+} & AnalysisScopeProps) {
   const stableId = analysis.stable._id
   const { data: events } = useSuspenseQuery(
     convexQuery(api.events.listForStable, { stableId }),
@@ -84,12 +96,17 @@ function UnlockedAnalysisPage({
   return (
     <StableAnalysisPageView
       analysis={analysis}
+      persistenceKey={analysisSessionKey(stableId)}
       data={data}
-      renderHorseComparison={(horseId) => (
+      {...scope}
+      renderHorseComparison={(horseId, range, onRangeChange) => (
         <HorseComparisonExplorer
           key={horseId}
           horseId={horseId}
           stableId={stableId}
+          persistenceKey={analysisSessionKey(stableId, horseId)}
+          range={range}
+          onRangeChange={onRangeChange}
         />
       )}
     />
@@ -100,11 +117,18 @@ export function StableAnalysisPageView({
   analysis,
   data,
   renderHorseComparison,
+  persistenceKey,
+  ...scope
 }: {
   analysis: StableAnalysis
   data?: DashboardLabData
-  renderHorseComparison?: (horseId: string) => ReactNode
-}) {
+  persistenceKey?: string
+  renderHorseComparison?: (
+    horseId: string,
+    range: ComparisonRange,
+    onRangeChange: (range: ComparisonRange) => void,
+  ) => ReactNode
+} & AnalysisScopeProps) {
   if (!analysis.hasAccess) return <LockedAnalysis />
   if (!data) throw new Error('Unlocked analysis requires dashboard data')
   return (
@@ -113,7 +137,9 @@ export function StableAnalysisPageView({
         key={analysis.stable._id}
         data={data}
         stableAnalysis={analysis}
+        persistenceKey={persistenceKey}
         renderHorseComparison={renderHorseComparison}
+        {...scope}
       />
     </DashboardPage>
   )

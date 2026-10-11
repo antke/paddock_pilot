@@ -149,6 +149,7 @@ export function createStableBreadcrumbItems(
     edit: t('breadcrumbs.editStable'),
     members: t('breadcrumbs.people'),
     reminders: t('breadcrumbs.care'),
+    stable: t('navigation.stable'),
     settings: t('breadcrumbs.settings'),
     welcome: t('breadcrumbs.gettingStarted'),
   }

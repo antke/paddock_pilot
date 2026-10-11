@@ -6,16 +6,20 @@ import { AuthStateSwitch } from '#/components/layout/AuthStateSwitch'
 import { RoutePending } from '#/components/layout/RoutePending'
 import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
 import { SignedOutRoutePrompt } from '#/components/layout/SignedOutRoutePrompt'
+import { PersonalOnboarding } from '#/components/ownership/PersonalOnboarding'
 import { OnboardingPage } from '#/components/onboarding/OnboardingPage'
 import { api } from 'convex/_generated/api'
+import { onboardingReturnTo } from '#/components/layout/accountRouting'
 
 type OnboardingSearch = {
   stableId?: string
+  returnTo?: string
 }
 
 export const Route = createFileRoute('/onboarding')({
   validateSearch: (search): OnboardingSearch => ({
     stableId: typeof search.stableId === 'string' ? search.stableId : undefined,
+    returnTo: onboardingReturnTo(search.returnTo),
   }),
   component: OnboardingRoute,
 })
@@ -23,7 +27,7 @@ export const Route = createFileRoute('/onboarding')({
 function OnboardingRoute() {
   const t = useT()
 
-  const { stableId } = Route.useSearch()
+  const { stableId, returnTo } = Route.useSearch()
 
   return (
     <AuthStateSwitch
@@ -33,12 +37,12 @@ function OnboardingRoute() {
           description={t('onboarding.signInHelp')}
         />
       }
-      signedIn={<OnboardingGate stableId={stableId} />}
+      signedIn={<OnboardingGate stableId={stableId} returnTo={returnTo} />}
     />
   )
 }
 
-function OnboardingGate({ stableId }: { stableId?: string }) {
+function OnboardingGate({ stableId, returnTo }: OnboardingSearch) {
   const t = useT()
 
   const user = useQuery(api.users.getCurrentUser)
@@ -57,7 +61,7 @@ function OnboardingGate({ stableId }: { stableId?: string }) {
   return stableId ? (
     <StableOnboardingGate stableId={stableId} />
   ) : (
-    <OnboardingPage />
+    <PersonalOnboarding key={returnTo ?? 'start'} returnTo={returnTo} />
   )
 }
 

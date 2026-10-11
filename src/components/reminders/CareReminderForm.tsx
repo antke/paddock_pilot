@@ -71,6 +71,8 @@ type HorseOption = {
 
 type CareReminderFormProps = {
   horseOptions?: Array<HorseOption>
+  assigneeOptions?: Array<HorseOption>
+  initialValues?: CareReminderSubmitBaseData
   fixedHorseId?: string
   onSubmit: (data: CareReminderSubmitData) => Promise<void>
   chrome?: DashboardChrome
@@ -84,6 +86,8 @@ const asPriority = (value: string) => value as CareReminderPriority
 
 export function CareReminderForm({
   horseOptions = [],
+  assigneeOptions = [],
+  initialValues,
   fixedHorseId,
   onSubmit,
   chrome = 'cards',
@@ -121,6 +125,7 @@ export function CareReminderForm({
       category: 'other',
       dueDate: getTodayDateKey(),
       priority: 'medium',
+      ...initialValues,
     },
   })
   const {
@@ -132,14 +137,16 @@ export function CareReminderForm({
   const targetType = form.watch('targetType')
   const selectedHorseIds = form.watch('horseIds')
   const selectedHorseCount = selectedHorseIds.length
-  const submitLabel =
-    !fixedHorseId && targetType === 'horses' && selectedHorseCount !== 1
+  const submitLabel = initialValues
+    ? t('reminders.save')
+    : !fixedHorseId && targetType === 'horses' && selectedHorseCount !== 1
       ? t('reminders.addMany')
       : t('reminders.add')
 
   const handleSubmit = form.handleSubmit(async (values) => {
     setFailed(false)
     const reminder = {
+      assignedTo: values.assignedTo,
       title: values.title,
       description: values.description,
       category: values.category,
@@ -167,15 +174,16 @@ export function CareReminderForm({
         })
       }
 
-      form.reset({
-        targetType: fixedHorseId ? 'horses' : 'stable',
-        horseIds: fixedHorseId ? [fixedHorseId] : [],
-        title: '',
-        description: '',
-        category: values.category,
-        dueDate: getTodayDateKey(),
-        priority: values.priority,
-      })
+      if (!initialValues)
+        form.reset({
+          targetType: fixedHorseId ? 'horses' : 'stable',
+          horseIds: fixedHorseId ? [fixedHorseId] : [],
+          title: '',
+          description: '',
+          category: values.category,
+          dueDate: getTodayDateKey(),
+          priority: values.priority,
+        })
     } catch {
       setFailed(true)
     }
@@ -197,7 +205,7 @@ export function CareReminderForm({
         />
       )}
 
-      {!fixedHorseId && horseOptions.length > 0 && (
+      {!initialValues && !fixedHorseId && horseOptions.length > 0 && (
         <Controller
           name="targetType"
           control={control}
@@ -239,96 +247,103 @@ export function CareReminderForm({
         />
       )}
 
-      {!fixedHorseId && horseOptions.length > 0 && targetType === 'horses' && (
-        <Controller
-          name="horseIds"
-          control={control}
-          render={({ field, fieldState }) => (
-            <FieldSet
-              data-invalid={fieldState.invalid}
-              aria-describedby={
-                fieldState.invalid ? `${formId}-${field.name}-error` : undefined
-              }
-            >
-              <FieldLegend>{t('reminders.horses')}</FieldLegend>
-              <FieldHeader>
-                <FieldHeaderContent>
-                  <FieldDescription>{t('reminders.oneEach')}</FieldDescription>
-                </FieldHeaderContent>
-                <DashboardValueBadge variant="neutral">
-                  {t('reminders.selected', { count: field.value.length })}
-                </DashboardValueBadge>
-              </FieldHeader>
-
-              <DashboardActions align="start">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  disabled={
-                    isSubmitting || field.value.length === horseOptions.length
-                  }
-                  onClick={() =>
-                    field.onChange(horseOptions.map((horse) => horse.id))
-                  }
-                >
-                  {t('reminders.selectAll')}
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  disabled={isSubmitting || field.value.length === 0}
-                  onClick={() => field.onChange([])}
-                >
-                  {t('reminders.clear')}
-                </Button>
-              </DashboardActions>
-
-              <ScrollableList
-                ariaLabel={t('reminders.availableHorses')}
-                itemCount={horseOptions.length}
-                visibleItemLimit={3}
-                estimatedItemHeightRem={5.5}
-                className="p-0.5"
+      {!initialValues &&
+        !fixedHorseId &&
+        horseOptions.length > 0 &&
+        targetType === 'horses' && (
+          <Controller
+            name="horseIds"
+            control={control}
+            render={({ field, fieldState }) => (
+              <FieldSet
+                data-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid
+                    ? `${formId}-${field.name}-error`
+                    : undefined
+                }
               >
-                {horseOptions.map((horse) => {
-                  const inputId = `${formId}-care-reminder-horse-${horse.id}`
-                  const checked = field.value.includes(horse.id)
-                  const setHorseChecked = (isChecked: boolean) => {
-                    field.onChange(
-                      isChecked
-                        ? [...field.value, horse.id]
-                        : field.value.filter((id) => id !== horse.id),
+                <FieldLegend>{t('reminders.horses')}</FieldLegend>
+                <FieldHeader>
+                  <FieldHeaderContent>
+                    <FieldDescription>
+                      {t('reminders.oneEach')}
+                    </FieldDescription>
+                  </FieldHeaderContent>
+                  <DashboardValueBadge variant="neutral">
+                    {t('reminders.selected', { count: field.value.length })}
+                  </DashboardValueBadge>
+                </FieldHeader>
+
+                <DashboardActions align="start">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={
+                      isSubmitting || field.value.length === horseOptions.length
+                    }
+                    onClick={() =>
+                      field.onChange(horseOptions.map((horse) => horse.id))
+                    }
+                  >
+                    {t('reminders.selectAll')}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={isSubmitting || field.value.length === 0}
+                    onClick={() => field.onChange([])}
+                  >
+                    {t('reminders.clear')}
+                  </Button>
+                </DashboardActions>
+
+                <ScrollableList
+                  ariaLabel={t('reminders.availableHorses')}
+                  itemCount={horseOptions.length}
+                  visibleItemLimit={3}
+                  estimatedItemHeightRem={5.5}
+                  className="p-0.5"
+                >
+                  {horseOptions.map((horse) => {
+                    const inputId = `${formId}-care-reminder-horse-${horse.id}`
+                    const checked = field.value.includes(horse.id)
+                    const setHorseChecked = (isChecked: boolean) => {
+                      field.onChange(
+                        isChecked
+                          ? [...field.value, horse.id]
+                          : field.value.filter((id) => id !== horse.id),
+                      )
+                    }
+
+                    return (
+                      <HorseSelectionCard
+                        key={horse.id}
+                        id={inputId}
+                        name={field.name}
+                        value={horse.id}
+                        horse={horse}
+                        checked={checked}
+                        disabled={isSubmitting}
+                        invalid={fieldState.invalid}
+                        onCheckedChange={setHorseChecked}
+                      />
                     )
-                  }
+                  })}
+                </ScrollableList>
 
-                  return (
-                    <HorseSelectionCard
-                      key={horse.id}
-                      id={inputId}
-                      name={field.name}
-                      value={horse.id}
-                      horse={horse}
-                      checked={checked}
-                      disabled={isSubmitting}
-                      invalid={fieldState.invalid}
-                      onCheckedChange={setHorseChecked}
-                    />
-                  )
-                })}
-              </ScrollableList>
-
-              {fieldState.invalid && (
-                <FieldError
-                  id={`${formId}-${field.name}-error`}
-                  errors={[fieldState.error]}
-                />
-              )}
-            </FieldSet>
-          )}
-        />
-      )}
+                {fieldState.invalid && (
+                  <FieldError
+                    id={`${formId}-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
+                )}
+              </FieldSet>
+            )}
+          />
+        )}
 
       <Field data-invalid={!!errors.title}>
         <FieldLabel htmlFor={`${formId}-title`}>
@@ -423,6 +438,33 @@ export function CareReminderForm({
         )}
       />
 
+      {assigneeOptions.length > 0 && (
+        <Field>
+          <FieldLabel htmlFor={`${formId}-assignedTo`}>
+            {t('reminders.responsible')}
+          </FieldLabel>
+          <Select
+            id={`${formId}-assignedTo`}
+            disabled={isSubmitting}
+            {...register('assignedTo')}
+          >
+            <option value="">{t('reminders.unassigned')}</option>
+            {initialValues?.assignedTo &&
+              !assigneeOptions.some(
+                (person) => person.id === initialValues.assignedTo,
+              ) && (
+                <option value={initialValues.assignedTo}>
+                  {t('reminders.unavailableAssignee')}
+                </option>
+              )}
+            {assigneeOptions.map((person) => (
+              <option key={person.id} value={person.id}>
+                {person.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      )}
       <Field data-invalid={!!errors.description}>
         <FieldLabel htmlFor={`${formId}-description`}>
           {t('reminders.notesOptional')}
@@ -444,12 +486,24 @@ export function CareReminderForm({
       </Field>
 
       {failed ? (
-        <FieldError errors={[{ message: t('reminders.saveFailed') }]} />
+        <FieldError
+          errors={[
+            {
+              message: t(
+                initialValues
+                  ? 'reminders.saveChangesFailed'
+                  : 'reminders.saveFailed',
+              ),
+            },
+          ]}
+        />
       ) : null}
       <FormSubmitActions
         isSubmitting={isSubmitting}
         submitLabel={submitLabel}
-        submittingLabel={t('reminders.adding')}
+        submittingLabel={t(
+          initialValues ? 'reminders.saving' : 'reminders.adding',
+        )}
         sticky={presentation === 'plain'}
       />
     </DashboardInlineForm>

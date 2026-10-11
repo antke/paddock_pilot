@@ -34,6 +34,42 @@ afterEach(() => {
 })
 
 describe('horse care deep-link selection', () => {
+  it('keeps callable care contacts and emergency notes ahead of both care views', () => {
+    const horse = {
+      ...createDashboardLabFixtureData().horses[0],
+      vetName: 'Dr Morgan',
+      vetPhone: '+48 123 456 789',
+      farrierName: undefined,
+      farrierPhone: '987654321',
+      emergencyNotes: 'Call the vet before administering medication.',
+    }
+    render(<HorseCareSection horse={horse} events={[]} />)
+    const contacts = screen.getByRole('region', { name: 'Care contacts' })
+    const notes = screen.getByRole('region', { name: 'Emergency notes' })
+    const tabs = screen.getByRole('tablist')
+    expect(
+      contacts.compareDocumentPosition(notes) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    expect(
+      notes.compareDocumentPosition(tabs) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    expect(
+      screen
+        .getByRole('link', { name: 'Vet: +48 123 456 789' })
+        .getAttribute('href'),
+    ).toBe('tel:+48123456789')
+    expect(
+      screen
+        .getByRole('link', { name: 'Farrier: 987654321' })
+        .getAttribute('href'),
+    ).toBe('tel:987654321')
+    fireEvent.click(screen.getByRole('tab', { name: 'Health issues' }))
+    expect(screen.getByText('Sample health records')).toBeTruthy()
+    expect(screen.getByRole('region', { name: 'Care contacts' })).toBe(contacts)
+    expect(screen.getByRole('region', { name: 'Emergency notes' })).toBe(notes)
+  })
+
   it('accepts only the supported optional health view', () => {
     expect(parseHorseCareSearch({ careView: 'health' })).toEqual({
       careView: 'health',
@@ -48,7 +84,7 @@ describe('horse care deep-link selection', () => {
     const root = createRootRoute()
     const care = createRoute({
       getParentRoute: () => root,
-      path: '/stables/$stableId/horses/$horseId/care',
+      path: '/horses/$horseId/care',
       validateSearch: parseHorseCareSearch,
       component: () => (
         <HorseDetail
@@ -62,9 +98,7 @@ describe('horse care deep-link selection', () => {
     const router = createRouter({
       routeTree: root.addChildren([care]),
       history: createMemoryHistory({
-        initialEntries: [
-          `/stables/${data.stable._id}/horses/${horse._id}/care?careView=health`,
-        ],
+        initialEntries: [`/horses/${horse._id}/care?careView=health`],
       }),
     })
     await router.load()

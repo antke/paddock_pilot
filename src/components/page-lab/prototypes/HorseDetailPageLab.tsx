@@ -29,7 +29,7 @@ export function HorseDetailPageLab({ data }: HorseDetailPageLabProps) {
             _id: originalHorse._id,
             _creationTime: originalHorse._creationTime,
             stableId: originalHorse.stableId,
-            ownerId: originalHorse.ownerId,
+            ownerId: originalHorse.ownerId!,
             name: 'Juniper',
             age: 9,
           }

@@ -57,7 +57,7 @@ export function OnboardingStepper({
                 !onStepSelect ||
                 (step.status !== 'completed' && step.status !== 'deferred')
               }
-              className="app-control-focus flex min-h-16 w-full min-w-0 items-center gap-3 border border-transparent px-4 py-3 text-left outline-none ring-inset enabled:hover:bg-surface-muted disabled:pointer-events-none"
+              className="app-choice-feedback app-control-focus flex min-h-16 w-full min-w-0 items-center gap-3 border border-transparent px-4 py-3 text-left outline-none ring-inset enabled:hover:bg-surface-muted disabled:pointer-events-none"
               onClick={() => onStepSelect?.(step)}
             >
               <StepMarker index={index} status={step.status} />

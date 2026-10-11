@@ -36,7 +36,7 @@ export const canManageOwnedRecord = ({
 }: {
   role: StableRole
   userId: string
-  ownerId: string
+  ownerId: string | undefined
 }) => role === 'owner' || userId === ownerId
 
 export const canManageCreatedRecord = ({
@@ -56,7 +56,7 @@ export const canCreateEventForHorseOwners = ({
 }: {
   role: StableRole
   userId: string
-  horseOwnerIds: Array<string>
+  horseOwnerIds: Array<string | undefined>
 }) => role === 'owner' || horseOwnerIds.some((ownerId) => ownerId === userId)
 
 export const canManageLinkedRecord = ({

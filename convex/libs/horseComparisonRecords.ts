@@ -115,7 +115,12 @@ export function createHorseComparisonRecords({
       title: entry.occurrence.event.title,
       durationMinutes: entry.details.durationMinutes,
       eventId: entry.occurrence.eventId,
-      status: entry.status,
+      // A scheduled event marked complete is not a horse-specific outcome.
+      // Preserve it as unconfirmed until this horse has a completion record.
+      status:
+        entry.status === 'completed' && entry.record?.status !== 'completed'
+          ? 'unconfirmed'
+          : entry.status,
       activities: entry.details.activities,
       details: fields({
         rider: entry.details.rider,

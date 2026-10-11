@@ -62,8 +62,7 @@ function applyThemeMode(mode: ThemeMode) {
   document.documentElement.style.colorScheme = resolved
 }
 
-export default function ThemeToggle() {
-  const t = useT()
+function useThemePreference() {
   const [mode, setMode] = useState<ThemeMode>('light')
   const currentMode = useRef<ThemeMode>('light')
 
@@ -142,13 +141,31 @@ export default function ThemeToggle() {
     )
   }
 
+  return { mode, toggleMode }
+}
+
+// Account preferences live in a dialog; keep system and cross-tab changes active
+// even when its controls are unmounted.
+export function ThemePreferenceSync() {
+  useThemePreference()
+  return null
+}
+
+export default function ThemeToggle({
+  showLabel = false,
+}: {
+  showLabel?: boolean
+}) {
+  const t = useT()
+  const { mode, toggleMode } = useThemePreference()
   const label = t(`theme.${mode}`)
 
   return (
     <Button
       type="button"
-      variant="ghost"
-      size="icon-sm"
+      variant={showLabel ? 'outline' : 'ghost'}
+      size={showLabel ? 'default' : 'icon-sm'}
+      className={showLabel ? 'w-full justify-start' : undefined}
       onClick={toggleMode}
       aria-label={label}
       title={label}
@@ -159,6 +176,17 @@ export default function ThemeToggle() {
         <MoonIcon aria-hidden="true" />
       ) : (
         <SunIcon aria-hidden="true" />
+      )}
+      {showLabel && (
+        <span>
+          {t(
+            mode === 'auto'
+              ? 'navigationShell.themeSystem'
+              : mode === 'dark'
+                ? 'navigationShell.themeDark'
+                : 'navigationShell.themeLight',
+          )}
+        </span>
       )}
     </Button>
   )

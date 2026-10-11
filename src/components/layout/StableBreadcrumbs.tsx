@@ -149,8 +149,8 @@ function StableBreadcrumbLink({
         render={
           <Link
             activeOptions={{ exact: true }}
-            to="/stables/$stableId/horses/$horseId/profile"
-            params={{ stableId, horseId }}
+            to="/horses/$horseId/profile"
+            params={{ horseId }}
           />
         }
       >

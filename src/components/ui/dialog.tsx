@@ -47,7 +47,7 @@ function DialogOverlay({
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        'fixed inset-0 isolate z-50 bg-foreground/15 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 motion-reduce:animate-none motion-reduce:transition-none',
+        'fixed inset-0 isolate z-50 bg-foreground/15 app-overlay-motion supports-backdrop-filter:backdrop-blur-xs motion-reduce:animate-none motion-reduce:transition-none',
         className,
       )}
       {...props}
@@ -59,19 +59,22 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  mobileFullscreen = false,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
+  mobileFullscreen?: boolean
 }) {
   const t = useT()
   return (
     <DialogPortal>
       <DialogOverlay />
-      <DialogViewport>
+      <DialogViewport data-mobile-fullscreen={mobileFullscreen || undefined}>
         <DialogPrimitive.Popup
           data-slot="dialog-content"
+          data-mobile-fullscreen={mobileFullscreen || undefined}
           className={cn(
-            'app-panel-strong relative my-auto grid w-full max-w-[calc(100%-2rem)] gap-4 bg-popover p-5 text-sm/relaxed text-popover-foreground duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 motion-reduce:animate-none motion-reduce:transition-none',
+            'app-panel-strong relative my-auto grid w-full max-w-[calc(100%-2rem)] gap-4 bg-popover p-5 text-sm/relaxed text-popover-foreground app-dialog-motion outline-none sm:max-w-sm motion-reduce:animate-none motion-reduce:transition-none',
             className,
           )}
           {...props}

@@ -1,6 +1,16 @@
 import type { EmailCopy } from './email.en'
 
 export const emailPL = {
+  digestSubject: 'Przypomnienia o opiece do wykonania',
+  digestHeading: 'Opieka wymagająca uwagi',
+  digestBody:
+    'W tych stajniach są oczekujące przypomnienia z terminem na dziś lub wcześniejszym. Otwórz Opiekę, aby zobaczyć aktualne szczegóły.',
+  digestCount: (name: string, count: number) =>
+    `${name}: do wykonania lub zaległe — ${count}`,
+  digestSettings: 'Ustawienia e-mail',
+  digestOpenCare: 'Otwórz opiekę',
+  digestPreferences:
+    'Otrzymujesz to codzienne podsumowanie, ponieważ włączono e-maile z przypomnieniami o opiece. Zmień to ustawienie w swoim profilu:',
   invitationSubject: (stableName: string) =>
     `Zaproszenie do stajni ${stableName} w Paddock Pilot`,
   invitationPreheader: (stableName: string) =>

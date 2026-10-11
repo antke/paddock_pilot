@@ -26,6 +26,8 @@ export const eventForm = {
   noRepeat: 'Does not repeat',
   trainingHelp: 'Describe the training and set its timing.',
   eventHelp: 'Name the event and set its timing.',
+  essentialsHelp:
+    'Start with event details and horses. Everything else is optional.',
   sessionDetails: 'Session details',
   eventDetails: 'Event details',
   title: 'Title',
@@ -47,11 +49,15 @@ export const eventForm = {
     'Leave blank for a one-day event. An end date includes that full day.',
   time: 'Time',
   timeHelp: 'Enter the yard-local time used by your stable.',
+  personalTimeHelp:
+    'Enter the local time where this appointment will take place.',
   trainingHorsesHelp: 'Choose the horses taking part in this session.',
   eventHorsesHelp: 'Choose every horse this event applies to.',
   horses: 'Horses',
   noHorses:
     'No horses are available in this stable. Add a horse before creating an event.',
+  noPersonalHorses:
+    'No horses are available for you to schedule. Add your horse, or ask its owner for care-editing access.',
   trainingLogisticsHelp: 'Add a location, trainer, and costs when relevant.',
   eventLogisticsHelp:
     'Add a location, service provider, and costs when relevant.',

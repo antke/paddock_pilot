@@ -79,6 +79,7 @@ export function DocumentUploadDialog({
 
   return (
     <CreateRecordDialog
+      actionId="document"
       open={isCreateOpen}
       onOpenChange={(open) => {
         if (!uploading.current) setIsCreateOpen(open)

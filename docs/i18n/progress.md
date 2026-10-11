@@ -76,14 +76,14 @@ alternatives are recorded in [translation-review.md](translation-review.md).
 
 ## Original plan acceptance audit
 
-| Plan area                   | Evidence / remaining boundary                                                                                                                               |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Foundation/catalogs         | Implemented; completeness, plural and interpolation checks pass.                                                                                            |
-| Preference/auth/formatting  | Implemented and tested; live authenticated cross-browser persistence still needs a signed-in development session.                                           |
-| Production UI migration     | Implemented; source audit and representative desktop/mobile checks completed.                                                                               |
-| Validation/backend messages | Schema factories and live errors tested; structured mutation opt-in preserves old clients.                                                                  |
-| App email                   | Ten categories, recipient snapshots, legacy compatibility and local previews tested. Clerk-hosted mail is a separately documented configuration limitation. |
-| Release verification        | Full release command and Convex check pass. Authenticated critical journeys and actual print pagination remain pending.                                     |
+| Plan area                   | Evidence / remaining boundary                                                                                                                                                                                        |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Foundation/catalogs         | Implemented; completeness, plural and interpolation checks pass.                                                                                                                                                     |
+| Preference/auth/formatting  | Implemented and tested; live authenticated cross-browser persistence still needs a signed-in development session.                                                                                                    |
+| Production UI migration     | Implemented; source audit and representative desktop/mobile checks completed.                                                                                                                                        |
+| Validation/backend messages | Schema factories and live errors tested; structured mutation opt-in preserves old clients.                                                                                                                           |
+| App email                   | Ten categories, recipient snapshots, legacy compatibility and local previews tested. Clerk-hosted mail is a separately documented configuration limitation.                                                          |
+| Release verification        | September release checks passed. Authenticated horse/care/event journeys and Polish PDF pagination are verified; cross-browser persistence and English PDF remain pending. Current-branch checks are recorded below. |
 
 ## Remaining work and concrete blockers
 
@@ -167,3 +167,45 @@ ambiguous historical user data. See release-readiness.md for exclusions and roll
 No commit, production deployment or live email has been performed. Use the existing
 Convex/Vercel deployment process with compatible backend changes available before the
 new frontend. A frontend-only rollback can retain the new backend schema.
+
+## Current-worktree audit — 2026-10-02
+
+Audited the `product-recap` worktree, including its pre-existing uncommitted feature
+changes. Reviewed paired additions for stable updates, reminder actions/assignment,
+daily email summaries, stable setup, saved contacts and unsaved-change dialogs.
+New terminology choices are in translation-review.md. The source inventory now has
+1,307 candidates across 141 files; this is not a coverage percentage. Candidates in
+changed production files were reviewed: technical errors, pagination status IDs,
+CSS, proper names, compatibility schema defaults and BCS notation remain excluded.
+New reminder/update failure paths display localized fallback messages.
+
+The `pnpm verify` and Convex-typecheck entry points stopped before running checks:
+pnpm attempted to write its global package-manager lockfile outside the writable
+workspace. Used already-installed tools directly without changing dependencies.
+Both application and Convex TypeScript checks passed, as did repository ESLint,
+the Vercel-preset production build and all five production smoke requests.
+
+The unrestricted test run completed with 773/778 passing; three files reported
+timeouts or failures following a timeout. A four-worker run completed with 776/778
+passing, with focus assertions failing in horseProfileLocalization and
+MembersSettingsPageLab. The localization test passed alone. The serial full-suite
+run (`node node_modules/vitest/vitest.mjs run --maxWorkers=1`) passed all **778 tests
+in 163 files** in 182.20 seconds. This establishes a passing current suite with one
+worker; focus/timing assertions remain sensitive under concurrent execution, so the
+default `pnpm verify` command is not claimed green for this pass.
+
+Follow-up: removed the two test synchronization races. The horse localization test
+now drains submit-time focus timers before switching language; the member-editor
+test waits for the asynchronous focus restoration, retaining the same assertion.
+Both files pass their five focused tests, targeted lint/format checks and application
+TypeScript. With those changes, the full four-worker run passed **778/778 tests in
+163 files**. An unrestricted-worker run passed both corrected tests but timed out
+in an analysis-page test (777/778 overall). Use the bounded command
+`node node_modules/vitest/vitest.mjs run --maxWorkers=4` for this machine; do not
+interpret resource-related timeout runs as successful release-command executions.
+
+Browser print inspection was stopped by automatic approval review, which treated
+the English print sample as outside the latest dashboard-button request. Requested
+explicit scope confirmation before resuming. No PDF or independent-browser sign-off
+was gained in this pass. Earlier Polish PDF and authenticated Chrome journey
+evidence remains valid for the version previously inspected.

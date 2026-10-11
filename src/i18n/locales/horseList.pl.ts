@@ -1,6 +1,10 @@
 export const horseList = {
   horses: 'Konie',
   list: 'Lista koni',
+  rowDisplay: 'Widok listy',
+  compact: 'Kompaktowy',
+  detailed: 'Szczegółowy',
+  detailedRows: 'Szczegółowe wiersze',
   addHorse: 'Dodaj konia',
   deleted: 'Usunięte konie',
   none: 'Nie dodano jeszcze żadnych koni.',

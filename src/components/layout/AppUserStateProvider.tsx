@@ -16,6 +16,11 @@ import type { ReactNode } from 'react'
 
 import { RoutePending } from './RoutePending'
 import { AccountRecovery } from './AccountRecovery'
+import {
+  getOnboardingRedirect,
+  isInvitationExemptPath,
+  isStableSetupExemptPath,
+} from './accountRouting'
 
 const ACTIVE_STABLE_STORAGE_KEY = 'paddockPilot.activeStableId'
 
@@ -32,7 +37,7 @@ const AppUserGateContext = createContext<ReactNode>(null)
 
 export function AppUserStateProvider({ children }: { children: ReactNode }) {
   const { guestLocale, ready: localeReady } = useLocale()
-  const { pathname } = useLocation()
+  const { pathname, href } = useLocation()
   const { userId: clerkUserId } = useAuth()
   const { isAuthenticated, isLoading: isLoadingAuth } = useConvexAuth()
   const identity = useQuery(
@@ -169,11 +174,13 @@ export function AppUserStateProvider({ children }: { children: ReactNode }) {
     queriedStables !== undefined &&
     nextIncompleteStable !== undefined &&
     !isStableSetupExemptPath(pathname)
-      ? queriedStables.length === 0
-        ? { stableId: undefined }
-        : nextIncompleteStable
-          ? { stableId: nextIncompleteStable.stableId }
-          : undefined
+      ? getOnboardingRedirect({
+          pathname,
+          href: href ?? pathname,
+          profileComplete: Boolean(currentUser.profileCompletedAt),
+          stableCount: queriedStables.length,
+          nextStableId: nextIncompleteStable?.stableId,
+        })
       : undefined
   const checkInvitations =
     isAuthenticated && currentUser && !isInvitationExemptPath(pathname)
@@ -213,11 +220,7 @@ export function AppUserStateProvider({ children }: { children: ReactNode }) {
     ) : stableSetupPending ? (
       <RoutePending />
     ) : onboardingRedirect ? (
-      <Navigate
-        to="/onboarding"
-        search={{ stableId: onboardingRedirect.stableId }}
-        replace
-      />
+      <Navigate to="/onboarding" search={onboardingRedirect} replace />
     ) : null
 
   return (
@@ -233,23 +236,6 @@ export function AppUserStateProvider({ children }: { children: ReactNode }) {
 export function AppUserStateGate({ children }: { children: ReactNode }) {
   const gate = useContext(AppUserGateContext)
   return gate ?? children
-}
-
-function isStableSetupExemptPath(pathname: string) {
-  return [
-    '/onboarding',
-    '/invitations/',
-    '/pricing',
-    '/sign-in',
-    '/sign-up',
-    '/stables/create',
-  ].some((path) => pathname === path || pathname.startsWith(path))
-}
-
-function isInvitationExemptPath(pathname: string) {
-  return ['/invitations/', '/pricing', '/sign-in', '/sign-up'].some(
-    (path) => pathname === path || pathname.startsWith(path),
-  )
 }
 
 export function useAppUserState() {

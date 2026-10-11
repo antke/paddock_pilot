@@ -67,7 +67,9 @@ describe('actual signed-in dashboard composition', () => {
         name: primary.stable.name,
       }),
     ).toBeTruthy()
-    expect(screen.getByRole('heading', { name: 'Today' })).toBeTruthy()
+    expect(
+      screen.getByRole('heading', { name: 'Events', level: 2 }),
+    ).toBeTruthy()
     const region = screen.getByRole('region', { name: 'Horse invitations' })
     expect(within(region).getAllByRole('listitem')).toHaveLength(2)
     expect(within(region).queryByText(invitations[2].event!.title)).toBeNull()

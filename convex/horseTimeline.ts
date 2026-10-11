@@ -1,7 +1,8 @@
+import { horseEvent } from './libs/horseEventHistory'
 import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
 import { query } from './_generated/server'
-import { assertCanViewStable } from './libs/stablePermissions'
+import { assertCanReadHorse } from './libs/horsePermissions'
 
 const isEvent = (event: Doc<'events'> | null): event is Doc<'events'> =>
   event !== null
@@ -24,7 +25,7 @@ export const listForHorse = query({
     const horse = await ctx.db.get(args.horseId)
     if (!horse) return { horse: null, entries: [] }
 
-    await assertCanViewStable(ctx, horse.stableId)
+    await assertCanReadHorse(ctx, horse)
 
     const [
       eventHorses,
@@ -36,7 +37,7 @@ export const listForHorse = query({
       ctx.db
         .query('eventsHorses')
         .withIndex('by_horse_id', (q) => q.eq('horseId', args.horseId))
-        .take(250),
+        .collect(),
       ctx.db
         .query('horseHealthIssues')
         .withIndex('by_horse_id', (q) => q.eq('horseId', args.horseId))
@@ -57,7 +58,7 @@ export const listForHorse = query({
 
     const confirmedEventHorses = eventHorses.filter(isConfirmedEventHorse)
     const events = await Promise.all(
-      confirmedEventHorses.map((eventHorse) => ctx.db.get(eventHorse.eventId)),
+      confirmedEventHorses.map((eventHorse) => horseEvent(ctx, eventHorse)),
     )
 
     const trainingRecords = await ctx.db
@@ -103,7 +104,8 @@ export const listForHorse = query({
     const trainingEntries = (
       await Promise.all(
         trainingRecords.map(async (record) => {
-          const event = await ctx.db.get(record.eventId)
+          const row = eventHorses.find((r) => r.eventId === record.eventId)
+          const event = row ? await horseEvent(ctx, row) : null
           if (!event) return null
           return {
             id: record._id,

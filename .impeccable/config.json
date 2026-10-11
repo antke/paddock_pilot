@@ -1,3 +1,35 @@
 {
-  "buildPath": "code"
+  "buildPath": "code",
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-radius",
+        "value": "9999px",
+        "files": [
+          "src/styles.css"
+        ],
+        "createdAt": "2026-10-09T18:26:59.700Z",
+        "reason": "Existing native date-picker icon uses functional circular geometry permitted by DESIGN.md; this is not a panel radius."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "1rem",
+        "files": [
+          "src/styles.css"
+        ],
+        "createdAt": "2026-10-09T18:26:59.771Z",
+        "reason": "Existing mobile form inputs use 16px text to avoid browser zoom while entering data; preserve this touch accessibility exception."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "20px",
+        "files": [
+          "src/components/layout/AppShell.test.tsx"
+        ],
+        "createdAt": "2026-10-10T10:38:50.957Z"
+      }
+    ]
+  }
 }

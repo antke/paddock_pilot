@@ -1,3 +1,7 @@
+import {
+  isOnlyOutstandingFilter,
+  createCareReminderListFilterConfig,
+} from './careReminderListFilters'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { useMemo } from 'react'
 import type { ComponentProps } from 'react'
@@ -10,7 +14,6 @@ import { useListFiltering } from '#/components/list-filtering/useListFiltering'
 
 import { CareRemindersCard } from './CareRemindersCard'
 import { StableRemindersPageView } from './StableRemindersPage'
-import { createCareReminderListFilterConfig } from './careReminderListFilters'
 
 type FilterableCareRemindersCardProps = ComponentProps<
   typeof CareRemindersCard
@@ -33,6 +36,7 @@ export function FilterableCareRemindersCard({
   const filtering = useListFiltering({
     items: reminders,
     config: filterConfig,
+    initialFacets: { state: 'pending' },
   })
 
   const View = pageLayout ? StableRemindersPageView : CareRemindersCard
@@ -42,11 +46,18 @@ export function FilterableCareRemindersCard({
       {...cardProps}
       reminders={filtering.items}
       horseOptions={horseOptions}
-      emptyMessage={getListFilterEmptyMessage({
-        filtering,
-        emptyMessage,
-        filteredEmptyMessage: t('reminders.filteredEmpty'),
-      })}
+      emptyMessage={
+        isOnlyOutstandingFilter({
+          query: filtering.query,
+          facets: filtering.selectedFacets,
+        })
+          ? t('reminders.outstandingEmpty')
+          : getListFilterEmptyMessage({
+              filtering,
+              emptyMessage,
+              filteredEmptyMessage: t('reminders.filteredEmpty'),
+            })
+      }
       listToolbar={
         <ListFilterControls
           config={filterConfig}

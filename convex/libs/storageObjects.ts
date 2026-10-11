@@ -8,14 +8,18 @@ export async function getStorageObjectReferences(
   ctx: Ctx,
   storageId: Id<'_storage'>,
 ) {
-  const [user, horse, document, ownership] = await Promise.all([
+  const [user, horse, document, ownership, snapshot] = await Promise.all([
     ctx.db
       .query('users')
-      .withIndex('by_profile_image_id', (q) => q.eq('profileImageId', storageId))
+      .withIndex('by_profile_image_id', (q) =>
+        q.eq('profileImageId', storageId),
+      )
       .first(),
     ctx.db
       .query('horses')
-      .withIndex('by_profile_image_id', (q) => q.eq('profileImageId', storageId))
+      .withIndex('by_profile_image_id', (q) =>
+        q.eq('profileImageId', storageId),
+      )
       .first(),
     ctx.db
       .query('stableDocuments')
@@ -25,9 +29,13 @@ export async function getStorageObjectReferences(
       .query('userStorageObjects')
       .withIndex('by_storage_id', (q) => q.eq('storageId', storageId))
       .first(),
+    ctx.db
+      .query('horseSnapshots')
+      .withIndex('by_storage_id', (q) => q.eq('storageId', storageId))
+      .first(),
   ])
 
-  return { user, horse, document, ownership }
+  return { user, horse, document, ownership, snapshot }
 }
 
 export async function assertStorageObjectCanBeClaimed(

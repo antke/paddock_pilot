@@ -84,7 +84,7 @@ function createTimelinePeriod(
   buckets: Array<LabTimelineBucket>,
   locale: Locale,
 ): StableTimelinePeriod {
-  const occurrences = getUniquePeriodOccurrences(buckets, scale)
+  const occurrences = getUniquePeriodOccurrences(buckets)
   const signals = getUniquePeriodSignals(buckets)
   const completedEventCount = occurrences.filter(
     (occurrence) => occurrence.event.status === 'completed',
@@ -132,14 +132,12 @@ function getUniquePeriodSignals(
 
 function getUniquePeriodOccurrences(
   buckets: Array<LabTimelineBucket>,
-  scale: StableTimelineScale,
 ): Array<LabTimelineOccurrence> {
   const occurrencesByKey = new Map<string, LabTimelineOccurrence>()
 
   for (const bucket of buckets) {
     for (const occurrence of bucket.occurrences) {
-      const occurrenceKey =
-        scale === 'day' ? occurrence.occurrenceKey : String(occurrence.eventId)
+      const occurrenceKey = occurrence.occurrenceKey
       if (!occurrencesByKey.has(occurrenceKey)) {
         occurrencesByKey.set(occurrenceKey, occurrence)
       }

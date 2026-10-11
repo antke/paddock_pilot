@@ -1,16 +1,19 @@
+import {
+  canEditHorseRecord,
+  auditHorse,
+  assertCanReadHorse,
+  assertCanAddHorseRecord,
+  assertCanEditHorseRecord,
+} from './libs/horsePermissions'
 import { ConvexError, v } from 'convex/values'
 import {
   healthIssueAddSchema,
   healthIssueUpdateSchema,
 } from '../shared/horses/healthIssueSchema'
 import type { Doc, Id } from './_generated/dataModel'
-import { mutation, query   } from './_generated/server'
-import type {MutationCtx, QueryCtx} from './_generated/server';
-import {
-  assertCanManageHorse,
-  assertCanViewStable,
-  getCurrentUser,
-} from './libs/stablePermissions'
+import { mutation, query } from './_generated/server'
+import type { MutationCtx, QueryCtx } from './_generated/server'
+import { getCurrentUser } from './libs/stablePermissions'
 
 const healthIssueSeverity = v.union(
   v.literal('low'),
@@ -56,10 +59,7 @@ const validateUpdateInput = (args: {
   return result.data
 }
 
-const getIssueHorse = async (
-  ctx: Ctx,
-  issue: Doc<'horseHealthIssues'>,
-) => {
+const getIssueHorse = async (ctx: Ctx, issue: Doc<'horseHealthIssues'>) => {
   const horse = await ctx.db.get(issue.horseId)
   if (!horse) throw new ConvexError('Horse not found')
 
@@ -72,18 +72,23 @@ export const listForHorse = query({
     const horse = await ctx.db.get(args.horseId)
     if (!horse) return []
 
-    await assertCanViewStable(ctx, horse.stableId)
+    const access = await assertCanReadHorse(ctx, horse)
 
     const issues = await ctx.db
       .query('horseHealthIssues')
       .withIndex('by_horse_id', (q) => q.eq('horseId', args.horseId))
       .collect()
 
-    return issues.sort((a, b) => {
-      if (a.status !== b.status) return a.status === 'active' ? -1 : 1
+    return issues
+      .map((record) => ({
+        ...record,
+        canEdit: canEditHorseRecord(access, horse, record),
+      }))
+      .sort((a, b) => {
+        if (a.status !== b.status) return a.status === 'active' ? -1 : 1
 
-      return b.notedAt - a.notedAt
-    })
+        return b.notedAt - a.notedAt
+      })
   },
 })
 
@@ -93,10 +98,10 @@ export const getPermissions = query({
     const horse = await ctx.db.get(args.horseId)
     if (!horse) return { canManage: false }
 
-    const access = await assertCanViewStable(ctx, horse.stableId)
+    const access = await assertCanReadHorse(ctx, horse)
 
     return {
-      canManage: access.role === 'owner' || horse.ownerId === access.userId,
+      canManage: access.canAddRecords,
     }
   },
 })
@@ -113,14 +118,15 @@ export const add = mutation({
     const horse = await ctx.db.get(args.horseId)
     if (!horse) throw new ConvexError('Horse not found')
 
-    await assertCanManageHorse(ctx, horse, user._id)
+    const access = await assertCanAddHorseRecord(ctx, horse, user._id)
+    await auditHorse(ctx, horse._id, user._id, 'horseHealthIssues.added')
 
     const issueInput = validateAddInput(args)
     const now = Date.now()
 
     return await ctx.db.insert('horseHealthIssues', {
       horseId: args.horseId,
-      stableId: horse.stableId,
+      ...access.recordOrigin,
       title: issueInput.title,
       description: issueInput.description,
       severity: issueInput.severity,
@@ -147,7 +153,14 @@ export const update = mutation({
     if (!issue) throw new ConvexError('Health issue not found')
 
     const horse = await getIssueHorse(ctx, issue)
-    await assertCanManageHorse(ctx, horse)
+    const recordAccess = await assertCanEditHorseRecord(ctx, horse, issue)
+    await auditHorse(
+      ctx,
+      horse._id,
+      recordAccess.userId,
+      'horseHealthIssues.changed',
+      JSON.stringify(issue),
+    )
 
     const issueInput = validateUpdateInput(updates)
     const nextStatus = issueInput.status ?? issue.status
@@ -155,7 +168,9 @@ export const update = mutation({
     await ctx.db.patch(id, {
       ...issueInput,
       resolvedAt:
-        nextStatus === 'resolved' ? issue.resolvedAt ?? Date.now() : undefined,
+        nextStatus === 'resolved'
+          ? (issue.resolvedAt ?? Date.now())
+          : undefined,
       updatedAt: Date.now(),
     })
   },
@@ -168,7 +183,14 @@ export const resolve = mutation({
     if (!issue) throw new ConvexError('Health issue not found')
 
     const horse = await getIssueHorse(ctx, issue)
-    await assertCanManageHorse(ctx, horse)
+    const recordAccess = await assertCanEditHorseRecord(ctx, horse, issue)
+    await auditHorse(
+      ctx,
+      horse._id,
+      recordAccess.userId,
+      'horseHealthIssues.changed',
+      JSON.stringify(issue),
+    )
 
     const now = Date.now()
     await ctx.db.patch(args.id, {
@@ -186,7 +208,14 @@ export const remove = mutation({
     if (!issue) throw new ConvexError('Health issue not found')
 
     const horse = await getIssueHorse(ctx, issue)
-    await assertCanManageHorse(ctx, horse)
+    const recordAccess = await assertCanEditHorseRecord(ctx, horse, issue)
+    await auditHorse(
+      ctx,
+      horse._id,
+      recordAccess.userId,
+      'horseHealthIssues.changed',
+      JSON.stringify(issue),
+    )
 
     await ctx.db.delete(args.id)
   },

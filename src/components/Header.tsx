@@ -1,10 +1,13 @@
+import { useOwnershipCopy } from '#/components/ownership/ownershipCopy'
 import { useT } from '#/i18n/LocaleProvider'
 import { LanguageSelector } from '#/i18n/LanguageSelector'
 import { Show } from '@clerk/tanstack-react-start'
 import type { ReactNode } from 'react'
+import { Popover } from '@base-ui/react/popover'
+import { GearIcon } from '@phosphor-icons/react'
 
 import { useAppUserState } from '#/components/layout/AppUserStateProvider'
-import { ButtonLink, buttonVariants } from '#/components/ui/button'
+import { Button, ButtonLink, buttonVariants } from '#/components/ui/button'
 import { cn } from '#/lib/utils'
 import { useDevAuthBypassEnabled } from '#/lib/devAuthBypass'
 import { Link, useLocation } from '@tanstack/react-router'
@@ -18,6 +21,9 @@ import {
   AppHeaderLinks,
 } from './layout/AppShell'
 import ThemeToggle from './ThemeToggle'
+import { useSmallScreen } from '#/lib/useSmallScreen'
+import { AuthStateSwitch } from './layout/AuthStateSwitch'
+import { WorkspaceNavigation } from './layout/WorkspaceNavigationShell'
 
 const activeNavigationClassName =
   'border-selection bg-selection-surface text-selection hover:bg-selection-surface hover:text-selection'
@@ -25,7 +31,7 @@ const activeNavigationClassName =
 export default function Header() {
   const devAuthBypassEnabled = useDevAuthBypassEnabled()
 
-  return (
+  const header = (
     <HeaderView
       navigation={
         <HeaderNavigation devAuthBypassEnabled={devAuthBypassEnabled} />
@@ -35,6 +41,13 @@ export default function Header() {
       }
     />
   )
+  return (
+    <AuthStateSwitch
+      signedOut={header}
+      loading={header}
+      signedIn={<WorkspaceNavigation />}
+    />
+  )
 }
 
 export function HeaderView({
@@ -42,26 +55,82 @@ export function HeaderView({
   accountActions,
   position,
   navigationLabel,
+  mobileContext,
 }: {
   navigation: ReactNode
   accountActions: ReactNode
   position?: 'sticky' | 'static'
   navigationLabel?: string
+  mobileContext?: ReactNode
 }) {
   const t = useT()
+  const small = useSmallScreen()
   return (
     <AppHeader position={position}>
-      <AppHeaderNav aria-label={navigationLabel ?? t('navigation.primary')}>
-        <AppBrandLink>Paddock Pilot</AppBrandLink>
+      <AppHeaderNav
+        aria-label={
+          navigationLabel ??
+          t(
+            mobileContext && small
+              ? 'dashboard.workspace'
+              : 'navigation.primary',
+          )
+        }
+      >
+        {mobileContext ? (
+          <>
+            <div className="min-w-0 flex-1 md:hidden">{mobileContext}</div>
+            <div className="hidden md:block">
+              <AppBrandLink>Paddock Pilot</AppBrandLink>
+            </div>
+          </>
+        ) : (
+          <AppBrandLink>Paddock Pilot</AppBrandLink>
+        )}
 
-        <AppHeaderLinks>{navigation}</AppHeaderLinks>
+        <AppHeaderLinks
+          className={mobileContext ? 'hidden md:flex' : undefined}
+        >
+          {navigation}
+        </AppHeaderLinks>
 
         <AppHeaderActions>
-          <AppHeaderUtilityCluster>
-            {accountActions}
+          {accountActions}
+          <AppHeaderUtilityCluster className="hidden sm:flex">
             <LanguageSelector compact />
             <ThemeToggle />
           </AppHeaderUtilityCluster>
+          <Popover.Root>
+            <Popover.Trigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="sm:hidden"
+                  aria-label={t('navigation.accountPreferences')}
+                />
+              }
+            >
+              <GearIcon aria-hidden="true" />
+            </Popover.Trigger>
+            <Popover.Portal>
+              <Popover.Positioner
+                align="end"
+                sideOffset={8}
+                className="z-50 sm:hidden"
+              >
+                <Popover.Popup
+                  aria-label={t('navigation.accountPreferences')}
+                  className="grid max-h-(--available-height) max-w-[calc(100vw-2rem)] gap-4 overflow-y-auto rounded-row border border-border bg-popover p-4 text-popover-foreground outline-none"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <LanguageSelector compact />
+                    <ThemeToggle />
+                  </div>
+                </Popover.Popup>
+              </Popover.Positioner>
+            </Popover.Portal>
+          </Popover.Root>
         </AppHeaderActions>
       </AppHeaderNav>
     </AppHeader>
@@ -103,20 +172,36 @@ function HeaderNavigation({
 }) {
   const t = useT()
   const { activeStable } = useAppUserState()
+  const c = useOwnershipCopy()
+  const { pathname } = useLocation()
+  const stableNavigation =
+    activeStable && pathname.startsWith('/stables/') ? (
+      <ActiveStableNavigation stableId={activeStable._id} />
+    ) : (
+      <>
+        <HeaderNavigationLink to="/" exact>
+          {t('navigation.home')}
+        </HeaderNavigationLink>
+        <HeaderNavigationLink to="/events">
+          {t('dashboard.events')}
+        </HeaderNavigationLink>
+        <HeaderNavigationLink to="/training">
+          {t('navigation.training')}
+        </HeaderNavigationLink>
+        <HeaderNavigationLink to="/stables">
+          {t('navigation.stables')}
+        </HeaderNavigationLink>
+      </>
+    )
 
-  const signedInNavigation = activeStable ? (
-    <ActiveStableNavigation stableId={activeStable._id} />
-  ) : (
+  const signedInNavigation = (
     <>
-      <HeaderNavigationLink to="/" exact>
-        {t('navigation.home')}
-      </HeaderNavigationLink>
-      <HeaderNavigationLink to="/stables">
-        {t('navigation.stables')}
-      </HeaderNavigationLink>
+      {activeStable && pathname.startsWith('/stables/') && (
+        <HeaderNavigationLink to="/horses">{c.title}</HeaderNavigationLink>
+      )}
+      {stableNavigation}
     </>
   )
-
   return (
     <>
       {devAuthBypassEnabled ? (
@@ -159,9 +244,21 @@ export function ActiveStableNavigation({
 
   return (
     <>
-      <HeaderNavigationLink to="/" active={pathname === '/'}>
+      <Link
+        to="/stables/$stableId"
+        params={{ stableId }}
+        activeOptions={{ exact: true }}
+        className={cn(
+          buttonVariants({ variant: 'ghost', size: 'sm' }),
+          pathname.replace(/\/$/, '') === stableBasePath &&
+            activeNavigationClassName,
+        )}
+        aria-current={
+          pathname.replace(/\/$/, '') === stableBasePath ? 'page' : undefined
+        }
+      >
         {t('navigation.home')}
-      </HeaderNavigationLink>
+      </Link>
       <Link
         to="/stables/$stableId/horses"
         params={{ stableId }}
@@ -176,6 +273,36 @@ export function ActiveStableNavigation({
         )}
       >
         {t('navigation.horses')}
+      </Link>
+      <Link
+        to="/stables/$stableId/training"
+        params={{ stableId }}
+        data-slot="button"
+        aria-current={
+          pathname.startsWith(`${stableBasePath}/training`) ? 'page' : undefined
+        }
+        className={cn(
+          buttonVariants({ variant: 'ghost', size: 'sm' }),
+          pathname.startsWith(`${stableBasePath}/training`) &&
+            activeNavigationClassName,
+        )}
+      >
+        {t('navigation.training')}
+      </Link>
+      <Link
+        to="/stables/$stableId/events"
+        params={{ stableId }}
+        data-slot="button"
+        aria-current={
+          pathname.startsWith(`${stableBasePath}/events`) ? 'page' : undefined
+        }
+        className={cn(
+          buttonVariants({ variant: 'ghost', size: 'sm' }),
+          pathname.startsWith(`${stableBasePath}/events`) &&
+            activeNavigationClassName,
+        )}
+      >
+        {t('dashboard.events')}
       </Link>
       <Link
         to="/stables/$stableId/reminders"
@@ -195,64 +322,40 @@ export function ActiveStableNavigation({
         {t('navigation.care')}
       </Link>
       <Link
-        to="/stables/$stableId/events"
+        to="/stables/$stableId/stable"
         params={{ stableId }}
         data-slot="button"
         aria-current={
-          pathname.startsWith(`${stableBasePath}/events`) ? 'page' : undefined
+          [
+            'stable',
+            'settings',
+            'members',
+            'documents',
+            'analysis',
+            'welcome',
+            'edit',
+          ].some((section) =>
+            pathname.startsWith(`${stableBasePath}/${section}`),
+          )
+            ? 'page'
+            : undefined
         }
         className={cn(
           buttonVariants({ variant: 'ghost', size: 'sm' }),
-          pathname.startsWith(`${stableBasePath}/events`) &&
-            activeNavigationClassName,
+          [
+            'stable',
+            'settings',
+            'members',
+            'documents',
+            'analysis',
+            'welcome',
+            'edit',
+          ].some((section) =>
+            pathname.startsWith(`${stableBasePath}/${section}`),
+          ) && activeNavigationClassName,
         )}
       >
-        {t('navigation.events')}
-      </Link>
-      <Link
-        to="/stables/$stableId/training"
-        params={{ stableId }}
-        data-slot="button"
-        aria-current={
-          pathname.startsWith(`${stableBasePath}/training`) ? 'page' : undefined
-        }
-        className={cn(
-          buttonVariants({ variant: 'ghost', size: 'sm' }),
-          pathname.startsWith(`${stableBasePath}/training`) &&
-            activeNavigationClassName,
-        )}
-      >
-        {t('navigation.training')}
-      </Link>
-      <Link
-        to="/stables/$stableId/documents"
-        params={{ stableId }}
-        data-slot="button"
-        aria-current={
-          pathname === `${stableBasePath}/documents` ? 'page' : undefined
-        }
-        className={cn(
-          buttonVariants({ variant: 'ghost', size: 'sm' }),
-          pathname === `${stableBasePath}/documents` &&
-            activeNavigationClassName,
-        )}
-      >
-        {t('navigation.documents')}
-      </Link>
-      <Link
-        to="/stables/$stableId/analysis"
-        params={{ stableId }}
-        data-slot="button"
-        aria-current={
-          pathname === `${stableBasePath}/analysis` ? 'page' : undefined
-        }
-        className={cn(
-          buttonVariants({ variant: 'ghost', size: 'sm' }),
-          pathname === `${stableBasePath}/analysis` &&
-            activeNavigationClassName,
-        )}
-      >
-        {t('navigation.analysis')}
+        {t('navigation.stable')}
       </Link>
     </>
   )
@@ -267,7 +370,7 @@ function HeaderNavigationLink({
   children: ReactNode
   exact?: boolean
   active?: boolean
-  to: '/' | '/stables' | '/pricing'
+  to: '/' | '/stables' | '/pricing' | '/horses' | '/events' | '/training'
 }) {
   return (
     <ButtonLink

@@ -1,3 +1,9 @@
+import {
+  isOnlyOutstandingFilter,
+  createCareReminderListFilterConfig,
+  getCareReminderListQueryArgs,
+} from './careReminderListFilters'
+import { Link } from '@tanstack/react-router'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
 import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
@@ -14,21 +20,21 @@ import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { api } from 'convex/_generated/api'
-import type { Doc, Id } from 'convex/_generated/dataModel'
-import { useMutation, usePaginatedQuery } from 'convex/react'
+import type { Id } from 'convex/_generated/dataModel'
+import { useMutation, usePaginatedQuery, useQuery } from 'convex/react'
 import { useCallback, useMemo, useState } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
+import { useCareReminderActions } from './useCareReminderActions'
+import { Button } from '#/components/ui/button'
 import { CareRemindersCard } from './CareRemindersCard'
 import type { CareReminderSubmitData } from './CareReminderForm'
-import {
-  createCareReminderListFilterConfig,
-  getCareReminderListQueryArgs,
-} from './careReminderListFilters'
 import type { CareReminderListFilterFacetId } from './careReminderListFilters'
 
 type StableRemindersPageProps = {
   stableId: string
+  reminderId?: string
+  onClearSelection?: () => void
   chrome?: DashboardChrome
 }
 
@@ -36,6 +42,8 @@ const reminderPageSize = 30
 
 export function StableRemindersPage({
   stableId,
+  reminderId,
+  onClearSelection,
   chrome = 'soft',
 }: StableRemindersPageProps) {
   const t = useT()
@@ -55,9 +63,16 @@ export function StableRemindersPage({
   )
   const addReminder = useMutation(api.careReminders.add)
   const addReminderForHorses = useMutation(api.careReminders.addForHorses)
-  const completeReminder = useMutation(api.careReminders.complete)
-  const dismissReminder = useMutation(api.careReminders.dismiss)
-  const removeReminder = useMutation(api.careReminders.remove)
+  const actions = useCareReminderActions()
+  const assigneeOptions = useQuery(api.careReminders.assigneeOptions, {
+    stableId: stableId as Id<'stables'>,
+  })
+  const selectedReminder = useQuery(
+    api.careReminders.get,
+    reminderId
+      ? { stableId: stableId as Id<'stables'>, id: reminderId }
+      : 'skip',
+  )
   const horseOptions = useMemo(
     () =>
       horses.map((horse) => ({
@@ -70,7 +85,9 @@ export function StableRemindersPage({
     () => createCareReminderListFilterConfig(horseOptions, locale),
     [horseOptions, locale],
   )
-  const filtering = useListQueryState<CareReminderListFilterFacetId>()
+  const filtering = useListQueryState<CareReminderListFilterFacetId>({
+    initialFacets: { state: 'pending' },
+  })
   const reminderQueryArgs = useMemo(
     () => ({
       stableId: stableId as Id<'stables'>,
@@ -97,6 +114,8 @@ export function StableRemindersPage({
           category: values.category,
           dueDate: values.dueDate,
           priority: values.priority,
+          assignedTo: (values.assignedTo || undefined) as
+            Id<'users'> | undefined,
           status: 'pending',
         } as const
 
@@ -147,24 +166,60 @@ export function StableRemindersPage({
 
   return (
     <StableRemindersPageView
-      reminders={paginatedReminders.results}
+      reminders={
+        selectedReminder
+          ? [
+              selectedReminder,
+              ...paginatedReminders.results.filter(
+                (item) => item.reminder._id !== selectedReminder.reminder._id,
+              ),
+            ]
+          : paginatedReminders.results
+      }
+      assigneeOptions={assigneeOptions}
       canAddReminder={permissions.canManageStableReminders}
       horseOptions={horseOptions}
       chrome={chrome}
       showHeader={false}
-      emptyMessage={getListFilterEmptyMessage({
-        filtering,
-        emptyMessage: t('reminders.stableEmpty'),
-        filteredEmptyMessage: t('reminders.filteredEmpty'),
-      })}
+      emptyMessage={
+        isOnlyOutstandingFilter({
+          query: filtering.query,
+          facets: filtering.selectedFacets,
+        })
+          ? t('reminders.outstandingEmpty')
+          : getListFilterEmptyMessage({
+              filtering,
+              emptyMessage: t('reminders.stableEmpty'),
+              filteredEmptyMessage: t('reminders.filteredEmpty'),
+            })
+      }
       isLoading={paginatedReminders.status === 'LoadingFirstPage'}
       loadingLabel={t('reminders.loading')}
       listToolbar={
-        <ListFilterControls
-          config={filterConfig}
-          filtering={filtering}
-          sticky
-        />
+        <>
+          {reminderId && (
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-sm">
+                {selectedReminder === null
+                  ? t('reminders.notFound')
+                  : t('reminders.showingSelected')}
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={onClearSelection}
+              >
+                {t('reminders.clearSelection')}
+              </Button>
+            </div>
+          )}
+          <ListFilterControls
+            config={filterConfig}
+            filtering={filtering}
+            sticky
+          />
+        </>
       }
       listFooter={
         <ListLoadMoreFooter
@@ -176,30 +231,7 @@ export function StableRemindersPage({
         />
       }
       onAdd={onAdd}
-      onComplete={(reminder) =>
-        runReminderActionWithToast(completeReminder, reminder, {
-          successTitle: t('reminders.completed'),
-          successDescription: t('reminders.markedComplete', {
-            name: reminder.title,
-          }),
-        })
-      }
-      onDismiss={(reminder) =>
-        runReminderActionWithToast(dismissReminder, reminder, {
-          successTitle: t('reminders.dismissed'),
-          successDescription: t('reminders.markedDismissed', {
-            name: reminder.title,
-          }),
-        })
-      }
-      onRemove={(reminder) =>
-        runReminderActionWithToast(removeReminder, reminder, {
-          successTitle: t('reminders.removed'),
-          successDescription: t('reminders.markedRemoved', {
-            name: reminder.title,
-          }),
-        })
-      }
+      {...actions}
     />
   )
 }
@@ -214,6 +246,11 @@ export function StableRemindersPageView(
     <DashboardPage>
       <DashboardPageHeader
         title={t('reminders.careReminders')}
+        description={
+          <Link to="/profile" className="underline underline-offset-4">
+            {t('reminders.emailSettings')}
+          </Link>
+        }
         actions={createAction}
       />
       <DashboardSectionCard contentGap="loose">
@@ -225,24 +262,4 @@ export function StableRemindersPageView(
       </DashboardSectionCard>
     </DashboardPage>
   )
-}
-
-const runReminderActionWithToast = async (
-  mutateReminder: (args: { id: Id<'careReminders'> }) => Promise<unknown>,
-  reminder: Doc<'careReminders'>,
-  messages: {
-    successTitle: string
-    successDescription: string
-  },
-) => {
-  try {
-    await mutateReminder({ id: reminder._id })
-    showAppSuccessToast({
-      title: messages.successTitle,
-      description: <p>{messages.successDescription}</p>,
-    })
-  } catch (err) {
-    showAppErrorToast()
-    throw err
-  }
 }

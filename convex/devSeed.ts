@@ -1,3 +1,4 @@
+import { installFixturePlacement } from './devOwnership'
 import { ConvexError, v } from 'convex/values'
 import { eventHorseDetailsInputSchema } from '../shared/events/eventHorseDetailsSchema'
 import { eventInputSchema } from '../shared/events/eventSchema'
@@ -301,6 +302,23 @@ const resetStableRows = async (ctx: MutationCtx, stableId: Id<'stables'>) => {
     ),
   ]
 
+  for (const horse of horses) {
+    for (const table of [
+      'horsePlacements',
+      'horseCarers',
+      'horseInvitations',
+      'horseAuditLogs',
+      'horseTransitions',
+      'horseSnapshots',
+      'trainingRecords',
+    ] as const) {
+      for (const row of await ctx.db
+        .query(table)
+        .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
+        .collect())
+        await ctx.db.delete(row._id)
+    }
+  }
   await Promise.all([
     ...eventHorseRows.flat().map((row) => ctx.db.delete(row._id)),
     ...events.map((event) => ctx.db.delete(event._id)),
@@ -872,12 +890,18 @@ const seedHorses = async (
   ].map((horse) => parseSeed(horseInputSchema.safeParse(horse), 'Horse seed'))
 
   return await Promise.all(
-    horseInputs.map(({ profileImageId: _profileImageId, ...horseInput }) =>
-      ctx.db.insert('horses', {
-        ...horseInput,
-        stableId,
-        ownerId,
-      }),
+    horseInputs.map(
+      ({
+        profileImageId: _profileImageId,
+        vetProviderId: _vetProviderId,
+        farrierProviderId: _farrierProviderId,
+        ...horseInput
+      }) =>
+        ctx.db.insert('horses', {
+          ...horseInput,
+          stableId,
+          ownerId,
+        }),
     ),
   )
 }
@@ -1003,6 +1027,9 @@ export const insertSeedDocument = internalMutation({
   handler: async (ctx, args) =>
     ctx.db.insert('stableDocuments', {
       ...args,
+      sourcePlacementId: args.horseId
+        ? (await ctx.db.get(args.horseId))?.currentPlacementId
+        : undefined,
       eventId: undefined,
     }),
 })
@@ -2147,6 +2174,7 @@ export const prepareDemoStable = internalMutation({
       seedCareReminders(ctx, stableId, user._id, horseIds),
     ])
 
+    for (const horseId of horseIds) await installFixturePlacement(ctx, horseId)
     return { stableId, ownerId: user._id, horseIds }
   },
 })

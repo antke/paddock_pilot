@@ -1,4 +1,6 @@
 export const documents = {
+  downloadStarted: 'Download started',
+  downloadStartedNamed: 'Download started for {{name}}.',
   types: {
     passport: 'Passport',
     vaccination: 'Vaccination',

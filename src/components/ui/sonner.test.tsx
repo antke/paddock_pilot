@@ -9,7 +9,12 @@ import {
 } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { toast } from 'sonner'
-import { showAppErrorToast, showAppSuccessToast, Toaster } from './sonner'
+import {
+  showAppErrorToast,
+  showAppPromiseToast,
+  showAppSuccessToast,
+  Toaster,
+} from './sonner'
 
 vi.mock('next-themes', () => ({ useTheme: () => ({ theme: 'light' }) }))
 beforeEach(() => {
@@ -31,6 +36,31 @@ afterEach(() => {
 })
 
 describe('shared toast presentation preserves vendor interactions', () => {
+  it('keeps one truthful notification while an operation settles', async () => {
+    let resolve!: () => void
+    const operation = new Promise<void>((done) => {
+      resolve = done
+    })
+    render(<Toaster />)
+    act(() => {
+      showAppPromiseToast(operation, {
+        loading: 'Restoring reminder…',
+        success: 'Reminder reopened',
+        error: 'Could not restore',
+        description: 'Juniper’s hoof check',
+        duration: Infinity,
+      })
+    })
+    const pending = await screen.findByText('Restoring reminder…')
+    const toastElement = pending.closest('[data-sonner-toast]')
+    expect(toastElement?.getAttribute('data-type')).toBe('loading')
+    expect(screen.queryByText('Reminder reopened')).toBeNull()
+    await act(async () => resolve())
+    const success = await screen.findByText('Reminder reopened')
+    expect(success.closest('[data-sonner-toast]')).toBe(toastElement)
+    expect(toastElement?.getAttribute('data-type')).toBe('success')
+    expect(screen.getByText('Juniper’s hoof check')).toBeTruthy()
+  })
   it('keeps success content and a named dismiss control with its callback', async () => {
     const onDismiss = vi.fn()
     render(<Toaster />)

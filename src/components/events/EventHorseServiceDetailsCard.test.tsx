@@ -44,6 +44,29 @@ function sampleRow(): EventHorseDetailRow {
 }
 
 describe('Event horse service interactions', () => {
+  it('keeps training notes and participation in a closed disclosure with existing edit and withdrawal controls', () => {
+    render(
+      <EventHorseServiceDetailsView
+        rows={[sampleRow()]}
+        onSave={async () => undefined}
+        onWithdraw={async () => undefined}
+        trainingDisclosure
+      />,
+    )
+    const summary = screen.getByText('Horse notes & participation')
+    expect(summary.closest('details')?.open).toBe(false)
+    fireEvent.click(summary)
+    expect(summary.closest('details')?.open).toBe(true)
+    expect(screen.getByRole('button', { name: 'Withdraw horse' })).toBeTruthy()
+    expect(screen.getByText('Before the session')).toBeTruthy()
+    expect(screen.getByText('Original notes')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /Edit details/ }))
+    expect(screen.getByLabelText('Before the session')).toBeTruthy()
+    expect(
+      screen.getByLabelText('Additional notes after the session'),
+    ).toBeTruthy()
+  })
+
   it('returns focus to the labelled horse row when successful withdrawal removes its trigger', async () => {
     const request = deferred()
     function Sample() {

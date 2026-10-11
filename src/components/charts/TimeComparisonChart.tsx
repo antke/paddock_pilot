@@ -15,6 +15,7 @@ import {
   layoutContextPoints,
   numericDomain,
   timePosition,
+  timeChartMarkBounds,
 } from './timeComparisonGeometry'
 import type { TimeChartPoint, TimeChartRow } from './timeComparisonGeometry'
 
@@ -25,6 +26,8 @@ export function TimeComparisonChart({
   rows,
   range,
   selectedId,
+  focusedDate,
+  clusterLabel,
   onSelect,
   formatDate,
   formatNumber,
@@ -36,6 +39,8 @@ export function TimeComparisonChart({
   rows: Array<TimeChartRow>
   range: ComparisonRange
   selectedId?: string
+  focusedDate?: string
+  clusterLabel?: (count: number, start: string, end: string) => string
   onSelect: (point: TimeChartPoint) => void
   formatDate: (date: string) => string
   formatNumber: (value: number) => string
@@ -46,12 +51,16 @@ export function TimeComparisonChart({
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(600)
+  const [hoveredId, setHoveredId] = useState<string>()
+  const [focusedId, setFocusedId] = useState<string>()
   const id = useId()
   useEffect(() => {
     const element = ref.current
     if (!element) return
-    const resize = () =>
-      setWidth(Math.max(240, element.getBoundingClientRect().width))
+    const resize = () => {
+      const measuredWidth = element.getBoundingClientRect().width
+      if (measuredWidth > 0) setWidth(measuredWidth)
+    }
     resize()
     if (typeof ResizeObserver === 'undefined') return
     const observer = new ResizeObserver(resize)
@@ -78,19 +87,28 @@ export function TimeComparisonChart({
   )
   return (
     <div ref={ref} className="min-w-0" role="group" aria-label={ariaLabel}>
+      {focusedDate &&
+        focusedDate >= range.start &&
+        focusedDate <= range.end && (
+          <p className="mb-3 text-sm font-medium tabular-nums">
+            {formatDate(focusedDate)}
+          </p>
+        )}
       {rows.map((row, rowIndex) => {
         const numeric = row.type === 'line' || row.type === 'bar'
         const packed = layoutContextPoints(row.points, position, range.end)
         const height = numeric
           ? 184
-          : Math.max(
-              66,
-              (Math.max(0, ...packed.map((p) => p.lane)) + 1) * 38 + 22,
-            )
+          : row.type === 'events'
+            ? 70
+            : Math.max(
+                66,
+                (Math.max(0, ...packed.map((p) => p.lane)) + 1) * 48 + 22,
+              )
         const top = 18,
           bottom = height - 24
         const [min, max] = numericDomain(row)
-        const y = (value: number) =>
+        const valueY = (value: number) =>
           bottom - ((value - min) / (max - min)) * (bottom - top)
         const points = row.points
           .filter((p) => p.value !== undefined && Number.isFinite(p.value))
@@ -103,11 +121,65 @@ export function TimeComparisonChart({
           ? points.map((point) => ({
               point,
               left: position(point.date),
-              right: position(point.date),
+              right: position(
+                row.type === 'bar' ? (point.endDate ?? point.date) : point.date,
+              ),
               lane: 0,
-              top: y(point.value!),
+              top: valueY(point.value!),
             }))
-          : packed.map((p) => ({ ...p, top: 24 + p.lane * 38 }))
+          : packed.map((p) => ({
+              ...p,
+              top: row.type === 'events' ? 30 : 24 + p.lane * 48,
+            }))
+        const slots = Math.max(1, Math.floor((right - left) / 44))
+        const slotWidth = (right - left) / slots
+        const targets = new Map<string, typeof marks>()
+        for (const mark of marks) {
+          const slot = Math.min(
+            slots - 1,
+            Math.max(
+              0,
+              Math.floor(((mark.left + mark.right) / 2 - left) / slotWidth),
+            ),
+          )
+          const key = row.type === 'intervals' ? mark.point.id : `${slot}`
+          targets.set(key, [...(targets.get(key) ?? []), mark])
+        }
+        const targetGroups = [...targets.entries()].map(([key, group]) => {
+          const bounds = group.map((mark) =>
+            timeChartMarkBounds(row.type, mark, bottom),
+          )
+          const x = Math.min(...bounds.map((bound) => bound.x))
+          const y = Math.min(...bounds.map((bound) => bound.y))
+          const endX = Math.max(...bounds.map((bound) => bound.x + bound.width))
+          const endY = Math.max(
+            ...bounds.map((bound) => bound.y + bound.height),
+          )
+          const first = group[0]
+          const last = group.at(-1)!
+          const point: TimeChartPoint =
+            group.length === 1
+              ? first.point
+              : {
+                  id: `cluster:${row.id}:${key}`,
+                  date: first.point.date,
+                  recordIds: group.flatMap((mark) => mark.point.recordIds),
+                  label:
+                    clusterLabel?.(
+                      group.length,
+                      first.point.date,
+                      last.point.endDate ?? last.point.date,
+                    ) ?? group.map((mark) => mark.point.label).join('; '),
+                }
+          return { key, group, point, x, y, endX, endY }
+        })
+        const highlighted = new Set(
+          targetGroups
+            .filter(({ point }) =>
+              [hoveredId, focusedId, selectedId].includes(point.id),
+            )
+            .flatMap(({ group }) => group.map((mark) => mark.point.id)),
+        )
         return (
           <div
             key={row.id}
@@ -149,19 +221,32 @@ export function TimeComparisonChart({
                       stroke="var(--border-subtle)"
                     />
                   ))}
+                  {focusedDate &&
+                    focusedDate >= range.start &&
+                    focusedDate <= range.end && (
+                      <line
+                        x1={position(focusedDate)}
+                        x2={position(focusedDate)}
+                        y1={8}
+                        y2={height - 6}
+                        stroke="var(--foreground)"
+                        strokeWidth={1.5}
+                        strokeDasharray="4 4"
+                      />
+                    )}
                   {numeric &&
                     yTicks.map((value, index) => (
                       <g key={index}>
                         <line
                           x1={left}
                           x2={right}
-                          y1={y(value)}
-                          y2={y(value)}
+                          y1={valueY(value)}
+                          y2={valueY(value)}
                           stroke="var(--border-subtle)"
                         />
                         <text
                           x={left - 10}
-                          y={y(value) + 4}
+                          y={valueY(value) + 4}
                           textAnchor="end"
                           fill="var(--muted-foreground)"
                           fontSize={12}
@@ -175,7 +260,7 @@ export function TimeComparisonChart({
                       d={points
                         .map(
                           (point, index) =>
-                            `${index ? 'L' : 'M'}${position(point.date)},${y(point.value!)}`,
+                            `${index ? 'L' : 'M'}${position(point.date)},${valueY(point.value!)}`,
                         )
                         .join(' ')}
                       fill="none"
@@ -184,7 +269,19 @@ export function TimeComparisonChart({
                     />
                   )}
                   {marks.map((mark) => (
-                    <g key={mark.point.id}>
+                    <g
+                      key={mark.point.id}
+                      data-chart-mark={mark.point.id}
+                      data-highlighted={
+                        highlighted.has(mark.point.id) || undefined
+                      }
+                      stroke={
+                        highlighted.has(mark.point.id)
+                          ? 'var(--foreground)'
+                          : 'none'
+                      }
+                      strokeWidth={2}
+                    >
                       {row.type === 'line' && (
                         <circle
                           cx={mark.left}
@@ -195,10 +292,7 @@ export function TimeComparisonChart({
                       )}
                       {row.type === 'bar' && (
                         <rect
-                          x={mark.left - 5}
-                          y={mark.top}
-                          width={10}
-                          height={Math.max(2, bottom - mark.top)}
+                          {...timeChartMarkBounds(row.type, mark, bottom)}
                           rx={2}
                           fill={row.color}
                         />
@@ -212,13 +306,10 @@ export function TimeComparisonChart({
                       {row.type === 'intervals' && (
                         <>
                           <rect
-                            x={mark.left}
-                            y={mark.top - 8}
-                            width={Math.max(4, mark.right - mark.left)}
-                            height={16}
+                            {...timeChartMarkBounds(row.type, mark, bottom)}
                             rx={3}
                             fill={row.color}
-                            opacity={0.35}
+                            fillOpacity={0.35}
                           />
                           <line
                             x1={mark.left}
@@ -244,25 +335,65 @@ export function TimeComparisonChart({
                     </g>
                   ))}
                 </svg>
-                {marks.map((mark) => (
-                  <Tooltip key={mark.point.id}>
-                    <TooltipTrigger
-                      aria-label={mark.point.label}
-                      aria-pressed={selectedId === mark.point.id}
-                      onClick={() => onSelect(mark.point)}
-                      className="absolute -translate-x-1/2 -translate-y-1/2 rounded-control border border-transparent bg-transparent hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-pressed:border-primary"
-                      style={{
-                        left: (mark.left + mark.right) / 2,
-                        top: mark.top,
-                        width: Math.max(28, mark.right - mark.left),
-                        height: 28,
-                      }}
-                    >
-                      <span className="sr-only">{mark.point.label}</span>
-                    </TooltipTrigger>
-                    <TooltipContent>{mark.point.label}</TooltipContent>
-                  </Tooltip>
-                ))}
+                {targetGroups.map((target) => {
+                  const { key, group, point, x, y, endX, endY } = target
+                  // Keep generous targets around small marks, but split the gap
+                  // between neighbours so one cannot intercept the other's shape.
+                  const neighbours = targetGroups.filter(
+                    (other) =>
+                      other !== target &&
+                      (row.type !== 'intervals' ||
+                        other.group[0].lane === group[0].lane),
+                  )
+                  const before = Math.max(
+                    left - 22,
+                    ...neighbours
+                      .filter((other) => other.endX <= x)
+                      .map((other) => (other.endX + x) / 2),
+                  )
+                  const after = Math.min(
+                    right + 22,
+                    ...neighbours
+                      .filter((other) => other.x >= endX)
+                      .map((other) => (other.x + endX) / 2),
+                  )
+                  const centerX = (x + endX) / 2
+                  const hitLeft = Math.max(before, Math.min(x, centerX - 22))
+                  const hitRight = Math.min(after, Math.max(endX, centerX + 22))
+                  const hitHeight = Math.max(44, endY - y)
+                  return (
+                    <Tooltip key={key}>
+                      <TooltipTrigger
+                        aria-label={point.label}
+                        aria-pressed={selectedId === point.id}
+                        onClick={() => onSelect(point)}
+                        onMouseEnter={() => setHoveredId(point.id)}
+                        onMouseLeave={() => setHoveredId(undefined)}
+                        onFocus={() => setFocusedId(point.id)}
+                        onBlur={() => setFocusedId(undefined)}
+                        className="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer border-0 bg-transparent p-0 outline-none"
+                        data-chart-target={point.id}
+                        style={{
+                          left: (hitLeft + hitRight) / 2,
+                          top: (y + endY) / 2,
+                          width: hitRight - hitLeft,
+                          height: hitHeight,
+                        }}
+                      >
+                        {group.length > 1 && (
+                          <span
+                            aria-hidden="true"
+                            className="inline-flex size-5 items-center justify-center rounded-full bg-background text-xs font-semibold text-foreground ring-1 ring-border"
+                          >
+                            {group.length}
+                          </span>
+                        )}
+                        <span className="sr-only">{point.label}</span>
+                      </TooltipTrigger>
+                      <TooltipContent>{point.label}</TooltipContent>
+                    </Tooltip>
+                  )
+                })}
               </div>
             )}
           </div>

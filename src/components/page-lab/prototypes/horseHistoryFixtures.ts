@@ -22,7 +22,7 @@ export function createHorseHistorySummary(
           _id: originalHorse._id,
           _creationTime: originalHorse._creationTime,
           stableId: originalHorse.stableId,
-          ownerId: originalHorse.ownerId,
+          ownerId: originalHorse.ownerId!,
           name: originalHorse.name,
           age: originalHorse.age,
         }
@@ -46,7 +46,7 @@ export function createHorseHistorySummary(
     _creationTime: timestamp,
     horseId: horse._id,
     stableId: data.stable._id,
-    createdBy: horse.ownerId,
+    createdBy: horse.ownerId!,
     createdAt: timestamp,
   }
   const empty = scenario === 'empty'

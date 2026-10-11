@@ -2,9 +2,28 @@ import { getUserFacingErrorCode } from 'shared/i18n/errors'
 import type { UserFacingErrorCode } from 'shared/i18n/errors'
 import { formatMediumTimestampDateTime } from '#/lib/dateDisplay'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
-import { DashboardMetaList } from '#/components/dashboard/DashboardMetaList'
+import { CheckCircleIcon } from '@phosphor-icons/react'
+import { Link } from '@tanstack/react-router'
+import {
+  DetailReferenceField,
+  DetailReferenceList,
+} from '#/components/dashboard/DetailReference'
 import { InlineForm } from '#/components/forms/FormLayout'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useLocalDateContext } from '#/lib/useLocalDateContext'
+import { UnsavedChangesGuard } from '#/components/forms/UnsavedChangesGuard'
+import { hasDraftChanges } from '#/components/forms/hasDraftChanges'
+import { formStickyActionsClassName } from '#/components/forms/RouteFormCard'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '#/components/ui/alert-dialog'
 import { useForm } from 'react-hook-form'
 import { useMutation } from 'convex/react'
 import { api } from 'convex/_generated/api'
@@ -19,6 +38,7 @@ import { Textarea } from '#/components/ui/textarea'
 import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
 import { TrainingFormFields } from './TrainingFormFields'
 import { TrainingActivityTag, TrainingStatusBadge } from './TrainingBadges'
+import { TrainingCompletionControl } from './TrainingCompletionControl'
 import { editEventEditorValues } from '#/components/forms/event/eventEditorValues'
 import type {
   EventFormInput,
@@ -26,30 +46,81 @@ import type {
 } from '#/components/forms/event/eventFormSchema'
 import type { TrainingEntry } from './trainingCalendarData'
 
-export function TrainingRecordCard({ entry }: { entry: TrainingEntry }) {
+export function TrainingRecordCard({
+  entry,
+  showCompletion = true,
+}: {
+  entry: TrainingEntry
+  showCompletion?: boolean
+}) {
   const t = useT()
   const { locale } = useLocale()
 
   const [editing, setEditing] = useState(false)
+  const recordAction = useRef<HTMLButtonElement>(null)
+  const wasEditing = useRef(false)
+  useEffect(() => {
+    if (wasEditing.current && !editing) recordAction.current?.focus()
+    wasEditing.current = editing
+  }, [editing])
   const [saved, setSaved] = useState(false)
   const { horse, details, record, status } = entry
+  const { today } = useLocalDateContext()
+  const hasNotes = Boolean(
+    details.focus || record?.outcome || details.nextFocus,
+  )
   return (
     <DashboardSectionCard
-      title={horse.name}
-      badges={<TrainingStatusBadge status={status} />}
-      actions={
-        horse.canRecord && !editing ? (
-          <Button
-            variant="outline"
-            onClick={() => {
-              setEditing(true)
-              setSaved(false)
-            }}
-          >
-            {record
-              ? t('trainingViews.updateRecord')
-              : t('trainingViews.record')}
-          </Button>
+      headerContent={
+        <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <h2 className="min-w-0 font-sans text-xl font-semibold leading-snug wrap-anywhere">
+            <Link
+              to="/horses/$horseId"
+              params={{ horseId: horse._id }}
+              className="app-control-focus rounded-control underline-offset-4 hover:underline"
+            >
+              {horse.name}
+            </Link>
+          </h2>
+          {!editing && (
+            <div className="flex flex-wrap items-center gap-3">
+              <TrainingStatusBadge status={status} />
+              {showCompletion && (
+                <TrainingCompletionControl entry={entry} labelled />
+              )}
+            </div>
+          )}
+        </header>
+      }
+      footer={
+        !editing && (record || horse.canRecord) ? (
+          <div className="flex w-full flex-wrap items-center justify-between gap-3 border-t border-border-subtle pt-4">
+            {record && (
+              <p className="text-xs text-muted-foreground">
+                {t('trainingViews.lastRecorded', {
+                  date: formatMediumTimestampDateTime(record.updatedAt, locale),
+                })}
+              </p>
+            )}
+            {horse.canRecord && (
+              <Button
+                ref={recordAction}
+                variant="outline"
+                onClick={() => {
+                  setEditing(true)
+                  setSaved(false)
+                }}
+              >
+                {record
+                  ? t('trainingViews.updateRecord')
+                  : t(
+                      entry.occurrence.startDate <= today
+                        ? 'trainingViews.recordCompleted'
+                        : 'trainingViews.record',
+                    )}
+              </Button>
+            )}
+          </div>
         ) : undefined
       }
     >
@@ -64,61 +135,74 @@ export function TrainingRecordCard({ entry }: { entry: TrainingEntry }) {
         />
       ) : (
         <>
-          <div className="flex flex-wrap gap-2">
-            {details.activities.map((activity) => (
-              <TrainingActivityTag key={activity} activity={activity} />
-            ))}
-          </div>
-          <DashboardMetaList size="sm" separator="dot" gap="compact">
-            <span>{t(`training.formats.${details.format}`)}</span>
-            {details.durationMinutes && (
-              <span className="tabular-nums">
-                {t('training.minutes', { count: details.durationMinutes })}
-              </span>
-            )}
-            {details.rider && (
-              <span>{t('training.rider', { name: details.rider })}</span>
-            )}
-          </DashboardMetaList>
-          <dl className="grid max-w-prose gap-5 text-sm leading-6 [overflow-wrap:anywhere]">
-            {details.focus && (
-              <div className="grid gap-1">
-                <dt className="text-xs font-medium leading-5 text-muted-foreground">
-                  {t('trainingViews.focus')}
-                </dt>
-                <dd className="whitespace-pre-wrap">{details.focus}</dd>
-              </div>
-            )}
-            {record?.outcome && (
-              <div className="grid gap-1">
-                <dt className="text-xs font-medium leading-5 text-muted-foreground">
-                  {t('trainingViews.outcome')}
-                </dt>
-                <dd className="whitespace-pre-wrap">{record.outcome}</dd>
-              </div>
-            )}
-            {details.nextFocus && (
-              <div className="grid gap-1">
-                <dt className="text-xs font-medium leading-5 text-muted-foreground">
-                  {t('trainingViews.nextFocus')}
-                </dt>
-                <dd className="whitespace-pre-wrap">{details.nextFocus}</dd>
-              </div>
-            )}
-          </dl>
-          {record && (
-            <p className="text-xs text-muted-foreground">
-              {t('trainingViews.lastRecorded', {
-                date: formatMediumTimestampDateTime(record.updatedAt, locale),
-              })}
-            </p>
+          <DetailReferenceList mobileColumns={2}>
+            <DetailReferenceField
+              label={t('trainingViews.workType')}
+              value={
+                <span className="flex flex-wrap gap-1.5">
+                  {details.activities.map((activity) => (
+                    <TrainingActivityTag key={activity} activity={activity} />
+                  ))}
+                </span>
+              }
+            />
+            <DetailReferenceField
+              label={t('trainingViews.duration')}
+              value={
+                details.durationMinutes !== undefined
+                  ? t('training.minutes', { count: details.durationMinutes })
+                  : undefined
+              }
+              missingValue={t('horseDetail.notRecorded')}
+            />
+            <DetailReferenceField
+              label={t('trainingViews.format')}
+              value={t(`training.formats.${details.format}`)}
+            />
+            <DetailReferenceField
+              label={t('eventForm.rider')}
+              value={details.rider}
+            />
+          </DetailReferenceList>
+          {hasNotes && (
+            <div className="border-t border-border-subtle pt-4">
+              <DetailReferenceList>
+                <DetailReferenceField
+                  label={t('trainingViews.focus')}
+                  value={details.focus}
+                  multiline
+                  fullWidth
+                />
+                <DetailReferenceField
+                  label={t('trainingViews.outcome')}
+                  value={record?.outcome}
+                  multiline
+                  fullWidth
+                />
+                <DetailReferenceField
+                  label={t('trainingViews.nextFocus')}
+                  value={details.nextFocus}
+                  multiline
+                  fullWidth
+                />
+              </DetailReferenceList>
+            </div>
           )}
           {!horse.canRecord && (
             <p className="text-sm text-muted-foreground">
               {t('trainingViews.permission')}
             </p>
           )}
-          {saved && <p role="status">{t('trainingViews.saved')}</p>}
+          {saved && (
+            <p role="status" className="flex items-center gap-2 text-primary">
+              <CheckCircleIcon
+                className="app-success-feedback size-5 shrink-0"
+                weight="fill"
+                aria-hidden="true"
+              />
+              {t('trainingViews.saved')}
+            </p>
+          )}
         </>
       )}
     </DashboardSectionCard>
@@ -137,10 +221,16 @@ function TrainingRecordEditor({
   const t = useT()
 
   const saveRecord = useMutation(api.training.saveRecord)
-  const [status, setStatus] = useState<Doc<'trainingRecords'>['status']>(
+  const { today } = useLocalDateContext()
+  const defaultStatus =
     entry.record?.status ??
-      (entry.status === 'completed' ? 'completed' : 'planned'),
-  )
+    (entry.occurrence.startDate <= today ? 'completed' : 'planned')
+  const [discardOpen, setDiscardOpen] = useState(false)
+  const [detailsOpen, setDetailsOpen] = useState(false)
+  const acknowledged = useRef(false)
+  const submitting = useRef(false)
+  const [status, setStatus] =
+    useState<Doc<'trainingRecords'>['status']>(defaultStatus)
   const [outcome, setOutcome] = useState(entry.record?.outcome ?? '')
   const [error, setError] = useState<TrainingValidationKey | 'save'>()
   const [serverErrorCode, setServerErrorCode] = useState<UserFacingErrorCode>()
@@ -152,12 +242,25 @@ function TrainingRecordEditor({
       training: entry.details,
     },
   })
+  const initialDraft = useRef({
+    training: entry.details,
+    status: defaultStatus,
+    outcome: entry.record?.outcome ?? '',
+  })
+  const isDirty = () =>
+    !acknowledged.current &&
+    hasDraftChanges(
+      { training: form.getValues('training'), status, outcome },
+      initialDraft.current,
+    )
   return (
     <InlineForm
+      data-mobile-inline-edit="true"
       noValidate
       onSubmit={async (event) => {
         event.preventDefault()
-        if (pending) return
+        if (submitting.current) return
+        form.clearErrors()
         setServerErrorCode(undefined)
         const parsed = trainingRecordSchema.safeParse({
           ...form.getValues('training'),
@@ -165,6 +268,27 @@ function TrainingRecordEditor({
           outcome,
         })
         if (!parsed.success) {
+          setDetailsOpen(true)
+          for (const issue of parsed.error.issues) {
+            const key = issue.path[0]
+            if (
+              key === 'activities' ||
+              key === 'format' ||
+              key === 'durationMinutes' ||
+              key === 'rider' ||
+              key === 'focus' ||
+              key === 'nextFocus'
+            )
+              form.setError(
+                `training.${key}`,
+                {
+                  message: t(
+                    `trainingValidation.${issue.message as TrainingValidationKey}`,
+                  ),
+                },
+                { shouldFocus: true },
+              )
+          }
           setError(parsed.error.issues[0]?.message as TrainingValidationKey)
           return
         }
@@ -173,6 +297,7 @@ function TrainingRecordEditor({
           outcome: nextOutcome,
           ...details
         } = parsed.data
+        submitting.current = true
         setPending(true)
         setError(undefined)
         try {
@@ -185,16 +310,19 @@ function TrainingRecordEditor({
             details,
             outcome: nextOutcome,
           })
+          acknowledged.current = true
           onSaved()
         } catch (reason) {
           console.error('Could not save training record', reason)
           setServerErrorCode(getUserFacingErrorCode(reason))
           setError('save')
         } finally {
+          submitting.current = false
           setPending(false)
         }
       }}
     >
+      <UnsavedChangesGuard shouldBlock={isDirty} />
       <Field>
         <FieldLabel htmlFor={`status-${entry.horse._id}`}>
           {t('trainingViews.statusForHorse')}
@@ -207,14 +335,24 @@ function TrainingRecordEditor({
         >
           {(['planned', 'completed', 'cancelled', 'skipped'] as const).map(
             (value) => (
-              <option key={value} value={value}>
+              <option
+                key={value}
+                value={value}
+                disabled={
+                  value === 'completed' && entry.occurrence.startDate > today
+                }
+              >
                 {t(`training.status.${value}`)}
               </option>
             ),
           )}
         </Select>
       </Field>
-      <TrainingFormFields control={form.control} disabled={pending} />
+      <TrainingFormFields
+        control={form.control}
+        disabled={pending}
+        fields="duration"
+      />
       <Field>
         <FieldLabel htmlFor={`outcome-${entry.horse._id}`}>
           {t('trainingViews.outcomeField')}
@@ -227,6 +365,24 @@ function TrainingRecordEditor({
           disabled={pending}
         />
       </Field>
+      <details
+        open={detailsOpen}
+        onToggle={(event) => setDetailsOpen(event.currentTarget.open)}
+      >
+        <summary className="app-control-focus min-h-11 cursor-pointer py-3 font-semibold">
+          {t('trainingViews.changeDetails')}
+        </summary>
+        <div
+          hidden={!detailsOpen}
+          className={detailsOpen ? 'grid gap-5 pt-3' : 'hidden'}
+        >
+          <TrainingFormFields
+            control={form.control}
+            disabled={pending}
+            fields="adjustments"
+          />
+        </div>
+      </details>
       <FormSubmissionError
         message={
           error === 'save'
@@ -238,7 +394,7 @@ function TrainingRecordEditor({
               : undefined
         }
       />
-      <div className="flex flex-wrap gap-2">
+      <div className={`${formStickyActionsClassName} flex flex-wrap gap-2`}>
         <Button type="submit" disabled={pending}>
           {pending ? t('trainingViews.saving') : t('trainingViews.saveRecord')}
         </Button>
@@ -246,11 +402,27 @@ function TrainingRecordEditor({
           type="button"
           variant="outline"
           disabled={pending}
-          onClick={onCancel}
+          onClick={() => (isDirty() ? setDiscardOpen(true) : onCancel())}
         >
           {t('trainingViews.cancel')}
         </Button>
       </div>
+      <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('common.unsavedTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('common.unsavedHelp')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.keepEditing')}</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={onCancel}>
+              {t('common.leaveWithoutSaving')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </InlineForm>
   )
 }

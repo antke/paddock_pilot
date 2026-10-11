@@ -9,6 +9,8 @@ import { useMutation } from 'convex/react'
 import { useEffect } from 'react'
 import { useAppUserState } from '#/components/layout/AppUserStateProvider'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
+import { StableSetupNotice } from './StableSetupNotice'
+import { StableUpdates } from '#/components/stables/StableUpdates'
 
 type AppDashboardProps = {
   stables: Array<Doc<'stables'>>
@@ -81,6 +83,16 @@ function AppDashboardData({
   return (
     <AppDashboardView
       data={data}
+      setupNotice={
+        <StableSetupNotice key={activeStable._id} stableId={activeStable._id} />
+      }
+      updates={
+        <StableUpdates
+          key={activeStable._id}
+          stableId={activeStable._id}
+          preview
+        />
+      }
       invitations={invitations}
       onApprove={async (eventHorseId) => {
         await approveInvitation({ eventHorseId })

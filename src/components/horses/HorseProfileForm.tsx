@@ -1,3 +1,4 @@
+import type { ProviderOption } from '#/components/ui/provider-autocomplete'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { useEffect, useId, useRef, useState } from 'react'
@@ -18,9 +19,13 @@ import {
 } from '#/components/forms/RouteFormCard'
 import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
 import { Button } from '#/components/ui/button'
+import { UnsavedChangesGuard } from '#/components/forms/UnsavedChangesGuard'
 
 type HorseProfileFormProps = {
+  providers?: Array<ProviderOption>
+  contactMode?: 'linked' | 'copied'
   breedSuggestions?: ReadonlyArray<string>
+  ownerSuggestions?: ReadonlyArray<string>
   mode: 'create' | 'edit'
   initialValues?: Partial<HorseFormInput>
   profileImageId?: Id<'_storage'>
@@ -39,6 +44,8 @@ type HorseProfileFormProps = {
 /** Shared route and specimen lifecycle; photo, save and navigation acknowledge separately. */
 export function HorseProfileForm({
   mode,
+  providers = [],
+  contactMode = 'linked',
   initialValues,
   profileImageId,
   uploadImage,
@@ -49,6 +56,7 @@ export function HorseProfileForm({
   onPendingChange,
   sampleNotice,
   breedSuggestions = [],
+  ownerSuggestions = [],
 }: HorseProfileFormProps) {
   const t = useT()
   const { locale } = useLocale()
@@ -87,6 +95,12 @@ export function HorseProfileForm({
     defaultValues: horseProfileDefaults(initialValues),
   })
   useLocalizedValidation(form)
+  const { trigger } = form
+  useEffect(() => {
+    // The autocomplete changes the value in the same event that adds its
+    // option. Revalidate after the resolver has received that new option.
+    if (addedBreeds.length > 0) void trigger('breed')
+  }, [addedBreeds, trigger])
   const isPending = phase !== 'idle'
   const finish = () => {
     pending.current = false
@@ -236,8 +250,15 @@ export function HorseProfileForm({
       }
     >
       {sampleNotice}
+      <UnsavedChangesGuard
+        shouldBlock={() => form.formState.isDirty && !acknowledged.current}
+      />
       <HorseFormFields
         control={form.control}
+        providers={providers}
+        ownerSuggestions={ownerSuggestions}
+        contactMode={contactMode}
+        setValue={form.setValue}
         existingBreed={existingBreed}
         additionalBreeds={additionalBreeds}
         onAddBreed={(breed) => setAddedBreeds((current) => [...current, breed])}

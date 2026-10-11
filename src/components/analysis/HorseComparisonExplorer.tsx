@@ -1,4 +1,14 @@
-import { useId, useState } from 'react'
+import { useId, useRef } from 'react'
+import {
+  useAnalysisSessionState,
+  decodeAnalysisRange,
+  decodeComparisonSelection,
+  decodePeriodChoice,
+  decodePreviousRange,
+  decodeBoolean,
+  decodeSelectedPoint,
+  encodeSelectedPoint,
+} from './analysisSessionState'
 import { useQuery } from '@tanstack/react-query'
 import { convexQuery } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
@@ -8,7 +18,6 @@ import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
-import { DashboardMetaList } from '#/components/dashboard/DashboardMetaList'
 import {
   DetailKeyValueList,
   DetailKeyValueRow,
@@ -63,9 +72,12 @@ import type {
 
 type ExplorerProps = {
   horseId: string
-  stableId: string
+  stableId?: string
   sampleRecords?: Array<HorseComparisonRecord>
   today?: string
+  range?: ComparisonRange
+  onRangeChange?: (range: ComparisonRange) => void
+  persistenceKey?: string
 }
 
 export function HorseComparisonExplorer({
@@ -73,18 +85,65 @@ export function HorseComparisonExplorer({
   stableId,
   sampleRecords,
   today = getTodayDateKey(),
+  range: controlledRange,
+  onRangeChange,
+  persistenceKey,
 }: ExplorerProps) {
   const t = useT()
+  const { locale } = useLocale()
   const id = useId()
-  const [selection, setSelection] = useState<HorseComparisonSelection>(
-    horseComparisonPresets.weightTraining,
+  const sessionField = (field: string) =>
+    persistenceKey ? `${persistenceKey}:${field}` : undefined
+  const [selection, setSelection] =
+    useAnalysisSessionState<HorseComparisonSelection>(
+      sessionField('comparison'),
+      horseComparisonPresets.trainingHealth,
+      decodeComparisonSelection,
+    )
+  const [ownRange, setOwnRange] = useAnalysisSessionState<ComparisonRange>(
+    sessionField('range'),
+    () => ({
+      start: shiftDate(today, -89),
+      end: today,
+    }),
+    decodeAnalysisRange,
   )
-  const [period, setPeriod] = useState('90')
-  const [range, setRange] = useState<ComparisonRange>(() => ({
-    start: shiftDate(today, -89),
-    end: today,
-  }))
-  const [showOthers, setShowOthers] = useState(false)
+  const range = controlledRange ?? ownRange
+  const rangeKey = `${range.start}:${range.end}`
+  const inferredPeriod =
+    range.end === today
+      ? (['30', '90', '180', '365'].find(
+          (days) => range.start === shiftDate(today, 1 - Number(days)),
+        ) ?? 'custom')
+      : 'custom'
+  const [periodChoice, setPeriodChoice] = useAnalysisSessionState(
+    sessionField('periodChoice'),
+    () => ({ value: inferredPeriod, rangeKey }),
+    decodePeriodChoice,
+  )
+  // Keep an explicit Custom selection while its dates are unchanged. A range
+  // received from stable navigation derives its own matching preset.
+  const period =
+    periodChoice.rangeKey === rangeKey ? periodChoice.value : inferredPeriod
+  const setPeriod = (value: string) => setPeriodChoice({ value, rangeKey })
+  const setRange = (next: ComparisonRange) => {
+    setOwnRange(next)
+    onRangeChange?.(next)
+  }
+  const [previousRange, setPreviousRange] = useAnalysisSessionState<{
+    range: ComparisonRange
+    period: string
+  } | null>(sessionField('previousRange'), null, decodePreviousRange)
+  const [showOthers, setShowOthers] = useAnalysisSessionState(
+    sessionField('otherTraining'),
+    false,
+    decodeBoolean,
+  )
+  const [customizeOpen, setCustomizeOpen] = useAnalysisSessionState(
+    sessionField('customizeOpen'),
+    false,
+    decodeBoolean,
+  )
   const preset = (
     Object.keys(horseComparisonPresets) as Array<HorseComparisonPreset>
   ).find((key) => {
@@ -103,10 +162,17 @@ export function HorseComparisonExplorer({
   const resultProps = {
     horseId,
     stableId,
+    persistenceKey,
     selection,
     range,
     showOthers,
+    onFit: (next: ComparisonRange) => {
+      setPreviousRange({ range, period })
+      setPeriod('custom')
+      setRange(next)
+    },
     onAround: (date: string) => {
+      setPreviousRange({ range, period })
       setPeriod('custom')
       setRange({ start: shiftDate(date, -28), end: shiftDate(date, 28) })
     },
@@ -118,7 +184,11 @@ export function HorseComparisonExplorer({
     }))
   return (
     <DashboardSection
-      title={t('horseComparison.title')}
+      title={
+        preset
+          ? t(`horseComparison.questions.${preset}`)
+          : t('horseComparison.title')
+      }
       description={t('horseComparison.help')}
       span="xl3"
       size="panel"
@@ -136,48 +206,6 @@ export function HorseComparisonExplorer({
         }))}
         onValueChange={(value) => setSelection(horseComparisonPresets[value])}
       />
-      <div className="grid min-w-0 gap-3 sm:grid-cols-3">
-        <Field>
-          <FieldLabel htmlFor={`${id}-measure`}>
-            {t('horseComparison.measure')}
-          </FieldLabel>
-          <Select
-            id={`${id}-measure`}
-            value={selection.measure}
-            onChange={(event) =>
-              setSelection((current) => ({
-                ...current,
-                measure: event.target.value as HorseMeasure,
-              }))
-            }
-          >
-            {horseMeasures.map((value) => (
-              <option key={value} value={value}>
-                {t(`horseComparison.measures.${value}`)}
-              </option>
-            ))}
-          </Select>
-        </Field>
-        {(['context', 'extra'] as const).map((key) => (
-          <Field key={key}>
-            <FieldLabel htmlFor={`${id}-${key}`}>
-              {t(`horseComparison.${key}`)}
-            </FieldLabel>
-            <Select
-              id={`${id}-${key}`}
-              value={selection[key]}
-              onChange={(event) => selectContext(key, event.target.value)}
-            >
-              <option value="none">{t('horseComparison.none')}</option>
-              {contextKinds.map((kind) => (
-                <option key={kind} value={kind}>
-                  {t(`horseComparison.kinds.${kind}`)}
-                </option>
-              ))}
-            </Select>
-          </Field>
-        ))}
-      </div>
       <DateRangeControl
         start={range.start}
         end={range.end}
@@ -207,26 +235,95 @@ export function HorseComparisonExplorer({
           error: t('horseComparison.rangeError'),
         }}
       />
-      <FieldLabel className="flex items-center gap-2 text-sm">
-        <Checkbox
-          checked={showOthers}
-          onCheckedChange={(checked) => setShowOthers(checked === true)}
-        />
-        {t('horseComparison.showOtherTraining')}
-      </FieldLabel>
+      <p className="text-sm text-muted-foreground">
+        {t('horseComparison.scope', {
+          start: isDateKey(range.start)
+            ? formatMediumDateKey(range.start, locale)
+            : range.start,
+          end: isDateKey(range.end)
+            ? formatMediumDateKey(range.end, locale)
+            : range.end,
+        })}
+      </p>
+      {previousRange && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="justify-self-start"
+          onClick={() => {
+            setRange(previousRange.range)
+            setPeriod(previousRange.period)
+            setPreviousRange(null)
+          }}
+        >
+          {t('horseComparison.returnRange')}
+        </Button>
+      )}
+      <details
+        className="min-w-0"
+        open={customizeOpen}
+        onToggle={(event) => setCustomizeOpen(event.currentTarget.open)}
+      >
+        <summary className="app-disclosure-trigger cursor-pointer text-sm font-medium">
+          {t('horseComparison.customize')}
+        </summary>
+        <div className="grid gap-3 pt-3">
+          <div className="grid min-w-0 gap-3 sm:grid-cols-3">
+            <Field>
+              <FieldLabel htmlFor={`${id}-measure`}>
+                {t('horseComparison.measure')}
+              </FieldLabel>
+              <Select
+                id={`${id}-measure`}
+                value={selection.measure}
+                onChange={(event) =>
+                  setSelection((current) => ({
+                    ...current,
+                    measure: event.target.value as HorseMeasure,
+                  }))
+                }
+              >
+                {horseMeasures.map((value) => (
+                  <option key={value} value={value}>
+                    {t(`horseComparison.measures.${value}`)}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            {(['context', 'extra'] as const).map((key) => (
+              <Field key={key}>
+                <FieldLabel htmlFor={`${id}-${key}`}>
+                  {t(`horseComparison.${key}`)}
+                </FieldLabel>
+                <Select
+                  id={`${id}-${key}`}
+                  value={selection[key]}
+                  onChange={(event) => selectContext(key, event.target.value)}
+                >
+                  <option value="none">{t('horseComparison.none')}</option>
+                  {contextKinds.map((kind) => (
+                    <option key={kind} value={kind}>
+                      {t(`horseComparison.kinds.${kind}`)}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            ))}
+          </div>
+          <FieldLabel className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={showOthers}
+              onCheckedChange={(checked) => setShowOthers(checked === true)}
+            />
+            {t('horseComparison.showOtherTraining')}
+          </FieldLabel>
+        </div>
+      </details>
       {!invalid &&
         (sampleRecords !== undefined ? (
-          <ComparisonResults
-            key={`${range.start}:${range.end}:${JSON.stringify(selection)}:${showOthers}`}
-            {...resultProps}
-            records={sampleRecords}
-            sample
-          />
+          <ComparisonResults {...resultProps} records={sampleRecords} sample />
         ) : (
-          <LiveComparisonResults
-            key={`${range.start}:${range.end}:${JSON.stringify(selection)}:${showOthers}`}
-            {...resultProps}
-          />
+          <LiveComparisonResults {...resultProps} />
         ))}
     </DashboardSection>
   )
@@ -234,11 +331,13 @@ export function HorseComparisonExplorer({
 
 type ResultProps = {
   horseId: string
-  stableId: string
+  stableId?: string
   selection: HorseComparisonSelection
   range: ComparisonRange
   showOthers: boolean
   onAround: (date: string) => void
+  onFit?: (range: ComparisonRange) => void
+  persistenceKey?: string
 }
 function LiveComparisonResults(props: ResultProps) {
   const t = useT()
@@ -277,13 +376,23 @@ export function ComparisonResults({
   range,
   showOthers,
   onAround,
+  onFit,
   stableId,
   horseId,
   sample = false,
+  persistenceKey,
 }: ResultProps & { records: Array<HorseComparisonRecord>; sample?: boolean }) {
   const t = useT()
   const { locale } = useLocale()
-  const [selected, setSelected] = useState<TimeChartPoint | null>(null)
+  const [selected, setSelected] =
+    useAnalysisSessionState<TimeChartPoint | null>(
+      persistenceKey ? `${persistenceKey}:selected` : undefined,
+      null,
+      decodeSelectedPoint,
+      encodeSelectedPoint,
+    )
+  const plotRef = useRef<HTMLDivElement>(null)
+  const inspectorRef = useRef<HTMLDivElement>(null)
   const data = createComparisonRows(
     records,
     selection,
@@ -296,14 +405,29 @@ export function ComparisonResults({
   )
   const number = (value: number) =>
     formatDecimal(Math.round(value * 10) / 10, locale)
-  const weights = data.records.filter(
-    (record) => record.kind === 'weight' && record.value !== undefined,
-  )
-  const first = weights[0],
-    last = weights.at(-1)
-  const measuredSessions = data.completed.filter(
-    (record) => record.durationMinutes !== undefined,
-  )
+  const recordingDates = data.records.map((record) => record.date).sort()
+  const recordingStart = recordingDates[0]
+  const fitEnd = data.records
+    .map((record) =>
+      record.endUnknown ? range.end : (record.endDate ?? record.date),
+    )
+    .sort()
+    .at(-1)
+  if (data.records.length === 0)
+    return (
+      <DashboardEmptyState>
+        <p>{t('horseComparison.noRecords')}</p>
+        <p className="mt-2">{t('horseComparison.emptyHelp')}</p>
+        <ButtonLink
+          variant="outline"
+          className="mt-4"
+          to="/horses/$horseId"
+          params={{ horseId }}
+        >
+          {t('horseComparison.openSource')}
+        </ButtonLink>
+      </DashboardEmptyState>
+    )
   return (
     <div className="grid min-w-0 gap-4">
       {sample && (
@@ -311,59 +435,179 @@ export function ComparisonResults({
           {t('horseComparison.sample')}
         </p>
       )}
-      <DashboardMetaList>
-        {first && last && (
-          <span>
-            {t('horseComparison.weightSummary', {
-              count: weights.length,
-              first: number(first.value!),
-              last: number(last.value!),
-              start: formatMediumDateKey(first.date, locale),
-              end: formatMediumDateKey(last.date, locale),
-            })}
-          </span>
+      {onFit &&
+        recordingStart &&
+        (recordingStart > range.start ||
+          (fitEnd !== undefined && fitEnd < range.end)) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="justify-self-start"
+            onClick={() =>
+              onFit({
+                start:
+                  recordingStart < range.start ? range.start : recordingStart,
+                end: fitEnd && fitEnd < range.end ? fitEnd : range.end,
+              })
+            }
+          >
+            {t('horseComparison.fit')}
+          </Button>
         )}
-        {data.hasTraining && (
-          <span>
-            {t('horseComparison.totals', {
-              count: data.completed.length,
-              minutes: number(
-                measuredSessions.reduce(
-                  (sum, record) => sum + record.durationMinutes!,
-                  0,
-                ),
-              ),
-            })}
-          </span>
-        )}
-      </DashboardMetaList>
-      <TimeComparisonChart
-        rows={data.rows}
-        range={range}
-        selectedId={selected?.id}
-        onSelect={setSelected}
-        formatDate={(date) =>
-          range.start.slice(0, 4) !== range.end.slice(0, 4)
-            ? formatMediumDateKey(date, locale)
-            : formatShortDateKey(date, locale)
-        }
-        minTickSpacing={
-          range.start.slice(0, 4) !== range.end.slice(0, 4) ? 120 : 80
-        }
-        formatNumber={number}
-        emptyLabel={t('horseComparison.noRecords')}
-        axisLabel={t('horseComparison.calendarDate')}
-        ariaLabel={t('horseComparison.title')}
-      />
+      <div className="grid min-w-0 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+        <div
+          ref={plotRef}
+          tabIndex={-1}
+          className="min-w-0 scroll-mt-32 rounded-panel bg-[var(--analysis-surface)] p-3"
+        >
+          {selectedRecords.length > 0 && (
+            <Button
+              className="mb-3 lg:hidden"
+              variant="outline"
+              onClick={() => {
+                inspectorRef.current?.scrollIntoView({ block: 'start' })
+                inspectorRef.current?.focus({ preventScroll: true })
+              }}
+            >
+              {t('horseComparison.inspectSelection', {
+                count: selectedRecords.length,
+              })}
+            </Button>
+          )}
+          <TimeComparisonChart
+            rows={data.rows}
+            range={range}
+            selectedId={selected?.id}
+            focusedDate={selected?.date}
+            clusterLabel={(count, start, end) =>
+              t('horseComparison.nearbyRecords', {
+                count,
+                start: formatShortDateKey(start, locale),
+                end: formatShortDateKey(end, locale),
+              })
+            }
+            onSelect={setSelected}
+            formatDate={(date) =>
+              range.start.slice(0, 4) !== range.end.slice(0, 4)
+                ? formatMediumDateKey(date, locale)
+                : formatShortDateKey(date, locale)
+            }
+            minTickSpacing={
+              range.start.slice(0, 4) !== range.end.slice(0, 4) ? 120 : 80
+            }
+            formatNumber={number}
+            emptyLabel={t('horseComparison.noRecords')}
+            axisLabel={t('horseComparison.calendarDate')}
+            ariaLabel={t('horseComparison.title')}
+          />
+        </div>
+        <div
+          ref={inspectorRef}
+          tabIndex={-1}
+          className="grid min-w-0 scroll-mt-32 gap-3 border-t border-border-subtle pt-4 lg:sticky lg:top-24 lg:border-t-0 lg:pt-0"
+          aria-live="polite"
+        >
+          <DashboardInlineHeader title={t('horseComparison.selected')} />
+          <Button
+            variant="ghost"
+            className="justify-self-start lg:hidden"
+            onClick={() => {
+              plotRef.current?.scrollIntoView({ block: 'start' })
+              plotRef.current?.focus({ preventScroll: true })
+            }}
+          >
+            {t('horseComparison.backToChart')}
+          </Button>
+          {selectedRecords.length ? (
+            <ScrollableList
+              ariaLabel={t('horseComparison.selected')}
+              itemCount={selectedRecords.length}
+              visibleItemLimit={3}
+              estimatedItemHeightRem={12}
+            >
+              {selectedRecords.map((record) => (
+                <div className="grid min-w-0 gap-3 py-2" key={record.id}>
+                  <p className="break-words font-medium">
+                    {comparisonRecordLabel(record, locale)}
+                  </p>
+                  <DetailKeyValueList>
+                    {record.originalUnit === 'lb' && (
+                      <DetailKeyValueRow
+                        label={t('horseComparison.recorded')}
+                        value={`${number(record.originalValue!)} lb`}
+                      />
+                    )}
+                    {record.status && record.kind !== 'training' && (
+                      <DetailKeyValueRow
+                        label={t('horseComparison.type')}
+                        value={trainingStatusLabel(record.status, locale)}
+                      />
+                    )}
+                    {record.endDate && (
+                      <DetailKeyValueRow
+                        label={t('horseComparison.end')}
+                        value={formatMediumDateKey(record.endDate, locale)}
+                      />
+                    )}
+                    {record.details?.map((field) => (
+                      <DetailKeyValueRow
+                        key={field.label}
+                        className="flex-col items-start gap-1"
+                        label={t(`horseComparison.fields.${field.label}`)}
+                        value={field.value}
+                      />
+                    ))}
+                  </DetailKeyValueList>
+                  {record.notes && (
+                    <p className="whitespace-pre-wrap break-words text-sm">
+                      {record.notes}
+                    </p>
+                  )}
+                  {record.endUnknown && (
+                    <p className="text-sm text-muted-foreground">
+                      {t('horseComparison.openEnd')}
+                    </p>
+                  )}
+                  {record.date < range.start && (
+                    <p className="text-sm text-muted-foreground">
+                      {t('horseComparison.continuesBefore')}
+                    </p>
+                  )}
+                  {record.endDate && record.endDate > range.end && (
+                    <p className="text-sm text-muted-foreground">
+                      {t('horseComparison.continuesAfter')}
+                    </p>
+                  )}
+                  <DashboardActions align="start">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onAround(record.date)}
+                    >
+                      {t('horseComparison.around')}
+                    </Button>
+                    {!sample && (
+                      <SourceLink
+                        record={record}
+                        stableId={stableId}
+                        horseId={horseId}
+                      />
+                    )}
+                  </DashboardActions>
+                </div>
+              ))}
+            </ScrollableList>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {t('horseComparison.chooseRecord')}
+            </p>
+          )}
+        </div>
+      </div>
       <div className="grid gap-1 text-sm text-muted-foreground">
         <p>{t('horseComparison.evidence')}</p>
-        {data.hasTraining && (
-          <p>
-            {t('horseComparison.coverage', {
-              recorded: measuredSessions.length,
-              total: data.completed.length,
-            })}
-          </p>
+        {data.rows.some((row) => row.id === 'condition') && (
+          <p>{t('horseComparison.conditionHelp')}</p>
         )}
         {data.rows.some((row) => row.id === 'health') && (
           <p>{t('horseComparison.recordedResolution')}</p>
@@ -375,97 +619,8 @@ export function ComparisonResults({
           <p>{t('horseComparison.completedVisits')}</p>
         )}
       </div>
-      <div
-        className="grid min-w-0 gap-3 border-t border-border-subtle pt-4"
-        aria-live="polite"
-      >
-        <DashboardInlineHeader title={t('horseComparison.selected')} />
-        {selectedRecords.length ? (
-          <ScrollableList
-            ariaLabel={t('horseComparison.selected')}
-            itemCount={selectedRecords.length}
-            visibleItemLimit={3}
-            estimatedItemHeightRem={12}
-          >
-            {selectedRecords.map((record) => (
-              <div className="grid min-w-0 gap-3 py-2" key={record.id}>
-                <p className="break-words font-medium">
-                  {comparisonRecordLabel(record, locale)}
-                </p>
-                <DetailKeyValueList>
-                  {record.originalUnit === 'lb' && (
-                    <DetailKeyValueRow
-                      label={t('horseComparison.recorded')}
-                      value={`${number(record.originalValue!)} lb`}
-                    />
-                  )}
-                  {record.status && record.kind !== 'training' && (
-                    <DetailKeyValueRow
-                      label={t('horseComparison.type')}
-                      value={trainingStatusLabel(record.status, locale)}
-                    />
-                  )}
-                  {record.endDate && (
-                    <DetailKeyValueRow
-                      label={t('horseComparison.end')}
-                      value={formatMediumDateKey(record.endDate, locale)}
-                    />
-                  )}
-                  {record.details?.map((field) => (
-                    <DetailKeyValueRow
-                      key={field.label}
-                      label={t(`horseComparison.fields.${field.label}`)}
-                      value={field.value}
-                    />
-                  ))}
-                </DetailKeyValueList>
-                {record.notes && (
-                  <p className="whitespace-pre-wrap break-words text-sm">
-                    {record.notes}
-                  </p>
-                )}
-                {record.endUnknown && (
-                  <p className="text-sm text-muted-foreground">
-                    {t('horseComparison.openEnd')}
-                  </p>
-                )}
-                {record.date < range.start && (
-                  <p className="text-sm text-muted-foreground">
-                    {t('horseComparison.continuesBefore')}
-                  </p>
-                )}
-                {record.endDate && record.endDate > range.end && (
-                  <p className="text-sm text-muted-foreground">
-                    {t('horseComparison.continuesAfter')}
-                  </p>
-                )}
-                <DashboardActions align="start">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onAround(record.date)}
-                  >
-                    {t('horseComparison.around')}
-                  </Button>
-                  {!sample && (
-                    <SourceLink
-                      record={record}
-                      stableId={stableId}
-                      horseId={horseId}
-                    />
-                  )}
-                </DashboardActions>
-              </div>
-            ))}
-          </ScrollableList>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            {t('horseComparison.chooseRecord')}
-          </p>
-        )}
-      </div>
       <details className="min-w-0 border-t border-border-subtle pt-4">
-        <summary className="cursor-pointer text-sm font-medium">
+        <summary className="app-disclosure-trigger cursor-pointer text-sm font-medium">
           {t('horseComparison.table')} ({data.records.length})
         </summary>
         <Table>
@@ -517,11 +672,10 @@ export function ComparisonResults({
 
 function SourceLink({
   record,
-  stableId,
   horseId,
 }: {
   record: HorseComparisonRecord
-  stableId: string
+  stableId?: string
   horseId: string
 }) {
   const t = useT()
@@ -530,12 +684,12 @@ function SourceLink({
       <ButtonLink
         variant="ghost"
         size="sm"
-        to={
-          record.kind === 'training'
-            ? '/stables/$stableId/training/$eventId'
-            : '/stables/$stableId/events/$eventId'
-        }
-        params={{ stableId, eventId: record.eventId }}
+        to="/events/$eventId"
+        params={{ eventId: record.eventId }}
+        search={{
+          date: record.kind === 'training' ? record.date : undefined,
+          horseId,
+        }}
       >
         {t('horseComparison.openSource')}
       </ButtonLink>
@@ -546,11 +700,19 @@ function SourceLink({
       size="sm"
       to={
         record.kind === 'health'
-          ? '/stables/$stableId/horses/$horseId/care'
-          : '/stables/$stableId/horses/$horseId/nutrition'
+          ? '/horses/$horseId/care'
+          : '/horses/$horseId/nutrition'
       }
-      params={{ stableId, horseId }}
-      search={record.kind === 'health' ? { careView: 'health' } : {}}
+      params={{ horseId }}
+      search={
+        record.kind === 'health'
+          ? { careView: 'health' }
+          : record.kind === 'weight'
+            ? { nutritionView: 'weight' }
+            : record.kind === 'medication'
+              ? { nutritionView: 'medication' }
+              : {}
+      }
     >
       {t('horseComparison.openSource')}
     </ButtonLink>

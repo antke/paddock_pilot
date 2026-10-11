@@ -1,4 +1,6 @@
-import { useT } from '#/i18n/LocaleProvider'
+import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
+import { useT, useLocale } from '#/i18n/LocaleProvider'
+import { formatShortDateKey } from '#/lib/dateDisplay'
 import {
   createFileRoute,
   Outlet,
@@ -14,7 +16,9 @@ import { EventDetail } from '#/components/events/EventDetail'
 import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
 import { Field, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
-import { ButtonLink } from '#/components/ui/button'
+import { EventEditAction } from '#/components/events/EventEditAction'
+import { useSmallScreen } from '#/lib/useSmallScreen'
+import { TrainingCompletionControl } from '#/components/training/TrainingCompletionControl'
 import { TrainingRecordCard } from '#/components/training/TrainingRecordCard'
 import { getTrainingEntries } from '#/components/training/trainingCalendarData'
 import { isDateKey } from 'shared/training/trainingSchema'
@@ -33,6 +37,8 @@ export const Route = createFileRoute(
 })
 function TrainingSession() {
   const t = useT()
+  const { locale } = useLocale()
+  const smallScreen = useSmallScreen()
 
   const { stableId, eventId } = Route.useParams()
   const { date } = Route.useSearch()
@@ -66,50 +72,79 @@ function TrainingSession() {
     end: occurrenceDate,
     today,
   }).filter((entry) => entry.occurrence.startDate === occurrenceDate)
+  const completionEntry =
+    entries.length === 1 &&
+    entries[0].horse.canRecord &&
+    occurrenceDate <= today
+      ? entries[0]
+      : undefined
+  const editSearch = {
+    date: occurrenceDate,
+    horseId: entries.length === 1 ? entries[0].horse._id : undefined,
+  }
   return (
     <DashboardPage>
-      <ButtonLink
-        to="/stables/$stableId/training"
-        params={{ stableId }}
-        variant="outline"
-        className="justify-self-start"
-      >
-        {t('trainingViews.back')}
-      </ButtonLink>
-      <EventDetail
-        stableId={stableId}
-        event={{
-          ...data.event,
-          date: entries[0]?.occurrence.startDate ?? data.event.date,
-          endDate: entries[0]
-            ? entries[0].occurrence.durationDays > 1
-              ? entries[0].occurrence.endDate
-              : undefined
-            : data.event.endDate,
-        }}
-        horses={data.horses}
-        canManageEvent={permissions?.canManageEvent ?? false}
-        showServiceDetails={false}
+      <DashboardPageHeader
+        title={data.event.title}
+        description={`${formatShortDateKey(occurrenceDate, locale)} · ${data.event.time}`}
+        actions={
+          completionEntry || (permissions?.canManageEvent && !smallScreen) ? (
+            <>
+              {completionEntry && (
+                <TrainingCompletionControl entry={completionEntry} labelled />
+              )}
+              {permissions?.canManageEvent && !smallScreen && (
+                <EventEditAction
+                  eventId={eventId}
+                  stableId={stableId}
+                  training
+                  search={editSearch}
+                />
+              )}
+            </>
+          ) : undefined
+        }
       />
-      <Field className="max-w-xs">
-        <FieldLabel htmlFor="training-occurrence">
-          {t('trainingViews.sessionDate')}
-        </FieldLabel>
-        <Input
-          id="training-occurrence"
-          type="date"
-          value={occurrenceDate}
-          onChange={(e) => {
-            if (isDateKey(e.target.value))
-              void navigate({
-                to: '/stables/$stableId/training/$eventId',
-                params: { stableId, eventId },
-                search: { date: e.target.value },
-                replace: true,
-              })
-          }}
+      {permissions?.canManageEvent && smallScreen && (
+        <EventEditAction
+          search={editSearch}
+          eventId={eventId}
+          stableId={stableId}
+          training
+          mobile
         />
-      </Field>
+      )}
+      {data.event.recurrence && (
+        <Field className="max-w-xs">
+          <FieldLabel htmlFor="training-occurrence">
+            {t('trainingViews.sessionDate')}
+          </FieldLabel>
+          <Input
+            id="training-occurrence"
+            type="date"
+            value={occurrenceDate}
+            onChange={(e) => {
+              if (isDateKey(e.target.value))
+                void navigate({
+                  to: '/stables/$stableId/training/$eventId',
+                  params: { stableId, eventId },
+                  search: { date: e.target.value },
+                  replace: true,
+                })
+            }}
+          />
+        </Field>
+      )}
+      {entries.length === 0 && (
+        <p role="status">{t('trainingViews.noSession')}</p>
+      )}
+      {entries.map((entry) => (
+        <TrainingRecordCard
+          key={entry.key}
+          entry={entry}
+          showCompletion={entries.length > 1}
+        />
+      ))}
       {data.event.recurrence && !data.event.training && (
         <p className="text-sm text-muted-foreground">
           {t('trainingViews.legacyHelp')}
@@ -132,7 +167,7 @@ function TrainingSession() {
         (row) => row.completionNotes || row.requestedServiceNotes,
       ) && (
         <details className="rounded-row bg-surface p-4">
-          <summary className="cursor-pointer font-semibold">
+          <summary className="app-disclosure-trigger cursor-pointer font-semibold">
             {t('trainingViews.earlierNotes')}
           </summary>
           <div className="mt-3 grid gap-3">
@@ -153,12 +188,30 @@ function TrainingSession() {
           </div>
         </details>
       )}
-      {entries.length === 0 && (
-        <p role="status">{t('trainingViews.noSession')}</p>
-      )}
-      {entries.map((entry) => (
-        <TrainingRecordCard key={entry.key} entry={entry} />
-      ))}
+      <details className="rounded-row bg-card p-4">
+        <summary className="app-control-focus min-h-11 cursor-pointer py-2 font-semibold">
+          {t('trainingViews.sessionDetails')}
+        </summary>
+        <div className="mt-4 grid gap-4">
+          <EventDetail
+            stableId={stableId}
+            event={{
+              ...data.event,
+              date: entries[0]?.occurrence.startDate ?? data.event.date,
+              endDate: entries[0]
+                ? entries[0].occurrence.durationDays > 1
+                  ? entries[0].occurrence.endDate
+                  : undefined
+                : data.event.endDate,
+            }}
+            horses={data.horses}
+            canManageEvent={permissions?.canManageEvent ?? false}
+            showServiceDetails={false}
+            showHeader={false}
+            showHorses={false}
+          />
+        </div>
+      </details>
     </DashboardPage>
   )
 }

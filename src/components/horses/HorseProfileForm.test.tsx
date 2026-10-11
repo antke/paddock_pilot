@@ -125,6 +125,88 @@ describe('linked birth date and age fields', () => {
 })
 
 describe('horse profile lifecycle', () => {
+  it('selects a suggested owner with the keyboard and saves the display name', async () => {
+    const { props, form } = setup({
+      mode: 'create',
+      initialValues: { ...initialValues, ownerName: '' },
+      ownerSuggestions: ['  Alex Rider  ', 'Alex Rider', '', 'Żaneta Łącka'],
+    })
+    const owner = screen.getByRole<HTMLInputElement>('combobox', {
+      name: 'Owner name',
+    })
+    expect(owner.value).toBe('')
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Show owner name suggestions' }),
+    )
+    await screen.findByRole('option', { name: 'Alex Rider' })
+    expect(screen.getAllByRole('option')).toHaveLength(2)
+    fireEvent.change(owner, { target: { value: 'Żaneta' } })
+    await screen.findByRole('option', { name: 'Żaneta Łącka' })
+    fireEvent.keyDown(owner, { key: 'ArrowDown' })
+    fireEvent.keyDown(owner, { key: 'Enter' })
+    expect(owner.value).toBe('Żaneta Łącka')
+    expect(props.save).not.toHaveBeenCalled()
+    fireEvent.submit(form)
+    await waitFor(() => expect(props.save).toHaveBeenCalledTimes(1))
+    expect(vi.mocked(props.save).mock.calls[0][0].ownerName).toBe(
+      'Żaneta Łącka',
+    )
+  })
+
+  it('accepts an owner outside the suggestions without replacing their name on blur', async () => {
+    const { props, form } = setup({
+      mode: 'create',
+      ownerSuggestions: ['Alex Rider'],
+    })
+    const owner = screen.getByLabelText<HTMLInputElement>('Owner name')
+    fireEvent.change(owner, { target: { value: 'Independent owner' } })
+    fireEvent.blur(owner)
+    expect(owner.value).toBe('Independent owner')
+    fireEvent.submit(form)
+    await waitFor(() => expect(props.save).toHaveBeenCalledTimes(1))
+    expect(vi.mocked(props.save).mock.calls[0][0].ownerName).toBe(
+      'Independent owner',
+    )
+  })
+
+  it.each(['create', 'edit'] as const)(
+    'clears a rejected breed immediately after explicitly adding it in %s mode',
+    async (mode) => {
+      const { props, form } = setup({ mode })
+      fireEvent.click(screen.getByRole('button', { name: /Profile & health/ }))
+      const breed = screen.getByLabelText<HTMLInputElement>('Breed')
+      const message =
+        'Choose a breed from the list, add a new breed, or clear this field.'
+      fireEvent.change(breed, { target: { value: 'Stara Szkapa' } })
+      fireEvent.blur(breed)
+      await screen.findByText(message)
+      fireEvent.click(screen.getByRole('button', { name: 'Add breed' }))
+      expect(
+        screen.getByLabelText<HTMLInputElement>('New breed name').value,
+      ).toBe('Stara Szkapa')
+      fireEvent.click(screen.getByRole('button', { name: 'Use breed' }))
+      // Adding a breed must update visible validity without another blur/save.
+      await waitFor(() => expect(screen.queryByText(message)).toBeNull())
+      expect(breed.getAttribute('aria-invalid')).toBe('false')
+      expect(breed.getAttribute('aria-describedby')).toBeNull()
+      expect(breed.value).toBe('Stara Szkapa')
+      expect(props.save).not.toHaveBeenCalled()
+      expect(props.uploadImage).not.toHaveBeenCalled()
+      fireEvent.change(breed, { target: { value: 'Another unknown breed' } })
+      fireEvent.blur(breed)
+      await screen.findByText(message)
+      fireEvent.submit(form)
+      await waitFor(() =>
+        expect(breed.getAttribute('aria-invalid')).toBe('true'),
+      )
+      expect(props.save).not.toHaveBeenCalled()
+      fireEvent.change(breed, { target: { value: 'Stara Szkapa' } })
+      fireEvent.submit(form)
+      await waitFor(() => expect(props.save).toHaveBeenCalledTimes(1))
+      expect(vi.mocked(props.save).mock.calls[0][0].breed).toBe('Stara Szkapa')
+    },
+  )
+
   it.each(['create', 'edit'] as const)(
     'saves an explicitly added custom breed in %s mode',
     async (mode) => {
@@ -412,5 +494,65 @@ describe('horse profile lifecycle', () => {
     await waitFor(() => expect(name.value).toBe('Maple'))
     expect(screen.queryByText('maple.png')).toBeNull()
     expect(props.save).not.toHaveBeenCalled()
+  })
+})
+
+describe('saved horse contacts', () => {
+  it('keeps a saved reference when editing unrelated details and detaches when the phone is edited', async () => {
+    const providerId = 'sample-vet' as Id<'stableProviders'>
+    const view = setup({
+      initialValues: {
+        ...initialValues,
+        vetName: 'Dr Carter',
+        vetPhone: '+48111111111',
+        vetProviderId: providerId,
+      },
+      providers: [
+        {
+          _id: providerId,
+          type: 'vet',
+          name: 'Dr Carter',
+          phone: '+48111111111',
+        },
+      ],
+    })
+    fireEvent.change(view.name, { target: { value: 'Maple II' } })
+    fireEvent.submit(view.form)
+    await waitFor(() =>
+      expect(view.props.save).toHaveBeenCalledWith(
+        expect.objectContaining({ vetProviderId: providerId }),
+        undefined,
+      ),
+    )
+    view.unmount()
+    const second = setup({
+      initialValues: {
+        ...initialValues,
+        vetName: 'Dr Carter',
+        vetPhone: '+48111111111',
+        vetProviderId: providerId,
+      },
+      providers: [
+        {
+          _id: providerId,
+          type: 'vet',
+          name: 'Dr Carter',
+          phone: '+48111111111',
+        },
+      ],
+    })
+    fireEvent.change(screen.getByLabelText('Vet phone'), {
+      target: { value: '+48222222222' },
+    })
+    fireEvent.submit(second.form)
+    await waitFor(() =>
+      expect(second.props.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          vetProviderId: undefined,
+          vetPhone: '+48222222222',
+        }),
+        undefined,
+      ),
+    )
   })
 })

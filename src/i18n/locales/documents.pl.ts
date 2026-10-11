@@ -1,4 +1,6 @@
 export const documents = {
+  downloadStarted: 'Rozpoczęto pobieranie',
+  downloadStartedNamed: 'Rozpoczęto pobieranie pliku {{name}}.',
   types: {
     passport: 'Paszport',
     vaccination: 'Szczepienia',

@@ -60,6 +60,26 @@ async function fixture(premium = true) {
   }
 }
 
+async function linkFixtureEvents(f: Awaited<ReturnType<typeof fixture>>) {
+  await f.t.run(async (ctx) => {
+    const events = await ctx.db.query('events').collect()
+    const training = await ctx.db.query('trainingRecords').collect()
+    for (const event of events)
+      for (const horseId of new Set([
+        ...event.horseIds,
+        ...training
+          .filter((r) => r.eventId === event._id)
+          .map((r) => r.horseId),
+      ])) {
+        await ctx.db.insert('eventsHorses', {
+          eventId: event._id,
+          horseId,
+          status: event.horseIds.includes(horseId) ? 'confirmed' : 'withdrawn',
+        })
+      }
+  })
+}
+
 describe('horse comparison evidence and access', () => {
   it('normalises units, keeps same-day observations and excludes another horse', async () => {
     const f = await fixture()
@@ -80,6 +100,7 @@ describe('horse comparison evidence and access', () => {
         })
       }
     })
+    await linkFixtureEvents(f)
     const result = await f.owner.query(
       api.stableAnalysis.getHorseComparisons,
       f.args,
@@ -115,6 +136,7 @@ describe('horse comparison evidence and access', () => {
         updatedAt: 1,
       })
     })
+    await linkFixtureEvents(f)
     const result = await f.owner.query(
       api.stableAnalysis.getHorseComparisons,
       f.args,
@@ -181,6 +203,7 @@ describe('horse comparison evidence and access', () => {
         recurrence: { frequency: 'weekly', interval: 1, daysOfWeek: [0] },
       })
     })
+    await linkFixtureEvents(f)
     const result = await f.owner.query(
       api.stableAnalysis.getHorseComparisons,
       f.args,
@@ -191,6 +214,8 @@ describe('horse comparison evidence and access', () => {
       '2026-02-08',
     ])
     expect(result.records[1].durationMinutes).toBeUndefined()
+    expect(result.records[0].status).toBe('unconfirmed')
+    expect(result.records[1].status).toBe('completed')
     expect(result.records.every((r) => r.kind === 'training')).toBe(true)
   })
   it('enforces membership and premium access server-side', async () => {
@@ -250,6 +275,7 @@ it('does not label unrelated completed events as care visits', async () => {
         status: 'completed',
       })
   })
+  await linkFixtureEvents(f)
   const result = await f.owner.query(
     api.stableAnalysis.getHorseComparisons,
     f.args,

@@ -1,3 +1,4 @@
+import { ContactLink } from '#/components/ui/contact-link'
 import { DashboardRecordDetails } from '#/components/dashboard/DashboardRecordDetails'
 import { createDashboardLabFixtureData } from '#/components/dashboard-lab/dashboardLabFixtures'
 import { createDashboardAuditSample } from '#/components/page-lab/prototypes/dashboardAnalysisFixtures'
@@ -68,6 +69,7 @@ import {
   HorseSelectionCard,
 } from '#/components/horses/HorseCard'
 import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
+import { EditRecordDialog } from '#/components/list-layout/EditRecordDialog'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { RecordRemoveAction } from '#/components/list-layout/RecordRemoveAction'
 import { ListFilterBar } from '#/components/list-filtering/ListFilterBar'
@@ -465,10 +467,10 @@ const componentInventory = [
   {
     group: 'Actions',
     canonical:
-      'ui/Button, ui/ButtonLink, ui/ActionGroup, DashboardActions, DashboardPageHeader action slots, DashboardSectionHeader action slots, DialogFooter, AlertDialogFooter, FormSubmitActions, and FormSubmitButtons',
+      'ui/Button, ui/ButtonLink, ui/ContactLink, ui/ProviderAutocomplete, ui/ActionGroup, DashboardActions, DashboardPageHeader action slots, DashboardSectionHeader action slots, DialogFooter, AlertDialogFooter, FormSubmitActions, and FormSubmitButtons',
     use: 'Primary CTAs, secondary links, row action groups, form footers, icon buttons, badge/action clusters',
     status: 'Canonical',
-    rule: 'Keep ordinary button appearance and semantic action icons inside ui/Button and buttonVariants, including subtle low-emphasis controls and chip-icon remove buttons. Set action="create" on controls that open add/create forms, action="edit" on controls that open edit forms, and action="delete" on destructive delete/remove controls; the shared primitive supplies the canonical plus, pen, or trash icon and spacing. Do not add these icons to ordinary navigation or form submit buttons merely because their copy contains the same verb. Evergreen identifies the primary action; neutral outlines are secondary. Deep neutral ink and pale stone identify selected controls and rows, while burgundy is reserved for destructive actions and errors. Keep ordinary section structure flat and neutral. Keep low-level action-row and footer spacing in ActionGroup; use DashboardActions for dashboard/header/card and public CTA action rows, including its width prop for full-width footers, DialogFooter and AlertDialogFooter for modal footers, FormSubmitActions for wrapped inline or dialog submit/cancel rows, FormSubmitButtons for compact inline submit pairs inside existing layouts, and toast action buttons routed through buttonVariants. Specialized interactive geometry, such as timeline cells, scrub handles, calendar day cells, and drag targets, should stay in its domain primitive owner rather than feature files.',
+    rule: 'Use ContactLink for phone and email actions with shared URI validation, and ProviderAutocomplete for saved provider selection with one-off entry. Keep ordinary button appearance and semantic action icons inside ui/Button and buttonVariants, including subtle low-emphasis controls and chip-icon remove buttons. Set action="create" on controls that open add/create forms, action="edit" on controls that open edit forms, and action="delete" on destructive delete/remove controls; the shared primitive supplies the canonical plus, pen, or trash icon and spacing. Do not add these icons to ordinary navigation or form submit buttons merely because their copy contains the same verb. Evergreen identifies the primary action; neutral outlines are secondary. Deep neutral ink and pale stone identify selected controls and rows, while burgundy is reserved for destructive actions and errors. Keep ordinary section structure flat and neutral. Keep low-level action-row and footer spacing in ActionGroup; use DashboardActions for dashboard/header/card and public CTA action rows, including its width prop for full-width footers, DialogFooter and AlertDialogFooter for modal footers, FormSubmitActions for wrapped inline or dialog submit/cancel rows, FormSubmitButtons for compact inline submit pairs inside existing layouts, and toast action buttons routed through buttonVariants. Specialized interactive geometry, such as timeline cells, scrub handles, calendar day cells, and drag targets, should stay in its domain primitive owner rather than feature files.',
   },
   {
     group: 'Search and filters',
@@ -481,10 +483,10 @@ const componentInventory = [
   {
     group: 'Record cards and rows',
     canonical:
-      'DashboardItemCard helpers, DashboardItemList, DashboardItemCard, DashboardItemLinkCard, DashboardItemRecordCard, DashboardItemRecordFooter, DashboardItemMediaCard, DashboardItemActionRow, DashboardItemActionColumn, DashboardItemActions, DashboardItemCardContent, DashboardItemRecordContent, dashboard item text helpers, DashboardInlineHeader, DashboardMetaList, and DashboardSectionCard for framed panels',
+      'DashboardItemCard helpers, DashboardItemList, DashboardItemCard, DashboardItemLinkCard, DashboardItemRecordCard, DashboardItemRecordFooter, DashboardItemMediaCard, DashboardItemActionRow, DashboardItemActionColumn, DashboardItemActions, DashboardItemCardContent, DashboardItemRecordContent, dashboard item text helpers, DashboardInlineHeader, DashboardMetaList, DashboardUpdates, and DashboardSectionCard for framed panels',
     use: 'Care reminders, documents, horses, providers, events, alerts, health, medication, nutrition, timeline',
     status: 'Canonical',
-    rule: 'Keep row stacks, plain item shells, route-link item shells, content-plus-action record cards, preview/media rows, full-width row footers, open/link rows, selected row state, list content alignment, row density, record title sizing, open-row title hover treatment through titleTone, compact item title sizing, inline header title size/weight, title/meta layout, metadata spacing, top-right badge clusters through DashboardBadgeList, bottom-right side and media actions, right-aligned wrapping footer actions through actionsPlacement, compact metadata separators through DashboardMetaList, and description/body text, including muted body tone, in DashboardItemCard helpers before adding local row markup, hover-title classes, selected background/border recipes, alignment classes, text color classes, or padding overrides. Footer record actions wrap instead of becoming a hidden horizontal strip, and exceptional badge clusters move ahead of long record copy on narrow layouts. Set interactive={false} whenever a record has no row-level link or selection action. Use clear text and exceptional-state badges for urgency; ordinary records use shared alternating fills. DashboardItemLinkCard owns block, full-width, full-height link geometry so its hover and selected surfaces remain intact inside semantic list wrappers and responsive grids. Use density="compact" on DashboardItemRecordCard and DashboardItemOpenLink for dense lists. Specialized timeline, calendar, date marker, avatar, filter, and overlay geometry should stay in their own primitive owners instead of feature files.',
+    rule: 'Use DashboardUpdates for dated, expiring yard notices with a hidden-when-empty preview; keep persistence in a separate caller. Keep row stacks, plain item shells, route-link item shells, content-plus-action record cards, preview/media rows, full-width row footers, open/link rows, selected row state, list content alignment, row density, record title sizing, open-row title hover treatment through titleTone, compact item title sizing, inline header title size/weight, title/meta layout, metadata spacing, top-right badge clusters through DashboardBadgeList, bottom-right side and media actions, right-aligned wrapping footer actions through actionsPlacement, compact metadata separators through DashboardMetaList, and description/body text, including muted body tone, in DashboardItemCard helpers before adding local row markup, hover-title classes, selected background/border recipes, alignment classes, text color classes, or padding overrides. Footer record actions wrap instead of becoming a hidden horizontal strip, and exceptional badge clusters move ahead of long record copy on narrow layouts. Set interactive={false} whenever a record has no row-level link or selection action. Use clear text and exceptional-state badges for urgency; ordinary records use shared alternating fills. DashboardItemLinkCard owns block, full-width, full-height link geometry so its hover and selected surfaces remain intact inside semantic list wrappers and responsive grids. Use density="compact" on DashboardItemRecordCard and DashboardItemOpenLink for dense lists. Specialized timeline, calendar, date marker, avatar, filter, and overlay geometry should stay in their own primitive owners instead of feature files.',
   },
   {
     group: 'Tables and matrices',
@@ -560,10 +562,10 @@ const componentInventory = [
   {
     group: 'Forms',
     canonical:
-      'RouteFormCard, RouteFormActions, InlineForm, FormGroup, FormSection, FormStepHeader, FormTabsContent, SelectableCardField, SelectableCardCheckbox, SelectableCardLabel, DashboardInlineForm, DashboardInlineField, CreateRecordDialog, RecordDialog primitives, Field, FieldGroup, FieldGrid, FieldPanel, FieldDescription, FieldLabelRow, FieldHeader, FieldHeaderContent, FieldOptionGroup, FieldInlineControl, FieldInlineText, FileUploadField, Input, Select, Textarea, Checkbox, RadioGroup, ChoiceButtonGroup, FormSubmitActions, and FormSubmitButtons',
+      'RouteFormCard, RouteFormActions, InlineForm, FormGroup, FormSection, FormStepHeader, FormTabsContent, SelectableCardField, SelectableCardCheckbox, SelectableCardLabel, DashboardInlineForm, DashboardInlineField, CreateRecordDialog, EditRecordDialog, UnsavedChangesGuard, RecordDialog primitives, Field, FieldGroup, FieldGrid, FieldPanel, FieldDescription, FieldLabelRow, FieldHeader, FieldHeaderContent, FieldOptionGroup, FieldInlineControl, FieldInlineText, FileUploadField, Input, Select, Textarea, Checkbox, RadioGroup, ChoiceButtonGroup, FormSubmitActions, and FormSubmitButtons',
     use: 'Stable, horse, event, provider, reminder, document workflows',
     status: 'Canonical',
-    rule: 'Use RouteFormCard for create/edit routes, including its contentGap prop for route-form body rhythm, stickyActions for long page forms, and embedded mode when a persistent entity shell already owns the page heading; use RouteFormActions for page form footers, including resetConfirmation before discarding meaningful edits, and InlineForm or DashboardInlineForm for embedded forms. Split a manageable form into always-visible FormGroup sections; reserve animated FormSection accordions for forms whose field count is genuinely difficult to scan, keep the first or most essential section open, and use FormStepHeader for numbered substeps inside a larger form section. Use InlineForm layout for known compact inline compositions, FormTabsContent only when the content represents genuinely separate views rather than sequential form data, SelectableCardField, SelectableCardCheckbox, and SelectableCardLabel for generic checkbox/radio rows that wrap a full card, and HorseSelectionCard for horse pickers so selection is represented by the card outline rather than an adjacent control. Use CreateRecordDialog with RecordDialog primitives for dialog create flows, and use FormSubmitActions sticky for long scrolling dialog forms so completion remains reachable without inventing a feature-local footer. Use FieldGroup with its gap prop for vertical field stacks, FieldGrid for responsive field columns, FieldPanel with its gap prop for inset form groups, FieldDescription for block helper copy, FieldLabel size, width, and interactive props for compact or full-width clickable labels, FieldLabelRow for labels paired with help or tooltip controls, FieldHeader and FieldHeaderContent for fieldset legends or labels paired with an aside badge/action, FieldOptionGroup for wrapped radio or checkbox option clusters, FieldInlineControl for compact input-prefix-suffix rows, FieldInlineText for muted inline prefixes and suffixes, Input width and Textarea minHeight for control sizing, FileUploadField for file inputs with optional help and the same rounded selected-file surface as the empty drop zone, ChoiceButtonGroup layout="cards" for descriptive two-way choices, DashboardInlineField for selectable rows, and FormSubmitActions or FormSubmitButtons for cancel/submit rows before adding local grid, spacing, dialog sizing, helper-text classes, label/help flex rows, field-header flex rows, option-cluster flex rows, inline-control flex rows, file-input field recipes, compact input width recipes, control-size recipes, or floating-trigger recipes.',
+    rule: 'Use UnsavedChangesGuard for meaningful form drafts, with a live predicate that stops blocking immediately after an acknowledged save. Use RouteFormCard for create/edit routes, including its contentGap prop for route-form body rhythm, stickyActions for long page forms, and embedded mode when a persistent entity shell already owns the page heading; use RouteFormActions for page form footers, including resetConfirmation before discarding meaningful edits, and InlineForm or DashboardInlineForm for embedded forms. Split a manageable form into always-visible FormGroup sections; reserve animated FormSection accordions for forms whose field count is genuinely difficult to scan, keep the first or most essential section open, and use FormStepHeader for numbered substeps inside a larger form section. Use InlineForm layout for known compact inline compositions, FormTabsContent only when the content represents genuinely separate views rather than sequential form data, SelectableCardField, SelectableCardCheckbox, and SelectableCardLabel for generic checkbox/radio rows that wrap a full card, and HorseSelectionCard for horse pickers so selection is represented by the card outline rather than an adjacent control. Use CreateRecordDialog with RecordDialog primitives for dialog create flows and EditRecordDialog for controlled record editing from existing row actions; keep save/error state in the caller and pass isPending to block dismissal during a save, and use FormSubmitActions sticky for long scrolling dialog forms so completion remains reachable without inventing a feature-local footer. Use FieldGroup with its gap prop for vertical field stacks, FieldGrid for responsive field columns, FieldPanel with its gap prop for inset form groups, FieldDescription for block helper copy, FieldLabel size, width, and interactive props for compact or full-width clickable labels, FieldLabelRow for labels paired with help or tooltip controls, FieldHeader and FieldHeaderContent for fieldset legends or labels paired with an aside badge/action, FieldOptionGroup for wrapped radio or checkbox option clusters, FieldInlineControl for compact input-prefix-suffix rows, FieldInlineText for muted inline prefixes and suffixes, Input width and Textarea minHeight for control sizing, FileUploadField for file inputs with optional help and the same rounded selected-file surface as the empty drop zone, ChoiceButtonGroup layout="cards" for descriptive two-way choices, DashboardInlineField for selectable rows, and FormSubmitActions or FormSubmitButtons for cancel/submit rows before adding local grid, spacing, dialog sizing, helper-text classes, label/help flex rows, field-header flex rows, option-cluster flex rows, inline-control flex rows, file-input field recipes, compact input width recipes, control-size recipes, or floating-trigger recipes.',
   },
   {
     group: 'Feedback and overlays',
@@ -1233,6 +1235,10 @@ function ComponentSpecimens() {
               Disabled
             </Button>
           </DashboardActions>
+          <DashboardActions align="start">
+            <ContactLink kind="phone" value="+48 123 456 789" />
+            <ContactLink kind="email" value="yard@example.com" />
+          </DashboardActions>
           <DashboardInlinePanel chrome="soft" padding="tight">
             <DashboardInlineHeader
               title="Loading and long labels"
@@ -1860,6 +1866,7 @@ function FeedbackOverlaySpecimen({
   onDialogOpenChange: (open: boolean) => void
 }) {
   const [destructiveDialogOpen, setDestructiveDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
 
   return (
     <div className="grid gap-3">
@@ -1984,6 +1991,46 @@ function FeedbackOverlaySpecimen({
             />
           </InlineForm>
         </CreateRecordDialog>
+
+        <Button
+          type="button"
+          variant="ghost"
+          action="edit"
+          onClick={() => setEditDialogOpen(true)}
+        >
+          Edit sample record
+        </Button>
+        <EditRecordDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          title="Edit sample care record"
+        >
+          <InlineForm
+            gap="compact"
+            onSubmit={(event) => {
+              event.preventDefault()
+              setEditDialogOpen(false)
+              showAppSuccessToast({
+                title: 'Sample updated',
+                description: 'No live care record was changed.',
+              })
+            }}
+          >
+            <Field>
+              <FieldLabel htmlFor="guideline-edit-title">Title</FieldLabel>
+              <Input
+                id="guideline-edit-title"
+                defaultValue="Hoof trim follow-up"
+              />
+            </Field>
+            <FormSubmitActions
+              isSubmitting={false}
+              submitLabel="Save sample"
+              submittingLabel="Saving"
+              onCancel={() => setEditDialogOpen(false)}
+            />
+          </InlineForm>
+        </EditRecordDialog>
 
         <AlertDialog
           open={destructiveDialogOpen}

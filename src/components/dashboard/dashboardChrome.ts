@@ -2,6 +2,10 @@ import { cn } from '#/lib/utils'
 
 export type DashboardChrome = 'flat' | 'cards' | 'soft'
 
+/** Separate tappable records on the mobile canvas without changing desktop panels. */
+export const dashboardMobileRecordClassName =
+  'max-md:rounded-row max-md:border max-md:border-border-subtle max-md:bg-card max-md:px-4 max-md:py-3 max-md:shadow-none max-md:hover:bg-surface max-md:active:bg-surface-muted'
+
 export function dashboardSectionClassName(
   chrome: DashboardChrome,
   className?: string,

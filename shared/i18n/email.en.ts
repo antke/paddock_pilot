@@ -1,4 +1,14 @@
 export const emailEN = {
+  digestSubject: 'Care reminders due',
+  digestHeading: 'Care to follow up on',
+  digestBody:
+    'These stables have pending care reminders due today or earlier. Open Care to review the latest details.',
+  digestCount: (name: string, count: number) =>
+    `${name}: ${count} due or overdue`,
+  digestSettings: 'Email settings',
+  digestOpenCare: 'Open Care',
+  digestPreferences:
+    'You receive this daily summary because you enabled care reminder emails. Manage this preference in your profile:',
   invitationSubject: (stableName: string) =>
     `You're invited to ${stableName} on Paddock Pilot`,
   invitationPreheader: (stableName: string) =>

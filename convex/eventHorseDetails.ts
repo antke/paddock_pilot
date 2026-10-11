@@ -1,117 +1,52 @@
 import { ConvexError, v } from 'convex/values'
 import { eventHorseDetailsInputSchema } from '../shared/events/eventHorseDetailsSchema'
-import {
-  canManageLinkedRecord,
-  canManageOwnedRecord,
-} from '../shared/stables/stableAccess'
-import type { Doc, Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
-import type { MutationCtx, QueryCtx } from './_generated/server'
-import { assertCanViewStable, getCurrentUser } from './libs/stablePermissions'
-import { isActiveHorse } from './libs/horseState'
-
-type Ctx = MutationCtx | QueryCtx
-
-const isHorse = (horse: Doc<'horses'> | null): horse is Doc<'horses'> => {
-  return isActiveHorse(horse)
-}
-
-const validateDetailsInput = (args: {
-  requestedServiceNotes?: string
-  completionNotes?: string
-  costShare?: number
-}) => {
-  const result = eventHorseDetailsInputSchema.safeParse(args)
-
-  if (!result.success) {
-    throw new ConvexError(
-      result.error.issues[0]?.message ?? 'Invalid service details input',
-    )
-  }
-
-  return result.data
-}
-
-const canManageEventHorse = (
-  access: Awaited<ReturnType<typeof assertCanViewStable>>,
-  event: Doc<'events'>,
-  horse: Doc<'horses'>,
-) =>
-  canManageLinkedRecord({
-    role: access.role,
-    userId: access.userId,
-    horseOwnerId: horse.ownerId,
-    eventCreatedBy: event.createdBy,
-  })
-
-const getEventHorseContext = async (ctx: Ctx, id: Id<'eventsHorses'>) => {
-  const eventHorse = await ctx.db.get(id)
-  if (!eventHorse) throw new ConvexError('Event horse row not found')
-
-  const [event, horse] = await Promise.all([
-    ctx.db.get(eventHorse.eventId),
-    ctx.db.get(eventHorse.horseId),
-  ])
-
-  if (!event) throw new ConvexError('Event not found')
-  if (!isActiveHorse(horse)) throw new ConvexError('Horse not found')
-  if (horse.stableId !== event.stableId) {
-    throw new ConvexError('Event horse row belongs to another stable')
-  }
-
-  return { eventHorse, event, horse }
-}
+import {
+  getHorseAccess,
+  assertCanEditHorseRecord,
+  auditHorse,
+} from './libs/horsePermissions'
+import { eventReadAccess, visibleEvent } from './libs/eventPermissions'
 
 export const listForEvent = query({
   args: { eventId: v.id('events') },
-  handler: async (ctx, args) => {
-    const event = await ctx.db.get(args.eventId)
+  handler: async (ctx, { eventId }) => {
+    const event = await ctx.db.get(eventId)
     if (!event) return { event: null, rows: [] }
-
-    const access = await assertCanViewStable(ctx, event.stableId)
-    const eventHorseRows = await ctx.db
+    const access = await eventReadAccess(ctx, event)
+    const rows = await ctx.db
       .query('eventsHorses')
-      .withIndex('by_event_id', (q) => q.eq('eventId', args.eventId))
+      .withIndex('by_event_id', (q) => q.eq('eventId', eventId))
       .collect()
-    const horses = await Promise.all(
-      eventHorseRows.map((row) => ctx.db.get(row.horseId)),
-    )
-    const horsesById = new Map(
-      horses.filter(isHorse).map((horse) => [horse._id, horse]),
-    )
-
+    const result = []
+    for (const row of rows) {
+      const horse = await ctx.db.get(row.horseId)
+      if (!horse) continue
+      const horseAccess = await getHorseAccess(ctx, horse, access.userId)
+      if (!horseAccess.canRead) continue
+      const editable =
+        !horse.transitionId &&
+        (horseAccess.canEditPersonalRecords ||
+          (horseAccess.isAdmin &&
+            event.stableId === horse.stableId &&
+            row.sourcePlacementId === horse.currentPlacementId))
+      result.push({
+        horse,
+        eventHorse: row,
+        canManage:
+          editable && row.status !== 'declined' && row.status !== 'withdrawn',
+        canWithdraw:
+          editable &&
+          !row.participationEndsAt &&
+          (row.status === undefined || row.status === 'confirmed'),
+      })
+    }
     return {
-      event,
-      rows: eventHorseRows
-        .map((row) => {
-          const horse = horsesById.get(row.horseId)
-
-          return {
-            eventHorse: row,
-            horse,
-            canManage:
-              horse && row.status !== 'declined' && row.status !== 'withdrawn'
-                ? canManageEventHorse(access, event, horse)
-                : false,
-            canWithdraw:
-              horse && (row.status === undefined || row.status === 'confirmed')
-                ? canManageOwnedRecord({
-                    role: access.role,
-                    userId: access.userId,
-                    ownerId: horse.ownerId,
-                  })
-                : false,
-          }
-        })
-        .sort((a, b) =>
-          (a.horse?.name ?? 'Unknown horse').localeCompare(
-            b.horse?.name ?? 'Unknown horse',
-          ),
-        ),
+      event: await visibleEvent(ctx, event),
+      rows: result.sort((a, b) => a.horse.name.localeCompare(b.horse.name)),
     }
   },
 })
-
 export const update = mutation({
   args: {
     id: v.id('eventsHorses'),
@@ -119,26 +54,29 @@ export const update = mutation({
     completionNotes: v.optional(v.string()),
     costShare: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
-    const user = await getCurrentUser(ctx)
-    const { id, ...details } = args
-    const input = validateDetailsInput(details)
-    const { eventHorse, event, horse } = await getEventHorseContext(ctx, id)
-    const access = await assertCanViewStable(ctx, event.stableId, user._id)
-
-    if (eventHorse.status === 'declined' || eventHorse.status === 'withdrawn') {
+  handler: async (ctx, { id, ...details }) => {
+    const input = eventHorseDetailsInputSchema.safeParse(details)
+    if (!input.success)
+      throw new ConvexError(input.error.issues[0]?.message ?? 'Invalid details')
+    const row = await ctx.db.get(id)
+    if (!row) throw new ConvexError('Participation not found')
+    const event = await ctx.db.get(row.eventId)
+    if (!event) throw new ConvexError('Event not found')
+    if (row.status === 'declined' || row.status === 'withdrawn')
       throw new ConvexError('Inactive horse participation cannot be updated')
-    }
-
-    if (!canManageEventHorse(access, event, horse)) {
-      throw new ConvexError('Not authorized to update service details')
-    }
-
-    await ctx.db.patch(eventHorse._id, {
-      requestedServiceNotes: input.requestedServiceNotes,
-      completionNotes: input.completionNotes,
-      costShare: input.costShare,
-      updatedAt: Date.now(),
+    const horse = await ctx.db.get(row.horseId)
+    if (!horse) throw new ConvexError('Horse not found')
+    const access = await assertCanEditHorseRecord(ctx, horse, {
+      stableId: event.stableId,
+      sourcePlacementId: row.sourcePlacementId,
     })
+    await auditHorse(
+      ctx,
+      row.horseId,
+      access.userId,
+      'event.details.updated',
+      JSON.stringify(row),
+    )
+    await ctx.db.patch(id, { ...input.data, updatedAt: Date.now() })
   },
 })

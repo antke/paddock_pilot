@@ -12,6 +12,10 @@ The calendar offers Week (horse rows, day columns), Month and a mobile agenda. H
 
 Stable members can read stable training. Only a horse owner or stable admin can record its completion. Creating and editing a shared schedule retains event permissions and the existing invitation flow. A member cannot confirm another owner's horse by selecting Completed in the creation form; only confirmed horses receive initial records.
 
+Dashboard cards, calendar entries, interactive hover previews and the session detail offer direct completion for permitted users on today’s or past sessions. The round control shows a green tick after saving and can reopen the session. The status-only mutation reads the latest stored details and outcome, so marking complete or incomplete never replaces notes with stale card data. Future sessions and read-only records do not offer the control.
+
+Editing a selected recorded session loads that record’s work details and preserves its horse, occurrence date and participation context on return. Changes apply to that record without rewriting other horses or dates in the series. Shared one-off work-detail edits update the changed fields in the associated records while preserving their outcomes and other individual adjustments. Detail pages use the same coloured activity tags as the calendar.
+
 Recurring plans do not imply completed work. Initial completion applies only to the selected date. Past plans without a result show Needs confirmation. Legacy one-off completion is preserved; legacy recurring completion does not establish completion of individual dates. Earlier per-horse notes remain available in the session detail.
 
 Recorded history survives withdrawal. Horses in deleted-horse storage are hidden and recoverable; permanent horse deletion removes their training records. Schedules with recorded history cannot be moved or have their recurrence rewritten; create a new schedule instead. Per-horse outcomes can still be corrected, with audit entries.

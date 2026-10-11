@@ -35,6 +35,21 @@ export type DashboardTrainingData = {
   horses: Array<TrainingHorse>
 }
 
+/** Shared section inputs; a personal workspace has no stable context. */
+export type DashboardActivityData = Pick<
+  DashboardCommandData,
+  'events' | 'todayTraining' | 'todayEvents' | 'weekDays'
+> & {
+  stable?: DashboardCommandStable
+}
+
+export type DashboardCareData = Pick<
+  DashboardCommandData,
+  'overview' | 'dueReminders' | 'attentionHorses'
+> & {
+  stable?: DashboardCommandStable
+}
+
 export type DashboardCommandData = {
   todayTraining?: Array<TrainingEntry>
   stable: DashboardCommandStable

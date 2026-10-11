@@ -1,3 +1,5 @@
+import { ProviderAutocomplete } from '#/components/ui/provider-autocomplete'
+import type { ProviderOption } from '#/components/ui/provider-autocomplete'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { getHorseBreedLabel } from 'shared/i18n/horseBreedLabels'
 import { FileUploadField } from '#/components/forms/FileUploadField'
@@ -30,13 +32,18 @@ import {
   useFormState,
   useWatch,
 } from 'react-hook-form'
-import type { Control } from 'react-hook-form'
+import type { Control, UseFormSetValue } from 'react-hook-form'
 import { HorseBreedAutocomplete } from './HorseBreedAutocomplete'
+import { HorseOwnerAutocomplete } from './HorseOwnerAutocomplete'
 import { HorseStringListField } from './HorseStringListField'
 import type { HorseFormInput, HorseFormSchema } from './horseFormSchema'
 
 type Props = {
   control: Control<HorseFormInput, unknown, HorseFormSchema>
+  providers?: Array<ProviderOption>
+  ownerSuggestions?: ReadonlyArray<string>
+  contactMode?: 'linked' | 'copied'
+  setValue: UseFormSetValue<HorseFormInput>
   disabled?: boolean
   existingBreed?: string
   additionalBreeds: ReadonlyArray<string>
@@ -56,6 +63,10 @@ const toOptionalShoeingStatus = (value: ShoeingStatusChoice) =>
 
 export function HorseFormFields({
   control,
+  providers = [],
+  ownerSuggestions = [],
+  contactMode = 'linked',
+  setValue,
   disabled = false,
   existingBreed,
   additionalBreeds,
@@ -234,18 +245,26 @@ export function HorseFormFields({
                     {t('horseForm.owner')}
                   </FieldLabel>
 
-                  <Input
-                    {...field}
+                  <HorseOwnerAutocomplete
+                    suggestions={ownerSuggestions}
+                    inputRef={field.ref}
+                    name={field.name}
                     id={field.name}
-                    type="text"
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    onBlur={field.onBlur}
                     disabled={disabled}
                     aria-invalid={fieldState.invalid}
                     aria-describedby={
-                      fieldState.invalid ? `${field.name}-error` : undefined
+                      fieldState.invalid
+                        ? `horse-owner-name-help ${field.name}-error`
+                        : 'horse-owner-name-help'
                     }
-                    placeholder="Penny Chenery"
-                    autoComplete="off"
                   />
+
+                  <FieldDescription id="horse-owner-name-help">
+                    {t('horseForm.ownerHelp')}
+                  </FieldDescription>
 
                   {fieldState.invalid && (
                     <FieldError
@@ -473,6 +492,13 @@ export function HorseFormFields({
           </CareRecordRow>
 
           <CareRecordRow label={t('horseForm.veterinary')}>
+            <FieldDescription>
+              {t(
+                contactMode === 'copied'
+                  ? 'horseForm.copiedContactHelp'
+                  : 'horseForm.savedContactHelp',
+              )}
+            </FieldDescription>
             <FieldGrid>
               <Controller
                 name="vetName"
@@ -482,17 +508,34 @@ export function HorseFormFields({
                     <FieldLabel htmlFor={field.name}>
                       {t('horseForm.vetName')}
                     </FieldLabel>
-                    <Input
-                      {...field}
+                    <ProviderAutocomplete
                       id={field.name}
+                      name={field.name}
                       value={field.value ?? ''}
+                      providers={providers.filter(
+                        (provider) => provider.type === 'vet',
+                      )}
                       disabled={disabled}
-                      aria-invalid={fieldState.invalid}
-                      aria-describedby={
+                      invalid={fieldState.invalid}
+                      describedBy={
                         fieldState.invalid ? `${field.name}-error` : undefined
                       }
-                      placeholder="Dr. Carter"
-                      autoComplete="off"
+                      inputRef={field.ref}
+                      onBlur={field.onBlur}
+                      onValueChange={(value) => {
+                        field.onChange(value)
+                        setValue('vetProviderId', undefined, {
+                          shouldDirty: true,
+                        })
+                      }}
+                      onProviderSelect={(provider) => {
+                        setValue('vetProviderId', provider._id, {
+                          shouldDirty: true,
+                        })
+                        setValue('vetPhone', provider.phone ?? '', {
+                          shouldDirty: true,
+                        })
+                      }}
                     />
                     {fieldState.invalid && (
                       <FieldError
@@ -514,6 +557,12 @@ export function HorseFormFields({
                     </FieldLabel>
                     <Input
                       {...field}
+                      onChange={(event) => {
+                        field.onChange(event)
+                        setValue('vetProviderId', undefined, {
+                          shouldDirty: true,
+                        })
+                      }}
                       id={field.name}
                       value={field.value ?? ''}
                       disabled={disabled}
@@ -538,6 +587,13 @@ export function HorseFormFields({
           </CareRecordRow>
 
           <CareRecordRow label={t('horseForm.farrier')}>
+            <FieldDescription>
+              {t(
+                contactMode === 'copied'
+                  ? 'horseForm.copiedContactHelp'
+                  : 'horseForm.savedContactHelp',
+              )}
+            </FieldDescription>
             <FieldGrid>
               <Controller
                 name="farrierName"
@@ -547,17 +603,34 @@ export function HorseFormFields({
                     <FieldLabel htmlFor={field.name}>
                       {t('horseForm.farrierName')}
                     </FieldLabel>
-                    <Input
-                      {...field}
+                    <ProviderAutocomplete
                       id={field.name}
+                      name={field.name}
                       value={field.value ?? ''}
+                      providers={providers.filter(
+                        (provider) => provider.type === 'farrier',
+                      )}
                       disabled={disabled}
-                      aria-invalid={fieldState.invalid}
-                      aria-describedby={
+                      invalid={fieldState.invalid}
+                      describedBy={
                         fieldState.invalid ? `${field.name}-error` : undefined
                       }
-                      placeholder="Alex Morgan"
-                      autoComplete="off"
+                      inputRef={field.ref}
+                      onBlur={field.onBlur}
+                      onValueChange={(value) => {
+                        field.onChange(value)
+                        setValue('farrierProviderId', undefined, {
+                          shouldDirty: true,
+                        })
+                      }}
+                      onProviderSelect={(provider) => {
+                        setValue('farrierProviderId', provider._id, {
+                          shouldDirty: true,
+                        })
+                        setValue('farrierPhone', provider.phone ?? '', {
+                          shouldDirty: true,
+                        })
+                      }}
                     />
                     {fieldState.invalid && (
                       <FieldError
@@ -579,6 +652,12 @@ export function HorseFormFields({
                     </FieldLabel>
                     <Input
                       {...field}
+                      onChange={(event) => {
+                        field.onChange(event)
+                        setValue('farrierProviderId', undefined, {
+                          shouldDirty: true,
+                        })
+                      }}
                       id={field.name}
                       value={field.value ?? ''}
                       disabled={disabled}

@@ -1,3 +1,8 @@
+import {
+  departurePreview,
+  startDeparture,
+  revokeHorseAccess,
+} from './horseTransitions'
 import { ConvexError, v } from 'convex/values'
 import {
   stableInputSchema,
@@ -220,6 +225,24 @@ export const remove = mutation({
   handler: async (ctx, args) => {
     const { stable, userId } = await assertCanManageStable(ctx, args.id)
 
+    const horses = await ctx.db
+      .query('horses')
+      .withIndex('by_stable_id', (q) => q.eq('stableId', args.id))
+      .collect()
+    if (horses.some((horse) => !horse.ownerId && horse.deletedAt === undefined))
+      throw new ConvexError(
+        'Claim or archive the unclaimed horses before archiving this stable',
+      )
+    for (const horse of horses) {
+      if (horse.currentPlacementId && !horse.transitionId) {
+        const preview = await departurePreview(ctx, horse)
+        await startDeparture(ctx, horse, {
+          actorUserId: userId,
+          carryReminderIds: preview.reminders.map((r) => r._id),
+        })
+      }
+      if (!horse.ownerId) await revokeHorseAccess(ctx, horse._id)
+    }
     await ctx.db.patch(args.id, {
       archivedAt: Date.now(),
       archivedReason: 'owner_archived',

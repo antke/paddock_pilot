@@ -1,0 +1,8 @@
+
+ RUN  v4.1.11 /Users/antek/Documents/projects/paddock_pilot
+
+
+ Test Files  10 passed (10)
+      Tests  49 passed (49)
+   Start at  17:21:44
+   Duration  5.93s (transform 3.21s, setup 0ms, import 11.59s, tests 6.78s, environment 2.08s)

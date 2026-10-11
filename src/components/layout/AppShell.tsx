@@ -170,11 +170,48 @@ export function AppSkipLink() {
 }
 
 export function AppHeaderLinks({ className, ...props }: ComponentProps<'div'>) {
+  const links = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const container = links.current
+    if (!container) return
+    const revealCurrent = () => {
+      const active = container.querySelector<HTMLElement>(
+        '[aria-current="page"]',
+      )
+      if (!active || container.scrollWidth <= container.clientWidth) return
+      const rect = active.getBoundingClientRect()
+      const viewport = container.getBoundingClientRect()
+      if (rect.left < viewport.left)
+        container.scrollLeft -= viewport.left - rect.left
+      else if (rect.right > viewport.right)
+        container.scrollLeft += rect.right - viewport.right
+    }
+    revealCurrent()
+    const observer = new MutationObserver(revealCurrent)
+    observer.observe(container, {
+      attributes: true,
+      childList: true,
+      subtree: true,
+      attributeFilter: ['aria-current'],
+    })
+    const resizeObserver =
+      typeof ResizeObserver === 'undefined'
+        ? undefined
+        : new ResizeObserver(revealCurrent)
+    resizeObserver?.observe(container)
+    window.addEventListener('resize', revealCurrent)
+    return () => {
+      observer.disconnect()
+      resizeObserver?.disconnect()
+      window.removeEventListener('resize', revealCurrent)
+    }
+  }, [])
   return (
     <div
+      ref={links}
       data-slot="app-header-links"
       className={cn(
-        'order-3 flex w-full min-w-0 flex-wrap items-center gap-1 xl:order-none xl:w-auto',
+        'order-3 flex w-full min-w-0 items-center gap-1 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:thin] [&>a]:min-h-11 [&>a]:whitespace-nowrap xl:order-none xl:w-auto xl:flex-wrap xl:overflow-visible xl:pb-0',
         className,
       )}
       {...props}
@@ -187,7 +224,7 @@ export function AppHeaderNav({ className, ...props }: AppHeaderNavProps) {
     <nav
       data-slot="app-header-nav"
       className={cn(
-        'page-wrap flex flex-wrap items-center justify-between gap-3 py-4',
+        'page-wrap flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2 sm:gap-3 sm:py-4',
         className,
       )}
       {...props}
@@ -285,12 +322,12 @@ export function AppMainContent({
   return (
     <div
       data-slot="app-main-wrap"
-      className="page-wrap grid flex-1 grid-cols-12"
+      className="page-wrap grid min-w-0 flex-1 grid-cols-12"
     >
       <div
         data-slot="app-main-content"
         className={cn(
-          'min-h-full',
+          'min-h-full min-w-0',
           width === 'wide' && 'col-span-12',
           width === 'default' && 'col-span-12 md:col-span-8 md:col-start-3',
           className,

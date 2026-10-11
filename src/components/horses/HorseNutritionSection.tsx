@@ -7,6 +7,7 @@ import { HorseNutritionCard } from './HorseNutritionCard'
 import { HorseNutritionLogsCard } from './HorseNutritionLogsCard'
 import { HorseWeightRecordsCard } from './HorseWeightRecordsCard'
 import { HorseDetailSectionTabs } from './HorseDetailSectionTabs'
+import { DashboardSubsection } from '#/components/dashboard/DashboardSectionCard'
 
 type NutritionTab = 'nutrition' | 'weight' | 'medication'
 
@@ -15,6 +16,8 @@ type SectionActionRenderer = (
 ) => ReactNode
 
 type HorseNutritionSectionViewProps = HorseDetailSectionProps & {
+  activeTab?: NutritionTab
+  onTabChange?: (tab: NutritionTab) => void
   renderLogs?: SectionActionRenderer
   renderWeight?: SectionActionRenderer
   renderMedication?: SectionActionRenderer
@@ -22,6 +25,8 @@ type HorseNutritionSectionViewProps = HorseDetailSectionProps & {
 
 export function HorseNutritionSection({
   horse,
+  activeTab: controlledTab,
+  onTabChange,
   renderLogs,
   renderWeight,
   renderMedication,
@@ -33,23 +38,21 @@ export function HorseNutritionSection({
       id: 'nutrition',
       label: t('careRecords.nutrition'),
       title: t('careRecords.nutrition'),
-      description: t('careRecords.nutritionHelp'),
     },
     {
       id: 'weight',
       label: t('careRecords.weight'),
       title: t('careRecords.weight'),
-      description: t('careRecords.weightHelp'),
     },
     {
       id: 'medication',
       label: t('careRecords.medication'),
       title: t('careRecords.medication'),
-      description: t('careRecords.medicationHelp'),
     },
   ] as const
 
-  const [activeTab, setActiveTab] = useState<NutritionTab>('nutrition')
+  const [localTab, setLocalTab] = useState<NutritionTab>('nutrition')
+  const activeTab = controlledTab ?? localTab
   const [headerAction, setHeaderAction] = useState<ReactNode>(null)
 
   return (
@@ -59,21 +62,24 @@ export function HorseNutritionSection({
       onSelect={(nextTab) => {
         if (activeTab === nextTab) return
         setHeaderAction(null)
-        setActiveTab(nextTab)
+        if (onTabChange) onTabChange(nextTab)
+        else setLocalTab(nextTab)
       }}
       actions={headerAction}
     >
       {activeTab === 'nutrition' && (
         <>
           <HorseNutritionCard horse={horse} showHeader={false} />
-          {renderLogs ? (
-            renderLogs(setHeaderAction)
-          ) : (
-            <HorseNutritionLogsCard
-              horse={horse}
-              onCreateActionChange={setHeaderAction}
-            />
-          )}
+          <DashboardSubsection title={t('careRecords.nutritionHistory')}>
+            {renderLogs ? (
+              renderLogs(setHeaderAction)
+            ) : (
+              <HorseNutritionLogsCard
+                horse={horse}
+                onCreateActionChange={setHeaderAction}
+              />
+            )}
+          </DashboardSubsection>
         </>
       )}
 

@@ -24,7 +24,9 @@ export type EventRowDensity = 'comfortable' | 'compact'
 
 export type EventRowEvent = {
   _id: string
-  stableId: string
+  contextHorseId?: string
+  contextParticipationId?: string
+  stableId?: string
   title: string
   date: string
   endDate?: string
@@ -72,7 +74,6 @@ export function EventRow({
   showLocation = true,
   showRecurrence = true,
   showStatus = true,
-  stableId = event.stableId,
   supplementalBadges,
   supplementalMeta = [],
   variant = 'agenda',
@@ -81,12 +82,12 @@ export function EventRow({
 
   return (
     <DashboardItemLinkCard
-      to={
-        event.type === 'training'
-          ? '/stables/$stableId/training/$eventId'
-          : '/stables/$stableId/events/$eventId'
-      }
-      params={{ stableId, eventId: event._id }}
+      to="/events/$eventId"
+      params={{ eventId: event._id }}
+      search={{
+        horseId: event.contextHorseId,
+        participationId: event.contextParticipationId,
+      }}
       accent={accent}
       chrome={chrome}
       density={resolvedDensity}
@@ -230,10 +231,8 @@ function getLeading(
       <span
         data-slot="event-time-badge"
         className={cn(
-          'app-row grid shrink-0 place-items-center rounded-control font-semibold text-primary',
-          density === 'compact'
-            ? 'min-w-12 px-2 py-1 text-xs'
-            : 'min-w-16 px-2 py-3 text-sm',
+          'app-row grid shrink-0 place-items-center rounded-control px-1 py-1 text-center leading-tight font-semibold text-primary [overflow-wrap:anywhere]',
+          density === 'compact' ? 'size-12 text-xs' : 'size-16 text-sm',
         )}
       >
         {leadingLabel ?? event.time}

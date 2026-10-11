@@ -115,9 +115,9 @@ type TimelineBlock = {
 }
 
 const columnWidthByScale = {
-  day: 24,
-  week: 28,
-  month: 32,
+  day: 17,
+  week: 17,
+  month: 17,
 } satisfies Record<StableTimelineScale, number>
 
 const laneHeightRem = 6.6
@@ -125,12 +125,12 @@ const blockHeightRem = 5.7
 const blockInsetRem = 0.48
 
 const eventTypeAccents = {
-  competition: 'var(--chart-3)',
-  vet: 'var(--destructive)',
-  training: 'var(--primary)',
-  dentist: 'var(--chart-1)',
-  hoof_trimming: 'var(--chart-4)',
-  massage: 'var(--chart-2)',
+  competition: 'var(--analysis-competition)',
+  vet: 'var(--analysis-health)',
+  training: 'var(--analysis-training)',
+  dentist: 'var(--analysis-medication)',
+  hoof_trimming: 'var(--analysis-care)',
+  massage: 'var(--analysis-condition)',
   other: 'var(--muted-foreground)',
 } satisfies Record<TimelineEvent['type'], string>
 
@@ -198,7 +198,13 @@ export function StableActivityTimelineChart({
       shouldShowOccurrence(occurrence, visibleSeries) &&
       visibleEventTypes.includes(occurrence.event.type),
   )
-  const baseColumnWidthRem = columnWidthByScale[scale]
+  const baseColumnWidthRem =
+    scrollState.clientWidth > 0
+      ? Math.min(
+          columnWidthByScale[scale],
+          scrollState.clientWidth / getRootRemInPixels(),
+        )
+      : columnWidthByScale[scale]
   const columnWidthRem = baseColumnWidthRem * columnZoom
   const blocks = getTimelineBlocks(visibleOccurrences, periods, scale)
   const laneCount = Math.max(

@@ -56,7 +56,10 @@ describe('Provider directory interactions', () => {
       />,
     )
     expect(document.activeElement).toBe(document.body)
-    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: `Actions for ${provider.name}` }),
+    )
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Edit' }))
     const name = screen.getByRole<HTMLInputElement>('textbox', { name: 'Name' })
     expect(document.activeElement).toBe(name)
     fireEvent.change(name, { target: { value: 'Ben Carter updated' } })
@@ -78,7 +81,7 @@ describe('Provider directory interactions', () => {
     await waitFor(() => expect(update).toHaveBeenCalledTimes(2))
     await act(async () => second.resolve())
     expect(document.activeElement).toBe(
-      screen.getByRole('button', { name: 'Edit' }),
+      screen.getByRole('button', { name: `Actions for ${provider.name}` }),
     )
   })
 
@@ -136,7 +139,10 @@ describe('Provider directory interactions', () => {
       )
     }
     render(<Sample />)
-    fireEvent.click(screen.getByRole('button', { name: 'Remove' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: `Actions for ${provider.name}` }),
+    )
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Remove' }))
     const dialog = await screen.findByRole('alertdialog')
     expect(remove).not.toHaveBeenCalled()
     fireEvent.click(

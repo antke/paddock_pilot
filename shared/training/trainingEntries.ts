@@ -14,8 +14,10 @@ export function getTrainingEntries({
   end,
   today,
 }: {
-  events: Array<Doc<'events'>>
-  records: Array<Doc<'trainingRecords'>>
+  events: Array<
+    Doc<'events'> & { contextParticipationId?: string; contextHorseId?: string }
+  >
+  records: Array<Doc<'trainingRecords'> & { canEdit?: boolean }>
   horses: Array<TrainingHorse>
   start: string
   end: string
@@ -45,30 +47,39 @@ export function getTrainingEntries({
             )
             .map((record) => record.horseId),
         ]),
-      ].flatMap((horseId) => {
-        const horse = byHorse.get(horseId)
-        if (!horse) return []
-        const key = `${occurrence.eventId}:${horseId}:${occurrence.startDate}`
-        const record = byRecord.get(key)
-        return [
-          {
-            key,
-            horse,
-            occurrence,
-            record,
-            details:
-              record?.details ??
-              occurrence.event.training ??
-              defaultTrainingDetails,
-            status: getTrainingStatus(
-              occurrence.event,
-              occurrence.startDate,
-              today,
+      ]
+        .filter(
+          (horseId) =>
+            !occurrence.event.contextHorseId ||
+            occurrence.event.contextHorseId === horseId,
+        )
+        .flatMap((horseId) => {
+          const horse = byHorse.get(horseId)
+          if (!horse) return []
+          const key = `${occurrence.eventId}:${horseId}:${occurrence.startDate}`
+          const record = byRecord.get(key)
+          return [
+            {
+              key,
+              horse: {
+                ...horse,
+                canRecord: horse.canRecord && record?.canEdit !== false,
+              },
+              occurrence,
               record,
-            ),
-          },
-        ]
-      }),
+              details:
+                record?.details ??
+                occurrence.event.training ??
+                defaultTrainingDetails,
+              status: getTrainingStatus(
+                occurrence.event,
+                occurrence.startDate,
+                today,
+                record,
+              ),
+            },
+          ]
+        }),
     )
     .sort(
       (a, b) =>

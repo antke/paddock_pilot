@@ -17,8 +17,10 @@ type EventListProps = {
 }
 
 type EventTableProps = {
-  stableId: string
-  events: Array<Doc<'events'>>
+  stableId?: string
+  events: Array<
+    Doc<'events'> & { contextHorseId?: string; contextParticipationId?: string }
+  >
   emptyTitle?: string
   emptyDescription?: string
   chrome?: DashboardChrome
@@ -48,7 +50,11 @@ export function EventTable({
     () => createEventListFilterConfig(locale),
     [locale],
   )
-  const filtering = useListFiltering({ items: events, config: filterConfig })
+  const filtering = useListFiltering({
+    items: events,
+    config: filterConfig,
+    storageKey: stableId ? `paddock:events:${stableId}:log` : undefined,
+  })
 
   return (
     <FilteredDashboardItemList
@@ -68,7 +74,7 @@ export function EventTable({
       stickyFilters
       renderItem={(event) => (
         <EventRow
-          key={event._id}
+          key={event.contextParticipationId ?? event._id}
           stableId={stableId}
           event={event}
           chrome={chrome}

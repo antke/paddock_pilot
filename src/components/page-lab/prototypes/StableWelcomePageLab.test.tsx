@@ -49,7 +49,7 @@ describe('stable welcome sample', () => {
   it('exposes individual setup completion and accurate progress for owner scenarios', async () => {
     await openSample()
     expect(screen.getByRole('progressbar').getAttribute('aria-valuenow')).toBe(
-      '2',
+      '4',
     )
     expect(
       screen.getByRole('listitem', { name: 'Add the first horse: Complete' }),
@@ -63,7 +63,7 @@ describe('stable welcome sample', () => {
       target: { value: 'owner-ready' },
     })
     expect(screen.getByRole('progressbar').getAttribute('aria-valuenow')).toBe(
-      '4',
+      '7',
     )
     fireEvent.change(screen.getByLabelText('Sample welcome state'), {
       target: { value: 'owner-new' },

@@ -20,7 +20,10 @@ import {
 import { HorseDetailSectionTabs } from '#/components/horses/HorseDetailSectionTabs'
 import { createDashboardLabFixtureData } from '#/components/dashboard-lab/dashboardLabFixtures'
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.restoreAllMocks()
+})
 const items = [
   {
     id: 'upcoming',
@@ -50,6 +53,108 @@ function SectionSample() {
   )
 }
 describe('shared dashboard navigation contracts', () => {
+  it('reveals the active destination on entry, navigation and resize without moving focus or the page', async () => {
+    const pageScroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    const rect = (left: number, width: number) => ({
+      left,
+      right: left + width,
+      width,
+      top: 0,
+      bottom: 44,
+      height: 44,
+      x: left,
+      y: 0,
+      toJSON() {},
+    })
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(
+      function (this: HTMLElement) {
+        return this.dataset.slot === 'navigation-menu-list' ? 240 : 0
+      },
+    )
+    vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockImplementation(
+      function (this: HTMLElement) {
+        return this.dataset.slot === 'navigation-menu-list' ? 620 : 0
+      },
+    )
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
+      function (this: HTMLElement) {
+        if (this.dataset.slot === 'navigation-menu-list') return rect(100, 240)
+        const list = this.closest<HTMLElement>(
+          '[data-slot="navigation-menu-list"]',
+        )
+        if (!list || this.dataset.testid === 'hidden-current') return rect(0, 0)
+        const offset =
+          this.textContent === 'Profile'
+            ? 0
+            : this.textContent === 'Nutrition'
+              ? 380
+              : 520
+        return rect(100 + offset - list.scrollLeft, 100)
+      },
+    )
+    function Sample({
+      active,
+    }: {
+      active: 'profile' | 'nutrition' | 'summary'
+    }) {
+      return (
+        <>
+          <button>Other control</button>
+          <DashboardNavigation ariaLabel="Horse sections" overflow="scroll">
+            <DashboardNavigationLinkItem
+              href="/profile"
+              active={active === 'profile'}
+            >
+              Profile
+            </DashboardNavigationLinkItem>
+            <DashboardNavigationLinkItem
+              href="/nutrition"
+              active={active === 'nutrition'}
+            >
+              Nutrition
+            </DashboardNavigationLinkItem>
+            <DashboardNavigationLinkItem
+              href="/summary"
+              data-testid="hidden-current"
+              active={active === 'summary'}
+            >
+              Care summary
+            </DashboardNavigationLinkItem>
+            <DashboardNavigationMenuGroup
+              label="More"
+              active={active === 'summary'}
+            >
+              <DashboardNavigationMenuLink
+                href="/summary"
+                active={active === 'summary'}
+              >
+                Care summary
+              </DashboardNavigationMenuLink>
+            </DashboardNavigationMenuGroup>
+          </DashboardNavigation>
+        </>
+      )
+    }
+    const { rerender } = render(<Sample active="nutrition" />)
+    const list = screen.getByRole('list')
+    const nutrition = screen.getByRole('link', { name: 'Nutrition' })
+    const isVisible = (element: HTMLElement) =>
+      element.getBoundingClientRect().left >= 100 &&
+      element.getBoundingClientRect().right <= 340
+    expect(isVisible(nutrition)).toBe(true)
+    const other = screen.getByRole('button', { name: 'Other control' })
+    act(() => other.focus())
+    rerender(<Sample active="profile" />)
+    await waitFor(() => expect(list.scrollLeft).toBe(0))
+    rerender(<Sample active="summary" />)
+    const more = screen.getByRole('button', { name: 'More' })
+    await waitFor(() => expect(isVisible(more)).toBe(true))
+    list.scrollLeft = 0
+    fireEvent(window, new Event('resize'))
+    expect(isVisible(more)).toBe(true)
+    expect(document.activeElement).toBe(other)
+    expect(pageScroll).not.toHaveBeenCalled()
+  })
   it('keeps control and content IDs unique when multiple section groups share a page', () => {
     render(
       <>

@@ -13,6 +13,7 @@ export function DateRangeControl({
   onPresetChange,
   labels,
   invalid,
+  showDateFields = preset === 'custom',
 }: {
   start: string
   end: string
@@ -22,6 +23,7 @@ export function DateRangeControl({
   onPresetChange: (value: string) => void
   labels: { period: string; start: string; end: string; error: string }
   invalid?: boolean
+  showDateFields?: boolean
 }) {
   const id = useId()
   return (
@@ -40,28 +42,32 @@ export function DateRangeControl({
           ))}
         </Select>
       </Field>
-      <Field>
-        <FieldLabel htmlFor={`${id}-start`}>{labels.start}</FieldLabel>
-        <Input
-          id={`${id}-start`}
-          type="date"
-          value={start}
-          aria-invalid={invalid}
-          aria-describedby={invalid ? `${id}-error` : undefined}
-          onChange={(event) => onChange({ start: event.target.value, end })}
-        />
-      </Field>
-      <Field>
-        <FieldLabel htmlFor={`${id}-end`}>{labels.end}</FieldLabel>
-        <Input
-          id={`${id}-end`}
-          type="date"
-          value={end}
-          aria-invalid={invalid}
-          aria-describedby={invalid ? `${id}-error` : undefined}
-          onChange={(event) => onChange({ start, end: event.target.value })}
-        />
-      </Field>
+      {showDateFields && (
+        <>
+          <Field>
+            <FieldLabel htmlFor={`${id}-start`}>{labels.start}</FieldLabel>
+            <Input
+              id={`${id}-start`}
+              type="date"
+              value={start}
+              aria-invalid={invalid}
+              aria-describedby={invalid ? `${id}-error` : undefined}
+              onChange={(event) => onChange({ start: event.target.value, end })}
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor={`${id}-end`}>{labels.end}</FieldLabel>
+            <Input
+              id={`${id}-end`}
+              type="date"
+              value={end}
+              aria-invalid={invalid}
+              aria-describedby={invalid ? `${id}-error` : undefined}
+              onChange={(event) => onChange({ start, end: event.target.value })}
+            />
+          </Field>
+        </>
+      )}
       {invalid && (
         <p
           id={`${id}-error`}

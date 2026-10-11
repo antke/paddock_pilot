@@ -1,8 +1,14 @@
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { Table } from '#/components/ui/table'
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import type { Doc } from 'convex/_generated/dataModel'
-import { CaretLeftIcon, CaretRightIcon, XIcon } from '@phosphor-icons/react'
+import {
+  CaretLeftIcon,
+  CaretRightIcon,
+  FunnelSimpleIcon,
+  XIcon,
+} from '@phosphor-icons/react'
 import { Button, ButtonLink } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Select } from '#/components/ui/select'
@@ -30,16 +36,21 @@ import {
 } from '#/lib/dateDisplay'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import {
+  isDateKey,
   trainingActivities,
   trainingStatusLabels,
 } from 'shared/training/trainingSchema'
 import { getTrainingEntries, trainingWindow } from './trainingCalendarData'
 import type { TrainingHorse } from './trainingCalendarData'
-import { TrainingActivityTag } from './TrainingBadges'
 import { TrainingEntryLink } from './TrainingEntryLink'
+import { TrainingMonthCalendar } from './TrainingMonthCalendar'
+import { useSessionState } from '#/lib/useSessionState'
+import { useSmallScreen } from '#/lib/useSmallScreen'
+import { MobileActionBar } from '#/components/layout/MobileActionBar'
+import { useTaskOriginState } from '#/components/layout/mobileTaskNavigation'
 
 type Props = {
-  stableId: string
+  stableId?: string
   events: Array<Doc<'events'>>
   records: Array<Doc<'trainingRecords'>>
   horses: Array<TrainingHorse>
@@ -47,6 +58,7 @@ type Props = {
   initialHorseIds?: Array<string>
   initialDate?: string
   initialView?: 'week' | 'month'
+  renderMobileActions?: (canRecord: boolean) => ReactNode
 }
 export function TrainingCalendar({
   stableId,
@@ -57,18 +69,86 @@ export function TrainingCalendar({
   initialHorseIds = [],
   initialDate,
   initialView,
+  renderMobileActions,
 }: Props) {
   const t = useT()
   const { locale } = useLocale()
+  const small = useSmallScreen()
+  const taskState = useTaskOriginState()
+  const stateKey = initialDate
+    ? undefined
+    : `paddock:training:${stableId ?? 'personal'}:${fixedHorseId ?? 'all'}`
+  const key = (field: string) => (stateKey ? `${stateKey}:${field}` : undefined)
+  const decodeText = (v: unknown) =>
+    typeof v === 'string' && v.length < 1000 ? v : undefined
 
   const { today } = useLocalDateContext()
   const id = useId()
   const [view, setView] = useState<'week' | 'month'>(initialView ?? 'week')
-  const [anchor, setAnchor] = useState(initialDate ?? today)
-  const [selected, setSelected] = useState(initialHorseIds)
+  const [anchor, setAnchor] = useSessionState(
+    key('date'),
+    initialDate ?? today,
+    (v) => (typeof v === 'string' && isDateKey(v) ? v : undefined),
+  )
+  const [selected, setSelected] = useSessionState(
+    key(`horses:${initialHorseIds.join(',')}`),
+    initialHorseIds,
+    (v) =>
+      Array.isArray(v) &&
+      v.length < 1000 &&
+      v.every((horseId) => typeof horseId === 'string')
+        ? v
+        : undefined,
+  )
   const [horseQuery, setHorseQuery] = useState('')
-  const [activity, setActivity] = useState('all')
-  const [status, setStatus] = useState('all')
+  const [activity, setActivity] = useSessionState(
+    key('activity'),
+    'all',
+    (v) =>
+      v === 'all' ||
+      trainingActivities.includes(v as (typeof trainingActivities)[number])
+        ? (v as string)
+        : undefined,
+  )
+  const [status, setStatus] = useSessionState(key('status'), 'all', (v) =>
+    decodeText(v) &&
+    (v === 'all' || Object.hasOwn(trainingStatusLabels, v as string))
+      ? (v as string)
+      : undefined,
+  )
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const filterToggle = useRef<HTMLButtonElement>(null)
+  const resultsRef = useRef<HTMLDivElement>(null)
+  const returnToResults = useRef(false)
+  useEffect(() => {
+    if (!filtersOpen && returnToResults.current) {
+      returnToResults.current = false
+      resultsRef.current?.focus({ preventScroll: true })
+      resultsRef.current?.scrollIntoView({ block: 'start' })
+    }
+  }, [filtersOpen])
+  const activeFilterCount =
+    Number(selected.length > 0 && !fixedHorseId) +
+    Number(activity !== 'all') +
+    Number(status !== 'all')
+  const filterSummary = [
+    !fixedHorseId && selected.length
+      ? horses
+          .filter((horse) => selected.includes(horse._id))
+          .map((horse) => horse.name)
+          .join(', ')
+      : undefined,
+    activity !== 'all'
+      ? t(
+          `training.activities.${activity as (typeof trainingActivities)[number]}`,
+        )
+      : undefined,
+    status !== 'all'
+      ? t(`training.status.${status as keyof typeof trainingStatusLabels}`)
+      : undefined,
+  ]
+    .filter(Boolean)
+    .join(' · ')
   useEffect(() => {
     if (initialView) return
     try {
@@ -140,66 +220,241 @@ export function TrainingCalendar({
   ]
   while (monthCells.length % 7) monthCells.push(null)
 
+  const viewControl = (
+    <ChoiceButtonGroup
+      aria-label={t('trainingViews.view')}
+      layout={small ? 'segmented' : 'compact'}
+      className={
+        small
+          ? '[&>button]:min-h-11 [&>button]:px-3 [&>button]:text-sm'
+          : 'grid w-auto grid-cols-2 [&>button]:h-(--control-height) [&>button]:px-3 [&>button]:text-sm [&>button]:pointer-coarse:min-h-11'
+      }
+      value={view}
+      options={[
+        { value: 'week', label: t('trainingViews.week') },
+        { value: 'month', label: t('trainingViews.month') },
+      ]}
+      onValueChange={(value) => changeView(value)}
+    />
+  )
+  const filterControl = (
+    <Button
+      ref={filterToggle}
+      variant="outline"
+      size="control"
+      className={small ? 'min-h-11 px-2' : undefined}
+      aria-expanded={filtersOpen}
+      aria-controls={`${id}-filters`}
+      onClick={() => setFiltersOpen((open) => !open)}
+    >
+      <FunnelSimpleIcon aria-hidden="true" />
+      {t('listControls.filters')}
+      {activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+    </Button>
+  )
+
   return (
-    <DashboardSectionCard title={label} contentGap="comfortable">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div
-          role="group"
-          aria-label={t('trainingViews.navigation')}
-          className="flex items-center gap-2"
-        >
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => move(-1)}
-            aria-label={t(
-              view === 'week'
-                ? 'trainingViews.previousWeek'
-                : 'trainingViews.previousMonth',
-            )}
+    <DashboardSectionCard
+      title={small ? undefined : label}
+      contentGap="comfortable"
+    >
+      {small ? (
+        <div className="grid gap-3">
+          <div
+            role="group"
+            aria-label={t('trainingViews.navigation')}
+            className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem_auto] items-center gap-1"
           >
-            <CaretLeftIcon aria-hidden="true" />
-            {t('trainingViews.previous')}
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setAnchor(today)}>
-            {t('trainingViews.today')}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => move(1)}
-            aria-label={t(
-              view === 'week'
-                ? 'trainingViews.nextWeek'
-                : 'trainingViews.nextMonth',
-            )}
-          >
-            {t('trainingViews.next')}
-            <CaretRightIcon aria-hidden="true" />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon-lg"
+              onClick={() => move(-1)}
+              aria-label={t(
+                view === 'week'
+                  ? 'trainingViews.previousWeek'
+                  : 'trainingViews.previousMonth',
+              )}
+            >
+              <CaretLeftIcon aria-hidden="true" />
+            </Button>
+            <h2
+              className="min-w-0 text-center font-display text-lg font-semibold leading-tight"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {label}
+            </h2>
+            <Button
+              variant="ghost"
+              size="icon-lg"
+              onClick={() => move(1)}
+              aria-label={t(
+                view === 'week'
+                  ? 'trainingViews.nextWeek'
+                  : 'trainingViews.nextMonth',
+              )}
+            >
+              <CaretRightIcon aria-hidden="true" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="control"
+              className="min-h-11 px-2"
+              onClick={() => setAnchor(today)}
+            >
+              {t('trainingViews.today')}
+            </Button>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            {viewControl}
+            {filterControl}
+          </div>
         </div>
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-          <ChoiceButtonGroup
-            aria-label={t('trainingViews.view')}
-            className="w-auto"
-            value={view}
-            options={[
-              { value: 'week', label: t('trainingViews.week') },
-              { value: 'month', label: t('trainingViews.month') },
-            ]}
-            onValueChange={(value) => changeView(value)}
-          />
-          <ButtonLink
-            to="/stables/$stableId/training/create"
-            params={{ stableId }}
-            search={{ horseIds: fixedHorseId ? [fixedHorseId] : selected }}
-            action="create"
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div
+            role="group"
+            aria-label={t('trainingViews.navigation')}
+            className="grid max-w-full grid-cols-3 items-center gap-2 [&>button]:px-2 [&>button]:whitespace-nowrap sm:[&>button]:px-3"
           >
-            {t('trainingViews.addSession')}
-          </ButtonLink>
+            <Button
+              variant="outline"
+              size="control"
+              onClick={() => move(-1)}
+              aria-label={t(
+                view === 'week'
+                  ? 'trainingViews.previousWeek'
+                  : 'trainingViews.previousMonth',
+              )}
+            >
+              <CaretLeftIcon aria-hidden="true" className="hidden sm:block" />
+              {t('trainingViews.previous')}
+            </Button>
+            <Button
+              variant="outline"
+              size="control"
+              onClick={() => setAnchor(today)}
+            >
+              {t('trainingViews.today')}
+            </Button>
+            <Button
+              variant="outline"
+              size="control"
+              onClick={() => move(1)}
+              aria-label={t(
+                view === 'week'
+                  ? 'trainingViews.nextWeek'
+                  : 'trainingViews.nextMonth',
+              )}
+            >
+              {t('trainingViews.next')}
+              <CaretRightIcon aria-hidden="true" className="hidden sm:block" />
+            </Button>
+          </div>
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            {viewControl}
+            {horses.some((horse) => horse.canRecord) &&
+              (stableId && !fixedHorseId ? (
+                <ButtonLink
+                  size="control"
+                  to="/stables/$stableId/training/create"
+                  params={{ stableId }}
+                  search={{
+                    horseIds: fixedHorseId ? [fixedHorseId] : undefined,
+                  }}
+                  state={taskState}
+                  variant="default"
+                  action="create"
+                >
+                  {t('trainingViews.addSession')}
+                </ButtonLink>
+              ) : (
+                <ButtonLink
+                  size="control"
+                  to="/events/create"
+                  search={{ horseId: fixedHorseId, training: true }}
+                  state={taskState}
+                  variant="default"
+                  action="create"
+                >
+                  {t('trainingViews.addSession')}
+                </ButtonLink>
+              ))}
+          </div>
         </div>
-      </div>
-      <div className="grid gap-4 rounded-row bg-surface p-4">
+      )}
+      {small &&
+        (renderMobileActions
+          ? renderMobileActions(horses.some((horse) => horse.canRecord))
+          : horses.some((horse) => horse.canRecord) && (
+              <MobileActionBar>
+                {stableId && !fixedHorseId ? (
+                  <ButtonLink
+                    action="record"
+                    to="/stables/$stableId/training/create"
+                    params={{ stableId }}
+                    search={{
+                      intent: 'record',
+                      horseIds: fixedHorseId ? [fixedHorseId] : undefined,
+                    }}
+                    state={taskState}
+                  >
+                    {t('trainingViews.recordCompleted')}
+                  </ButtonLink>
+                ) : (
+                  <ButtonLink
+                    action="record"
+                    to="/events/create"
+                    search={{
+                      horseId: fixedHorseId,
+                      training: true,
+                      intent: 'record',
+                    }}
+                    state={taskState}
+                  >
+                    {t('trainingViews.recordCompleted')}
+                  </ButtonLink>
+                )}
+              </MobileActionBar>
+            ))}
+      {(!small || activeFilterCount > 0) && (
+        <div className="flex flex-wrap items-center gap-3">
+          {!small && filterControl}
+          {activeFilterCount > 0 && (
+            <>
+              <span className="min-w-0 flex-1 text-sm [overflow-wrap:anywhere]">
+                {filterSummary}
+              </span>
+              <Button
+                variant="ghost"
+                size="control"
+                onClick={() => {
+                  setSelected([])
+                  setActivity('all')
+                  setStatus('all')
+                  setHorseQuery('')
+                }}
+              >
+                {t('listControls.clear')}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+      <div
+        id={`${id}-filters`}
+        hidden={!filtersOpen}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') {
+            event.preventDefault()
+            setFiltersOpen(false)
+            filterToggle.current?.focus()
+          }
+        }}
+        className={
+          filtersOpen ? 'grid gap-4 rounded-row bg-surface p-4' : 'hidden'
+        }
+      >
         <div
           className={`grid gap-3 ${fixedHorseId ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}
         >
@@ -262,7 +517,7 @@ export function TrainingCalendar({
             className="flex flex-wrap gap-2"
           >
             <Button
-              size="sm"
+              size="control"
               variant={selected.length === 0 ? 'secondary' : 'outline'}
               aria-pressed={selected.length === 0}
               onClick={() => setSelected([])}
@@ -271,7 +526,7 @@ export function TrainingCalendar({
             </Button>
             {horses.some((h) => h.canRecord) && (
               <Button
-                size="sm"
+                size="control"
                 variant="outline"
                 onClick={() =>
                   setSelected(
@@ -293,7 +548,7 @@ export function TrainingCalendar({
               .map((horse) => (
                 <Button
                   key={horse._id}
-                  size="sm"
+                  size="control"
                   variant={
                     selected.includes(horse._id) ? 'secondary' : 'outline'
                   }
@@ -312,189 +567,214 @@ export function TrainingCalendar({
               ))}
           </div>
         )}
-        <div
-          className="flex flex-wrap gap-2"
-          aria-label={t('trainingViews.legend')}
-        >
-          {trainingActivities.map((item) => (
-            <TrainingActivityTag key={item} activity={item} />
-          ))}
-        </div>
-      </div>
-      {horses.length === 0 ? (
-        <DashboardEmptyState title={t('trainingViews.addHorse')} />
-      ) : (
-        <>
-          {entries.length === 0 && (
-            <DashboardEmptyState
-              chrome="flat"
-              title={t('trainingViews.noMatches')}
-            >
-              {t('trainingViews.noMatchesHelp')}
-            </DashboardEmptyState>
-          )}
-          {/* Small screens use the existing calendar's agenda pattern. */}
-          <div
-            className="grid gap-5 md:hidden"
-            aria-label={t('trainingViews.agenda')}
+        {small && (
+          <Button
+            variant="secondary"
+            className="min-h-11 w-full"
+            onClick={() => {
+              returnToResults.current = true
+              setFiltersOpen(false)
+            }}
           >
-            {period.days
-              .filter((day) => dayEntries(day).length > 0)
-              .map((day) => (
-                <section key={day} className="grid gap-2">
-                  <h3 className="font-semibold">
-                    {formatShortDateKey(day, locale)}
-                  </h3>
-                  {dayEntries(day).map((entry) => (
-                    <TrainingEntryLink
-                      key={entry.key}
-                      entry={entry}
-                      stableId={stableId}
-                    />
-                  ))}
-                </section>
-              ))}
-          </div>
-          {view === 'week' ? (
-            <div
-              className="app-panel-strong hidden overflow-hidden md:block"
-              tabIndex={0}
-              role="region"
-              aria-label={t('trainingViews.weekly')}
-            >
-              <Table className="w-full min-w-[68rem] table-fixed border-collapse text-sm">
-                <caption className="sr-only">
-                  {t('trainingViews.weeklyCaption', { period: label })}
-                </caption>
-                <thead>
-                  <tr className="border-b border-border-subtle bg-surface-muted">
-                    <th scope="col" className="w-32 p-3 text-left">
-                      {t('trainingViews.horse')}
-                    </th>
-                    {period.days.map((day) => (
-                      <th
-                        scope="col"
-                        key={day}
-                        className="p-3 text-left"
-                        aria-current={day === today ? 'date' : undefined}
-                      >
-                        {formatShortWeekdayDate(dateKeyToDate(day), locale)}{' '}
-                        {formatShortDateKey(day, locale)}
-                      </th>
+            {t('trainingViews.showResults')}
+          </Button>
+        )}
+      </div>
+      <div
+        ref={resultsRef}
+        role={small ? 'region' : undefined}
+        aria-label={small ? t('trainingViews.agenda') : undefined}
+        tabIndex={small ? -1 : undefined}
+        className="grid min-w-0 scroll-mt-4 gap-5"
+      >
+        {horses.length === 0 ? (
+          <DashboardEmptyState title={t('trainingViews.addHorse')} />
+        ) : (
+          <>
+            {entries.length === 0 && (!small || view === 'week') && (
+              <DashboardEmptyState
+                chrome="flat"
+                title={t('trainingViews.noMatches')}
+              >
+                {t('trainingViews.noMatchesHelp')}
+              </DashboardEmptyState>
+            )}
+            {small &&
+              (view === 'month' ? (
+                <TrainingMonthCalendar
+                  days={period.days}
+                  entries={entries}
+                  selectedDate={anchor}
+                  today={today}
+                  onSelectDate={setAnchor}
+                />
+              ) : (
+                <div className="grid gap-5">
+                  {period.days
+                    .filter((day) => dayEntries(day).length > 0)
+                    .map((day) => (
+                      <section key={day} className="grid gap-2">
+                        <h3 className="font-semibold">
+                          {formatShortDateKey(day, locale)}
+                        </h3>
+                        {dayEntries(day).map((entry) => (
+                          <TrainingEntryLink
+                            key={entry.key}
+                            entry={entry}
+                            stableId={stableId}
+                          />
+                        ))}
+                      </section>
                     ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedHorses.map((horse) => (
-                    <tr
-                      key={horse._id}
-                      className="border-b border-border-subtle last:border-b-0"
-                    >
-                      <th scope="row" className="p-3 text-left align-top">
-                        {horse.name}
-                      </th>
-                      {period.days.map((day) => (
-                        <td
-                          key={day}
-                          className="border-l border-border-subtle p-2 align-top"
+                </div>
+              ))}
+            {!small &&
+              (view === 'week' ? (
+                <div
+                  className="app-panel-strong hidden overflow-hidden md:block"
+                  tabIndex={0}
+                  role="region"
+                  aria-label={t('trainingViews.weekly')}
+                >
+                  <Table className="w-full min-w-[76rem] table-fixed border-collapse text-sm">
+                    <caption className="sr-only">
+                      {t('trainingViews.weeklyCaption', { period: label })}
+                    </caption>
+                    <thead>
+                      <tr className="border-b border-border-subtle bg-surface-muted">
+                        <th scope="col" className="w-32 p-3 text-left">
+                          {t('trainingViews.horse')}
+                        </th>
+                        {period.days.map((day) => (
+                          <th
+                            scope="col"
+                            key={day}
+                            className="p-3 text-left"
+                            aria-current={day === today ? 'date' : undefined}
+                          >
+                            {formatShortWeekdayDate(dateKeyToDate(day), locale)}{' '}
+                            {formatShortDateKey(day, locale)}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedHorses.map((horse) => (
+                        <tr
+                          key={horse._id}
+                          className="border-b border-border-subtle last:border-b-0"
                         >
-                          <div className="grid gap-2">
-                            {dayEntries(day, horse._id).map((entry) => (
-                              <TrainingEntryLink
-                                key={entry.key}
-                                entry={entry}
-                                stableId={stableId}
-                                showHorseName={false}
-                              />
-                            ))}
-                            {dayEntries(day, horse._id).length === 0 && (
-                              <span className="text-xs text-muted-foreground">
-                                {t('trainingViews.noRecorded')}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </div>
-          ) : (
-            <CalendarShell
-              className="hidden md:block"
-              role="table"
-              aria-label={t('trainingViews.monthly')}
-            >
-              <CalendarWeekdayRow role="row">
-                {Array.from({ length: 7 }, (_, index) =>
-                  formatShortWeekdayDate(new Date(2026, 8, 28 + index), locale),
-                ).map((day) => (
-                  <CalendarWeekdayCell role="columnheader" key={day}>
-                    {day}
-                  </CalendarWeekdayCell>
-                ))}
-              </CalendarWeekdayRow>
-              <CalendarGrid role="rowgroup">
-                {Array.from({ length: monthCells.length / 7 }, (_, row) => (
-                  <div role="row" className="contents" key={row}>
-                    {monthCells.slice(row * 7, row * 7 + 7).map((day, index) =>
-                      day ? (
-                        <CalendarDayCell
-                          role="cell"
-                          key={day}
-                          isToday={day === today}
-                        >
-                          <CalendarDayHeader>
-                            <Button
-                              variant="subtle"
-                              size="sm"
-                              aria-label={t('trainingViews.inspectWeek', {
-                                date: formatShortDateKey(day, locale),
-                              })}
-                              onClick={() => inspectWeek(day)}
+                          <th scope="row" className="p-3 text-left align-top">
+                            {horse.name}
+                          </th>
+                          {period.days.map((day) => (
+                            <td
+                              key={day}
+                              className="border-l border-border-subtle p-2 align-top"
                             >
-                              <CalendarDayNumber isToday={day === today}>
-                                {dateKeyToDate(day).getDate()}
-                              </CalendarDayNumber>
-                            </Button>
-                          </CalendarDayHeader>
-                          <CalendarDayEventList>
-                            {dayEntries(day)
-                              .slice(0, 2)
-                              .map((entry) => (
-                                <TrainingEntryLink
-                                  key={entry.key}
-                                  entry={entry}
-                                  stableId={stableId}
-                                />
-                              ))}
-                            {dayEntries(day).length > 2 && (
-                              <CalendarMoreEventsButton
-                                onClick={() => inspectWeek(day)}
-                              >
-                                {t('trainingViews.moreWeek', {
-                                  count: dayEntries(day).length - 2,
-                                })}
-                              </CalendarMoreEventsButton>
-                            )}
-                          </CalendarDayEventList>
-                        </CalendarDayCell>
-                      ) : (
-                        <CalendarDayCell
-                          role="cell"
-                          muted
-                          key={`empty-${index}`}
-                        />
+                              <div className="grid gap-2">
+                                {dayEntries(day, horse._id).map((entry) => (
+                                  <TrainingEntryLink
+                                    key={entry.key}
+                                    entry={entry}
+                                    stableId={stableId}
+                                    showHorseName={false}
+                                    variant="week"
+                                  />
+                                ))}
+                              </div>
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
+              ) : (
+                <CalendarShell
+                  className="hidden overflow-x-auto md:block"
+                  tabIndex={0}
+                  role="table"
+                  aria-label={t('trainingViews.monthly')}
+                >
+                  <CalendarWeekdayRow role="row" className="min-w-[56rem]">
+                    {Array.from({ length: 7 }, (_, index) =>
+                      formatShortWeekdayDate(
+                        new Date(2026, 8, 28 + index),
+                        locale,
                       ),
-                    )}
-                  </div>
-                ))}
-              </CalendarGrid>
-            </CalendarShell>
-          )}
-        </>
-      )}
+                    ).map((day) => (
+                      <CalendarWeekdayCell role="columnheader" key={day}>
+                        {day}
+                      </CalendarWeekdayCell>
+                    ))}
+                  </CalendarWeekdayRow>
+                  <CalendarGrid role="rowgroup" className="min-w-[56rem]">
+                    {Array.from({ length: monthCells.length / 7 }, (_, row) => (
+                      <div role="row" className="contents" key={row}>
+                        {monthCells
+                          .slice(row * 7, row * 7 + 7)
+                          .map((day, index) =>
+                            day ? (
+                              <CalendarDayCell
+                                role="cell"
+                                className="h-auto min-h-64 md:pointer-coarse:h-auto"
+                                key={day}
+                                isToday={day === today}
+                              >
+                                <CalendarDayHeader>
+                                  <Button
+                                    variant="subtle"
+                                    size="sm"
+                                    aria-label={t('trainingViews.inspectWeek', {
+                                      date: formatShortDateKey(day, locale),
+                                    })}
+                                    onClick={() => inspectWeek(day)}
+                                  >
+                                    <CalendarDayNumber isToday={day === today}>
+                                      {dateKeyToDate(day).getDate()}
+                                    </CalendarDayNumber>
+                                  </Button>
+                                </CalendarDayHeader>
+                                <CalendarDayEventList>
+                                  {dayEntries(day)
+                                    .slice(0, 2)
+                                    .map((entry) => (
+                                      <TrainingEntryLink
+                                        key={entry.key}
+                                        entry={entry}
+                                        stableId={stableId}
+                                        variant="month"
+                                      />
+                                    ))}
+                                  {dayEntries(day).length > 2 && (
+                                    <CalendarMoreEventsButton
+                                      onClick={() => inspectWeek(day)}
+                                    >
+                                      {t('trainingViews.moreWeek', {
+                                        count: dayEntries(day).length - 2,
+                                      })}
+                                    </CalendarMoreEventsButton>
+                                  )}
+                                </CalendarDayEventList>
+                              </CalendarDayCell>
+                            ) : (
+                              <CalendarDayCell
+                                role="cell"
+                                className="h-auto min-h-64 md:pointer-coarse:h-auto"
+                                muted
+                                key={`empty-${index}`}
+                              />
+                            ),
+                          )}
+                      </div>
+                    ))}
+                  </CalendarGrid>
+                </CalendarShell>
+              ))}
+          </>
+        )}
+      </div>
     </DashboardSectionCard>
   )
 }

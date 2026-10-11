@@ -1,4 +1,12 @@
 export const stables = {
+  providerActions: 'Działania dla {{name}}',
+  callProvider: 'Zadzwoń do {{name}}',
+  sharedTabs: {
+    contacts: 'Kontakty',
+    people: 'Osoby',
+    yard: 'Informacje o stajni',
+  },
+
   createdDescription: 'Stajnia „{{name}}” jest gotowa.',
   updatedDescription: 'Zaktualizowano dane stajni „{{name}}”.',
   saveFailed:
@@ -124,10 +132,10 @@ export const stables = {
   invitations: 'Zaproszenia',
   memberRemoved: 'Usunięto osobę ze stajni',
   removeMemberFailed: 'Nie udało się usunąć osoby',
-  reassignmentCheck: 'Sprawdź przypisanie koni i spróbuj ponownie.',
+  reassignmentCheck: 'Odśwież dane osoby i spróbuj ponownie.',
   remove: 'Usuń',
   removeMemberFailedHelp:
-    'Nie udało się usunąć tej osoby. Sprawdź przypisanie koni i spróbuj ponownie.',
+    'Nie udało się usunąć tej osoby. Odśwież dane osoby i spróbuj ponownie.',
   newOwner: 'Nowy właściciel',
   chooseMember: 'Wybierz osobę ze stajni',
   removing: 'Usuwanie…',
@@ -150,8 +158,7 @@ export const stables = {
   providerUpdated: 'Zaktualizowano dane specjalisty',
   providerRemoved: 'Usunięto specjalistę',
   providerDirectory: 'Lista specjalistów',
-  providerDirectoryHelp:
-    'Kontakty do specjalistów przydatne przy planowaniu opieki.',
+  providerDirectoryHelp: 'Weterynarze, kowale i pozostałe kontakty stajni.',
   addProvider: 'Dodaj specjalistę',
   addProviderHelp: 'Dodaj kontakt do specjalisty zajmującego się końmi.',
   noProviders: 'Nie dodano jeszcze specjalistów.',

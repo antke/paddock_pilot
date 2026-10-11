@@ -1,0 +1,29 @@
+{
+  "assessment": "B — independent detector and persona evidence",
+  "date": "2026-10-02",
+  "target": "src/components/analysis/AnalysisCentre.tsx",
+  "browser": {"url": "http://localhost:9090/page-lab/analysis", "type": "own hidden IAB fixture tab", "viewports": ["1366x900", "390x844"], "closed": true, "viewportReset": true},
+  "detector": {"command": "node /Users/antek/.agents/skills/impeccable/scripts/detect.mjs --json src/components/analysis/AnalysisCentre.tsx", "output": [], "findings": 0, "outputPath": "/private/tmp/paddock-persona-detector.json", "scope": "target file only; no transitive imported-component coverage"},
+  "overlay": {"status": "unavailable", "reason": "Browser tool exposes read-only Playwright evaluate; mutable title/script preflight is not supported. No live server started or user-visible overlay claimed.", "fallback": "CLI detector, DOM/AX inspection, actual keyboard interactions, saved native screenshots"},
+  "findings": [
+    {"severity": "P2", "personas": ["Casey", "Riley", "Alex"], "title": "Comparison context is lost when revisiting a horse", "trace": "Selected Sample horse 1, Feeding changes, Last 30 days. Clicked Stable overview and then Sample horse 1. The period remained Last 30 days but comparison reset to Weight & training. Reload returned to stable overview and Last 90 days.", "sources": ["src/components/analysis/HorseComparisonExplorer.tsx:84", "src/components/analysis/AnalysisCentre.tsx:171", "src/components/analysis/AnalysisCentre.tsx:210", "src/components/analysis/AnalysisCentre.tsx:508", "src/routes/stables/_layout/$stableId/analysis.tsx:4"], "fix": "Preserve subject/range/preset/context in route search or stable-scoped view state; preserve comparison selection per horse across scope switches."},
+    {"severity": "P2", "personas": ["Sam"], "title": "Scope buttons discard keyboard focus", "trace": "After activating Stable overview, and again after activating a horse-name row button, accessibility focus became WebArea/body because the focused button unmounted. Combobox keyboard selection retained focus and worked.", "sources": ["src/components/analysis/StableHistoryOverview.tsx:64", "src/components/analysis/AnalysisScopeSelector.tsx:90", "src/components/analysis/AnalysisCentre.tsx:508"], "fix": "Move focus to the persistent scope selector or newly selected section heading after button-driven scope changes; preserve selector focus on combobox-driven changes."}
+  ],
+  "passes": [
+    "Keyboard autocomplete: enter horse name, ArrowDown, Enter selects the horse.",
+    "Chart marker Space activation selects its source record; aria-pressed state and a polite live selected-record region are present.",
+    "Mobile Inspect selected records transfers focus and scroll to inspector. Back to chart returns focus and scroll to chart container.",
+    "390px viewport has document scrollWidth 390. Inspected weight marker hit regions measured 54x184 CSS pixels; close training marks cluster into an inspectable 2 nearby marks control.",
+    "Invalid reversed range hides results and shows plain-language date-order/ten-year guidance. Date fields have aria-invalid=true and aria-describedby referencing the error. Choosing Last 30 days restores chart.",
+    "Show 4 weeks before and after offers Return to previous range and restores it.",
+    "Unmatched search shows No matching horse or stable as status. Escape restores selected stable and focus to selector.",
+    "Empty stable provides Add a horse action and explains how to get records into the period."
+  ],
+  "sourceOnly": [
+    "Live comparison loading uses role=status; query failure uses alert plus Retry button (HorseComparisonExplorer.tsx:302). Network failure not injected.",
+    "SourceLink routes training/events to entity pages; health to horse care with careView=health; other records to nutrition. Individual non-event record ID is not included in destination, requiring user recognition of source record. Source links are deliberately hidden for comparison sample data, so fixture cannot validate live destination/back flow."
+  ],
+  "limits": ["Fixture data, not authenticated backend data", "No screen-reader speech session, contrast audit, actual touchscreen, 3G throttling, or 200% browser zoom", "No care/record mutations", "Date fill alone failed to dispatch React change in IAB; subsequent native ArrowUp produced real invalid-range behavior. The fill discrepancy is tooling evidence, not an application finding."],
+  "screenshots": ["horse-feeding-desktop.jpg", "horse-mobile-selected.jpg", "horse-mobile-details.jpg", "invalid-range-mobile.jpg", "empty-mobile.jpg", "no-match-mobile.jpg"],
+  "independence": "No prior critiques read. Findings withheld until parent confirmed Assessment A complete and frozen. No ignore file exists."
+}

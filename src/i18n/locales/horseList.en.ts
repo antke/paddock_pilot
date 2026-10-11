@@ -1,6 +1,10 @@
 export const horseList = {
   horses: 'Horses',
   list: 'Horse list',
+  rowDisplay: 'Row display',
+  compact: 'Compact',
+  detailed: 'Detailed',
+  detailedRows: 'Detailed rows',
   addHorse: 'Add horse',
   deleted: 'Deleted horses',
   none: 'No horses have been added yet.',

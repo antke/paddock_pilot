@@ -34,6 +34,14 @@ function showAppSuccessToast({ title, ...options }: AppSuccessToastOptions) {
   })
 }
 
+/** One notification follows the real operation from pending to its outcome. */
+function showAppPromiseToast<T>(
+  promise: Promise<T>,
+  options: NonNullable<Parameters<typeof toast.promise<T>>[1]>,
+) {
+  return toast.promise(promise, { ...appToastOptions, ...options })
+}
+
 function showAppErrorToast({
   title,
   description,
@@ -85,7 +93,10 @@ const Toaster = ({ ...props }: ToasterProps) => {
       closeButton
       icons={{
         success: (
-          <CheckCircleIcon className="size-4 text-primary" weight="bold" />
+          <CheckCircleIcon
+            className="app-success-feedback size-4 text-primary"
+            weight="bold"
+          />
         ),
         info: <InfoIcon className="size-4 text-chart-2" weight="bold" />,
         warning: <WarningIcon className="size-4 text-chart-3" weight="bold" />,
@@ -138,6 +149,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
 }
 
 export {
+  showAppPromiseToast,
   showAppErrorToast,
   showAppSuccessToast,
   showAppValidationToast,

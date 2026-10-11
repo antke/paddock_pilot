@@ -23,9 +23,9 @@ export function getTimelineSignalKindLabels(locale: Locale) {
 export const timelineSignalKindLabels = getTimelineSignalKindLabels('en')
 
 export const timelineSignalKindAccentColors = {
-  health: 'var(--destructive)',
-  medication: 'var(--chart-1)',
-  nutrition: 'var(--chart-2)',
-  weight: 'var(--chart-4)',
-  reminder: 'var(--primary)',
+  health: 'var(--analysis-health)',
+  medication: 'var(--analysis-medication)',
+  nutrition: 'var(--analysis-nutrition)',
+  weight: 'var(--analysis-weight)',
+  reminder: 'var(--analysis-care)',
 } satisfies Record<LabTimelineSignalKind, string>

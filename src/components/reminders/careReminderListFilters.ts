@@ -69,7 +69,10 @@ export function createCareReminderListFilterConfig(
     { value: 'overdue', label: t('careLabels.overdue') },
     ...careReminderStatuses.map((status) => ({
       value: status,
-      label: t(`careLabels.reminderStatus.${status}`),
+      label:
+        status === 'pending'
+          ? t('reminders.outstanding')
+          : t(`careLabels.reminderStatus.${status}`),
     })),
   ] satisfies ReadonlyArray<ListFilterOption>
 
@@ -241,4 +244,17 @@ function getCategoryFilterArg(value: string | undefined) {
   if (value && isCareReminderCategory(value)) return value
 
   return undefined
+}
+
+/** The default work view is not a user search with zero matches. */
+export function isOnlyOutstandingFilter(
+  state: ListFilterState<CareReminderListFilterFacetId>,
+) {
+  return (
+    !state.query.trim() &&
+    state.facets.state === 'pending' &&
+    Object.entries(state.facets).every(
+      ([key, value]) => key === 'state' || !value,
+    )
+  )
 }

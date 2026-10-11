@@ -45,14 +45,15 @@ describe('email templates', () => {
         'stable_archived',
         'account_deleted',
       ].includes(template.kind)
-      expect(links).toHaveLength(informational ? 0 : 2)
+      const hasPreferences = template.kind === 'care_reminder_digest'
+      expect(links).toHaveLength(informational ? 0 : hasPreferences ? 3 : 2)
       for (const link of links) {
         expect(link.href.startsWith(`${previewAppUrl}/`)).toBe(true)
         expect(email.text).toContain(link.href)
       }
       // Action and copyable fallback must always lead to the same destination.
       expect(new Set(links.map((link) => link.href)).size).toBe(
-        informational ? 0 : 1,
+        informational ? 0 : hasPreferences ? 2 : 1,
       )
     },
   )
@@ -77,6 +78,12 @@ describe('email templates', () => {
               : value,
         ]),
       ) as typeof template
+      if (poisoned.kind === 'care_reminder_digest') {
+        poisoned.stables = poisoned.stables.map((stable) => ({
+          ...stable,
+          stableName: malicious,
+        }))
+      }
       const email = createEmailContent(poisoned, previewAppUrl)
       const document = new DOMParser().parseFromString(email.html, 'text/html')
       expect(document.querySelectorAll('img, [onerror]')).toHaveLength(0)

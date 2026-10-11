@@ -1,3 +1,4 @@
+import { departurePreview, startDeparture } from './horseTransitions'
 import { ConvexError, v } from 'convex/values'
 import { stableMemberDetailsInputSchema } from '../shared/stables/stableMemberSchema'
 import { mutation, query } from './_generated/server'
@@ -6,7 +7,6 @@ import type { Doc, Id } from './_generated/dataModel'
 import {
   assertCanManageMembers,
   assertCanViewStable,
-  assertIsStableParticipant,
   getCurrentUser,
 } from './libs/stablePermissions'
 import { recordStableAudit } from './libs/audit'
@@ -220,18 +220,18 @@ export const remove = mutation({
     }
     const member = await ctx.db.get(membership.userId)
 
-    const ownedHorse = await ctx.db
+    const horses = await ctx.db
       .query('horses')
       .withIndex('by_owner_id', (q) => q.eq('ownerId', membership.userId))
-      .filter((q) => q.eq(q.field('stableId'), membership.stableId))
-      .first()
-
-    if (ownedHorse) {
-      throw new ConvexError(
-        'Reassign or remove this member’s horses before removing the member',
-      )
-    }
-
+      .collect()
+    for (const horse of horses)
+      if (horse.stableId === membership.stableId && horse.currentPlacementId) {
+        const preview = await departurePreview(ctx, horse)
+        await startDeparture(ctx, horse, {
+          actorUserId: userId,
+          carryReminderIds: preview.reminders.map((r) => r._id),
+        })
+      }
     await removeStableOnboarding(ctx, membership.stableId, membership.userId)
     await ctx.db.delete(args.id)
     await recordStableAudit(ctx, {
@@ -283,28 +283,14 @@ export const removeWithHorseReassignment = mutation({
       .filter((q) => q.eq(q.field('stableId'), membership.stableId))
       .collect()
 
-    if (horses.length > 0) {
-      if (!args.reassignToUserId) {
-        throw new ConvexError(
-          'Choose a new owner for this member’s horses before removing them',
-        )
+    for (const horse of horses)
+      if (horse.currentPlacementId) {
+        const preview = await departurePreview(ctx, horse)
+        await startDeparture(ctx, horse, {
+          actorUserId: userId,
+          carryReminderIds: preview.reminders.map((r) => r._id),
+        })
       }
-      if (args.reassignToUserId === membership.userId) {
-        throw new ConvexError('Choose a different owner for these horses')
-      }
-
-      await assertIsStableParticipant(
-        ctx,
-        membership.stableId,
-        args.reassignToUserId,
-      )
-      await Promise.all(
-        horses.map((horse) =>
-          ctx.db.patch(horse._id, { ownerId: args.reassignToUserId! }),
-        ),
-      )
-    }
-
     await removeStableOnboarding(ctx, membership.stableId, membership.userId)
     await ctx.db.delete(membership._id)
     await recordStableAudit(ctx, {
@@ -315,7 +301,7 @@ export const removeWithHorseReassignment = mutation({
       entityId: membership._id,
       summary:
         horses.length > 0
-          ? `Removed member and reassigned ${horses.length} horse${horses.length === 1 ? '' : 's'}`
+          ? `Removed member and started departure for ${horses.length} horse${horses.length === 1 ? '' : 's'}`
           : `Removed member ${membership.userId}`,
       details: {
         kind: 'member_removed',
@@ -324,14 +310,14 @@ export const removeWithHorseReassignment = mutation({
           member?.preferredName ||
           [member?.firstName, member?.lastName].filter(Boolean).join(' ') ||
           undefined,
-        reassignedHorseCount: horses.length,
+        reassignedHorseCount: 0,
       },
     })
     if (member) {
       await queueMembershipRemovedEmail(ctx, { member, membership, stable })
     }
 
-    return { reassignedHorseCount: horses.length }
+    return { reassignedHorseCount: 0 }
   },
 })
 

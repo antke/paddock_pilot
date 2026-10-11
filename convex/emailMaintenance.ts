@@ -1,3 +1,9 @@
+import { v } from 'convex/values'
+import { enqueueEmail } from './libs/email/outbox'
+import {
+  getDigestClock,
+  getReminderDigestStables,
+} from './libs/email/reminderDigest'
 import { internal } from './_generated/api'
 import { internalMutation } from './_generated/server'
 import {
@@ -98,5 +104,54 @@ export const purgeExpired = internalMutation({
       deliveriesDeleted: finalDeliveries.length,
       webhookEventsDeleted: webhookEvents.length,
     }
+  },
+})
+
+// Small pages keep each scheduled transaction bounded; the outbox owns retries.
+export const queueReminderDigests = internalMutation({
+  args: { cursor: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const page = await ctx.db
+      .query('users')
+      .withIndex('by_reminder_digest_enabled', (q) =>
+        q.eq('reminderDigestEnabled', true),
+      )
+      .paginate({ cursor: args.cursor ?? null, numItems: 25 })
+    let queued = 0
+    for (const user of page.page) {
+      if (user.deletedAt !== undefined || !user.email.includes('@')) continue
+      const timezone = user.reminderDigestTimezone ?? user.timezone ?? 'UTC'
+      let clock
+      try {
+        clock = getDigestClock(Date.now(), timezone)
+      } catch {
+        continue
+      }
+      if (clock.hour < 9 || (user.lastReminderDigestDate ?? '') >= clock.date)
+        continue
+      const stables = await getReminderDigestStables(ctx, user, clock.date)
+      if (stables.length === 0) continue
+      await enqueueEmail(ctx, {
+        dedupeKey: `care-reminder-digest:${user._id}:${clock.date}`,
+        recipient: user.email,
+        locale: user.locale,
+        relation: { type: 'user', id: user._id },
+        template: {
+          kind: 'care_reminder_digest',
+          date: clock.date,
+          timezone,
+          stables,
+        },
+      })
+      await ctx.db.patch(user._id, { lastReminderDigestDate: clock.date })
+      queued++
+    }
+    if (!page.isDone)
+      await ctx.scheduler.runAfter(
+        0,
+        internal.emailMaintenance.queueReminderDigests,
+        { cursor: page.continueCursor },
+      )
+    return { queued }
   },
 })

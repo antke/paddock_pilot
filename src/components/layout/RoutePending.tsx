@@ -7,7 +7,7 @@ export function RoutePending() {
     <DashboardLoadingState
       data-slot="route-pending"
       label={t('recovery.loadingPage')}
-      className="h-full min-h-[60dvh]"
+      className="app-route-pending h-full min-h-[60dvh]"
       panelClassName="size-auto border-0 bg-transparent"
       spinnerClassName="size-10"
     />

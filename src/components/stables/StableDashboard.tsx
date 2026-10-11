@@ -9,6 +9,8 @@ import type {
 } from '#/components/dashboard/command-center/dashboardTypes'
 import { StableCommandCenter } from '#/components/dashboard/command-center/StableCommandCenter'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
+import { StableUpdates } from '#/components/stables/StableUpdates'
+import { StableSetupNotice } from '#/components/dashboard/StableSetupNotice'
 
 type StableDashboardProps = {
   stable: DashboardCommandStable
@@ -43,7 +45,15 @@ export function StableDashboard({
 
   return (
     <DashboardPage>
-      <StableCommandCenter data={data} />
+      <StableCommandCenter
+        data={data}
+        setupNotice={
+          <StableSetupNotice key={stable._id} stableId={stable._id} />
+        }
+        updates={
+          <StableUpdates key={stable._id} stableId={stable._id} preview />
+        }
+      />
     </DashboardPage>
   )
 }

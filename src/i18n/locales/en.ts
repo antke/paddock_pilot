@@ -1,3 +1,4 @@
+import { stableUpdates } from './stableUpdates.en'
 import { horseComparison } from './horseComparison.en'
 import { serverErrors } from './serverErrors.en'
 import { uiRemainder } from './uiRemainder.en'
@@ -30,8 +31,11 @@ import { stables } from './stables.en'
 import { events } from './events.en'
 import { invitationFlow } from './invitationFlow.en'
 import { onboarding } from './onboarding.en'
+import { navigationShell } from './navigationShell.en'
 
 export const en = {
+  navigationShell,
+  stableUpdates,
   horseComparison,
   serverErrors,
   uiRemainder,
@@ -227,6 +231,11 @@ export const en = {
     imageTooLarge: 'Choose an image no larger than 5 MB.',
   },
   upload: {
+    selected: 'Selected · not saved yet',
+    selectedNamed: '{{name}} selected. Save the form to attach it.',
+    releaseToSelect: 'Drop to select this file',
+    chooseImage: 'Choose an image',
+    chooseFileLabel: 'Choose a file',
     about: 'About {{label}}',
     remove: 'Remove {{name}}',
     replace: 'Replace {{name}}',
@@ -269,6 +278,11 @@ export const en = {
     retry: 'Save language again',
   },
   navigation: {
+    accountPreferences: 'Preferences',
+    stable: 'Stable',
+    today: 'Today',
+    calendar: 'Calendar',
+
     primary: 'Primary navigation',
     public: 'Public navigation',
     footer: 'Footer navigation',
@@ -307,6 +321,12 @@ export const en = {
     dark: 'Theme mode: dark. Click to switch mode.',
   },
   profile: {
+    notifications: 'Email reminders',
+    digestLabel: 'Daily care summary',
+    digestDescription:
+      'One email around 09:00 ({{timezone}}) when any of your stables has care due or overdue. Off by default; reminders remain available in Care.',
+    digestSaved: 'Email preference saved',
+    digestError: 'Could not save your email preference. Try again.',
     signInTitle: 'Sign in to edit your profile',
     signInDescription:
       'Your profile follows you across the stables you own and join.',
@@ -319,6 +339,10 @@ export const en = {
       'Check your connection, then try again. Your profile has not been changed.',
   },
   common: {
+    unsavedTitle: 'Leave without saving?',
+    unsavedHelp:
+      'Your changes have not been saved. Stay here to finish or leave and discard them.',
+    leaveWithoutSaving: 'Leave without saving',
     close: 'Close',
     keepEditing: 'Keep editing',
     reset: 'Reset',
@@ -332,6 +356,8 @@ export const en = {
     pageErrorDescription:
       'Try again. If the problem continues, you can return home.',
     retry: 'Try again',
+    copied: 'Copied',
+    copying: 'Copying…',
     home: 'Go home',
     cancel: 'Cancel',
     save: 'Save',

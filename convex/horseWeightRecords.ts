@@ -1,3 +1,10 @@
+import {
+  canEditHorseRecord,
+  auditHorse,
+  assertCanReadHorse,
+  assertCanAddHorseRecord,
+  assertCanEditHorseRecord,
+} from './libs/horsePermissions'
 import { compareWeightRecordsNewestFirst } from '../shared/horses/weightRecordOrder'
 import { ConvexError, v } from 'convex/values'
 import {
@@ -7,11 +14,7 @@ import {
 import type { Doc } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import type { MutationCtx, QueryCtx } from './_generated/server'
-import {
-  assertCanManageHorse,
-  assertCanViewStable,
-  getCurrentUser,
-} from './libs/stablePermissions'
+import { getCurrentUser } from './libs/stablePermissions'
 
 const weightUnitValidator = v.union(v.literal('kg'), v.literal('lb'))
 
@@ -51,14 +54,19 @@ export const listForHorse = query({
     const horse = await ctx.db.get(args.horseId)
     if (!horse) return []
 
-    await assertCanViewStable(ctx, horse.stableId)
+    const access = await assertCanReadHorse(ctx, horse)
 
     const records = await ctx.db
       .query('horseWeightRecords')
       .withIndex('by_horse_id', (q) => q.eq('horseId', args.horseId))
       .collect()
 
-    return records.sort(compareWeightRecordsNewestFirst)
+    return records
+      .map((record) => ({
+        ...record,
+        canEdit: canEditHorseRecord(access, horse, record),
+      }))
+      .sort(compareWeightRecordsNewestFirst)
   },
 })
 
@@ -68,10 +76,10 @@ export const getPermissions = query({
     const horse = await ctx.db.get(args.horseId)
     if (!horse) return { canManage: false }
 
-    const access = await assertCanViewStable(ctx, horse.stableId)
+    const access = await assertCanReadHorse(ctx, horse)
 
     return {
-      canManage: access.role === 'owner' || horse.ownerId === access.userId,
+      canManage: access.canAddRecords,
     }
   },
 })
@@ -90,7 +98,8 @@ export const add = mutation({
     const horse = await ctx.db.get(args.horseId)
     if (!horse) throw new ConvexError('Horse not found')
 
-    await assertCanManageHorse(ctx, horse, user._id)
+    const access = await assertCanAddHorseRecord(ctx, horse, user._id)
+    await auditHorse(ctx, horse._id, user._id, 'horseWeightRecords.added')
 
     const input = validateAddInput(args)
     const unit = weightUnitSchema.parse(input.unit)
@@ -98,7 +107,7 @@ export const add = mutation({
 
     return await ctx.db.insert('horseWeightRecords', {
       horseId: horse._id,
-      stableId: horse.stableId,
+      ...access.recordOrigin,
       weight: input.weight,
       unit,
       measuredAt: input.measuredAt,
@@ -117,7 +126,14 @@ export const remove = mutation({
     if (!record) throw new ConvexError('Weight record not found')
 
     const horse = await getRecordHorse(ctx, record)
-    await assertCanManageHorse(ctx, horse)
+    const recordAccess = await assertCanEditHorseRecord(ctx, horse, record)
+    await auditHorse(
+      ctx,
+      horse._id,
+      recordAccess.userId,
+      'horseWeightRecords.changed',
+      JSON.stringify(record),
+    )
 
     await ctx.db.delete(args.id)
   },

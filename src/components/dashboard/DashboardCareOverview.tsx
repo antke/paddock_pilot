@@ -31,6 +31,7 @@ import type { Doc } from 'convex/_generated/dataModel'
 import type { FunctionReturnType } from 'convex/server'
 import { formatShortDateKey } from '#/lib/dateDisplay'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
+import { useOwnershipCopy } from '#/components/ownership/ownershipCopy'
 
 type UserCareOverview = FunctionReturnType<
   typeof api.userCareOverview.getForCurrentUser
@@ -52,10 +53,14 @@ const careRowTone = {
 
 type DashboardCareOverviewProps = {
   stableId: Doc<'stables'>['_id'] | undefined
+  showUpcomingEvents?: boolean
+  hideWhenEmpty?: boolean
 }
 
 export function DashboardCareOverview({
   stableId,
+  showUpcomingEvents = true,
+  hideWhenEmpty = false,
 }: DashboardCareOverviewProps) {
   const t = useT()
 
@@ -64,6 +69,14 @@ export function DashboardCareOverview({
   const { data: overview } = useSuspenseQuery(
     convexQuery(api.userCareOverview.getForCurrentUser, overviewArgs),
   )
+
+  if (
+    hideWhenEmpty &&
+    overview.dueReminders.length === 0 &&
+    overview.attentionHorses.length === 0 &&
+    (!showUpcomingEvents || overview.upcomingEvents.length === 0)
+  )
+    return null
 
   return (
     <DashboardSection
@@ -74,7 +87,7 @@ export function DashboardCareOverview({
       size="panel"
       descriptionSize="sm"
     >
-      <DashboardMetricStrip>
+      <DashboardMetricStrip columns={showUpcomingEvents ? 4 : 3}>
         <OverviewMetric
           title={t('uiRemainder.dueReminders')}
           value={`${overview.summary.dueReminderCount}`}
@@ -83,12 +96,14 @@ export function DashboardCareOverview({
             count: overview.summary.overdueReminderCount,
           })}
         </OverviewMetric>
-        <OverviewMetric
-          title={t('uiRemainder.upcomingCare')}
-          value={`${overview.summary.upcomingEventCount}`}
-        >
-          {t('uiRemainder.plannedFortnight')}
-        </OverviewMetric>
+        {showUpcomingEvents && (
+          <OverviewMetric
+            title={t('uiRemainder.upcomingCare')}
+            value={`${overview.summary.upcomingEventCount}`}
+          >
+            {t('uiRemainder.plannedFortnight')}
+          </OverviewMetric>
+        )}
         <OverviewMetric
           title={t('uiRemainder.highAlerts')}
           value={`${overview.summary.highSeverityIssueCount}`}
@@ -105,7 +120,9 @@ export function DashboardCareOverview({
 
       <DashboardLayoutGrid variant="equal">
         <DueReminderCard reminders={overview.dueReminders} />
-        <UpcomingEventCard events={overview.upcomingEvents} />
+        {showUpcomingEvents && (
+          <UpcomingEventCard events={overview.upcomingEvents} />
+        )}
         <AttentionHorseCard horses={overview.attentionHorses} />
       </DashboardLayoutGrid>
     </DashboardSection>
@@ -134,6 +151,7 @@ function OverviewMetric({
 
 function DueReminderCard({ reminders }: { reminders: ReminderItem[] }) {
   const t = useT()
+  const c = useOwnershipCopy()
   const { locale } = useLocale()
 
   return (
@@ -158,8 +176,17 @@ function DueReminderCard({ reminders }: { reminders: ReminderItem[] }) {
           reminders.map((reminder) => (
             <DashboardItemOpenLink
               key={reminder.id}
-              to="/stables/$stableId/reminders"
-              params={{ stableId: reminder.stableId }}
+              to={
+                reminder.horseId
+                  ? '/horses/$horseId/care'
+                  : reminder.stableId
+                    ? '/stables/$stableId/reminders'
+                    : '/horses'
+              }
+              params={{
+                horseId: reminder.horseId ?? '',
+                stableId: reminder.stableId ?? '',
+              }}
               tone={careRowTone[reminder.overdue ? 'attention' : 'due']}
               density="compact"
             >
@@ -184,7 +211,9 @@ function DueReminderCard({ reminders }: { reminders: ReminderItem[] }) {
                   })}
                 </span>
                 <span>{t(`careLabels.category.${reminder.category}`)}</span>
-                <span>{reminder.stableName}</span>
+                <span>
+                  {reminder.stableId ? reminder.stableName : c.personal}
+                </span>
                 {reminder.horseName && <span>{reminder.horseName}</span>}
               </DashboardMetaList>
             </DashboardItemOpenLink>
@@ -245,6 +274,7 @@ function UpcomingEventCard({ events }: { events: EventItem[] }) {
 
 function AttentionHorseCard({ horses }: { horses: AttentionHorseItem[] }) {
   const t = useT()
+  const c = useOwnershipCopy()
 
   return (
     <DashboardSection
@@ -290,7 +320,7 @@ function AttentionHorseCard({ horses }: { horses: AttentionHorseItem[] }) {
               }
               meta={
                 <>
-                  <span>{horse.stableName}</span>
+                  <span>{horse.stableId ? horse.stableName : c.personal}</span>
                   <span>
                     {t('analysisViews.activeIssueCount', {
                       count: horse.activeIssueCount,

@@ -1,3 +1,4 @@
+import { StableOwnershipTools } from '#/components/ownership/StableOwnershipTools'
 import { useT } from '#/i18n/LocaleProvider'
 import { HorseListPage } from '#/components/horses/HorseListPage'
 import { RouteQueryErrorAlert } from '#/components/layout/RouteStatusAlert'
@@ -19,7 +20,12 @@ function RouteComponent() {
     convexQuery(api.horses.list, { stableId: stableId as Id<'stables'> }),
   )
 
-  return <HorseListPage horses={horses} stableId={stableId} />
+  return (
+    <>
+      <HorseListPage horses={horses} stableId={stableId} />
+      <StableOwnershipTools stableId={stableId as Id<'stables'>} />
+    </>
+  )
 }
 
 function HorseListError({ reset }: ErrorComponentProps) {

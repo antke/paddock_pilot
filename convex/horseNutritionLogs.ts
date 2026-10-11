@@ -1,13 +1,16 @@
+import {
+  canEditHorseRecord,
+  auditHorse,
+  assertCanReadHorse,
+  assertCanAddHorseRecord,
+  assertCanEditHorseRecord,
+} from './libs/horsePermissions'
 import { ConvexError, v } from 'convex/values'
 import { nutritionLogAddSchema } from '../shared/horses/nutritionLogSchema'
 import type { Doc } from './_generated/dataModel'
-import { mutation, query   } from './_generated/server'
-import type {MutationCtx, QueryCtx} from './_generated/server';
-import {
-  assertCanManageHorse,
-  assertCanViewStable,
-  getCurrentUser,
-} from './libs/stablePermissions'
+import { mutation, query } from './_generated/server'
+import type { MutationCtx, QueryCtx } from './_generated/server'
+import { getCurrentUser } from './libs/stablePermissions'
 
 const validateAddInput = (args: {
   horseId: string
@@ -40,8 +43,10 @@ const getLogHorse = async (
   return horse
 }
 
-const byChangedAtDesc = (a: Doc<'horseNutritionLogs'>, b: Doc<'horseNutritionLogs'>) =>
-  b.changedAt - a.changedAt
+const byChangedAtDesc = (
+  a: Doc<'horseNutritionLogs'>,
+  b: Doc<'horseNutritionLogs'>,
+) => b.changedAt - a.changedAt
 
 export const listForHorse = query({
   args: { horseId: v.id('horses') },
@@ -49,14 +54,19 @@ export const listForHorse = query({
     const horse = await ctx.db.get(args.horseId)
     if (!horse) return []
 
-    await assertCanViewStable(ctx, horse.stableId)
+    const access = await assertCanReadHorse(ctx, horse)
 
     const logs = await ctx.db
       .query('horseNutritionLogs')
       .withIndex('by_horse_id', (q) => q.eq('horseId', args.horseId))
       .collect()
 
-    return logs.sort(byChangedAtDesc)
+    return logs
+      .map((record) => ({
+        ...record,
+        canEdit: canEditHorseRecord(access, horse, record),
+      }))
+      .sort(byChangedAtDesc)
   },
 })
 
@@ -66,9 +76,9 @@ export const getPermissions = query({
     const horse = await ctx.db.get(args.horseId)
     if (!horse) return { canManage: false }
 
-    const access = await assertCanViewStable(ctx, horse.stableId)
+    const access = await assertCanReadHorse(ctx, horse)
 
-    return { canManage: access.role === 'owner' || horse.ownerId === access.userId }
+    return { canManage: access.canAddRecords }
   },
 })
 
@@ -87,13 +97,14 @@ export const add = mutation({
     const horse = await ctx.db.get(args.horseId)
     if (!horse) throw new ConvexError('Horse not found')
 
-    await assertCanManageHorse(ctx, horse, user._id)
+    const access = await assertCanAddHorseRecord(ctx, horse, user._id)
+    await auditHorse(ctx, horse._id, user._id, 'horseNutritionLogs.added')
 
     const input = validateAddInput(args)
 
     return await ctx.db.insert('horseNutritionLogs', {
       horseId: horse._id,
-      stableId: horse.stableId,
+      ...access.recordOrigin,
       changedAt: input.changedAt,
       summary: input.summary,
       feedingRoutineSnapshot: input.feedingRoutineSnapshot,
@@ -113,7 +124,14 @@ export const remove = mutation({
     if (!log) throw new ConvexError('Nutrition log not found')
 
     const horse = await getLogHorse(ctx, log)
-    await assertCanManageHorse(ctx, horse)
+    const recordAccess = await assertCanEditHorseRecord(ctx, horse, log)
+    await auditHorse(
+      ctx,
+      horse._id,
+      recordAccess.userId,
+      'horseNutritionLogs.changed',
+      JSON.stringify(log),
+    )
 
     await ctx.db.delete(args.id)
   },

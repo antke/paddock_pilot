@@ -71,7 +71,10 @@ export function createStableDocumentSchemas(
     .transform((val) => val || undefined)
 
   const stableDocumentInputSchema = z.object({
-    stableId: z.string({ error: message('textInvalid') }).min(1),
+    stableId: z
+      .string({ error: message('textInvalid') })
+      .min(1)
+      .optional(),
     horseId: optionalId,
     eventId: optionalId,
     storageId: optionalId,

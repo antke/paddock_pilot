@@ -56,7 +56,7 @@ function NavigationMenuItem({
 }
 
 const navigationMenuTriggerStyle = cva(
-  'group/navigation-menu-trigger inline-flex h-9 w-max cursor-pointer items-center justify-center rounded-control border border-transparent px-3 py-1.5 text-sm font-semibold transition-[background-color,border-color,color,box-shadow] duration-150 outline-none hover:bg-surface-muted focus:bg-surface-muted focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-active:border-selection data-active:bg-selection-surface data-active:text-selection data-popup-open:bg-surface-muted data-open:bg-surface-muted data-active:hover:bg-selection-surface data-active:focus:bg-selection-surface [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11',
+  'app-choice-feedback group/navigation-menu-trigger inline-flex h-9 w-max cursor-pointer items-center justify-center rounded-control border border-transparent px-3 py-1.5 text-sm font-semibold transition-[background-color,border-color,color,box-shadow] duration-150 outline-none hover:bg-surface-muted focus:bg-surface-muted focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-active:border-selection data-active:bg-selection-surface data-active:text-selection data-popup-open:bg-surface-muted data-open:bg-surface-muted data-active:hover:bg-selection-surface data-active:focus:bg-selection-surface [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11',
 )
 
 function NavigationMenuTrigger({

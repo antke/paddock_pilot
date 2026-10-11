@@ -379,6 +379,7 @@ function SampleHorse(props: ComponentProps<OnboardingForms['Horse']>) {
               stableId: state.stable._id,
               ownerId: state.profile._id,
               profileImageUrl: undefined,
+              canRead: true,
             },
           ],
         }))

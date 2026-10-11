@@ -39,6 +39,7 @@ type DashboardSectionProps = Omit<
     contentAlign?: DashboardSectionContentAlign
     gap?: DashboardSectionGap
     headerClassName?: string
+    headerLayout?: DashboardSectionHeaderProps['layout']
     padding?: DashboardSectionPadding
     size?: DashboardSectionHeaderProps['size']
     span?: DashboardSectionSpan
@@ -97,6 +98,7 @@ export function DashboardSection({
   descriptionWidth,
   gap = 'default',
   headerClassName,
+  headerLayout,
   headingClassName,
   padding = 'default',
   size = 'section',
@@ -138,6 +140,7 @@ export function DashboardSection({
           descriptionSize={descriptionSize}
           descriptionWidth={descriptionWidth}
           headingClassName={headingClassName}
+          layout={headerLayout}
           size={size}
           title={title}
           titleClassName={titleClassName}

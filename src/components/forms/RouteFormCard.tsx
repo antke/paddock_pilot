@@ -20,6 +20,9 @@ import {
 import { Button } from '#/components/ui/button'
 import { FormSubmitButtons } from './FormSubmitActions'
 
+export const formStickyActionsClassName =
+  'sticky bottom-0 z-10 border-t border-border-subtle bg-card py-4 pb-[max(1rem,env(safe-area-inset-bottom))]'
+
 type RouteFormCardProps = {
   formId: string
   title: ReactNode
@@ -31,6 +34,8 @@ type RouteFormCardProps = {
   sectionTitle?: ReactNode
   noValidate?: boolean
   stickyActions?: boolean
+  onCancel?: () => void
+  cancelDisabled?: boolean
 }
 
 type RouteFormActionsProps = {
@@ -89,10 +94,14 @@ export function RouteFormCard({
   embedded = false,
   sectionTitle,
   stickyActions = false,
+  onCancel,
+  cancelDisabled = false,
 }: RouteFormCardProps) {
+  const t = useT()
   const formCard = (
     <form
       data-slot="route-form-card"
+      data-mobile-route-form={!embedded && stickyActions ? true : undefined}
       id={formId}
       onSubmit={onSubmit}
       noValidate={noValidate}
@@ -105,11 +114,7 @@ export function RouteFormCard({
         contentLayout="flexColumn"
         contentGap={contentGap}
         footer={<DashboardActions width="full">{actions}</DashboardActions>}
-        footerClassName={
-          stickyActions
-            ? 'sticky bottom-0 z-10 border-t border-border-subtle bg-card/95 py-4 supports-backdrop-filter:backdrop-blur-sm'
-            : undefined
-        }
+        footerClassName={stickyActions ? formStickyActionsClassName : undefined}
       >
         {children}
       </DashboardSectionCard>
@@ -120,7 +125,23 @@ export function RouteFormCard({
 
   return (
     <DashboardPage>
-      <DashboardPageHeader title={title} />
+      <DashboardPageHeader
+        title={title}
+        contentLayout={onCancel ? 'inline' : 'default'}
+        actions={
+          onCancel ? (
+            <Button
+              type="button"
+              variant="ghost"
+              className="min-h-11 md:hidden"
+              onClick={onCancel}
+              disabled={cancelDisabled}
+            >
+              {t('common.cancel')}
+            </Button>
+          ) : undefined
+        }
+      />
       {formCard}
     </DashboardPage>
   )

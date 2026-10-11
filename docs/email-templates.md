@@ -73,3 +73,24 @@ to the sender's language. Retries retain the original delivery locale. Older que
 messages without one remain English, and legacy event-change descriptions remain
 readable. See `docs/i18n/README.md` for implementation conventions and
 `docs/i18n/translation-review.md` for wording decisions and Clerk-auth-email limits.
+
+## Daily care summaries
+
+Care reminder email is off by default. Profile → Email reminders enables one
+summary per account/local calendar day across its active stables. The saved
+IANA timezone is captured from the account or browser when enabling. A 30-minute
+job checks after 09:00 local time, including DST. Only pending reminders due
+today or earlier for active horses are counted; a stable with no due care does
+not appear. Ownership and current `member` memberships authorize recipients.
+
+The transactional outbox handles deduplication, leases, retries and provider
+webhooks. Daily scheduling also records the last queued date on the account.
+Before sending or retrying, the worker rechecks opt-in, email address, active
+account, memberships, archived stables and current due care. An empty or
+previous-day digest is skipped. Unsubscribing happens through the Profile
+preference. Invitations and event updates are unaffected.
+
+The `care-reminder-digest` preview fixture uses fictional data. Automated tests
+exercise queueing and preparation with the console provider and do not send to
+real recipients. Runtime delivery still requires the existing provider setup;
+console delivery only logs locally.

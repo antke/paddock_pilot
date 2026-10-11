@@ -1,5 +1,10 @@
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { DashboardRecordDetails } from '#/components/dashboard/DashboardRecordDetails'
+import {
+  DetailReferenceField,
+  DetailReferenceList,
+} from '#/components/dashboard/DetailReference'
+import { DashboardBadgeList } from '#/components/dashboard/DashboardBadgeList'
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
@@ -8,14 +13,24 @@ import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import {
   DashboardItemList,
   DashboardItemRecordCard,
-  DashboardItemRecordContent,
+  dashboardItemLargeTitleClassName,
 } from '#/components/dashboard/DashboardItemCard'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { Button } from '#/components/ui/button'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { RecordRemoveAction } from '#/components/list-layout/RecordRemoveAction'
+import { EditRecordDialog } from '#/components/list-layout/EditRecordDialog'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '#/components/ui/dropdown-menu'
+import { Input } from '#/components/ui/input'
+import { Field, FieldLabel } from '#/components/ui/field'
+import { careReminderDueDateSchema } from 'shared/reminders/careReminderSchema'
 import { Spinner } from '#/components/ui/spinner'
-import { CheckIcon, XIcon } from '@phosphor-icons/react'
+import { CheckIcon, DotsThreeIcon } from '@phosphor-icons/react'
 import type { Doc } from 'convex/_generated/dataModel'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ElementType, ReactNode } from 'react'
@@ -36,6 +51,10 @@ export type CareReminderListItem = {
   reminder: Doc<'careReminders'>
   horseName?: string
   canManage: boolean
+  canComplete?: boolean
+  canReopen?: boolean
+  assigneeName?: string
+  completedByName?: string
 }
 
 type HorseOption = {
@@ -50,10 +69,19 @@ type CareRemindersCardProps = {
   reminders: Array<CareReminderListItem>
   canAddReminder: boolean
   horseOptions?: Array<HorseOption>
+  assigneeOptions?: Array<HorseOption>
   fixedHorseId?: string
   emptyMessage: ReactNode
   onAdd: (data: CareReminderSubmitData) => Promise<void>
-  onComplete: (reminder: Doc<'careReminders'>) => Promise<void>
+  onComplete: (
+    reminder: Doc<'careReminders'>,
+    nextDueDate?: string,
+  ) => Promise<void>
+  onEdit?: (
+    reminder: Doc<'careReminders'>,
+    data: CareReminderSubmitData,
+  ) => Promise<void>
+  onReopen?: (reminder: Doc<'careReminders'>) => Promise<void>
   onDismiss: (reminder: Doc<'careReminders'>) => Promise<void>
   onRemove: (reminder: Doc<'careReminders'>) => Promise<void>
   chrome?: DashboardChrome
@@ -74,10 +102,13 @@ export function CareRemindersCard({
   reminders,
   canAddReminder,
   horseOptions,
+  assigneeOptions,
   fixedHorseId,
   emptyMessage,
   onAdd,
   onComplete,
+  onEdit,
+  onReopen,
   onDismiss,
   onRemove,
   chrome = 'soft',
@@ -115,18 +146,27 @@ export function CareRemindersCard({
       canAddReminder ? (
         <CareReminderForm
           horseOptions={horseOptions}
+          assigneeOptions={assigneeOptions}
           fixedHorseId={fixedHorseId}
           onSubmit={onAddFromDialog}
           chrome={chrome}
           presentation="plain"
         />
       ) : null,
-    [canAddReminder, chrome, fixedHorseId, horseOptions, onAddFromDialog],
+    [
+      canAddReminder,
+      chrome,
+      fixedHorseId,
+      horseOptions,
+      assigneeOptions,
+      onAddFromDialog,
+    ],
   )
   const createDialog = useMemo(
     () =>
       form ? (
         <CreateRecordDialog
+          actionId="reminder"
           open={isCreateOpen}
           isPending={isCreating}
           onOpenChange={(open) => {
@@ -192,10 +232,14 @@ export function CareRemindersCard({
               <ReminderRow
                 item={item}
                 onComplete={onComplete}
+                onEdit={onEdit}
+                onReopen={onReopen}
+                assigneeOptions={assigneeOptions}
                 onDismiss={onDismiss}
                 onRemove={onRemove}
                 chrome={chrome}
                 headingLevel={recordHeadingLevel}
+                showHorse={!fixedHorseId}
                 removalFocusTarget={removalFocusTarget}
               />
             </div>
@@ -238,18 +282,32 @@ export function CareRemindersCard({
 }
 
 function ReminderRow({
+  showHorse,
   removalFocusTarget,
   headingLevel,
   item,
   onComplete,
+  onEdit,
+  onReopen,
+  assigneeOptions,
   onDismiss,
   onRemove,
   chrome,
 }: {
+  showHorse: boolean
   removalFocusTarget: () => HTMLElement | null
   headingLevel: 2 | 3
   item: CareReminderListItem
-  onComplete: (reminder: Doc<'careReminders'>) => Promise<void>
+  assigneeOptions?: Array<HorseOption>
+  onComplete: (
+    reminder: Doc<'careReminders'>,
+    nextDueDate?: string,
+  ) => Promise<void>
+  onEdit?: (
+    reminder: Doc<'careReminders'>,
+    data: CareReminderSubmitData,
+  ) => Promise<void>
+  onReopen?: (reminder: Doc<'careReminders'>) => Promise<void>
   onDismiss: (reminder: Doc<'careReminders'>) => Promise<void>
   onRemove: (reminder: Doc<'careReminders'>) => Promise<void>
   chrome: DashboardChrome
@@ -261,15 +319,27 @@ function ReminderRow({
   const dueState = getCareReminderDueState(reminder)
   const showPriorityBadge = reminder.priority === 'high'
   const showStatusBadge = overdue || reminder.status !== 'pending'
+  const Heading = `h${headingLevel}` as const
+  const hasActions =
+    item.canManage ||
+    (reminder.status === 'pending' && (item.canComplete ?? item.canManage)) ||
+    (reminder.status !== 'pending' &&
+      (item.canReopen ?? item.canManage) &&
+      Boolean(onReopen))
   const [pendingAction, setPendingAction] = useState<
-    'complete' | 'dismiss' | null
+    'complete' | 'dismiss' | 'reopen' | 'edit' | null
   >(null)
+  const [editor, setEditor] = useState<'edit' | 'next' | null>(null)
+  const [removeOpen, setRemoveOpen] = useState(false)
+  const actionsTrigger = useRef<HTMLButtonElement>(null)
+  const [nextDueDate, setNextDueDate] = useState('')
+  const [dateError, setDateError] = useState(false)
   const pendingRef = useRef(false)
   const isUpdating = pendingAction !== null
   const [actionError, setActionError] = useState(false)
 
   const runStatusAction = async (
-    action: 'complete' | 'dismiss',
+    action: 'complete' | 'dismiss' | 'reopen' | 'edit',
     callback: (careReminder: Doc<'careReminders'>) => Promise<void>,
   ) => {
     if (pendingRef.current) return
@@ -279,6 +349,7 @@ function ReminderRow({
       setActionError(false)
       setPendingAction(action)
       await callback(reminder)
+      setEditor(null)
     } catch {
       setActionError(true)
     } finally {
@@ -288,123 +359,310 @@ function ReminderRow({
   }
 
   return (
-    <DashboardItemRecordCard
-      accent={getCareReminderRecordAccent(reminder)}
-      chrome={chrome}
-      interactive={false}
-      density="compact"
-      footer={
-        actionError ? (
-          <p role="alert" className="text-sm text-destructive">
-            {t('reminders.updateFailed')}
-          </p>
-        ) : undefined
-      }
-      actionsClassName="ml-auto"
-      actionBadges={
-        showPriorityBadge || showStatusBadge ? (
-          <>
-            {showPriorityBadge && <CareReminderPriorityBadge priority="high" />}
-            {showStatusBadge && (
-              <CareReminderStatusBadge
-                status={reminder.status}
-                overdue={overdue}
-              />
-            )}
-          </>
-        ) : undefined
-      }
-      actions={
-        item.canManage ? (
-          <>
-            {reminder.status === 'pending' && (
-              <>
-                <Button
-                  type="button"
-                  size="sm"
-                  disabled={isUpdating}
-                  aria-busy={pendingAction === 'complete' || undefined}
-                  aria-label={t(
-                    pendingAction === 'complete'
-                      ? 'reminders.completingNamed'
-                      : 'reminders.completeNamed',
-                    { name: reminder.title },
-                  )}
-                  onClick={() => void runStatusAction('complete', onComplete)}
-                >
-                  {pendingAction === 'complete' ? (
-                    <Spinner aria-hidden={true} />
-                  ) : (
-                    <CheckIcon data-icon="inline-start" weight="bold" />
-                  )}
-                  {pendingAction === 'complete'
-                    ? t('reminders.completing')
-                    : t('reminders.complete')}
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  disabled={isUpdating}
-                  aria-busy={pendingAction === 'dismiss' || undefined}
-                  aria-label={t(
-                    pendingAction === 'dismiss'
-                      ? 'reminders.dismissingNamed'
-                      : 'reminders.dismissNamed',
-                    { name: reminder.title },
-                  )}
-                  onClick={() => void runStatusAction('dismiss', onDismiss)}
-                >
-                  {pendingAction === 'dismiss' ? (
-                    <Spinner aria-hidden={true} />
-                  ) : (
-                    <XIcon data-icon="inline-start" weight="bold" />
-                  )}
-                  {pendingAction === 'dismiss'
-                    ? t('reminders.dismissing')
-                    : t('reminders.dismiss')}
-                </Button>
-              </>
-            )}
-            <RecordRemoveAction
-              title={t('reminders.removeNamed', { name: reminder.title })}
-              description={t('reminders.removeHelp')}
-              confirmLabel={t('reminders.remove')}
-              disabled={isUpdating}
-              onConfirm={() => onRemove(reminder)}
-              removalFocusTarget={removalFocusTarget}
-            />
-          </>
-        ) : undefined
-      }
-    >
-      <DashboardItemRecordContent
-        headingLevel={headingLevel}
-        title={reminder.title}
-        meta={
-          <>
-            <span
-              className={
-                dueState === 'overdue'
-                  ? 'font-semibold text-destructive'
-                  : dueState === 'today' || dueState === 'soon'
-                    ? 'font-semibold text-foreground'
-                    : undefined
-              }
-            >
-              {getCareReminderDueLabel(reminder, undefined, locale)}
-            </span>
-            {item.horseName && <span>{item.horseName}</span>}
-            <span>{t(`careLabels.category.${reminder.category}`)}</span>
-          </>
+    <>
+      <DashboardItemRecordCard
+        accent={getCareReminderRecordAccent(reminder)}
+        chrome={chrome}
+        interactive={false}
+        density="compact"
+        footer={
+          actionError ? (
+            <p role="alert" className="text-sm text-destructive sm:col-span-2">
+              {t('reminders.updateFailed')}
+            </p>
+          ) : undefined
+        }
+        actionsPlacement="footer"
+        actionsClassName="w-full justify-start border-t border-border-subtle pt-3"
+        actions={
+          hasActions ? (
+            <>
+              {reminder.status === 'pending' &&
+                (item.canComplete ?? item.canManage) && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={isUpdating}
+                    aria-busy={pendingAction === 'complete' || undefined}
+                    aria-label={t('reminders.completeNamed', {
+                      name: reminder.title,
+                    })}
+                    onClick={() => void runStatusAction('complete', onComplete)}
+                  >
+                    {pendingAction === 'complete' ? (
+                      <Spinner aria-hidden={true} />
+                    ) : (
+                      <CheckIcon data-icon="inline-start" weight="bold" />
+                    )}
+                    {t(
+                      pendingAction === 'complete'
+                        ? 'reminders.completing'
+                        : 'reminders.complete',
+                    )}
+                  </Button>
+                )}
+              {reminder.status !== 'pending' &&
+                (item.canReopen ?? item.canManage) &&
+                onReopen && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={isUpdating}
+                    onClick={() => void runStatusAction('reopen', onReopen)}
+                  >
+                    {t('reminders.reopen')}
+                  </Button>
+                )}
+              {item.canManage && (
+                <>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          ref={actionsTrigger}
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          disabled={isUpdating}
+                          aria-label={t('reminders.actionsNamed', {
+                            name: reminder.title,
+                          })}
+                        />
+                      }
+                    >
+                      <DotsThreeIcon weight="bold" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {onEdit && (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setActionError(false)
+                            setEditor('edit')
+                          }}
+                        >
+                          {t('reminders.edit')}
+                        </DropdownMenuItem>
+                      )}
+                      {reminder.status === 'pending' &&
+                        !reminder.followUpReminderId && (
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setActionError(false)
+                              setEditor('next')
+                            }}
+                          >
+                            {t('reminders.completeAndSchedule')}
+                          </DropdownMenuItem>
+                        )}
+                      {reminder.status === 'pending' && (
+                        <DropdownMenuItem
+                          onClick={() =>
+                            void runStatusAction('dismiss', onDismiss)
+                          }
+                        >
+                          {t('reminders.dismiss')}
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => setRemoveOpen(true)}
+                      >
+                        {t('reminders.remove')}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <RecordRemoveAction
+                    open={removeOpen}
+                    onOpenChange={setRemoveOpen}
+                    externalTrigger={actionsTrigger}
+                    title={t('reminders.removeNamed', { name: reminder.title })}
+                    description={t('reminders.removeHelp')}
+                    confirmLabel={t('reminders.remove')}
+                    disabled={isUpdating}
+                    onConfirm={() => onRemove(reminder)}
+                    removalFocusTarget={removalFocusTarget}
+                  />
+                </>
+              )}
+            </>
+          ) : undefined
         }
       >
-        {reminder.description && (
-          <DashboardRecordDetails recordTitle={reminder.title}>
-            {reminder.description}
-          </DashboardRecordDetails>
+        <div className="grid min-w-0 gap-4 sm:col-span-2">
+          <header className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+            <Heading
+              className={`${dashboardItemLargeTitleClassName} min-w-0 wrap-anywhere`}
+            >
+              {reminder.title}
+            </Heading>
+            {(showPriorityBadge || showStatusBadge) && (
+              <DashboardBadgeList gap="compact">
+                {showPriorityBadge && (
+                  <CareReminderPriorityBadge priority="high" />
+                )}
+                {showStatusBadge && (
+                  <CareReminderStatusBadge
+                    status={reminder.status}
+                    overdue={overdue}
+                  />
+                )}
+              </DashboardBadgeList>
+            )}
+          </header>
+          <DetailReferenceList mobileColumns={2}>
+            <DetailReferenceField
+              label={t('reminders.dueDate')}
+              value={
+                <time
+                  dateTime={reminder.dueDate}
+                  className={
+                    dueState === 'overdue'
+                      ? 'font-semibold text-destructive'
+                      : dueState === 'today' || dueState === 'soon'
+                        ? 'font-semibold'
+                        : undefined
+                  }
+                >
+                  {getCareReminderDueLabel(reminder, undefined, locale)}
+                </time>
+              }
+            />
+            <DetailReferenceField
+              label={t('reminders.category')}
+              value={t(`careLabels.category.${reminder.category}`)}
+            />
+            <DetailReferenceField
+              label={t('reminders.responsible')}
+              value={item.assigneeName}
+              missingValue={t('reminders.unassigned')}
+              fullWidth={!showHorse || !item.horseName}
+            />
+            {showHorse && item.horseName && (
+              <DetailReferenceField
+                label={t('reminders.horse')}
+                value={item.horseName}
+              />
+            )}
+          </DetailReferenceList>
+          {reminder.status === 'completed' && reminder.completedAt && (
+            <p className="text-sm text-muted-foreground">
+              {t(
+                item.completedByName
+                  ? 'reminders.completedByOn'
+                  : 'reminders.completedOn',
+                {
+                  name: item.completedByName ?? '',
+                  date: new Intl.DateTimeFormat(locale, {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                  }).format(reminder.completedAt),
+                },
+              )}
+            </p>
+          )}
+          {reminder.followUpReminderId && (
+            <p className="text-sm text-muted-foreground">
+              {t('reminders.followUpScheduled')}
+            </p>
+          )}
+          {reminder.description && (
+            <DashboardRecordDetails recordTitle={reminder.title}>
+              {reminder.description}
+            </DashboardRecordDetails>
+          )}
+        </div>
+      </DashboardItemRecordCard>
+      <EditRecordDialog
+        open={editor !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditor(null)
+        }}
+        isPending={isUpdating}
+        title={t(
+          editor === 'next'
+            ? 'reminders.completeAndSchedule'
+            : 'reminders.edit',
         )}
-      </DashboardItemRecordContent>
-    </DashboardItemRecordCard>
+      >
+        {editor === 'edit' && onEdit && (
+          <CareReminderForm
+            fixedHorseId={reminder.horseId}
+            assigneeOptions={assigneeOptions}
+            initialValues={{
+              title: reminder.title,
+              description: reminder.description ?? '',
+              category: reminder.category,
+              dueDate: reminder.dueDate,
+              priority: reminder.priority,
+              assignedTo: reminder.assignedTo,
+            }}
+            presentation="plain"
+            onSubmit={async (data) => {
+              setPendingAction('edit')
+              try {
+                await onEdit(reminder, data)
+                setEditor(null)
+              } finally {
+                setPendingAction(null)
+              }
+            }}
+          />
+        )}
+        {editor === 'next' && (
+          <form
+            className="grid gap-4"
+            onSubmit={(event) => {
+              event.preventDefault()
+              if (
+                !careReminderDueDateSchema.safeParse(nextDueDate).success ||
+                nextDueDate <= reminder.dueDate
+              ) {
+                setDateError(true)
+                return
+              }
+              setDateError(false)
+              void runStatusAction('complete', (record) =>
+                onComplete(record, nextDueDate),
+              )
+            }}
+          >
+            <Field>
+              <FieldLabel htmlFor={`next-${reminder._id}`}>
+                {t('reminders.nextDue')}
+              </FieldLabel>
+              <Input
+                id={`next-${reminder._id}`}
+                type="date"
+                value={nextDueDate}
+                disabled={isUpdating}
+                aria-invalid={dateError}
+                aria-describedby={
+                  dateError ? `next-error-${reminder._id}` : undefined
+                }
+                onChange={(event) => setNextDueDate(event.target.value)}
+              />
+            </Field>
+            {dateError && (
+              <p
+                id={`next-error-${reminder._id}`}
+                role="alert"
+                className="text-sm text-destructive"
+              >
+                {t('reminders.nextDueInvalid')}
+              </p>
+            )}
+            {actionError && (
+              <p role="alert" className="text-sm text-destructive">
+                {t('reminders.updateFailed')}
+              </p>
+            )}
+            <Button type="submit" disabled={isUpdating}>
+              {t('reminders.completeAndSchedule')}
+            </Button>
+          </form>
+        )}
+      </EditRecordDialog>
+    </>
   )
 }

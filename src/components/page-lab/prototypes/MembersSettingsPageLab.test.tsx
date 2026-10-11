@@ -89,7 +89,7 @@ describe('actual members settings sample', () => {
     await waitFor(() =>
       expect(screen.queryByLabelText('Yard display name')).toBeNull(),
     )
-    expect(document.activeElement).toBe(edit)
+    await waitFor(() => expect(document.activeElement).toBe(edit))
     expect(screen.getByText('Sample Rowan')).toBeTruthy()
     fireEvent.click(edit)
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
@@ -131,7 +131,7 @@ describe('actual members settings sample', () => {
     )
   })
 
-  it('requires reassignment, exposes rejected removal inline, and transfers horses only after success', async () => {
+  it('keeps ownership, exposes rejected removal inline, and removes horses from the roster only after success', async () => {
     setup()
     outcome('reject')
     const removeTrigger = row('Sample Rae').getByRole('button', {
@@ -144,13 +144,10 @@ describe('actual members settings sample', () => {
     const confirmation = await screen.findByRole('button', {
       name: 'Remove member',
     })
-    expect(confirmation.hasAttribute('disabled')).toBe(true)
-    fireEvent.change(screen.getByLabelText('New owner'), {
-      target: { value: 'sample-member-user-1' },
-    })
+    expect(confirmation.hasAttribute('disabled')).toBe(false)
     fireEvent.click(confirmation)
     await screen.findByText(
-      'Could not remove this member. Check the horse reassignment and try again.',
+      'Could not remove this member. Refresh the member details and try again.',
     )
     expect(screen.getByRole('alertdialog')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Remove member' }))
@@ -162,14 +159,14 @@ describe('actual members settings sample', () => {
       ).toContain(document.activeElement),
     )
     expect(screen.getByRole('status').textContent).toContain(
-      '2 horses reassigned locally',
+      '2 horses left this sample stable with their owner.',
     )
     fireEvent.click(
       row('Sample Alexandrina Montgomery-Wetherby').getByRole('button', {
         name: 'Remove',
       }),
     )
-    expect(await screen.findByText('Reassign 2 horses first')).toBeTruthy()
-    expect(screen.getByText(/Sample Clover, Sample Willow/)).toBeTruthy()
+    expect(screen.queryByLabelText('New owner')).toBeNull()
+    expect(screen.queryByText(/Sample Clover, Sample Willow/)).toBeNull()
   })
 })

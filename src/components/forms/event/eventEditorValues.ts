@@ -1,7 +1,7 @@
 import type { Doc } from 'convex/_generated/dataModel'
 import type { EventFormInput } from './eventFormSchema'
 
-export function createEventEditorValues(stableId: string): EventFormInput {
+export function createEventEditorValues(stableId?: string): EventFormInput {
   return {
     stableId,
     horseIds: [],
@@ -24,10 +24,15 @@ export function createEventEditorValues(stableId: string): EventFormInput {
 
 export function editEventEditorValues(
   event: Doc<'events'>,
-  eventHorses: Array<Pick<Doc<'eventsHorses'>, 'horseId' | 'status'>>,
+  eventHorses: Array<
+    Pick<Doc<'eventsHorses'>, 'horseId' | 'status' | 'participationEndsAt'>
+  >,
 ): EventFormInput {
   const selectedHorseIds = eventHorses
-    .filter(({ status }) => status !== 'declined' && status !== 'withdrawn')
+    .filter(
+      ({ status, participationEndsAt }) =>
+        !participationEndsAt && status !== 'declined' && status !== 'withdrawn',
+    )
     .map(({ horseId }) => horseId)
 
   return {

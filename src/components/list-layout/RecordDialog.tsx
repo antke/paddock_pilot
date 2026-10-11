@@ -65,6 +65,7 @@ export function RecordDialogContent({
   return (
     <DialogContent
       data-slot="record-dialog-content"
+      mobileFullscreen
       className={cn(
         'grid max-h-[calc(100dvh-1rem)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-panel p-0 sm:max-h-[calc(100dvh-2rem)] sm:max-w-2xl',
         className,

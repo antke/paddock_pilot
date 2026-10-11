@@ -41,10 +41,12 @@ export type EventHorseDetailRow = EventHorseDetails['rows'][number]
 
 type EventHorseServiceDetailsCardProps = {
   eventId: string
+  trainingDisclosure?: boolean
 }
 
 export function EventHorseServiceDetailsCard({
   eventId,
+  trainingDisclosure = false,
 }: EventHorseServiceDetailsCardProps) {
   const t = useT()
 
@@ -60,6 +62,7 @@ export function EventHorseServiceDetailsCard({
   return (
     <EventHorseServiceDetailsView
       rows={data.rows}
+      trainingDisclosure={trainingDisclosure}
       onSave={async (rowId, values) => {
         await updateDetails({ id: rowId, ...values })
         showAppSuccessToast({ title: t('eventViews.serviceSaved') })
@@ -80,6 +83,7 @@ type EventHorseServiceDetailsViewProps = {
   ) => Promise<void>
   onWithdraw: (rowId: Id<'eventsHorses'>) => Promise<void>
   withdrawalDescription?: string
+  trainingDisclosure?: boolean
 }
 
 /** Shared UI; mutation owners must reject failures and resolve only after saving. */
@@ -88,8 +92,46 @@ export function EventHorseServiceDetailsView({
   onSave,
   onWithdraw,
   withdrawalDescription,
+  trainingDisclosure = false,
 }: EventHorseServiceDetailsViewProps) {
   const t = useT()
+  const content =
+    rows.length === 0 ? (
+      <DashboardEmptyState chrome="cards">
+        {t('eventViews.noHorses')}
+      </DashboardEmptyState>
+    ) : (
+      <DashboardItemList>
+        {rows.map((row) => (
+          <EventHorseServiceRow
+            key={row.eventHorse._id}
+            row={row}
+            training={trainingDisclosure}
+            onSubmit={(values) => onSave(row.eventHorse._id, values)}
+            onWithdraw={() => onWithdraw(row.eventHorse._id)}
+            withdrawalDescription={
+              withdrawalDescription ?? t('eventViews.withdrawalHelp')
+            }
+          />
+        ))}
+      </DashboardItemList>
+    )
+
+  if (trainingDisclosure) {
+    return (
+      <details className="app-panel bg-card p-4 sm:p-5">
+        <summary className="app-control-focus min-h-11 cursor-pointer py-2 font-semibold">
+          {t('trainingViews.horseNotes')}
+        </summary>
+        <div className="grid gap-4 border-t border-border-subtle pt-4">
+          <p className="text-sm leading-6 text-muted-foreground">
+            {t('trainingViews.horseNotesHelp')}
+          </p>
+          {content}
+        </div>
+      </details>
+    )
+  }
   return (
     <DashboardSectionCard
       title={t('eventViews.serviceNotes')}
@@ -97,25 +139,7 @@ export function EventHorseServiceDetailsView({
       description={t('eventViews.serviceHelp')}
       descriptionSize="sm"
     >
-      {rows.length === 0 ? (
-        <DashboardEmptyState chrome="cards">
-          {t('eventViews.noHorses')}
-        </DashboardEmptyState>
-      ) : (
-        <DashboardItemList>
-          {rows.map((row) => (
-            <EventHorseServiceRow
-              key={row.eventHorse._id}
-              row={row}
-              onSubmit={(values) => onSave(row.eventHorse._id, values)}
-              onWithdraw={() => onWithdraw(row.eventHorse._id)}
-              withdrawalDescription={
-                withdrawalDescription ?? t('eventViews.withdrawalHelp')
-              }
-            />
-          ))}
-        </DashboardItemList>
-      )}
+      {content}
     </DashboardSectionCard>
   )
 }
@@ -125,11 +149,13 @@ function EventHorseServiceRow({
   onSubmit,
   onWithdraw,
   withdrawalDescription,
+  training = false,
 }: {
   row: EventHorseDetailRow
   onSubmit: (values: EventHorseDetailsFormSchema) => Promise<void>
   onWithdraw: () => Promise<void>
   withdrawalDescription: string
+  training?: boolean
 }) {
   const t = useT()
   const { locale } = useLocale()
@@ -273,6 +299,7 @@ function EventHorseServiceRow({
         <DashboardItemRecordFooter textSize="sm">
           {isEditing ? (
             <EventHorseServiceDetailsForm
+              training={training}
               defaultValues={defaultValues}
               onSubmit={async (values) => {
                 await onSubmit(values)
@@ -283,19 +310,35 @@ function EventHorseServiceRow({
           ) : hasDetails ? (
             <>
               {eventHorse.requestedServiceNotes && (
-                <DetailTextBlock label={t('eventViews.requestedService')}>
+                <DetailTextBlock
+                  label={t(
+                    training
+                      ? 'trainingViews.beforeSession'
+                      : 'eventViews.requestedService',
+                  )}
+                >
                   {eventHorse.requestedServiceNotes}
                 </DetailTextBlock>
               )}
               {eventHorse.completionNotes && (
-                <DetailTextBlock label={t('eventViews.outcome')}>
+                <DetailTextBlock
+                  label={t(
+                    training
+                      ? 'trainingViews.afterSession'
+                      : 'eventViews.outcome',
+                  )}
+                >
                   {eventHorse.completionNotes}
                 </DetailTextBlock>
               )}
             </>
           ) : (
             <DashboardEmptyState chrome="soft" spacing="flush">
-              {t('eventViews.noServiceNotes')}
+              {t(
+                training
+                  ? 'trainingViews.noHorseNotes'
+                  : 'eventViews.noServiceNotes',
+              )}
             </DashboardEmptyState>
           )}
         </DashboardItemRecordFooter>
