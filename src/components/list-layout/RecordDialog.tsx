@@ -1,6 +1,7 @@
 import type { ComponentProps, ReactNode, Ref } from 'react'
 
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
+import { MobileFloatingAction } from '#/components/layout/MobileFloatingAction'
 import { Button } from '#/components/ui/button'
 import { DialogContent, DialogTrigger } from '#/components/ui/dialog'
 import { cn } from '#/lib/utils'
@@ -22,7 +23,7 @@ export function RecordDialogDesktopTrigger({
   return (
     <DashboardActions
       data-slot="record-dialog-desktop-trigger"
-      className="hidden sm:flex"
+      className="hidden md:flex"
     >
       <DialogTrigger
         ref={triggerRef}
@@ -39,22 +40,23 @@ export function RecordDialogFloatingTrigger({
   label,
 }: RecordDialogFloatingTriggerProps) {
   return (
-    <DialogTrigger
-      ref={triggerRef}
-      data-slot="record-dialog-floating-trigger"
-      render={
-        <Button
-          type="button"
-          action="create"
-          variant="solid"
-          size="fab"
-          className="fixed right-5 bottom-5 z-40 sm:hidden"
-          aria-label={label}
-        />
-      }
-    >
-      <span className="sr-only">{label}</span>
-    </DialogTrigger>
+    <MobileFloatingAction>
+      <DialogTrigger
+        ref={triggerRef}
+        data-slot="record-dialog-floating-trigger"
+        render={
+          <Button
+            type="button"
+            action="create"
+            variant="solid"
+            size="fab"
+            aria-label={label}
+          />
+        }
+      >
+        <span className="sr-only">{label}</span>
+      </DialogTrigger>
+    </MobileFloatingAction>
   )
 }
 

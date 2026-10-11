@@ -239,12 +239,7 @@ export function MobileNavigationView({
           ref={navigation}
           data-slot="mobile-app-navigation"
           aria-label={t('navigation.primary')}
-          className={cn(
-            'md:hidden',
-            stableId
-              ? 'grid-cols-[1fr_1.2fr_1.2fr_0.8fr_0.8fr]'
-              : 'grid-cols-4',
-          )}
+          className={cn('md:hidden', stableId ? 'grid-cols-5' : 'grid-cols-4')}
         >
           {stableId ? (
             <>
