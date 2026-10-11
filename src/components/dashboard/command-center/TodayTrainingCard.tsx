@@ -31,7 +31,6 @@ export function TodayTrainingCard({
   return (
     <DashboardSection
       aria-labelledby={headingId}
-      chrome={compact ? 'flat' : 'soft'}
       title={<span id={headingId}>{t('dashboard.todayTraining')}</span>}
       titleStyle="display"
       headerLayout="inline"

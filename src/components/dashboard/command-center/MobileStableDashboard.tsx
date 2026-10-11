@@ -3,6 +3,7 @@ import { CaretDownIcon } from '@phosphor-icons/react'
 import { useT } from '#/i18n/LocaleProvider'
 import { ButtonLink } from '#/components/ui/button'
 import { DashboardCreateMenu } from '#/components/dashboard/DashboardCreateMenu'
+import { DashboardLayoutStack } from '#/components/dashboard/DashboardLayoutGrid'
 import { TodayTrainingCard } from './TodayTrainingCard'
 import { TodayBriefingCard } from './TodayBriefingCard'
 import { HorseRosterCard } from './HorseRosterCard'
@@ -22,13 +23,13 @@ export function MobileStableDashboard({
   const t = useT()
   const attention = getDashboardAttention(data)
   return (
-    <div data-slot="mobile-stable-dashboard" className="grid min-w-0 gap-6">
+    <DashboardLayoutStack data-slot="mobile-stable-dashboard">
       <h1 className="sr-only">{t('navigation.home')}</h1>
       <DashboardCreateMenu stableId={data.stable._id} />
       <MobileHealthSummary data={data} />
       <TodayTrainingCard data={data} compact />
-      <TodayBriefingCard data={data} compact chrome="flat" />
-      <HorseRosterCard data={data} compact chrome="flat" visibleItemLimit={3} />
+      <TodayBriefingCard data={data} compact />
+      <HorseRosterCard data={data} compact visibleItemLimit={3} />
       {attention.reminderCount > 0 && (
         <ButtonLink
           to="/stables/$stableId/reminders"
@@ -54,6 +55,6 @@ export function MobileStableDashboard({
           </div>
         </details>
       )}
-    </div>
+    </DashboardLayoutStack>
   )
 }

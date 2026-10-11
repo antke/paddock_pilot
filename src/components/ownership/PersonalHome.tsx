@@ -136,7 +136,6 @@ export function PersonalHome() {
           <TodayBriefingCard
             data={activity}
             compact={small}
-            chrome={small ? 'flat' : 'soft'}
             canCreate={canCreate}
             showWeek
           />
@@ -144,7 +143,6 @@ export function PersonalHome() {
             title={c.title}
             titleStyle="display"
             headerLayout="inline"
-            chrome={small ? 'flat' : 'soft'}
             actions={
               !small &&
               horses.length > 0 && (
