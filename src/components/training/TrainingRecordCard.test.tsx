@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import type * as ConvexReact from 'convex/react'
 import {
   cleanup,
   fireEvent,
@@ -26,7 +27,10 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
 }))
 
 const save = vi.hoisted(() => vi.fn())
-vi.mock('convex/react', () => ({ useMutation: () => save }))
+vi.mock('convex/react', async (importOriginal) => ({
+  ...(await importOriginal<typeof ConvexReact>()),
+  useMutation: () => save,
+}))
 
 function entry(canRecord = true) {
   const horseId = 'horse' as Id<'horses'>

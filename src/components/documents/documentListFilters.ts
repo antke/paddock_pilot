@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { localeInstances } from '#/i18n/resources'
 import type { Locale } from 'shared/i18n/locale'
 import type {
@@ -66,7 +67,7 @@ export function createDocumentListFilterConfig({
                 { value: 'stable-wide', label: t('documents.stableWide') },
                 ...horseOptions.map((horse) => ({
                   value: horse._id,
-                  label: horse.name,
+                  label: getHorseDisplayName(horse),
                 })),
               ],
               matches: (item: DocumentListItem, selectedValue: string) =>

@@ -7,6 +7,15 @@ export const listControls = {
   remove: 'Usuń filtr {{title}}',
   sectionViews: 'Widoki sekcji',
   showSuggestions: 'Pokaż podpowiedzi',
+  personPlaceholder: 'Wyszukaj lub wpisz imię i nazwisko',
+  currentPerson: '{{name}} (ja)',
+  showPeopleSuggestions: 'Pokaż podpowiedzi osób',
+  peopleSuggestionsLoading:
+    'Wczytywanie osób. Możesz też wpisać imię i nazwisko.',
+  peopleSuggestionsFailed:
+    'Nie udało się wczytać osób. Nadal możesz wpisać imię i nazwisko.',
+  noPeopleSuggestions:
+    'Brak pasujących osób. Możesz wpisać inne imię i nazwisko.',
   dashboardEmpty: 'Utwórz stajnię, aby zacząć korzystać z panelu głównego.',
   dashboardFailed: 'Nie udało się wczytać panelu stajni',
   dashboardFailedHelp:

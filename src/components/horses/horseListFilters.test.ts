@@ -7,6 +7,21 @@ const stableId = 'stable-1' as Id<'stables'>
 const userId = 'user-1' as Id<'users'>
 
 describe('horse list filters', () => {
+  it.each([false, true])(
+    'finds the full name and nickname regardless of the display preference (%s)',
+    (useNickname) => {
+      const horses = [
+        createHorse({ name: 'Secretariat', nickname: 'Big Red', useNickname }),
+      ]
+      const config = createHorseListFilterConfig()
+      expect(searchHorseNames(horses, config, 'secretariat')).toEqual([
+        'Secretariat',
+      ])
+      expect(searchHorseNames(horses, config, 'big red')).toEqual([
+        'Secretariat',
+      ])
+    },
+  )
   it('searches identifying and profile fields', () => {
     const config = createHorseListFilterConfig()
     const horses = [

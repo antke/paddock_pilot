@@ -9,7 +9,8 @@ import { useNavigate } from '@tanstack/react-router'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { Button, ButtonLink } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
-import { Field, FieldLabel } from '#/components/ui/field'
+import { Field, FieldGrid, FieldLabel } from '#/components/ui/field'
+import { HorseNicknameField } from '#/components/forms/horse/HorseNicknameField'
 import { InlineForm } from '#/components/forms/FormLayout'
 import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
 import {
@@ -19,7 +20,7 @@ import {
 } from '#/components/dashboard/DashboardItemCard'
 import { ListFilterPanel } from '#/components/list-filtering/ListFilterPanel'
 import { formatMediumTimestampDate } from '#/lib/dateDisplay'
-import { useLocale } from '#/i18n/LocaleProvider'
+import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { useOwnershipCopy } from './ownershipCopy'
 import { useOwnershipErrorMessage } from './ownershipErrors'
 import { useStableOwnershipCopy } from './stableOwnershipCopy'
@@ -54,12 +55,16 @@ export function StableOwnershipTools({
   )
 }
 export function UnclaimedHorseForm({ stableId }: { stableId: Id<'stables'> }) {
+  const t = useT()
   const c = useOwnershipCopy()
   const copy = useStableOwnershipCopy()
   const errorMessage = useOwnershipErrorMessage()
   const add = useMutation(api.horseCollaboration.addUnclaimed)
   const navigate = useNavigate()
   const [name, setName] = useState('')
+  const [nickname, setNickname] = useState('')
+  const [useNickname, setUseNickname] = useState(false)
+  const [nicknameInvalid, setNicknameInvalid] = useState(false)
   const [age, setAge] = useState('')
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
@@ -70,11 +75,19 @@ export function UnclaimedHorseForm({ stableId }: { stableId: Id<'stables'> }) {
         onSubmit={async (e) => {
           e.preventDefault()
           if (submitting.current) return
+          setNicknameInvalid(useNickname && !nickname.trim())
+          if (useNickname && !nickname.trim()) return
           submitting.current = true
           setPending(true)
           setError('')
           try {
-            const horseId = await add({ stableId, name, age: Number(age) })
+            const horseId = await add({
+              stableId,
+              name,
+              nickname,
+              useNickname,
+              age: Number(age),
+            })
             await navigate({
               to: '/horses/$horseId/manage',
               params: { horseId },
@@ -87,17 +100,40 @@ export function UnclaimedHorseForm({ stableId }: { stableId: Id<'stables'> }) {
           }
         }}
       >
-        <Field>
-          <FieldLabel htmlFor="unclaimed-name">{c.name}</FieldLabel>
-          <Input
-            id="unclaimed-name"
-            required
-            maxLength={120}
+        <FieldGrid>
+          <Field>
+            <FieldLabel htmlFor="unclaimed-name">{c.name}</FieldLabel>
+            <Input
+              id="unclaimed-name"
+              required
+              maxLength={100}
+              disabled={pending}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </Field>
+          <HorseNicknameField
+            value={nickname}
+            onValueChange={(value) => {
+              setNickname(value)
+              setNicknameInvalid(false)
+            }}
+            checked={useNickname}
+            onCheckedChange={(checked) => {
+              setUseNickname(checked)
+              setNicknameInvalid(false)
+            }}
             disabled={pending}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            error={
+              nicknameInvalid
+                ? {
+                    type: 'required',
+                    message: t('horseValidation.nicknameRequired'),
+                  }
+                : undefined
+            }
           />
-        </Field>
+        </FieldGrid>
         <Field>
           <FieldLabel htmlFor="unclaimed-age">{c.age}</FieldLabel>
           <Input

@@ -7,6 +7,13 @@ export const listControls = {
   remove: 'Remove {{title}} filter',
   sectionViews: 'Section views',
   showSuggestions: 'Show suggestions',
+  personPlaceholder: 'Search or enter a name',
+  currentPerson: '{{name}} (me)',
+  showPeopleSuggestions: 'Show people suggestions',
+  peopleSuggestionsLoading: 'Loading people. You can also enter a name.',
+  peopleSuggestionsFailed:
+    'People could not be loaded. You can still enter a name.',
+  noPeopleSuggestions: 'No matching people. You can enter another name.',
   dashboardEmpty: 'Create a stable to start using the dashboard.',
   dashboardFailed: 'The stable noticeboard couldn’t load',
   dashboardFailedHelp:

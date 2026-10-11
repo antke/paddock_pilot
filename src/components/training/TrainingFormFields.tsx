@@ -1,6 +1,8 @@
+import type { PersonNameSuggestion } from '#/components/forms/PersonNameAutocomplete'
 import { useT } from '#/i18n/LocaleProvider'
 import { useId } from 'react'
-import { Controller } from 'react-hook-form'
+import { Controller, useWatch } from 'react-hook-form'
+import { PersonNameField } from '#/components/forms/PersonNameField'
 import type { Control } from 'react-hook-form'
 import type {
   EventFormInput,
@@ -26,12 +28,18 @@ export function TrainingFormFields({
   control,
   disabled,
   fields = 'all',
+  horseIds: selectedHorseIds,
+  riderSuggestions,
 }: {
   control: Control<EventFormInput, unknown, EventFormSchema>
   disabled: boolean
   fields?: 'all' | 'essential' | 'optional' | 'adjustments' | 'duration'
+  horseIds?: ReadonlyArray<string>
+  riderSuggestions?: ReadonlyArray<PersonNameSuggestion>
 }) {
   const t = useT()
+  const stableId = useWatch({ control, name: 'stableId' })
+  const horseIds = useWatch({ control, name: 'horseIds' })
 
   const id = useId()
   return (
@@ -157,8 +165,14 @@ export function TrainingFormFields({
                 <FieldLabel htmlFor={`${id}-rider`}>
                   {t('eventForm.rider')}
                 </FieldLabel>
-                <Input
-                  {...field}
+                <PersonNameField
+                  aria-label={t('eventForm.rider')}
+                  inputRef={field.ref}
+                  name={field.name}
+                  onBlur={field.onBlur}
+                  onValueChange={field.onChange}
+                  scope={{ stableId, horseIds: selectedHorseIds ?? horseIds }}
+                  suggestions={riderSuggestions}
                   id={`${id}-rider`}
                   aria-invalid={fieldState.invalid}
                   aria-describedby={

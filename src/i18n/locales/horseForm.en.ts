@@ -1,4 +1,8 @@
 export const horseForm = {
+  nickname: 'Nickname',
+  useNickname: 'Use nickname',
+  nicknameHelp:
+    'Show the nickname throughout the app. The full name stays in the horse’s profile.',
   savedContactHelp:
     'Choose a saved contact to keep their details up to date, or enter a one-off contact. Editing the phone keeps it only on this horse.',
   copiedContactHelp:

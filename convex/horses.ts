@@ -16,7 +16,10 @@ import type { MutationCtx } from './_generated/server'
 import type { Doc, Id } from './_generated/dataModel'
 import { getUserFromIdentity } from './libs/auth'
 import { horsesFields } from './schema'
-import { horseInputSchema } from '../shared/horses/horseSchema'
+import {
+  horseIdentitySchema,
+  horseInputSchema,
+} from '../shared/horses/horseSchema'
 import {
   resolveHorseContacts,
   validateHorseContacts,
@@ -42,6 +45,8 @@ export const horseTrashRetentionMs = 14 * 24 * 60 * 60 * 1000
 
 const validateHorseInput = (args: {
   name: string
+  nickname?: string
+  useNickname?: boolean
   ownerName?: string
   age: number
   breed?: string
@@ -266,7 +271,11 @@ export const update = mutation({
 
     await assertCanManageHorse(ctx, horse)
 
-    const horseInput = validateHorseInput(updates)
+    const horseInput = validateHorseInput({
+      ...updates,
+      nickname: updates.nickname ?? horse.nickname,
+      useNickname: updates.useNickname ?? horse.useNickname,
+    })
     await validateHorseContacts(ctx, horse.stableId, horseInput)
     if (
       horseInput.profileImageId &&
@@ -288,6 +297,8 @@ export const updateOnboardingBasics = mutation({
   args: {
     id: v.id('horses'),
     name: v.string(),
+    nickname: v.optional(v.string()),
+    useNickname: v.optional(v.boolean()),
     age: v.number(),
     dateOfBirth: v.optional(v.string()),
   },
@@ -296,9 +307,16 @@ export const updateOnboardingBasics = mutation({
     if (!horse) throw new ConvexError('Horse not found')
     await assertCanManageHorse(ctx, horse)
 
-    const result = horseInputSchema
-      .pick({ name: true, age: true, dateOfBirth: true })
-      .safeParse(args)
+    const result = horseIdentitySchema
+      .safeExtend({
+        age: horseInputSchema.shape.age,
+        dateOfBirth: horseInputSchema.shape.dateOfBirth,
+      })
+      .safeParse({
+        ...args,
+        nickname: args.nickname ?? horse.nickname,
+        useNickname: args.useNickname ?? horse.useNickname,
+      })
     if (!result.success) {
       throw new ConvexError(
         result.error.issues[0]?.message ?? 'Invalid horse details',
@@ -310,7 +328,14 @@ export const updateOnboardingBasics = mutation({
     if (age === undefined || age < 0 || age > 100) {
       throw new ConvexError('Use a valid birth date or age.')
     }
-    await ctx.db.patch(args.id, { ...result.data, age })
+    const { name, nickname, useNickname, dateOfBirth } = result.data
+    await ctx.db.patch(args.id, {
+      name,
+      nickname,
+      useNickname,
+      dateOfBirth,
+      age,
+    })
   },
 })
 

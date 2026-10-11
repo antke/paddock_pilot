@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { useMemo, useState } from 'react'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
@@ -174,7 +175,7 @@ function HorseActivity({ stableId, horse, events }: HorseDetailSectionProps) {
         ) : (
           <ScrollableList
             ariaLabel={t('horseHistory.activityRegion', {
-              name: horse.name,
+              name: getHorseDisplayName(horse),
               view: t(
                 isHistory
                   ? 'horseHistory.historyRegion'

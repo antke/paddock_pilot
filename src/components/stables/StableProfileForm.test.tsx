@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import type * as ConvexReact from 'convex/react'
 import {
   cleanup,
   fireEvent,
@@ -11,7 +12,8 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { StableProfileForm } from './StableProfileForm'
 import { createDashboardLabFixtureData } from '#/components/dashboard-lab/dashboardLabFixtures'
 
-vi.mock('convex/react', () => ({
+vi.mock('convex/react', async (importOriginal) => ({
+  ...(await importOriginal<typeof ConvexReact>()),
   useMutation: () => {
     throw new Error('Live mutation in form view')
   },

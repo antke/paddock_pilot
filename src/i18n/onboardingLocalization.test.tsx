@@ -160,6 +160,8 @@ describe('localized onboarding and invitation interaction', () => {
     await waitFor(() =>
       expect(save).toHaveBeenCalledWith({
         name: 'Śnieżka',
+        nickname: '',
+        useNickname: false,
         age: 12,
         dateOfBirth: undefined,
       }),

@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import { horseEvent } from './libs/horseEventHistory'
 import {
   canEditEvent,
@@ -179,7 +180,7 @@ const sendEventInvitationEmails = async (
         template: {
           kind: 'event_horse_invitation',
           eventTitle,
-          horseNames: horses.map((horse) => horse.name),
+          horseNames: horses.map((horse) => getHorseDisplayName(horse)),
           stableId,
           eventId,
         },
@@ -213,7 +214,7 @@ const notifyEventOrganizerOfParticipation = async (
     template: {
       kind: 'event_participation_update',
       eventTitle: input.event.title,
-      horseName: input.horse.name,
+      horseName: getHorseDisplayName(input.horse),
       actorName: formatUserName(input.actor, organizer.locale),
       status: input.status,
       stableId: input.event.stableId,
@@ -1042,7 +1043,7 @@ export const approveHorseInvitation = mutation({
       action: 'event_horse.approved',
       entityType: 'eventHorse',
       entityId: eventHorse._id,
-      summary: `${horse.name} · ${event.title}`,
+      summary: `${getHorseDisplayName(horse)} · ${event.title}`,
     })
   },
 })
@@ -1098,7 +1099,7 @@ export const declineHorseInvitation = mutation({
       action: 'event_horse.declined',
       entityType: 'eventHorse',
       entityId: eventHorse._id,
-      summary: `${horse.name} · ${event.title}`,
+      summary: `${getHorseDisplayName(horse)} · ${event.title}`,
     })
   },
 })
@@ -1159,7 +1160,7 @@ export const withdrawHorseFromEvent = mutation({
       action: 'event_horse.withdrawn',
       entityType: 'eventHorse',
       entityId: eventHorse._id,
-      summary: `${horse.name} · ${event.title}`,
+      summary: `${getHorseDisplayName(horse)} · ${event.title}`,
     })
   },
 })

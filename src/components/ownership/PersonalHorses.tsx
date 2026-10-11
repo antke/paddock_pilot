@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useState } from 'react'
 import { cn } from '#/lib/utils'
 import type { Id } from 'convex/_generated/dataModel'
@@ -80,7 +81,7 @@ export function PersonalHorseList({
           )}
         >
           <HorseAvatar
-            name={horse.name}
+            name={getHorseDisplayName(horse)}
             profileImageUrl={horse.profileImageUrl}
             size={compact ? 'md' : 'lg'}
           />
@@ -91,7 +92,7 @@ export function PersonalHorseList({
                 compact ? 'text-base font-semibold' : 'font-display text-2xl',
               )}
             >
-              {horse.name}
+              {getHorseDisplayName(horse)}
             </Heading>
             <p
               className={cn(
@@ -156,7 +157,9 @@ export function PersonalHorseTrash() {
             className="flex flex-wrap items-center justify-between gap-3 border-b py-4"
           >
             <div>
-              <h2 className="font-display text-xl">{horse.name}</h2>
+              <h2 className="font-display text-xl">
+                {getHorseDisplayName(horse)}
+              </h2>
               <p className="text-sm text-muted-foreground">
                 {horse.transitionId
                   ? c.moving

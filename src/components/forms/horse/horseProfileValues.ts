@@ -7,6 +7,8 @@ export function horseProfileDefaults(
 ): HorseFormInput {
   return {
     name: '',
+    nickname: '',
+    useNickname: false,
     ownerName: '',
     breed: '',
     color: '',

@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import type * as ConvexReact from 'convex/react'
 import {
   act,
   cleanup,
@@ -11,7 +12,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createDashboardLabFixtureData } from '#/components/dashboard-lab/dashboardLabFixtures'
 import { HorseFormPageLab } from './HorseFormPageLab'
 
-vi.mock('convex/react', () => ({
+vi.mock('convex/react', async (importOriginal) => ({
+  ...(await importOriginal<typeof ConvexReact>()),
   useMutation: () => {
     throw new Error('Horse form specimens cannot mount live mutations')
   },

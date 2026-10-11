@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { getUserFacingErrorCode } from 'shared/i18n/errors'
 import type { UserFacingErrorCode } from 'shared/i18n/errors'
 import { formatMediumTimestampDateTime } from '#/lib/dateDisplay'
@@ -79,7 +80,7 @@ export function TrainingRecordCard({
               params={{ horseId: horse._id }}
               className="app-control-focus rounded-control underline-offset-4 hover:underline"
             >
-              {horse.name}
+              {getHorseDisplayName(horse)}
             </Link>
           </h2>
           {!editing && (
@@ -380,6 +381,7 @@ function TrainingRecordEditor({
             control={form.control}
             disabled={pending}
             fields="adjustments"
+            horseIds={[entry.horse._id]}
           />
         </div>
       </details>

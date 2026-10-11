@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { cn } from '#/lib/utils'
 import { dashboardMobileRecordClassName } from '#/components/dashboard/dashboardChrome'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
@@ -33,7 +34,7 @@ export function TrainingEntryLink({
 
   const { occurrence, horse, details, status, record } = entry
   const showStatus = !canComplete || status !== 'completed'
-  const title = `${showHorseName ? `${horse.name} · ` : ''}${occurrence.event.title}`
+  const title = `${showHorseName ? `${getHorseDisplayName(horse)} · ` : ''}${occurrence.event.title}`
   const dateTime = formatEventDateTime(
     occurrence.startDate,
     occurrence.event.time,
@@ -91,7 +92,9 @@ export function TrainingEntryLink({
                     canComplete && 'min-h-8 pr-11',
                   )}
                 >
-                  <span className="min-w-0 font-semibold">{horse.name}</span>
+                  <span className="min-w-0 font-semibold">
+                    {getHorseDisplayName(horse)}
+                  </span>
                   {showStatus && <TrainingStatusBadge status={status} />}
                 </span>
                 <span className="text-muted-foreground">
@@ -112,7 +115,9 @@ export function TrainingEntryLink({
                   )}
                 >
                   <span className="min-w-0 flex-1 truncate">
-                    {showHorseName ? horse.name : occurrence.event.title}
+                    {showHorseName
+                      ? getHorseDisplayName(horse)
+                      : occurrence.event.title}
                   </span>
                   {!canComplete && (
                     <TrainingStatusBadge status={status} iconOnly />
@@ -220,7 +225,7 @@ export function TrainingEntryLink({
         <div className="grid gap-3">
           <div className="grid gap-1">
             <span className="font-bold">
-              {horse.name} · {occurrence.event.title}
+              {getHorseDisplayName(horse)} · {occurrence.event.title}
             </span>
             <span className="flex flex-wrap gap-1.5">
               {details.activities.map((activity) => (

@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { getHorseBreedLabel } from 'shared/i18n/horseBreedLabels'
 import { useLocale } from '#/i18n/LocaleProvider'
 import type { DashboardItemAccent } from '#/components/dashboard/DashboardItemCard'
@@ -16,6 +17,8 @@ export type HorseListDensity = 'compact' | 'detailed'
 
 export type HorseCardHorse = {
   name: string
+  nickname?: string
+  useNickname?: boolean
   ownerName?: string
   breed?: string
   profileImageUrl?: string | null
@@ -80,7 +83,7 @@ export function HorseCardContent({
       className={listDensity && 'w-full gap-4 sm:gap-4'}
       leading={
         <HorseAvatar
-          name={horse.name}
+          name={getHorseDisplayName(horse)}
           profileImageUrl={horse.profileImageUrl}
           size={listDensity === 'detailed' ? 'lg' : 'md'}
           className={
@@ -92,7 +95,7 @@ export function HorseCardContent({
           }
         />
       }
-      title={horse.name}
+      title={getHorseDisplayName(horse)}
       titleTone={linked ? 'open' : 'default'}
       titleClassName={
         listDensity === 'detailed'

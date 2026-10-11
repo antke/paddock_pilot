@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { Button, ButtonLink } from '#/components/ui/button'
 import { DateRangeControl } from '#/components/ui/date-range-control'
 import { getTodayDateKey, formatMediumDateKey } from '#/lib/dateDisplay'
@@ -303,7 +304,7 @@ export function AnalysisCentre({
     { id: stableAnalysisTabValue, label: data.stable.name },
     ...data.horses.map((horse) => ({
       id: getHorseAnalysisTabValue(horse._id),
-      label: horse.name,
+      label: getHorseDisplayName(horse),
     })),
   ]
   const filteredBuckets = historyAnalysis.timeline.buckets.map((bucket) => ({

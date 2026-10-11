@@ -1,4 +1,5 @@
 export const horseDetail = {
+  fullName: 'Pełne imię',
   profile: 'Profil',
   activity: 'Aktywność',
   training: 'Treningi',

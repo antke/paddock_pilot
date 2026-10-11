@@ -117,6 +117,18 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
         <DetailReferenceGroup title={t('horseDetail.horseDetails')}>
           <DetailReferenceList mobileColumns={2}>
             <DetailReferenceField
+              label={t('horseDetail.fullName')}
+              value={horse.name}
+              fullWidth
+            />
+            {horse.nickname && (
+              <DetailReferenceField
+                label={t('horseForm.nickname')}
+                value={horse.nickname}
+                fullWidth
+              />
+            )}
+            <DetailReferenceField
               label={t('horseDetail.age')}
               value={age}
               missingValue={notRecorded}

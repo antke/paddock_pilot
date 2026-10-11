@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { ContactLink } from '#/components/ui/contact-link'
 import { getHorseBreedLabel } from 'shared/i18n/horseBreedLabels'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
@@ -89,7 +90,9 @@ export function HorseCareSummaryView({
     <PrintSummaryPage>
       <PrintSummaryHeader
         as="h2"
-        title={t('horseHistory.summaryTitle', { name: horse.name })}
+        title={t('horseHistory.summaryTitle', {
+          name: getHorseDisplayName(horse),
+        })}
         description={formatMetaText([
           stable?.name,
           t('horseHistory.generated', {

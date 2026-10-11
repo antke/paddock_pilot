@@ -1,4 +1,5 @@
 export const horseValidation = {
+  nicknameRequired: 'Enter a nickname or turn off “Use nickname”.',
   nameMin: 'Name must have minimum 1 character.',
   nameMax: 'Name cannot be longer than 100 characters.',
   ageMin: 'Age cannot be negative.',

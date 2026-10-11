@@ -59,6 +59,7 @@ import type * as libs_stablePermissions from "../libs/stablePermissions.js";
 import type * as libs_storageObjects from "../libs/storageObjects.js";
 import type * as libs_userFacingError from "../libs/userFacingError.js";
 import type * as onboarding from "../onboarding.js";
+import type * as people from "../people.js";
 import type * as personalProviders from "../personalProviders.js";
 import type * as stableAnalysis from "../stableAnalysis.js";
 import type * as stableDashboardAlerts from "../stableDashboardAlerts.js";
@@ -133,6 +134,7 @@ declare const fullApi: ApiFromModules<{
   "libs/storageObjects": typeof libs_storageObjects;
   "libs/userFacingError": typeof libs_userFacingError;
   onboarding: typeof onboarding;
+  people: typeof people;
   personalProviders: typeof personalProviders;
   stableAnalysis: typeof stableAnalysis;
   stableDashboardAlerts: typeof stableDashboardAlerts;

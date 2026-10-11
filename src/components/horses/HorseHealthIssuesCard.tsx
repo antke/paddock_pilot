@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { HealthIssueForm } from '#/components/horses/HealthIssueForm'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
@@ -204,7 +205,9 @@ export function HorseHealthIssuesCardView({
     <div
       ref={listRegion}
       role="region"
-      aria-label={t('careRecords.healthRegion', { name: horse.name })}
+      aria-label={t('careRecords.healthRegion', {
+        name: getHorseDisplayName(horse),
+      })}
       tabIndex={-1}
       className="grid gap-5 outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >

@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { formatMediumDateKey, formatMonthYearDateKey } from '#/lib/dateDisplay'
 import type { Locale } from 'shared/i18n/locale'
@@ -147,7 +148,7 @@ export function OnboardingReviewStep({
         <ReviewSection title={t('onboarding.firstHorse')}>
           <ReviewField
             label={t('onboarding.horseName')}
-            value={horse?.name || t('onboarding.notAdded')}
+            value={getHorseDisplayName(horse) || t('onboarding.notAdded')}
             onEdit={() => onEdit('first-horse')}
           />
           <ReviewField

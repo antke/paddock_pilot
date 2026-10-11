@@ -151,7 +151,7 @@ export const careRecords = {
   recordRemoved: 'The record from {{date}} was removed.',
   removeMeasurementHelp:
     'The measurement from {{date}} will be removed permanently. This cannot be undone.',
-  measuredAt: 'Measured {{date}}',
+  measuredAt: 'Measured: {{date}}',
   nutritionHistoryUpdated: "{{name}}'s nutrition history was updated.",
   namedRemoved: '{{name}} was removed.',
   loggedAt: 'Logged {{date}}',

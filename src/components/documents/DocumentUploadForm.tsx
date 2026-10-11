@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { useT } from '#/i18n/LocaleProvider'
 import { InlineForm } from '#/components/forms/FormLayout'
@@ -176,7 +177,7 @@ export function DocumentUploadForm({
                   <option value="">{t('documents.stableWideDocument')}</option>
                   {horseOptions.map((horse) => (
                     <option key={horse._id} value={horse._id}>
-                      {horse.name}
+                      {getHorseDisplayName(horse)}
                     </option>
                   ))}
                 </Select>

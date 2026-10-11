@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import {
   isOnlyOutstandingFilter,
   createCareReminderListFilterConfig,
@@ -77,7 +78,7 @@ export function StableRemindersPage({
     () =>
       horses.map((horse) => ({
         id: horse._id,
-        name: horse.name,
+        name: getHorseDisplayName(horse),
       })),
     [horses],
   )

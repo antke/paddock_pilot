@@ -1,8 +1,12 @@
+import { getHorseDisplayName } from '../horses/horseDisplayName'
 import type { Doc } from '../../convex/_generated/dataModel'
 import { createEventOccurrences } from '../events/eventOccurrences'
 import { defaultTrainingDetails, getTrainingStatus } from './trainingSchema'
 
-export type TrainingHorse = Pick<Doc<'horses'>, '_id' | 'name'> & {
+export type TrainingHorse = Pick<
+  Doc<'horses'>,
+  '_id' | 'name' | 'nickname' | 'useNickname'
+> & {
   canRecord?: boolean
 }
 
@@ -85,7 +89,9 @@ export function getTrainingEntries({
       (a, b) =>
         a.occurrence.startDate.localeCompare(b.occurrence.startDate) ||
         a.occurrence.event.time.localeCompare(b.occurrence.event.time) ||
-        a.horse.name.localeCompare(b.horse.name),
+        getHorseDisplayName(a.horse).localeCompare(
+          getHorseDisplayName(b.horse),
+        ),
     )
 }
 export type TrainingEntry = ReturnType<typeof getTrainingEntries>[number]

@@ -29,27 +29,12 @@ function RouteComponent() {
   const { data: horses } = useSuspenseQuery(
     convexQuery(api.horses.list, { stableId: stableId as Id<'stables'> }),
   )
-  const { data: people } = useSuspenseQuery(
-    convexQuery(api.stableMembers.listByStable, {
-      stableId: stableId as Id<'stables'>,
-    }),
-  )
   return (
     <HorseProfileForm
       providers={directory.providers}
       key={stableId}
       mode="create"
-      ownerSuggestions={people.flatMap((person) =>
-        person.user
-          ? [
-              person.membership?.displayNameOverride ||
-                person.user.preferredName ||
-                [person.user.firstName, person.user.lastName]
-                  .filter(Boolean)
-                  .join(' '),
-            ]
-          : [],
-      )}
+      ownerSuggestionScope={{ stableId }}
       breedSuggestions={horses.flatMap((horse) =>
         horse.breed ? [horse.breed] : [],
       )}

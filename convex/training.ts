@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import { horseEvent } from './libs/horseEventHistory'
 import {
   assertCanReadHorse,
@@ -228,10 +229,10 @@ async function saveTrainingRecord(
     action: 'training.recorded',
     entityType: 'event',
     entityId: event._id,
-    summary: `${horse.name}: ${status} on ${args.date}`,
+    summary: `${getHorseDisplayName(horse)}: ${status} on ${args.date}`,
     details: {
       kind: 'training_recorded',
-      horseName: horse.name,
+      horseName: getHorseDisplayName(horse),
       status,
       date: args.date,
     },

@@ -1,4 +1,5 @@
 export const horseValidation = {
+  nicknameRequired: 'Wpisz przezwisko lub wyłącz „Używaj przezwiska”.',
   nameMin: 'Podaj imię konia.',
   nameMax: 'Imię konia nie może przekraczać 100 znaków.',
   ageMin: 'Wiek nie może być ujemny.',

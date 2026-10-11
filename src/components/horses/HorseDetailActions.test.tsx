@@ -19,6 +19,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { createDashboardLabFixtureData } from '#/components/dashboard-lab/dashboardLabFixtures'
 import { useSmallScreen } from '#/lib/useSmallScreen'
 import { HorseDetail } from './HorseDetail'
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 
 vi.mock('#/lib/useSmallScreen', () => ({ useSmallScreen: vi.fn() }))
 beforeEach(() => {
@@ -75,14 +76,20 @@ async function renderHeader({
   canManageHorse,
   section = 'analysis',
   canRecord = false,
+  nickname,
 }: {
   mobile: boolean
   canManageHorse: boolean
   section?: string
   canRecord?: boolean
+  nickname?: string
 }) {
   vi.mocked(useSmallScreen).mockReturnValue(mobile)
-  const horse = createDashboardLabFixtureData().horses[0]
+  const horse = {
+    ...createDashboardLabFixtureData().horses[0],
+    nickname,
+    useNickname: Boolean(nickname),
+  }
   const router = createRouter({
     scrollRestoration: true,
     routeTree: createRootRoute({
@@ -108,9 +115,22 @@ async function renderHeader({
   })
   await router.load()
   render(<RouterProvider router={router} />)
-  await screen.findByRole('heading', { name: horse.name })
+  await screen.findByRole('heading', { name: getHorseDisplayName(horse) })
   return { horse, router }
 }
+
+it('uses the nickname in the header and horse section labels', async () => {
+  const { horse } = await renderHeader({
+    mobile: false,
+    canManageHorse: true,
+    nickname: 'Juni',
+  })
+  expect(screen.getByRole('heading', { name: 'Juni', level: 1 })).toBeTruthy()
+  expect(
+    screen.queryByRole('heading', { name: horse.name, level: 1 }),
+  ).toBeNull()
+  expect(screen.getByRole('navigation', { name: 'Juni sections' })).toBeTruthy()
+})
 
 it.each([true, false])(
   'keeps mobile Analysis accessible under More while respecting management permission (%s)',

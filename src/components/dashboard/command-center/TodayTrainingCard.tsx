@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT } from '#/i18n/LocaleProvider'
 import { useId } from 'react'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
@@ -83,7 +84,7 @@ export function TodayTrainingCard({
               className="grid content-start gap-2"
             >
               <h3 className="text-base font-semibold">
-                {entries[0].horse.name}
+                {getHorseDisplayName(entries[0].horse)}
               </h3>
               {entries.map((entry) => (
                 <TrainingEntryLink

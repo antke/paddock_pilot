@@ -1,38 +1,9 @@
-import { useEffect, useState } from 'react'
 import { useT } from '#/i18n/LocaleProvider'
 import { Autocomplete as AutocompletePrimitive } from '@base-ui/react/autocomplete'
 import { CaretDownIcon } from '@phosphor-icons/react'
 
 import { cn } from '#/lib/utils'
-
-/** Base UI 1.7 hard-codes both screen-reader dismiss labels with no public override.
- * Scope this compatibility adapter to our input/portal containers. It changes only
- * the label; the library continues to own focus, dismissal and popup behavior.
- * Remove when Base UI exposes a localization prop for its internal dismiss button.
- */
-function useAutocompleteDismissTranslation() {
-  const t = useT()
-  const [container, setContainer] = useState<HTMLDivElement | null>(null)
-  const label = t('common.close')
-  useEffect(() => {
-    if (!container) return
-    const update = () => {
-      container
-        .querySelectorAll<HTMLElement>(
-          'span[role="button"][aria-label="Dismiss"], [data-localized-autocomplete-dismiss]',
-        )
-        .forEach((button) => {
-          button.setAttribute('data-localized-autocomplete-dismiss', '')
-          button.setAttribute('aria-label', label)
-        })
-    }
-    update()
-    const observer = new MutationObserver(update)
-    observer.observe(container, { childList: true, subtree: true })
-    return () => observer.disconnect()
-  }, [container, label])
-  return setContainer
-}
+import { usePickerDismissTranslation } from './usePickerDismissTranslation'
 
 function AutocompleteRoot<TItemValue>({
   ...props
@@ -50,7 +21,7 @@ function AutocompleteInput({
   triggerLabel?: string
 }) {
   const t = useT()
-  const dismissContainerRef = useAutocompleteDismissTranslation()
+  const dismissContainerRef = usePickerDismissTranslation()
 
   return (
     <div ref={dismissContainerRef} className="relative">
@@ -89,7 +60,7 @@ function AutocompleteContent({
     AutocompletePrimitive.Positioner.Props,
     'align' | 'alignOffset' | 'side' | 'sideOffset'
   >) {
-  const dismissContainerRef = useAutocompleteDismissTranslation()
+  const dismissContainerRef = usePickerDismissTranslation()
   return (
     <AutocompletePrimitive.Portal>
       <AutocompletePrimitive.Positioner

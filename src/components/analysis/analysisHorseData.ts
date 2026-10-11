@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import type {
   DashboardLabData,
   DashboardLabEvent,
@@ -109,7 +110,7 @@ export function createHorseAnalysisData({
           stableId: data.stable._id,
           stableName: data.stable.name,
           horseId: horse._id,
-          horseName: horse.name,
+          horseName: getHorseDisplayName(horse),
           title: record.title,
           dueDate: record.date,
           category: record.reminderCategory!,
@@ -252,7 +253,7 @@ export function createStableHorseOverview({
     )
     return {
       horseId: horse._id,
-      horseName: horse.name,
+      horseName: getHorseDisplayName(horse),
       summaryComplete: Boolean(current),
       latestWeight:
         current?.latestWeight ??

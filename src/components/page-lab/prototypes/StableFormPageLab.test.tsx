@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import type * as ConvexReact from 'convex/react'
 import {
   act,
   cleanup,
@@ -16,7 +17,8 @@ const access = vi.hoisted(() => ({ enabled: true }))
 vi.mock('#/lib/devAuthBypass', () => ({
   useDevAuthBypassEnabled: () => access.enabled,
 }))
-vi.mock('convex/react', () => ({
+vi.mock('convex/react', async (importOriginal) => ({
+  ...(await importOriginal<typeof ConvexReact>()),
   useMutation: () => {
     throw new Error('Live mutation used by sample')
   },

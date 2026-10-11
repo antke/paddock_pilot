@@ -17,6 +17,7 @@ import {
   FieldLabel,
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
+import { PersonNameField } from '#/components/forms/PersonNameField'
 import { Textarea } from '#/components/ui/textarea'
 import { api } from 'convex/_generated/api'
 import { createStableSchemas } from 'shared/stables/stableSchema'
@@ -95,8 +96,14 @@ export function StableOperationsStepView({
               <FieldLabel htmlFor={`${formId}-${field.name}`}>
                 {t('onboarding.primaryContact')}
               </FieldLabel>
-              <Input
-                {...field}
+              <PersonNameField
+                aria-label={t('onboarding.primaryContact')}
+                inputRef={field.ref}
+                name={field.name}
+                value={field.value ?? ''}
+                onBlur={field.onBlur}
+                onValueChange={field.onChange}
+                scope={{ stableId: stable._id }}
                 id={`${formId}-${field.name}`}
                 aria-invalid={fieldState.invalid}
                 aria-describedby={

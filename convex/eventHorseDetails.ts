@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import { ConvexError, v } from 'convex/values'
 import { eventHorseDetailsInputSchema } from '../shared/events/eventHorseDetailsSchema'
 import { mutation, query } from './_generated/server'
@@ -43,7 +44,11 @@ export const listForEvent = query({
     }
     return {
       event: await visibleEvent(ctx, event),
-      rows: result.sort((a, b) => a.horse.name.localeCompare(b.horse.name)),
+      rows: result.sort((a, b) =>
+        getHorseDisplayName(a.horse).localeCompare(
+          getHorseDisplayName(b.horse),
+        ),
+      ),
     }
   },
 })

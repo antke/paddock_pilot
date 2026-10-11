@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DetailTextBlock } from '#/components/dashboard/DetailBlocks'
@@ -207,7 +208,7 @@ function EventHorseServiceRow({
       ref={rowFocusTarget}
       role="group"
       aria-label={t('eventViews.serviceRegion', {
-        name: horse?.name ?? t('eventViews.unknownHorse'),
+        name: getHorseDisplayName(horse) ?? t('eventViews.unknownHorse'),
       })}
       tabIndex={-1}
       chrome="flat"
@@ -259,8 +260,10 @@ function EventHorseServiceRow({
                 >
                   <AlertDialogHeader>
                     <AlertDialogTitle>
-                      {horse?.name
-                        ? t('eventViews.withdrawNamed', { name: horse.name })
+                      {getHorseDisplayName(horse)
+                        ? t('eventViews.withdrawNamed', {
+                            name: getHorseDisplayName(horse),
+                          })
                         : t('eventViews.withdrawUnnamed')}
                     </AlertDialogTitle>
                     <AlertDialogDescription>

@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { NutritionLogForm } from '#/components/horses/NutritionLogForm'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
@@ -39,6 +40,7 @@ export function HorseNutritionLogsCard({
   horse,
   onCreateActionChange,
 }: HorseNutritionLogsCardProps) {
+  const horseDisplayName = getHorseDisplayName(horse)
   const t = useT()
 
   const { data: logs } = useSuspenseQuery(
@@ -66,7 +68,9 @@ export function HorseNutritionLogsCard({
           title: t('careRecords.nutritionAdded'),
           description: (
             <p>
-              {t('careRecords.nutritionHistoryUpdated', { name: horse.name })}
+              {t('careRecords.nutritionHistoryUpdated', {
+                name: horseDisplayName,
+              })}
             </p>
           ),
         })
@@ -75,7 +79,7 @@ export function HorseNutritionLogsCard({
         throw err
       }
     },
-    [addNutritionLog, horse._id, horse.name, t],
+    [addNutritionLog, horse._id, horseDisplayName, t],
   )
 
   const onRemoveNutritionLog = async (log: Doc<'horseNutritionLogs'>) => {

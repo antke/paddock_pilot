@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
 import {
   Breadcrumb,
@@ -40,7 +41,10 @@ export function StableBreadcrumbs({ stableId }: StableBreadcrumbsProps) {
     <StableBreadcrumbsView
       stableId={stableId}
       pathAfterStable={pathAfterStable}
-      labels={{ eventTitle: event?.title, horseName: horse?.name }}
+      labels={{
+        eventTitle: event?.title,
+        horseName: getHorseDisplayName(horse),
+      }}
     />
   )
 }

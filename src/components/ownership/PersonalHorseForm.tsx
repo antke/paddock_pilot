@@ -11,7 +11,6 @@ import { RoutePending } from '#/components/layout/RoutePending'
 import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
 
 export function PersonalHorseForm({ horseId }: { horseId?: string }) {
-  const currentUser = useQuery(api.users.getCurrentUser, horseId ? 'skip' : {})
   const horse = useQuery(api.horses.get, horseId ? { id: horseId } : 'skip')
   const permissions = useQuery(
     api.horses.getPermissions,
@@ -22,7 +21,6 @@ export function PersonalHorseForm({ horseId }: { horseId?: string }) {
   const update = useMutation(api.horses.update)
   const upload = useMutation(api.horses.generateProfileImageUploadUrl)
   const navigate = useNavigate()
-  if (!horseId && currentUser === undefined) return <RoutePending />
   if (horseId && (horse === undefined || permissions === undefined))
     return <RoutePending />
   if (horseId && (!horse || !permissions?.canEditProfile))
@@ -32,16 +30,7 @@ export function PersonalHorseForm({ horseId }: { horseId?: string }) {
       key={horseId ?? 'new'}
       mode={horseId ? 'edit' : 'create'}
       initialValues={horse ?? undefined}
-      ownerSuggestions={
-        currentUser
-          ? [
-              currentUser.preferredName ||
-                [currentUser.firstName, currentUser.lastName]
-                  .filter(Boolean)
-                  .join(' '),
-            ]
-          : []
-      }
+      ownerSuggestionScope={{ horseIds: horseId ? [horseId] : [] }}
       providers={providers}
       contactMode="copied"
       profileImageId={horse?.profileImageId}

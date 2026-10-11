@@ -66,6 +66,19 @@ vi.mock('@clerk/tanstack-react-start', () => ({
 vi.mock('convex/react', async () => {
   const { useSyncExternalStore } = await import('react')
   return {
+    useConvex: () => ({}),
+    useQueries: () => {
+      useSyncExternalStore(
+        (listener) => {
+          state.listeners.add(listener)
+          return () => {
+            state.listeners.delete(listener)
+          }
+        },
+        () => state.version,
+      )
+      return { people: state.queries['people:suggestNames'] }
+    },
     useConvexAuth: () => ({ isAuthenticated: true, isLoading: false }),
     useAction: () => state.sync,
     useQuery: (
@@ -144,6 +157,7 @@ beforeEach(() => {
     removeEventListener: vi.fn(),
   }))
   state.queries = {
+    'people:suggestNames': [{ name: 'Sample Rider', isCurrentUser: true }],
     'users:getCurrentIdentity': { subject: 'rider' },
     'users:getCurrentUser': user,
     'onboarding:getAccountProfile': {
@@ -312,7 +326,9 @@ it.each([false, true])(
     fireEvent.click(
       screen.getByRole('button', { name: 'Show owner name suggestions' }),
     )
-    fireEvent.click(await screen.findByRole('option', { name: 'Sample Rider' }))
+    fireEvent.click(
+      await screen.findByRole('option', { name: 'Sample Rider (me)' }),
+    )
     fireEvent.change(screen.getByLabelText('Or current age'), {
       target: { value: '8' },
     })

@@ -32,7 +32,7 @@ export function createHorseListFilterConfig(
       {
         id: 'name',
         weight: 12,
-        getValues: (horse) => [horse.name],
+        getValues: (horse) => [horse.name, horse.nickname],
       },
       {
         id: 'owner',

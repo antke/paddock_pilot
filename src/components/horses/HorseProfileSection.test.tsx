@@ -55,6 +55,17 @@ function definition(label: string, scope = document.body) {
   return value
 }
 
+it('keeps the full name in profile information when the nickname is enabled', () => {
+  open({
+    ...baseHorse,
+    name: 'Juniper of the Meadow',
+    nickname: 'Juni',
+    useNickname: true,
+  })
+  expect(definition('Full name').textContent).toBe('Juniper of the Meadow')
+  expect(definition('Nickname').textContent).toBe('Juni')
+})
+
 afterEach(() => {
   cleanup()
   localStorage.clear()
@@ -98,7 +109,8 @@ it('keeps derived age beside the recorded partial birth date', () => {
   const terms = within(
     screen.getByRole('region', { name: 'Horse details' }),
   ).getAllByRole('term')
-  expect(terms.slice(0, 2).map((term) => term.textContent)).toEqual([
+  expect(terms.slice(0, 3).map((term) => term.textContent)).toEqual([
+    'Full name',
     'Age',
     'Date of birth',
   ])

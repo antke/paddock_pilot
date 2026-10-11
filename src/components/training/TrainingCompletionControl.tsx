@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useRef, useState } from 'react'
 import { CheckIcon } from '@phosphor-icons/react'
 import { useMutation } from 'convex/react'
@@ -43,7 +44,7 @@ function CompletionButton({
       ? 'trainingViews.markIncompleteFor'
       : 'trainingViews.markCompleteFor',
     {
-      horse: entry.horse.name,
+      horse: getHorseDisplayName(entry.horse),
       title: entry.occurrence.event.title,
     },
   )
@@ -84,7 +85,7 @@ function CompletionButton({
                 ? 'trainingViews.markedIncomplete'
                 : 'trainingViews.markedComplete',
             ),
-            description: `${entry.horse.name} · ${entry.occurrence.event.title}`,
+            description: `${getHorseDisplayName(entry.horse)} · ${entry.occurrence.event.title}`,
           })
         } catch (error) {
           const code = getUserFacingErrorCode(error)

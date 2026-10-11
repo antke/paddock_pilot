@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import { ConvexError, v } from 'convex/values'
 import { stableDocumentInputSchema } from '../shared/stables/stableDocumentSchema'
 import { stableDocumentType } from './schema'
@@ -50,7 +51,7 @@ async function enrich(ctx: Ctx, documents: Array<Doc<'stableDocuments'>>) {
       document.storageId && (await ctx.db.system.get(document.storageId))
     result.push({
       document: publicDocument,
-      horseName: access.horse?.name,
+      horseName: getHorseDisplayName(access.horse),
       eventTitle: event?.title,
       fileUrl: available ? `/api/documents/${document._id}` : null,
       fileState: available

@@ -37,6 +37,7 @@ export function stableProfileDefaults(
 
 export function StableProfileForm({
   mode,
+  stableId,
   initialValues,
   save,
   onSaved,
@@ -45,6 +46,7 @@ export function StableProfileForm({
   sampleNotice,
 }: {
   mode: 'create' | 'edit'
+  stableId?: string
   initialValues?: Partial<StableFormSchema>
   save: (values: StableFormSchema) => Promise<Id<'stables'>>
   onSaved: (id: Id<'stables'>) => void | Promise<void>
@@ -157,6 +159,7 @@ export function StableProfileForm({
     >
       {sampleNotice}
       <StableFormFields
+        stableId={stableId}
         headingLevel={mode === 'create' ? 2 : 3}
         control={form.control}
         disabled={submission.pending || submission.acknowledged}

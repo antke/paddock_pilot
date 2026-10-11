@@ -2,7 +2,7 @@ import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { useT } from '#/i18n/LocaleProvider'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from 'convex/react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useController, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { useId } from 'react'
 import { useOnboardingSave, OnboardingSaveError } from './onboardingAsync'
@@ -14,6 +14,7 @@ import {
   Field,
   FieldDescription,
   FieldError,
+  FieldGrid,
   FieldLabel,
   FieldLegend,
 } from '#/components/ui/field'
@@ -25,6 +26,7 @@ import {
   splitHorseBirthDate,
 } from 'shared/horses/horseAge'
 import { OnboardingLaterNote } from './OnboardingLayout'
+import { HorseNicknameField } from '#/components/forms/horse/HorseNicknameField'
 
 function createFirstHorseSchema(t: ReturnType<typeof useT>) {
   const optionalNumber = z
@@ -38,12 +40,25 @@ function createFirstHorseSchema(t: ReturnType<typeof useT>) {
   return z
     .object({
       name: z.string().trim().min(1, t('onboarding.horseNameRequired')),
+      nickname: z
+        .string()
+        .trim()
+        .max(100, t('horseValidation.shortMax'))
+        .optional(),
+      useNickname: z.boolean().optional(),
       birthYear: optionalNumber,
       birthMonth: optionalNumber,
       birthDay: optionalNumber,
       age: optionalNumber,
     })
     .superRefine((values, context) => {
+      if (values.useNickname && !values.nickname) {
+        context.addIssue({
+          code: 'custom',
+          path: ['nickname'],
+          message: t('horseValidation.nicknameRequired'),
+        })
+      }
       if (!values.birthYear && !values.age) {
         context.addIssue({
           code: 'custom',
@@ -108,6 +123,8 @@ type FirstHorseStepProps = {
 }
 export type FirstHorseSaveValues = {
   name: string
+  nickname?: string
+  useNickname?: boolean
   age: number
   dateOfBirth?: string
 }
@@ -147,7 +164,13 @@ export function FirstHorseStepView({
         ? calculateHorseAge(dateOfBirth)
         : Number(values.age)
       if (age === undefined) throw new Error('Invalid horse age')
-      await onSave({ name: values.name, dateOfBirth, age })
+      await onSave({
+        name: values.name,
+        nickname: values.nickname,
+        useNickname: values.useNickname,
+        dateOfBirth,
+        age,
+      })
     },
     onSaved,
     failureMessage: horse
@@ -160,6 +183,8 @@ export function FirstHorseStepView({
     mode: 'onTouched',
     defaultValues: {
       name: horse?.name ?? '',
+      nickname: horse?.nickname ?? '',
+      useNickname: horse?.useNickname ?? false,
       birthYear: birthDate.year,
       birthMonth: birthDate.month,
       birthDay: birthDate.day,
@@ -167,6 +192,11 @@ export function FirstHorseStepView({
     },
   })
   useLocalizedValidation(form)
+  const nickname = useController({ control: form.control, name: 'nickname' })
+  const useNickname = useController({
+    control: form.control,
+    name: 'useNickname',
+  })
   const birthYear = form.watch('birthYear')
   const birthMonth = form.watch('birthMonth')
 
@@ -177,34 +207,49 @@ export function FirstHorseStepView({
         {t('onboarding.horseLaterHelp')}
       </OnboardingLaterNote>
 
-      <Controller
-        name="name"
-        control={form.control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={`${formId}-${field.name}`}>
-              {t('onboarding.horseName')}
-            </FieldLabel>
-            <Input
-              {...field}
-              id={`${formId}-${field.name}`}
-              placeholder="Maple"
-              autoComplete="off"
-              aria-invalid={fieldState.invalid}
-              aria-describedby={
-                fieldState.invalid ? `${formId}-${field.name}-error` : undefined
-              }
-              disabled={save.pending || save.acknowledged}
-            />
-            {fieldState.invalid && (
-              <FieldError
-                id={`${formId}-${field.name}-error`}
-                errors={[fieldState.error]}
+      <FieldGrid>
+        <Controller
+          name="name"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={`${formId}-${field.name}`}>
+                {t('onboarding.horseName')}
+              </FieldLabel>
+              <Input
+                {...field}
+                id={`${formId}-${field.name}`}
+                placeholder="Maple"
+                autoComplete="off"
+                aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid
+                    ? `${formId}-${field.name}-error`
+                    : undefined
+                }
+                disabled={save.pending || save.acknowledged}
               />
-            )}
-          </Field>
-        )}
-      />
+              {fieldState.invalid && (
+                <FieldError
+                  id={`${formId}-${field.name}-error`}
+                  errors={[fieldState.error]}
+                />
+              )}
+            </Field>
+          )}
+        />
+
+        <HorseNicknameField
+          value={nickname.field.value}
+          onValueChange={nickname.field.onChange}
+          onBlur={nickname.field.onBlur}
+          inputRef={nickname.field.ref}
+          error={nickname.fieldState.error}
+          checked={useNickname.field.value}
+          onCheckedChange={useNickname.field.onChange}
+          disabled={save.pending || save.acknowledged}
+        />
+      </FieldGrid>
 
       <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(8rem,1fr)] lg:gap-y-2">
         <fieldset className="grid gap-3 lg:row-span-2 lg:grid-rows-subgrid">

@@ -54,6 +54,62 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
+describe('horse nickname preference', () => {
+  it.each(['create', 'edit'] as const)(
+    'saves a nickname alongside the full name in %s mode',
+    async (mode) => {
+      const { form, name, props } = setup({ mode })
+      fireEvent.change(screen.getByLabelText('Nickname'), {
+        target: { value: '  Mappy  ' },
+      })
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Use nickname' }))
+      fireEvent.submit(form)
+      await waitFor(() => expect(props.save).toHaveBeenCalledTimes(1))
+      expect(vi.mocked(props.save).mock.calls[0][0]).toMatchObject({
+        name: 'Maple',
+        nickname: 'Mappy',
+        useNickname: true,
+      })
+      expect(name.value).toBe('Maple')
+    },
+  )
+
+  it('loads the saved preference and retains the nickname when disabled', async () => {
+    const { form, props } = setup({
+      initialValues: { ...initialValues, nickname: 'Mappy', useNickname: true },
+    })
+    expect(screen.getByLabelText<HTMLInputElement>('Nickname').value).toBe(
+      'Mappy',
+    )
+    const checkbox = screen.getByRole('checkbox', { name: 'Use nickname' })
+    expect(checkbox.getAttribute('aria-checked')).toBe('true')
+    fireEvent.click(checkbox)
+    fireEvent.submit(form)
+    await waitFor(() => expect(props.save).toHaveBeenCalledTimes(1))
+    expect(vi.mocked(props.save).mock.calls[0][0]).toMatchObject({
+      name: 'Maple',
+      nickname: 'Mappy',
+      useNickname: false,
+    })
+  })
+
+  it('blocks a blank enabled nickname and allows recovery without losing the full name', async () => {
+    const { form, name, props } = setup()
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Use nickname' }))
+    fireEvent.submit(form)
+    const error = await screen.findByText(
+      'Enter a nickname or turn off “Use nickname”.',
+    )
+    const nickname = screen.getByLabelText<HTMLInputElement>('Nickname')
+    expect(nickname.getAttribute('aria-describedby')).toContain(error.id)
+    expect(props.save).not.toHaveBeenCalled()
+    expect(name.value).toBe('Maple')
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Use nickname' }))
+    fireEvent.submit(form)
+    await waitFor(() => expect(props.save).toHaveBeenCalledTimes(1))
+  })
+})
+
 describe('linked birth date and age fields', () => {
   function setToday() {
     vi.useFakeTimers({ toFake: ['Date'] })

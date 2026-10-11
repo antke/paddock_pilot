@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import type { AnalysisSignalDisplayData } from 'shared/i18n/analysisSignal'
 import type { Locale } from 'shared/i18n/locale'
 import { localeInstances } from '#/i18n/resources'
@@ -626,7 +627,7 @@ function getHorseProfileItems(
 
     return {
       horseId: horse._id,
-      horseName: horse.name,
+      horseName: getHorseDisplayName(horse),
       missingFields,
       completedFieldCount,
       totalFieldCount: profileFieldCount,
@@ -709,7 +710,7 @@ function getCareCadence(
 
         return {
           horseId: horse._id,
-          horseName: horse.name,
+          horseName: getHorseDisplayName(horse),
           type,
           expectedDays,
           daysSinceLast,

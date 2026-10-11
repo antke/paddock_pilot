@@ -3,6 +3,7 @@ import z from 'zod'
 const defaultMessages = {
   nameMin: 'Name must have minimum 1 character.',
   nameMax: 'Name cannot be longer than 100 characters.',
+  nicknameRequired: 'Enter a nickname or turn off “Use nickname”.',
   ageMin: 'Age cannot be negative.',
   ageMax: "That's probably not true.",
   breedMax: 'Breed name cannot be longer than 100 characters',
@@ -95,6 +96,8 @@ export function createHorseSchemas(
 
   const horseFormSchema = z.object({
     name: horseNameSchema,
+    nickname: horseShortTextSchema.optional(),
+    useNickname: z.boolean().optional(),
     ownerName: horseOwnerNameSchema,
     age: horseAgeSchema,
     breed: horseBreedSchema,
@@ -133,8 +136,18 @@ export function createHorseSchemas(
     feedingRoutine: horseOptionalTextSchema,
   })
 
-  const horseInputSchema = z.object({
-    name: horseNameSchema,
+  const horseIdentitySchema = z
+    .object({
+      name: horseNameSchema,
+      nickname: optionalText(horseShortTextSchema),
+      useNickname: z.boolean().optional(),
+    })
+    .refine((horse) => !horse.useNickname || Boolean(horse.nickname), {
+      path: ['nickname'],
+      message: message('nicknameRequired'),
+    })
+
+  const horseInputSchema = horseIdentitySchema.safeExtend({
     ownerName: horseOwnerNameSchema,
     age: horseAgeSchema,
     breed: horseBreedSchema.optional().transform((val) => val || undefined),
@@ -189,6 +202,7 @@ export function createHorseSchemas(
     horsePhoneSchema,
     horseDateOfBirthSchema,
     horseFormSchema,
+    horseIdentitySchema,
     horseInputSchema,
   }
 }
@@ -205,6 +219,7 @@ export const {
   horsePhoneSchema,
   horseDateOfBirthSchema,
   horseFormSchema,
+  horseIdentitySchema,
   horseInputSchema,
 } = createHorseSchemas()
 

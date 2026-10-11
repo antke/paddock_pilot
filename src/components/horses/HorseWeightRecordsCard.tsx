@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { formatDecimal } from '#/lib/numberDisplay'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { compareWeightRecordsNewestFirst } from 'shared/horses/weightRecordOrder'
@@ -42,6 +43,7 @@ export function HorseWeightRecordsCard({
   horse,
   onCreateActionChange,
 }: HorseWeightRecordsCardProps) {
+  const horseDisplayName = getHorseDisplayName(horse)
   const t = useT()
   const { locale } = useLocale()
 
@@ -68,7 +70,11 @@ export function HorseWeightRecordsCard({
         showAppSuccessToast({
           title: t('careRecords.weightAdded'),
           description: (
-            <p>{t('careRecords.weightHistoryUpdated', { name: horse.name })}</p>
+            <p>
+              {t('careRecords.weightHistoryUpdated', {
+                name: horseDisplayName,
+              })}
+            </p>
           ),
         })
       } catch (err) {
@@ -76,7 +82,7 @@ export function HorseWeightRecordsCard({
         throw err
       }
     },
-    [addWeightRecord, horse._id, horse.name, t],
+    [addWeightRecord, horse._id, horseDisplayName, t],
   )
 
   const onRemoveWeightRecord = async (record: Doc<'horseWeightRecords'>) => {
@@ -333,8 +339,9 @@ function WeightRecordRow({
         meta={
           <>
             <span>
-              {t('careRecords.measured')}
-              {formatMediumTimestampDate(record.measuredAt, locale)}
+              {t('careRecords.measuredAt', {
+                date: formatMediumTimestampDate(record.measuredAt, locale),
+              })}
             </span>
             {record.bodyConditionScore !== undefined && (
               <span>

@@ -14,10 +14,25 @@ import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { Route as CreateHorseRoute } from '#/routes/stables/_layout/$stableId/horses/create'
 
-vi.mock('convex/react', () => ({ useMutation: () => vi.fn() }))
+const suggestions = vi.hoisted(() =>
+  vi.fn(() => ({
+    people: [
+      { name: 'Alex Rider', isCurrentUser: true },
+      { name: 'Owner preferred name', isCurrentUser: false },
+      { name: 'Stable nickname', isCurrentUser: false },
+    ],
+  })),
+)
+vi.mock('convex/react', () => ({
+  useMutation: () => vi.fn(),
+  useConvex: () => ({}),
+  useConvexAuth: () => ({ isAuthenticated: true }),
+  useQueries: suggestions,
+}))
+vi.mock('#/lib/devAuthBypass', () => ({ useDevAuthBypassEnabled: () => false }))
 afterEach(cleanup)
 
-it('suggests only active people from the current stable using their directory names', async () => {
+it('uses the shared people picker scoped to the current stable with the signed-in user first', async () => {
   const stableId = 'current-yard' as Id<'stables'>
   const client = new QueryClient({
     defaultOptions: { queries: { staleTime: Infinity, retry: false } },
@@ -27,35 +42,6 @@ it('suggests only active people from the current stable using their directory na
     { providers: [] },
   )
   client.setQueryData(convexQuery(api.horses.list, { stableId }).queryKey, [])
-  client.setQueryData(
-    convexQuery(api.stableMembers.listByStable, { stableId }).queryKey,
-    [
-      {
-        user: {
-          firstName: 'Stable',
-          lastName: 'Owner',
-          preferredName: 'Owner preferred name',
-        },
-        membership: null,
-      },
-      {
-        user: {
-          firstName: 'Sam',
-          lastName: 'Rider',
-          preferredName: 'Sam preferred name',
-        },
-        membership: { displayNameOverride: 'Stable nickname' },
-      },
-      { user: { firstName: 'Alex', lastName: 'Rider' }, membership: null },
-      { user: null, membership: { displayNameOverride: 'Deleted member' } },
-    ],
-  )
-  client.setQueryData(
-    convexQuery(api.stableMembers.listByStable, {
-      stableId: 'other-yard' as Id<'stables'>,
-    }).queryKey,
-    [{ user: { firstName: 'Other stable member' }, membership: null }],
-  )
   const root = createRootRoute()
   const stables = createRoute({ getParentRoute: () => root, path: 'stables' })
   const layout = createRoute({ getParentRoute: () => stables, id: '_layout' })
@@ -88,7 +74,13 @@ it('suggests only active people from the current stable using their directory na
   await screen.findByRole('option', { name: 'Stable nickname' })
   expect(
     screen.getAllByRole('option').map((option) => option.textContent),
-  ).toEqual(['Owner preferred name', 'Stable nickname', 'Alex Rider'])
+  ).toEqual(['Alex Rider (me)', 'Owner preferred name', 'Stable nickname'])
+  expect(suggestions).toHaveBeenLastCalledWith({
+    people: {
+      query: api.people.suggestNames,
+      args: { stableId, horseIds: [] },
+    },
+  })
   fireEvent.click(screen.getByRole('option', { name: 'Stable nickname' }))
   expect(screen.getByLabelText<HTMLInputElement>('Owner name').value).toBe(
     'Stable nickname',

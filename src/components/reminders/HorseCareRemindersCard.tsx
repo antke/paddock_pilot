@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import {
   isOnlyOutstandingFilter,
   createHorseCareReminderListFilterConfig,
@@ -30,6 +31,7 @@ export function HorseCareRemindersCard({
   horse,
   onCreateActionChange,
 }: HorseCareRemindersCardProps) {
+  const horseDisplayName = getHorseDisplayName(horse)
   const t = useT()
   const { data } = useSuspenseQuery(
     convexQuery(api.careReminders.listForHorse, { horseId: horse._id }),
@@ -60,7 +62,10 @@ export function HorseCareRemindersCard({
           title: t('reminders.added'),
           description: (
             <p>
-              {t('reminders.linked', { title: values.title, name: horse.name })}
+              {t('reminders.linked', {
+                title: values.title,
+                name: horseDisplayName,
+              })}
             </p>
           ),
         })
@@ -69,7 +74,7 @@ export function HorseCareRemindersCard({
         throw err
       }
     },
-    [addReminder, horse._id, horse.name, horse.stableId, t],
+    [addReminder, horse._id, horseDisplayName, horse.stableId, t],
   )
 
   return (
@@ -119,7 +124,7 @@ export function HorseCareRemindersView({
     items ??
     records.map((reminder) => ({
       reminder,
-      horseName: horse.name,
+      horseName: getHorseDisplayName(horse),
       canManage: canManage,
     }))
   const filterConfig = useMemo(

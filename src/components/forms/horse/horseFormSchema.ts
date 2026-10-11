@@ -62,6 +62,13 @@ export const createHorseFormSchema = (
         .transform((files) => files ?? undefined),
     })
     .superRefine((values, context) => {
+      if (values.useNickname && !values.nickname) {
+        context.addIssue({
+          code: 'custom',
+          path: ['nickname'],
+          message: t('horseValidation.nicknameRequired'),
+        })
+      }
       if (!values.dateOfBirth && values.age === '') {
         context.addIssue({
           code: 'custom',

@@ -1,4 +1,8 @@
 export const horseForm = {
+  nickname: 'Przezwisko',
+  useNickname: 'Używaj przezwiska',
+  nicknameHelp:
+    'Pokazuj przezwisko w aplikacji. Pełne imię pozostanie w profilu konia.',
   savedContactHelp:
     'Wybierz zapisany kontakt, aby korzystać z aktualnych danych, lub wpisz jednorazowy kontakt. Zmiana telefonu zapisze go tylko przy tym koniu.',
   copiedContactHelp:

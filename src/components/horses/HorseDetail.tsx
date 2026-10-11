@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useOwnershipCopy } from '#/components/ownership/ownershipCopy'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { ChartLineIcon } from '@phosphor-icons/react'
@@ -129,7 +130,7 @@ export function HorseDetail({
       <DashboardPage>
         <DashboardEntityHero
           className="print:hidden"
-          title={horse.name}
+          title={getHorseDisplayName(horse)}
           description={heroDescription || undefined}
           actionsLayout="inline"
           actions={
@@ -177,7 +178,7 @@ export function HorseDetail({
           }
           leading={
             <HorseAvatar
-              name={horse.name}
+              name={getHorseDisplayName(horse)}
               profileImageUrl={horse.profileImageUrl}
               size="lg"
               className="size-16 sm:size-24"
@@ -186,7 +187,9 @@ export function HorseDetail({
         >
           <div className="min-w-0 border-t border-border-subtle pt-4">
             <DashboardNavigation
-              ariaLabel={t('horseDetail.sections', { name: horse.name })}
+              ariaLabel={t('horseDetail.sections', {
+                name: getHorseDisplayName(horse),
+              })}
               inset={false}
               overflow="scroll"
             >
@@ -299,7 +302,7 @@ export function HorseDetail({
           <HorseActionMenu
             triggerRef={actionTrigger}
             horseId={horse._id}
-            horseName={horse.name}
+            horseName={getHorseDisplayName(horse)}
             canManageHorse={canManageHorse}
             canAddRecords={canAddRecords}
           />

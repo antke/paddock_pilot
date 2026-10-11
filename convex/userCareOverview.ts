@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import { horseCareData } from './libs/horseCareData'
 import { accessibleHorses, getHorseAccess } from './libs/horsePermissions'
 import type { Doc, Id } from './_generated/dataModel'
@@ -280,7 +281,7 @@ export const getForCurrentUser = query({
           stableId: reminder.stableId,
           stableName: stable?.name ?? 'Stable',
           horseId: reminder.horseId,
-          horseName: horse?.name,
+          horseName: getHorseDisplayName(horse),
           title: reminder.title,
           dueDate: reminder.dueDate,
           category: reminder.category,
@@ -307,7 +308,7 @@ export const getForCurrentUser = query({
 
           return {
             horseId,
-            horseName: horse.name,
+            horseName: getHorseDisplayName(horse),
             ownerName: horse.ownerName,
             breed: horse.breed,
             profileImageUrl: horseProfileImageUrls.get(horse._id),

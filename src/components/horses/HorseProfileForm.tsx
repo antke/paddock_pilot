@@ -1,4 +1,6 @@
+import type { PersonNameSuggestion } from '#/components/forms/PersonNameAutocomplete'
 import type { ProviderOption } from '#/components/ui/provider-autocomplete'
+import type { PersonNameScope } from '#/components/forms/PersonNameField'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { useEffect, useId, useRef, useState } from 'react'
@@ -25,7 +27,8 @@ type HorseProfileFormProps = {
   providers?: Array<ProviderOption>
   contactMode?: 'linked' | 'copied'
   breedSuggestions?: ReadonlyArray<string>
-  ownerSuggestions?: ReadonlyArray<string>
+  ownerSuggestions?: ReadonlyArray<PersonNameSuggestion>
+  ownerSuggestionScope?: PersonNameScope
   mode: 'create' | 'edit'
   initialValues?: Partial<HorseFormInput>
   profileImageId?: Id<'_storage'>
@@ -56,7 +59,8 @@ export function HorseProfileForm({
   onPendingChange,
   sampleNotice,
   breedSuggestions = [],
-  ownerSuggestions = [],
+  ownerSuggestions,
+  ownerSuggestionScope,
 }: HorseProfileFormProps) {
   const t = useT()
   const { locale } = useLocale()
@@ -257,6 +261,7 @@ export function HorseProfileForm({
         control={form.control}
         providers={providers}
         ownerSuggestions={ownerSuggestions}
+        ownerSuggestionScope={ownerSuggestionScope}
         contactMode={contactMode}
         setValue={form.setValue}
         existingBreed={existingBreed}

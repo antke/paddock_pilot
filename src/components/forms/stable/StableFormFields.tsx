@@ -9,6 +9,7 @@ import {
   FieldLabelRow,
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
+import { PersonNameField } from '#/components/forms/PersonNameField'
 import { Textarea } from '#/components/ui/textarea'
 import { Controller } from 'react-hook-form'
 import type { Control } from 'react-hook-form'
@@ -18,12 +19,14 @@ type Props = {
   headingLevel?: 2 | 3 | 4
   control: Control<StableFormSchema>
   disabled?: boolean
+  stableId?: string
 }
 
 export function StableFormFields({
   control,
   disabled = false,
   headingLevel = 3,
+  stableId,
 }: Props) {
   const t = useT()
 
@@ -309,10 +312,15 @@ export function StableFormFields({
                   {t('stables.contactName')}
                 </FieldLabel>
 
-                <Input
-                  {...field}
+                <PersonNameField
+                  aria-label={t('stables.contactName')}
+                  inputRef={field.ref}
+                  name={field.name}
+                  value={field.value ?? ''}
+                  onBlur={field.onBlur}
+                  onValueChange={field.onChange}
+                  scope={{ stableId }}
                   id={field.name}
-                  type="text"
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
                   aria-describedby={

@@ -1,3 +1,5 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
+import type { PersonNameSuggestion } from '#/components/forms/PersonNameAutocomplete'
 import { localeInstances } from '#/i18n/resources'
 import { displayLocales } from 'shared/i18n/locale'
 import type { Locale } from 'shared/i18n/locale'
@@ -74,6 +76,7 @@ type Props = {
   setValue: UseFormSetValue<EventFormInput>
   horses: Array<HorseOption>
   providers?: Array<ProviderOption>
+  riderSuggestions?: ReadonlyArray<PersonNameSuggestion>
   disabled?: boolean
   trainingMode?: 'create' | 'edit'
   scheduleOnly?: boolean
@@ -518,6 +521,7 @@ export function EventFormFields({
   setValue,
   horses,
   providers = [],
+  riderSuggestions,
   disabled = false,
   trainingMode,
   scheduleOnly = false,
@@ -788,7 +792,7 @@ export function EventFormFields({
         horseIds.length
           ? horses
               .filter((horse) => horseIds.includes(horse._id))
-              .map((horse) => horse.name)
+              .map((horse) => getHorseDisplayName(horse))
               .join(', ')
           : horsesSummary
       }
@@ -1040,6 +1044,7 @@ export function EventFormFields({
             control={control}
             disabled={disabled}
             fields="optional"
+            riderSuggestions={riderSuggestions}
           />
           {endDateField}
         </FormSection>

@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import type { Locale } from 'shared/i18n/locale'
 import { localeInstances } from '#/i18n/resources'
@@ -160,7 +161,7 @@ function HorseWellbeingSummaryPanel({
   const trend = analysis.weightTrend
   return (
     <HorseAnalysisPanel
-      title={horse.name}
+      title={getHorseDisplayName(horse)}
       description={t('analysisViews.currentCareToday')}
       className={className}
       span={span}

@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT } from '#/i18n/LocaleProvider'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
@@ -22,7 +23,7 @@ import { useMutation } from 'convex/react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 type HorseDeletionActionsProps = {
-  horse: Pick<Doc<'horses'>, '_id' | 'name'>
+  horse: Pick<Doc<'horses'>, '_id' | 'name' | 'nickname' | 'useNickname'>
   onDeleted: () => void | Promise<void>
   onAcknowledged?: () => void
   disabled?: boolean
@@ -55,7 +56,9 @@ export function HorseDeletionActions({
           toastedHorse.current = horse._id
           showAppSuccessToast({
             title: t('horseDeletion.moved'),
-            description: t('horseDeletion.movedHelp', { name: horse.name }),
+            description: t('horseDeletion.movedHelp', {
+              name: getHorseDisplayName(horse),
+            }),
           })
         }
         await onDeleted()
@@ -144,7 +147,9 @@ function HorseDeletionState({
     failure === 'delete'
       ? t('horseDeletion.moveFailed')
       : failure === 'continue'
-        ? t('horseDeletion.continueFailed', { name: horse.name })
+        ? t('horseDeletion.continueFailed', {
+            name: getHorseDisplayName(horse),
+          })
         : undefined
   const busyLabel = acknowledged
     ? t('horseDeletion.continuing')
@@ -162,7 +167,9 @@ function HorseDeletionState({
     <DashboardSectionCard
       ref={section}
       role="group"
-      aria-label={t('horseDeletion.region', { name: horse.name })}
+      aria-label={t('horseDeletion.region', {
+        name: getHorseDisplayName(horse),
+      })}
       tabIndex={-1}
       title={t('horseDeletion.delete')}
       description={t('horseDeletion.help')}
@@ -174,7 +181,9 @@ function HorseDeletionState({
           errorAlert
         ) : (
           <p role="status">
-            {t('horseDeletion.acknowledged', { name: horse.name })}
+            {t('horseDeletion.acknowledged', {
+              name: getHorseDisplayName(horse),
+            })}
           </p>
         ))}
       <DashboardActions align="end">
@@ -219,8 +228,12 @@ function HorseDeletionState({
               <AlertDialogHeader>
                 <AlertDialogTitle>
                   {acknowledged
-                    ? t('horseDeletion.movedTitle', { name: horse.name })
-                    : t('horseDeletion.moveQuestion', { name: horse.name })}
+                    ? t('horseDeletion.movedTitle', {
+                        name: getHorseDisplayName(horse),
+                      })
+                    : t('horseDeletion.moveQuestion', {
+                        name: getHorseDisplayName(horse),
+                      })}
                 </AlertDialogTitle>
                 <AlertDialogDescription>
                   {acknowledged

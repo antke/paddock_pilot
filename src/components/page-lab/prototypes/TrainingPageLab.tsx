@@ -92,6 +92,12 @@ export function TrainingPageLab({ data }: { data: DashboardLabData }) {
       <EventEditor
         mode="create"
         feature="training"
+        riderSuggestions={[
+          { name: 'Alex Morgan', isCurrentUser: true },
+          'Anna Kowalska',
+          'Jamie Wilson',
+          'Maria Nowak',
+        ]}
         horses={horses}
         initialValues={{
           ...createEventEditorValues(data.stable._id),

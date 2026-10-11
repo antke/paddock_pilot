@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { localeInstances } from '#/i18n/resources'
 import type { Locale } from 'shared/i18n/locale'
 import type {
@@ -172,7 +173,7 @@ function getHorseFilterOptions(
     { value: stableWideHorseFilterValue, label: t('reminders.stableWide') },
     ...horseOptions.map((horse) => ({
       value: getHorseFilterValue(horse.id),
-      label: horse.name,
+      label: getHorseDisplayName(horse),
     })),
   ] satisfies ReadonlyArray<ListFilterOption>
 }

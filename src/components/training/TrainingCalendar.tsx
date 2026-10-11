@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { Table } from '#/components/ui/table'
 import { useEffect, useId, useRef, useState } from 'react'
@@ -135,7 +136,7 @@ export function TrainingCalendar({
     !fixedHorseId && selected.length
       ? horses
           .filter((horse) => selected.includes(horse._id))
-          .map((horse) => horse.name)
+          .map((horse) => getHorseDisplayName(horse))
           .join(', ')
       : undefined,
     activity !== 'all'
@@ -540,7 +541,7 @@ export function TrainingCalendar({
             {horses
               .filter(
                 (horse) =>
-                  horse.name
+                  getHorseDisplayName(horse)
                     .toLocaleLowerCase()
                     .includes(horseQuery.toLocaleLowerCase()) ||
                   selected.includes(horse._id),
@@ -561,7 +562,7 @@ export function TrainingCalendar({
                     )
                   }
                 >
-                  {horse.name}
+                  {getHorseDisplayName(horse)}
                   {selected.includes(horse._id) && <XIcon aria-hidden="true" />}
                 </Button>
               ))}
@@ -665,7 +666,7 @@ export function TrainingCalendar({
                           className="border-b border-border-subtle last:border-b-0"
                         >
                           <th scope="row" className="p-3 text-left align-top">
-                            {horse.name}
+                            {getHorseDisplayName(horse)}
                           </th>
                           {period.days.map((day) => (
                             <td

@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useMemo, useState } from 'react'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { formatEventDateTime } from '#/components/events/eventDisplay'
@@ -93,7 +94,9 @@ export function HorseTimelineView({ timeline }: { timeline: HorseTimeline }) {
       title={t('horseHistory.timeline')}
       description={
         timeline.horse
-          ? t('horseHistory.timelineHelp', { name: timeline.horse.name })
+          ? t('horseHistory.timelineHelp', {
+              name: getHorseDisplayName(timeline.horse),
+            })
           : t('horseHistory.timelineGenericHelp')
       }
       size="panel"

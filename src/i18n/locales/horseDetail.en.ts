@@ -1,4 +1,5 @@
 export const horseDetail = {
+  fullName: 'Full name',
   profile: 'Profile',
   activity: 'Activity',
   training: 'Training',

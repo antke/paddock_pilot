@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useOwnershipCopy } from '#/components/ownership/ownershipCopy'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { api } from 'convex/_generated/api'
@@ -401,7 +402,9 @@ export function RemoveMemberButtonView({
               <FieldHeaderContent>
                 <FieldTitle>{c.departureHelp}</FieldTitle>
                 <FieldDescription>
-                  {formatCommaList(horses.map((horse) => horse.name))}
+                  {formatCommaList(
+                    horses.map((horse) => getHorseDisplayName(horse)),
+                  )}
                 </FieldDescription>
               </FieldHeaderContent>
             </FieldHeader>

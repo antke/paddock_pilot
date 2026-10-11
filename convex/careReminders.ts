@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import {
   assertCanReadHorse,
   assertCanAddHorseRecord,
@@ -176,7 +177,7 @@ const mapStableReminderListItems = async (
     return [
       {
         reminder,
-        horseName: horse?.name,
+        horseName: getHorseDisplayName(horse),
         assigneeName: people[index].assignee
           ? personName(people[index].assignee)
           : undefined,

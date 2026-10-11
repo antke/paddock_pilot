@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import { ConvexError, v } from 'convex/values'
 import { paginationOptsValidator } from 'convex/server'
 import { internalMutation, mutation, query } from './_generated/server'
@@ -222,7 +223,7 @@ export const advance = internalMutation({
     ) => {
       await ctx.db.insert('horseSnapshots', {
         horseId: horse._id,
-        horseName: horse.name,
+        horseName: getHorseDisplayName(horse),
         stableId: placement.stableId,
         placementId: placement._id,
         kind,

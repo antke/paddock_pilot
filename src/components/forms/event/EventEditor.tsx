@@ -28,6 +28,7 @@ type Props = {
   initialValues: EventFormInput
   horses: ComponentProps<typeof EventFormFields>['horses']
   providers?: ComponentProps<typeof EventFormFields>['providers']
+  riderSuggestions?: ComponentProps<typeof EventFormFields>['riderSuggestions']
   onSave: (values: EventFormSchema) => Promise<Id<'events'>>
   onSaved: (eventId: Id<'events'>) => void | Promise<void>
   onAcknowledged?: (eventId: Id<'events'>, values: EventFormSchema) => void
@@ -44,6 +45,7 @@ export function EventEditor({
   initialValues,
   horses,
   providers,
+  riderSuggestions,
   onSave,
   onSaved,
   onAcknowledged,
@@ -235,6 +237,7 @@ export function EventEditor({
         setValue={form.setValue}
         horses={horses}
         providers={providers}
+        riderSuggestions={riderSuggestions}
         disabled={pending || save.acknowledged}
       />
       <FormSubmissionError message={save.error} />

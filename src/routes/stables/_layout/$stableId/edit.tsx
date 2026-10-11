@@ -66,6 +66,7 @@ function EditStableForm({ stable }: EditStableFormProps) {
 
   return (
     <StableProfileForm
+      stableId={stable._id}
       mode="edit"
       initialValues={stable}
       save={async (values) => {

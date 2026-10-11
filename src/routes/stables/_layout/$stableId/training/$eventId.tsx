@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { formatShortDateKey } from '#/lib/dateDisplay'
@@ -156,8 +157,9 @@ function TrainingSession() {
             horses: data.pendingEventHorses
               .map(
                 (row) =>
-                  training.horses.find((horse) => horse._id === row.horseId)
-                    ?.name ?? t('trainingViews.horse'),
+                  getHorseDisplayName(
+                    training.horses.find((horse) => horse._id === row.horseId),
+                  ) ?? t('trainingViews.horse'),
               )
               .join(', '),
           })}
@@ -176,8 +178,11 @@ function TrainingSession() {
               .map((row) => (
                 <div key={row._id}>
                   <p className="font-semibold">
-                    {training.horses.find((horse) => horse._id === row.horseId)
-                      ?.name ?? t('trainingViews.horse')}
+                    {getHorseDisplayName(
+                      training.horses.find(
+                        (horse) => horse._id === row.horseId,
+                      ),
+                    ) ?? t('trainingViews.horse')}
                   </p>
                   {row.requestedServiceNotes && (
                     <p>{row.requestedServiceNotes}</p>

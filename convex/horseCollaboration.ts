@@ -1,3 +1,5 @@
+import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
+import { horseIdentitySchema } from '../shared/horses/horseSchema'
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { carerRole, horseInvitationKind } from './horseOwnershipSchema'
@@ -24,11 +26,16 @@ export const addUnclaimed = mutation({
   args: {
     stableId: v.id('stables'),
     name: v.string(),
+    nickname: v.optional(v.string()),
+    useNickname: v.optional(v.boolean()),
     age: v.number(),
     ownerName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const access = await assertCanManageStable(ctx, args.stableId)
+    const identity = horseIdentitySchema.safeParse(args)
+    if (!identity.success)
+      throw new ConvexError(identity.error.issues[0].message)
     if (
       !args.name.trim() ||
       !Number.isFinite(args.age) ||
@@ -38,7 +45,7 @@ export const addUnclaimed = mutation({
       throw new ConvexError('Use a horse name and valid age')
     const horseId = await ctx.db.insert('horses', {
       ...args,
-      name: args.name.trim(),
+      ...identity.data,
       custodianStableId: args.stableId,
     })
     const placementId = await ctx.db.insert('horsePlacements', {
@@ -110,7 +117,7 @@ export const invite = mutation({
       relation: { type: 'horseInvitation', id },
       template: {
         kind: 'horse_access_invitation',
-        horseName: horse.name,
+        horseName: getHorseDisplayName(horse),
         invitationKind: args.kind,
         token,
       },
@@ -155,7 +162,7 @@ export const management = query({
       ? await ctx.db.get(currentStable.ownerId)
       : null
     return {
-      horseName: horse.name,
+      horseName: getHorseDisplayName(horse),
       ownerName:
         owner?.preferredName ||
         owner?.firstName ||
@@ -278,7 +285,7 @@ export const invitation = query({
     }
     return {
       invitation,
-      horseName: horse.name,
+      horseName: getHorseDisplayName(horse),
       stableName: horse.stableId
         ? (await ctx.db.get(horse.stableId))?.name
         : undefined,

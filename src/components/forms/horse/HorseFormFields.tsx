@@ -1,3 +1,4 @@
+import type { PersonNameSuggestion } from '#/components/forms/PersonNameAutocomplete'
 import { ProviderAutocomplete } from '#/components/ui/provider-autocomplete'
 import type { ProviderOption } from '#/components/ui/provider-autocomplete'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
@@ -35,13 +36,17 @@ import {
 import type { Control, UseFormSetValue } from 'react-hook-form'
 import { HorseBreedAutocomplete } from './HorseBreedAutocomplete'
 import { HorseOwnerAutocomplete } from './HorseOwnerAutocomplete'
+import type { PersonNameScope } from '#/components/forms/PersonNameField'
 import { HorseStringListField } from './HorseStringListField'
 import type { HorseFormInput, HorseFormSchema } from './horseFormSchema'
+import { HorseNicknameField } from './HorseNicknameField'
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 
 type Props = {
   control: Control<HorseFormInput, unknown, HorseFormSchema>
   providers?: Array<ProviderOption>
-  ownerSuggestions?: ReadonlyArray<string>
+  ownerSuggestions?: ReadonlyArray<PersonNameSuggestion>
+  ownerSuggestionScope?: PersonNameScope
   contactMode?: 'linked' | 'copied'
   setValue: UseFormSetValue<HorseFormInput>
   disabled?: boolean
@@ -64,7 +69,8 @@ const toOptionalShoeingStatus = (value: ShoeingStatusChoice) =>
 export function HorseFormFields({
   control,
   providers = [],
-  ownerSuggestions = [],
+  ownerSuggestions,
+  ownerSuggestionScope,
   contactMode = 'linked',
   setValue,
   disabled = false,
@@ -100,6 +106,8 @@ export function HorseFormFields({
 
   const profileImageId = useId()
   const horseName = useWatch({ control, name: 'name' })
+  const nickname = useController({ control, name: 'nickname' })
+  const useNickname = useController({ control, name: 'useNickname' })
   const ownerName = useWatch({ control, name: 'ownerName' })
   const dateOfBirth = useWatch({ control, name: 'dateOfBirth' })
   const statedAge = useWatch({ control, name: 'age' })
@@ -126,7 +134,11 @@ export function HorseFormFields({
       : statedAge
 
   const detailsSummary = formatMetaText([
-    horseName || t('horseForm.unnamed'),
+    getHorseDisplayName({
+      name: horseName,
+      nickname: nickname.field.value,
+      useNickname: useNickname.field.value,
+    }) || t('horseForm.unnamed'),
     ownerName,
     calculatedAge !== undefined && calculatedAge >= 0
       ? t('horseForm.years', { count: calculatedAge })
@@ -157,6 +169,7 @@ export function HorseFormFields({
       : t('horseForm.optional')
   const detailsInvalid = Boolean(
     errors.name ||
+    errors.nickname ||
     errors.ownerName ||
     errors.dateOfBirth ||
     errors.age ||
@@ -236,6 +249,18 @@ export function HorseFormFields({
                 </Field>
               )}
             />
+            <HorseNicknameField
+              value={nickname.field.value}
+              onValueChange={nickname.field.onChange}
+              onBlur={nickname.field.onBlur}
+              inputRef={nickname.field.ref}
+              error={nickname.fieldState.error}
+              checked={useNickname.field.value}
+              onCheckedChange={useNickname.field.onChange}
+              disabled={disabled}
+            />
+          </FieldGrid>
+          <FieldGrid>
             <Controller
               name="ownerName"
               control={control}
@@ -246,7 +271,9 @@ export function HorseFormFields({
                   </FieldLabel>
 
                   <HorseOwnerAutocomplete
+                    aria-label={t('horseForm.owner')}
                     suggestions={ownerSuggestions}
+                    scope={ownerSuggestionScope}
                     inputRef={field.ref}
                     name={field.name}
                     id={field.name}

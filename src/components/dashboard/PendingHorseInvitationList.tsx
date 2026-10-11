@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { useId, useLayoutEffect, useRef, useState } from 'react'
 import type { FunctionReturnType } from 'convex/server'
@@ -148,7 +149,8 @@ export function PendingHorseInvitationList({
                 : 'events.declinedAnnouncement',
               {
                 horse:
-                  acknowledgement.item.horse?.name ?? t('events.horseFallback'),
+                  getHorseDisplayName(acknowledgement.item.horse) ??
+                  t('events.horseFallback'),
                 event:
                   acknowledgement.item.event?.title ??
                   t('events.eventAcknowledgementFallback'),
@@ -169,7 +171,7 @@ export function PendingHorseInvitationList({
                   ? currentOperation
                   : undefined
               const target = {
-                horse: horse?.name ?? t('events.horseFallback'),
+                horse: getHorseDisplayName(horse) ?? t('events.horseFallback'),
                 event: event?.title ?? t('events.eventFallback'),
               }
               const errorId = `${listId}-${invitation._id}-error`

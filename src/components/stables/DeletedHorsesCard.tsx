@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { api } from 'convex/_generated/api'
 import { useMutation } from 'convex/react'
@@ -41,14 +42,18 @@ export function DeletedHorsesCard({ horses }: { horses: Array<DeletedHorse> }) {
         await restoreHorse({ id: horse._id })
         showAppSuccessToast({
           title: t('stableSetup.restored'),
-          description: t('stableSetup.restoredHelp', { name: horse.name }),
+          description: t('stableSetup.restoredHelp', {
+            name: getHorseDisplayName(horse),
+          }),
         })
       }}
       onPermanentlyDelete={async (horse) => {
         await permanentlyDeleteHorse({ id: horse._id })
         showAppSuccessToast({
           title: t('stableSetup.deleted'),
-          description: t('stableSetup.deletedHelp', { name: horse.name }),
+          description: t('stableSetup.deletedHelp', {
+            name: getHorseDisplayName(horse),
+          }),
         })
       }}
     />
@@ -144,7 +149,9 @@ function DeletedHorseRow({
       density="compact"
       interactive={false}
       role="group"
-      aria-label={t('stableSetup.deletedHorseLabel', { name: horse.name })}
+      aria-label={t('stableSetup.deletedHorseLabel', {
+        name: getHorseDisplayName(horse),
+      })}
       actions={
         <>
           <Button
@@ -193,7 +200,9 @@ function DeletedHorseRow({
               >
                 <AlertDialogHeader>
                   <AlertDialogTitle>
-                    {t('stableSetup.deleteQuestion', { name: horse.name })}
+                    {t('stableSetup.deleteQuestion', {
+                      name: getHorseDisplayName(horse),
+                    })}
                   </AlertDialogTitle>
                   <AlertDialogDescription>
                     {t('stableSetup.deleteWarning')}
@@ -238,7 +247,7 @@ function DeletedHorseRow({
       }
     >
       <DashboardItemCardContent
-        title={horse.name}
+        title={getHorseDisplayName(horse)}
         titleSize="sm"
         meta={
           <>

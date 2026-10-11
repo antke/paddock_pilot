@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import { horseCareData } from './libs/horseCareData'
 import { getHorseAccess } from './libs/horsePermissions'
 import { v } from 'convex/values'
@@ -25,7 +26,7 @@ const getHorseName = (
   horsesById: Map<Id<'horses'>, Doc<'horses'>>,
   horseId: Id<'horses'>,
 ) => {
-  return horsesById.get(horseId)?.name ?? 'Unknown horse'
+  return getHorseDisplayName(horsesById.get(horseId)) ?? 'Unknown horse'
 }
 
 const hasNutrition = (horse: Doc<'horses'>) => {
@@ -171,7 +172,7 @@ export const getForStable = query({
     const profileGaps = activeHorses
       .map((horse) => ({
         horseId: horse._id,
-        horseName: horse.name,
+        horseName: getHorseDisplayName(horse),
         missingFields: missingProfileFields(horse),
       }))
       .filter((horse) => horse.missingFields.length > 0)

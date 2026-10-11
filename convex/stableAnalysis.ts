@@ -1,3 +1,4 @@
+import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import { horseEvent } from './libs/horseEventHistory'
 import { horseCareData } from './libs/horseCareData'
 import { assertCanReadHorse, getHorseAccess } from './libs/horsePermissions'
@@ -161,7 +162,7 @@ const getStableTimelineSignals = ({
         date: observationDate(issue.notedAt),
         title: issue.title,
         horseId: issue.horseId,
-        horseName: horse?.name,
+        horseName: getHorseDisplayName(horse),
         detail: joinDetails([`${severity} severity`, issue.status]),
         status: issue.status,
         severity,
@@ -177,7 +178,7 @@ const getStableTimelineSignals = ({
         date: record.startDate,
         title: record.medicationName,
         horseId: record.horseId,
-        horseName: horse?.name,
+        horseName: getHorseDisplayName(horse),
         detail: joinDetails([record.status, record.dosage, record.frequency]),
         displayData: { dosage: record.dosage, frequency: record.frequency },
         status: record.status,
@@ -193,7 +194,7 @@ const getStableTimelineSignals = ({
         date: observationDate(log.changedAt),
         title: log.summary,
         horseId: log.horseId,
-        horseName: horse?.name,
+        horseName: getHorseDisplayName(horse),
         detail: 'Nutrition change',
         urgent: false,
       }
@@ -214,7 +215,7 @@ const getStableTimelineSignals = ({
           date: observationDate(record.measuredAt),
           title: `${record.weight} ${record.unit}`,
           horseId: record.horseId,
-          horseName: horse?.name,
+          horseName: getHorseDisplayName(horse),
           detail: joinDetails(['Weight record', bodyCondition]),
           displayData: {
             weight: record.weight,
@@ -237,7 +238,7 @@ const getStableTimelineSignals = ({
         date: reminder.dueDate,
         title: reminder.title,
         horseId: reminder.horseId,
-        horseName: horse?.name,
+        horseName: getHorseDisplayName(horse),
         detail: joinDetails([`${priority} priority`, reminder.status]),
         status: reminder.status,
         priority,
@@ -268,7 +269,7 @@ const getWeightTrends = (
 
       return {
         horseId: horse._id,
-        horseName: horse.name,
+        horseName: getHorseDisplayName(horse),
         latestWeight: latest.weight,
         previousWeight: previous?.weight,
         unit: latest.unit,
@@ -309,7 +310,7 @@ const getHealthIssueFrequency = (
 
       return {
         horseId: horse._id,
-        horseName: horse.name,
+        horseName: getHorseDisplayName(horse),
         totalCount: horseIssues.length,
         activeCount,
         resolvedCount,
@@ -383,7 +384,7 @@ const getCareCadence = (
 
         return {
           horseId: horse._id,
-          horseName: horse.name,
+          horseName: getHorseDisplayName(horse),
           type: type as Doc<'events'>['type'],
           expectedDays,
           lastCompletedDate: lastCompleted?.date,
@@ -435,7 +436,7 @@ const getNutritionSignals = (
         {
           id: log._id,
           horseId: horse._id,
-          horseName: horse.name,
+          horseName: getHorseDisplayName(horse),
           changedAt: log.changedAt,
           summary: log.summary,
           nearbyWeightCount: nearbyWeights.length,
@@ -519,7 +520,7 @@ const countHealthIssuesByHorse = (
   return horses
     .map((horse) => ({
       horseId: horse._id,
-      horseName: horse.name,
+      horseName: getHorseDisplayName(horse),
       ownerName: horse.ownerName,
       breed: horse.breed,
       profileImageUrl: profileImageUrls.get(horse._id),
@@ -700,7 +701,7 @@ export const getForStable = query({
           eventTitle: event?.title ?? 'Unknown event',
           eventDate: event?.date ?? '',
           horseId: row.horseId,
-          horseName: horse?.name ?? 'Unknown horse',
+          horseName: getHorseDisplayName(horse) ?? 'Unknown horse',
         }
       })
     const providerDetailsMissing = events.filter(
@@ -759,7 +760,7 @@ export const getForStable = query({
     // independent of the historical exploration range and any ranked list.
     const horseSummaries = horses.map((horse) => ({
       horseId: horse._id,
-      horseName: horse.name,
+      horseName: getHorseDisplayName(horse),
       latestWeight:
         weightTrends.find((trend) => trend.horseId === horse._id) ?? null,
       activeIssueCount: activeHealthIssues.filter(
@@ -825,7 +826,7 @@ export const getForStable = query({
         id: reminder._id,
         horseId: reminder.horseId,
         horseName: reminder.horseId
-          ? horsesById.get(reminder.horseId)?.name
+          ? getHorseDisplayName(horsesById.get(reminder.horseId))
           : undefined,
         title: reminder.title,
         dueDate: reminder.dueDate,

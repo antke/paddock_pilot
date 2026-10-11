@@ -520,6 +520,8 @@ export const horsesFields = {
   currentPlacementId: v.optional(v.id('horsePlacements')),
   transitionId: v.optional(v.id('horseTransitions')),
   name: v.string(),
+  nickname: v.optional(v.string()),
+  useNickname: v.optional(v.boolean()),
   ownerName: v.optional(v.string()),
   age: v.number(),
   breed: v.optional(v.string()),
