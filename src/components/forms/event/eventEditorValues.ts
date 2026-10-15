@@ -1,6 +1,46 @@
 import type { Doc } from 'convex/_generated/dataModel'
 import type { EventFormInput } from './eventFormSchema'
 
+/** Store visible defaults once, so validation, reset and dirty checks agree. */
+export function getEventEditorDefaults(
+  values: EventFormInput,
+  includeTrainingDetails = false,
+): EventFormInput {
+  const recurrence = values.recurrence
+  const monthlyMode = recurrence?.monthlyMode ?? 'dayOfMonth'
+  return {
+    ...values,
+    status: values.status ?? 'planned',
+    recurrence: recurrence
+      ? {
+          ...recurrence,
+          end: recurrence.end ?? { type: 'never' },
+          ...(recurrence.frequency === 'monthly'
+            ? {
+                monthlyMode,
+                ...(monthlyMode === 'dayOfMonth' &&
+                (recurrence.dayOfMonth ?? 0) >= 29
+                  ? {
+                      missingDateStrategy:
+                        recurrence.missingDateStrategy ?? 'lastDayOfMonth',
+                    }
+                  : {}),
+              }
+            : {}),
+        }
+      : undefined,
+    ...(includeTrainingDetails
+      ? {
+          training: {
+            ...values.training,
+            activities: values.training?.activities ?? [],
+            format: values.training?.format ?? 'regular',
+          },
+        }
+      : {}),
+  }
+}
+
 export function createEventEditorValues(stableId?: string): EventFormInput {
   return {
     stableId,

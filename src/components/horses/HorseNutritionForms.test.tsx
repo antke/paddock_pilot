@@ -16,6 +16,24 @@ afterEach(cleanup)
 const horse = createDashboardLabFixtureData().horses[0]
 
 describe('horse weight and nutrition forms', () => {
+  it('submits the selected default weight unit before and after reset without touching it', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined)
+    render(<WeightRecordForm onSubmit={onSubmit} />)
+    const weight = screen.getByLabelText<HTMLInputElement>('Weight')
+    for (const count of [1, 2]) {
+      expect(
+        screen.getByRole('button', { name: 'kg', pressed: true }),
+      ).toBeTruthy()
+      fireEvent.change(weight, { target: { value: '500' } })
+      fireEvent.submit(weight.closest('form')!)
+      await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(count))
+      expect(onSubmit).toHaveBeenLastCalledWith(
+        expect.objectContaining({ weight: 500, unit: 'kg' }),
+      )
+      await waitFor(() => expect(weight.value).toBe(''))
+    }
+  })
+
   it('names weight units, isolates IDs and focuses a described invalid measurement', async () => {
     render(
       <>

@@ -1,3 +1,4 @@
+import { RequiredFieldsHint } from './FormLayout'
 import { useT } from '#/i18n/LocaleProvider'
 import type { ComponentProps, FormEventHandler, ReactNode } from 'react'
 import { useRef, useState } from 'react'
@@ -116,6 +117,7 @@ export function RouteFormCard({
         footer={<DashboardActions width="full">{actions}</DashboardActions>}
         footerClassName={stickyActions ? formStickyActionsClassName : undefined}
       >
+        <RequiredFieldsHint />
         {children}
       </DashboardSectionCard>
     </form>

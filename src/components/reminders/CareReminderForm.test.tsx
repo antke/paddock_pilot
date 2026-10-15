@@ -18,6 +18,12 @@ describe('care reminder form recovery', () => {
       .mockRejectedValueOnce(new Error('Offline'))
       .mockResolvedValueOnce(undefined)
     render(<CareReminderForm onSubmit={save} presentation="plain" />)
+    expect(screen.getByLabelText<HTMLSelectElement>('Category').value).toBe(
+      'other',
+    )
+    expect(
+      screen.getByRole('button', { name: 'Medium', pressed: true }),
+    ).toBeTruthy()
     const title = screen.getByLabelText<HTMLInputElement>('Title')
     fireEvent.submit(title.closest('form')!)
     await waitFor(() => expect(title.getAttribute('aria-invalid')).toBe('true'))
@@ -38,6 +44,8 @@ describe('care reminder form recovery', () => {
     expect(save.mock.calls[1][0]).toMatchObject({
       title: 'Book farrier visit',
       targetType: 'stable',
+      category: 'other',
+      priority: 'medium',
     })
   })
   it('edits the existing due date and responsibility, preserving changes on a failed save', async () => {

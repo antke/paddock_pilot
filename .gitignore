@@ -16,3 +16,6 @@ __unconfig*
 todos.json
 # CocoIndex Code (ccc)
 /.cocoindex_code/
+
+# Local browser layout evidence
+.browser-checks/

@@ -18,6 +18,7 @@ import { UnsavedChangesGuard } from '#/components/forms/UnsavedChangesGuard'
 import { hasDraftChanges } from '#/components/forms/hasDraftChanges'
 import { EventFormFields } from './EventFormFields'
 import type { EventFormInput, EventFormSchema } from './eventFormSchema'
+import { getEventEditorDefaults } from './eventEditorValues'
 import { useMobileTaskReturn } from '#/components/layout/mobileTaskNavigation'
 
 type Props = {
@@ -67,7 +68,9 @@ export function EventEditor({
     (key) => t(`trainingValidation.${key}`),
   )
   const formId = useId()
-  const initialDraft = useRef(initialValues)
+  const initialDraft = useRef(
+    getEventEditorDefaults(initialValues, isTraining && !scheduleOnly),
+  )
   const resolve = zodResolver(eventFormSchema)
   const form = useForm<EventFormInput, unknown, EventFormSchema>({
     resolver: (values, context, options) =>
@@ -77,7 +80,7 @@ export function EventEditor({
               ...values,
               title:
                 values.training?.activities
-                  .map((activity) => t(`training.activities.${activity}`))
+                  ?.map((activity) => t(`training.activities.${activity}`))
                   .join(' · ') || t('trainingViews.log'),
             }
           : values,
@@ -85,7 +88,7 @@ export function EventEditor({
         options,
       ),
     mode: 'onTouched',
-    defaultValues: initialValues,
+    defaultValues: initialDraft.current,
   })
   const currentDraft = useWatch({ control: form.control })
   const hasChanges = hasDraftChanges(currentDraft, initialDraft.current)

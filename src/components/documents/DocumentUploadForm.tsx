@@ -124,6 +124,7 @@ export function DocumentUploadForm({
                 {t('documents.name')}
               </FieldLabel>
               <Input
+                aria-required="true"
                 {...field}
                 id={`${formId}-${field.name}`}
                 disabled={form.formState.isSubmitting || isPending}
@@ -251,6 +252,7 @@ function DocumentTypeField({
             {t('documents.type')}
           </FieldLabel>
           <Select
+            aria-required="true"
             {...field}
             id={`${formId}-${field.name}`}
             disabled={disabled}

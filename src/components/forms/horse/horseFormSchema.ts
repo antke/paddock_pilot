@@ -22,6 +22,12 @@ export const createHorseFormSchema = (
     .or(horseAgeSchema)
   return horseBaseFormSchema
     .extend({
+      sex: horseBaseFormSchema.shape.sex
+        .or(z.literal('unspecified'))
+        .transform((value) => (value === 'unspecified' ? undefined : value)),
+      shoeingStatus: horseBaseFormSchema.shape.shoeingStatus
+        .or(z.literal('unspecified'))
+        .transform((value) => (value === 'unspecified' ? undefined : value)),
       breed: horseBreedSchema
         .transform(
           (value) =>

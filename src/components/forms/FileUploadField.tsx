@@ -169,7 +169,9 @@ export function FileUploadField({
       className="min-w-0"
     >
       <FieldLabelRow>
-        <FieldLabel htmlFor={inputId}>{label}</FieldLabel>
+        <FieldLabel htmlFor={inputId} required={required}>
+          {label}
+        </FieldLabel>
         {help && (
           <FormHelpTooltip
             label={

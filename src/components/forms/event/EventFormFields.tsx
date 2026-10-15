@@ -1,4 +1,3 @@
-import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import type { PersonNameSuggestion } from '#/components/forms/PersonNameAutocomplete'
 import { localeInstances } from '#/i18n/resources'
 import { displayLocales } from 'shared/i18n/locale'
@@ -41,6 +40,7 @@ import { Controller, useFormState, useWatch } from 'react-hook-form'
 import type { Control, UseFormSetValue } from 'react-hook-form'
 import {
   eventStatuses,
+  eventRecurrenceSchema,
   eventTypes,
   recurrenceFrequencies,
   recurrenceOrdinals,
@@ -461,7 +461,8 @@ const getRecurrencePreview = (
   endDate: string | undefined,
   locale: Locale,
 ) => {
-  if (!recurrence) return undefined
+  if (!recurrence || !eventRecurrenceSchema.safeParse(recurrence).success)
+    return undefined
   const t = localeInstances[locale].t
   const end =
     recurrence.end?.type === 'on_date' && !isDateKey(recurrence.end.date ?? '')
@@ -541,7 +542,6 @@ export function EventFormFields({
     shortDayLabels,
   } = getEventFormOptions(locale)
   const eventDate = useWatch({ control, name: 'date' })
-  const eventStatus = useWatch({ control, name: 'status' })
   const endDate = useWatch({ control, name: 'endDate' })
   const eventTitle = useWatch({ control, name: 'title' })
   const eventType = useWatch({ control, name: 'type' })
@@ -553,7 +553,6 @@ export function EventFormFields({
     control,
     name: 'notesAfterCompletion',
   })
-  const horseIds = useWatch({ control, name: 'horseIds' })
   const recurring = useWatch({ control, name: 'recurring' })
   const recurrence = useWatch({ control, name: 'recurrence' })
   const { errors, submitCount } = useFormState({ control })
@@ -580,27 +579,19 @@ export function EventFormFields({
             amount: formatCurrencyAmount(totalCost, locale),
           })
         : undefined,
-    ]) || (trainingMode ? t('eventForm.optional') : undefined)
+    ]) || undefined
   const notesSummary =
-    description || notesAfterCompletion
-      ? t('eventForm.notesAdded')
-      : trainingMode
-        ? t('eventForm.optional')
-        : undefined
-  const horsesSummary = t('eventForm.horsesSelected', {
-    count: horseIds.length,
-  })
+    description || notesAfterCompletion ? t('eventForm.notesAdded') : undefined
   const recurrenceSummary = recurring
     ? recurrencePreview || t('eventForm.repeating')
     : t('eventForm.noRepeat')
   const essentialsInvalid = Boolean(
-    errors.title ||
+    (!trainingMode && errors.title) ||
     errors.type ||
-    errors.status ||
     errors.date ||
-    errors.endDate ||
     errors.time ||
-    errors.training,
+    errors.training?.activities ||
+    errors.training?.format,
   )
   const logisticsInvalid = Boolean(
     errors.location ||
@@ -665,6 +656,7 @@ export function EventFormFields({
           <FieldLabel htmlFor={field.name}>{t('eventForm.title')}</FieldLabel>
 
           <Input
+            aria-required={!trainingMode}
             {...field}
             id={field.name}
             type="text"
@@ -720,7 +712,7 @@ export function EventFormFields({
     />
   )
   const dateFields = (
-    <FieldGrid columns={trainingMode ? 2 : 3}>
+    <FieldGrid>
       <Controller
         name="date"
         control={control}
@@ -729,6 +721,7 @@ export function EventFormFields({
             <FieldLabel htmlFor={field.name}>{t('eventForm.date')}</FieldLabel>
 
             <Input
+              aria-required={true}
               {...field}
               id={field.name}
               type="date"
@@ -746,7 +739,6 @@ export function EventFormFields({
         )}
       />
 
-      {!trainingMode && endDateField}
       <Controller
         name="time"
         control={control}
@@ -755,6 +747,7 @@ export function EventFormFields({
             <FieldLabel htmlFor={field.name}>{t('eventForm.time')}</FieldLabel>
 
             <Input
+              aria-required={true}
               {...field}
               id={field.name}
               type="time"
@@ -783,96 +776,77 @@ export function EventFormFields({
       />
     </FieldGrid>
   )
-  const horseSection = (
-    <FormSection
-      defaultOpen={!trainingMode && horseIds.length === 0}
-      description={trainingMode ? undefined : t('eventForm.eventHorsesHelp')}
-      invalid={horsesInvalid}
-      summary={
-        horseIds.length
-          ? horses
-              .filter((horse) => horseIds.includes(horse._id))
-              .map((horse) => getHorseDisplayName(horse))
-              .join(', ')
-          : horsesSummary
-      }
-      title={t('eventForm.horses')}
-      validationAttempt={submitCount}
-    >
-      <Controller
-        name="horseIds"
-        control={control}
-        render={({ field, fieldState }) => (
-          <FieldSet
-            data-invalid={fieldState.invalid}
-            disabled={disabled}
-            aria-describedby={
-              fieldState.invalid ? 'event-horseIds-error' : undefined
-            }
-          >
-            <FieldLegend className="sr-only">
-              {t('eventForm.horses')}
-            </FieldLegend>
+  const horseFields = (
+    <Controller
+      name="horseIds"
+      control={control}
+      render={({ field, fieldState }) => (
+        <FieldSet
+          data-invalid={fieldState.invalid}
+          disabled={disabled}
+          aria-describedby={
+            fieldState.invalid ? 'event-horseIds-error' : undefined
+          }
+        >
+          <FieldLegend variant="label" required>
+            {t('eventForm.horses')}
+          </FieldLegend>
 
-            {horses.length === 0 ? (
-              <FieldGroup gap="compact">
-                <FieldDescription>
-                  {t(
-                    eventContext === 'personal'
-                      ? 'eventForm.noPersonalHorses'
-                      : 'eventForm.noHorses',
-                  )}
-                </FieldDescription>
-                {eventContext === 'personal' && (
-                  <div>
-                    <ButtonLink
-                      to="/horses/create"
-                      variant="outline"
-                      action="create"
-                    >
-                      {t('horseForm.addHorse')}
-                    </ButtonLink>
-                  </div>
+          {horses.length === 0 ? (
+            <FieldGroup gap="compact">
+              <FieldDescription>
+                {t(
+                  eventContext === 'personal'
+                    ? 'eventForm.noPersonalHorses'
+                    : 'eventForm.noHorses',
                 )}
-              </FieldGroup>
-            ) : null}
-            <FieldGrid breakpoint="sm" gap="compact">
-              {horses.map((horse) => {
-                const horseId = horse._id
-                const checked = field.value.includes(horseId)
+              </FieldDescription>
+              {eventContext === 'personal' && (
+                <div>
+                  <ButtonLink
+                    to="/horses/create"
+                    variant="outline"
+                    action="create"
+                  >
+                    {t('horseForm.addHorse')}
+                  </ButtonLink>
+                </div>
+              )}
+            </FieldGroup>
+          ) : null}
+          <FieldGrid breakpoint="sm" gap="compact">
+            {horses.map((horse) => {
+              const horseId = horse._id
+              const checked = field.value.includes(horseId)
 
-                return (
-                  <HorseSelectionCard
-                    key={horseId}
-                    id={horseId}
-                    name={field.name}
-                    value={horseId}
-                    horse={horse}
-                    checked={checked}
-                    disabled={disabled}
-                    invalid={fieldState.invalid}
-                    onCheckedChange={(isChecked) => {
-                      field.onChange(
-                        isChecked
-                          ? [...field.value, horseId]
-                          : field.value.filter((id) => id !== horseId),
-                      )
-                    }}
-                  />
-                )
-              })}
-            </FieldGrid>
+              return (
+                <HorseSelectionCard
+                  key={horseId}
+                  id={horseId}
+                  name={field.name}
+                  value={horseId}
+                  horse={horse}
+                  checked={checked}
+                  disabled={disabled}
+                  invalid={fieldState.invalid}
+                  onCheckedChange={(isChecked) => {
+                    field.onChange(
+                      isChecked
+                        ? [...field.value, horseId]
+                        : field.value.filter((id) => id !== horseId),
+                    )
+                  }}
+                />
+              )
+            })}
+          </FieldGrid>
 
-            {fieldState.invalid && (
-              <FieldError
-                id="event-horseIds-error"
-                errors={[fieldState.error]}
-              />
-            )}
-          </FieldSet>
-        )}
-      />
-    </FormSection>
+          {fieldState.invalid && (
+            <FieldError id="event-horseIds-error" errors={[fieldState.error]} />
+          )}
+        </FieldSet>
+      )}
+    />
   )
   const outcomeField = (
     <Controller
@@ -920,11 +894,11 @@ export function EventFormFields({
           {t('eventForm.essentialsHelp')}
         </p>
       )}
-      {trainingMode && horseSection}
       <FormSection
         defaultOpen
+        collapsible={false}
         description={trainingMode ? undefined : t('eventForm.eventHelp')}
-        invalid={essentialsInvalid}
+        invalid={essentialsInvalid || horsesInvalid}
         summary={essentialsSummary}
         title={
           trainingMode
@@ -933,8 +907,9 @@ export function EventFormFields({
         }
         validationAttempt={submitCount}
       >
+        {horseFields}
         {trainingMode && dateFields}
-        {(!trainingMode || scheduleOnly) && titleField}
+        {!trainingMode && titleField}
 
         {!trainingMode && (
           <Controller
@@ -942,7 +917,7 @@ export function EventFormFields({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel>{t('eventForm.type')}</FieldLabel>
+                <FieldLabel required>{t('eventForm.type')}</FieldLabel>
 
                 <ChoiceButtonGroup
                   aria-label={t('eventForm.eventType')}
@@ -976,6 +951,33 @@ export function EventFormFields({
           />
         )}
 
+        {!trainingMode && dateFields}
+      </FormSection>
+
+      <FormSection
+        title={t('eventForm.additionalDetails')}
+        optionalLabel={t('eventForm.optional')}
+        invalid={Boolean(
+          (trainingMode && errors.title) ||
+          errors.endDate ||
+          errors.status ||
+          errors.training?.durationMinutes ||
+          errors.training?.rider ||
+          errors.training?.focus ||
+          errors.training?.nextFocus,
+        )}
+        validationAttempt={submitCount}
+      >
+        {trainingMode && titleField}
+        {trainingMode && !scheduleOnly && (
+          <TrainingFormFields
+            control={control}
+            disabled={disabled}
+            fields="optional"
+            riderSuggestions={riderSuggestions}
+          />
+        )}
+        {endDateField}
         {trainingMode !== 'edit' && (
           <Controller
             name="status"
@@ -990,7 +992,7 @@ export function EventFormFields({
                       ? t('eventForm.sessionStatus')
                       : t('eventForm.eventStatus')
                   }
-                  value={field.value ?? 'planned'}
+                  value={field.value}
                   options={
                     trainingMode
                       ? eventStatusOptions.map((option) => ({
@@ -1026,30 +1028,7 @@ export function EventFormFields({
               : t('eventForm.trainingCreateCompletionHelp')}
           </FieldDescription>
         )}
-        {trainingMode &&
-          !scheduleOnly &&
-          eventStatus === 'completed' &&
-          outcomeField}
-        {!trainingMode && dateFields}
       </FormSection>
-
-      {trainingMode && !scheduleOnly && (
-        <FormSection
-          title={t('trainingViews.moreDetails')}
-          invalid={Boolean(errors.title || errors.endDate || errors.training)}
-          validationAttempt={submitCount}
-        >
-          {titleField}
-          <TrainingFormFields
-            control={control}
-            disabled={disabled}
-            fields="optional"
-            riderSuggestions={riderSuggestions}
-          />
-          {endDateField}
-        </FormSection>
-      )}
-      {!trainingMode && horseSection}
 
       <FormSection
         description={
@@ -1058,7 +1037,7 @@ export function EventFormFields({
             : t('eventForm.eventLogisticsHelp')
         }
         invalid={logisticsInvalid}
-        optionalLabel={trainingMode ? undefined : t('eventForm.optional')}
+        optionalLabel={t('eventForm.optional')}
         summary={logisticsSummary}
         title={
           trainingMode
@@ -1193,7 +1172,7 @@ export function EventFormFields({
                     ref={field.ref}
                     id={field.name}
                     name={field.name}
-                    value={field.value ?? ''}
+                    value={Number.isNaN(field.value) ? '' : (field.value ?? '')}
                     type="number"
                     min="0"
                     step="0.01"
@@ -1206,11 +1185,7 @@ export function EventFormFields({
                     autoComplete="off"
                     onBlur={field.onBlur}
                     onChange={(event) => {
-                      field.onChange(
-                        event.target.value === ''
-                          ? undefined
-                          : event.target.valueAsNumber,
-                      )
+                      field.onChange(event.target.valueAsNumber)
                     }}
                   />
 
@@ -1237,7 +1212,7 @@ export function EventFormFields({
                     ref={field.ref}
                     id={field.name}
                     name={field.name}
-                    value={field.value ?? ''}
+                    value={Number.isNaN(field.value) ? '' : (field.value ?? '')}
                     type="number"
                     min="0"
                     step="0.01"
@@ -1252,11 +1227,7 @@ export function EventFormFields({
                     autoComplete="off"
                     onBlur={field.onBlur}
                     onChange={(event) => {
-                      field.onChange(
-                        event.target.value === ''
-                          ? undefined
-                          : event.target.valueAsNumber,
-                      )
+                      field.onChange(event.target.valueAsNumber)
                     }}
                   />
 
@@ -1276,7 +1247,7 @@ export function EventFormFields({
       <FormSection
         description={t('eventForm.repeatHelp')}
         invalid={recurrenceInvalid}
-        optionalLabel={trainingMode ? undefined : t('eventForm.optional')}
+        optionalLabel={t('eventForm.optional')}
         summary={recurrenceSummary}
         title={t('eventForm.repeatSchedule')}
         validationAttempt={submitCount}
@@ -1357,7 +1328,9 @@ export function EventFormFields({
 
                     <Field>
                       <FieldLabelRow>
-                        <FieldLabel>{t('eventForm.repeat')}</FieldLabel>
+                        <FieldLabel required>
+                          {t('eventForm.repeat')}
+                        </FieldLabel>
                         <FormHelpTooltip label={t('eventForm.presetAbout')}>
                           {t('eventForm.presetTooltip')}
                         </FormHelpTooltip>
@@ -1405,7 +1378,7 @@ export function EventFormFields({
                             className="border-t border-border-subtle pt-4"
                           >
                             <FieldLabelRow>
-                              <FieldLabel>
+                              <FieldLabel required>
                                 {t('eventForm.daysOfWeek')}
                               </FieldLabel>
                               <FormHelpTooltip
@@ -1480,7 +1453,7 @@ export function EventFormFields({
                             control={control}
                             render={({ field: frequencyField, fieldState }) => (
                               <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel size="compact">
+                                <FieldLabel required size="compact">
                                   {t('eventForm.frequency')}
                                 </FieldLabel>
 
@@ -1711,10 +1684,15 @@ export function EventFormFields({
                                       {t('eventForm.every')}
                                     </FieldInlineText>
                                     <Input
+                                      aria-required="true"
                                       ref={intervalField.ref}
                                       id={intervalField.name}
                                       name={intervalField.name}
-                                      value={intervalField.value ?? 1}
+                                      value={
+                                        Number.isNaN(intervalField.value)
+                                          ? ''
+                                          : (intervalField.value ?? '')
+                                      }
                                       type="number"
                                       min={1}
                                       width="compactNumber"
@@ -1727,11 +1705,8 @@ export function EventFormFields({
                                       }
                                       onBlur={intervalField.onBlur}
                                       onChange={(e) => {
-                                        const val = e.target.value
                                         intervalField.onChange(
-                                          val === ''
-                                            ? undefined
-                                            : e.target.valueAsNumber,
+                                          e.target.valueAsNumber,
                                         )
                                       }}
                                     />
@@ -1766,7 +1741,7 @@ export function EventFormFields({
                                 control={control}
                                 render={({ field: daysField, fieldState }) => (
                                   <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel size="compact">
+                                    <FieldLabel required size="compact">
                                       {t('eventForm.daysOfWeek')}
                                     </FieldLabel>
 
@@ -1843,7 +1818,7 @@ export function EventFormFields({
                                             ? 'event-recurrence-monthlyMode-error'
                                             : undefined
                                         }
-                                        value={modeField.value ?? 'dayOfMonth'}
+                                        value={modeField.value ?? null}
                                         className="sm:w-auto sm:grid-cols-[max-content_max-content] sm:justify-start sm:gap-x-8"
                                         onValueChange={(value) => {
                                           modeField.onChange(value)
@@ -1930,7 +1905,10 @@ export function EventFormFields({
                                             id="recurrence-monthly-day"
                                             value="dayOfMonth"
                                           />
-                                          <FieldLabel htmlFor="recurrence-monthly-day">
+                                          <FieldLabel
+                                            required
+                                            htmlFor="recurrence-monthly-day"
+                                          >
                                             {t('eventForm.dayOfMonth')}
                                           </FieldLabel>
                                         </Field>
@@ -1969,6 +1947,7 @@ export function EventFormFields({
                                           data-invalid={fieldState.invalid}
                                         >
                                           <FieldLabel
+                                            required
                                             htmlFor={dayField.name}
                                             size="compact"
                                           >
@@ -1980,10 +1959,15 @@ export function EventFormFields({
                                               {t('eventForm.day')}
                                             </FieldInlineText>
                                             <Input
+                                              aria-required="true"
                                               ref={dayField.ref}
                                               id={dayField.name}
                                               name={dayField.name}
-                                              value={dayField.value ?? ''}
+                                              value={
+                                                Number.isNaN(dayField.value)
+                                                  ? ''
+                                                  : (dayField.value ?? '')
+                                              }
                                               type="number"
                                               min={1}
                                               max={31}
@@ -1997,11 +1981,8 @@ export function EventFormFields({
                                               }
                                               onBlur={dayField.onBlur}
                                               onChange={(e) => {
-                                                const val = e.target.value
                                                 const nextDay =
-                                                  val === ''
-                                                    ? undefined
-                                                    : e.target.valueAsNumber
+                                                  e.target.valueAsNumber
 
                                                 dayField.onChange(nextDay)
                                                 setValue(
@@ -2042,7 +2023,7 @@ export function EventFormFields({
                                           <Field
                                             data-invalid={fieldState.invalid}
                                           >
-                                            <FieldLabel size="compact">
+                                            <FieldLabel required size="compact">
                                               {t('eventForm.missingDate')}
                                             </FieldLabel>
 
@@ -2057,8 +2038,7 @@ export function EventFormFields({
                                                   : undefined
                                               }
                                               value={
-                                                strategyField.value ??
-                                                'lastDayOfMonth'
+                                                strategyField.value ?? null
                                               }
                                               onValueChange={
                                                 strategyField.onChange
@@ -2115,7 +2095,7 @@ export function EventFormFields({
                                         <Field
                                           data-invalid={fieldState.invalid}
                                         >
-                                          <FieldLabel size="compact">
+                                          <FieldLabel required size="compact">
                                             {t('eventForm.weekOfMonth')}
                                           </FieldLabel>
 
@@ -2180,7 +2160,7 @@ export function EventFormFields({
                                         <Field
                                           data-invalid={fieldState.invalid}
                                         >
-                                          <FieldLabel size="compact">
+                                          <FieldLabel required size="compact">
                                             {t('eventForm.weekday')}
                                           </FieldLabel>
 
@@ -2267,7 +2247,7 @@ export function EventFormFields({
                                     ? 'event-recurrence-end-error-type'
                                     : undefined
                                 }
-                                value={endField.value?.type ?? 'never'}
+                                value={endField.value?.type ?? null}
                                 className="sm:grid-cols-3 lg:grid-cols-1"
                                 onValueChange={(value) => {
                                   endField.onChange(
@@ -2341,6 +2321,7 @@ export function EventFormFields({
                                 </FieldLabel>
 
                                 <Input
+                                  aria-required="true"
                                   ref={endField.ref}
                                   id="recurrence-end-date"
                                   type="date"
@@ -2386,11 +2367,16 @@ export function EventFormFields({
                                 </FieldLabel>
 
                                 <Input
+                                  aria-required="true"
                                   ref={endField.ref}
                                   id="recurrence-end-count"
                                   type="number"
                                   min={1}
-                                  value={endField.value ?? ''}
+                                  value={
+                                    Number.isNaN(endField.value)
+                                      ? ''
+                                      : (endField.value ?? '')
+                                  }
                                   width="compactNumber"
                                   disabled={disabled}
                                   aria-invalid={fieldState.invalid}
@@ -2401,12 +2387,7 @@ export function EventFormFields({
                                   }
                                   onBlur={endField.onBlur}
                                   onChange={(e) => {
-                                    const val = e.target.value
-                                    endField.onChange(
-                                      val === ''
-                                        ? undefined
-                                        : e.target.valueAsNumber,
-                                    )
+                                    endField.onChange(e.target.valueAsNumber)
                                   }}
                                 />
 
@@ -2445,7 +2426,7 @@ export function EventFormFields({
         <FormSection
           description={t('eventForm.notesHelp')}
           invalid={notesInvalid}
-          optionalLabel={trainingMode ? undefined : t('eventForm.optional')}
+          optionalLabel={t('eventForm.optional')}
           summary={notesSummary}
           title={t(
             trainingMode ? 'eventForm.description' : 'eventForm.notesOutcome',
@@ -2488,7 +2469,7 @@ export function EventFormFields({
             )}
           />
 
-          {(!trainingMode || eventStatus !== 'completed') && outcomeField}
+          {outcomeField}
         </FormSection>
       )}
     </>

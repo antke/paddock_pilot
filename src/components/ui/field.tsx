@@ -11,7 +11,7 @@ function FieldSet({ className, ...props }: React.ComponentProps<'fieldset'>) {
     <fieldset
       data-slot="field-set"
       className={cn(
-        'flex flex-col gap-4 has-[>[data-slot=checkbox-group]]:gap-3 has-[>[data-slot=radio-group]]:gap-3',
+        'min-w-0 flex flex-col gap-4 has-[>[data-slot=checkbox-group]]:gap-3 has-[>[data-slot=radio-group]]:gap-3',
         '[&>[data-slot=field-legend]]:pl-2',
         className,
       )}
@@ -23,8 +23,13 @@ function FieldSet({ className, ...props }: React.ComponentProps<'fieldset'>) {
 function FieldLegend({
   className,
   variant = 'legend',
+  required = false,
+  children,
   ...props
-}: React.ComponentProps<'legend'> & { variant?: 'legend' | 'label' }) {
+}: React.ComponentProps<'legend'> & {
+  variant?: 'legend' | 'label'
+  required?: boolean
+}) {
   return (
     <legend
       data-slot="field-legend"
@@ -34,7 +39,17 @@ function FieldLegend({
         className,
       )}
       {...props}
-    />
+    >
+      {children}
+      {required && (
+        <span
+          aria-hidden="true"
+          data-slot="required-mark"
+          data-required
+          className="ml-1 text-destructive"
+        />
+      )}
+    </legend>
   )
 }
 
@@ -57,7 +72,7 @@ function FieldGroup({
     <div
       data-slot="field-group"
       className={cn(
-        'group/field-group @container/field-group flex w-full flex-col data-[slot=checkbox-group]:gap-3',
+        'group/field-group @container/field-group flex min-w-0 w-full flex-col data-[slot=checkbox-group]:gap-3',
         fieldGroupGapClassNames[gap],
         className,
       )}
@@ -156,7 +171,7 @@ function FieldGrid({
     <div
       data-slot="field-grid"
       className={cn(
-        'grid',
+        'grid min-w-0 grid-cols-1 items-start [&>*]:min-w-0',
         gap === 'compact' ? 'gap-3' : 'gap-4',
         template === 'equal'
           ? fieldGridColumnClassNames[breakpoint][columns]
@@ -169,7 +184,7 @@ function FieldGrid({
 }
 
 const fieldVariants = cva(
-  'group/field flex w-full gap-2 data-[invalid=true]:text-destructive',
+  'group/field flex min-w-0 w-full shrink-0 gap-2 data-[invalid=true]:text-destructive',
   {
     variants: {
       orientation: {
@@ -208,7 +223,7 @@ function FieldContent({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="field-content"
       className={cn(
-        'group/field-content flex flex-1 flex-col gap-0.5 leading-snug',
+        'group/field-content flex min-w-0 flex-1 flex-col gap-0.5 leading-snug',
         className,
       )}
       {...props}
@@ -221,11 +236,14 @@ function FieldLabel({
   htmlFor,
   id,
   interactive = false,
+  required = false,
+  children,
   size = 'default',
   width = 'fit',
   ...props
 }: React.ComponentProps<typeof Label> & {
   interactive?: boolean
+  required?: boolean
   size?: FieldLabelSize
   width?: 'fit' | 'full'
 }) {
@@ -243,7 +261,15 @@ function FieldLabel({
         className,
       )}
       {...props}
-    />
+    >
+      {children}
+      <span
+        aria-hidden="true"
+        data-slot="required-mark"
+        data-required={required || undefined}
+        className="text-destructive"
+      />
+    </Label>
   )
 }
 

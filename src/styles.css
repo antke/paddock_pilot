@@ -339,7 +339,7 @@
 @utility app-control {
   height: var(--control-height);
   border-radius: var(--radius-control);
-  @apply w-full min-w-0 border border-input/80 bg-surface-elevated px-3 text-sm font-medium text-foreground shadow-none transition-[background-color,border-color,color,box-shadow] duration-150 outline-none placeholder:text-muted-foreground hover:border-primary/45 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-surface-muted disabled:opacity-55 dark:bg-surface-elevated dark:disabled:bg-surface-muted;
+  @apply w-full min-w-0 max-w-full shrink-0 border border-input/80 bg-surface-elevated px-3 text-sm font-medium text-foreground shadow-none transition-[background-color,border-color,color,box-shadow] duration-150 outline-none placeholder:text-muted-foreground hover:border-primary/45 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-surface-muted disabled:opacity-55 dark:bg-surface-elevated dark:disabled:bg-surface-muted;
 }
 
 @utility app-control-focus {
@@ -399,7 +399,39 @@
   }
 }
 
+/* Native WebKit date/time editors must fit inside their grid column. */
+.app-picker-control::-webkit-date-and-time-value {
+  min-width: 0;
+  text-align: start;
+}
+
+[data-slot='required-mark']::after {
+  content: '*';
+}
+[data-slot='required-fields-hint'] {
+  display: none;
+}
+form:has(:is([required], [aria-required='true'], [data-required]))
+  [data-slot='required-fields-hint'] {
+  display: block;
+}
+
+[data-slot='required-mark'] {
+  display: none;
+}
+[data-slot='required-mark'][data-required],
+[data-slot='field']:has(:is([required], [aria-required='true']))
+  > [data-slot='field-label']
+  > [data-slot='required-mark'],
+[data-slot='field']:has(:is([required], [aria-required='true']))
+  > [data-slot='field-label-row']
+  > [data-slot='field-label']
+  > [data-slot='required-mark'] {
+  display: inline;
+}
+
 .app-picker-control {
+  max-width: 100%;
   padding-inline-end: 0.375rem;
   color-scheme: light;
 }
@@ -648,7 +680,7 @@
 }
 
 @utility app-height-collapse {
-  @apply grid transition-[grid-template-rows,opacity] motion-reduce:transition-none;
+  @apply min-w-0 grid transition-[grid-template-rows,opacity] motion-reduce:transition-none;
   transition-duration: var(--motion-disclosure);
   transition-timing-function: var(--ease-arrive);
 }
@@ -662,7 +694,7 @@
 }
 
 @utility app-height-collapse-inner {
-  @apply min-h-0 overflow-hidden;
+  @apply min-h-0 min-w-0 overflow-hidden;
 }
 
 html,
@@ -1369,5 +1401,14 @@ body {
   }
   [data-slot='mobile-stable-dashboard'] [data-slot='dashboard-section'] {
     gap: 0.75rem;
+  }
+}
+
+/* iOS does not zoom editable controls when their text is at least 16px. */
+@media (width < 48rem), (pointer: coarse) {
+  input.app-control,
+  textarea.app-control,
+  select.app-control {
+    font-size: 1rem;
   }
 }

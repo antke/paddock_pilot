@@ -34,9 +34,12 @@ export function HorseNicknameField({
   const id = useId()
   return (
     <Field data-invalid={Boolean(error)}>
-      <FieldLabel htmlFor={id}>{t('horseForm.nickname')}</FieldLabel>
+      <FieldLabel htmlFor={id} required={checked}>
+        {t('horseForm.nickname')}
+      </FieldLabel>
       <div className="flex items-center gap-4">
         <Input
+          aria-required={checked || undefined}
           id={id}
           name="nickname"
           ref={inputRef}

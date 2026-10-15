@@ -20,6 +20,7 @@ export const eventForm = {
   untitledSession: 'Untitled session',
   untitledEvent: 'Untitled event',
   noDate: 'No date',
+  additionalDetails: 'Additional details',
   optional: 'Optional',
   notesAdded: 'Notes added',
   repeating: 'Repeating event',

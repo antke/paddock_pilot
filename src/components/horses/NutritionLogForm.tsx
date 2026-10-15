@@ -123,6 +123,7 @@ export function NutritionLogForm({
                   {t('careRecords.changeSummary')}
                 </FieldLabel>
                 <Input
+                  aria-required="true"
                   {...field}
                   id={`${formId}-${field.name}`}
                   disabled={
@@ -156,6 +157,7 @@ export function NutritionLogForm({
                   {t('careRecords.changedDate')}
                 </FieldLabel>
                 <Input
+                  aria-required="true"
                   {...field}
                   id={`${formId}-${field.name}`}
                   type="date"

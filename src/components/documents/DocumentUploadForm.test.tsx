@@ -71,6 +71,7 @@ describe('DocumentUploadForm', () => {
       />,
     )
     const fileInput = screen.getByLabelText('File (required)')
+    expect(screen.getByLabelText<HTMLSelectElement>('Type').value).toBe('other')
     fireEvent.change(fileInput, { target: { files: files() } })
     const name = screen.getByLabelText<HTMLInputElement>('Document name')
     await waitFor(() => expect(name.value).toBe('sample-record.txt'))
@@ -97,6 +98,7 @@ describe('DocumentUploadForm', () => {
     expect(onSubmit).toHaveBeenLastCalledWith(
       expect.objectContaining({
         horseId: 'sample-horse',
+        type: 'other',
         notes: 'Keep this sample note',
       }),
     )

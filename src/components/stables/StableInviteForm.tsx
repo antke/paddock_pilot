@@ -143,6 +143,7 @@ export function StableInviteFormView({
               {t('invitations.email')}
             </FieldLabel>
             <Input
+              aria-required="true"
               {...field}
               id={`${formId}-${field.name}`}
               type="email"

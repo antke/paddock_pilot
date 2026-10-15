@@ -21,6 +21,7 @@ export const eventForm = {
   untitledSession: 'Trening bez tytułu',
   untitledEvent: 'Wydarzenie bez tytułu',
   noDate: 'Brak daty',
+  additionalDetails: 'Dodatkowe informacje',
   optional: 'Opcjonalnie',
   notesAdded: 'Dodano notatki',
   repeating: 'Wydarzenie cykliczne',

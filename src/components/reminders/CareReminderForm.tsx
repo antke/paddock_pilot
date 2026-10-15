@@ -211,7 +211,7 @@ export function CareReminderForm({
           control={control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>{t('reminders.appliesTo')}</FieldLabel>
+              <FieldLabel required>{t('reminders.appliesTo')}</FieldLabel>
               <ChoiceButtonGroup
                 aria-label={t('reminders.appliesTo')}
                 value={field.value}
@@ -263,7 +263,7 @@ export function CareReminderForm({
                     : undefined
                 }
               >
-                <FieldLegend>{t('reminders.horses')}</FieldLegend>
+                <FieldLegend required>{t('reminders.horses')}</FieldLegend>
                 <FieldHeader>
                   <FieldHeaderContent>
                     <FieldDescription>
@@ -388,6 +388,7 @@ export function CareReminderForm({
             {t('reminders.category')}
           </FieldLabel>
           <Select
+            aria-required="true"
             id={`${formId}-category`}
             disabled={isSubmitting}
             aria-invalid={Boolean(errors.category)}

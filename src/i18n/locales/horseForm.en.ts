@@ -20,7 +20,7 @@ export const horseForm = {
   microchipAdded: 'Microchip added',
   optional: 'Optional',
   nutritionAdded: 'Nutrition details added',
-  detailsHelp: "Add the horse's identifying details and profile image.",
+  detailsHelp: 'Add the horse’s name, owner and birth date or age.',
   details: 'Horse details',
   name: 'Horse name',
   owner: 'Owner name',

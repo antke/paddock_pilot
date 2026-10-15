@@ -345,6 +345,7 @@ export const pl = {
       'Sprawdź połączenie i spróbuj ponownie. Twój profil nie został zmieniony.',
   },
   common: {
+    requiredFields: 'Pola oznaczone * są wymagane.',
     unsavedTitle: 'Wyjść bez zapisywania?',
     unsavedHelp:
       'Zmiany nie zostały zapisane. Zostań, aby je dokończyć, lub wyjdź i je odrzuć.',

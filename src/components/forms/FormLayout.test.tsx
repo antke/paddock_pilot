@@ -107,3 +107,36 @@ describe('FormGroup', () => {
     expect(screen.queryByRole('button')).toBeNull()
   })
 })
+
+describe('FormSection visibility', () => {
+  it('keeps required details visible without a collapse control', () => {
+    render(
+      <FormSection title="Essentials" collapsible={false}>
+        <input aria-label="Name" />
+      </FormSection>,
+    )
+    expect(screen.getByRole('heading', { name: 'Essentials' })).toBeTruthy()
+    expect(screen.queryByRole('button')).toBeNull()
+    expect(screen.getByRole('textbox').closest('[hidden], [inert]')).toBeNull()
+  })
+
+  it('preserves entered optional values while hiding and reopening the section', () => {
+    render(
+      <FormSection title="Notes">
+        <input aria-label="Notes" />
+      </FormSection>,
+    )
+    const trigger = screen.getByRole('button', { name: 'Notes' })
+    expect(screen.queryByRole('textbox')).toBeNull()
+    fireEvent.click(trigger)
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'Keep this draft' },
+    })
+    fireEvent.click(trigger)
+    expect(screen.queryByRole('textbox')).toBeNull()
+    fireEvent.click(trigger)
+    expect(screen.getByRole<HTMLInputElement>('textbox').value).toBe(
+      'Keep this draft',
+    )
+  })
+})

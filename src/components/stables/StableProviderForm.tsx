@@ -91,7 +91,7 @@ export function StableProviderForm({
         control={form.control}
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel>{t('stables.providerType')}</FieldLabel>
+            <FieldLabel required>{t('stables.providerType')}</FieldLabel>
             <ChoiceButtonGroup
               value={field.value}
               options={providerTypeOptions}
@@ -119,6 +119,7 @@ export function StableProviderForm({
             {t('stables.personName')}
           </FieldLabel>
           <Input
+            aria-required="true"
             id={`${formId}-name`}
             autoFocus
             type="text"

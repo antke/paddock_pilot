@@ -125,6 +125,7 @@ import {
   FieldPanel,
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
+import { Textarea } from '#/components/ui/textarea'
 import { Progress } from '#/components/ui/progress'
 import { RadioGroup, RadioGroupItem } from '#/components/ui/radio-group'
 import { Select } from '#/components/ui/select'
@@ -565,7 +566,7 @@ const componentInventory = [
       'RouteFormCard, RouteFormActions, InlineForm, FormGroup, FormSection, FormStepHeader, FormTabsContent, SelectableCardField, SelectableCardCheckbox, SelectableCardLabel, DashboardInlineForm, DashboardInlineField, CreateRecordDialog, EditRecordDialog, UnsavedChangesGuard, RecordDialog primitives, Field, FieldGroup, FieldGrid, FieldPanel, FieldDescription, FieldLabelRow, FieldHeader, FieldHeaderContent, FieldOptionGroup, FieldInlineControl, FieldInlineText, FileUploadField, Input, Select, Textarea, Checkbox, RadioGroup, ChoiceButtonGroup, FormSubmitActions, and FormSubmitButtons',
     use: 'Stable, horse, event, provider, reminder, document workflows',
     status: 'Canonical',
-    rule: 'Use UnsavedChangesGuard for meaningful form drafts, with a live predicate that stops blocking immediately after an acknowledged save. Use RouteFormCard for create/edit routes, including its contentGap prop for route-form body rhythm, stickyActions for long page forms, and embedded mode when a persistent entity shell already owns the page heading; use RouteFormActions for page form footers, including resetConfirmation before discarding meaningful edits, and InlineForm or DashboardInlineForm for embedded forms. Split a manageable form into always-visible FormGroup sections; reserve animated FormSection accordions for forms whose field count is genuinely difficult to scan, keep the first or most essential section open, and use FormStepHeader for numbered substeps inside a larger form section. Use InlineForm layout for known compact inline compositions, FormTabsContent only when the content represents genuinely separate views rather than sequential form data, SelectableCardField, SelectableCardCheckbox, and SelectableCardLabel for generic checkbox/radio rows that wrap a full card, and HorseSelectionCard for horse pickers so selection is represented by the card outline rather than an adjacent control. Use CreateRecordDialog with RecordDialog primitives for dialog create flows and EditRecordDialog for controlled record editing from existing row actions; keep save/error state in the caller and pass isPending to block dismissal during a save, and use FormSubmitActions sticky for long scrolling dialog forms so completion remains reachable without inventing a feature-local footer. Use FieldGroup with its gap prop for vertical field stacks, FieldGrid for responsive field columns, FieldPanel with its gap prop for inset form groups, FieldDescription for block helper copy, FieldLabel size, width, and interactive props for compact or full-width clickable labels, FieldLabelRow for labels paired with help or tooltip controls, FieldHeader and FieldHeaderContent for fieldset legends or labels paired with an aside badge/action, FieldOptionGroup for wrapped radio or checkbox option clusters, FieldInlineControl for compact input-prefix-suffix rows, FieldInlineText for muted inline prefixes and suffixes, Input width and Textarea minHeight for control sizing, FileUploadField for file inputs with optional help and the same rounded selected-file surface as the empty drop zone, ChoiceButtonGroup layout="cards" for descriptive two-way choices, DashboardInlineField for selectable rows, and FormSubmitActions or FormSubmitButtons for cancel/submit rows before adding local grid, spacing, dialog sizing, helper-text classes, label/help flex rows, field-header flex rows, option-cluster flex rows, inline-control flex rows, file-input field recipes, compact input width recipes, control-size recipes, or floating-trigger recipes.',
+    rule: 'Use UnsavedChangesGuard for meaningful form drafts, with a live predicate that stops blocking immediately after an acknowledged save. Use RouteFormCard for create/edit routes, including its contentGap prop for route-form body rhythm, stickyActions for long page forms, and embedded mode when a persistent entity shell already owns the page heading; use RouteFormActions for page form footers, including resetConfirmation before discarding meaningful edits, and InlineForm or DashboardInlineForm for embedded forms. Split a manageable form into always-visible FormGroup sections; reserve FormSection disclosures for forms whose field count is genuinely difficult to scan, keep required fields in an always-visible first section with collapsible={false}, and use FormStepHeader for numbered substeps inside a larger form section. Use InlineForm layout for known compact inline compositions, FormTabsContent only when the content represents genuinely separate views rather than sequential form data, SelectableCardField, SelectableCardCheckbox, and SelectableCardLabel for generic checkbox/radio rows that wrap a full card, and HorseSelectionCard for horse pickers so selection is represented by the card outline rather than an adjacent control. Use CreateRecordDialog with RecordDialog primitives for dialog create flows and EditRecordDialog for controlled record editing from existing row actions; keep save/error state in the caller and pass isPending to block dismissal during a save, and use FormSubmitActions sticky for long scrolling dialog forms so completion remains reachable without inventing a feature-local footer. Use FieldGroup with its gap prop for vertical field stacks, FieldGrid for responsive field columns, FieldPanel with its gap prop for inset form groups, FieldDescription for block helper copy, FieldLabel size, width, and interactive props for compact or full-width clickable labels, FieldLabelRow for labels paired with help or tooltip controls, FieldHeader and FieldHeaderContent for fieldset legends or labels paired with an aside badge/action, FieldOptionGroup for wrapped radio or checkbox option clusters, FieldInlineControl for compact input-prefix-suffix rows, FieldInlineText for muted inline prefixes and suffixes, Input width and Textarea minHeight for control sizing, FileUploadField for file inputs with optional help and the same rounded selected-file surface as the empty drop zone, ChoiceButtonGroup layout="cards" for descriptive two-way choices, DashboardInlineField for selectable rows, and FormSubmitActions or FormSubmitButtons for cancel/submit rows before adding local grid, spacing, dialog sizing, helper-text classes, label/help flex rows, field-header flex rows, option-cluster flex rows, inline-control flex rows, file-input field recipes, compact input width recipes, control-size recipes, or floating-trigger recipes.',
   },
   {
     group: 'Feedback and overlays',
@@ -1537,7 +1538,7 @@ function ComponentSpecimens() {
           </DashboardLayoutGrid>
         </div>
 
-        <div className="grid gap-3">
+        <div data-slot="form-control-specimen" className="grid gap-3">
           <TextLabel as="p" size="sm" weight="medium" tracking="none">
             Fields
           </TextLabel>
@@ -1582,6 +1583,30 @@ function ComponentSpecimens() {
               </FieldError>
             </Field>
           </FieldGrid>
+          <FieldGrid breakpoint="sm">
+            <Field>
+              <FieldLabel htmlFor="guideline-date">Visit date</FieldLabel>
+              <Input
+                id="guideline-date"
+                type="date"
+                defaultValue="2026-10-14"
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="guideline-time">Visit time</FieldLabel>
+              <Input id="guideline-time" type="time" defaultValue="10:30" />
+            </Field>
+          </FieldGrid>
+          <Field>
+            <FieldLabel htmlFor="guideline-notes">Visit notes</FieldLabel>
+            <Textarea
+              id="guideline-notes"
+              defaultValue="Keep the visit notes with the horse’s record."
+            />
+            <FieldDescription>
+              Add preparation details and questions for the provider.
+            </FieldDescription>
+          </Field>
           <FileUploadField
             id="guideline-file"
             name="guideline-file"

@@ -20,7 +20,7 @@ export const horseForm = {
   microchipAdded: 'Dodano mikroczip',
   optional: 'Opcjonalnie',
   nutritionAdded: 'Dodano informacje o żywieniu',
-  detailsHelp: 'Uzupełnij dane identyfikacyjne konia i zdjęcie profilowe.',
+  detailsHelp: 'Podaj imię konia, właściciela oraz datę urodzenia lub wiek.',
   details: 'Dane konia',
   name: 'Imię konia',
   owner: 'Imię i nazwisko właściciela',

@@ -20,7 +20,7 @@ function Textarea({
     <textarea
       data-slot="textarea"
       className={cn(
-        'app-control app-control-focus app-control-invalid flex field-sizing-content py-2.5',
+        'app-control app-control-focus app-control-invalid block h-auto field-sizing-content py-2.5',
         textareaMinHeightClassNames[minHeight],
         className,
       )}

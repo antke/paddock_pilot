@@ -52,7 +52,7 @@ export function TrainingFormFields({
           name="training.activities"
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>{t('eventForm.workType')}</FieldLabel>
+              <FieldLabel required>{t('eventForm.workType')}</FieldLabel>
               <ToggleGroup
                 multiple
                 variant="outline"
@@ -88,9 +88,7 @@ export function TrainingFormFields({
           )}
         />
       )}
-      {(fields === 'all' ||
-        fields === 'essential' ||
-        fields === 'duration') && (
+      {(fields === 'all' || fields === 'optional' || fields === 'duration') && (
         <Controller
           control={control}
           name="training.durationMinutes"
@@ -113,7 +111,7 @@ export function TrainingFormFields({
                 onBlur={field.onBlur}
                 onChange={(e) =>
                   field.onChange(
-                    e.target.value === '' ? undefined : Number(e.target.value),
+                    e.target.value === '' ? '' : Number(e.target.value),
                   )
                 }
                 disabled={disabled}
@@ -127,36 +125,40 @@ export function TrainingFormFields({
         />
       )}
       {(fields === 'all' ||
+        fields === 'essential' ||
+        fields === 'adjustments') && (
+        <Controller
+          control={control}
+          name="training.format"
+          render={({ field, fieldState }) => (
+            <Field>
+              <FieldLabel required>{t('eventForm.sessionFormat')}</FieldLabel>
+              <ChoiceButtonGroup
+                aria-label={t('eventForm.sessionFormat')}
+                aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid ? `${id}-format-error` : undefined
+                }
+                value={field.value}
+                options={trainingFormats.map((value) => ({
+                  value,
+                  label: t(`training.formats.${value}`),
+                }))}
+                onValueChange={field.onChange}
+                disabled={disabled}
+              />
+              <FieldError
+                id={`${id}-format-error`}
+                errors={[fieldState.error]}
+              />
+            </Field>
+          )}
+        />
+      )}
+      {(fields === 'all' ||
         fields === 'optional' ||
         fields === 'adjustments') && (
         <>
-          <Controller
-            control={control}
-            name="training.format"
-            render={({ field, fieldState }) => (
-              <Field>
-                <FieldLabel>{t('eventForm.sessionFormat')}</FieldLabel>
-                <ChoiceButtonGroup
-                  aria-label={t('eventForm.sessionFormat')}
-                  aria-invalid={fieldState.invalid}
-                  aria-describedby={
-                    fieldState.invalid ? `${id}-format-error` : undefined
-                  }
-                  value={field.value ?? 'regular'}
-                  options={trainingFormats.map((value) => ({
-                    value,
-                    label: t(`training.formats.${value}`),
-                  }))}
-                  onValueChange={field.onChange}
-                  disabled={disabled}
-                />
-                <FieldError
-                  id={`${id}-format-error`}
-                  errors={[fieldState.error]}
-                />
-              </Field>
-            )}
-          />
           <Controller
             control={control}
             name="training.rider"

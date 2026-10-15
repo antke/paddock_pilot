@@ -1,3 +1,4 @@
+import { useT } from '#/i18n/LocaleProvider'
 import { CaretDownIcon } from '@phosphor-icons/react'
 import { useEffect, useId, useRef, useState } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
@@ -36,6 +37,7 @@ type FormSectionProps = Omit<
 > & {
   children: ReactNode
   defaultOpen?: boolean
+  collapsible?: boolean
   description?: ReactNode
   invalid?: boolean
   number?: number
@@ -45,9 +47,9 @@ type FormSectionProps = Omit<
   validationAttempt?: number
 }
 
-export const inlineFormClassName = 'grid gap-5'
-export const compactInlineFormClassName = 'grid gap-4'
-export const tightInlineFormClassName = 'grid gap-3'
+export const inlineFormClassName = 'grid min-w-0 grid-cols-1 gap-5'
+export const compactInlineFormClassName = 'grid min-w-0 grid-cols-1 gap-4'
+export const tightInlineFormClassName = 'grid min-w-0 grid-cols-1 gap-3'
 export const inviteInlineFormClassName =
   'sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start'
 export const formTabsContentClassName = 'flex flex-col gap-4'
@@ -71,6 +73,7 @@ export function InlineForm({
       )}
       {...props}
     >
+      <RequiredFieldsHint />
       {children}
     </form>
   )
@@ -155,6 +158,7 @@ export function FormSection({
   children,
   className,
   defaultOpen = false,
+  collapsible = true,
   description,
   invalid = false,
   number,
@@ -165,7 +169,9 @@ export function FormSection({
   ...props
 }: FormSectionProps) {
   const contentId = useId()
-  const [open, setOpen] = useState(defaultOpen)
+  const [expanded, setOpen] = useState(defaultOpen)
+  const open = !collapsible || expanded
+  const Header = collapsible ? 'button' : 'div'
   const sectionRef = useRef<HTMLElement>(null)
   const previousValidationAttempt = useRef(validationAttempt)
 
@@ -211,7 +217,7 @@ export function FormSection({
           : 'smooth',
         block: 'center',
       })
-    }, 220)
+    }, 0)
 
     return () => window.clearTimeout(focusTimer)
   }, [invalid, validationAttempt])
@@ -222,19 +228,23 @@ export function FormSection({
       data-slot="form-section"
       data-open={open || undefined}
       className={cn(
-        'app-row overflow-hidden bg-card transition-colors',
+        'app-row min-w-0 bg-card transition-colors',
         open && 'border-primary/25',
         invalid && 'border-destructive/45',
         className,
       )}
       {...props}
     >
-      <button
-        type="button"
-        className="app-choice-feedback app-control-focus flex w-full cursor-pointer items-center gap-3 px-4 py-4 text-left hover:bg-primary/5 focus-visible:outline-none sm:px-5"
-        aria-controls={contentId}
-        aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
+      <Header
+        type={collapsible ? 'button' : undefined}
+        className={cn(
+          'flex min-w-0 w-full items-center gap-3 px-4 py-4 text-left sm:px-5',
+          collapsible &&
+            'app-choice-feedback app-control-focus cursor-pointer hover:bg-primary/5 focus-visible:outline-none',
+        )}
+        aria-controls={collapsible ? contentId : undefined}
+        aria-expanded={collapsible ? open : undefined}
+        onClick={collapsible ? () => setOpen((current) => !current) : undefined}
       >
         {number !== undefined && (
           <span
@@ -252,6 +262,8 @@ export function FormSection({
         <span className="grid min-w-0 flex-1 gap-1">
           <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <span
+              role={collapsible ? undefined : 'heading'}
+              aria-level={collapsible ? undefined : 3}
               className={cn(
                 dashboardNestedHeadingClassName,
                 'text-lg leading-none',
@@ -272,27 +284,21 @@ export function FormSection({
           )}
         </span>
 
-        <CaretDownIcon
-          className={cn(
-            'size-4 shrink-0 text-muted-foreground transition-transform duration-200 motion-reduce:transition-none',
-            open && 'rotate-180',
-          )}
-          aria-hidden="true"
-        />
-      </button>
-
-      <div
-        id={contentId}
-        aria-hidden={!open}
-        className={cn(
-          'app-height-collapse',
-          open ? 'app-height-collapse-open' : 'app-height-collapse-closed',
+        {collapsible && (
+          <CaretDownIcon
+            className={cn(
+              'size-4 shrink-0 text-muted-foreground transition-transform duration-200 motion-reduce:transition-none',
+              open && 'rotate-180',
+            )}
+            aria-hidden="true"
+          />
         )}
-      >
-        <div className="app-height-collapse-inner" inert={!open}>
-          <div className="grid gap-5 border-t border-border-subtle bg-card px-4 py-5 sm:px-5 sm:py-6">
-            {children}
-          </div>
+      </Header>
+
+      {/* Normal block flow avoids WebKit intrinsic sizing bugs in nested grid disclosures. */}
+      <div id={contentId} hidden={!open} inert={!open}>
+        <div className="grid min-w-0 grid-cols-1 gap-5 border-t border-border-subtle bg-card px-4 py-5 sm:px-5 sm:py-6">
+          {children}
         </div>
       </div>
     </section>
@@ -333,5 +339,17 @@ export function SelectableCardLabel({
 }: SelectableCardLabelProps) {
   return (
     <FieldLabel data-slot="selectable-card-label" width={width} {...props} />
+  )
+}
+
+export function RequiredFieldsHint() {
+  const t = useT()
+  return (
+    <p
+      data-slot="required-fields-hint"
+      className="col-span-full text-sm text-muted-foreground"
+    >
+      {t('common.requiredFields')}
+    </p>
   )
 }

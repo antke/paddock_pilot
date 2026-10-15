@@ -295,7 +295,7 @@ export function MedicationRecordForm({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>{t('careRecords.status')}</FieldLabel>
+              <FieldLabel required>{t('careRecords.status')}</FieldLabel>
               <ChoiceButtonGroup
                 aria-label={t('careRecords.status')}
                 value={field.value}

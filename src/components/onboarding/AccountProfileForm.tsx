@@ -175,6 +175,7 @@ export function AccountProfileFormView({
                 {t('profileForm.preferredName')}
               </FieldLabel>
               <Input
+                aria-required="true"
                 {...field}
                 id={`${formId}-${field.name}`}
                 autoComplete="name"

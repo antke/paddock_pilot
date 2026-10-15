@@ -46,6 +46,7 @@ it('translates dirty horse validation and acknowledged-save errors without reset
     target: { value: 'Żaneta Łącka' },
   })
   fireEvent.change(screen.getByLabelText('Year'), { target: { value: '2018' } })
+  fireEvent.click(screen.getByRole('button', { name: /Profile & health/ }))
   fireEvent.click(screen.getByRole('button', { name: 'Mare' }))
   // Finish validation and its deferred focus recovery before changing language.
   // A real zero-delay timer can race React's commit under concurrent test load.

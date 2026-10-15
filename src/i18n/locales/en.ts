@@ -339,6 +339,7 @@ export const en = {
       'Check your connection, then try again. Your profile has not been changed.',
   },
   common: {
+    requiredFields: 'Fields marked * are required.',
     unsavedTitle: 'Leave without saving?',
     unsavedHelp:
       'Your changes have not been saved. Stay here to finish or leave and discard them.',

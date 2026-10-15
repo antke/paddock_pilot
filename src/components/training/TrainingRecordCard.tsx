@@ -235,7 +235,7 @@ function TrainingRecordEditor({
   const [outcome, setOutcome] = useState(entry.record?.outcome ?? '')
   const [error, setError] = useState<TrainingValidationKey | 'save'>()
   const [serverErrorCode, setServerErrorCode] = useState<UserFacingErrorCode>()
-  const { trainingRecordSchema } = createTrainingSchemas((key) => key)
+  const { trainingRecordFormSchema } = createTrainingSchemas((key) => key)
   const [pending, setPending] = useState(false)
   const form = useForm<EventFormInput, unknown, EventFormSchema>({
     defaultValues: {
@@ -263,7 +263,7 @@ function TrainingRecordEditor({
         if (submitting.current) return
         form.clearErrors()
         setServerErrorCode(undefined)
-        const parsed = trainingRecordSchema.safeParse({
+        const parsed = trainingRecordFormSchema.safeParse({
           ...form.getValues('training'),
           status,
           outcome,

@@ -101,6 +101,7 @@ export function WeightRecordForm({
                 {t('careRecords.weight')}
               </FieldLabel>
               <Input
+                aria-required="true"
                 ref={field.ref}
                 name={field.name}
                 id={`${formId}-${field.name}`}
@@ -140,7 +141,7 @@ export function WeightRecordForm({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>{t('careRecords.unit')}</FieldLabel>
+              <FieldLabel required>{t('careRecords.unit')}</FieldLabel>
               <ChoiceButtonGroup
                 aria-label={t('careRecords.weightUnit')}
                 value={field.value}
@@ -175,6 +176,7 @@ export function WeightRecordForm({
                 {t('careRecords.measuredDate')}
               </FieldLabel>
               <Input
+                aria-required="true"
                 {...field}
                 id={`${formId}-${field.name}`}
                 type="date"

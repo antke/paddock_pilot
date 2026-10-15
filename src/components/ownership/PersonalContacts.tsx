@@ -246,6 +246,7 @@ function ContactEditor({
       <Field>
         <FieldLabel htmlFor={`${id}-type`}>{t('eventForm.type')}</FieldLabel>
         <Select
+          aria-required="true"
           id={`${id}-type`}
           value={type}
           disabled={pending}

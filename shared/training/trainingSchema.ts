@@ -87,7 +87,22 @@ export function createTrainingSchemas(
       .max(1000, message('outcomeMax'))
       .optional(),
   })
-  return { trainingDetailsSchema, trainingRecordSchema }
+  // Keep an explicit cleared value in controlled forms; only the submitted
+  // payload maps it back to an absent optional duration.
+  const trainingDetailsFormSchema = trainingDetailsSchema.extend({
+    durationMinutes: trainingDetailsSchema.shape.durationMinutes
+      .or(z.literal(''))
+      .transform((value) => (value === '' ? undefined : value)),
+  })
+  const trainingRecordFormSchema = trainingRecordSchema.extend({
+    durationMinutes: trainingDetailsFormSchema.shape.durationMinutes,
+  })
+  return {
+    trainingDetailsSchema,
+    trainingRecordSchema,
+    trainingDetailsFormSchema,
+    trainingRecordFormSchema,
+  }
 }
 export const { trainingDetailsSchema, trainingRecordSchema } =
   createTrainingSchemas()

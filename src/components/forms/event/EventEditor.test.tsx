@@ -6,6 +6,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ComponentProps } from 'react'
@@ -65,6 +66,231 @@ afterEach(() => {
 })
 
 describe('EventEditor production composition', () => {
+  it('clears saved optional costs without displaying their original values', async () => {
+    const { form, props } = setup()
+    fireEvent.click(screen.getByRole('button', { name: /Place & provider/ }))
+    for (const label of ['Total cost', 'Cost per horse']) {
+      const input = screen.getByLabelText<HTMLInputElement>(label)
+      fireEvent.change(input, { target: { value: '' } })
+      expect(input.value).toBe('')
+    }
+    fireEvent.submit(form)
+    await waitFor(() => expect(props.onSave).toHaveBeenCalledOnce())
+    const values = vi.mocked(props.onSave).mock.calls[0][0]
+    expect(values.totalCost).toBeUndefined()
+    expect(values.costPerHorse).toBeUndefined()
+  })
+
+  it('clears an existing optional training duration without displaying or submitting the old default', async () => {
+    const { form, props } = setup({
+      feature: 'training',
+      initialValues: editEventEditorValues(
+        {
+          ...event,
+          type: 'training',
+          training: {
+            activities: ['flatwork'],
+            format: 'lesson',
+            durationMinutes: 45,
+          },
+        },
+        [],
+      ),
+    })
+    fireEvent.click(screen.getByRole('button', { name: /Additional details/ }))
+    const duration =
+      screen.getByLabelText<HTMLInputElement>('Duration (minutes)')
+    fireEvent.change(duration, { target: { value: '' } })
+    expect(duration.value).toBe('')
+    fireEvent.submit(form)
+    await waitFor(() => expect(props.onSave).toHaveBeenCalledOnce())
+    expect(
+      vi.mocked(props.onSave).mock.calls[0][0].training?.durationMinutes,
+    ).toBeUndefined()
+  })
+
+  it.each([undefined, 'dayOfMonth'] as const)(
+    'stores displayed event defaults with monthly mode %s before submitting or resetting',
+    async (monthlyMode) => {
+      const { form, title, props } = setup({
+        initialValues: {
+          ...editEventEditorValues(event, []),
+          status: undefined,
+          recurring: true,
+          recurrence: {
+            frequency: 'monthly',
+            interval: 1,
+            monthlyMode,
+            dayOfMonth: 31,
+          },
+        },
+      })
+      fireEvent.click(
+        screen.getByRole('button', { name: /Additional details/ }),
+      )
+      expect(
+        screen.getByRole('button', { name: 'Planned', pressed: true }),
+      ).toBeTruthy()
+      fireEvent.click(screen.getByRole('button', { name: /Repeat schedule/ }))
+      expect(
+        screen.getByRole('radio', { name: 'Day of month', checked: true }),
+      ).toBeTruthy()
+      expect(
+        screen.getByRole('radio', {
+          name: 'Use the last day of the month',
+          checked: true,
+        }),
+      ).toBeTruthy()
+      expect(
+        screen.getByRole('radio', { name: 'Never', checked: true }),
+      ).toBeTruthy()
+      const untouched = new Event('beforeunload', { cancelable: true })
+      window.dispatchEvent(untouched)
+      expect(untouched.defaultPrevented).toBe(false)
+      fireEvent.change(title, { target: { value: 'Temporary title' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
+      fireEvent.click(
+        await screen.findByRole('button', { name: 'Reset changes' }),
+      )
+      await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
+      fireEvent.submit(form)
+      await waitFor(() =>
+        expect(props.onSave).toHaveBeenCalledWith(
+          expect.objectContaining({
+            status: 'planned',
+            recurrence: {
+              frequency: 'monthly',
+              interval: 1,
+              monthlyMode: 'dayOfMonth',
+              dayOfMonth: 31,
+              missingDateStrategy: 'lastDayOfMonth',
+              end: { type: 'never' },
+            },
+          }),
+        ),
+      )
+    },
+  )
+
+  it.each(['planned', 'completed'] as const)(
+    'submits the displayed default format for a %s training session without reselecting it',
+    async (status) => {
+      const { form, props } = setup({
+        mode: 'create',
+        feature: 'training',
+        eventContext: 'personal',
+        initialValues: {
+          ...createEventEditorValues(),
+          type: 'training',
+          status,
+          date: '2026-07-24',
+          time: '10:00',
+          horseIds: [horseId],
+          // Some entry points provide no training details yet.
+        },
+      })
+      expect(
+        screen.getByRole('button', { name: 'Regular session', pressed: true }),
+      ).toBeTruthy()
+      const untouched = new Event('beforeunload', { cancelable: true })
+      window.dispatchEvent(untouched)
+      expect(untouched.defaultPrevented).toBe(false)
+
+      fireEvent.submit(form)
+      await screen.findByText('Choose at least one activity.')
+      expect(props.onSave).not.toHaveBeenCalled()
+      fireEvent.click(screen.getByRole('button', { name: 'Flatwork' }))
+      fireEvent.submit(form)
+      await waitFor(() =>
+        expect(props.onSave).toHaveBeenCalledWith(
+          expect.objectContaining({
+            status,
+            training: { activities: ['flatwork'], format: 'regular' },
+          }),
+        ),
+      )
+    },
+  )
+
+  it('restores a real default format on reset and submits it without touching the format group', async () => {
+    const { form, props } = setup({
+      mode: 'create',
+      feature: 'training',
+      initialValues: {
+        ...createEventEditorValues(stableId),
+        type: 'training',
+        date: '2026-07-24',
+        time: '10:00',
+        horseIds: [horseId],
+      },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Trainer lesson' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Flatwork' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Reset changes' }),
+    )
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
+    expect(
+      screen.getByRole('button', { name: 'Regular session', pressed: true }),
+    ).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Flatwork' }))
+    fireEvent.submit(form)
+    await waitFor(() =>
+      expect(props.onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          training: { activities: ['flatwork'], format: 'regular' },
+        }),
+      ),
+    )
+  })
+
+  it('preserves saved training details and restores their format after reset', async () => {
+    const training = {
+      activities: ['jumping' as const],
+      format: 'workshop' as const,
+      durationMinutes: 45,
+      rider: 'Alex',
+    }
+    const { form, props } = setup({
+      feature: 'training',
+      initialValues: editEventEditorValues(
+        { ...event, type: 'training', training },
+        [],
+      ),
+    })
+    expect(
+      screen.getByRole('button', { name: 'Workshop / clinic', pressed: true }),
+    ).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Regular session' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Reset changes' }),
+    )
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
+    expect(
+      screen.getByRole('button', { name: 'Workshop / clinic', pressed: true }),
+    ).toBeTruthy()
+    fireEvent.submit(form)
+    await waitFor(() =>
+      expect(props.onSave).toHaveBeenCalledWith(
+        expect.objectContaining({ training }),
+      ),
+    )
+  })
+
+  it('does not add incomplete training details to a schedule-only editor', async () => {
+    const { form, props } = setup({
+      feature: 'training',
+      scheduleOnly: true,
+      initialValues: editEventEditorValues({ ...event, type: 'training' }, []),
+    })
+    expect(screen.queryByRole('group', { name: 'Session format' })).toBeNull()
+    fireEvent.submit(form)
+    await waitFor(() => expect(props.onSave).toHaveBeenCalledOnce())
+    expect(vi.mocked(props.onSave).mock.calls[0][0].training).toBeUndefined()
+  })
+
   it('treats registered optional fields as pristine, but protects real training edits', async () => {
     const { title } = setup({
       mode: 'create',
@@ -91,6 +317,49 @@ describe('EventEditor production composition', () => {
     expect(await screen.findByRole('alertdialog')).toBeTruthy()
   })
 
+  it('keeps training requirements together and saves without opening optional sections', async () => {
+    const { form, props } = setup({
+      mode: 'create',
+      feature: 'training',
+      initialValues: {
+        ...createEventEditorValues(stableId),
+        type: 'training',
+        date: '2026-07-24',
+        time: '10:00',
+        horseIds: [horseId],
+        training: { activities: ['flatwork'], format: 'regular' },
+      },
+    })
+    const essentials = screen
+      .getByRole('heading', { name: 'Session details' })
+      .closest('section')!
+    for (const name of ['Horses', 'Type of work', 'Session format']) {
+      expect(within(essentials).getByRole('group', { name })).toBeTruthy()
+    }
+    expect(
+      within(essentials).getByLabelText('Date').getAttribute('aria-required'),
+    ).toBe('true')
+    expect(
+      within(essentials).getByLabelText('Time').getAttribute('aria-required'),
+    ).toBe('true')
+    expect(within(essentials).queryByLabelText('Duration (minutes)')).toBeNull()
+    for (const section of form.querySelectorAll(
+      '[data-slot="form-section"]:not(:first-of-type)',
+    )) {
+      expect(section.querySelector('[hidden]')).toBeTruthy()
+    }
+    fireEvent.submit(form)
+    await waitFor(() =>
+      expect(props.onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Flatwork',
+          horseIds: [horseId],
+          training: { activities: ['flatwork'], format: 'regular' },
+        }),
+      ),
+    )
+  })
+
   it('records completed work with an automatic title and links training validation errors', async () => {
     const { form, props } = setup({
       mode: 'create',
@@ -108,6 +377,7 @@ describe('EventEditor production composition', () => {
     expect(
       screen.getByRole('heading', { name: 'Add training log' }),
     ).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /Additional details/ }))
     const duration = screen.getByLabelText('Duration (minutes)')
     fireEvent.change(duration, { target: { value: '0' } })
     fireEvent.submit(form)
@@ -120,6 +390,9 @@ describe('EventEditor production composition', () => {
     ).toBeTruthy()
     expect(props.onSave).not.toHaveBeenCalled()
     fireEvent.change(duration, { target: { value: '35' } })
+    fireEvent.click(
+      screen.getByRole('button', { name: /^Description Optional/ }),
+    )
     fireEvent.change(screen.getByLabelText('What happened / what went well'), {
       target: { value: 'Relaxed transitions' },
     })

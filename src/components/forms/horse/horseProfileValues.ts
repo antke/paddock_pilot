@@ -9,6 +9,8 @@ export function horseProfileDefaults(
     name: '',
     nickname: '',
     useNickname: false,
+    sex: 'unspecified',
+    shoeingStatus: 'unspecified',
     ownerName: '',
     breed: '',
     color: '',

@@ -93,7 +93,8 @@ export function createEventSchemas(
   message: (key: EventValidationKey) => string = (key) => defaultMessages[key],
   trainingMessage?: (key: TrainingValidationKey) => string,
 ) {
-  const { trainingDetailsSchema } = createTrainingSchemas(trainingMessage)
+  const { trainingDetailsSchema, trainingDetailsFormSchema } =
+    createTrainingSchemas(trainingMessage)
   const eventDateSchema = z
     .string({ error: message('textInvalid') })
     .regex(/^\d{4}-\d{2}-\d{2}$/, message('dateInvalid'))
@@ -349,6 +350,7 @@ export function createEventSchemas(
   const eventFormSchema = eventInputFieldsSchema
     .extend({
       recurring: z.boolean({ error: message('booleanInvalid') }),
+      training: trainingDetailsFormSchema.optional(),
     })
     .superRefine((event, ctx) => {
       validateEventDateRange(event, ctx)

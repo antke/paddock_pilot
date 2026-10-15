@@ -6,6 +6,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Id } from 'convex/_generated/dataModel'
@@ -181,6 +182,35 @@ describe('linked birth date and age fields', () => {
 })
 
 describe('horse profile lifecycle', () => {
+  it.each([false, true])(
+    'submits visible unspecified choices, including clearing saved values: %s',
+    async (savedChoices) => {
+      const { form, props } = setup({
+        initialValues: {
+          ...initialValues,
+          ...(savedChoices
+            ? { sex: 'mare' as const, shoeingStatus: 'barefoot' as const }
+            : {}),
+        },
+      })
+      fireEvent.click(screen.getByRole('button', { name: /Profile & health/ }))
+      for (const name of ['Sex', 'Shoeing status']) {
+        const group = within(screen.getByRole('group', { name }))
+        if (savedChoices)
+          fireEvent.click(group.getByRole('button', { name: 'Not specified' }))
+        expect(
+          group.getByRole('button', { name: 'Not specified', pressed: true }),
+        ).toBeTruthy()
+      }
+      fireEvent.submit(form)
+      await waitFor(() => expect(props.save).toHaveBeenCalledOnce())
+      const values = vi.mocked(props.save).mock.calls[0][0]
+      expect(values.sex).toBeUndefined()
+      expect(values.shoeingStatus).toBeUndefined()
+      expect(values.useNickname).toBe(false)
+    },
+  )
+
   it('selects a suggested owner with the keyboard and saves the display name', async () => {
     const { props, form } = setup({
       mode: 'create',
@@ -427,6 +457,7 @@ describe('horse profile lifecycle', () => {
   it('retains an upload failure and allows removing the file before retrying without an upload', async () => {
     const uploadImage = vi.fn().mockRejectedValue(new Error('upload offline'))
     const { form, imageInput, name, props } = setup({ uploadImage })
+    fireEvent.click(screen.getByRole('button', { name: /Profile & health/ }))
     fireEvent.change(name, { target: { value: 'Maple revised' } })
     fireEvent.change(imageInput, { target: { files: files(photo()) } })
     fireEvent.submit(form)
@@ -496,6 +527,7 @@ describe('horse profile lifecycle', () => {
 
   it('rejects invalid details and dropped images, linking the photo error to its visible focus target', async () => {
     const { form, name, imageInput, props } = setup()
+    fireEvent.click(screen.getByRole('button', { name: /Profile & health/ }))
     fireEvent.change(name, { target: { value: '' } })
     fireEvent.submit(form)
     await waitFor(() => expect(name.getAttribute('aria-invalid')).toBe('true'))

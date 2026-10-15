@@ -91,6 +91,59 @@ function openRepeat() {
 }
 
 describe('EventFormFields', () => {
+  it.each([
+    {
+      label: 'Interval',
+      recurrence: { frequency: 'daily', interval: 2, end: { type: 'never' } },
+    },
+    {
+      label: 'Day of month',
+      recurrence: {
+        frequency: 'monthly',
+        interval: 1,
+        monthlyMode: 'dayOfMonth',
+        dayOfMonth: 15,
+        end: { type: 'never' },
+      },
+    },
+    {
+      label: 'Occurrences',
+      recurrence: {
+        frequency: 'daily',
+        interval: 1,
+        end: { type: 'after_occurrences', count: 5 },
+      },
+    },
+  ] as const)(
+    'keeps cleared $label visibly empty until the user enters a value',
+    async ({ label, recurrence }) => {
+      const onSubmit = vi.fn()
+      render(<Harness recurrence={recurrence} onSubmit={onSubmit} />)
+      openRepeat()
+      const interval = screen.getByLabelText<HTMLInputElement>(label, {
+        selector: 'input[type="number"]',
+      })
+      fireEvent.change(interval, { target: { value: '' } })
+      expect(interval.value).toBe('')
+      fireEvent.submit(screen.getByRole('form', { name: 'Event' }))
+      await waitFor(() =>
+        expect(interval.getAttribute('aria-invalid')).toBe('true'),
+      )
+      expect(onSubmit).not.toHaveBeenCalled()
+      fireEvent.change(interval, { target: { value: '1' } })
+      fireEvent.submit(screen.getByRole('form', { name: 'Event' }))
+      await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce())
+      const saved = onSubmit.mock.calls[0][0].recurrence
+      expect(
+        label === 'Interval'
+          ? saved.interval
+          : label === 'Day of month'
+            ? saved.dayOfMonth
+            : saved.end.count,
+      ).toBe(1)
+    },
+  )
+
   it('gives personal appointments local-time guidance and a path to add a missing horse', () => {
     render(<Harness empty eventContext="personal" />)
     expect(
@@ -99,10 +152,8 @@ describe('EventFormFields', () => {
       ),
     ).toBeTruthy()
     expect(
-      screen
-        .getByRole('button', { name: /Horses/ })
-        .getAttribute('aria-expanded'),
-    ).toBe('true')
+      screen.getByRole('group', { name: 'Horses' }).closest('[hidden]'),
+    ).toBeNull()
     expect(
       screen.getByText(/No horses are available for you to schedule/),
     ).toBeTruthy()
@@ -118,17 +169,19 @@ describe('EventFormFields', () => {
     const onSubmit = vi.fn()
     render(<Harness onSubmit={onSubmit} />)
 
+    const essentials = screen
+      .getByRole('heading', { name: 'Event details' })
+      .closest('section')!
     expect(
-      screen
-        .getByRole('button', { name: /Event details/ })
-        .getAttribute('aria-expanded'),
-    ).toBe('true')
-    expect(
-      screen
-        .getByRole('button', { name: 'Horses Juniper' })
-        .getAttribute('aria-expanded'),
-    ).toBe('false')
+      within(essentials).getByRole('group', { name: 'Horses' }),
+    ).toBeTruthy()
+    for (const label of ['Title', 'Date', 'Time']) {
+      const input = within(essentials).getByLabelText(label, { exact: true })
+      expect(input.getAttribute('aria-required')).toBe('true')
+      expect(input.closest('[hidden]')).toBeNull()
+    }
     for (const name of [
+      /Additional details Optional/,
       /Place & provider Optional/,
       /Repeat schedule Optional/,
       /Notes & outcome Optional/,

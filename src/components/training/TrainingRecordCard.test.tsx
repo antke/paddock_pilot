@@ -69,6 +69,22 @@ afterEach(() => {
 })
 
 describe('focused training recording', () => {
+  it('saves a cleared inherited duration without restoring its previous value', async () => {
+    save.mockResolvedValue(undefined)
+    render(<TrainingRecordCard entry={entry()} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Add training log' }))
+    const duration =
+      screen.getByLabelText<HTMLInputElement>('Duration (minutes)')
+    fireEvent.change(duration, { target: { value: '' } })
+    expect(duration.value).toBe('')
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Save training record' }),
+    )
+    await screen.findByText('Training record saved.')
+    expect(save).toHaveBeenCalledOnce()
+    expect(save.mock.calls[0][0].details.durationMinutes).toBeUndefined()
+  })
+
   it('labels the training facts and keeps the horse profile reachable without a separate horse list', () => {
     render(<TrainingRecordCard entry={entry(false)} />)
     expect(
