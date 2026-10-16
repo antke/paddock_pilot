@@ -55,7 +55,8 @@ export function ChoiceButtonGroup<TValue extends string>({
       }}
       className={cn(
         layout === 'compact' && 'flex w-full flex-wrap gap-2',
-        layout === 'cards' && 'grid w-full gap-2 sm:grid-cols-2',
+        layout === 'cards' &&
+          'grid w-full auto-rows-fr items-stretch gap-2 sm:grid-cols-2',
         layout === 'segmented' && 'inline-flex w-auto flex-nowrap gap-0',
         className,
       )}
@@ -74,7 +75,7 @@ export function ChoiceButtonGroup<TValue extends string>({
             layout === 'segmented' &&
               'rounded-none first:rounded-l-control last:rounded-r-control',
             layout === 'cards' &&
-              'h-auto min-h-20 w-full flex-col items-start gap-1 px-4 py-3 text-left whitespace-normal',
+              'h-auto min-h-20 w-full flex-col items-start justify-start gap-1 px-4 py-3 text-left whitespace-normal',
           )}
         >
           {spatial && value === option.value && (
