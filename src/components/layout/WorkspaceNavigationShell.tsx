@@ -46,9 +46,11 @@ import {
 } from '#/components/ui/dropdown-menu'
 import { useT } from '#/i18n/LocaleProvider'
 import HeaderUser from '#/integrations/clerk/header-user'
+import { DrawerAccount } from '#/integrations/clerk/DrawerAccount'
 import { cn } from '#/lib/utils'
 import { useSmallScreen } from '#/lib/useSmallScreen'
 import { AppHeader } from './AppShell'
+import { AccountPreferencesDialog } from './AccountPreferencesDialog'
 import { useAppUserState } from './AppUserStateProvider'
 import {
   isMobileTaskPath,
@@ -87,18 +89,34 @@ export function WorkspaceNavigation() {
   const user = useQuery(api.users.getCurrentUser, isAuthenticated ? {} : 'skip')
   const stableId = stableIdFromPath(pathname)
   const stable = stables.find((item) => item._id === stableId)
+  const [preferencesOpen, setPreferencesOpen] = useState(false)
 
   return (
-    <WorkspaceNavigationView
-      pathname={pathname}
-      currentTab={new URLSearchParams(searchStr).get('tab') ?? undefined}
-      stables={stables}
-      isLoadingStables={isLoadingStables}
-      canManageStable={Boolean(user && stable?.ownerId === user._id)}
-      accountActions={<HeaderUser compact={false} showStableSwitcher={false} />}
-      compactAccountActions={<HeaderUser showStableSwitcher={false} />}
-      backAction={<MobileBackButton />}
-    />
+    <>
+      <WorkspaceNavigationView
+        pathname={pathname}
+        currentTab={new URLSearchParams(searchStr).get('tab') ?? undefined}
+        stables={stables}
+        isLoadingStables={isLoadingStables}
+        canManageStable={Boolean(user && stable?.ownerId === user._id)}
+        accountActions={
+          <HeaderUser compact={false} showStableSwitcher={false} />
+        }
+        compactAccountActions={<HeaderUser showStableSwitcher={false} />}
+        renderDrawerAccount={(closeDrawer) => (
+          <DrawerAccount
+            closeDrawer={closeDrawer}
+            showManageStables={Boolean(stableId)}
+            onPreferences={() => setPreferencesOpen(true)}
+          />
+        )}
+        backAction={<MobileBackButton />}
+      />
+      <AccountPreferencesDialog
+        open={preferencesOpen}
+        onOpenChange={setPreferencesOpen}
+      />
+    </>
   )
 }
 
@@ -111,6 +129,7 @@ export function WorkspaceNavigationView({
   canManageStable = false,
   accountActions,
   compactAccountActions = accountActions,
+  renderDrawerAccount,
   backAction,
 }: {
   pathname: string
@@ -120,15 +139,20 @@ export function WorkspaceNavigationView({
   canManageStable?: boolean
   accountActions: ReactNode
   compactAccountActions?: ReactNode
+  renderDrawerAccount?: (
+    closeDrawer: (afterClose?: () => void) => void,
+  ) => ReactNode
   backAction?: ReactNode
 }) {
   const t = useT()
   const [collapsed, setCollapsed] = useState(false)
   const [open, setOpen] = useState(false)
+  const [closeComplete, setCloseComplete] = useState(false)
   const small = useSmallScreen()
   const headerTrigger = useRef<HTMLButtonElement>(null)
   const collapseTrigger = useRef<HTMLButtonElement>(null)
   const moveFocus = useRef(false)
+  const afterDrawerClose = useRef<(() => void) | undefined>(undefined)
   const stableId = stableIdFromPath(pathname)
   const stable = stables.find((item) => item._id === stableId)
   const name =
@@ -158,8 +182,16 @@ export function WorkspaceNavigationView({
   }, [])
 
   useEffect(() => {
+    afterDrawerClose.current = undefined
     setOpen(false)
   }, [pathname, currentTab])
+
+  useEffect(() => {
+    if (open || !closeComplete) return
+    const action = afterDrawerClose.current
+    afterDrawerClose.current = undefined
+    action?.()
+  }, [open, closeComplete])
 
   useEffect(() => {
     // A drawer must not remain modal after resizing back to an expanded sidebar.
@@ -203,7 +235,19 @@ export function WorkspaceNavigationView({
   )
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (nextOpen) {
+          afterDrawerClose.current = undefined
+          setCloseComplete(false)
+        }
+        setOpen(nextOpen)
+      }}
+      onOpenChangeComplete={(isOpen) => {
+        setCloseComplete(!isOpen)
+      }}
+    >
       <div
         className="contents"
         data-slot="workspace-navigation"
@@ -286,45 +330,51 @@ export function WorkspaceNavigationView({
               return true
             }}
           >
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center justify-between gap-3">
               <DialogTitle>Paddock Pilot</DialogTitle>
               <DialogClose
                 render={
                   <Button
                     variant="ghost"
-                    className="hidden min-h-11 md:inline-flex"
+                    size="icon"
+                    className="size-11 shrink-0"
+                    aria-label={t('navigationShell.closeMenu')}
                   />
                 }
               >
-                {t('common.close')}
+                <XIcon aria-hidden="true" className="size-5" />
               </DialogClose>
             </div>
             <DialogDescription className="sr-only">
               {t('navigationShell.menuDescription')}
             </DialogDescription>
-            {workspace}
-            {navigation}
-            <div className="app-workspace-account">
+            <div className="grid min-w-0 gap-2">
+              <span className="text-sm font-medium text-muted-foreground">
+                {t('navigationShell.workspace')}
+              </span>
+              {workspace}
+            </div>
+            <div
+              data-slot="workspace-drawer-scroll"
+              className="app-workspace-drawer-scroll"
+            >
+              {navigation}
+              <div className="app-workspace-account">
+                {renderDrawerAccount
+                  ? renderDrawerAccount((afterClose) => {
+                      afterDrawerClose.current = afterClose
+                      setOpen(false)
+                    })
+                  : accountActions}
+              </div>
               <Button
                 variant="ghost"
-                className="mb-2 hidden w-full justify-start gap-2 lg:flex"
+                className="hidden min-h-11 w-full justify-start gap-2 lg:flex"
                 onClick={() => changeCollapsed(false)}
               >
                 <SidebarSimpleIcon aria-hidden="true" />
                 {t('navigationShell.expandSidebar')}
               </Button>
-              {accountActions}
-              <DialogClose
-                render={
-                  <Button
-                    variant="secondary"
-                    className="mt-3 min-h-12 w-full md:hidden"
-                  />
-                }
-              >
-                <XIcon aria-hidden="true" />
-                {t('navigationShell.closeMenu')}
-              </DialogClose>
             </div>
           </DialogPrimitive.Popup>
         </DialogPrimitive.Viewport>
@@ -381,7 +431,7 @@ function WorkspacePicker({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"
-        className="w-72 max-w-[calc(100vw-2rem)]"
+        className="w-(--anchor-width) min-w-64 max-w-[calc(100vw-2rem)]"
       >
         <DropdownMenuGroup>
           <DropdownMenuLabel>
@@ -475,7 +525,10 @@ function WorkspaceLinks({
     .flatMap((group) => group.items)
     .find((item) => item.active)?.id
   useEffect(() => {
-    const element = navigation.current
+    const element =
+      navigation.current?.closest<HTMLElement>(
+        '[data-slot="workspace-drawer-scroll"]',
+      ) ?? navigation.current
     if (!element) return
     const revealCurrent = () => {
       const active = element.querySelector<HTMLElement>('[aria-current="page"]')

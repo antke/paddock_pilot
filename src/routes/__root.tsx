@@ -154,7 +154,8 @@ function LocalizedRootDocument({ children }: { children: React.ReactNode }) {
   const isStandaloneLab =
     isLandingLabPath(pathname) ||
     pathname === '/page-lab/dark-mode' ||
-    (import.meta.env.DEV && pathname === '/page-lab/motion')
+    (import.meta.env.DEV &&
+      ['/page-lab/motion', '/page-lab/navigation'].includes(pathname))
 
   return (
     <html lang={locale} suppressHydrationWarning>

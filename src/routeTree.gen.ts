@@ -39,6 +39,7 @@ import { Route as PageLabIndexRouteImport } from './routes/page-lab/index'
 import { Route as PageLabPageRouteImport } from './routes/page-lab/$page'
 import { Route as PageLabDarkModeRouteImport } from './routes/page-lab/dark-mode'
 import { Route as PageLabMotionRouteImport } from './routes/page-lab/motion'
+import { Route as PageLabNavigationRouteImport } from './routes/page-lab/navigation'
 import { Route as PageLabOwnershipRouteImport } from './routes/page-lab/ownership'
 import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
 import { Route as SignUpSplatRouteImport } from './routes/sign-up.$'
@@ -248,6 +249,11 @@ const PageLabDarkModeRoute = PageLabDarkModeRouteImport.update({
 const PageLabMotionRoute = PageLabMotionRouteImport.update({
   id: '/motion',
   path: '/motion',
+  getParentRoute: () => PageLabRoute,
+} as any)
+const PageLabNavigationRoute = PageLabNavigationRouteImport.update({
+  id: '/navigation',
+  path: '/navigation',
   getParentRoute: () => PageLabRoute,
 } as any)
 const PageLabOwnershipRoute = PageLabOwnershipRouteImport.update({
@@ -616,6 +622,7 @@ export interface FileRoutesByFullPath {
   '/page-lab/$page': typeof PageLabPageRoute
   '/page-lab/dark-mode': typeof PageLabDarkModeRoute
   '/page-lab/motion': typeof PageLabMotionRoute
+  '/page-lab/navigation': typeof PageLabNavigationRoute
   '/page-lab/ownership': typeof PageLabOwnershipRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
@@ -702,6 +709,7 @@ export interface FileRoutesByTo {
   '/page-lab/$page': typeof PageLabPageRoute
   '/page-lab/dark-mode': typeof PageLabDarkModeRoute
   '/page-lab/motion': typeof PageLabMotionRoute
+  '/page-lab/navigation': typeof PageLabNavigationRoute
   '/page-lab/ownership': typeof PageLabOwnershipRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
@@ -789,6 +797,7 @@ export interface FileRoutesById {
   '/page-lab/$page': typeof PageLabPageRoute
   '/page-lab/dark-mode': typeof PageLabDarkModeRoute
   '/page-lab/motion': typeof PageLabMotionRoute
+  '/page-lab/navigation': typeof PageLabNavigationRoute
   '/page-lab/ownership': typeof PageLabOwnershipRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
@@ -883,6 +892,7 @@ export interface FileRouteTypes {
     | '/page-lab/$page'
     | '/page-lab/dark-mode'
     | '/page-lab/motion'
+    | '/page-lab/navigation'
     | '/page-lab/ownership'
     | '/sign-in/$'
     | '/sign-up/$'
@@ -969,6 +979,7 @@ export interface FileRouteTypes {
     | '/page-lab/$page'
     | '/page-lab/dark-mode'
     | '/page-lab/motion'
+    | '/page-lab/navigation'
     | '/page-lab/ownership'
     | '/sign-in/$'
     | '/sign-up/$'
@@ -1055,6 +1066,7 @@ export interface FileRouteTypes {
     | '/page-lab/$page'
     | '/page-lab/dark-mode'
     | '/page-lab/motion'
+    | '/page-lab/navigation'
     | '/page-lab/ownership'
     | '/sign-in/$'
     | '/sign-up/$'
@@ -1353,6 +1365,13 @@ declare module '@tanstack/react-router' {
       path: '/motion'
       fullPath: '/page-lab/motion'
       preLoaderRoute: typeof PageLabMotionRouteImport
+      parentRoute: typeof PageLabRoute
+    }
+    '/page-lab/navigation': {
+      id: '/page-lab/navigation'
+      path: '/navigation'
+      fullPath: '/page-lab/navigation'
+      preLoaderRoute: typeof PageLabNavigationRouteImport
       parentRoute: typeof PageLabRoute
     }
     '/page-lab/ownership': {
@@ -1882,6 +1901,7 @@ interface PageLabRouteChildren {
   PageLabPageRoute: typeof PageLabPageRoute
   PageLabDarkModeRoute: typeof PageLabDarkModeRoute
   PageLabMotionRoute: typeof PageLabMotionRoute
+  PageLabNavigationRoute: typeof PageLabNavigationRoute
   PageLabOwnershipRoute: typeof PageLabOwnershipRoute
   PageLabIndexRoute: typeof PageLabIndexRoute
 }
@@ -1890,6 +1910,7 @@ const PageLabRouteChildren: PageLabRouteChildren = {
   PageLabPageRoute: PageLabPageRoute,
   PageLabDarkModeRoute: PageLabDarkModeRoute,
   PageLabMotionRoute: PageLabMotionRoute,
+  PageLabNavigationRoute: PageLabNavigationRoute,
   PageLabOwnershipRoute: PageLabOwnershipRoute,
   PageLabIndexRoute: PageLabIndexRoute,
 }

@@ -785,7 +785,7 @@ body {
 .app-workspace-drawer {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr);
   gap: 1.25rem;
   height: 100%;
   max-height: 100dvh;
@@ -794,6 +794,25 @@ body {
     max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
   border-inline-end: 1px solid var(--border-subtle);
   transition: transform var(--motion-overlay) var(--ease-arrive);
+}
+.app-workspace-drawer-scroll {
+  display: grid;
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 1.5rem;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  padding: 0.25rem;
+  margin: -0.25rem;
+  scroll-padding-block: 0.25rem;
+}
+.app-workspace-drawer-scroll .app-workspace-links {
+  overflow: visible;
+  padding: 0;
+  margin: 0;
 }
 .app-workspace-drawer:is([data-starting-style], [data-ending-style]) {
   transform: translateX(-100%);

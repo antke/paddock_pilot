@@ -21,6 +21,7 @@ import {
   SIDEBAR_COLLAPSED_KEY,
   WorkspaceNavigationView,
 } from './WorkspaceNavigationShell'
+import { DrawerAccountView } from '#/integrations/clerk/DrawerAccount'
 
 const stables = [
   { _id: 'stable-a', name: 'Oak Farm' },
@@ -57,7 +58,14 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-async function setup(href: string) {
+async function setup(
+  href: string,
+  actions: {
+    onManageAccount?: () => void
+    onPreferences?: () => void
+    onSignOut?: () => Promise<unknown>
+  } = {},
+) {
   const root = createRootRoute({
     component: () => {
       const { pathname, searchStr } = useLocation()
@@ -68,6 +76,16 @@ async function setup(href: string) {
           stables={stables}
           canManageStable
           accountActions={<button>Account and preferences</button>}
+          renderDrawerAccount={(closeDrawer) => (
+            <DrawerAccountView
+              name="Sample member"
+              email="sample@example.test"
+              onNavigate={() => closeDrawer()}
+              onManageAccount={() => closeDrawer(actions.onManageAccount)}
+              onPreferences={() => closeDrawer(actions.onPreferences)}
+              onSignOut={actions.onSignOut ?? (() => Promise.resolve())}
+            />
+          )}
         />
       )
     },
@@ -221,6 +239,13 @@ it('uses one icon-only mobile opener and restores focus from the full-screen men
   const drawer = await screen.findByRole('dialog', { name: 'Paddock Pilot' })
   expect(screen.getAllByRole('dialog')).toHaveLength(1)
   expect(navigationHrefs(drawer)).toEqual(expectedHrefs)
+  const close = within(drawer).getByRole('button', {
+    name: 'Close navigation menu',
+  })
+  expect(close.textContent).toBe('')
+  expect(
+    within(drawer).getAllByRole('button', { name: 'Close navigation menu' }),
+  ).toHaveLength(1)
   fireEvent.click(
     within(drawer).getByRole('button', { name: 'Close navigation menu' }),
   )
@@ -253,7 +278,9 @@ it('returns focus to Menu when resizing hides the mobile menu opener', async () 
   fireEvent.click(more)
   const drawer = await screen.findByRole('dialog', { name: 'Paddock Pilot' })
   setViewport(900)
-  fireEvent.click(within(drawer).getByRole('button', { name: 'Close' }))
+  fireEvent.click(
+    within(drawer).getByRole('button', { name: 'Close navigation menu' }),
+  )
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   await waitFor(() => expect(document.activeElement).toBe(headerMenu()))
 })
@@ -318,3 +345,102 @@ it.each([
     expect(nav.querySelectorAll('[aria-current="page"]')).toHaveLength(1)
   },
 )
+
+it('exposes account destinations directly and closes the drawer when following a profile link', async () => {
+  setViewport(390)
+  const router = await setup('/events')
+  fireEvent.click(
+    await screen.findByRole('button', { name: 'Open navigation menu' }),
+  )
+  const drawer = await screen.findByRole('dialog', { name: 'Paddock Pilot' })
+  const account = within(drawer).getByRole('region', {
+    name: 'Account and preferences',
+  })
+  expect(within(account).getByText('sample@example.test')).toBeTruthy()
+  expect(
+    within(account)
+      .getByRole('link', { name: 'Plans and billing' })
+      .getAttribute('href'),
+  ).toBe('/pricing')
+  expect(
+    within(account)
+      .getByRole('link', { name: 'Manage stables' })
+      .getAttribute('href'),
+  ).toBe('/stables')
+  expect(
+    within(account).getByRole('button', { name: 'Preferences' }),
+  ).toBeTruthy()
+  expect(
+    within(account).getByRole('button', { name: 'Manage account' }),
+  ).toBeTruthy()
+  expect(screen.queryByRole('menu')).toBeNull()
+  fireEvent.click(within(account).getByRole('link', { name: 'Your profile' }))
+  await waitFor(() => expect(router.state.location.pathname).toBe('/profile'))
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+})
+
+it.each(['Preferences', 'Manage account'])(
+  'releases the drawer before opening %s and hands off focus once',
+  async (label) => {
+    setViewport(390)
+    const action = vi.fn(() => {
+      expect(screen.queryByRole('dialog')).toBeNull()
+    })
+    await setup('/events', { onManageAccount: action, onPreferences: action })
+    const opener = await screen.findByRole('button', {
+      name: 'Open navigation menu',
+    })
+    act(() => opener.focus())
+    fireEvent.click(opener)
+    const drawer = await screen.findByRole('dialog', { name: 'Paddock Pilot' })
+    fireEvent.click(within(drawer).getByRole('button', { name: label }))
+    await waitFor(() => expect(action).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(document.activeElement).toBe(opener))
+    fireEvent.click(opener)
+    const reopened = await screen.findByRole('dialog', {
+      name: 'Paddock Pilot',
+    })
+    fireEvent.click(
+      within(reopened).getByRole('button', { name: 'Close navigation menu' }),
+    )
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(action).toHaveBeenCalledTimes(1)
+  },
+)
+
+it('prevents duplicate sign-out, reports failure in the drawer, and permits retry', async () => {
+  setViewport(390)
+  let reject!: (reason: Error) => void
+  const onSignOut = vi
+    .fn()
+    .mockImplementationOnce(
+      () =>
+        new Promise((_, fail) => {
+          reject = fail
+        }),
+    )
+    .mockResolvedValue(undefined)
+  await setup('/events', { onSignOut })
+  fireEvent.click(
+    await screen.findByRole('button', { name: 'Open navigation menu' }),
+  )
+  const drawer = await screen.findByRole('dialog', { name: 'Paddock Pilot' })
+  const signOut = within(drawer).getByRole<HTMLButtonElement>('button', {
+    name: 'Sign out',
+  })
+  fireEvent.click(signOut)
+  fireEvent.click(signOut)
+  expect(signOut.disabled).toBe(true)
+  expect(signOut.getAttribute('aria-busy')).toBe('true')
+  expect(onSignOut).toHaveBeenCalledTimes(1)
+  await act(async () => reject(new Error('offline')))
+  expect(within(drawer).getByRole('alert').textContent).toContain(
+    'We couldn’t sign you out',
+  )
+  expect(document.activeElement).toBe(within(drawer).getByRole('alert'))
+  expect(signOut.disabled).toBe(false)
+  fireEvent.click(signOut)
+  await waitFor(() => expect(onSignOut).toHaveBeenCalledTimes(2))
+  await waitFor(() => expect(signOut.disabled).toBe(false))
+  expect(within(drawer).queryByRole('alert')).toBeNull()
+})
