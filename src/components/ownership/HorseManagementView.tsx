@@ -94,7 +94,7 @@ export function HorseManagementView({
     }
   }
   return (
-    <div className="grid max-w-3xl gap-6">
+    <div className="grid min-w-0 w-full gap-6">
       {!access.canAddRecords && access.isOwner && (
         <p role="status">{c.moving}</p>
       )}
