@@ -199,29 +199,29 @@
 }
 
 .dark {
-  --selection: #d9decc;
-  --selection-foreground: #1e2a23;
-  --selection-surface: #41493a;
-  --background: #272a24;
-  --foreground: #f0f3ea;
-  --card: #20251f;
-  --card-foreground: #f0f3ea;
-  --popover: #20251f;
-  --popover-foreground: #f0f3ea;
-  --primary: #a9c7ab;
-  --primary-foreground: #15271d;
-  --secondary: #41493a;
-  --secondary-foreground: #f0f3ea;
-  --muted: color-mix(in srgb, #20251f 70%, #272a24);
-  --muted-foreground: #bfc9b9;
-  --accent: #41493a;
-  --accent-foreground: #f0f3ea;
+  --selection: #eeece8;
+  --selection-foreground: #1c1e1d;
+  --selection-surface: #3e4440;
+  --background: #1c1e1d;
+  --foreground: #eeece8;
+  --card: #272a28;
+  --card-foreground: #eeece8;
+  --popover: #303431;
+  --popover-foreground: #eeece8;
+  --primary: #91c8a9;
+  --primary-foreground: #172b20;
+  --secondary: #3e4440;
+  --secondary-foreground: #eeece8;
+  --muted: #2c302d;
+  --muted-foreground: #b8bcb8;
+  --accent: #3e4440;
+  --accent-foreground: #eeece8;
   --destructive: #f2a8b7;
   --destructive-foreground: #321c22;
-  --border: #586b60;
-  --input: #809287;
-  --ring: #a9c7ab;
-  --analysis-weight: #a9c7ab;
+  --border: #515a54;
+  --input: #8b978e;
+  --ring: #91c8a9;
+  --analysis-weight: #91c8a9;
   --analysis-training: #91bde9;
   --analysis-nutrition: #daba70;
   --analysis-health: #d1a7ce;
@@ -229,32 +229,32 @@
   --analysis-medication: #b8afe8;
   --analysis-care: #8fc9c8;
   --analysis-competition: #d6af91;
-  --analysis-surface: #222c28;
-  --chart-1: #a9c7ab;
-  --chart-2: #9abda7;
-  --chart-3: #d6a35a;
-  --chart-4: #d58e67;
+  --analysis-surface: #272a28;
+  --chart-1: #91c8a9;
+  --chart-2: #a8bac5;
+  --chart-3: #daba70;
+  --chart-4: #d6af91;
   --chart-5: #efb5c0;
-  --status-info: #b8d8c5;
-  --status-info-surface: #2e4939;
-  --status-warning: #f0c27c;
-  --status-warning-surface: #4e3c28;
-  --sidebar: #272a24;
-  --sidebar-foreground: #f0f3ea;
-  --sidebar-primary: #a9c7ab;
-  --sidebar-primary-foreground: #15271d;
-  --sidebar-accent: #41493a;
-  --sidebar-accent-foreground: #eef5f0;
-  --sidebar-border: #4c6053;
-  --sidebar-ring: #a9c7ab;
+  --status-info: #b0c9e0;
+  --status-info-surface: #293b4b;
+  --status-warning: #edc28b;
+  --status-warning-surface: #463729;
+  --sidebar: #202321;
+  --sidebar-foreground: #eeece8;
+  --sidebar-primary: #91c8a9;
+  --sidebar-primary-foreground: #172b20;
+  --sidebar-accent: #3e4440;
+  --sidebar-accent-foreground: #eeece8;
+  --sidebar-border: #515a54;
+  --sidebar-ring: #91c8a9;
 
-  --surface: color-mix(in srgb, #20251f 70%, #272a24);
-  --surface-muted: #272a24;
-  --surface-elevated: #20251f;
-  --brand-surface: #2c5140;
-  --brand-surface-foreground: #f4f8f5;
-  --brand-surface-muted-foreground: #d2e4d9;
-  --brand-surface-border: #668c75;
+  --surface: #2c302d;
+  --surface-muted: #1c1e1d;
+  --surface-elevated: #303431;
+  --brand-surface: #284639;
+  --brand-surface-foreground: #f0f3ee;
+  --brand-surface-muted-foreground: #c9dcd1;
+  --brand-surface-border: #6c9680;
   --border-subtle: color-mix(in oklab, var(--border) 76%, transparent);
 }
 
@@ -1410,5 +1410,151 @@ body {
   textarea.app-control,
   select.app-control {
     font-size: 1rem;
+  }
+}
+
+/* Working UI motion: control hit targets remain stationary, interior marks respond. */
+:where([data-app-motion-scope], [data-motion-fixture]) .app-button:active {
+  translate: none;
+  scale: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  :where([data-app-motion-scope], [data-motion-fixture])
+    .app-button
+    > :is(svg, [data-slot='action-feedback']) {
+    transition: translate var(--motion-press) var(--ease-arrive);
+  }
+  :where([data-app-motion-scope], [data-motion-fixture])
+    .app-button:not(:disabled):active
+    > :is(svg, [data-slot='action-feedback']) {
+    translate: 0 1px;
+  }
+}
+[data-care-completed='true'] {
+  background-color: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+.app-tab-indicator {
+  z-index: -1;
+  left: 0;
+  top: 0;
+  width: var(--active-tab-width);
+  height: var(--active-tab-height);
+  transform: translate(var(--active-tab-left), var(--active-tab-top));
+  border: 1px solid var(--selection);
+  border-radius: var(--radius-control);
+  background: var(--selection-surface);
+  transition:
+    transform var(--motion-state) var(--ease-arrive),
+    width var(--motion-state) var(--ease-arrive),
+    height var(--motion-state) var(--ease-arrive);
+}
+[data-motion-tabs] [data-slot='tabs-trigger'][data-active] {
+  background-color: transparent;
+  border-color: transparent;
+}
+[data-motion-tabs][data-variant='line'] .app-tab-indicator {
+  top: auto;
+  bottom: 0;
+  height: 3px;
+  border: 0;
+  border-radius: 0;
+  background: var(--selection);
+  transform: translateX(var(--active-tab-left));
+}
+[data-motion-tabs][data-variant='line'] [data-slot='tabs-trigger']::after {
+  display: none;
+}
+[data-slot='tabs'][data-vertical]
+  [data-motion-tabs][data-variant='line']
+  .app-tab-indicator {
+  left: auto;
+  right: 0;
+  top: 0;
+  bottom: auto;
+  width: 3px;
+  height: var(--active-tab-height);
+  transform: translateY(var(--active-tab-top));
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-tab-indicator {
+    transition: none;
+  }
+}
+
+/* Indicator surfaces own selection feedback; checkbox/radio targets do not move. */
+.app-selection-mark {
+  opacity: 1;
+  transition:
+    opacity var(--motion-press) ease-out,
+    scale var(--motion-press) var(--ease-arrive);
+}
+.app-selection-mark[data-unchecked] {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .app-selection-mark[data-unchecked] {
+    scale: 0.8;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-selection-mark {
+    transition-property: opacity;
+  }
+}
+/* New validation is readable from its first frame and never shakes the field. */
+:where([data-app-motion-scope], [data-motion-fixture])
+  [data-slot='field-error'] {
+  transition: opacity var(--motion-press) ease-out;
+  @starting-style {
+    opacity: 0.65;
+  }
+}
+[data-slot='activity-timeline-window-drag'][data-dragging='true'] {
+  cursor: grabbing;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  outline: 1px solid var(--primary);
+}
+
+/* Base UI keeps presence and focus ownership, including portalled surfaces.
+   The application policy replaces legacy keyframes rather than layering over them. */
+[data-app-motion][data-slot='tooltip-content'],
+[data-app-motion][data-slot='navigation-menu-popup'],
+[data-app-motion][data-slot='navigation-menu-content'] {
+  animation: none;
+  scale: none;
+  translate: none;
+  transition:
+    opacity var(--motion-state) var(--ease-arrive),
+    transform var(--motion-state) var(--ease-arrive);
+}
+[data-app-motion][data-slot='navigation-menu-positioner'] {
+  transition-duration: var(--motion-state);
+  transition-timing-function: var(--ease-arrive);
+}
+[data-app-motion][data-slot='navigation-menu-popup'] {
+  transition-property: opacity, transform, width, height;
+}
+[data-app-motion]:is(
+    [data-slot='tooltip-content'],
+    [data-slot='navigation-menu-popup']
+  ):is([data-starting-style], [data-ending-style]) {
+  opacity: 0;
+  transform: scale(0.98);
+}
+[data-app-motion][data-slot='navigation-menu-content']:is(
+    [data-starting-style],
+    [data-ending-style]
+  ) {
+  opacity: 0;
+  transform: translateX(6px);
+}
+[data-app-motion][data-ending-style] {
+  transition-duration: var(--motion-exit);
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-app-motion] {
+    transform: none !important;
+    transition-property: opacity !important;
   }
 }

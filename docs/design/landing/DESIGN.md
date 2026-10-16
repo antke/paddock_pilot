@@ -2,58 +2,58 @@
 name: Paddock Pilot — Field journal landing
 description: A warm country editorial design for the signed-out home page.
 colors:
-  evergreen: "#263f30"
-  paper: "#f7f1e5"
-  supporting-copy: "#4e5547"
-  rule: "#c8caba"
-  clay: "#aa563e"
-  evergreen-hover: "#3f5842"
-  reverse-copy: "#e1e3ce"
-  selection: "#d8be96"
+  evergreen: '#263f30'
+  paper: '#f7f1e5'
+  supporting-copy: '#4e5547'
+  rule: '#c8caba'
+  clay: '#aa563e'
+  evergreen-hover: '#3f5842'
+  reverse-copy: '#e1e3ce'
+  selection: '#d8be96'
 typography:
   display:
     fontFamily: "'Fraunces Country', Georgia, serif"
-    fontSize: "clamp(52px, 5.4vw, 88px)"
+    fontSize: 'clamp(52px, 5.4vw, 88px)'
     fontWeight: 500
     lineHeight: 1.06
-    letterSpacing: "-0.03em"
+    letterSpacing: '-0.03em'
   headline:
     fontFamily: "'Fraunces Country', Georgia, serif"
-    fontSize: "clamp(43px, 4.5vw, 66px)"
+    fontSize: 'clamp(43px, 4.5vw, 66px)'
     fontWeight: 500
     lineHeight: 1.1
-    letterSpacing: "-0.03em"
+    letterSpacing: '-0.03em'
   title:
     fontFamily: "'Fraunces Country', Georgia, serif"
-    fontSize: "36px"
+    fontSize: '36px'
     fontWeight: 500
     lineHeight: 1.25
   body:
     fontFamily: "'Manrope Variable', sans-serif"
-    fontSize: "18px"
+    fontSize: '18px'
     lineHeight: 1.8
   control:
     fontFamily: "'Manrope Variable', sans-serif"
-    fontSize: "14px"
+    fontSize: '14px'
     fontWeight: 600
     lineHeight: 1.4
 rounded:
-  control: "4px"
+  control: '4px'
 components:
   button-primary:
-    backgroundColor: "{colors.evergreen}"
-    textColor: "{colors.paper}"
-    typography: "{typography.control}"
-    rounded: "{rounded.control}"
-    padding: "15px 24px"
+    backgroundColor: '{colors.evergreen}'
+    textColor: '{colors.paper}'
+    typography: '{typography.control}'
+    rounded: '{rounded.control}'
+    padding: '15px 24px'
   button-primary-hover:
-    backgroundColor: "{colors.evergreen-hover}"
-  button-small:
-    backgroundColor: "{colors.evergreen}"
-    textColor: "{colors.paper}"
-    typography: "{typography.control}"
-    rounded: "{rounded.control}"
-    padding: "11px 19px"
+    backgroundColor: '{colors.evergreen-hover}'
+  account-action:
+    backgroundColor: 'transparent'
+    textColor: '{colors.evergreen}'
+    typography: '{typography.control}'
+    rounded: '{rounded.control}'
+    padding: '10px 18px'
 ---
 
 # Design System: Paddock Pilot — Field journal landing
@@ -68,7 +68,7 @@ This is a **public-landing-only** record of [PublicLandingPage.tsx](../../../src
 
 The frontmatter records the implemented palette and desktop type roles. Paper is the page ground and reverse text; evergreen anchors headings, ordinary primary actions and the product section. Supporting copy and rules use muted green neutrals. Clay remains a focus and visit-toggle hover accent. The overlay header wordmark, including its desktop dot, uses paper.
 
-The hero and overlay header reverse primary buttons to paper with evergreen text; their hover fill is `#e7e8d8` and focus outline is paper. Other primary buttons use evergreen with paper text and `#3f5842` on hover. The landing explicitly sets `color-scheme: light` and keeps its variables local.
+The hero reverses primary buttons to paper with evergreen text; their hover fill is `#e7e8d8` and focus outline is paper. The header's single “Sign in” action uses paper text, a quiet paper outline (`#f7f1e566`) and a translucent hover fill (`#f7f1e514`). Other primary buttons use evergreen with paper text and `#3f5842` on hover. The landing explicitly sets `color-scheme: light` and keeps its variables local.
 
 Fraunces Country supplies display and section headings; the existing Manrope Variable supplies body copy, navigation and record details. The hero uses three block spans on desktop, with `clamp(52px, 5.4vw, 88px)` type at 1.06 line height. Tablet uses 64px. Below 700px, the spans flow inline with `clamp(43px, 11vw, 66px)` type at 1.08. Shared-care and closing headings use the same `clamp(43px, 4.5vw, 66px)` scale and 1.1 line height, becoming 43px on mobile.
 
@@ -86,11 +86,13 @@ One shared inner grid aligns the header, hero text, section containers and foote
 2. **Shared care and product.** The full-width evergreen section is also at least `100svh`, with vertically centered content and `clamp(64px, 7vw, 112px)` padding (58px on mobile). Its heading and supporting paragraph precede a paper product representation. A simple “Paddock Pilot / Horses / Juniper” bar introduces a horse profile and an interactive care record. The profile and record use `0.7fr 1.3fr` columns on desktop and stack on mobile, where the profile becomes a compact horizontal row.
 3. **Closing invitation.** The paper section uses the shared heading grid and 104px vertical padding (64px on mobile). The exact supporting copy is: **“Create your stable, add your horse and invite your friends.”** An account action follows. There is no testing or payment reassurance copy.
 
-The compact footer follows with copyright, “Plans” and “Sign in”. Signup routes remain `/sign-up/$`, sign-in routes `/sign-in/$`, and “Plans” links to `/pricing`. On mobile, the header keeps its actions in one row and stacks the wordmark words.
+The compact footer follows with copyright, “Plans”, “Sign in” and the language selector. On mobile, copyright sits above a wrapping row of links and language selection. Signup routes remain `/sign-up/$`, sign-in routes `/sign-in/$`, and “Plans” links to `/pricing`. The header contains only the wordmark and “Sign in”; its auth screen also offers account creation, while the hero keeps the direct signup action. The wordmark stays on one line, using 24px type on mobile.
 
 ## Components and interaction
 
-**Actions and navigation.** Primary actions have 4px corners, a 54px minimum height and an inline arrow; the compact header action has a 44px minimum height. Hover changes fill and lifts the action by 2px, with 180ms ease-out transitions. Text links have 44px minimum height and underline on hover. Keyboard focus uses a 2px outline with 5px offset. A keyboard-revealed “Skip to content” link targets the main landmark.
+**Actions and navigation.** Primary actions have 4px corners, a 54px minimum height and an inline arrow. Hover changes fill and lifts the primary action by 2px, with 180ms ease-out transitions. The compact header action has a 44px minimum height and changes fill without movement. Text links have 44px minimum height and underline on hover. Keyboard focus uses a 2px outline with 5px offset. A keyboard-revealed “Skip to content” link targets the main landmark.
+
+**Language.** The footer uses the shared native language selector with an accessible label, native language names and saved guest preferences. Landing-scoped styles give it a transparent background, evergreen text and chevron, a muted green hover fill, and a 44px minimum height. Loading, save failure and retry behavior remain available.
 
 **Product representation.** One paper panel with 12px corners and a thin header divider contains the example, without shadows or nested cards. The horse profile shows only the portrait, without an age or breed caption. The care record remains readable HTML. Its figure heading “Juniper’s care” retains “Example” to identify fictional data; decorative eyebrows, audience labels and redundant “Provider” or “Notes” sublabels are absent.
 

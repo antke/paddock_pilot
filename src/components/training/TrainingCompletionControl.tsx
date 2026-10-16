@@ -1,5 +1,6 @@
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { ConfirmedCheck } from '#/components/motion/StateFeedback'
 import { CheckIcon } from '@phosphor-icons/react'
 import { useMutation } from 'convex/react'
 import { api } from 'convex/_generated/api'
@@ -36,6 +37,10 @@ function CompletionButton({
   const submitting = useRef(false)
   const [pending, setPending] = useState(false)
   const completed = entry.status === 'completed'
+  const [confirmed, setConfirmed] = useState(false)
+  useEffect(() => {
+    if (!completed) setConfirmed(false)
+  }, [completed])
   const label = t(
     completed ? 'trainingViews.markIncomplete' : 'trainingViews.markComplete',
   )
@@ -71,6 +76,7 @@ function CompletionButton({
         if (submitting.current) return
         submitting.current = true
         setPending(true)
+        setConfirmed(false)
         try {
           await setStatus({
             eventId: entry.occurrence.eventId,
@@ -79,6 +85,7 @@ function CompletionButton({
             status: completed ? 'planned' : 'completed',
             errorFormat: 'structured',
           })
+          setConfirmed(!completed)
           showAppSuccessToast({
             title: t(
               completed
@@ -102,7 +109,7 @@ function CompletionButton({
     >
       <span
         className={cn(
-          'flex size-6 shrink-0 items-center justify-center rounded-control border-2',
+          'app-choice-feedback flex size-6 shrink-0 items-center justify-center rounded-control border-2',
           completed
             ? 'border-primary bg-primary text-primary-foreground'
             : 'border-input bg-card',
@@ -110,6 +117,8 @@ function CompletionButton({
       >
         {pending ? (
           <Spinner aria-hidden="true" />
+        ) : confirmed ? (
+          <ConfirmedCheck />
         ) : completed ? (
           <CheckIcon weight="bold" aria-hidden="true" className="size-4" />
         ) : null}

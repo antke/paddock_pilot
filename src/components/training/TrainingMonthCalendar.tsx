@@ -76,7 +76,7 @@ export function TrainingMonthCalendar({
             </CalendarWeekdayCell>
           ))}
         </CalendarWeekdayRow>
-        <CalendarGrid role="rowgroup">
+        <CalendarGrid period={days[0]?.slice(0, 7)} role="rowgroup">
           {Array.from({ length: cells.length / 7 }, (_week, row) => (
             <div role="row" className="contents" key={row}>
               {cells.slice(row * 7, row * 7 + 7).map((date, column) => {

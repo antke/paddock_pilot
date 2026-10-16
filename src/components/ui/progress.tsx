@@ -33,8 +33,11 @@ export function Progress({
     >
       <div
         data-slot="progress-indicator"
-        className={cn('h-full rounded-control bg-primary', indicatorClassName)}
-        style={{ width: `${percent}%` }}
+        className={cn(
+          'h-full origin-left rounded-control bg-primary transition-transform duration-160 ease-out motion-reduce:transition-none',
+          indicatorClassName,
+        )}
+        style={{ transform: `scaleX(${percent / 100})` }}
       />
     </div>
   )

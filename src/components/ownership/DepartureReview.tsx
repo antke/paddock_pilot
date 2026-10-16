@@ -1,3 +1,5 @@
+import { ActionFeedback } from '#/components/ui/action-feedback'
+import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
 import { useRef, useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import type { Id } from 'convex/_generated/dataModel'
@@ -101,11 +103,7 @@ export function DepartureReviewView({
         onChange={setSelected}
         disabled={pending}
       />
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
+      <FormSubmissionError message={error} />
       <div className="flex flex-wrap gap-3">
         <Button
           aria-busy={pending || undefined}
@@ -129,11 +127,15 @@ export function DepartureReviewView({
             }
           }}
         >
-          {pending
-            ? c.moving
-            : targetStableName
-              ? m.moveConfirm(targetStableName)
-              : m.leaveConfirm}
+          <ActionFeedback
+            pending={pending}
+            pendingLabel={c.moving}
+            label={
+              targetStableName
+                ? m.moveConfirm(targetStableName)
+                : m.leaveConfirm
+            }
+          />
         </Button>
         <Button variant="outline" disabled={pending} onClick={onCancel}>
           {m.cancelReview}

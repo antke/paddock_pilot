@@ -1,0 +1,656 @@
+/* Marketing scale and composition; color, font and control roles remain the app's. */
+.current-landing {
+  --current-gutter: clamp(1.25rem, 5vw, 6rem);
+  --current-muted: var(--muted-foreground);
+  position: relative;
+  min-height: 100svh;
+  background: var(--surface-elevated);
+  color: var(--foreground);
+  font-family: var(--font-sans, 'Alegreya Sans', sans-serif);
+}
+.current-landing *,
+.current-landing *::before,
+.current-landing *::after {
+  box-sizing: border-box;
+}
+.current-inner {
+  width: min(calc(100% - 2 * var(--current-gutter)), 84rem);
+  margin-inline: auto;
+}
+.current-landing h1,
+.current-landing h2,
+.current-landing h3,
+.current-landing p {
+  margin: 0;
+}
+.current-landing h1,
+.current-landing h2,
+.current-landing h3 {
+  font-family: var(--font-display, 'Alegreya', Georgia, serif);
+  font-weight: 600;
+  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+.current-landing h1 {
+  font-size: clamp(3.5rem, 7.5vw, 7rem);
+  line-height: 1.03;
+  letter-spacing: -0.035em;
+}
+.current-landing h1 > span {
+  display: block;
+}
+.current-landing h2 {
+  font-size: clamp(2.5rem, 4.8vw, 4.75rem);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+}
+.current-landing h3 {
+  font-size: clamp(1.75rem, 2.6vw, 2.5rem);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+.current-landing p {
+  max-width: 46ch;
+  font-size: 1.1875rem;
+  line-height: 1.5;
+  color: var(--current-muted);
+  text-wrap: pretty;
+}
+.current-inverse {
+  --current-muted: var(--brand-surface-muted-foreground);
+  background: var(--brand-surface);
+  color: var(--brand-surface-foreground);
+}
+.current-landing :is(a, button, select):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+.current-landing .current-inverse :focus-visible {
+  outline-color: var(--brand-surface-foreground);
+}
+.current-header .current-inner {
+  min-height: 6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.current-header .current-wordmark {
+  min-height: 2.75rem;
+  padding-inline: 0;
+  gap: 0;
+  background: transparent;
+  font-family: var(--font-display, 'Alegreya', Georgia, serif);
+  font-size: 1.875rem;
+  line-height: 1;
+  font-weight: 600;
+  white-space: nowrap;
+  color: inherit;
+}
+.current-header .current-wordmark:hover {
+  background: transparent;
+}
+.current-header .current-sign-in {
+  min-height: 2.75rem;
+  border-color: var(--border);
+  font-size: 1rem;
+  color: inherit;
+}
+.current-header-overlay {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 2;
+  color: var(--brand-surface-foreground);
+}
+.current-header-overlay .current-inner,
+.current-header-overlay .current-sign-in {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-surface-foreground) 35%,
+    transparent
+  );
+}
+.current-header-overlay .current-sign-in:hover {
+  background: color-mix(
+    in srgb,
+    var(--brand-surface-foreground) 12%,
+    transparent
+  );
+  color: inherit;
+}
+.current-landing .current-header-overlay :focus-visible {
+  outline-color: var(--brand-surface-foreground);
+}
+.current-skip {
+  position: absolute;
+  top: 1rem;
+  left: var(--current-gutter);
+  z-index: 10;
+  padding: 0.75rem 1rem;
+  transform: translateY(-200%);
+  border-radius: var(--radius-control, 6px);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.current-skip:focus {
+  transform: none;
+}
+.current-landing .current-action {
+  min-height: 3.25rem;
+  padding: 0.875rem 1.5rem;
+  gap: 1.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.current-landing .current-action svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.current-landing .current-action-inverse {
+  border-color: var(--brand-surface-foreground);
+  background: var(--brand-surface-foreground);
+  color: var(--brand-surface);
+}
+.current-landing .current-action-inverse:hover {
+  background: color-mix(
+    in srgb,
+    var(--brand-surface-foreground) 90%,
+    var(--brand-surface)
+  );
+  color: var(--brand-surface);
+}
+.current-landing .current-action-inverse:focus-visible {
+  outline-color: var(--brand-surface-foreground);
+}
+.current-photo {
+  display: block;
+}
+.current-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 65% center;
+}
+.current-close {
+  padding-block: clamp(4rem, 8vw, 8rem);
+  background: var(--surface-elevated);
+}
+.current-close > .current-inner {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: clamp(2rem, 6vw, 6rem);
+  align-items: start;
+}
+.current-close h2 {
+  max-width: 12ch;
+}
+.current-close p {
+  margin-bottom: 1.75rem;
+}
+.current-footer {
+  background: var(--surface-elevated);
+}
+.current-footer > .current-inner {
+  padding-block: 1.5rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.current-footer p {
+  font-size: 0.9375rem;
+}
+.current-footer-controls,
+.current-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.current-footer nav a,
+.current-footer [data-slot='select'] {
+  min-height: 2.75rem;
+  font-size: 0.9375rem;
+}
+.current-footer [data-slot='select'] {
+  border-color: transparent;
+  background: transparent;
+}
+.current-footer [data-slot='select']:hover {
+  background: var(--selection-surface);
+}
+/* 01: the familiar photograph / pine / paper sequence, without a faux record. */
+.journal-opening {
+  position: relative;
+  min-height: max(45rem, 100svh);
+  display: grid;
+  align-items: center;
+  padding-block: 10rem 6rem;
+  isolation: isolate;
+}
+.journal-opening > .current-photo {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+}
+.journal-opening::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--brand-surface) 96%, transparent) 0%,
+    color-mix(in srgb, var(--brand-surface) 90%, transparent) 44%,
+    color-mix(in srgb, var(--brand-surface) 10%, transparent) 100%
+  );
+}
+.journal-opening h1 {
+  max-width: 15ch;
+  font-size: clamp(3.5rem, 6.2vw, 6.25rem);
+}
+.journal-opening p {
+  max-width: 42ch;
+  margin-block: 2rem;
+}
+.journal-shared {
+  padding-block: clamp(4rem, 8vw, 8rem);
+}
+.journal-shared > .current-inner {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 9%;
+}
+.journal-shared h2 {
+  max-width: 10ch;
+}
+.journal-capabilities {
+  display: grid;
+  gap: 2rem;
+}
+.journal-capabilities article {
+  border-top: 1px solid var(--brand-surface-border);
+  padding-top: 1.5rem;
+}
+.journal-capabilities p {
+  margin-top: 0.75rem;
+}
+/* 02: oversized paper typography, an offset introduction, and a photo interlude. */
+.editorial-opening {
+  padding-block: clamp(3rem, 6vw, 6rem) 4rem;
+}
+.editorial-opening h1 {
+  font-size: clamp(4rem, 10.5vw, 10rem);
+  line-height: 0.98;
+}
+.editorial-opening h1 span:last-child {
+  margin-left: 15%;
+  color: var(--primary);
+}
+.editorial-intro {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  align-items: end;
+  gap: 2rem;
+  margin-top: 3rem;
+  margin-left: 38%;
+}
+.editorial-intro p {
+  font-size: 1.125rem;
+}
+.editorial-intro .current-action {
+  justify-self: end;
+}
+.editorial-photo {
+  height: clamp(18rem, 38vw, 38rem);
+}
+.editorial-photo img {
+  object-position: 65% 42%;
+}
+.editorial-story {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 12%;
+  padding-block: clamp(4rem, 8vw, 8rem);
+}
+.editorial-story h2 {
+  max-width: 11ch;
+}
+.editorial-story article {
+  padding-block: 1.75rem;
+  border-top: 1px solid var(--border);
+}
+.editorial-story p {
+  margin-top: 1rem;
+}
+.direction-editorial .current-close {
+  background: var(--surface-muted);
+}
+/* 03: a wide, unshaded panorama; the photograph never competes with text. */
+.paddock-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 2rem;
+  padding-block: 3rem;
+}
+.paddock-heading h1 {
+  font-size: clamp(3.25rem, 6.5vw, 6.5rem);
+}
+.paddock-heading .current-action {
+  margin-bottom: 0.5rem;
+}
+.paddock-opening > .current-photo {
+  height: clamp(25rem, 50vw, 46rem);
+}
+.paddock-opening > .current-photo img {
+  object-position: 70% center;
+}
+.paddock-intro {
+  padding-block: 2.5rem 5rem;
+}
+.paddock-intro p {
+  max-width: 55ch;
+  font-size: clamp(1.5rem, 2.3vw, 2.25rem);
+  color: var(--foreground);
+}
+.paddock-story > .current-inner {
+  padding-block: 1rem 3rem;
+}
+.paddock-story h2 {
+  max-width: 19ch;
+}
+.paddock-band {
+  padding-block: clamp(3rem, 6vw, 6rem);
+  background: var(--surface-muted);
+}
+.paddock-band.current-inverse {
+  background: var(--brand-surface);
+}
+.paddock-band > .current-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 12%;
+}
+.paddock-band h3 {
+  max-width: 15ch;
+  font-size: clamp(2rem, 3.7vw, 3.75rem);
+}
+/* 04: direct sans-serif hierarchy and broad, open chapters, not dashboard rows. */
+.direction-working {
+  background: var(--surface-muted);
+}
+.working-opening {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  align-items: end;
+  gap: 6%;
+  padding-block: clamp(4rem, 9vw, 9rem);
+}
+.working-opening h1 {
+  font-family: var(--font-sans, 'Alegreya Sans', sans-serif);
+  font-size: clamp(4.25rem, 8.5vw, 8rem);
+  font-weight: 700;
+  line-height: 0.98;
+}
+.working-opening h1 span:last-child {
+  color: var(--primary);
+}
+.working-opening p {
+  margin-bottom: 2rem;
+}
+.working-story {
+  padding-block: 4rem 6rem;
+  background: var(--surface-elevated);
+}
+.working-story h2 {
+  max-width: 20ch;
+  margin-bottom: 3rem;
+  font-family: var(--font-sans, 'Alegreya Sans', sans-serif);
+  font-weight: 700;
+}
+.working-story ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.working-story li {
+  display: grid;
+  grid-template-columns: 0.15fr 0.85fr 1fr;
+  align-items: baseline;
+  gap: 3rem;
+  padding-block: 2.5rem;
+  border-top: 1px solid var(--border);
+}
+.working-number {
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+}
+.working-story h3 {
+  font-family: var(--font-sans, 'Alegreya Sans', sans-serif);
+  font-weight: 700;
+}
+.direction-working .current-close {
+  background: var(--surface-muted);
+}
+/* 05: the brand is the opening; immense type replaces decorative media. */
+.statement-opening {
+  min-height: 100svh;
+  display: grid;
+  align-items: center;
+  padding-block: 11rem 5rem;
+}
+.statement-opening h1 {
+  font-size: clamp(4.75rem, 13vw, 12.5rem);
+  line-height: 0.96;
+  max-width: 13ch;
+  letter-spacing: -0.04em;
+}
+.statement-opening h1 > span:last-child {
+  font-style: normal;
+  margin-left: 15%;
+}
+.statement-intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-top: clamp(3rem, 6vw, 6rem);
+}
+.statement-story > .current-inner {
+  padding-block: clamp(4rem, 8vw, 8rem);
+}
+.statement-story h2 {
+  max-width: 20ch;
+}
+.statement-capabilities {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.statement-capabilities article {
+  padding: clamp(2rem, 5vw, 5rem) var(--current-gutter);
+  background: var(--surface-muted);
+}
+.statement-capabilities article:nth-child(2),
+.statement-capabilities article:nth-child(3) {
+  background: var(--selection-surface);
+}
+.statement-capabilities h3 {
+  max-width: 16ch;
+  font-size: clamp(2.5rem, 4.4vw, 4.5rem);
+}
+.statement-capabilities p {
+  margin-top: 1.5rem;
+}
+@media (min-width: 1800px) {
+  .statement-capabilities article:first-child,
+  .statement-capabilities article:nth-child(3) {
+    padding-left: max(var(--current-gutter), calc((100vw - 84rem) / 2));
+  }
+  .statement-capabilities article:nth-child(2),
+  .statement-capabilities article:last-child {
+    padding-right: max(var(--current-gutter), calc((100vw - 84rem) / 2));
+  }
+}
+@media (max-width: 1023px) {
+  .editorial-intro {
+    margin-left: 25%;
+    grid-template-columns: 1fr;
+  }
+  .editorial-intro .current-action {
+    justify-self: start;
+  }
+  .working-opening {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .working-opening > div {
+    max-width: 35rem;
+  }
+  .working-story li {
+    gap: 1.5rem;
+  }
+}
+@media (max-width: 699px) {
+  .current-header .current-inner {
+    min-height: 5rem;
+  }
+  .current-header .current-wordmark {
+    font-size: 1.5rem;
+  }
+  .current-header .current-sign-in {
+    padding-inline: 0.75rem;
+  }
+  .current-landing p {
+    font-size: 1.125rem;
+  }
+  .current-landing h1 {
+    font-size: clamp(3rem, 11.5vw, 4.75rem);
+  }
+  .current-close > .current-inner,
+  .journal-shared > .current-inner,
+  .editorial-story,
+  .paddock-band > .current-inner {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .current-footer > .current-inner {
+    align-items: flex-start;
+  }
+  .current-footer-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .current-footer nav a {
+    padding-inline: 0.5rem;
+  }
+  .journal-opening {
+    min-height: max(44rem, 100svh);
+    padding-block: 9rem 4rem;
+  }
+  .journal-opening::before {
+    background: linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--brand-surface) 96%, transparent),
+      color-mix(in srgb, var(--brand-surface) 86%, transparent)
+    );
+  }
+  .journal-opening .current-photo img {
+    object-position: 70% center;
+  }
+  .journal-opening h1 {
+    max-width: 13ch;
+  }
+  .journal-opening h1 > span {
+    display: inline;
+  }
+  .journal-opening h1 > span:not(:last-child)::after {
+    content: ' ';
+  }
+  .journal-shared h2 {
+    max-width: 15ch;
+  }
+  .editorial-opening {
+    padding-block: 3rem;
+  }
+  .editorial-opening h1 {
+    font-size: clamp(3.5rem, 13vw, 5rem);
+  }
+  .editorial-opening h1 span:last-child {
+    margin-left: 0;
+  }
+  .editorial-intro {
+    margin-left: 0;
+    margin-top: 2rem;
+  }
+  .editorial-photo {
+    height: 21rem;
+  }
+  .paddock-heading {
+    align-items: start;
+    flex-direction: column;
+    padding-block: 2.5rem;
+  }
+  .paddock-heading h1 {
+    font-size: clamp(3rem, 11.5vw, 4.5rem);
+  }
+  .paddock-opening > .current-photo {
+    height: 28rem;
+  }
+  .paddock-opening > .current-photo img {
+    object-position: 66% center;
+  }
+  .paddock-intro p {
+    font-size: 1.5rem;
+  }
+  .working-opening h1 {
+    font-size: clamp(3.75rem, 14vw, 5.5rem);
+  }
+  .working-story li {
+    grid-template-columns: 2rem 1fr;
+    gap: 1rem;
+    padding-block: 2rem;
+  }
+  .working-story li p {
+    grid-column: 2;
+  }
+  .statement-opening {
+    min-height: max(40rem, 100svh);
+    padding-block: 9rem 4rem;
+  }
+  .statement-opening h1 {
+    font-size: clamp(3.75rem, 15vw, 6rem);
+  }
+  .statement-opening h1 > span:last-child {
+    margin-left: 0;
+  }
+  .statement-intro {
+    margin-top: 3rem;
+  }
+  .statement-capabilities {
+    grid-template-columns: 1fr;
+  }
+  .statement-capabilities article:nth-child(3) {
+    background: var(--surface-muted);
+  }
+  .statement-capabilities article:last-child {
+    background: var(--selection-surface);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .current-landing *,
+  .current-landing *::before,
+  .current-landing *::after {
+    scroll-behavior: auto;
+    animation: none;
+    transition: none;
+  }
+}

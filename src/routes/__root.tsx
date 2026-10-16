@@ -46,7 +46,8 @@ export const Route = createRootRoute({
       },
       {
         name: 'viewport',
-        content: 'width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content',
+        content:
+          'width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content',
       },
       {
         title: SITE_TITLE,
@@ -150,7 +151,10 @@ function LocalizedRootDocument({ children }: { children: React.ReactNode }) {
         ?.setAttribute('content', description)
     }
   }, [locale, pathname, t])
-  const isLandingLab = isLandingLabPath(pathname)
+  const isStandaloneLab =
+    isLandingLabPath(pathname) ||
+    pathname === '/page-lab/dark-mode' ||
+    (import.meta.env.DEV && pathname === '/page-lab/motion')
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -161,7 +165,7 @@ function LocalizedRootDocument({ children }: { children: React.ReactNode }) {
 
       <body className={appBodyClassName}>
         <ConvexProviderWithClerk>
-          {isLandingLab ? (
+          {isStandaloneLab ? (
             <TooltipProvider>
               {children}
               <Toaster />

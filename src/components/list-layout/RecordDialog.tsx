@@ -1,4 +1,5 @@
 import type { ComponentProps, ReactNode, Ref } from 'react'
+import { useAppMotion } from '#/components/motion/appMotion'
 
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { MobileFloatingAction } from '#/components/layout/MobileFloatingAction'
@@ -64,9 +65,11 @@ export function RecordDialogContent({
   className,
   ...props
 }: ComponentProps<typeof DialogContent>) {
+  const { enabled } = useAppMotion()
   return (
     <DialogContent
       data-slot="record-dialog-content"
+      data-app-motion-scope={enabled || undefined}
       mobileFullscreen
       className={cn(
         'grid max-h-[calc(100dvh-1rem)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-panel p-0 sm:max-h-[calc(100dvh-2rem)] sm:max-w-2xl',

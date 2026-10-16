@@ -68,6 +68,7 @@ export function HeaderView({
   return (
     <AppHeader position={position}>
       <AppHeaderNav
+        className={!mobileContext ? 'sm:gap-4 sm:py-3' : undefined}
         aria-label={
           navigationLabel ??
           t(
@@ -88,15 +89,18 @@ export function HeaderView({
           <AppBrandLink>Paddock Pilot</AppBrandLink>
         )}
 
-        <AppHeaderLinks
-          className={mobileContext ? 'hidden md:flex' : undefined}
-        >
-          {navigation}
-        </AppHeaderLinks>
+        {mobileContext && (
+          <AppHeaderLinks className="hidden md:flex">
+            {navigation}
+          </AppHeaderLinks>
+        )}
 
-        <AppHeaderActions>
-          {accountActions}
-          <AppHeaderUtilityCluster className="hidden sm:flex">
+        <AppHeaderActions className="gap-2 sm:gap-3 max-sm:w-full max-sm:justify-between">
+          <div className="flex min-w-0 items-center gap-1 [&>a]:min-h-10 [&>a]:text-sm max-md:[&>a]:min-h-11">
+            {!mobileContext && navigation}
+            {accountActions}
+          </div>
+          <AppHeaderUtilityCluster className="hidden flex-nowrap border-l border-border-subtle py-0 pr-0 pl-3 sm:flex [&_button]:size-10 max-md:[&_button]:size-11">
             <LanguageSelector compact />
             <ThemeToggle />
           </AppHeaderUtilityCluster>
@@ -148,10 +152,10 @@ function HeaderAccountActions({
   return (
     <>
       <Show when="signed-out">
-        <ButtonLink to="/sign-in/$" variant="ghost" size="sm">
+        <ButtonLink to="/sign-in/$" variant="ghost" size="control">
           {t('navigation.signIn')}
         </ButtonLink>
-        <ButtonLink to="/sign-up/$" size="sm">
+        <ButtonLink to="/sign-up/$" size="control">
           <span className="sm:hidden">{t('navigation.create')}</span>
           <span className="hidden sm:inline">
             {t('navigation.createAccount')}

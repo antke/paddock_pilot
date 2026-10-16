@@ -1,3 +1,5 @@
+import { MotionDisclosure } from '#/components/motion/MotionDisclosure'
+import { useChangeMotion } from '#/components/motion/useChangeMotion'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { Table } from '#/components/ui/table'
@@ -159,6 +161,7 @@ export function TrainingCalendar({
       /* Storage is optional. */
     }
   }, [initialView])
+  const periodMotion = useChangeMotion<HTMLDivElement>(`${view}-${anchor}`)
   const changeView = (next: 'week' | 'month') => {
     setView(next)
     try {
@@ -442,9 +445,9 @@ export function TrainingCalendar({
           )}
         </div>
       )}
-      <div
+      <MotionDisclosure
         id={`${id}-filters`}
-        hidden={!filtersOpen}
+        open={filtersOpen}
         onKeyDown={(event) => {
           if (event.key === 'Escape') {
             event.preventDefault()
@@ -452,135 +455,136 @@ export function TrainingCalendar({
             filterToggle.current?.focus()
           }
         }}
-        className={
-          filtersOpen ? 'grid gap-4 rounded-row bg-surface p-4' : 'hidden'
-        }
       >
-        <div
-          className={`grid gap-3 ${fixedHorseId ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}
-        >
-          {!fixedHorseId && (
-            <Field>
-              <FieldLabel htmlFor={`${id}-horses`}>
-                {t('trainingViews.findHorses')}
-              </FieldLabel>
-              <Input
-                id={`${id}-horses`}
-                value={horseQuery}
-                onChange={(e) => setHorseQuery(e.target.value)}
-                placeholder={t('trainingViews.searchHorses')}
-              />
-            </Field>
-          )}
-          <Field>
-            <FieldLabel htmlFor={`${id}-activity`}>
-              {t('trainingViews.workType')}
-            </FieldLabel>
-            <Select
-              id={`${id}-activity`}
-              value={activity}
-              onChange={(e) => setActivity(e.target.value)}
-            >
-              <option value="all">{t('trainingViews.allActivities')}</option>
-              {trainingActivities.map((item) => (
-                <option key={item} value={item}>
-                  {t(`training.activities.${item}`)}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field>
-            <FieldLabel htmlFor={`${id}-status`}>
-              {t('trainingViews.status')}
-            </FieldLabel>
-            <Select
-              id={`${id}-status`}
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-            >
-              <option value="all">{t('trainingViews.allStatuses')}</option>
-              {(
-                Object.keys(trainingStatusLabels) as Array<
-                  keyof typeof trainingStatusLabels
-                >
-              ).map((value) => (
-                <option key={value} value={value}>
-                  {t(`training.status.${value}`)}
-                </option>
-              ))}
-            </Select>
-          </Field>
-        </div>
-        {!fixedHorseId && (
+        <div className="grid gap-4 rounded-row bg-surface p-4">
           <div
-            role="group"
-            aria-label={t('trainingViews.filterHorses')}
-            className="flex flex-wrap gap-2"
+            className={`grid gap-3 ${fixedHorseId ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}
           >
-            <Button
-              size="control"
-              variant={selected.length === 0 ? 'secondary' : 'outline'}
-              aria-pressed={selected.length === 0}
-              onClick={() => setSelected([])}
+            {!fixedHorseId && (
+              <Field>
+                <FieldLabel htmlFor={`${id}-horses`}>
+                  {t('trainingViews.findHorses')}
+                </FieldLabel>
+                <Input
+                  id={`${id}-horses`}
+                  value={horseQuery}
+                  onChange={(e) => setHorseQuery(e.target.value)}
+                  placeholder={t('trainingViews.searchHorses')}
+                />
+              </Field>
+            )}
+            <Field>
+              <FieldLabel htmlFor={`${id}-activity`}>
+                {t('trainingViews.workType')}
+              </FieldLabel>
+              <Select
+                id={`${id}-activity`}
+                value={activity}
+                onChange={(e) => setActivity(e.target.value)}
+              >
+                <option value="all">{t('trainingViews.allActivities')}</option>
+                {trainingActivities.map((item) => (
+                  <option key={item} value={item}>
+                    {t(`training.activities.${item}`)}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor={`${id}-status`}>
+                {t('trainingViews.status')}
+              </FieldLabel>
+              <Select
+                id={`${id}-status`}
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value="all">{t('trainingViews.allStatuses')}</option>
+                {(
+                  Object.keys(trainingStatusLabels) as Array<
+                    keyof typeof trainingStatusLabels
+                  >
+                ).map((value) => (
+                  <option key={value} value={value}>
+                    {t(`training.status.${value}`)}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+          {!fixedHorseId && (
+            <div
+              role="group"
+              aria-label={t('trainingViews.filterHorses')}
+              className="flex flex-wrap gap-2"
             >
-              {t('trainingViews.allHorses')}
-            </Button>
-            {horses.some((h) => h.canRecord) && (
               <Button
                 size="control"
-                variant="outline"
-                onClick={() =>
-                  setSelected(
-                    horses.filter((h) => h.canRecord).map((h) => h._id),
-                  )
-                }
+                variant={selected.length === 0 ? 'secondary' : 'outline'}
+                aria-pressed={selected.length === 0}
+                onClick={() => setSelected([])}
               >
-                {t('trainingViews.myHorses')}
+                {t('trainingViews.allHorses')}
               </Button>
-            )}
-            {horses
-              .filter(
-                (horse) =>
-                  getHorseDisplayName(horse)
-                    .toLocaleLowerCase()
-                    .includes(horseQuery.toLocaleLowerCase()) ||
-                  selected.includes(horse._id),
-              )
-              .map((horse) => (
+              {horses.some((h) => h.canRecord) && (
                 <Button
-                  key={horse._id}
                   size="control"
-                  variant={
-                    selected.includes(horse._id) ? 'secondary' : 'outline'
-                  }
-                  aria-pressed={selected.includes(horse._id)}
+                  variant="outline"
                   onClick={() =>
-                    setSelected((current) =>
-                      current.includes(horse._id)
-                        ? current.filter((item) => item !== horse._id)
-                        : [...current, horse._id],
+                    setSelected(
+                      horses.filter((h) => h.canRecord).map((h) => h._id),
                     )
                   }
                 >
-                  {getHorseDisplayName(horse)}
-                  {selected.includes(horse._id) && <XIcon aria-hidden="true" />}
+                  {t('trainingViews.myHorses')}
                 </Button>
-              ))}
-          </div>
-        )}
-        {small && (
-          <Button
-            variant="secondary"
-            className="min-h-11 w-full"
-            onClick={() => {
-              returnToResults.current = true
-              setFiltersOpen(false)
-            }}
-          >
-            {t('trainingViews.showResults')}
-          </Button>
-        )}
-      </div>
+              )}
+              {horses
+                .filter(
+                  (horse) =>
+                    getHorseDisplayName(horse)
+                      .toLocaleLowerCase()
+                      .includes(horseQuery.toLocaleLowerCase()) ||
+                    selected.includes(horse._id),
+                )
+                .map((horse) => (
+                  <Button
+                    key={horse._id}
+                    size="control"
+                    variant={
+                      selected.includes(horse._id) ? 'secondary' : 'outline'
+                    }
+                    aria-pressed={selected.includes(horse._id)}
+                    onClick={() =>
+                      setSelected((current) =>
+                        current.includes(horse._id)
+                          ? current.filter((item) => item !== horse._id)
+                          : [...current, horse._id],
+                      )
+                    }
+                  >
+                    {getHorseDisplayName(horse)}
+                    {selected.includes(horse._id) && (
+                      <XIcon aria-hidden="true" />
+                    )}
+                  </Button>
+                ))}
+            </div>
+          )}
+          {small && (
+            <Button
+              variant="secondary"
+              className="min-h-11 w-full"
+              onClick={() => {
+                returnToResults.current = true
+                setFiltersOpen(false)
+              }}
+            >
+              {t('trainingViews.showResults')}
+            </Button>
+          )}
+        </div>
+      </MotionDisclosure>
       <div
         ref={resultsRef}
         role={small ? 'region' : undefined}
@@ -591,7 +595,7 @@ export function TrainingCalendar({
         {horses.length === 0 ? (
           <DashboardEmptyState title={t('trainingViews.addHorse')} />
         ) : (
-          <>
+          <div ref={periodMotion} className="grid min-w-0 gap-5">
             {entries.length === 0 && (!small || view === 'week') && (
               <DashboardEmptyState
                 chrome="flat"
@@ -710,7 +714,11 @@ export function TrainingCalendar({
                       </CalendarWeekdayCell>
                     ))}
                   </CalendarWeekdayRow>
-                  <CalendarGrid role="rowgroup" className="min-w-[56rem]">
+                  <CalendarGrid
+                    period={anchor.slice(0, 7)}
+                    role="rowgroup"
+                    className="min-w-[56rem]"
+                  >
                     {Array.from({ length: monthCells.length / 7 }, (_, row) => (
                       <div role="row" className="contents" key={row}>
                         {monthCells
@@ -773,7 +781,7 @@ export function TrainingCalendar({
                   </CalendarGrid>
                 </CalendarShell>
               ))}
-          </>
+          </div>
         )}
       </div>
     </DashboardSectionCard>

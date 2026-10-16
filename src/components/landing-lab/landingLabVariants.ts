@@ -3,7 +3,52 @@ import type { ComponentType, LazyExoticComponent } from 'react'
 
 import type { LandingLabVariantProps } from './LandingLabPrimitives'
 
-export const landingLabVariants = [
+type LandingLabVariantDefinition = {
+  id: string
+  label: string
+  thesis: string
+  component: LazyExoticComponent<ComponentType<LandingLabVariantProps>>
+}
+
+export const currentLandingLabVariants = [
+  {
+    id: 'field-journal',
+    label: 'Field Journal',
+    thesis:
+      'A refinement of the current landing direction, keeping horse records and day-to-day stable care in one clear field journal.',
+    component: lazy(() => import('./variants/FieldJournal')),
+  },
+  {
+    id: 'yard-editorial',
+    label: 'Yard Editorial',
+    thesis:
+      'An editorial rhythm connects the stable view, each horse’s context, and the people doing the work.',
+    component: lazy(() => import('./variants/YardEditorial')),
+  },
+  {
+    id: 'open-paddock',
+    label: 'Open Paddock',
+    thesis:
+      'An open composition gives horse records and shared stable care room to breathe without losing their connection.',
+    component: lazy(() => import('./variants/OpenPaddock')),
+  },
+  {
+    id: 'working-journal',
+    label: 'Working Journal',
+    thesis:
+      'A practical journal follows stable work from what needs attention to the record of what was done.',
+    component: lazy(() => import('./variants/WorkingJournal')),
+  },
+  {
+    id: 'pine-statement',
+    label: 'Pine Statement',
+    thesis:
+      'A concise typographic statement brings horse context, stable work, and shared access into one factual story.',
+    component: lazy(() => import('./variants/PineStatement')),
+  },
+] as const satisfies ReadonlyArray<LandingLabVariantDefinition>
+
+export const archivedLandingLabVariants = [
   {
     id: 'gathered-yard',
     label: 'Gathered Yard',
@@ -39,12 +84,13 @@ export const landingLabVariants = [
       'Two fields of responsibility meet at one shared seam without inventing personas, examples, or product evidence.',
     component: lazy(() => import('./variants/OwnerMemberGatefold')),
   },
-] as const satisfies ReadonlyArray<{
-  id: string
-  label: string
-  thesis: string
-  component: LazyExoticComponent<ComponentType<LandingLabVariantProps>>
-}>
+] as const satisfies ReadonlyArray<LandingLabVariantDefinition>
+
+// Keep both rounds available for existing review, capture, and preference URLs.
+export const landingLabVariants = [
+  ...currentLandingLabVariants,
+  ...archivedLandingLabVariants,
+] as const
 
 export type LandingLabVariantId = (typeof landingLabVariants)[number]['id']
 

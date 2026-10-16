@@ -1,3 +1,4 @@
+import { StateFeedback } from '#/components/motion/StateFeedback'
 import { Badge } from '#/components/ui/badge'
 import type { ComponentProps, ReactNode } from 'react'
 
@@ -21,7 +22,7 @@ export function DashboardCountBadge({
       size="count"
       {...props}
     >
-      {count}
+      <StateFeedback value={count}>{count}</StateFeedback>
     </Badge>
   )
 }

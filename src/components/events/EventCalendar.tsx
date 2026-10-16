@@ -1,5 +1,6 @@
+import { useChangeMotion } from '#/components/motion/useChangeMotion'
 import { createLink } from '@tanstack/react-router'
-import { forwardRef } from 'react'
+import { forwardRef, useImperativeHandle } from 'react'
 import type { ComponentProps } from 'react'
 import { Button } from '#/components/ui/button'
 
@@ -73,9 +74,17 @@ export function CalendarWeekdayCell({
   )
 }
 
-export function CalendarGrid({ className, ...props }: ComponentProps<'div'>) {
+export function CalendarGrid({
+  className,
+  period,
+  ref,
+  ...props
+}: ComponentProps<'div'> & { period?: string }) {
+  const scope = useChangeMotion<HTMLDivElement>(period, true)
+  useImperativeHandle(ref, () => scope.current, [scope])
   return (
     <div
+      ref={scope}
       data-slot="calendar-grid"
       className={calendarGridClassName(className)}
       {...props}

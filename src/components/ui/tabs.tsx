@@ -1,3 +1,4 @@
+import { useAppMotion } from '#/components/motion/appMotion'
 import { Tabs as TabsPrimitive } from '@base-ui/react/tabs'
 import { cva } from 'class-variance-authority'
 import type { VariantProps } from 'class-variance-authority'
@@ -41,15 +42,30 @@ const tabsListVariants = cva(
 function TabsList({
   className,
   variant = 'default',
+  children,
   ...props
 }: TabsPrimitive.List.Props & VariantProps<typeof tabsListVariants>) {
+  const { enabled } = useAppMotion()
   return (
     <TabsPrimitive.List
       data-slot="tabs-list"
+      data-motion-tabs={enabled || undefined}
       data-variant={variant}
-      className={cn(tabsListVariants({ variant }), className)}
+      className={cn(
+        tabsListVariants({ variant }),
+        'relative isolate',
+        className,
+      )}
       {...props}
-    />
+    >
+      {children}
+      {enabled && (
+        <TabsPrimitive.Indicator
+          aria-hidden="true"
+          className="app-tab-indicator pointer-events-none absolute"
+        />
+      )}
+    </TabsPrimitive.List>
   )
 }
 

@@ -33,7 +33,7 @@ export function CalendarItemPreview({
             id={id}
             role="tooltip"
             data-slot="calendar-item-preview"
-            className="w-96 max-w-full max-h-[min(var(--available-height),28rem)] overflow-y-auto overscroll-contain rounded-panel border border-border bg-popover p-4 text-sm text-popover-foreground wrap-anywhere"
+            className="app-popup-motion origin-(--transform-origin) w-96 max-w-full max-h-[min(var(--available-height),28rem)] overflow-y-auto overscroll-contain rounded-panel border border-border bg-popover p-4 text-sm text-popover-foreground wrap-anywhere"
           >
             {children}
           </PreviewCard.Popup>

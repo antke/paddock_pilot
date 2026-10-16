@@ -16,7 +16,8 @@ import { EventRow } from '#/components/events/EventRow'
 import { CalendarEventTooltip } from '#/components/events/CalendarEventTooltip'
 import { CalendarItemTypeDot } from '#/components/events/CalendarItemTypeDot'
 import { calendarCompactEventChipClassName } from '#/components/events/EventCalendarChrome'
-import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
+import { MotionList } from '#/components/motion/MotionList'
+import { MotionNotice } from '#/components/motion/MotionNotice'
 import {
   formatEventDate,
   formatEventDateTime,
@@ -44,6 +45,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import type { ReactNode } from 'react'
 import type { Locale } from 'shared/i18n/locale'
 import { localeInstances } from '#/i18n/resources'
 import {
@@ -174,11 +176,14 @@ export function StableEventsCalendar({
     const focused = lastFocusedRef.current
     if (
       focused &&
-      !focused.isConnected &&
-      document.activeElement === document.body
+      (!focused.isConnected ||
+        (selectedDayOccurrences.length === 0 &&
+          selectedAgendaRef.current?.contains(focused))) &&
+      (document.activeElement === document.body ||
+        document.activeElement === focused)
     )
       calendarRef.current?.focus()
-  }, [events, selectedDateKey, visibleMonth])
+  }, [events, selectedDateKey, selectedDayOccurrences.length, visibleMonth])
 
   useEffect(() => {
     if (selectedDateKey && isRendered(selectedAgendaRef.current))
@@ -278,7 +283,7 @@ export function StableEventsCalendar({
               </CalendarWeekdayCell>
             ))}
           </CalendarWeekdayRow>
-          <CalendarGrid role="rowgroup">
+          <CalendarGrid period={monthKey} role="rowgroup">
             {calendarWeeks.map((week, index) => (
               <div role="row" className="contents" key={index}>
                 {week.map((cell) => {
@@ -353,32 +358,17 @@ export function StableEventsCalendar({
               count: mobileDayOccurrences.length,
             })}
           </p>
-          {mobileDayOccurrences.length === 0 ? (
-            <DashboardEmptyState chrome="flat" spacing="flush">
-              {t('calendar.dayEmpty')}
-            </DashboardEmptyState>
-          ) : (
-            <DashboardItemList gap="compact">
-              {mobileDayOccurrences.map((dayOccurrence) => (
-                <EventRow
-                  key={dayOccurrence.occurrence.occurrenceKey}
-                  event={getOccurrenceDisplayEvent(dayOccurrence.occurrence)}
-                  chrome="flat"
-                  horseCount={dayOccurrence.occurrence.event.horseIds.length}
-                  leadingLabel={getDayOccurrenceLabel(dayOccurrence, locale)}
-                  showRecurrence={false}
-                  supplementalMeta={
-                    dayOccurrence.occurrence.durationDays > 1
-                      ? [
-                          `${formatEventDate(dayOccurrence.occurrence.startDate, locale)} – ${formatEventDate(dayOccurrence.occurrence.endDate, locale)}`,
-                        ]
-                      : []
-                  }
-                  variant="contextual"
-                />
-              ))}
-            </DashboardItemList>
-          )}
+          <CalendarAgendaList
+            key={mobileSelectedDate}
+            occurrences={mobileDayOccurrences}
+            locale={locale}
+            focusTarget={() => calendarRef.current}
+            empty={
+              <DashboardEmptyState chrome="flat" spacing="flush">
+                {t('calendar.dayEmpty')}
+              </DashboardEmptyState>
+            }
+          />
         </DashboardSubsection>
       </div>
 
@@ -400,7 +390,7 @@ export function StableEventsCalendar({
           ))}
         </CalendarWeekdayRow>
 
-        <CalendarGrid role="rowgroup">
+        <CalendarGrid period={monthKey} role="rowgroup">
           {calendarWeeks.map((week, weekIndex) => (
             <div role="row" className="contents" key={`week-${weekIndex}`}>
               {week.map((cell) => {
@@ -480,62 +470,94 @@ export function StableEventsCalendar({
         </CalendarGrid>
       </CalendarShell>
 
-      {selectedDateKey && selectedDayOccurrences.length > 0 && (
-        <div
-          id={selectedAgendaId}
-          ref={selectedAgendaRef}
-          role="region"
-          data-calendar-view="selected"
-          aria-label={t('calendar.eventsOn', {
-            date: formatEventDate(selectedDateKey, locale),
-          })}
-          tabIndex={-1}
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') closeSelectedAgenda()
-          }}
-          className="hidden rounded-panel border-t border-border-subtle pt-5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:block"
-        >
-          <DashboardSubsection
-            as="h3"
-            aside={
-              <Button
-                type="button"
-                variant="subtle"
-                size="sm"
-                onClick={closeSelectedAgenda}
-              >
-                {t('calendar.close')}
-              </Button>
-            }
-            gap="compact"
-            title={t('calendar.eventsOn', {
+      <MotionNotice
+        show={Boolean(selectedDateKey && selectedDayOccurrences.length > 0)}
+        className="hidden md:block"
+      >
+        {selectedDateKey && selectedDayOccurrences.length > 0 && (
+          <div
+            id={selectedAgendaId}
+            ref={selectedAgendaRef}
+            role="region"
+            data-calendar-view="selected"
+            aria-label={t('calendar.eventsOn', {
               date: formatEventDate(selectedDateKey, locale),
             })}
+            tabIndex={-1}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') closeSelectedAgenda()
+            }}
+            className="hidden rounded-panel border-t border-border-subtle pt-5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:block"
           >
-            <DashboardItemList gap="compact">
-              {selectedDayOccurrences.map((dayOccurrence) => (
-                <EventRow
-                  key={dayOccurrence.occurrence.occurrenceKey}
-                  event={getOccurrenceDisplayEvent(dayOccurrence.occurrence)}
-                  chrome="flat"
-                  horseCount={dayOccurrence.occurrence.event.horseIds.length}
-                  leadingLabel={getDayOccurrenceLabel(dayOccurrence, locale)}
-                  showRecurrence={false}
-                  supplementalMeta={
-                    dayOccurrence.occurrence.durationDays > 1
-                      ? [
-                          `${formatEventDate(dayOccurrence.occurrence.startDate, locale)} – ${formatEventDate(dayOccurrence.occurrence.endDate, locale)}`,
-                        ]
-                      : []
-                  }
-                  variant="contextual"
-                />
-              ))}
-            </DashboardItemList>
-          </DashboardSubsection>
-        </div>
-      )}
+            <DashboardSubsection
+              as="h3"
+              aside={
+                <Button
+                  type="button"
+                  variant="subtle"
+                  size="sm"
+                  onClick={closeSelectedAgenda}
+                >
+                  {t('calendar.close')}
+                </Button>
+              }
+              gap="compact"
+              title={t('calendar.eventsOn', {
+                date: formatEventDate(selectedDateKey, locale),
+              })}
+            >
+              <CalendarAgendaList
+                occurrences={selectedDayOccurrences}
+                locale={locale}
+                focusTarget={() =>
+                  selectedAgendaRef.current ?? calendarRef.current
+                }
+              />
+            </DashboardSubsection>
+          </div>
+        )}
+      </MotionNotice>
     </DashboardSectionCard>
+  )
+}
+
+/** Agenda rows share record identity; dense calendar table cells stay unwrapped. */
+function CalendarAgendaList({
+  occurrences,
+  locale,
+  empty,
+  focusTarget,
+}: {
+  occurrences: StableCalendarDayOccurrence[]
+  locale: Locale
+  empty?: ReactNode
+  focusTarget: () => HTMLElement | null
+}) {
+  return (
+    <MotionList
+      className="min-h-24 content-start"
+      items={occurrences}
+      getKey={(item) => item.occurrence.occurrenceKey}
+      focusTarget={focusTarget}
+      empty={empty}
+      renderItem={(dayOccurrence) => (
+        <EventRow
+          event={getOccurrenceDisplayEvent(dayOccurrence.occurrence)}
+          chrome="flat"
+          horseCount={dayOccurrence.occurrence.event.horseIds.length}
+          leadingLabel={getDayOccurrenceLabel(dayOccurrence, locale)}
+          showRecurrence={false}
+          supplementalMeta={
+            dayOccurrence.occurrence.durationDays > 1
+              ? [
+                  `${formatEventDate(dayOccurrence.occurrence.startDate, locale)} – ${formatEventDate(dayOccurrence.occurrence.endDate, locale)}`,
+                ]
+              : []
+          }
+          variant="contextual"
+        />
+      )}
+    />
   )
 }
 

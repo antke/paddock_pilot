@@ -1,3 +1,4 @@
+import { StateFeedback } from '#/components/motion/StateFeedback'
 import { useT } from '#/i18n/LocaleProvider'
 import { CheckIcon, ClockCounterClockwiseIcon } from '@phosphor-icons/react'
 import type { ComponentProps, CSSProperties } from 'react'
@@ -104,13 +105,15 @@ function StepMarker({
         status === 'upcoming' && 'border-border bg-card text-muted-foreground',
       )}
     >
-      {status === 'completed' ? (
-        <CheckIcon className="size-4" weight="bold" />
-      ) : status === 'deferred' ? (
-        <ClockCounterClockwiseIcon className="size-4" />
-      ) : (
-        String(index + 1).padStart(2, '0')
-      )}
+      <StateFeedback value={status}>
+        {status === 'completed' ? (
+          <CheckIcon className="size-4" weight="bold" />
+        ) : status === 'deferred' ? (
+          <ClockCounterClockwiseIcon className="size-4" />
+        ) : (
+          String(index + 1).padStart(2, '0')
+        )}
+      </StateFeedback>
     </span>
   )
 }

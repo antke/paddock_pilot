@@ -1,3 +1,4 @@
+import { HomeIcon } from '#/components/icons/domain-icons'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
 import {
@@ -9,7 +10,7 @@ import {
   BreadcrumbSeparator,
 } from '#/components/ui/breadcrumb'
 import { Link, useLocation } from '@tanstack/react-router'
-import { HouseIcon } from '@phosphor-icons/react'
+
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { useQuery } from 'convex/react'
@@ -72,7 +73,7 @@ export function StableBreadcrumbsView({
             aria-label={t('breadcrumbs.dashboard')}
             title={t('breadcrumbs.dashboard')}
           >
-            <HouseIcon aria-hidden="true" className="size-4" />
+            <HomeIcon aria-hidden="true" className="size-4" />
             <span className="sr-only">{t('breadcrumbs.dashboard')}</span>
           </BreadcrumbLink>
         </BreadcrumbItem>

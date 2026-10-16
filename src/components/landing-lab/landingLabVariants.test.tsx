@@ -5,7 +5,18 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { forbiddenLandingClaims } from './landingLabContent'
-import { landingLabVariants } from './landingLabVariants'
+import {
+  archivedLandingLabVariants,
+  currentLandingLabVariants,
+  getLandingLabVariant,
+  isLandingLabVariantId,
+  landingLabVariants,
+} from './landingLabVariants'
+import FieldJournal from './variants/FieldJournal'
+import OpenPaddock from './variants/OpenPaddock'
+import PineStatement from './variants/PineStatement'
+import WorkingJournal from './variants/WorkingJournal'
+import YardEditorial from './variants/YardEditorial'
 import CareCycle from './variants/CareCycle'
 import GatheredYard from './variants/GatheredYard'
 import OwnerMemberGatefold from './variants/OwnerMemberGatefold'
@@ -34,9 +45,21 @@ vi.mock('#/components/ui/button', () => ({
   },
 }))
 
+vi.mock('#/i18n/LanguageSelector', () => ({
+  LanguageSelector: () => <span>Language</span>,
+}))
+
 afterEach(cleanup)
 
-const concepts = [
+const currentConcepts = [
+  ['Field Journal', FieldJournal],
+  ['Yard Editorial', YardEditorial],
+  ['Open Paddock', OpenPaddock],
+  ['Working Journal', WorkingJournal],
+  ['Pine Statement', PineStatement],
+] as const
+
+const archivedConcepts = [
   ['Gathered Yard', GatheredYard],
   ['Stable Aisle', StableAisle],
   ['Paddock Map', PaddockMap],
@@ -45,20 +68,46 @@ const concepts = [
 ] as const
 
 describe('landing lab registry', () => {
-  it('contains the same five unique top-level directions', () => {
-    expect(landingLabVariants.map((variant) => variant.id)).toEqual([
+  it('contains exactly five current directions with the refinement first', () => {
+    expect(currentLandingLabVariants.map((variant) => variant.id)).toEqual([
+      'field-journal',
+      'yard-editorial',
+      'open-paddock',
+      'working-journal',
+      'pine-statement',
+    ])
+    expect(currentLandingLabVariants.map((variant) => variant.label)).toEqual(
+      currentConcepts.map(([label]) => label),
+    )
+  })
+
+  it('retains all five archived directions for backwards ID lookup', () => {
+    expect(archivedLandingLabVariants.map((variant) => variant.id)).toEqual([
       'gathered-yard',
       'stable-aisle',
       'paddock-map',
       'care-cycle',
       'owner-member-gatefold',
     ])
+    expect(archivedLandingLabVariants.map((variant) => variant.label)).toEqual(
+      archivedConcepts.map(([label]) => label),
+    )
+    expect(landingLabVariants).toEqual([
+      ...currentLandingLabVariants,
+      ...archivedLandingLabVariants,
+    ])
+    for (const variant of landingLabVariants) {
+      expect(getLandingLabVariant(variant.id)).toBe(variant)
+      expect(isLandingLabVariantId(variant.id)).toBe(true)
+    }
+    expect(getLandingLabVariant('unknown')).toBeUndefined()
+    expect(isLandingLabVariantId('unknown')).toBe(false)
     expect(new Set(landingLabVariants.map((variant) => variant.id)).size).toBe(
-      concepts.length,
+      landingLabVariants.length,
     )
     expect(
       new Set(landingLabVariants.map((variant) => variant.label)).size,
-    ).toBe(concepts.length)
+    ).toBe(landingLabVariants.length)
   })
 
   it('keeps three unique Paddock Map studies below the top-level registry', () => {
@@ -81,14 +130,19 @@ describe('landing lab registry', () => {
   })
 })
 
-function expectFactualLandingStory(container: HTMLElement) {
+function expectFactualLandingStory(
+  container: HTMLElement,
+  includesPlans = false,
+) {
   expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
   expect(container.querySelector('header')).toBeTruthy()
   expect(container.querySelector('main')).toBeTruthy()
   expect(container.querySelector('footer')).toBeTruthy()
   expect(container.querySelector('a[href="/sign-up/$"]')).toBeTruthy()
   expect(container.querySelector('a[href="/sign-in/$"]')).toBeTruthy()
-  expect(container.querySelector('a[href="/pricing"]')).toBeFalsy()
+  expect(Boolean(container.querySelector('a[href="/pricing"]'))).toBe(
+    includesPlans,
+  )
 
   const copy = container.textContent?.toLowerCase() ?? ''
   expect(copy).toContain('stable')
@@ -101,7 +155,15 @@ function expectFactualLandingStory(container: HTMLElement) {
   }
 }
 
-describe.each(concepts)('%s', (_label, Concept) => {
+describe.each(currentConcepts)('%s', (_label, Concept) => {
+  it('renders a factual and accessible landing-page story with live account routes', () => {
+    const { container } = render(<Concept theme="light" />)
+    expectFactualLandingStory(container, true)
+    expect(container.querySelector('main#main-content')).toBeTruthy()
+  })
+})
+
+describe.each(archivedConcepts)('%s', (_label, Concept) => {
   it('renders a factual and accessible landing-page story', () => {
     const { container } = render(<Concept theme="light" />)
     expectFactualLandingStory(container)

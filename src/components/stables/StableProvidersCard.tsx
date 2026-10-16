@@ -1,3 +1,4 @@
+import { MotionList } from '#/components/motion/MotionList'
 import { DotsThreeIcon } from '@phosphor-icons/react'
 import {
   DropdownMenu,
@@ -9,10 +10,7 @@ import type { RefObject } from 'react'
 import { useT } from '#/i18n/LocaleProvider'
 import { StableProviderForm } from '#/components/stables/StableProviderForm'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
-import {
-  DashboardItemList,
-  DashboardItemRecordCard,
-} from '#/components/dashboard/DashboardItemCard'
+import { DashboardItemRecordCard } from '#/components/dashboard/DashboardItemCard'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
@@ -140,25 +138,26 @@ export function StableProvidersView({
       }
       contentGap="loose"
     >
-      <DashboardItemList gap="compact">
-        {providers.length === 0 ? (
+      <MotionList
+        items={providers}
+        getKey={(provider) => provider._id}
+        empty={
           <DashboardEmptyState>{t('stables.noProviders')}</DashboardEmptyState>
-        ) : (
-          providers.map((provider) => (
-            <ProviderRow
-              key={provider._id}
-              provider={provider}
-              canManage={canManage}
-              onSubmit={(values) => onUpdate(provider, values)}
-              onRemove={async () => {
-                await onRemove(provider)
-                return true
-              }}
-              removalFocusTarget={() => directory.current}
-            />
-          ))
+        }
+        renderItem={(provider) => (
+          <ProviderRow
+            key={provider._id}
+            provider={provider}
+            canManage={canManage}
+            onSubmit={(values) => onUpdate(provider, values)}
+            onRemove={async () => {
+              await onRemove(provider)
+              return true
+            }}
+            removalFocusTarget={() => directory.current}
+          />
         )}
-      </DashboardItemList>
+      />
     </DashboardSectionCard>
   )
 }

@@ -113,3 +113,30 @@ describe('DocumentUploadForm', () => {
     ).toBeTruthy()
   })
 })
+
+it('releases pending state on navigation and ignores a late rejected upload', async () => {
+  let reject!: (reason: Error) => void
+  const submit = vi.fn(
+    () =>
+      new Promise<void>((_, fail) => {
+        reject = fail
+      }),
+  )
+  const pending = vi.fn()
+  const view = render(
+    <DocumentUploadForm onSubmit={submit} onPendingChange={pending} />,
+  )
+  fireEvent.change(screen.getByLabelText('File (required)'), {
+    target: { files: files() },
+  })
+  const name = screen.getByLabelText<HTMLInputElement>('Document name')
+  await waitFor(() => expect(name.value).toBe('sample-record.txt'))
+  fireEvent.submit(name.closest('form')!)
+  await waitFor(() => expect(submit).toHaveBeenCalledTimes(1))
+  view.unmount()
+  expect(pending).toHaveBeenLastCalledWith(false)
+  const callsAtUnmount = pending.mock.calls.length
+  await act(async () => reject(new Error('Late network failure')))
+  expect(pending).toHaveBeenCalledTimes(callsAtUnmount)
+  expect(screen.queryByRole('alert')).toBeNull()
+})

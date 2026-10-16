@@ -24,12 +24,29 @@ colors:
   warning-surface: '#f1e2c8'
   information: '#365f4d'
   information-surface: '#e0ede5'
-  night-canvas: '#272a24'
-  night-ink: '#f0f3ea'
-  night-primary: '#a9c7ab'
-  night-selection: '#d9decc'
-  night-selection-surface: '#41493a'
+  night-canvas: '#1c1e1d'
+  night-paper: '#272a28'
+  night-raised: '#303431'
+  night-row: '#2c302d'
+  night-sidebar: '#202321'
+  night-ink: '#eeece8'
+  night-muted-ink: '#b8bcb8'
+  night-primary: '#91c8a9'
+  night-primary-ink: '#172b20'
+  night-selection: '#eeece8'
+  night-selection-surface: '#3e4440'
+  night-divider: '#515a54'
+  night-input-border: '#8b978e'
   night-destructive: '#f2a8b7'
+  night-destructive-ink: '#321c22'
+  night-warning: '#edc28b'
+  night-warning-surface: '#463729'
+  night-information: '#b0c9e0'
+  night-information-surface: '#293b4b'
+  night-quiet-green: '#284639'
+  night-quiet-green-ink: '#f0f3ee'
+  night-quiet-green-muted-ink: '#c9dcd1'
+  night-quiet-green-border: '#6c9680'
 typography:
   display:
     fontFamily: 'Alegreya, Georgia, serif'
@@ -149,7 +166,7 @@ A warm, readable working journal for stable plans, horse records and everyday ca
 
 This is the canonical shared **application** system, grounded in [src/styles.css](src/styles.css), [dashboard primitives](src/components/dashboard), [UI primitives](src/components/ui) and the [design lab](src/components/design/StableDesignGuidelines.tsx). The public landing has its own [scoped design record](docs/design/landing/DESIGN.md).
 
-The shared foundation is implemented. Some specialized components and route-local overrides still need review by page family; this document does not certify every app screen as fully migrated. The lab demonstrates sample day selection and local care completion with undo. A full care-completion animation and horse-profile preview from the prototype have not been shipped as shared app features.
+The shared foundation is implemented. Some specialized components and route-local overrides still need review by page family; this document does not certify every app screen as fully migrated. The lab demonstrates sample day selection and local care completion with undo. Confirmed care completion now uses the shared journal-check sequence; cross-route horse photo morphing remains an intentional exception.
 
 **Key Characteristics:**
 
@@ -169,7 +186,9 @@ Pine & paper is the approved app palette: warm stone, soft paper and a rich pine
 - **Ink** and **muted ink** provide reading hierarchy; dividers use `--border` or its subtle mixed counterpart. Inputs use `--input` for a clearer boundary.
 - **Quiet green** retains its own inverse foreground pair. Warning and information badges use their dedicated foreground/surface tokens rather than arbitrary chart colors.
 
-Dark mode maps the same roles through `.dark`; use semantic utilities rather than copying light hex values into components. Text selection uses the selection surface, the caret uses primary, and the scrollbar is tinted from primary and the neutral border.
+**Charcoal & pine** is the approved dark palette (selected 16 October 2026). A charcoal canvas supports lighter working panels and raised controls; neutral stone marks selections, while readable pine green identifies actions. The light theme's off-white becomes the main text colour, preserving the journal's warmth without an olive tint across every surface. Pink destructive feedback, amber warnings and blue information states remain distinct.
+
+Dark mode maps the same roles through `.dark`; use semantic utilities rather than copying light hex values into components. Text selection uses the selection surface, the caret uses primary, and the scrollbar is tinted from primary and the neutral border. The dark-mode lab retains alternate studies; `src/styles.css` owns the adopted application tokens.
 
 **The Separate States Rule.** Evergreen means action, pale stone with deep neutral ink means selection, and burgundy means destructive feedback. Keep these roles distinct when adding a new control.
 
@@ -215,7 +234,9 @@ Horse Care keeps configured vet and farrier contacts in a shared reference secti
 
 Control, surface and panel shadow tokens are `none`. Hierarchy comes from surface contrast, spacing, type, selection fills and restrained record bands. Overlays use their shared stacking, border and backdrop treatments. Do not add ambient shadows to ordinary sections or records.
 
-Shared buttons have a one-pixel pressed translation and 150ms color/border feedback. Height-collapse helpers use 200ms ease-out transitions. The global reduced-motion rule removes smooth scrolling, reduces animations/transitions to 0.01ms and limits animation iterations to one; shared buttons also suppress their pressed transform. These are shipped utility interactions, not a claim that the prototype's larger animation sequence is implemented.
+Working-app motion uses Motion for React through `AppMotionProvider`: bounded list layout/presence, measured disclosures, shared segmented selection and local status feedback. Buttons keep stationary hit targets with interior press response. CSS owns simple control states and Base UI overlay transitions; native router View Transitions own navigation and persistent chrome. Do not animate the same node/property with two systems.
+
+Routine timing is 120–220ms with 140ms exits; confirmed care gets a 320ms drawn journal check and a modest ring only for the confirmed final outstanding item. Server results remain authoritative, including undo and retry. Initial data and background synchronization never earn completion celebrations. Reduced motion removes spatial travel and height tweening while retaining clear state feedback. See the [motion contract](src/components/motion/README.md) and [coverage/verification ledger](docs/design/motion/interaction-coverage.md) for conventions, intentional exceptions and evidence boundaries.
 
 ## Shapes
 

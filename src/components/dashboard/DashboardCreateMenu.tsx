@@ -1,9 +1,6 @@
+import { EventIcon, TrainingIcon } from '#/components/icons/domain-icons'
 import { Link } from '@tanstack/react-router'
-import {
-  CalendarBlankIcon,
-  HorseIcon,
-  NotebookIcon,
-} from '@phosphor-icons/react'
+import { HorseIcon } from '@phosphor-icons/react'
 import {
   MobileActionMenu,
   MobileActionMenuItem,
@@ -42,7 +39,7 @@ export function DashboardCreateMenu({
               />
             }
           >
-            <CalendarBlankIcon aria-hidden="true" className="size-5" />
+            <EventIcon aria-hidden="true" className="size-5" />
             {t('dashboard.addEvent')}
           </MobileActionMenuItem>
           <MobileActionMenuItem
@@ -62,7 +59,7 @@ export function DashboardCreateMenu({
               />
             }
           >
-            <NotebookIcon aria-hidden="true" className="size-5" />
+            <TrainingIcon aria-hidden="true" className="size-5" />
             {t('trainingViews.recordCompleted')}
           </MobileActionMenuItem>
         </>

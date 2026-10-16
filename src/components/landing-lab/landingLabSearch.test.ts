@@ -8,6 +8,11 @@ import {
 } from './landingLabSearch'
 
 const registeredSelections = [
+  'field-journal',
+  'yard-editorial',
+  'open-paddock',
+  'working-journal',
+  'pine-statement',
   'gathered-yard',
   'stable-aisle',
   'paddock-map',
@@ -64,7 +69,7 @@ describe('landing lab search parsing', () => {
     expect(parsed.mapVersion).toBeUndefined()
   })
 
-  it('keeps every registered overdrive direction', () => {
+  it('keeps every current and archived direction', () => {
     for (const selected of registeredSelections) {
       expect(parseLandingLabSelection({ selected })).toEqual({ selected })
     }

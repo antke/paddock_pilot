@@ -159,7 +159,10 @@ export function HorseTimelineCalendar({
             </CalendarWeekdayCell>
           ))}
         </CalendarWeekdayRow>
-        <CalendarGrid role="rowgroup">
+        <CalendarGrid
+          period={`${visibleMonth.getFullYear()}-${String(visibleMonth.getMonth()).padStart(2, '0')}`}
+          role="rowgroup"
+        >
           {Array.from({ length: cells.length / 7 }, (_, row) => (
             <div role="row" className="contents" key={row}>
               {cells.slice(row * 7, row * 7 + 7).map((day, index) => {

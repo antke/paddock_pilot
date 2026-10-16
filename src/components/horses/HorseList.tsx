@@ -117,6 +117,7 @@ export function HorseList({ horses, stableId }: Props) {
     <FilteredDashboardItemList
       config={filterConfig}
       filtering={filtering}
+      getItemKey={(item) => item._id}
       gap="loose"
       listActions={
         horses.length > 0 && (
@@ -158,7 +159,8 @@ export function HorseList({ horses, stableId }: Props) {
       filteredEmptyMessage={t('horseList.noMatches')}
       stickyFilters
       renderItem={(horse) => {
-        if (horse.canRead === false) return <HorseCard horse={horse} />
+        if (horse.canRead === false)
+          return <HorseCard key={horse._id} horse={horse} />
         const matchedIdentifier = getMatchedIdentifier(
           horse,
           filtering.query,

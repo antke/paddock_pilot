@@ -1,19 +1,21 @@
+import {
+  StableIcon,
+  EventIcon,
+  HomeIcon,
+  TrainingIcon,
+} from '#/components/icons/domain-icons'
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import {
-  BuildingsIcon,
-  CalendarBlankIcon,
   CaretDownIcon,
   ChartLineIcon,
   CheckSquareIcon,
   FilesIcon,
   GearIcon,
   HorseIcon,
-  HouseIcon,
   ListIcon,
-  NotebookIcon,
   PhoneIcon,
   SidebarSimpleIcon,
   UsersThreeIcon,
@@ -62,15 +64,15 @@ import type {
 export const SIDEBAR_COLLAPSED_KEY = 'paddockPilot.sidebarCollapsed'
 
 const navigationIcons = {
-  home: HouseIcon,
-  events: CalendarBlankIcon,
-  training: NotebookIcon,
+  home: HomeIcon,
+  events: EventIcon,
+  training: TrainingIcon,
   horses: HorseIcon,
   care: CheckSquareIcon,
   contacts: PhoneIcon,
   documents: FilesIcon,
   analysis: ChartLineIcon,
-  stable: BuildingsIcon,
+  stable: StableIcon,
   people: UsersThreeIcon,
   settings: GearIcon,
   welcome: CheckSquareIcon,
@@ -422,7 +424,7 @@ function WorkspacePicker({
             void navigate({ to: '/stables' })
           }}
         >
-          <BuildingsIcon aria-hidden="true" />
+          <StableIcon aria-hidden="true" />
           {t('navigation.manageStables')}
         </DropdownMenuItem>
       </DropdownMenuContent>

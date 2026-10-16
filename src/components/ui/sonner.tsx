@@ -131,7 +131,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }
       toastOptions={{
         closeButtonAriaLabel: t('common.closeNotification'),
-        style: { paddingInlineEnd: '4rem', minHeight: '4rem' },
+        style: { paddingInlineEnd: '3.5rem', minHeight: '4rem' },
         classNames: {
           toast:
             'border-border bg-popover text-popover-foreground shadow-control [&_[data-description]]:text-popover-foreground/80 [&_[data-title]]:text-popover-foreground',
@@ -139,8 +139,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
           description: 'text-sm !font-medium !text-popover-foreground/80',
           actionButton: buttonVariants({ variant: 'default', size: 'xs' }),
           cancelButton: buttonVariants({ variant: 'outline', size: 'xs' }),
+          // Override Sonner's unlayered styles; the invisible inset keeps a 44px tap target.
           closeButton:
-            'top-2! start-auto! end-2! size-11! transform-none! border-border bg-surface-elevated text-foreground/70 hover:bg-primary/8 hover:text-foreground',
+            "top-2! start-auto! end-2! size-8! transform-none! rounded-control! border-0! bg-transparent! text-muted-foreground! shadow-none! hover:bg-primary/8! hover:text-foreground! active:bg-primary/15! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-solid! focus-visible:outline-ring! after:absolute after:-inset-1.5 after:content-['']",
         },
       }}
       {...props}

@@ -1,3 +1,7 @@
+import { MotionList } from '#/components/motion/MotionList'
+import { MotionNotice } from '#/components/motion/MotionNotice'
+import { ConfirmedCheck } from '#/components/motion/StateFeedback'
+import { ActionFeedback } from '#/components/ui/action-feedback'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { DashboardRecordDetails } from '#/components/dashboard/DashboardRecordDetails'
 import {
@@ -29,7 +33,6 @@ import {
 import { Input } from '#/components/ui/input'
 import { Field, FieldLabel } from '#/components/ui/field'
 import { careReminderDueDateSchema } from 'shared/reminders/careReminderSchema'
-import { Spinner } from '#/components/ui/spinner'
 import { CheckIcon, DotsThreeIcon } from '@phosphor-icons/react'
 import type { Doc } from 'convex/_generated/dataModel'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -66,6 +69,8 @@ type CareRemindersCardProps = {
   title?: string
   as?: ElementType
   description?: string
+  /** Complete scope count only; omit for paginated or filtered server results. */
+  outstandingCount?: number
   reminders: Array<CareReminderListItem>
   canAddReminder: boolean
   horseOptions?: Array<HorseOption>
@@ -100,6 +105,7 @@ export function CareRemindersCard({
   as,
   description,
   reminders,
+  outstandingCount,
   canAddReminder,
   horseOptions,
   assigneeOptions,
@@ -122,6 +128,47 @@ export function CareRemindersCard({
   onCreateActionChange,
 }: CareRemindersCardProps) {
   const t = useT()
+
+  const [receipt, setReceipt] = useState<{
+    id: string
+    title: string
+    final: boolean
+  } | null>(null)
+  const receiptObserved = useRef<string | null>(null)
+  useEffect(() => {
+    if (!receipt) {
+      receiptObserved.current = null
+      return
+    }
+    const pendingAgain = reminders.some(
+      (item) =>
+        item.reminder._id === receipt.id && item.reminder.status === 'pending',
+    )
+    if (!pendingAgain) receiptObserved.current = receipt.id
+    else if (receiptObserved.current === receipt.id) setReceipt(null)
+  }, [reminders, receipt])
+  const mounted = useRef(false)
+  useEffect(() => {
+    mounted.current = true
+    return () => {
+      mounted.current = false
+    }
+  }, [])
+  useEffect(() => {
+    if (!receipt) return
+    // Presentation only. No mutation, focus, removal or next action waits for this timer.
+    const timer = window.setTimeout(() => setReceipt(null), 4000)
+    return () => window.clearTimeout(timer)
+  }, [receipt])
+  const completeWithReceipt = async (
+    record: Doc<'careReminders'>,
+    nextDueDate?: string,
+  ) => {
+    const final = outstandingCount === 1 && !nextDueDate
+    await onComplete(record, nextDueDate)
+    if (mounted.current)
+      setReceipt({ id: record._id, title: record.title, final })
+  }
 
   const listRef = useRef<HTMLDivElement>(null)
   const removalFocusTarget = useCallback(() => listRef.current, [])
@@ -219,32 +266,60 @@ export function CareRemindersCard({
           {t('reminders.shown', { count: reminders.length })}
         </p>
       )}
+      <MotionNotice show={Boolean(receipt)}>
+        {receipt && (
+          <div
+            role="status"
+            className="flex items-center gap-3 rounded-row bg-primary/8 px-3 py-3 text-sm text-primary"
+            data-slot="care-confirmation"
+            data-final={(receipt.final && outstandingCount === 0) || undefined}
+          >
+            <ConfirmedCheck
+              key={receipt.id}
+              final={receipt.final && outstandingCount === 0}
+            />
+            <span>
+              <span className="font-semibold">{t('reminders.completed')}</span>{' '}
+              · {receipt.title}
+            </span>
+          </div>
+        )}
+      </MotionNotice>
       {isLoading ? (
         <DashboardLoadingState label={loadingLabel ?? t('reminders.loading')} />
-      ) : reminders.length === 0 ? (
-        <DashboardEmptyState chrome={chrome}>
-          {emptyMessage}
-        </DashboardEmptyState>
       ) : (
-        <DashboardItemList role="list">
-          {reminders.map((item) => (
-            <div key={item.reminder._id} role="listitem" className="min-w-0">
-              <ReminderRow
-                item={item}
-                onComplete={onComplete}
-                onEdit={onEdit}
-                onReopen={onReopen}
-                assigneeOptions={assigneeOptions}
-                onDismiss={onDismiss}
-                onRemove={onRemove}
-                chrome={chrome}
-                headingLevel={recordHeadingLevel}
-                showHorse={!fixedHorseId}
-                removalFocusTarget={removalFocusTarget}
-              />
-            </div>
-          ))}
-        </DashboardItemList>
+        <MotionList
+          items={reminders}
+          getKey={(item) => item.reminder._id}
+          focusTarget={removalFocusTarget}
+          empty={
+            <DashboardEmptyState chrome={chrome}>
+              {emptyMessage}
+            </DashboardEmptyState>
+          }
+          renderItem={(item) => (
+            <ReminderRow
+              item={item}
+              onComplete={completeWithReceipt}
+              onEdit={onEdit}
+              onReopen={
+                onReopen
+                  ? async (record) => {
+                      await onReopen(record)
+                      if (mounted.current) setReceipt(null)
+                    }
+                  : undefined
+              }
+              assigneeOptions={assigneeOptions}
+              onDismiss={onDismiss}
+              onRemove={onRemove}
+              chrome={chrome}
+              headingLevel={recordHeadingLevel}
+              showHorse={!fixedHorseId}
+              removalFocusTarget={removalFocusTarget}
+            />
+          )}
+        />
       )}
       {listFooter}
     </DashboardItemList>
@@ -334,6 +409,17 @@ function ReminderRow({
   const actionsTrigger = useRef<HTMLButtonElement>(null)
   const [nextDueDate, setNextDueDate] = useState('')
   const [dateError, setDateError] = useState(false)
+  const [confirmed, setConfirmed] = useState(false)
+  const mounted = useRef(false)
+  useEffect(() => {
+    mounted.current = true
+    return () => {
+      mounted.current = false
+    }
+  }, [])
+  useEffect(() => {
+    setConfirmed(false)
+  }, [reminder.status])
   const pendingRef = useRef(false)
   const isUpdating = pendingAction !== null
   const [actionError, setActionError] = useState(false)
@@ -349,18 +435,23 @@ function ReminderRow({
       setActionError(false)
       setPendingAction(action)
       await callback(reminder)
+      if (!mounted.current) return
+      setConfirmed(action === 'complete')
       setEditor(null)
     } catch {
-      setActionError(true)
+      if (mounted.current) setActionError(true)
     } finally {
       pendingRef.current = false
-      setPendingAction(null)
+      if (mounted.current) setPendingAction(null)
     }
   }
 
   return (
     <>
       <DashboardItemRecordCard
+        data-care-completed={
+          reminder.status === 'completed' || confirmed || undefined
+        }
         accent={getCareReminderRecordAccent(reminder)}
         chrome={chrome}
         interactive={false}
@@ -382,23 +473,23 @@ function ReminderRow({
                   <Button
                     type="button"
                     size="sm"
-                    disabled={isUpdating}
+                    disabled={isUpdating || confirmed}
                     aria-busy={pendingAction === 'complete' || undefined}
                     aria-label={t('reminders.completeNamed', {
                       name: reminder.title,
                     })}
                     onClick={() => void runStatusAction('complete', onComplete)}
                   >
-                    {pendingAction === 'complete' ? (
-                      <Spinner aria-hidden={true} />
-                    ) : (
-                      <CheckIcon data-icon="inline-start" weight="bold" />
-                    )}
-                    {t(
-                      pendingAction === 'complete'
-                        ? 'reminders.completing'
-                        : 'reminders.complete',
-                    )}
+                    <ActionFeedback
+                      label={t('reminders.complete')}
+                      pendingLabel={t('reminders.completing')}
+                      confirmedLabel={t('reminders.completed')}
+                      pending={pendingAction === 'complete'}
+                      confirmed={confirmed}
+                      icon={
+                        <CheckIcon data-icon="inline-start" weight="bold" />
+                      }
+                    />
                   </Button>
                 )}
               {reminder.status !== 'pending' &&
@@ -604,7 +695,7 @@ function ReminderRow({
                 await onEdit(reminder, data)
                 setEditor(null)
               } finally {
-                setPendingAction(null)
+                if (mounted.current) setPendingAction(null)
               }
             }}
           />

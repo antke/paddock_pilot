@@ -37,6 +37,8 @@ import { Route as LandingLabVariantRouteImport } from './routes/landing-lab/$var
 import { Route as LandingLabCountryStudyRouteImport } from './routes/landing-lab/country-study'
 import { Route as PageLabIndexRouteImport } from './routes/page-lab/index'
 import { Route as PageLabPageRouteImport } from './routes/page-lab/$page'
+import { Route as PageLabDarkModeRouteImport } from './routes/page-lab/dark-mode'
+import { Route as PageLabMotionRouteImport } from './routes/page-lab/motion'
 import { Route as PageLabOwnershipRouteImport } from './routes/page-lab/ownership'
 import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
 import { Route as SignUpSplatRouteImport } from './routes/sign-up.$'
@@ -236,6 +238,16 @@ const PageLabIndexRoute = PageLabIndexRouteImport.update({
 const PageLabPageRoute = PageLabPageRouteImport.update({
   id: '/$page',
   path: '/$page',
+  getParentRoute: () => PageLabRoute,
+} as any)
+const PageLabDarkModeRoute = PageLabDarkModeRouteImport.update({
+  id: '/dark-mode',
+  path: '/dark-mode',
+  getParentRoute: () => PageLabRoute,
+} as any)
+const PageLabMotionRoute = PageLabMotionRouteImport.update({
+  id: '/motion',
+  path: '/motion',
   getParentRoute: () => PageLabRoute,
 } as any)
 const PageLabOwnershipRoute = PageLabOwnershipRouteImport.update({
@@ -602,6 +614,8 @@ export interface FileRoutesByFullPath {
   '/landing-lab/$variant': typeof LandingLabVariantRoute
   '/landing-lab/country-study': typeof LandingLabCountryStudyRoute
   '/page-lab/$page': typeof PageLabPageRoute
+  '/page-lab/dark-mode': typeof PageLabDarkModeRoute
+  '/page-lab/motion': typeof PageLabMotionRoute
   '/page-lab/ownership': typeof PageLabOwnershipRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
@@ -686,6 +700,8 @@ export interface FileRoutesByTo {
   '/landing-lab/$variant': typeof LandingLabVariantRoute
   '/landing-lab/country-study': typeof LandingLabCountryStudyRoute
   '/page-lab/$page': typeof PageLabPageRoute
+  '/page-lab/dark-mode': typeof PageLabDarkModeRoute
+  '/page-lab/motion': typeof PageLabMotionRoute
   '/page-lab/ownership': typeof PageLabOwnershipRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
@@ -771,6 +787,8 @@ export interface FileRoutesById {
   '/landing-lab/$variant': typeof LandingLabVariantRoute
   '/landing-lab/country-study': typeof LandingLabCountryStudyRoute
   '/page-lab/$page': typeof PageLabPageRoute
+  '/page-lab/dark-mode': typeof PageLabDarkModeRoute
+  '/page-lab/motion': typeof PageLabMotionRoute
   '/page-lab/ownership': typeof PageLabOwnershipRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
@@ -863,6 +881,8 @@ export interface FileRouteTypes {
     | '/landing-lab/$variant'
     | '/landing-lab/country-study'
     | '/page-lab/$page'
+    | '/page-lab/dark-mode'
+    | '/page-lab/motion'
     | '/page-lab/ownership'
     | '/sign-in/$'
     | '/sign-up/$'
@@ -947,6 +967,8 @@ export interface FileRouteTypes {
     | '/landing-lab/$variant'
     | '/landing-lab/country-study'
     | '/page-lab/$page'
+    | '/page-lab/dark-mode'
+    | '/page-lab/motion'
     | '/page-lab/ownership'
     | '/sign-in/$'
     | '/sign-up/$'
@@ -1031,6 +1053,8 @@ export interface FileRouteTypes {
     | '/landing-lab/$variant'
     | '/landing-lab/country-study'
     | '/page-lab/$page'
+    | '/page-lab/dark-mode'
+    | '/page-lab/motion'
     | '/page-lab/ownership'
     | '/sign-in/$'
     | '/sign-up/$'
@@ -1315,6 +1339,20 @@ declare module '@tanstack/react-router' {
       path: '/$page'
       fullPath: '/page-lab/$page'
       preLoaderRoute: typeof PageLabPageRouteImport
+      parentRoute: typeof PageLabRoute
+    }
+    '/page-lab/dark-mode': {
+      id: '/page-lab/dark-mode'
+      path: '/dark-mode'
+      fullPath: '/page-lab/dark-mode'
+      preLoaderRoute: typeof PageLabDarkModeRouteImport
+      parentRoute: typeof PageLabRoute
+    }
+    '/page-lab/motion': {
+      id: '/page-lab/motion'
+      path: '/motion'
+      fullPath: '/page-lab/motion'
+      preLoaderRoute: typeof PageLabMotionRouteImport
       parentRoute: typeof PageLabRoute
     }
     '/page-lab/ownership': {
@@ -1842,12 +1880,16 @@ const LandingLabRouteWithChildren = LandingLabRoute._addFileChildren(
 
 interface PageLabRouteChildren {
   PageLabPageRoute: typeof PageLabPageRoute
+  PageLabDarkModeRoute: typeof PageLabDarkModeRoute
+  PageLabMotionRoute: typeof PageLabMotionRoute
   PageLabOwnershipRoute: typeof PageLabOwnershipRoute
   PageLabIndexRoute: typeof PageLabIndexRoute
 }
 
 const PageLabRouteChildren: PageLabRouteChildren = {
   PageLabPageRoute: PageLabPageRoute,
+  PageLabDarkModeRoute: PageLabDarkModeRoute,
+  PageLabMotionRoute: PageLabMotionRoute,
   PageLabOwnershipRoute: PageLabOwnershipRoute,
   PageLabIndexRoute: PageLabIndexRoute,
 }

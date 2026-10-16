@@ -1,400 +1,188 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-18T16:22:43.985142Z",
-  "title": "Design System: Paddock Pilot \u2014 Stable journal",
+  "generatedAt": "2026-10-16T17:02:21.480738Z",
+  "title": "Design System: Paddock Pilot — Stable journal",
   "extensions": {
     "colorMeta": {
-      "ivory": {
+      "off-white": {
         "role": "neutral",
-        "displayName": "Ivory",
-        "tonalRamp": [
-          "oklch(15% 0.0139 88.7)",
-          "oklch(27% 0.0139 88.7)",
-          "oklch(39% 0.0139 88.7)",
-          "oklch(51% 0.0139 88.7)",
-          "oklch(63% 0.0139 88.7)",
-          "oklch(75% 0.0139 88.7)",
-          "oklch(87% 0.0139 88.7)",
-          "oklch(95% 0.0139 88.7)"
-        ]
+        "displayName": "Off white"
       },
       "ink": {
         "role": "neutral",
-        "displayName": "Ink",
-        "tonalRamp": [
-          "oklch(15% 0.0184 154.7)",
-          "oklch(27% 0.0184 154.7)",
-          "oklch(39% 0.0184 154.7)",
-          "oklch(51% 0.0184 154.7)",
-          "oklch(63% 0.0184 154.7)",
-          "oklch(75% 0.0184 154.7)",
-          "oklch(87% 0.0184 154.7)",
-          "oklch(95% 0.0184 154.7)"
-        ]
+        "displayName": "Ink"
       },
       "paper": {
         "role": "neutral",
-        "displayName": "Paper",
-        "tonalRamp": [
-          "oklch(15% 0.0110 89.7)",
-          "oklch(27% 0.0110 89.7)",
-          "oklch(39% 0.0110 89.7)",
-          "oklch(51% 0.0110 89.7)",
-          "oklch(63% 0.0110 89.7)",
-          "oklch(75% 0.0110 89.7)",
-          "oklch(87% 0.0110 89.7)",
-          "oklch(95% 0.0110 89.7)"
-        ]
+        "displayName": "Paper"
       },
       "evergreen": {
         "role": "primary",
-        "displayName": "Evergreen",
-        "tonalRamp": [
-          "oklch(15% 0.0545 164.1)",
-          "oklch(27% 0.0545 164.1)",
-          "oklch(39% 0.0545 164.1)",
-          "oklch(51% 0.0545 164.1)",
-          "oklch(63% 0.0545 164.1)",
-          "oklch(75% 0.0545 164.1)",
-          "oklch(87% 0.0545 164.1)",
-          "oklch(95% 0.0545 164.1)"
-        ]
+        "displayName": "Evergreen"
       },
       "selection": {
         "role": "neutral",
-        "displayName": "Warm ink",
-        "tonalRamp": [
-          "oklch(15% 0.0179 94.4)",
-          "oklch(27% 0.0179 94.4)",
-          "oklch(39% 0.0179 94.4)",
-          "oklch(51% 0.0179 94.4)",
-          "oklch(63% 0.0179 94.4)",
-          "oklch(75% 0.0179 94.4)",
-          "oklch(87% 0.0179 94.4)",
-          "oklch(95% 0.0179 94.4)"
-        ]
+        "displayName": "Selection"
       },
       "selection-ink": {
         "role": "neutral",
-        "displayName": "Selection ink",
-        "tonalRamp": [
-          "oklch(15% 0.0107 76.6)",
-          "oklch(27% 0.0107 76.6)",
-          "oklch(39% 0.0107 76.6)",
-          "oklch(51% 0.0107 76.6)",
-          "oklch(63% 0.0107 76.6)",
-          "oklch(75% 0.0107 76.6)",
-          "oklch(87% 0.0107 76.6)",
-          "oklch(95% 0.0107 76.6)"
-        ]
+        "displayName": "Selection ink"
       },
-      "oat": {
+      "pale-stone": {
         "role": "neutral",
-        "displayName": "Oat",
-        "tonalRamp": [
-          "oklch(15% 0.0252 89.2)",
-          "oklch(27% 0.0252 89.2)",
-          "oklch(39% 0.0252 89.2)",
-          "oklch(51% 0.0252 89.2)",
-          "oklch(63% 0.0252 89.2)",
-          "oklch(75% 0.0252 89.2)",
-          "oklch(87% 0.0252 89.2)",
-          "oklch(95% 0.0252 89.2)"
-        ]
+        "displayName": "Pale stone"
       },
       "burgundy": {
         "role": "tertiary",
-        "displayName": "Burgundy",
-        "tonalRamp": [
-          "oklch(15% 0.1375 12.9)",
-          "oklch(27% 0.1375 12.9)",
-          "oklch(39% 0.1375 12.9)",
-          "oklch(51% 0.1375 12.9)",
-          "oklch(63% 0.1375 12.9)",
-          "oklch(75% 0.1375 12.9)",
-          "oklch(87% 0.1375 12.9)",
-          "oklch(95% 0.1375 12.9)"
-        ]
+        "displayName": "Burgundy"
       },
       "destructive-ink": {
         "role": "neutral",
-        "displayName": "Destructive ink",
-        "tonalRamp": [
-          "oklch(15% 0.0085 44.9)",
-          "oklch(27% 0.0085 44.9)",
-          "oklch(39% 0.0085 44.9)",
-          "oklch(51% 0.0085 44.9)",
-          "oklch(63% 0.0085 44.9)",
-          "oklch(75% 0.0085 44.9)",
-          "oklch(87% 0.0085 44.9)",
-          "oklch(95% 0.0085 44.9)"
-        ]
+        "displayName": "Destructive ink"
       },
       "secondary": {
         "role": "neutral",
-        "displayName": "Secondary",
-        "tonalRamp": [
-          "oklch(15% 0.0161 99.0)",
-          "oklch(27% 0.0161 99.0)",
-          "oklch(39% 0.0161 99.0)",
-          "oklch(51% 0.0161 99.0)",
-          "oklch(63% 0.0161 99.0)",
-          "oklch(75% 0.0161 99.0)",
-          "oklch(87% 0.0161 99.0)",
-          "oklch(95% 0.0161 99.0)"
-        ]
+        "displayName": "Secondary"
       },
       "muted-ink": {
         "role": "neutral",
-        "displayName": "Muted ink",
-        "tonalRamp": [
-          "oklch(15% 0.0148 126.6)",
-          "oklch(27% 0.0148 126.6)",
-          "oklch(39% 0.0148 126.6)",
-          "oklch(51% 0.0148 126.6)",
-          "oklch(63% 0.0148 126.6)",
-          "oklch(75% 0.0148 126.6)",
-          "oklch(87% 0.0148 126.6)",
-          "oklch(95% 0.0148 126.6)"
-        ]
+        "displayName": "Muted ink"
       },
       "divider": {
         "role": "neutral",
-        "displayName": "Divider",
-        "tonalRamp": [
-          "oklch(15% 0.0204 87.5)",
-          "oklch(27% 0.0204 87.5)",
-          "oklch(39% 0.0204 87.5)",
-          "oklch(51% 0.0204 87.5)",
-          "oklch(63% 0.0204 87.5)",
-          "oklch(75% 0.0204 87.5)",
-          "oklch(87% 0.0204 87.5)",
-          "oklch(95% 0.0204 87.5)"
-        ]
+        "displayName": "Divider"
       },
       "input-border": {
         "role": "neutral",
-        "displayName": "Input border",
-        "tonalRamp": [
-          "oklch(15% 0.0220 97.7)",
-          "oklch(27% 0.0220 97.7)",
-          "oklch(39% 0.0220 97.7)",
-          "oklch(51% 0.0220 97.7)",
-          "oklch(63% 0.0220 97.7)",
-          "oklch(75% 0.0220 97.7)",
-          "oklch(87% 0.0220 97.7)",
-          "oklch(95% 0.0220 97.7)"
-        ]
+        "displayName": "Input border"
       },
       "surface": {
         "role": "neutral",
-        "displayName": "Surface",
-        "tonalRamp": [
-          "oklch(15% 0.0140 88.7)",
-          "oklch(27% 0.0140 88.7)",
-          "oklch(39% 0.0140 88.7)",
-          "oklch(51% 0.0140 88.7)",
-          "oklch(63% 0.0140 88.7)",
-          "oklch(75% 0.0140 88.7)",
-          "oklch(87% 0.0140 88.7)",
-          "oklch(95% 0.0140 88.7)"
-        ]
+        "displayName": "Surface"
       },
       "surface-muted": {
         "role": "neutral",
-        "displayName": "Surface muted",
-        "tonalRamp": [
-          "oklch(15% 0.0164 95.2)",
-          "oklch(27% 0.0164 95.2)",
-          "oklch(39% 0.0164 95.2)",
-          "oklch(51% 0.0164 95.2)",
-          "oklch(63% 0.0164 95.2)",
-          "oklch(75% 0.0164 95.2)",
-          "oklch(87% 0.0164 95.2)",
-          "oklch(95% 0.0164 95.2)"
-        ]
+        "displayName": "Surface muted"
       },
       "quiet-green": {
         "role": "neutral",
-        "displayName": "Quiet green",
-        "tonalRamp": [
-          "oklch(15% 0.0571 163.4)",
-          "oklch(27% 0.0571 163.4)",
-          "oklch(39% 0.0571 163.4)",
-          "oklch(51% 0.0571 163.4)",
-          "oklch(63% 0.0571 163.4)",
-          "oklch(75% 0.0571 163.4)",
-          "oklch(87% 0.0571 163.4)",
-          "oklch(95% 0.0571 163.4)"
-        ]
+        "displayName": "Quiet green"
       },
       "quiet-green-ink": {
         "role": "neutral",
-        "displayName": "Quiet green ink",
-        "tonalRamp": [
-          "oklch(15% 0.0130 82.4)",
-          "oklch(27% 0.0130 82.4)",
-          "oklch(39% 0.0130 82.4)",
-          "oklch(51% 0.0130 82.4)",
-          "oklch(63% 0.0130 82.4)",
-          "oklch(75% 0.0130 82.4)",
-          "oklch(87% 0.0130 82.4)",
-          "oklch(95% 0.0130 82.4)"
-        ]
+        "displayName": "Quiet green ink"
       },
       "quiet-green-muted-ink": {
         "role": "neutral",
-        "displayName": "Quiet green muted ink",
-        "tonalRamp": [
-          "oklch(15% 0.0167 156.9)",
-          "oklch(27% 0.0167 156.9)",
-          "oklch(39% 0.0167 156.9)",
-          "oklch(51% 0.0167 156.9)",
-          "oklch(63% 0.0167 156.9)",
-          "oklch(75% 0.0167 156.9)",
-          "oklch(87% 0.0167 156.9)",
-          "oklch(95% 0.0167 156.9)"
-        ]
+        "displayName": "Quiet green muted ink"
       },
       "warning": {
         "role": "tertiary",
-        "displayName": "Warning",
-        "tonalRamp": [
-          "oklch(15% 0.0944 66.2)",
-          "oklch(27% 0.0944 66.2)",
-          "oklch(39% 0.0944 66.2)",
-          "oklch(51% 0.0944 66.2)",
-          "oklch(63% 0.0944 66.2)",
-          "oklch(75% 0.0944 66.2)",
-          "oklch(87% 0.0944 66.2)",
-          "oklch(95% 0.0944 66.2)"
-        ]
+        "displayName": "Warning"
       },
       "warning-surface": {
         "role": "neutral",
-        "displayName": "Warning surface",
-        "tonalRamp": [
-          "oklch(15% 0.0381 81.5)",
-          "oklch(27% 0.0381 81.5)",
-          "oklch(39% 0.0381 81.5)",
-          "oklch(51% 0.0381 81.5)",
-          "oklch(63% 0.0381 81.5)",
-          "oklch(75% 0.0381 81.5)",
-          "oklch(87% 0.0381 81.5)",
-          "oklch(95% 0.0381 81.5)"
-        ]
+        "displayName": "Warning surface"
       },
       "information": {
         "role": "tertiary",
-        "displayName": "Information",
-        "tonalRamp": [
-          "oklch(15% 0.0379 157.1)",
-          "oklch(27% 0.0379 157.1)",
-          "oklch(39% 0.0379 157.1)",
-          "oklch(51% 0.0379 157.1)",
-          "oklch(63% 0.0379 157.1)",
-          "oklch(75% 0.0379 157.1)",
-          "oklch(87% 0.0379 157.1)",
-          "oklch(95% 0.0379 157.1)"
-        ]
+        "displayName": "Information"
       },
       "information-surface": {
         "role": "neutral",
-        "displayName": "Information surface",
-        "tonalRamp": [
-          "oklch(15% 0.0170 137.0)",
-          "oklch(27% 0.0170 137.0)",
-          "oklch(39% 0.0170 137.0)",
-          "oklch(51% 0.0170 137.0)",
-          "oklch(63% 0.0170 137.0)",
-          "oklch(75% 0.0170 137.0)",
-          "oklch(87% 0.0170 137.0)",
-          "oklch(95% 0.0170 137.0)"
-        ]
+        "displayName": "Information surface"
       },
       "night-canvas": {
         "role": "neutral",
-        "displayName": "Night canvas",
-        "tonalRamp": [
-          "oklch(15% 0.0086 137.8)",
-          "oklch(27% 0.0086 137.8)",
-          "oklch(39% 0.0086 137.8)",
-          "oklch(51% 0.0086 137.8)",
-          "oklch(63% 0.0086 137.8)",
-          "oklch(75% 0.0086 137.8)",
-          "oklch(87% 0.0086 137.8)",
-          "oklch(95% 0.0086 137.8)"
-        ]
+        "displayName": "Night canvas"
+      },
+      "night-paper": {
+        "role": "neutral",
+        "displayName": "Night paper"
+      },
+      "night-raised": {
+        "role": "neutral",
+        "displayName": "Night raised"
+      },
+      "night-row": {
+        "role": "neutral",
+        "displayName": "Night row"
+      },
+      "night-sidebar": {
+        "role": "neutral",
+        "displayName": "Night sidebar"
       },
       "night-ink": {
         "role": "neutral",
-        "displayName": "Night ink",
-        "tonalRamp": [
-          "oklch(15% 0.0143 84.6)",
-          "oklch(27% 0.0143 84.6)",
-          "oklch(39% 0.0143 84.6)",
-          "oklch(51% 0.0143 84.6)",
-          "oklch(63% 0.0143 84.6)",
-          "oklch(75% 0.0143 84.6)",
-          "oklch(87% 0.0143 84.6)",
-          "oklch(95% 0.0143 84.6)"
-        ]
+        "displayName": "Night ink"
+      },
+      "night-muted-ink": {
+        "role": "neutral",
+        "displayName": "Night muted ink"
       },
       "night-primary": {
+        "role": "primary",
+        "displayName": "Night primary"
+      },
+      "night-primary-ink": {
         "role": "neutral",
-        "displayName": "Night primary",
-        "tonalRamp": [
-          "oklch(15% 0.0337 149.5)",
-          "oklch(27% 0.0337 149.5)",
-          "oklch(39% 0.0337 149.5)",
-          "oklch(51% 0.0337 149.5)",
-          "oklch(63% 0.0337 149.5)",
-          "oklch(75% 0.0337 149.5)",
-          "oklch(87% 0.0337 149.5)",
-          "oklch(95% 0.0337 149.5)"
-        ]
+        "displayName": "Night primary ink"
       },
       "night-selection": {
         "role": "neutral",
-        "displayName": "Night selection",
-        "tonalRamp": [
-          "oklch(15% 0.0337 89.9)",
-          "oklch(27% 0.0337 89.9)",
-          "oklch(39% 0.0337 89.9)",
-          "oklch(51% 0.0337 89.9)",
-          "oklch(63% 0.0337 89.9)",
-          "oklch(75% 0.0337 89.9)",
-          "oklch(87% 0.0337 89.9)",
-          "oklch(95% 0.0337 89.9)"
-        ]
+        "displayName": "Night selection"
       },
       "night-selection-surface": {
         "role": "neutral",
-        "displayName": "Night selection surface",
-        "tonalRamp": [
-          "oklch(15% 0.0168 97.8)",
-          "oklch(27% 0.0168 97.8)",
-          "oklch(39% 0.0168 97.8)",
-          "oklch(51% 0.0168 97.8)",
-          "oklch(63% 0.0168 97.8)",
-          "oklch(75% 0.0168 97.8)",
-          "oklch(87% 0.0168 97.8)",
-          "oklch(95% 0.0168 97.8)"
-        ]
+        "displayName": "Night selection surface"
+      },
+      "night-divider": {
+        "role": "neutral",
+        "displayName": "Night divider"
+      },
+      "night-input-border": {
+        "role": "neutral",
+        "displayName": "Night input border"
       },
       "night-destructive": {
+        "role": "tertiary",
+        "displayName": "Night destructive"
+      },
+      "night-destructive-ink": {
         "role": "neutral",
-        "displayName": "Night destructive",
-        "tonalRamp": [
-          "oklch(15% 0.0890 5.9)",
-          "oklch(27% 0.0890 5.9)",
-          "oklch(39% 0.0890 5.9)",
-          "oklch(51% 0.0890 5.9)",
-          "oklch(63% 0.0890 5.9)",
-          "oklch(75% 0.0890 5.9)",
-          "oklch(87% 0.0890 5.9)",
-          "oklch(95% 0.0890 5.9)"
-        ]
+        "displayName": "Night destructive ink"
+      },
+      "night-warning": {
+        "role": "tertiary",
+        "displayName": "Night warning"
+      },
+      "night-warning-surface": {
+        "role": "neutral",
+        "displayName": "Night warning surface"
+      },
+      "night-information": {
+        "role": "tertiary",
+        "displayName": "Night information"
+      },
+      "night-information-surface": {
+        "role": "neutral",
+        "displayName": "Night information surface"
+      },
+      "night-quiet-green": {
+        "role": "neutral",
+        "displayName": "Night quiet green"
+      },
+      "night-quiet-green-ink": {
+        "role": "neutral",
+        "displayName": "Night quiet green ink"
+      },
+      "night-quiet-green-muted-ink": {
+        "role": "neutral",
+        "displayName": "Night quiet green muted ink"
+      },
+      "night-quiet-green-border": {
+        "role": "neutral",
+        "displayName": "Night quiet green border"
       }
     },
     "typographyMeta": {
@@ -426,24 +214,49 @@
     ],
     "motion": [
       {
-        "name": "control-feedback",
-        "value": "150ms",
-        "purpose": "Shared color and border feedback."
+        "name": "press",
+        "value": "120ms",
+        "purpose": "Interior feedback with stationary control hit targets."
       },
       {
-        "name": "pressed-feedback",
-        "value": "translateY(1px)",
-        "purpose": "Shared buttons; removed under reduced motion."
+        "name": "state",
+        "value": "160ms",
+        "purpose": "Local selection and state feedback."
       },
       {
-        "name": "height-collapse",
-        "value": "200ms ease-out",
-        "purpose": "Shared expandable content."
+        "name": "disclosure",
+        "value": "180ms",
+        "purpose": "Measured optional content, including dynamic resizing."
+      },
+      {
+        "name": "exit",
+        "value": "140ms",
+        "purpose": "Exiting content immediately becomes inert."
+      },
+      {
+        "name": "confirmation",
+        "value": "320ms",
+        "purpose": "Drawn journal check only after acknowledged local completion."
+      },
+      {
+        "name": "distance",
+        "value": "6px",
+        "purpose": "Maximum routine directional travel; counters use 2px."
+      },
+      {
+        "name": "arrival-ease",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Shared local arrivals."
+      },
+      {
+        "name": "layout-spring",
+        "value": "stiffness 460; damping 38; mass 0.7",
+        "purpose": "Bounded list and segmented selection continuity."
       },
       {
         "name": "reduced-motion",
-        "value": "0.01ms; 1 iteration; scroll-behavior: auto",
-        "purpose": "Global reduced-motion override."
+        "value": "No spatial travel or height tween; short fades",
+        "purpose": "Live shared preference policy; CSS also reduces transitions and disables smooth scrolling."
       }
     ],
     "breakpoints": [
@@ -472,7 +285,7 @@
       "refersTo": "button-primary",
       "description": "Shared app action; default and solid share the primary appearance.",
       "html": "<button class=\"ds-button-primary\" type=\"button\">Save changes</button>",
-      "css": ".ds-button-primary{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 16px;border:1px solid transparent;border-radius:6px;font:600 15px/1.5 'Alegreya Sans',ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:background-color 150ms,border-color 150ms,color 150ms;border-color:var(--primary,#244c3b);background:var(--primary,#244c3b);color:var(--primary-foreground,#fcf9f1);}.ds-button-primary:hover{background:color-mix(in oklab,var(--primary,#244c3b) 92%,transparent);}.ds-button-primary:focus-visible{outline:3px solid color-mix(in oklab,var(--ring,#244c3b) 25%,transparent);outline-offset:1px;}.ds-button-primary:active{transform:translateY(1px)}.ds-button-primary:disabled{pointer-events:none;opacity:.5}@media(pointer:coarse){.ds-button-primary{min-height:44px;min-width:44px}}@media(prefers-reduced-motion:reduce){.ds-button-primary{transition:none}.ds-button-primary:active{transform:none}}"
+      "css": ".ds-button-primary{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 16px;border:1px solid transparent;border-radius:6px;font:600 15px/1.5 'Alegreya Sans',ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:background-color 150ms,border-color 150ms,color 150ms;border-color:var(--primary,#285b43);background:var(--primary,#285b43);color:var(--primary-foreground,#fcfdfc);}.ds-button-primary:hover{background:color-mix(in oklab,var(--primary,#285b43) 92%,transparent);}.ds-button-primary:focus-visible{outline:3px solid color-mix(in oklab,var(--ring,#285b43) 25%,transparent);outline-offset:1px;}.ds-button-primary:disabled{pointer-events:none;opacity:.5}@media(pointer:coarse){.ds-button-primary{min-height:44px;min-width:44px}}@media(prefers-reduced-motion:reduce){.ds-button-primary{transition:none}.ds-button-primary:active{transform:none}}"
     },
     {
       "name": "Outline action",
@@ -480,7 +293,7 @@
       "refersTo": "button-outline",
       "description": "Neutral supporting action.",
       "html": "<button class=\"ds-button-outline\" type=\"button\">Add note</button>",
-      "css": ".ds-button-outline{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 16px;border:1px solid transparent;border-radius:6px;font:600 15px/1.5 'Alegreya Sans',ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:background-color 150ms,border-color 150ms,color 150ms;border-color:var(--border,#c9c3b5);background:var(--surface-elevated,#fcf9f1);color:var(--foreground,#29332c);}.ds-button-outline:hover{border-color:var(--primary,#244c3b);background:color-mix(in oklab,var(--primary,#244c3b) 8%,transparent);}.ds-button-outline:focus-visible{outline:3px solid color-mix(in oklab,var(--ring,#244c3b) 25%,transparent);outline-offset:1px;}.ds-button-outline:active{transform:translateY(1px)}.ds-button-outline:disabled{pointer-events:none;opacity:.5}@media(pointer:coarse){.ds-button-outline{min-height:44px;min-width:44px}}@media(prefers-reduced-motion:reduce){.ds-button-outline{transition:none}.ds-button-outline:active{transform:none}}"
+      "css": ".ds-button-outline{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 16px;border:1px solid transparent;border-radius:6px;font:600 15px/1.5 'Alegreya Sans',ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:background-color 150ms,border-color 150ms,color 150ms;border-color:var(--border,#bec8c2);background:var(--surface-elevated,#fcfbf8);color:var(--foreground,#30372f);}.ds-button-outline:hover{border-color:var(--primary,#285b43);background:color-mix(in oklab,var(--primary,#285b43) 8%,transparent);}.ds-button-outline:focus-visible{outline:3px solid color-mix(in oklab,var(--ring,#285b43) 25%,transparent);outline-offset:1px;}.ds-button-outline:disabled{pointer-events:none;opacity:.5}@media(pointer:coarse){.ds-button-outline{min-height:44px;min-width:44px}}@media(prefers-reduced-motion:reduce){.ds-button-outline{transition:none}.ds-button-outline:active{transform:none}}"
     },
     {
       "name": "Secondary action",
@@ -488,14 +301,14 @@
       "refersTo": "button-secondary",
       "description": "Neutral supporting action.",
       "html": "<button class=\"ds-button-secondary\" type=\"button\">Add note</button>",
-      "css": ".ds-button-secondary{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 16px;border:1px solid transparent;border-radius:6px;font:600 15px/1.5 'Alegreya Sans',ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:background-color 150ms,border-color 150ms,color 150ms;border-color:var(--border-subtle,#c9c3b5);background:var(--secondary,#e9e7db);color:var(--secondary-foreground,#29332c);}.ds-button-secondary:hover{background:color-mix(in oklab,var(--secondary,#e9e7db) 85%,transparent);}.ds-button-secondary:focus-visible{outline:3px solid color-mix(in oklab,var(--ring,#244c3b) 25%,transparent);outline-offset:1px;}.ds-button-secondary:active{transform:translateY(1px)}.ds-button-secondary:disabled{pointer-events:none;opacity:.5}@media(pointer:coarse){.ds-button-secondary{min-height:44px;min-width:44px}}@media(prefers-reduced-motion:reduce){.ds-button-secondary{transition:none}.ds-button-secondary:active{transform:none}}"
+      "css": ".ds-button-secondary{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 16px;border:1px solid transparent;border-radius:6px;font:600 15px/1.5 'Alegreya Sans',ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:background-color 150ms,border-color 150ms,color 150ms;border-color:var(--border-subtle,color-mix(in oklab, var(--border) 72%, transparent));background:var(--secondary,#e4e6dc);color:var(--secondary-foreground,#30372f);}.ds-button-secondary:hover{background:color-mix(in oklab,var(--secondary,#e4e6dc) 85%,transparent);}.ds-button-secondary:focus-visible{outline:3px solid color-mix(in oklab,var(--ring,#285b43) 25%,transparent);outline-offset:1px;}.ds-button-secondary:disabled{pointer-events:none;opacity:.5}@media(pointer:coarse){.ds-button-secondary{min-height:44px;min-width:44px}}@media(prefers-reduced-motion:reduce){.ds-button-secondary{transition:none}.ds-button-secondary:active{transform:none}}"
     },
     {
       "name": "Destructive action",
       "kind": "button",
       "description": "Burgundy identifies removal; production records use the shared confirmation flow.",
       "html": "<button class=\"ds-destructive\" type=\"button\">Remove record</button>",
-      "css": ".ds-destructive{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 16px;border:1px solid color-mix(in oklab,var(--destructive,#962f43) 30%,transparent);border-radius:6px;background:color-mix(in oklab,var(--destructive,#962f43) 10%,transparent);color:var(--destructive,#962f43);font:600 15px/1.5 \"Alegreya Sans\",ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:background-color 150ms}.ds-destructive:hover{background:color-mix(in oklab,var(--destructive,#962f43) 20%,transparent)}.ds-destructive:focus-visible{outline:3px solid var(--destructive,#962f43);outline-offset:1px}.ds-destructive:active{transform:translateY(1px)}.ds-destructive:disabled{pointer-events:none;opacity:.5}@media(pointer:coarse){.ds-destructive{min-height:44px;min-width:44px}}@media(prefers-reduced-motion:reduce){.ds-destructive{transition:none}.ds-destructive:active{transform:none}}"
+      "css": ".ds-destructive{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 16px;border:1px solid color-mix(in oklab,var(--destructive,#962f43) 30%,transparent);border-radius:6px;background:color-mix(in oklab,var(--destructive,#962f43) 10%,transparent);color:var(--destructive,#962f43);font:600 15px/1.5 \"Alegreya Sans\",ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:background-color 150ms}.ds-destructive:hover{background:color-mix(in oklab,var(--destructive,#962f43) 20%,transparent)}.ds-destructive:focus-visible{outline:3px solid var(--destructive,#962f43);outline-offset:1px}.ds-destructive:disabled{pointer-events:none;opacity:.5}@media(pointer:coarse){.ds-destructive{min-height:44px;min-width:44px}}@media(prefers-reduced-motion:reduce){.ds-destructive{transition:none}.ds-destructive:active{transform:none}}"
     },
     {
       "name": "Text field",
@@ -503,15 +316,15 @@
       "refersTo": "input",
       "description": "Shared labeled field with visible focus and invalid states.",
       "html": "<label class=\"ds-field\">Provider<input class=\"ds-input\" placeholder=\"Search providers\"></label>",
-      "css": ".ds-field{display:grid;gap:8px;color:var(--foreground,#29332c);font:500 15px/1.5 'Alegreya Sans',ui-sans-serif,system-ui,sans-serif}.ds-input{width:100%;min-width:0;box-sizing:border-box;height:40px;padding:0 12px;border:1px solid var(--input,#918e7f);border-radius:6px;background:var(--surface-elevated,#fcf9f1);color:var(--foreground,#29332c);font:500 15px/1.5 'Alegreya Sans',ui-sans-serif,system-ui,sans-serif;transition:border-color 150ms}.ds-input::placeholder{color:var(--muted-foreground,#62665d)}.ds-input:hover{border-color:color-mix(in oklab,var(--primary,#244c3b) 45%,transparent)}.ds-input:focus-visible{border-color:var(--ring,#244c3b);outline:3px solid color-mix(in oklab,var(--ring,#244c3b) 25%,transparent);outline-offset:1px;}.ds-input[aria-invalid=true]{border-color:var(--destructive,#962f43)}.ds-input:disabled{background:var(--surface-muted,#e8e5d9);opacity:.55}@media(prefers-reduced-motion:reduce){.ds-input{transition:none}}"
+      "css": ".ds-field{display:grid;gap:8px;color:var(--foreground,#30372f);font:500 15px/1.5 'Alegreya Sans',ui-sans-serif,system-ui,sans-serif}.ds-input{width:100%;min-width:0;box-sizing:border-box;height:40px;padding:0 12px;border:1px solid var(--input,#7d8b83);border-radius:6px;background:var(--surface-elevated,#fcfbf8);color:var(--foreground,#30372f);font:500 15px/1.5 'Alegreya Sans',ui-sans-serif,system-ui,sans-serif;transition:border-color 150ms}.ds-input::placeholder{color:var(--muted-foreground,#62695f)}.ds-input:hover{border-color:color-mix(in oklab,var(--primary,#285b43) 45%,transparent)}.ds-input:focus-visible{border-color:var(--ring,#285b43);outline:3px solid color-mix(in oklab,var(--ring,#285b43) 25%,transparent);outline-offset:1px;}.ds-input[aria-invalid=true]{border-color:var(--destructive,#962f43)}.ds-input:disabled{background:var(--surface-muted,#eeece8);opacity:.55}@media(prefers-reduced-motion:reduce){.ds-input{transition:none}}"
     },
     {
       "name": "Section navigation",
       "kind": "nav",
       "refersTo": "selected-control",
-      "description": "Warm ink indicates the current destination; labels remain sentence case.",
+      "description": "Neutral stone marks the current destination; labels remain sentence case.",
       "html": "<nav class=\"ds-nav\" aria-label=\"Horse record\"><a href=\"#care\" aria-current=\"page\">Care</a><a href=\"#notes\">Notes</a></nav>",
-      "css": ".ds-nav{display:flex;gap:8px;overflow-x:auto;font:600 15px/1.5 'Alegreya Sans',ui-sans-serif,system-ui,sans-serif}.ds-nav a{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid transparent;border-radius:6px;color:var(--muted-foreground,#62665d);text-decoration:none;white-space:nowrap;transition:background-color 150ms}.ds-nav a[aria-current=page]{border-color:var(--selection,#555247);background:var(--selection-surface,#e7e0ce);color:var(--selection,#555247)}.ds-nav a:hover{background:var(--surface-muted,#e8e5d9)}.ds-nav a:focus-visible{outline:3px solid color-mix(in oklab,var(--ring,#244c3b) 25%,transparent);outline-offset:1px;}@media(prefers-reduced-motion:reduce){.ds-nav a{transition:none}}"
+      "css": ".ds-nav{display:flex;gap:8px;overflow-x:auto;font:600 15px/1.5 'Alegreya Sans',ui-sans-serif,system-ui,sans-serif}.ds-nav a{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid transparent;border-radius:6px;color:var(--muted-foreground,#62695f);text-decoration:none;white-space:nowrap;transition:background-color 150ms}.ds-nav a[aria-current=page]{border-color:var(--selection,#55594c);background:var(--selection-surface,#e4e6dc);color:var(--selection,#55594c)}.ds-nav a:hover{background:var(--surface-muted,#eeece8)}.ds-nav a:focus-visible{outline:3px solid color-mix(in oklab,var(--ring,#285b43) 25%,transparent);outline-offset:1px;}@media(prefers-reduced-motion:reduce){.ds-nav a{transition:none}}"
     },
     {
       "name": "Warning badge",
@@ -526,31 +339,31 @@
       "kind": "card",
       "refersTo": "record-row",
       "description": "Default open record with a quiet bottom divider and no outer card frame.",
-      "html": "<article class=\"ds-record\"><h3>Farrier visit</h3><p>Juniper \u00b7 Thursday, 10:30</p><p>Sam Taylor will check the front shoes.</p></article>",
-      "css": ".ds-record{display:grid;gap:8px;padding:20px 0;border-bottom:1px solid var(--border-subtle,#c9c3b5);background:transparent;color:var(--foreground,#29332c);font:400 15px/24px 'Alegreya Sans',ui-sans-serif,system-ui,sans-serif}.ds-record h3{margin:0;font:600 18px/1.375 'Alegreya Sans',ui-sans-serif,system-ui,sans-serif}.ds-record p{margin:0}.ds-record p:first-of-type{color:var(--muted-foreground,#62665d)}"
+      "html": "<article class=\"ds-record\"><h3>Farrier visit</h3><p>Juniper · Thursday, 10:30</p><p>Sam Taylor will check the front shoes.</p></article>",
+      "css": ".ds-record{display:grid;gap:8px;padding:20px 0;border-bottom:1px solid var(--border-subtle,color-mix(in oklab, var(--border) 72%, transparent));background:transparent;color:var(--foreground,#30372f);font:400 15px/24px 'Alegreya Sans',ui-sans-serif,system-ui,sans-serif}.ds-record h3{margin:0;font:600 18px/1.375 'Alegreya Sans',ui-sans-serif,system-ui,sans-serif}.ds-record p{margin:0}.ds-record p:first-of-type{color:var(--muted-foreground,#62695f)}"
     },
     {
       "name": "Contained panel",
       "kind": "card",
       "refersTo": "panel",
       "description": "Explicit opt-in for information that needs its own boundary.",
-      "html": "<section class=\"ds-panel\"><h2>Provider details</h2><p>Sam Taylor \u00b7 Farrier</p></section>",
-      "css": ".ds-panel{padding:24px;border:1px solid var(--border-subtle,#c9c3b5);border-radius:12px;background:var(--card,#fcf9f1);color:var(--card-foreground,#29332c)}.ds-panel h2{margin:0 0 16px;font:600 24px/1.15 Alegreya,Georgia,serif;letter-spacing:-.015em}.ds-panel p{margin:0;font:400 15px/24px 'Alegreya Sans',ui-sans-serif,system-ui,sans-serif}"
+      "html": "<section class=\"ds-panel\"><h2>Provider details</h2><p>Sam Taylor · Farrier</p></section>",
+      "css": ".ds-panel{padding:24px;border:1px solid var(--border-subtle,color-mix(in oklab, var(--border) 72%, transparent));border-radius:12px;background:var(--card,#fcfbf8);color:var(--card-foreground,#30372f)}.ds-panel h2{margin:0 0 16px;font:600 24px/1.15 Alegreya,Georgia,serif;letter-spacing:-.015em}.ds-panel p{margin:0;font:400 15px/24px 'Alegreya Sans',ui-sans-serif,system-ui,sans-serif}"
     }
   ],
   "narrative": {
     "northStar": "Stable journal",
-    "overview": "A warm, readable working journal for stable plans, horse records and everyday care. Alegreya headings and Alegreya Sans body text give the app its character. An ivory canvas, open sections and quiet row dividers keep real records easy to scan. Evergreen actions, oat selection and burgundy destructive states have distinct jobs.\n\nThis is the canonical shared **application** system, grounded in [src/styles.css](src/styles.css), [dashboard primitives](src/components/dashboard), [UI primitives](src/components/ui) and the [design lab](src/components/design/StableDesignGuidelines.tsx). The public landing has its own [scoped design record](docs/design/landing/DESIGN.md).\n\nThe shared foundation is implemented. Some specialized components and route-local overrides still need review by page family; this document does not certify every app screen as fully migrated. The lab demonstrates sample day selection and local care completion with undo. A full care-completion animation and horse-profile preview from the prototype have not been shipped as shared app features.",
+    "overview": "A warm, readable working journal for stable plans, horse records and everyday care. Alegreya headings and Alegreya Sans body text give the app its character. A soft stone canvas, paper working sections and gently alternating rows keep real records easy to scan. Evergreen actions, pale stone selection and burgundy destructive states have distinct jobs.\n\nThis is the canonical shared **application** system, grounded in [src/styles.css](src/styles.css), [dashboard primitives](src/components/dashboard), [UI primitives](src/components/ui) and the [design lab](src/components/design/StableDesignGuidelines.tsx). The public landing has its own [scoped design record](docs/design/landing/DESIGN.md).\n\nThe shared foundation is implemented. Some specialized components and route-local overrides still need review by page family; this document does not certify every app screen as fully migrated. The lab demonstrates sample day selection and local care completion with undo. Confirmed care completion now uses the shared journal-check sequence; cross-route horse photo morphing remains an intentional exception.",
     "keyCharacteristics": [
       "Sentence-case serif headings and readable sans-serif records.",
-      "Flat sections and item rows, with contained surfaces used deliberately.",
+      "Soft paper sections on a soft stone canvas, with open, alternating record rows.",
       "Distinct action, selection and destructive colors in both themes.",
       "Useful interaction feedback without decorative headings, patterns or imagery."
     ],
     "rules": [
       {
         "name": "The Separate States Rule",
-        "body": "Evergreen means action, oat with warm ink means selection, and burgundy means destructive feedback. Keep these roles distinct when adding a new control.",
+        "body": "Evergreen means action, pale stone with deep neutral ink means selection, and burgundy means destructive feedback. Keep these roles distinct when adding a new control.",
         "section": "colors"
       },
       {

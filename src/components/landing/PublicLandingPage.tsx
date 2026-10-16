@@ -1,4 +1,5 @@
 import { useT } from '#/i18n/LocaleProvider'
+import { LanguageSelector } from '#/i18n/LanguageSelector'
 import { Link } from '@tanstack/react-router'
 import {
   CountryArrow,
@@ -78,14 +79,19 @@ export function PublicLandingPage() {
       <footer className="country-footer">
         <div className="country-footer-inner">
           <p>Paddock Pilot © {new Date().getFullYear()}</p>
-          <nav aria-label={t('navigation.footer')}>
-            <Link className="country-text-link" to="/pricing">
-              {t('navigation.plans')}
-            </Link>
-            <Link className="country-text-link" to="/sign-in/$">
-              {t('navigation.signIn')}
-            </Link>
-          </nav>
+          <div className="country-footer-controls">
+            <nav aria-label={t('navigation.footer')}>
+              <Link className="country-text-link" to="/pricing">
+                {t('navigation.plans')}
+              </Link>
+              <Link className="country-text-link" to="/sign-in/$">
+                {t('navigation.signIn')}
+              </Link>
+            </nav>
+            <div className="country-footer-language">
+              <LanguageSelector compact />
+            </div>
+          </div>
         </div>
       </footer>
     </CountryPage>

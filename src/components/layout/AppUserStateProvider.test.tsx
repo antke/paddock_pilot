@@ -199,15 +199,13 @@ describe('invitation-first account routing', () => {
     expect(screen.getByRole('banner').textContent).toBe(
       'Application navigation',
     )
-    expect(screen.getByRole('contentinfo').textContent).toBe(
-      'Application footer',
-    )
+    expect(screen.queryByRole('contentinfo')).toBeNull()
     expect(screen.getByRole('main').textContent).toContain('Loading account')
     await screen.findByRole('heading', {
       name: 'Could not prepare your account',
     })
     expect(screen.getByRole('banner')).toBeTruthy()
-    expect(screen.getByRole('contentinfo')).toBeTruthy()
+    expect(screen.queryByRole('contentinfo')).toBeNull()
     expect(screen.getByRole('button', { name: 'Reload page' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeTruthy()
     expect(screen.queryByText('Requested page')).toBeNull()

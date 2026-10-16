@@ -1,5 +1,6 @@
+import { StableIcon } from '#/components/icons/domain-icons'
 import { useT } from '#/i18n/LocaleProvider'
-import { BuildingsIcon } from '@phosphor-icons/react'
+
 import type { Doc } from 'convex/_generated/dataModel'
 
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
@@ -22,7 +23,7 @@ export function StableIntroductionStep({
   return (
     <div className="grid gap-5">
       <Alert role="note">
-        <BuildingsIcon aria-hidden="true" />
+        <StableIcon aria-hidden="true" />
         <AlertTitle>
           {t('onboarding.connectedStable', { name: stable.name })}
         </AlertTitle>

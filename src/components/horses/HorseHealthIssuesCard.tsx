@@ -183,6 +183,7 @@ export function HorseHealthIssuesCardView({
     <FilteredDashboardItemList
       config={filterConfig}
       filtering={filtering}
+      getItemKey={(item) => item._id}
       emptyMessage={t('careRecords.healthEmpty')}
       filteredEmptyMessage={t('careRecords.healthFilteredEmpty')}
       renderItem={(issue) => (

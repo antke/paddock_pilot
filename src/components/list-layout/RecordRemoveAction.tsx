@@ -11,7 +11,7 @@ import {
   AlertDialogTrigger,
 } from '#/components/ui/alert-dialog'
 import { Button } from '#/components/ui/button'
-import { Spinner } from '#/components/ui/spinner'
+import { ActionFeedback } from '#/components/ui/action-feedback'
 import { useRef, useState } from 'react'
 import type { RefObject } from 'react'
 import { Alert, AlertDescription } from '#/components/ui/alert'
@@ -139,10 +139,11 @@ export function RecordRemoveAction({
             aria-busy={isRemoving || undefined}
             onClick={() => void confirmRemoval()}
           >
-            {isRemoving && <Spinner aria-hidden={true} />}
-            {isRemoving
-              ? t('careRecords.removing')
-              : (confirmLabel ?? t('careRecords.removeRecord'))}
+            <ActionFeedback
+              pending={isRemoving}
+              pendingLabel={t('careRecords.removing')}
+              label={confirmLabel ?? t('careRecords.removeRecord')}
+            />
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

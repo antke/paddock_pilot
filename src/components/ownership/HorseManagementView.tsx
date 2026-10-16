@@ -1,3 +1,5 @@
+import { MotionNotice } from '#/components/motion/MotionNotice'
+import { ActionFeedback } from '#/components/ui/action-feedback'
 import { useId, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
@@ -174,17 +176,23 @@ export function HorseManagementView({
                   }
                 }}
               >
-                {pending ? m.connectPending : c.connect}
+                <ActionFeedback
+                  pending={pending}
+                  label={c.connect}
+                  pendingLabel={m.connectPending}
+                />
               </Button>
             )}
-            <div id={reviewId} hidden={!review}>
-              {review &&
-                access.stable &&
-                (renderDeparture ? (
-                  renderDeparture(departureProps)
-                ) : (
-                  <DepartureReview {...departureProps} />
-                ))}
+            <div id={reviewId}>
+              <MotionNotice show={review}>
+                {review &&
+                  access.stable &&
+                  (renderDeparture ? (
+                    renderDeparture(departureProps)
+                  ) : (
+                    <DepartureReview {...departureProps} />
+                  ))}
+              </MotionNotice>
             </div>
           </>
         )}

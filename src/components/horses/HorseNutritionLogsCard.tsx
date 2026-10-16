@@ -185,6 +185,7 @@ export function HorseNutritionLogsView({
     <FilteredDashboardItemList
       config={filterConfig}
       filtering={filtering}
+      getItemKey={(item) => item._id}
       emptyMessage={t('careRecords.nutritionEmpty')}
       filteredEmptyMessage={t('careRecords.nutritionFilteredEmpty')}
       renderItem={(log) => (

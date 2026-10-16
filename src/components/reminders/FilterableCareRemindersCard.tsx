@@ -44,6 +44,9 @@ export function FilterableCareRemindersCard({
   return (
     <View
       {...cardProps}
+      outstandingCount={
+        reminders.filter((item) => item.reminder.status === 'pending').length
+      }
       reminders={filtering.items}
       horseOptions={horseOptions}
       emptyMessage={

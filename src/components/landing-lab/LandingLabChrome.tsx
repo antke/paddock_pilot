@@ -11,7 +11,10 @@ import {
   getLandingLabCaptureSource,
   getLandingLabReviewSearch,
 } from './landingLabSearch'
-import { landingLabVariants } from './landingLabVariants'
+import {
+  archivedLandingLabVariants,
+  currentLandingLabVariants,
+} from './landingLabVariants'
 import type { LandingLabVariantId } from './landingLabVariants'
 import {
   paddockMapVersions,
@@ -98,27 +101,41 @@ export function LandingLabChrome({
           aria-label="Landing concept variants"
           className="overflow-x-auto pb-1"
         >
-          <div className="flex min-w-max gap-2">
-            {landingLabVariants.map((variant) => (
-              <Link
-                key={variant.id}
-                to="/landing-lab/$variant"
-                params={{ variant: variant.id }}
-                search={getLandingLabReviewSearch({
-                  variantId: variant.id,
-                  theme,
-                  viewport,
-                  mapVersion,
-                })}
-                aria-current={variant.id === variantId ? 'page' : undefined}
-                className={cn(
-                  'inline-flex min-h-10 items-center rounded-control border border-border bg-surface-elevated px-3 text-sm font-semibold text-foreground no-underline outline-none hover:border-primary hover:bg-primary/8 focus-visible:ring-3 focus-visible:ring-ring/25',
-                  variant.id === variantId &&
-                    'border-primary bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground',
-                )}
-              >
-                {variant.label}
-              </Link>
+          <div className="grid gap-3">
+            {[
+              { label: 'Current round', variants: currentLandingLabVariants },
+              { label: 'Archived round', variants: archivedLandingLabVariants },
+            ].map((round) => (
+              <div key={round.label} role="group" aria-label={round.label}>
+                <p className="mb-2 text-xs font-semibold text-muted-foreground">
+                  {round.label}
+                </p>
+                <div className="flex min-w-max gap-2">
+                  {round.variants.map((variant) => (
+                    <Link
+                      key={variant.id}
+                      to="/landing-lab/$variant"
+                      params={{ variant: variant.id }}
+                      search={getLandingLabReviewSearch({
+                        variantId: variant.id,
+                        theme,
+                        viewport,
+                        mapVersion,
+                      })}
+                      aria-current={
+                        variant.id === variantId ? 'page' : undefined
+                      }
+                      className={cn(
+                        'inline-flex min-h-10 items-center rounded-control border border-border bg-surface-elevated px-3 text-sm font-semibold text-foreground no-underline outline-none hover:border-primary hover:bg-primary/8 focus-visible:ring-3 focus-visible:ring-ring/25',
+                        variant.id === variantId &&
+                          'border-primary bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground',
+                      )}
+                    >
+                      {variant.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </nav>

@@ -1,6 +1,6 @@
+import { MotionList } from '#/components/motion/MotionList'
 import { useT } from '#/i18n/LocaleProvider'
-import { isValidElement } from 'react'
-import type { ComponentProps, ReactNode } from 'react'
+import type { ComponentProps, Key, ReactNode } from 'react'
 
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
@@ -28,6 +28,7 @@ type FilteredDashboardItemListProps<
   hideControlsWhenEmpty?: boolean
   itemLayout?: 'grid' | 'list'
   listActions?: ReactNode
+  getItemKey: (item: TItem) => Key
   renderItem: (item: TItem) => ReactNode
   stickyFilters?: boolean
 }
@@ -46,6 +47,7 @@ export function FilteredDashboardItemList<
   itemLayout = 'list',
   listActions,
   renderItem,
+  getItemKey,
   stickyFilters = false,
   className,
   ...props
@@ -74,39 +76,25 @@ export function FilteredDashboardItemList<
         {t('listControls.results', { count: filtering.items.length })}
       </p>
 
-      {filtering.items.length === 0 ? (
-        !filtering.isFiltering && emptyState !== undefined ? (
-          emptyState
-        ) : (
-          <DashboardEmptyState chrome="soft">
-            {getListFilterEmptyMessage({
-              filtering,
-              emptyMessage,
-              filteredEmptyMessage,
-            })}
-          </DashboardEmptyState>
-        )
-      ) : (
-        <DashboardItemList
-          role="list"
-          gap="comfortable"
-          className={cn(usesGrid && 'lg:grid-cols-2')}
-        >
-          {filtering.items.map((item, index) => {
-            const renderedItem = renderItem(item)
-            const key =
-              isValidElement(renderedItem) && renderedItem.key !== null
-                ? renderedItem.key
-                : index
-
-            return (
-              <div key={key} role="listitem" className="min-w-0">
-                {renderedItem}
-              </div>
-            )
-          })}
-        </DashboardItemList>
-      )}
+      <MotionList
+        items={filtering.items}
+        getKey={getItemKey}
+        renderItem={renderItem}
+        className={cn('gap-2', usesGrid && 'lg:grid-cols-2')}
+        empty={
+          !filtering.isFiltering && emptyState !== undefined ? (
+            emptyState
+          ) : (
+            <DashboardEmptyState chrome="soft">
+              {getListFilterEmptyMessage({
+                filtering,
+                emptyMessage,
+                filteredEmptyMessage,
+              })}
+            </DashboardEmptyState>
+          )
+        }
+      />
     </DashboardItemList>
   )
 }

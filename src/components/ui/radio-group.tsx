@@ -1,3 +1,4 @@
+import { useAppMotion } from '#/components/motion/appMotion'
 import { Radio as RadioPrimitive } from '@base-ui/react/radio'
 import { RadioGroup as RadioGroupPrimitive } from '@base-ui/react/radio-group'
 
@@ -20,6 +21,7 @@ function RadioGroupItem({
   'aria-labelledby': ariaLabelledBy,
   ...props
 }: RadioPrimitive.Root.Props) {
+  const { enabled } = useAppMotion()
   const accessibleNameProps = ariaLabel
     ? { 'aria-label': ariaLabel }
     : ariaLabelledBy || id
@@ -38,8 +40,13 @@ function RadioGroupItem({
       {...props}
     >
       <RadioPrimitive.Indicator
+        keepMounted={enabled}
+        aria-hidden="true"
         data-slot="radio-group-indicator"
-        className="flex size-5 items-center justify-center"
+        className={cn(
+          'flex size-5 items-center justify-center',
+          enabled && 'app-selection-mark',
+        )}
       >
         <span className="absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-selection-foreground" />
       </RadioPrimitive.Indicator>

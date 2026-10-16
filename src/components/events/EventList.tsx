@@ -60,6 +60,7 @@ export function EventTable({
     <FilteredDashboardItemList
       config={filterConfig}
       filtering={filtering}
+      getItemKey={(item) => item.contextParticipationId ?? item._id}
       gap="compact"
       emptyMessage={emptyDescription ?? t('eventViews.emptyHelp')}
       emptyState={

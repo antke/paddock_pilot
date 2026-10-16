@@ -1,3 +1,5 @@
+import { MotionList } from '#/components/motion/MotionList'
+import { ActionFeedback } from '#/components/ui/action-feedback'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { api } from 'convex/_generated/api'
@@ -5,7 +7,6 @@ import { useMutation } from 'convex/react'
 import { useRef, useState } from 'react'
 import {
   DashboardItemCardContent,
-  DashboardItemList,
   DashboardItemRecordCard,
 } from '#/components/dashboard/DashboardItemCard'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
@@ -82,26 +83,32 @@ export function DeletedHorsesView({
       title={t('stableSetup.deletedHorses')}
       description={t('stableSetup.deletedHorsesHelp')}
     >
-      {horses.length === 0 ? (
-        <DashboardEmptyState>
-          {t('stableSetup.deletedEmpty')}
-        </DashboardEmptyState>
-      ) : (
-        <DashboardItemList gap="compact">
-          {horses.map((horse) => (
-            <DeletedHorseRow
-              key={horse._id}
-              horse={horse}
-              onRestore={async () => {
-                await onRestore(horse)
-                section.current?.focus()
-              }}
-              onPermanentlyDelete={() => onPermanentlyDelete(horse)}
-              removalFocusTarget={() => section.current}
-            />
-          ))}
-        </DashboardItemList>
-      )}
+      <MotionList
+        items={horses}
+        getKey={(horse) => horse._id}
+        focusTarget={() => section.current}
+        empty={
+          <DashboardEmptyState>
+            {t('stableSetup.deletedEmpty')}
+          </DashboardEmptyState>
+        }
+        renderItem={(horse) => (
+          <DeletedHorseRow
+            horse={horse}
+            onRestore={async () => {
+              await onRestore(horse)
+              if (
+                document.activeElement === document.body ||
+                section.current?.contains(document.activeElement)
+              ) {
+                section.current?.focus({ preventScroll: true })
+              }
+            }}
+            onPermanentlyDelete={() => onPermanentlyDelete(horse)}
+            removalFocusTarget={() => section.current}
+          />
+        )}
+      />
     </DashboardSectionCard>
   )
 }
@@ -162,10 +169,12 @@ function DeletedHorseRow({
             aria-busy={pendingAction === 'restore' || undefined}
             onClick={() => void perform('restore')}
           >
-            <ArrowCounterClockwiseIcon aria-hidden="true" />
-            {pendingAction === 'restore'
-              ? t('stableSetup.restoring')
-              : t('stableSetup.restore')}
+            <ActionFeedback
+              pending={pendingAction === 'restore'}
+              label={t('stableSetup.restore')}
+              pendingLabel={t('stableSetup.restoring')}
+              icon={<ArrowCounterClockwiseIcon aria-hidden="true" />}
+            />
           </Button>
           {horse.canPermanentlyDelete && (
             <AlertDialog
@@ -226,9 +235,11 @@ function DeletedHorseRow({
                     aria-busy={pendingAction === 'delete' || undefined}
                     onClick={() => void perform('delete')}
                   >
-                    {pendingAction === 'delete'
-                      ? t('stableSetup.deleting')
-                      : t('stableSetup.deletePermanently')}
+                    <ActionFeedback
+                      pending={pendingAction === 'delete'}
+                      label={t('stableSetup.deletePermanently')}
+                      pendingLabel={t('stableSetup.deleting')}
+                    />
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

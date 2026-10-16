@@ -1,13 +1,11 @@
+import { MotionList } from '#/components/motion/MotionList'
 import { localeInstances } from '#/i18n/resources'
 import type { Locale } from 'shared/i18n/locale'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
-import {
-  DashboardItemList,
-  DashboardItemMediaCard,
-} from '#/components/dashboard/DashboardItemCard'
+import { DashboardItemMediaCard } from '#/components/dashboard/DashboardItemCard'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { ButtonAnchor } from '#/components/ui/button'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
@@ -121,24 +119,24 @@ export function DocumentsCard({
         {t('documents.count', { count: documents.length })}
       </p>
 
-      {documents.length === 0 ? (
-        <DashboardEmptyState chrome={chrome}>
-          {emptyMessage}
-        </DashboardEmptyState>
-      ) : (
-        <DashboardItemList gap="compact" role="list">
-          {documents.map((item) => (
-            <div key={item.document._id} role="listitem" className="min-w-0">
-              <DocumentRow
-                item={item}
-                headingLevel={title ? 3 : 2}
-                onRemove={onRemove}
-                removalFocusTarget={() => section.current}
-              />
-            </div>
-          ))}
-        </DashboardItemList>
-      )}
+      <MotionList
+        items={documents}
+        getKey={(item) => item.document._id}
+        focusTarget={() => section.current}
+        empty={
+          <DashboardEmptyState chrome={chrome}>
+            {emptyMessage}
+          </DashboardEmptyState>
+        }
+        renderItem={(item) => (
+          <DocumentRow
+            item={item}
+            headingLevel={title ? 3 : 2}
+            onRemove={onRemove}
+            removalFocusTarget={() => section.current}
+          />
+        )}
+      />
     </>
   )
 

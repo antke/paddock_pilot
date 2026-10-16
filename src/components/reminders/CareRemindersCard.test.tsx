@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -206,4 +207,55 @@ describe('reminder actions', () => {
     expect(within(row as HTMLElement).queryByRole('button')).toBeNull()
     expect(row.querySelector('[data-slot="action-group"]')).toBeNull()
   })
+})
+
+it('shows the local care receipt only after acknowledgement, retains retry after failure, and ignores background completion', async () => {
+  const actions = callbacks()
+  let resolve!: () => void
+  let reject!: (error: Error) => void
+  actions.onComplete.mockImplementation(
+    () =>
+      new Promise<void>((ok, fail) => {
+        resolve = ok
+        reject = fail
+      }),
+  )
+  const view = (
+    items: Array<{ reminder: Doc<'careReminders'>; canManage: boolean }>,
+    outstandingCount: number,
+  ) => (
+    <CareRemindersCard
+      reminders={items}
+      outstandingCount={outstandingCount}
+      canAddReminder={false}
+      emptyMessage="All recorded"
+      {...actions}
+    />
+  )
+  const { rerender, container } = render(
+    view([{ reminder, canManage: true }], 1),
+  )
+  const complete = screen.getByRole('button', { name: 'Complete Farrier' })
+  fireEvent.click(complete)
+  fireEvent.click(complete)
+  expect(actions.onComplete).toHaveBeenCalledTimes(1)
+  expect(container.querySelector('[data-slot="care-confirmation"]')).toBeNull()
+  await act(async () => reject(new Error('Offline')))
+  expect(screen.getByRole('alert')).toBeTruthy()
+  expect(container.querySelector('[data-slot="care-confirmation"]')).toBeNull()
+  fireEvent.click(complete)
+  await act(async () => resolve())
+  expect(
+    container.querySelector('[data-slot="care-confirmation"]')?.textContent,
+  ).toContain('Farrier')
+  rerender(view([], 0))
+  expect(container.querySelector('[data-final="true"]')).toBeTruthy()
+  cleanup()
+  render(
+    view(
+      [{ reminder: { ...reminder, status: 'completed' }, canManage: true }],
+      0,
+    ),
+  )
+  expect(document.querySelector('[data-slot="care-confirmation"]')).toBeNull()
 })

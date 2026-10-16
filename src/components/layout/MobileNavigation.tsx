@@ -1,3 +1,8 @@
+import {
+  HomeIcon,
+  EventIcon,
+  TrainingIcon,
+} from '#/components/icons/domain-icons'
 import { useEffect, useRef, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import {
@@ -7,9 +12,6 @@ import {
   useRouter,
 } from '@tanstack/react-router'
 import {
-  HouseIcon,
-  CalendarBlankIcon,
-  NotebookIcon,
   HorseIcon,
   ListIcon,
   CaretDownIcon,
@@ -256,7 +258,7 @@ export function MobileNavigationView({
                     : undefined
                 }
               >
-                <HouseIcon aria-hidden="true" />
+                <HomeIcon aria-hidden="true" />
                 {t('navigation.home')}
               </Link>
               <Link
@@ -267,7 +269,7 @@ export function MobileNavigationView({
                   pathname.startsWith(`${base}/events`) ? 'page' : undefined
                 }
               >
-                <CalendarBlankIcon aria-hidden="true" />
+                <EventIcon aria-hidden="true" />
                 {t('dashboard.events')}
               </Link>
               <Link
@@ -278,7 +280,7 @@ export function MobileNavigationView({
                   pathname.startsWith(`${base}/training`) ? 'page' : undefined
                 }
               >
-                <NotebookIcon aria-hidden="true" />
+                <TrainingIcon aria-hidden="true" />
                 {t('navigation.training')}
               </Link>
               <Link
@@ -301,7 +303,7 @@ export function MobileNavigationView({
                 className={itemClass(personalHomeSelected)}
                 aria-current={personalHomeSelected ? 'page' : undefined}
               >
-                <HouseIcon aria-hidden="true" />
+                <HomeIcon aria-hidden="true" />
                 {t('navigation.home')}
               </Link>
               <Link
@@ -311,7 +313,7 @@ export function MobileNavigationView({
                   pathname.startsWith('/events') ? 'page' : undefined
                 }
               >
-                <CalendarBlankIcon aria-hidden="true" />
+                <EventIcon aria-hidden="true" />
                 {t('dashboard.events')}
               </Link>
               <Link
@@ -321,7 +323,7 @@ export function MobileNavigationView({
                   pathname.startsWith('/training') ? 'page' : undefined
                 }
               >
-                <NotebookIcon aria-hidden="true" />
+                <TrainingIcon aria-hidden="true" />
                 {t('navigation.training')}
               </Link>
             </>

@@ -200,6 +200,7 @@ export function HorseWeightRecordsView({
     <FilteredDashboardItemList
       config={filterConfig}
       filtering={filtering}
+      getItemKey={(item) => item._id}
       emptyMessage={t('careRecords.weightEmpty')}
       filteredEmptyMessage={t('careRecords.weightFilteredEmpty')}
       renderItem={(record) => (

@@ -1,3 +1,4 @@
+import { useChangeMotion } from '#/components/motion/useChangeMotion'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { formatFileSize } from '#/lib/numberDisplay'
 import type { TFunction } from 'i18next'
@@ -82,6 +83,9 @@ export function FileUploadField({
   const [dragging, setDragging] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File>()
   const [previewUrl, setPreviewUrl] = useState<string>()
+  const selectionMotion = useChangeMotion<HTMLDivElement>(
+    selectedFile ? `${selectedFile.name}-${selectedFile.lastModified}` : '',
+  )
 
   useEffect(() => {
     if (restoreFocus.current) {
@@ -188,6 +192,7 @@ export function FileUploadField({
 
       {selectedFile ? (
         <Attachment
+          ref={selectionMotion}
           state={invalid ? 'error' : 'ready'}
           className={cn(
             'w-full min-w-0 flex-nowrap',
@@ -275,7 +280,7 @@ export function FileUploadField({
           }}
           onDrop={handleDrop}
         >
-          <span className="flex size-16 shrink-0 items-center justify-center rounded-control border border-border-subtle bg-card text-primary transition-transform group-data-[dragging=true]/dropzone:scale-105 motion-reduce:transition-none">
+          <span className="flex size-16 shrink-0 items-center justify-center rounded-control border border-border-subtle bg-card text-primary transition-transform motion-safe:group-data-[dragging=true]/dropzone:scale-105 motion-reduce:transition-none">
             {kind === 'image' ? (
               <ImageSquareIcon
                 className="size-7"

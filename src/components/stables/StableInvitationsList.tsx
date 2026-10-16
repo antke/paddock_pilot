@@ -1,8 +1,8 @@
+import { MotionList } from '#/components/motion/MotionList'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import {
   DashboardItemCardContent,
-  DashboardItemList,
   DashboardItemRecordCard,
   DashboardItemRecordFooter,
 } from '#/components/dashboard/DashboardItemCard'
@@ -119,24 +119,19 @@ export function StableInvitationsListView({
 }: StableInvitationsListProps & InvitationActions) {
   const t = useT()
 
-  if (invitations.length === 0) {
-    return (
-      <DashboardEmptyState chrome="soft" spacing="flush">
-        {t('invitationFlow.empty')}
-      </DashboardEmptyState>
-    )
-  }
-
   return (
-    <DashboardItemList gap="compact">
-      {invitations.map((invitation) => (
-        <StableInvitationRow
-          key={invitation._id}
-          invitation={invitation}
-          {...actions}
-        />
-      ))}
-    </DashboardItemList>
+    <MotionList
+      items={invitations}
+      getKey={(invitation) => invitation._id}
+      empty={
+        <DashboardEmptyState chrome="soft" spacing="flush">
+          {t('invitationFlow.empty')}
+        </DashboardEmptyState>
+      }
+      renderItem={(invitation) => (
+        <StableInvitationRow invitation={invitation} {...actions} />
+      )}
+    />
   )
 }
 
@@ -242,9 +237,11 @@ function StableInvitationRow({
                 aria-busy={isPending || undefined}
                 onClick={() => void runAction('resend')}
               >
-                {pendingAction === 'resend'
-                  ? t('invitationFlow.resending')
-                  : t('invitationFlow.resend')}
+                <ActionFeedback
+                  pending={pendingAction === 'resend'}
+                  label={t('invitationFlow.resend')}
+                  pendingLabel={t('invitationFlow.resending')}
+                />
               </Button>
             )}
             {invitation.status === 'pending' && (
@@ -293,9 +290,11 @@ function StableInvitationRow({
                       aria-busy={isPending || undefined}
                       onClick={() => void runAction('revoke')}
                     >
-                      {pendingAction === 'revoke'
-                        ? t('invitationFlow.revoking')
-                        : t('invitationFlow.revokeInvitation')}
+                      <ActionFeedback
+                        pending={pendingAction === 'revoke'}
+                        label={t('invitationFlow.revokeInvitation')}
+                        pendingLabel={t('invitationFlow.revoking')}
+                      />
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

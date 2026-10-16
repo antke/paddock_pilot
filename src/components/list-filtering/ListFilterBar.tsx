@@ -1,3 +1,4 @@
+import { MotionDisclosure } from '#/components/motion/MotionDisclosure'
 import { useT } from '#/i18n/LocaleProvider'
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
@@ -160,7 +161,8 @@ export function ListFilterBar<TFacetId extends string = string>({
         />
 
         {hasFacets && (
-          <div
+          <MotionDisclosure
+            open={isPanelOpen}
             ref={panel}
             id={panelId}
             aria-hidden={!isPanelOpen}
@@ -172,14 +174,8 @@ export function ListFilterBar<TFacetId extends string = string>({
                 toggle.current?.focus()
               }
             }}
-            className={cn(
-              'app-height-collapse',
-              isPanelOpen
-                ? 'app-height-collapse-open'
-                : 'app-height-collapse-closed',
-            )}
           >
-            <div className="app-height-collapse-inner">
+            <div>
               <div className="px-0.5 pt-3 pb-0.5 sm:pt-4">
                 <ListFilterPanel
                   facets={config.facets}
@@ -192,7 +188,7 @@ export function ListFilterBar<TFacetId extends string = string>({
                 />
               </div>
             </div>
-          </div>
+          </MotionDisclosure>
         )}
       </div>
     </div>

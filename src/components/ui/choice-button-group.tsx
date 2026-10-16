@@ -1,3 +1,6 @@
+import { useId } from 'react'
+import { motion } from 'motion/react'
+import { journalMotion, useAppMotion } from '#/components/motion/appMotion'
 import type { ReactNode } from 'react'
 
 import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group'
@@ -34,6 +37,8 @@ export function ChoiceButtonGroup<TValue extends string>({
   className,
   layout = 'compact',
 }: ChoiceButtonGroupProps<TValue>) {
+  const id = useId()
+  const { spatial } = useAppMotion()
   return (
     <ToggleGroup
       data-slot="choice-button-group"
@@ -64,6 +69,7 @@ export function ChoiceButtonGroup<TValue extends string>({
           key={option.value}
           value={option.value}
           className={cn(
+            spatial && 'isolate data-pressed:bg-transparent',
             layout === 'compact' && 'px-4',
             layout === 'segmented' &&
               'rounded-none first:rounded-l-control last:rounded-r-control',
@@ -71,6 +77,16 @@ export function ChoiceButtonGroup<TValue extends string>({
               'h-auto min-h-20 w-full flex-col items-start gap-1 px-4 py-3 text-left whitespace-normal',
           )}
         >
+          {spatial && value === option.value && (
+            <motion.span
+              aria-hidden="true"
+              layoutId={`${id}-selection`}
+              layoutDependency={value}
+              initial={false}
+              transition={journalMotion.spring}
+              className="pointer-events-none absolute inset-0 -z-10 rounded-[inherit] bg-selection-surface"
+            />
+          )}
           <span
             className={cn(
               layout === 'cards' && 'text-base font-semibold leading-snug',

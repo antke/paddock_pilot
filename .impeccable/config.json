@@ -7,28 +7,225 @@
       {
         "rule": "design-system-radius",
         "value": "9999px",
-        "files": [
-          "src/styles.css"
-        ],
+        "files": ["src/styles.css"],
         "createdAt": "2026-10-09T18:26:59.700Z",
         "reason": "Existing native date-picker icon uses functional circular geometry permitted by DESIGN.md; this is not a panel radius."
       },
       {
         "rule": "design-system-font-size",
         "value": "1rem",
-        "files": [
-          "src/styles.css"
-        ],
+        "files": ["src/styles.css"],
         "createdAt": "2026-10-09T18:26:59.771Z",
         "reason": "Existing mobile form inputs use 16px text to avoid browser zoom while entering data; preserve this touch accessibility exception."
       },
       {
         "rule": "design-system-font-size",
         "value": "20px",
-        "files": [
-          "src/components/layout/AppShell.test.tsx"
-        ],
+        "files": ["src/components/layout/AppShell.test.tsx"],
         "createdAt": "2026-10-10T10:38:50.957Z"
+      },
+      {
+        "rule": "overused-font",
+        "value": "fraunces",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:32.108Z",
+        "reason": "Agent: Fraunces Country is the established landing brand face with self-hosted font provenance in docs/design/landing/DESIGN.md; this task refines navigation, preserving that identity."
+      },
+      {
+        "rule": "design-system-font",
+        "value": "fraunces country",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:32.133Z",
+        "reason": "Agent: preserve the existing landing typography explicitly documented in docs/design/landing/DESIGN.md; root DESIGN.md describes the authenticated app."
+      },
+      {
+        "rule": "design-system-font",
+        "value": "manrope variable",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:32.169Z",
+        "reason": "Agent: preserve the existing landing typography explicitly documented in docs/design/landing/DESIGN.md; root DESIGN.md describes the authenticated app."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#d8be96",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:32.208Z",
+        "reason": "Agent: preserve the existing country landing palette and photographic overlays documented in docs/design/landing/DESIGN.md, separate from the authenticated app."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#263f30",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:32.248Z",
+        "reason": "Agent: preserve the existing country landing palette and photographic overlays documented in docs/design/landing/DESIGN.md, separate from the authenticated app."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "28px",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:32.274Z",
+        "reason": "Agent: preserve the existing landing and retained country comparison type scales in countryLanding.css and docs/design/landing/DESIGN.md; root app scale does not apply."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "14px",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:32.312Z",
+        "reason": "Agent: preserve the existing landing and retained country comparison type scales in countryLanding.css and docs/design/landing/DESIGN.md; root app scale does not apply."
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "4px",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:32.385Z",
+        "reason": "Agent: the landing control and image radius of 4px is explicitly documented in docs/design/landing/DESIGN.md."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#3f5842",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:32.431Z",
+        "reason": "Agent: preserve the existing country landing palette and photographic overlays documented in docs/design/landing/DESIGN.md, separate from the authenticated app."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "27px",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:32.460Z",
+        "reason": "Agent: preserve the existing landing and retained country comparison type scales in countryLanding.css and docs/design/landing/DESIGN.md; root app scale does not apply."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "12px",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:32.527Z",
+        "reason": "Agent: preserve the existing landing and retained country comparison type scales in countryLanding.css and docs/design/landing/DESIGN.md; root app scale does not apply."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#203426",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:32.560Z",
+        "reason": "Agent: preserve the existing country landing palette and photographic overlays documented in docs/design/landing/DESIGN.md, separate from the authenticated app."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "52px",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:32.603Z",
+        "reason": "Agent: preserve the existing landing and retained country comparison type scales in countryLanding.css and docs/design/landing/DESIGN.md; root app scale does not apply."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "43px",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:32.668Z",
+        "reason": "Agent: preserve the existing landing and retained country comparison type scales in countryLanding.css and docs/design/landing/DESIGN.md; root app scale does not apply."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "18px",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:32.701Z",
+        "reason": "Agent: preserve the existing landing and retained country comparison type scales in countryLanding.css and docs/design/landing/DESIGN.md; root app scale does not apply."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#e1e3ce",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:32.755Z",
+        "reason": "Agent: preserve the existing country landing palette and photographic overlays documented in docs/design/landing/DESIGN.md, separate from the authenticated app."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "22px",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:32.819Z",
+        "reason": "Agent: preserve the existing landing and retained country comparison type scales in countryLanding.css and docs/design/landing/DESIGN.md; root app scale does not apply."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "19px",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:32.856Z",
+        "reason": "Agent: preserve the existing landing and retained country comparison type scales in countryLanding.css and docs/design/landing/DESIGN.md; root app scale does not apply."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "16px",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:32.920Z",
+        "reason": "Agent: preserve the existing landing and retained country comparison type scales in countryLanding.css and docs/design/landing/DESIGN.md; root app scale does not apply."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "64px",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:32.967Z",
+        "reason": "Agent: preserve the existing landing and retained country comparison type scales in countryLanding.css and docs/design/landing/DESIGN.md; root app scale does not apply."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#102417bd",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:33.020Z",
+        "reason": "Agent: preserve the existing country landing palette and photographic overlays documented in docs/design/landing/DESIGN.md, separate from the authenticated app."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "29px",
+        "files": ["src/components/landing/countryLanding.css"],
+        "createdAt": "2026-10-11T20:37:33.076Z",
+        "reason": "Agent: preserve the existing landing and retained country comparison type scales in countryLanding.css and docs/design/landing/DESIGN.md; root app scale does not apply."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#515a54",
+        "files": ["src/components/dark-mode-lab/darkModePalettes.ts"],
+        "createdAt": "2026-10-16T12:15:51.972Z",
+        "reason": "Agent: intentional isolated dark palette study requested by the user; no production or light theme values changed."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#8b978e",
+        "files": ["src/components/dark-mode-lab/darkModePalettes.ts"],
+        "createdAt": "2026-10-16T12:15:52.048Z",
+        "reason": "Agent: intentional isolated dark palette study requested by the user; no production or light theme values changed."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#655658",
+        "files": ["src/components/dark-mode-lab/darkModePalettes.ts"],
+        "createdAt": "2026-10-16T12:15:52.132Z",
+        "reason": "Agent: intentional isolated dark palette study requested by the user; no production or light theme values changed."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#a38e91",
+        "files": ["src/components/dark-mode-lab/darkModePalettes.ts"],
+        "createdAt": "2026-10-16T12:15:52.226Z",
+        "reason": "Agent: intentional isolated dark palette study requested by the user; no production or light theme values changed."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#526b7c",
+        "files": ["src/components/dark-mode-lab/darkModePalettes.ts"],
+        "createdAt": "2026-10-16T12:15:52.321Z",
+        "reason": "Agent: intentional isolated dark palette study requested by the user; no production or light theme values changed."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#91a7b7",
+        "files": ["src/components/dark-mode-lab/darkModePalettes.ts"],
+        "createdAt": "2026-10-16T12:15:52.404Z",
+        "reason": "Agent: intentional isolated dark palette study requested by the user; no production or light theme values changed."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "4.5rem",
+        "files": ["src/components/landing-lab/landingLabOverdrive.css"],
+        "createdAt": "2026-10-16T17:01:34.898Z",
+        "reason": "Agent: intentional archived landing study; the responsive display clamp preserves whole words in narrow captures and is outside the working-app type ramp."
       }
     ]
   }

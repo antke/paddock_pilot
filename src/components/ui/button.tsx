@@ -1,11 +1,6 @@
+import { EventIcon, TrainingIcon } from '#/components/icons/domain-icons'
 import { Button as ButtonPrimitive } from '@base-ui/react/button'
-import {
-  CalendarBlankIcon,
-  NotebookIcon,
-  PencilSimpleIcon,
-  PlusIcon,
-  TrashIcon,
-} from '@phosphor-icons/react'
+import { PencilSimpleIcon, PlusIcon, TrashIcon } from '@phosphor-icons/react'
 import { cva } from 'class-variance-authority'
 import type { VariantProps } from 'class-variance-authority'
 import { createLink } from '@tanstack/react-router'
@@ -24,8 +19,8 @@ const buttonActionIcons = {
   create: PlusIcon,
   delete: TrashIcon,
   edit: PencilSimpleIcon,
-  record: NotebookIcon,
-  schedule: CalendarBlankIcon,
+  record: TrainingIcon,
+  schedule: EventIcon,
 } satisfies Record<ButtonAction, typeof PlusIcon>
 
 function ButtonActionIcon({ action }: { action?: ButtonAction }) {

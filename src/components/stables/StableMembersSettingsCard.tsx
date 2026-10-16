@@ -1,3 +1,5 @@
+import { MotionList } from '#/components/motion/MotionList'
+import { MotionNotice } from '#/components/motion/MotionNotice'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useOwnershipCopy } from '#/components/ownership/ownershipCopy'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
@@ -8,10 +10,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Alert, AlertDescription } from '#/components/ui/alert'
 
-import {
-  DashboardItemList,
-  DashboardItemRecordFooter,
-} from '#/components/dashboard/DashboardItemCard'
+import { DashboardItemRecordFooter } from '#/components/dashboard/DashboardItemCard'
 import {
   DashboardSectionCard,
   DashboardSectionDivider,
@@ -160,8 +159,11 @@ export function StableMembersSettingsCardView({
       contentGap="loose"
     >
       <DashboardSubsection title={t('stables.currentMembers')} gap="compact">
-        <DashboardItemList gap="compact">
-          {members.map((member) => {
+        <MotionList
+          items={members}
+          getKey={(member) => member.membership?._id ?? 'owner'}
+          focusTarget={() => membersSection.current}
+          renderItem={(member) => {
             const membership = member.membership
             const editableMembership =
               membership && member.role !== 'owner' ? membership : null
@@ -225,23 +227,30 @@ export function StableMembersSettingsCardView({
                   ) : undefined
                 }
                 footer={
-                  membership && editingMemberId === membership._id ? (
-                    <DashboardItemRecordFooter>
-                      <div ref={editor}>
-                        {renderDetailsForm({
-                          member: membership,
-                          onCancel: () => closeEditor(membership._id),
-                          onSaved: () => closeEditor(membership._id),
-                          onPendingChange: setIsSavingDetails,
-                        })}
-                      </div>
-                    </DashboardItemRecordFooter>
-                  ) : undefined
+                  <MotionNotice
+                    show={Boolean(
+                      membership && editingMemberId === membership._id,
+                    )}
+                    className="sm:col-span-2"
+                  >
+                    {membership && editingMemberId === membership._id && (
+                      <DashboardItemRecordFooter>
+                        <div ref={editor}>
+                          {renderDetailsForm({
+                            member: membership,
+                            onCancel: () => closeEditor(membership._id),
+                            onSaved: () => closeEditor(membership._id),
+                            onPendingChange: setIsSavingDetails,
+                          })}
+                        </div>
+                      </DashboardItemRecordFooter>
+                    )}
+                  </MotionNotice>
                 }
               />
             )
-          })}
-        </DashboardItemList>
+          }}
+        />
       </DashboardSubsection>
 
       <DashboardSectionDivider />

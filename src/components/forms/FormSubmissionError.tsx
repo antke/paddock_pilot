@@ -1,3 +1,4 @@
+import { MotionNotice } from '#/components/motion/MotionNotice'
 import { useEffect, useRef } from 'react'
 import { Alert, AlertDescription } from '#/components/ui/alert'
 
@@ -14,10 +15,11 @@ export function FormSubmissionError({ message }: { message?: string }) {
     })
   }, [message])
 
-  if (!message) return null
   return (
-    <Alert ref={alert} variant="destructive" tabIndex={-1}>
-      <AlertDescription>{message}</AlertDescription>
-    </Alert>
+    <MotionNotice show={Boolean(message)}>
+      <Alert ref={alert} variant="destructive" tabIndex={-1}>
+        <AlertDescription>{message}</AlertDescription>
+      </Alert>
+    </MotionNotice>
   )
 }

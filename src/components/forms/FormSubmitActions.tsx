@@ -15,6 +15,8 @@ type FormSubmitActionsProps = Omit<
   }
 
 type FormSubmitButtonsProps = {
+  confirmed?: boolean
+  confirmedLabel?: string
   isSubmitting: boolean
   submitLabel: string
   submittingLabel: string
@@ -25,6 +27,8 @@ type FormSubmitButtonsProps = {
 
 export function FormSubmitActions({
   isSubmitting,
+  confirmed,
+  confirmedLabel,
   submitLabel,
   submittingLabel,
   onCancel,
@@ -48,6 +52,8 @@ export function FormSubmitActions({
         cancelLabel={cancelLabel}
         disabled={disabled}
         isSubmitting={isSubmitting}
+        confirmed={confirmed}
+        confirmedLabel={confirmedLabel}
         onCancel={onCancel}
         submitLabel={submitLabel}
         submittingLabel={submittingLabel}
@@ -58,6 +64,8 @@ export function FormSubmitActions({
 
 export function FormSubmitButtons({
   isSubmitting,
+  confirmed,
+  confirmedLabel,
   submitLabel,
   submittingLabel,
   onCancel,
@@ -86,6 +94,8 @@ export function FormSubmitButtons({
         aria-busy={isSubmitting || undefined}
       >
         <ActionFeedback
+          confirmed={confirmed}
+          confirmedLabel={confirmedLabel}
           label={submitLabel}
           pendingLabel={submittingLabel}
           pending={isSubmitting}

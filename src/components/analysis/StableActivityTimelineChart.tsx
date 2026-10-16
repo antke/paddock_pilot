@@ -700,6 +700,8 @@ function TimelineOverviewNavigator({
 
     event.preventDefault()
     cancelDrag.current?.()
+    const dragTarget = event.currentTarget
+    dragTarget.dataset.dragging = 'true'
     const railBounds = rail.getBoundingClientRect()
     const initialLeft = windowMetrics.leftRatio
     const initialWidth = windowMetrics.widthRatio
@@ -717,6 +719,7 @@ function TimelineOverviewNavigator({
     }
 
     const handlePointerUp = () => {
+      delete dragTarget.dataset.dragging
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
       window.removeEventListener('pointercancel', handlePointerUp)

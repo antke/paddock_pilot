@@ -8,6 +8,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -58,6 +59,59 @@ afterEach(() => {
   cleanup()
   window.history.replaceState({}, '', '/')
   vi.restoreAllMocks()
+})
+
+describe('LandingLabChrome concept rounds', () => {
+  it('groups exactly five current and five archived options while preserving review controls', () => {
+    render(
+      <LandingLabChrome
+        variantId="field-journal"
+        theme="dark"
+        viewport="390"
+      />,
+    )
+    const current = within(screen.getByRole('group', { name: 'Current round' }))
+    const archive = within(
+      screen.getByRole('group', { name: 'Archived round' }),
+    )
+    expect(
+      current.getAllByRole('link').map((link) => link.textContent),
+    ).toEqual([
+      'Field Journal',
+      'Yard Editorial',
+      'Open Paddock',
+      'Working Journal',
+      'Pine Statement',
+    ])
+    expect(
+      archive.getAllByRole('link').map((link) => link.textContent),
+    ).toEqual([
+      'Gathered Yard',
+      'Stable Aisle',
+      'Paddock Map',
+      'Care Cycle',
+      'Owner / Member Gatefold',
+    ])
+    expect(
+      current
+        .getByRole('link', { name: 'Field Journal' })
+        .getAttribute('aria-current'),
+    ).toBe('page')
+    for (const link of [
+      ...current.getAllByRole('link'),
+      ...archive.getAllByRole('link'),
+    ]) {
+      const url = new URL(link.getAttribute('href') ?? '', window.location.href)
+      expect(url.searchParams.get('mode')).toBe('review')
+      expect(url.searchParams.get('theme')).toBe('dark')
+      expect(url.searchParams.get('viewport')).toBe('390')
+    }
+    expect(
+      screen
+        .getByRole('link', { name: 'Choose this direction' })
+        .getAttribute('href'),
+    ).toBe('/landing-lab?selected=field-journal')
+  })
 })
 
 describe('LandingLabChrome Paddock Map studies', () => {

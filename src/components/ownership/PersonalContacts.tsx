@@ -1,3 +1,5 @@
+import { ActionFeedback } from '#/components/ui/action-feedback'
+import { MotionList } from '#/components/motion/MotionList'
 import { useEffect, useId, useRef, useState } from 'react'
 import type { RefObject } from 'react'
 import { useMutation, useQuery } from 'convex/react'
@@ -53,24 +55,24 @@ export function PersonalContactsView({
       }
     >
       {notice && <p role="status">{notice}</p>}
-      {providers.length ? (
-        <ul className="app-record-list">
-          {providers.map((provider) => (
-            <ContactRow
-              key={provider._id}
-              provider={provider}
-              save={save}
-              remove={async () => {
-                await remove({ id: provider._id })
-                setNotice(r.deleted)
-              }}
-              removalFocusTarget={() => addName.current}
-            />
-          ))}
-        </ul>
-      ) : (
-        <p className="text-muted-foreground">{r.noContacts}</p>
-      )}
+      <MotionList
+        items={providers}
+        getKey={(provider) => provider._id}
+        focusTarget={() => addName.current}
+        empty={<p className="text-muted-foreground">{r.noContacts}</p>}
+        renderItem={(provider) => (
+          <ContactRow
+            key={provider._id}
+            provider={provider}
+            save={save}
+            remove={async () => {
+              await remove({ id: provider._id })
+              setNotice(r.deleted)
+            }}
+            removalFocusTarget={() => addName.current}
+          />
+        )}
+      />
       <section className="grid gap-4" aria-labelledby="new-care-contact">
         <h3 id="new-care-contact" className="text-lg font-semibold">
           {r.newContact}
@@ -102,7 +104,7 @@ function ContactRow({
     wasEditing.current = editing
   }, [editing])
   return (
-    <li className="app-record grid gap-3">
+    <div className="app-record grid gap-3">
       {editing ? (
         <ContactEditor
           provider={provider}
@@ -157,7 +159,7 @@ function ContactRow({
           {notice && <p role="status">{notice}</p>}
         </>
       )}
-    </li>
+    </div>
   )
 }
 function ContactEditor({
@@ -281,7 +283,11 @@ function ContactEditor({
           disabled={pending}
           aria-busy={pending || undefined}
         >
-          {pending ? r.saving : provider ? r.saveChanges : c.saveContact}
+          <ActionFeedback
+            pending={pending}
+            pendingLabel={r.saving}
+            label={provider ? r.saveChanges : c.saveContact}
+          />
         </Button>
         {onCancel && (
           <Button

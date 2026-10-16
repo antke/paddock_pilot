@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 
+import { AppMotionProvider } from '#/components/motion/appMotion'
+
 import Footer from '../Footer'
 import Header from '../Header'
 import { AppShell, AppSkipLink } from './AppShell'
@@ -15,13 +17,23 @@ export function ApplicationRouteShell({
   pathname,
   children,
 }: ApplicationRouteShellProps) {
+  const motionEnabled =
+    !/^\/(?:pricing|style-lab|page-lab|dashboard-lab|landing-lab)(?:\/|$)/.test(
+      pathname,
+    )
   const appShell = (
-    <AppShell>
-      <AppSkipLink />
-      <Header />
-      <PageLayout>{children}</PageLayout>
-      <Footer />
-    </AppShell>
+    <AppMotionProvider enabled={motionEnabled}>
+      <AppShell data-app-motion-scope={motionEnabled || undefined}>
+        <AppSkipLink />
+        <Header />
+        <PageLayout>{children}</PageLayout>
+        <AuthStateSwitch
+          signedIn={null}
+          signedOut={<Footer />}
+          loading={null}
+        />
+      </AppShell>
+    </AppMotionProvider>
   )
 
   return (

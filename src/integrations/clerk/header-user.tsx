@@ -1,3 +1,4 @@
+import { StableIcon, HomeIcon } from '#/components/icons/domain-icons'
 import { useT } from '#/i18n/LocaleProvider'
 import { Show, SignInButton, UserButton } from '@clerk/tanstack-react-start'
 import { useRef, useState } from 'react'
@@ -20,11 +21,9 @@ import {
 import { Button } from '#/components/ui/button'
 import { useNavigate } from '@tanstack/react-router'
 import {
-  BuildingsIcon,
   CaretDownIcon,
   CreditCardIcon,
   GearIcon,
-  HouseIcon,
   ListChecksIcon,
   UserCircleIcon,
   UsersThreeIcon,
@@ -116,7 +115,7 @@ function SignedInUserControls({
           />
           <UserButton.Action
             label={t('navigation.manageStables')}
-            labelIcon={<BuildingsIcon />}
+            labelIcon={<StableIcon />}
             onClick={() => navigate({ to: '/stables' })}
           />
           <UserButton.Action
@@ -226,7 +225,7 @@ export function StableSwitcherView({
           />
         }
       >
-        <BuildingsIcon aria-hidden="true" />
+        <StableIcon aria-hidden="true" />
         <span className="hidden truncate sm:inline">
           {activeStable?.name ?? t('navigation.selectStable')}
         </span>
@@ -251,7 +250,7 @@ export function StableSwitcherView({
         {activeStableId && (
           <>
             <DropdownMenuItem onClick={() => onOpen('overview')}>
-              <HouseIcon aria-hidden="true" />
+              <HomeIcon aria-hidden="true" />
               {t('navigation.overview')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onOpen('members')}>
@@ -271,7 +270,7 @@ export function StableSwitcherView({
           </>
         )}
         <DropdownMenuItem onClick={() => onOpen('stables')}>
-          <BuildingsIcon aria-hidden="true" />
+          <StableIcon aria-hidden="true" />
           {t('navigation.manageStables')}
         </DropdownMenuItem>
       </DropdownMenuContent>

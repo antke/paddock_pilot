@@ -141,6 +141,9 @@ export function HorseCareRemindersView({
     <CareRemindersCard
       title={t('reminders.careReminders')}
       description={t('reminders.horseHelp')}
+      outstandingCount={
+        reminders.filter((item) => item.reminder.status === 'pending').length
+      }
       reminders={filtering.items}
       canAddReminder={canManage}
       fixedHorseId={horse._id}

@@ -1,5 +1,4 @@
 import { useT } from '#/i18n/LocaleProvider'
-import { LanguageSelector } from '#/i18n/LanguageSelector'
 import { useId, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
@@ -35,15 +34,12 @@ export function CountryHeader({ overlay = false }: { overlay?: boolean }) {
           <span>Paddock</span> <span>Pilot</span>
           <span className="country-wordmark-dot">.</span>
         </Link>
-        <div className="country-header-actions">
-          <LanguageSelector compact />
-          <Link className="country-text-link" to="/sign-in/$">
-            {t('navigation.signIn')}
-          </Link>
-          <Link className="country-button country-button-small" to="/sign-up/$">
-            {t('navigation.createAccount')}
-          </Link>
-        </div>
+        <Link
+          className="country-text-link country-account-link"
+          to="/sign-in/$"
+        >
+          {t('navigation.signIn')}
+        </Link>
       </nav>
     </header>
   )

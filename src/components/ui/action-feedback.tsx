@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
-import { CheckIcon } from '@phosphor-icons/react'
+import { motion } from 'motion/react'
+import { ConfirmedCheck } from '#/components/motion/StateFeedback'
+import { useAppMotion } from '#/components/motion/appMotion'
 import { Spinner } from './spinner'
 import { cn } from '#/lib/utils'
 
@@ -19,27 +21,33 @@ export function ActionFeedback({
   confirmed?: boolean
   icon?: ReactNode
 }) {
+  const { duration } = useAppMotion()
   const phase = pending
     ? 'pending'
     : confirmed && confirmedLabel
       ? 'confirmed'
       : 'idle'
-  const content = (active: boolean) =>
+  const content = () =>
     cn(
       'col-start-1 row-start-1 inline-flex min-w-0 items-center justify-center gap-2',
-      !active && 'invisible',
     )
   return (
     <span data-slot="action-feedback" className="inline-grid min-w-0">
-      <span
-        className={content(phase === 'idle')}
+      <motion.span
+        initial={false}
+        animate={{ opacity: phase === 'idle' ? 1 : 0 }}
+        transition={{ duration }}
+        className={content()}
         aria-hidden={phase !== 'idle'}
       >
         {icon}
         {label}
-      </span>
-      <span
-        className={content(phase === 'pending')}
+      </motion.span>
+      <motion.span
+        initial={false}
+        animate={{ opacity: phase === 'pending' ? 1 : 0 }}
+        transition={{ duration }}
+        className={content()}
         aria-hidden={phase !== 'pending'}
       >
         {pending ? (
@@ -48,22 +56,22 @@ export function ActionFeedback({
           <span className="size-4 shrink-0" />
         )}
         {pendingLabel}
-      </span>
+      </motion.span>
       {confirmedLabel && (
-        <span
-          className={content(phase === 'confirmed')}
+        <motion.span
+          initial={false}
+          animate={{ opacity: phase === 'confirmed' ? 1 : 0 }}
+          transition={{ duration }}
+          className={content()}
           aria-hidden={phase !== 'confirmed'}
         >
-          <CheckIcon
-            weight="bold"
-            aria-hidden="true"
-            className={cn(
-              'size-4',
-              phase === 'confirmed' && 'app-success-feedback',
-            )}
-          />
+          {phase === 'confirmed' ? (
+            <ConfirmedCheck />
+          ) : (
+            <span className="size-5 shrink-0" />
+          )}
           {confirmedLabel}
-        </span>
+        </motion.span>
       )}
     </span>
   )

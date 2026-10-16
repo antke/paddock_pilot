@@ -1,3 +1,4 @@
+import { useAppMotion } from '#/components/motion/appMotion'
 import { Checkbox as CheckboxPrimitive } from '@base-ui/react/checkbox'
 
 import { cn } from '#/lib/utils.ts'
@@ -10,6 +11,7 @@ function Checkbox({
   'aria-labelledby': ariaLabelledBy,
   ...props
 }: CheckboxPrimitive.Root.Props) {
+  const { enabled } = useAppMotion()
   const accessibleNameProps = ariaLabel
     ? { 'aria-label': ariaLabel }
     : ariaLabelledBy || id
@@ -28,8 +30,13 @@ function Checkbox({
       {...props}
     >
       <CheckboxPrimitive.Indicator
+        keepMounted={enabled}
+        aria-hidden="true"
         data-slot="checkbox-indicator"
-        className="grid place-content-center text-current transition-none [&>svg]:size-4"
+        className={cn(
+          'grid place-content-center text-current [&>svg]:size-4',
+          enabled && 'app-selection-mark',
+        )}
       >
         <CheckIcon />
       </CheckboxPrimitive.Indicator>

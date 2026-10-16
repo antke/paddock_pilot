@@ -1,3 +1,4 @@
+import { useAppMotion } from '#/components/motion/appMotion'
 import { Tooltip as TooltipPrimitive } from '@base-ui/react/tooltip'
 import { createContext, useContext, useEffect, useId, useState } from 'react'
 
@@ -86,6 +87,7 @@ function TooltipContent({
     TooltipPrimitive.Positioner.Props,
     'align' | 'alignOffset' | 'side' | 'sideOffset'
   >) {
+  const { enabled } = useAppMotion()
   const context = useContext(TooltipDescriptionContext)
   const setContentId = context?.setContentId
   const fallbackId = useId()
@@ -108,6 +110,7 @@ function TooltipContent({
       >
         <TooltipPrimitive.Popup
           data-slot="tooltip-content"
+          data-app-motion={enabled || undefined}
           id={id ?? context?.contentId ?? fallbackId}
           role="tooltip"
           className={cn(

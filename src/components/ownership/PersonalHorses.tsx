@@ -1,5 +1,9 @@
+import { MotionList } from '#/components/motion/MotionList'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { ActionFeedback } from '#/components/ui/action-feedback'
+import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
+import { useT } from '#/i18n/LocaleProvider'
 import { cn } from '#/lib/utils'
 import type { Id } from 'convex/_generated/dataModel'
 import type { FunctionReturnType } from 'convex/server'
@@ -37,16 +41,7 @@ export function PersonalHorses() {
           </div>
         }
       />
-      {horses.length ? (
-        <PersonalHorseList horses={horses} />
-      ) : (
-        <DashboardEmptyState
-          title={c.empty}
-          actions={<ButtonLink to="/horses/create">{c.add}</ButtonLink>}
-        >
-          {c.emptyHelp}
-        </DashboardEmptyState>
-      )}
+      <PersonalHorseList horses={horses} />
     </DashboardPage>
   )
 }
@@ -63,12 +58,21 @@ export function PersonalHorseList({
   const c = useOwnershipCopy()
   const Heading = headingLevel === 2 ? 'h2' : 'h3'
   return (
-    <div
+    <MotionList
+      items={horses}
+      getKey={(horse) => horse._id}
+      empty={
+        <DashboardEmptyState
+          title={c.empty}
+          actions={<ButtonLink to="/horses/create">{c.add}</ButtonLink>}
+        >
+          {c.emptyHelp}
+        </DashboardEmptyState>
+      }
       className={cn(
         compact ? 'grid gap-3 sm:grid-cols-2' : 'divide-y divide-border-subtle',
       )}
-    >
-      {horses.map((horse) => (
+      renderItem={(horse) => (
         <Link
           key={horse._id}
           to="/horses/$horseId"
@@ -120,18 +124,22 @@ export function PersonalHorseList({
             {horse.access.isOwner ? c.owned : c.shared}
           </span>
         </Link>
-      ))}
-    </div>
+      )}
+    />
   )
 }
 
 export function PersonalHorseTrash() {
+  const t = useT()
+  const restoring = useRef(false)
   const c = useOwnershipCopy()
   const horses = useQuery(api.horses.listMyDeleted)
   const restore = useMutation(api.horses.restoreHorse)
   const [pendingId, setPendingId] = useState<Id<'horses'> | null>(null)
   const [error, setError] = useState('')
   async function restoreHorse(id: Id<'horses'>) {
+    if (restoring.current) return
+    restoring.current = true
     setPendingId(id)
     setError('')
     try {
@@ -139,42 +147,51 @@ export function PersonalHorseTrash() {
     } catch {
       setError(c.failed)
     } finally {
+      restoring.current = false
       setPendingId(null)
     }
   }
   return (
     <DashboardPage>
       <DashboardPageHeader title={c.trash} description={c.restoreHelp} />
-      {error && <p role="alert">{error}</p>}
+      <FormSubmissionError message={error} />
       {!horses ? (
         <RoutePending />
-      ) : !horses.length ? (
-        <DashboardEmptyState>{c.emptyTrash}</DashboardEmptyState>
       ) : (
-        horses.map((horse) => (
-          <div
-            key={horse._id}
-            className="flex flex-wrap items-center justify-between gap-3 border-b py-4"
-          >
-            <div>
-              <h2 className="font-display text-xl">
-                {getHorseDisplayName(horse)}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {horse.transitionId
-                  ? c.moving
-                  : `${c.purgeOn}: ${new Date(horse.purgeAt).toLocaleDateString()}`}
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              disabled={Boolean(pendingId || horse.transitionId)}
-              onClick={() => void restoreHorse(horse._id)}
+        <MotionList
+          items={horses}
+          getKey={(horse) => horse._id}
+          empty={<DashboardEmptyState>{c.emptyTrash}</DashboardEmptyState>}
+          renderItem={(horse) => (
+            <div
+              key={horse._id}
+              className="flex flex-wrap items-center justify-between gap-3 border-b py-4"
             >
-              {c.restore}
-            </Button>
-          </div>
-        ))
+              <div>
+                <h2 className="font-display text-xl">
+                  {getHorseDisplayName(horse)}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {horse.transitionId
+                    ? c.moving
+                    : `${c.purgeOn}: ${new Date(horse.purgeAt).toLocaleDateString()}`}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                disabled={Boolean(pendingId || horse.transitionId)}
+                aria-busy={pendingId === horse._id || undefined}
+                onClick={() => void restoreHorse(horse._id)}
+              >
+                <ActionFeedback
+                  pending={pendingId === horse._id}
+                  label={c.restore}
+                  pendingLabel={t('stableSetup.restoring')}
+                />
+              </Button>
+            </div>
+          )}
+        />
       )}
     </DashboardPage>
   )

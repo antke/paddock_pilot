@@ -11,7 +11,7 @@ import { Textarea } from '#/components/ui/textarea'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Id } from 'convex/_generated/dataModel'
 import { useEffect, useId, useRef, useState } from 'react'
-import { Alert, AlertDescription } from '#/components/ui/alert'
+import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
 import { Controller, useForm } from 'react-hook-form'
 import type { Control } from 'react-hook-form'
 import {
@@ -49,6 +49,16 @@ export function DocumentUploadForm({
   )
   const formId = useId()
   const pending = useRef(false)
+  const mounted = useRef(false)
+  const pendingCallback = useRef(onPendingChange)
+  pendingCallback.current = onPendingChange
+  useEffect(() => {
+    mounted.current = true
+    return () => {
+      mounted.current = false
+      pendingCallback.current?.(false)
+    }
+  }, [])
   const [isPending, setIsPending] = useState(false)
   const [failed, setFailed] = useState(false)
   const form = useForm<StableDocumentFormSchema>({
@@ -85,6 +95,7 @@ export function DocumentUploadForm({
         ...values,
         horseId: (fixedHorseId ?? values.horseId) || undefined,
       })
+      if (!mounted.current) return
       form.reset({
         horseId: fixedHorseId ?? '',
         type: values.type,
@@ -93,21 +104,21 @@ export function DocumentUploadForm({
         notes: '',
       })
     } catch {
-      setFailed(true)
+      if (mounted.current) setFailed(true)
     } finally {
       pending.current = false
-      setIsPending(false)
-      onPendingChange?.(false)
+      if (mounted.current) {
+        setIsPending(false)
+        pendingCallback.current?.(false)
+      }
     }
   }
 
   return (
     <InlineForm noValidate onSubmit={form.handleSubmit(submit)}>
-      {failed && (
-        <Alert variant="destructive">
-          <AlertDescription>{t('documents.saveFailed')}</AlertDescription>
-        </Alert>
-      )}
+      <FormSubmissionError
+        message={failed ? t('documents.saveFailed') : undefined}
+      />
       <DocumentFileField
         formId={formId}
         control={form.control}

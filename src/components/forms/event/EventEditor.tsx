@@ -166,6 +166,12 @@ export function EventEditor({
       actions={
         save.acknowledged ? (
           <FormSubmitButtons
+            confirmed={save.completed}
+            confirmedLabel={
+              isTraining
+                ? t('eventEditor.trainingSaved')
+                : t('eventEditor.eventSaved')
+            }
             isSubmitting={pending}
             disabled={save.completed}
             submitLabel={

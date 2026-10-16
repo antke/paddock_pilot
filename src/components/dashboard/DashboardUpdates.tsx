@@ -1,3 +1,5 @@
+import { MotionList } from '#/components/motion/MotionList'
+import { MotionNotice } from '#/components/motion/MotionNotice'
 import { useId, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
@@ -6,7 +8,6 @@ import { DashboardSectionCard } from './DashboardSectionCard'
 import { DashboardEmptyState } from './DashboardEmptyState'
 import {
   DashboardItemBodyText,
-  DashboardItemList,
   DashboardItemRecordCard,
 } from './DashboardItemCard'
 import { DashboardMetaList } from './DashboardMetaList'
@@ -95,24 +96,32 @@ export function DashboardUpdates({
       }
       footer={more}
     >
-      {editing && (
-        <UpdateForm
-          key={editing === 'new' ? 'new' : editing.id}
-          initial={editing === 'new' ? undefined : editing}
-          onCancel={finish}
-          onSave={async (values) => {
-            await onSave(editing === 'new' ? undefined : editing.id, values)
-            finish()
-          }}
-        />
-      )}
+      <MotionNotice show={Boolean(editing)}>
+        {editing && (
+          <UpdateForm
+            key={editing === 'new' ? 'new' : editing.id}
+            initial={editing === 'new' ? undefined : editing}
+            onCancel={finish}
+            onSave={async (values) => {
+              await onSave(editing === 'new' ? undefined : editing.id, values)
+              finish()
+            }}
+          />
+        )}
+      </MotionNotice>
       {loading ? (
         <p role="status">{t('stableUpdates.loading')}</p>
-      ) : updates.length === 0 ? (
-        <DashboardEmptyState>{t('stableUpdates.empty')}</DashboardEmptyState>
       ) : (
-        <DashboardItemList gap="compact">
-          {updates.map((update) => (
+        <MotionList
+          items={updates}
+          getKey={(update) => update.id}
+          focusTarget={() => section.current}
+          empty={
+            <DashboardEmptyState>
+              {t('stableUpdates.empty')}
+            </DashboardEmptyState>
+          }
+          renderItem={(update) => (
             <DashboardItemRecordCard
               key={update.id}
               chrome="flat"
@@ -172,8 +181,8 @@ export function DashboardUpdates({
                 </DashboardMetaList>
               </div>
             </DashboardItemRecordCard>
-          ))}
-        </DashboardItemList>
+          )}
+        />
       )}
       <AlertDialog
         open={Boolean(removing)}

@@ -1,3 +1,4 @@
+import { MotionDisclosure } from '#/components/motion/MotionDisclosure'
 import { useT } from '#/i18n/LocaleProvider'
 import { CaretDownIcon } from '@phosphor-icons/react'
 import { useEffect, useId, useRef, useState } from 'react'
@@ -296,11 +297,11 @@ export function FormSection({
       </Header>
 
       {/* Normal block flow avoids WebKit intrinsic sizing bugs in nested grid disclosures. */}
-      <div id={contentId} hidden={!open} inert={!open}>
+      <MotionDisclosure id={contentId} open={open}>
         <div className="grid min-w-0 grid-cols-1 gap-5 border-t border-border-subtle bg-card px-4 py-5 sm:px-5 sm:py-6">
           {children}
         </div>
-      </div>
+      </MotionDisclosure>
     </section>
   )
 }

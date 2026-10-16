@@ -1,3 +1,4 @@
+import { StateFeedback } from '#/components/motion/StateFeedback'
 import type { ComponentProps, ElementType, ReactNode } from 'react'
 
 import { cn } from '#/lib/utils'
@@ -123,7 +124,11 @@ export function DashboardMetric({
       <p
         className={cn('text-3xl font-semibold tracking-normal', valueClassName)}
       >
-        {value}
+        {typeof value === 'number' || typeof value === 'string' ? (
+          <StateFeedback value={value}>{value}</StateFeedback>
+        ) : (
+          value
+        )}
       </p>
       {children && (
         <p

@@ -5,6 +5,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { ApplicationRouteShell } from './ApplicationRouteShell'
+import { MotionList } from '#/components/motion/MotionList'
 
 const auth = vi.hoisted<{
   state: 'signed-in' | 'signed-out' | 'loading'
@@ -91,9 +92,7 @@ describe('ApplicationRouteShell', () => {
         'Application navigation',
       )
       expect(screen.getByRole('main').textContent).toBe('Home route content')
-      expect(screen.getByRole('contentinfo').textContent).toBe(
-        'Application footer',
-      )
+      expect(screen.queryByRole('contentinfo')).toBeNull()
     },
   )
 
@@ -113,9 +112,13 @@ describe('ApplicationRouteShell', () => {
           'Application navigation',
         )
         expect(screen.getByRole('main').textContent).toBe('Route content')
-        expect(screen.getByRole('contentinfo').textContent).toBe(
-          'Application footer',
-        )
+        if (state === 'signed-out') {
+          expect(screen.getByRole('contentinfo').textContent).toBe(
+            'Application footer',
+          )
+        } else {
+          expect(screen.queryByRole('contentinfo')).toBeNull()
+        }
         unmount()
       }
     },
@@ -131,5 +134,38 @@ describe('ApplicationRouteShell', () => {
 
     expect(container.querySelector('[data-slot="app-shell"]')).toBeTruthy()
     expect(screen.getByRole('main').textContent).toBe('Fixture content')
+    expect(screen.queryByRole('contentinfo')).toBeNull()
   })
+})
+
+it('retains animated exits only in the working app, keeping pricing and historical labs static', () => {
+  auth.state = 'signed-in'
+  const ui = (pathname: string, items: string[]) => (
+    <ApplicationRouteShell pathname={pathname}>
+      <MotionList
+        items={items}
+        getKey={(item) => item}
+        renderItem={(item) => <button>{item}</button>}
+      />
+    </ApplicationRouteShell>
+  )
+  const { container, rerender } = render(ui('/pricing', ['Juniper']))
+  for (const pathname of [
+    '/pricing',
+    '/style-lab',
+    '/page-lab/forms',
+    '/dashboard-lab/sample',
+  ]) {
+    rerender(ui(pathname, ['Juniper']))
+    rerender(ui(pathname, []))
+    expect(
+      screen.queryByRole('button', { name: 'Juniper', hidden: true }),
+    ).toBeNull()
+    expect(container.querySelector('[data-exiting]')).toBeNull()
+  }
+  rerender(ui('/horses', ['Juniper']))
+  rerender(ui('/horses', []))
+  expect(container.querySelector('[data-exiting]')?.hasAttribute('inert')).toBe(
+    true,
+  )
 })

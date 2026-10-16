@@ -1,6 +1,7 @@
+import { StableIcon } from '#/components/icons/domain-icons'
 import { useT } from '#/i18n/LocaleProvider'
 import { Badge } from '#/components/ui/badge'
-import { BuildingsIcon } from '@phosphor-icons/react'
+
 import type { Doc } from 'convex/_generated/dataModel'
 import type { ComponentProps } from 'react'
 
@@ -100,7 +101,7 @@ export function StableInvitationContextBadge(
   const t = useT()
   return (
     <Badge variant="secondary" {...props}>
-      <BuildingsIcon aria-hidden="true" />
+      <StableIcon aria-hidden="true" />
       {t('invitationFlow.context')}
     </Badge>
   )
