@@ -11,9 +11,17 @@ import {
   CaretRightIcon,
   FunnelSimpleIcon,
   XIcon,
+  CheckIcon,
 } from '@phosphor-icons/react'
 import { Button, ButtonLink } from '#/components/ui/button'
-import { Input } from '#/components/ui/input'
+import {
+  Combobox,
+  ComboboxInput,
+  ComboboxContent,
+  ComboboxList,
+  ComboboxItem,
+  ComboboxEmpty,
+} from '#/components/ui/combobox'
 import { Select } from '#/components/ui/select'
 import { Field, FieldLabel } from '#/components/ui/field'
 import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
@@ -83,6 +91,16 @@ export function TrainingCalendar({
     initialDate ?? today,
     (v) => (typeof v === 'string' && isDateKey(v) ? v : undefined),
   )
+  // Browsing a month does not select its first day.
+  const [selectedDate, setSelectedDate] = useSessionState(
+    key('selectedDate'),
+    initialDate ?? today,
+    (v) => (typeof v === 'string' && isDateKey(v) ? v : undefined),
+  )
+  const selectDate = (date: string) => {
+    setSelectedDate(date)
+    setAnchor(date)
+  }
   const [selected, setSelected] = useSessionState(
     key(`horses:${initialHorseIds.join(',')}`),
     initialHorseIds,
@@ -94,6 +112,11 @@ export function TrainingCalendar({
         : undefined,
   )
   const [horseQuery, setHorseQuery] = useState('')
+  const [horsePickerOpen, setHorsePickerOpen] = useState(false)
+  const horseLabel = (horseId: string) => {
+    const horse = horses.find((item) => item._id === horseId)
+    return horse ? getHorseDisplayName(horse) : horseId
+  }
   const [activity, setActivity] = useSessionState(
     key('activity'),
     'all',
@@ -231,15 +254,16 @@ export function TrainingCalendar({
       onClick={() => setFiltersOpen((open) => !open)}
     >
       <FunnelSimpleIcon aria-hidden="true" />
-      {t('listControls.filters')}
-      {activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+      <span className="whitespace-nowrap">
+        {t('listControls.filtersWithCount', { count: activeFilterCount })}
+      </span>
     </Button>
   )
 
   return (
     <DashboardSectionCard
       title={small ? undefined : label}
-      contentGap="comfortable"
+      contentGap="default"
     >
       {small ? (
         <div className="grid gap-3">
@@ -283,7 +307,7 @@ export function TrainingCalendar({
               variant="ghost"
               size="control"
               className="min-h-11 px-2"
-              onClick={() => setAnchor(today)}
+              onClick={() => selectDate(today)}
             >
               {t('trainingViews.today')}
             </Button>
@@ -316,7 +340,7 @@ export function TrainingCalendar({
             <Button
               variant="outline"
               size="control"
-              onClick={() => setAnchor(today)}
+              onClick={() => selectDate(today)}
             >
               {t('trainingViews.today')}
             </Button>
@@ -424,267 +448,335 @@ export function TrainingCalendar({
           )}
         </div>
       )}
-      <MotionDisclosure
-        id={`${id}-filters`}
-        open={filtersOpen}
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') {
-            event.preventDefault()
-            setFiltersOpen(false)
-            filterToggle.current?.focus()
-          }
-        }}
-      >
-        <div className="grid gap-4 rounded-row bg-surface p-4">
-          <div
-            className={`grid gap-3 ${fixedHorseId ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}
-          >
-            {!fixedHorseId && (
-              <Field>
-                <FieldLabel htmlFor={`${id}-horses`}>
-                  {t('trainingViews.findHorses')}
-                </FieldLabel>
-                <Input
-                  id={`${id}-horses`}
-                  value={horseQuery}
-                  onChange={(e) => setHorseQuery(e.target.value)}
-                  placeholder={t('trainingViews.searchHorses')}
-                />
-              </Field>
-            )}
-            <Field>
-              <FieldLabel htmlFor={`${id}-activity`}>
-                {t('trainingViews.workType')}
-              </FieldLabel>
-              <Select
-                id={`${id}-activity`}
-                value={activity}
-                onChange={(e) => setActivity(e.target.value)}
+      <div className="min-w-0">
+        <MotionDisclosure
+          id={`${id}-filters`}
+          open={filtersOpen}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              event.preventDefault()
+              setFiltersOpen(false)
+              filterToggle.current?.focus()
+            }
+          }}
+        >
+          <div className="pb-4">
+            <div className="grid gap-4 rounded-row bg-surface p-4">
+              <div
+                className={`grid gap-3 ${fixedHorseId ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}
               >
-                <option value="all">{t('trainingViews.allActivities')}</option>
-                {trainingActivities.map((item) => (
-                  <option key={item} value={item}>
-                    {t(`training.activities.${item}`)}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field>
-              <FieldLabel htmlFor={`${id}-status`}>
-                {t('trainingViews.status')}
-              </FieldLabel>
-              <Select
-                id={`${id}-status`}
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-              >
-                <option value="all">{t('trainingViews.allStatuses')}</option>
-                {(
-                  Object.keys(trainingStatusLabels) as Array<
-                    keyof typeof trainingStatusLabels
+                {!fixedHorseId && (
+                  <Field
+                    onKeyDown={(event) => {
+                      if (event.key === 'Escape' && horsePickerOpen) {
+                        event.stopPropagation()
+                      }
+                    }}
                   >
-                ).map((value) => (
-                  <option key={value} value={value}>
-                    {t(`training.status.${value}`)}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          </div>
-          {!fixedHorseId && (
-            <div
-              role="group"
-              aria-label={t('trainingViews.filterHorses')}
-              className="flex flex-wrap gap-2"
-            >
-              <Button
-                size="control"
-                variant={selected.length === 0 ? 'secondary' : 'outline'}
-                aria-pressed={selected.length === 0}
-                onClick={() => setSelected([])}
-              >
-                {t('trainingViews.allHorses')}
-              </Button>
-              {horses.some((h) => h.canRecord) && (
+                    <FieldLabel htmlFor={`${id}-horses`}>
+                      {t('trainingViews.findHorses')}
+                    </FieldLabel>
+                    <Combobox
+                      multiple
+                      openOnInputClick
+                      open={horsePickerOpen}
+                      onOpenChange={setHorsePickerOpen}
+                      items={horses.map((horse) => horse._id as string)}
+                      value={selected}
+                      onValueChange={(horseIds) => {
+                        setSelected(horseIds)
+                        setHorseQuery('')
+                      }}
+                      inputValue={horseQuery}
+                      onInputValueChange={setHorseQuery}
+                      itemToStringLabel={horseLabel}
+                      filter={(horseId, query) =>
+                        horseLabel(horseId)
+                          .toLocaleLowerCase(locale)
+                          .includes(query.trim().toLocaleLowerCase(locale))
+                      }
+                    >
+                      <ComboboxInput
+                        id={`${id}-horses`}
+                        aria-label={t('trainingViews.findHorses')}
+                        placeholder={t('trainingViews.searchHorses')}
+                      />
+                      <ComboboxContent>
+                        <ComboboxEmpty>
+                          {t('trainingViews.noMatchingHorses')}
+                        </ComboboxEmpty>
+                        <ComboboxList>
+                          {(horseId: string) => (
+                            <ComboboxItem
+                              key={horseId}
+                              value={horseId}
+                              className="flex items-center justify-between gap-2"
+                            >
+                              <span className="min-w-0 wrap-anywhere">
+                                {horseLabel(horseId)}
+                              </span>
+                              {selected.includes(horseId) && (
+                                <CheckIcon
+                                  aria-hidden="true"
+                                  className="size-4 shrink-0"
+                                />
+                              )}
+                            </ComboboxItem>
+                          )}
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+                    <div
+                      id={`${id}-horse-options`}
+                      role="group"
+                      aria-label={t('trainingViews.filterHorses')}
+                      className="flex flex-wrap gap-2"
+                    >
+                      <Button
+                        size="control"
+                        variant={
+                          selected.length === 0 ? 'secondary' : 'outline'
+                        }
+                        aria-pressed={selected.length === 0}
+                        onClick={() => setSelected([])}
+                      >
+                        {t('trainingViews.allHorses')}
+                      </Button>
+                      {horses.some((h) => h.canRecord) && (
+                        <Button
+                          size="control"
+                          variant="outline"
+                          onClick={() =>
+                            setSelected(
+                              horses
+                                .filter((h) => h.canRecord)
+                                .map((h) => h._id),
+                            )
+                          }
+                        >
+                          {t('trainingViews.myHorses')}
+                        </Button>
+                      )}
+                      {horses
+                        .filter((horse) => selected.includes(horse._id))
+                        .map((horse) => (
+                          <Button
+                            key={horse._id}
+                            size="control"
+                            variant={
+                              selected.includes(horse._id)
+                                ? 'secondary'
+                                : 'outline'
+                            }
+                            aria-pressed={selected.includes(horse._id)}
+                            onClick={() =>
+                              setSelected((current) =>
+                                current.includes(horse._id)
+                                  ? current.filter((item) => item !== horse._id)
+                                  : [...current, horse._id],
+                              )
+                            }
+                          >
+                            {getHorseDisplayName(horse)}
+                            {selected.includes(horse._id) && (
+                              <XIcon aria-hidden="true" />
+                            )}
+                          </Button>
+                        ))}
+                    </div>
+                  </Field>
+                )}
+                <Field>
+                  <FieldLabel htmlFor={`${id}-activity`}>
+                    {t('trainingViews.workType')}
+                  </FieldLabel>
+                  <Select
+                    id={`${id}-activity`}
+                    value={activity}
+                    onChange={(e) => setActivity(e.target.value)}
+                  >
+                    <option value="all">
+                      {t('trainingViews.allActivities')}
+                    </option>
+                    {trainingActivities.map((item) => (
+                      <option key={item} value={item}>
+                        {t(`training.activities.${item}`)}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor={`${id}-status`}>
+                    {t('trainingViews.status')}
+                  </FieldLabel>
+                  <Select
+                    id={`${id}-status`}
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                  >
+                    <option value="all">
+                      {t('trainingViews.allStatuses')}
+                    </option>
+                    {(
+                      Object.keys(trainingStatusLabels) as Array<
+                        keyof typeof trainingStatusLabels
+                      >
+                    ).map((value) => (
+                      <option key={value} value={value}>
+                        {t(`training.status.${value}`)}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              </div>
+              {small && (
                 <Button
-                  size="control"
-                  variant="outline"
-                  onClick={() =>
-                    setSelected(
-                      horses.filter((h) => h.canRecord).map((h) => h._id),
-                    )
-                  }
+                  variant="secondary"
+                  className="min-h-11 w-full"
+                  onClick={() => {
+                    returnToResults.current = true
+                    setFiltersOpen(false)
+                  }}
                 >
-                  {t('trainingViews.myHorses')}
+                  {t('trainingViews.showResults')}
                 </Button>
               )}
-              {horses
-                .filter(
-                  (horse) =>
-                    getHorseDisplayName(horse)
-                      .toLocaleLowerCase()
-                      .includes(horseQuery.toLocaleLowerCase()) ||
-                    selected.includes(horse._id),
-                )
-                .map((horse) => (
-                  <Button
-                    key={horse._id}
-                    size="control"
-                    variant={
-                      selected.includes(horse._id) ? 'secondary' : 'outline'
+            </div>
+          </div>
+        </MotionDisclosure>
+        <div
+          ref={resultsRef}
+          role={small ? 'region' : undefined}
+          aria-label={small ? t('trainingViews.agenda') : undefined}
+          tabIndex={small ? -1 : undefined}
+          className="grid min-w-0 scroll-mt-4 gap-5"
+        >
+          {horses.length === 0 ? (
+            <DashboardEmptyState title={t('trainingViews.addHorse')} />
+          ) : (
+            <div ref={periodMotion} className="grid min-w-0 gap-5">
+              {entries.length === 0 && (!small || view === 'week') && (
+                <DashboardEmptyState
+                  chrome="flat"
+                  title={t('trainingViews.noMatches')}
+                >
+                  {t('trainingViews.noMatchesHelp')}
+                </DashboardEmptyState>
+              )}
+              {small &&
+                (view === 'month' ? (
+                  <TrainingMonthCalendar
+                    days={period.days}
+                    entries={entries}
+                    selectedDate={
+                      period.days.includes(selectedDate)
+                        ? selectedDate
+                        : undefined
                     }
-                    aria-pressed={selected.includes(horse._id)}
-                    onClick={() =>
-                      setSelected((current) =>
-                        current.includes(horse._id)
-                          ? current.filter((item) => item !== horse._id)
-                          : [...current, horse._id],
-                      )
-                    }
+                    today={today}
+                    onSelectDate={selectDate}
+                  />
+                ) : (
+                  <div className="grid gap-5">
+                    {period.days
+                      .filter((day) => dayEntries(day).length > 0)
+                      .map((day) => (
+                        <section key={day} className="grid gap-2">
+                          <h3 className="font-semibold">
+                            {formatShortDateKey(day, locale)}
+                          </h3>
+                          {dayEntries(day).map((entry) => (
+                            <TrainingEntryLink
+                              key={entry.key}
+                              entry={entry}
+                              stableId={stableId}
+                            />
+                          ))}
+                        </section>
+                      ))}
+                  </div>
+                ))}
+              {!small &&
+                (view === 'week' ? (
+                  <div
+                    className="app-panel-strong hidden overflow-hidden md:block"
+                    tabIndex={0}
+                    role="region"
+                    aria-label={t('trainingViews.weekly')}
                   >
-                    {getHorseDisplayName(horse)}
-                    {selected.includes(horse._id) && (
-                      <XIcon aria-hidden="true" />
-                    )}
-                  </Button>
+                    <Table className="w-full min-w-[76rem] table-fixed border-collapse text-sm">
+                      <caption className="sr-only">
+                        {t('trainingViews.weeklyCaption', { period: label })}
+                      </caption>
+                      <thead>
+                        <tr className="border-b border-border-subtle bg-surface-muted">
+                          <th scope="col" className="w-32 p-3 text-left">
+                            {t('trainingViews.horse')}
+                          </th>
+                          {period.days.map((day) => (
+                            <th
+                              scope="col"
+                              key={day}
+                              className="p-3 text-left"
+                              aria-current={day === today ? 'date' : undefined}
+                            >
+                              {formatShortWeekdayDate(
+                                dateKeyToDate(day),
+                                locale,
+                              )}{' '}
+                              {formatShortDateKey(day, locale)}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedHorses.map((horse) => (
+                          <tr
+                            key={horse._id}
+                            className="border-b border-border-subtle last:border-b-0"
+                          >
+                            <th scope="row" className="p-3 text-left align-top">
+                              {getHorseDisplayName(horse)}
+                            </th>
+                            {period.days.map((day) => (
+                              <td
+                                key={day}
+                                className="border-l border-border-subtle p-2 align-top"
+                              >
+                                <div className="grid gap-2">
+                                  {dayEntries(day, horse._id).map((entry) => (
+                                    <TrainingEntryLink
+                                      key={entry.key}
+                                      entry={entry}
+                                      stableId={stableId}
+                                      showHorseName={false}
+                                      variant="week"
+                                    />
+                                  ))}
+                                </div>
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </div>
+                ) : (
+                  <TrainingMonthCalendar
+                    days={period.days}
+                    entries={entries}
+                    selectedDate={
+                      period.days.includes(selectedDate)
+                        ? selectedDate
+                        : undefined
+                    }
+                    today={today}
+                    onSelectDate={selectDate}
+                  />
                 ))}
             </div>
           )}
-          {small && (
-            <Button
-              variant="secondary"
-              className="min-h-11 w-full"
-              onClick={() => {
-                returnToResults.current = true
-                setFiltersOpen(false)
-              }}
-            >
-              {t('trainingViews.showResults')}
-            </Button>
-          )}
         </div>
-      </MotionDisclosure>
-      <div
-        ref={resultsRef}
-        role={small ? 'region' : undefined}
-        aria-label={small ? t('trainingViews.agenda') : undefined}
-        tabIndex={small ? -1 : undefined}
-        className="grid min-w-0 scroll-mt-4 gap-5"
-      >
-        {horses.length === 0 ? (
-          <DashboardEmptyState title={t('trainingViews.addHorse')} />
-        ) : (
-          <div ref={periodMotion} className="grid min-w-0 gap-5">
-            {entries.length === 0 && (!small || view === 'week') && (
-              <DashboardEmptyState
-                chrome="flat"
-                title={t('trainingViews.noMatches')}
-              >
-                {t('trainingViews.noMatchesHelp')}
-              </DashboardEmptyState>
-            )}
-            {small &&
-              (view === 'month' ? (
-                <TrainingMonthCalendar
-                  days={period.days}
-                  entries={entries}
-                  selectedDate={anchor}
-                  today={today}
-                  onSelectDate={setAnchor}
-                />
-              ) : (
-                <div className="grid gap-5">
-                  {period.days
-                    .filter((day) => dayEntries(day).length > 0)
-                    .map((day) => (
-                      <section key={day} className="grid gap-2">
-                        <h3 className="font-semibold">
-                          {formatShortDateKey(day, locale)}
-                        </h3>
-                        {dayEntries(day).map((entry) => (
-                          <TrainingEntryLink
-                            key={entry.key}
-                            entry={entry}
-                            stableId={stableId}
-                          />
-                        ))}
-                      </section>
-                    ))}
-                </div>
-              ))}
-            {!small &&
-              (view === 'week' ? (
-                <div
-                  className="app-panel-strong hidden overflow-hidden md:block"
-                  tabIndex={0}
-                  role="region"
-                  aria-label={t('trainingViews.weekly')}
-                >
-                  <Table className="w-full min-w-[76rem] table-fixed border-collapse text-sm">
-                    <caption className="sr-only">
-                      {t('trainingViews.weeklyCaption', { period: label })}
-                    </caption>
-                    <thead>
-                      <tr className="border-b border-border-subtle bg-surface-muted">
-                        <th scope="col" className="w-32 p-3 text-left">
-                          {t('trainingViews.horse')}
-                        </th>
-                        {period.days.map((day) => (
-                          <th
-                            scope="col"
-                            key={day}
-                            className="p-3 text-left"
-                            aria-current={day === today ? 'date' : undefined}
-                          >
-                            {formatShortWeekdayDate(dateKeyToDate(day), locale)}{' '}
-                            {formatShortDateKey(day, locale)}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedHorses.map((horse) => (
-                        <tr
-                          key={horse._id}
-                          className="border-b border-border-subtle last:border-b-0"
-                        >
-                          <th scope="row" className="p-3 text-left align-top">
-                            {getHorseDisplayName(horse)}
-                          </th>
-                          {period.days.map((day) => (
-                            <td
-                              key={day}
-                              className="border-l border-border-subtle p-2 align-top"
-                            >
-                              <div className="grid gap-2">
-                                {dayEntries(day, horse._id).map((entry) => (
-                                  <TrainingEntryLink
-                                    key={entry.key}
-                                    entry={entry}
-                                    stableId={stableId}
-                                    showHorseName={false}
-                                    variant="week"
-                                  />
-                                ))}
-                              </div>
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </div>
-              ) : (
-                <TrainingMonthCalendar
-                  days={period.days}
-                  entries={entries}
-                  selectedDate={anchor}
-                  today={today}
-                  onSelectDate={setAnchor}
-                />
-              ))}
-          </div>
-        )}
       </div>
     </DashboardSectionCard>
   )

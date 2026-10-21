@@ -23,6 +23,7 @@ import {
 import {
   dateKeyToDate,
   formatLongDateKey,
+  formatMonthYearDate,
   formatShortWeekdayDate,
 } from '#/lib/dateDisplay'
 import type { TrainingEntry } from './trainingCalendarData'
@@ -31,7 +32,7 @@ import { TrainingEntryLink } from './TrainingEntryLink'
 type Props = {
   days: Array<string>
   entries: Array<TrainingEntry>
-  selectedDate: string
+  selectedDate?: string
   today: string
   onSelectDate: (date: string) => void
 }
@@ -60,7 +61,9 @@ export function TrainingMonthCalendar({
       ),
     ]),
   )
-  const selectedEntries = entriesByDate.get(selectedDate) ?? []
+  const selectedEntries = selectedDate
+    ? (entriesByDate.get(selectedDate) ?? [])
+    : []
   const density = useCalendarDensity(cells.length / 7, days[0]?.slice(0, 7))
   const dayLabel = (date: string, count: number) =>
     t('trainingViews.selectDay', {
@@ -69,8 +72,7 @@ export function TrainingMonthCalendar({
     })
 
   return (
-    <div className="calendar-container grid gap-4">
-      <HorseColourLegend horses={entries.map((entry) => entry.horse)} />
+    <div className="calendar-container grid gap-3">
       <CalendarShell
         ref={density.ref}
         style={density.style}
@@ -116,10 +118,11 @@ export function TrainingMonthCalendar({
                     key={date}
                     role="cell"
                     isToday={date === today}
+                    isSelected={date === selectedDate}
                     className="h-14 p-0"
                   >
                     <Button
-                      variant={date === selectedDate ? 'secondary' : 'ghost'}
+                      variant="ghost"
                       className="calendar-date-button h-full min-w-0 w-full flex-col gap-1 rounded-none border-0 px-0 py-1 text-sm [@media(pointer:coarse)]:min-w-0"
                       aria-label={`${dayLabel(date, count)}${dayHorses.length ? `, ${t('calendar.horseNames', { names: dayHorses.map(getHorseDisplayName).join(', ') })}` : ''}`}
                       aria-pressed={date === selectedDate}
@@ -163,29 +166,38 @@ export function TrainingMonthCalendar({
           ))}
         </CalendarGrid>
       </CalendarShell>
-      <section
-        id={agendaId}
-        className="grid scroll-mt-4 gap-2"
-        aria-label={t('calendar.daySessions', {
-          date: formatLongDateKey(selectedDate, locale),
-        })}
-      >
-        <h3 className="font-semibold">
-          {formatLongDateKey(selectedDate, locale)}
-        </h3>
-        <p className="sr-only" aria-live="polite" aria-atomic="true">
-          {dayLabel(selectedDate, selectedEntries.length)}
+      <HorseColourLegend horses={entries.map((entry) => entry.horse)} />
+      {selectedDate ? (
+        <section
+          id={agendaId}
+          className="grid scroll-mt-4 gap-2"
+          aria-label={t('calendar.daySessions', {
+            date: formatLongDateKey(selectedDate, locale),
+          })}
+        >
+          <h3 className="font-semibold">
+            {formatLongDateKey(selectedDate, locale)}
+          </h3>
+          <p className="sr-only" aria-live="polite" aria-atomic="true">
+            {dayLabel(selectedDate, selectedEntries.length)}
+          </p>
+          {selectedEntries.length ? (
+            selectedEntries.map((entry) => (
+              <TrainingEntryLink key={entry.key} entry={entry} />
+            ))
+          ) : (
+            <DashboardEmptyState chrome="flat" spacing="flush">
+              {t('trainingViews.dayEmpty')}
+            </DashboardEmptyState>
+          )}
+        </section>
+      ) : (
+        <p id={agendaId} className="text-sm text-muted-foreground">
+          {t('calendar.chooseDay', {
+            month: formatMonthYearDate(dateKeyToDate(days[0]), locale),
+          })}
         </p>
-        {selectedEntries.length ? (
-          selectedEntries.map((entry) => (
-            <TrainingEntryLink key={entry.key} entry={entry} />
-          ))
-        ) : (
-          <DashboardEmptyState chrome="flat" spacing="flush">
-            {t('trainingViews.dayEmpty')}
-          </DashboardEmptyState>
-        )}
-      </section>
+      )}
     </div>
   )
 }

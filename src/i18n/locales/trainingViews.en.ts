@@ -52,6 +52,7 @@ export const trainingViews = {
   today: 'Today',
   addSession: 'Add training session',
   findHorses: 'Find horses',
+  noMatchingHorses: 'No horses match your search.',
   searchHorses: 'Search horses to select',
   workType: 'Type of work',
   allActivities: 'All activities',

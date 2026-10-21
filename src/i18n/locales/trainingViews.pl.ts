@@ -54,6 +54,7 @@ export const trainingViews = {
   today: 'Dzisiaj',
   addSession: 'Dodaj trening',
   findHorses: 'Znajdź konie',
+  noMatchingHorses: 'Brak koni pasujących do wyszukiwania.',
   searchHorses: 'Wyszukaj konie do wybrania',
   workType: 'Rodzaj pracy',
   allActivities: 'Wszystkie rodzaje pracy',

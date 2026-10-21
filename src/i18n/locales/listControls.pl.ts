@@ -1,6 +1,7 @@
 export const listControls = {
   search: 'Szukaj',
   filters: 'Filtry',
+  filtersWithCount: 'Filtry ({{count}})',
   toggle: 'Pokaż lub ukryj filtry',
   activeToggle: 'Pokaż lub ukryj filtry, aktywne: {{count}}',
   clear: 'Wyczyść wszystko',

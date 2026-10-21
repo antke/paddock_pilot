@@ -41,8 +41,9 @@ export function calendarDayCellClassName({
   return cn(
     'h-[var(--calendar-row-height,120px)] min-w-0 border-r border-b border-border-subtle last:border-r-0 pointer-coarse:min-h-40',
     muted ? 'bg-surface-muted' : 'bg-surface-elevated p-1.5',
-    isToday && 'bg-surface-muted',
-    isSelected && 'bg-selection-surface ring-2 ring-inset ring-selection',
+    isToday && 'bg-calendar-today',
+    isSelected && !isToday && 'bg-selection-surface',
+    isSelected && 'ring-1 ring-inset ring-selection/35',
     className,
   )
 }
@@ -61,11 +62,7 @@ export function calendarDayNumberClassName({
   isToday?: boolean
   className?: string
 } = {}) {
-  return cn(
-    'font-medium',
-    isToday && 'font-bold underline decoration-border underline-offset-4',
-    className,
-  )
+  return cn('font-medium', isToday && 'font-bold text-primary', className)
 }
 
 export function calendarDayHeaderClassName(className?: string) {

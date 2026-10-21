@@ -201,7 +201,7 @@ export function MobileNavigationView({
   const base = `/stables/${stableId}`
   const itemClass = (active: boolean) =>
     cn(
-      'app-navigation-item app-control-focus flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-row px-0 py-2 text-center text-xs leading-tight text-muted-foreground [&_svg]:size-5',
+      'app-navigation-item app-control-focus flex min-h-14 min-w-0 flex-col items-center justify-start gap-1 rounded-row border border-transparent px-0 py-2 text-center text-xs leading-tight text-muted-foreground [&_svg]:size-5 [&_svg]:shrink-0',
       active && 'bg-selection-surface font-semibold text-foreground',
     )
   const personalHomeSelected =
@@ -259,7 +259,9 @@ export function MobileNavigationView({
                 }
               >
                 <HomeIcon aria-hidden="true" />
-                {t('navigation.home')}
+                <span className="min-h-[2lh] w-full wrap-anywhere">
+                  {t('navigation.home')}
+                </span>
               </Link>
               <Link
                 to="/stables/$stableId/events"
@@ -270,7 +272,9 @@ export function MobileNavigationView({
                 }
               >
                 <EventIcon aria-hidden="true" />
-                {t('dashboard.events')}
+                <span className="min-h-[2lh] w-full wrap-anywhere">
+                  {t('dashboard.events')}
+                </span>
               </Link>
               <Link
                 to="/stables/$stableId/training"
@@ -281,7 +285,9 @@ export function MobileNavigationView({
                 }
               >
                 <TrainingIcon aria-hidden="true" />
-                {t('navigation.training')}
+                <span className="min-h-[2lh] w-full wrap-anywhere">
+                  {t('navigation.training')}
+                </span>
               </Link>
               <Link
                 to="/stables/$stableId/horses"
@@ -292,7 +298,9 @@ export function MobileNavigationView({
                 }
               >
                 <HorseIcon aria-hidden="true" />
-                {t('navigation.horses')}
+                <span className="min-h-[2lh] w-full wrap-anywhere">
+                  {t('navigation.horses')}
+                </span>
               </Link>
             </>
           ) : (
@@ -304,7 +312,9 @@ export function MobileNavigationView({
                 aria-current={personalHomeSelected ? 'page' : undefined}
               >
                 <HomeIcon aria-hidden="true" />
-                {t('navigation.home')}
+                <span className="min-h-[2lh] w-full wrap-anywhere">
+                  {t('navigation.home')}
+                </span>
               </Link>
               <Link
                 to="/events"
@@ -314,7 +324,9 @@ export function MobileNavigationView({
                 }
               >
                 <EventIcon aria-hidden="true" />
-                {t('dashboard.events')}
+                <span className="min-h-[2lh] w-full wrap-anywhere">
+                  {t('dashboard.events')}
+                </span>
               </Link>
               <Link
                 to="/training"
@@ -324,7 +336,9 @@ export function MobileNavigationView({
                 }
               >
                 <TrainingIcon aria-hidden="true" />
-                {t('navigation.training')}
+                <span className="min-h-[2lh] w-full wrap-anywhere">
+                  {t('navigation.training')}
+                </span>
               </Link>
             </>
           )}
@@ -333,10 +347,10 @@ export function MobileNavigationView({
               <Button
                 type="button"
                 variant="ghost"
-                className={cn(itemClass(moreSelected), '[&_svg]:size-6')}
+                className={itemClass(moreSelected)}
                 aria-label={t('navigationShell.openMenu')}
               >
-                <ListIcon aria-hidden="true" className="size-6" />
+                <ListIcon aria-hidden="true" className="size-5" />
               </Button>,
             )
           ) : (
@@ -349,10 +363,10 @@ export function MobileNavigationView({
                 <Button
                   type="button"
                   variant="ghost"
-                  className={cn(itemClass(moreSelected), '[&_svg]:size-6')}
+                  className={itemClass(moreSelected)}
                   aria-label={t('navigationShell.openMenu')}
                 >
-                  <ListIcon aria-hidden="true" className="size-6" />
+                  <ListIcon aria-hidden="true" className="size-5" />
                 </Button>
               }
             >
