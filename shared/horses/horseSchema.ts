@@ -1,6 +1,12 @@
 import z from 'zod'
+import {
+  horseCalendarColourIds,
+  isCustomHorseColour,
+} from './horseCalendarColours'
 
 const defaultMessages = {
+  calendarColourInvalid:
+    'Choose a preset or enter a six-digit hex colour, such as #347653.',
   nameMin: 'Name must have minimum 1 character.',
   nameMax: 'Name cannot be longer than 100 characters.',
   nicknameRequired: 'Enter a nickname or turn off “Use nickname”.',
@@ -103,6 +109,19 @@ export function createHorseSchemas(
     breed: horseBreedSchema,
     sex: horseSexSchema.optional(),
     color: horseShortTextSchema,
+    calendarColourId: z
+      .string()
+      .refine(
+        (value) =>
+          horseCalendarColourIds.includes(
+            value as (typeof horseCalendarColourIds)[number],
+          ) || isCustomHorseColour(value),
+        message('calendarColourInvalid'),
+      )
+      .transform((value) =>
+        isCustomHorseColour(value) ? value.toUpperCase() : value,
+      )
+      .optional(),
     height: horseShortTextSchema,
     dateOfBirth: z
       .literal('', { error: message('birthInvalid') })
@@ -153,6 +172,19 @@ export function createHorseSchemas(
     breed: horseBreedSchema.optional().transform((val) => val || undefined),
     sex: horseSexSchema.optional(),
     color: optionalText(horseShortTextSchema),
+    calendarColourId: z
+      .string()
+      .refine(
+        (value) =>
+          horseCalendarColourIds.includes(
+            value as (typeof horseCalendarColourIds)[number],
+          ) || isCustomHorseColour(value),
+        message('calendarColourInvalid'),
+      )
+      .transform((value) =>
+        isCustomHorseColour(value) ? value.toUpperCase() : value,
+      )
+      .optional(),
     height: optionalText(horseShortTextSchema),
     dateOfBirth: horseDateOfBirthSchema
       .optional()

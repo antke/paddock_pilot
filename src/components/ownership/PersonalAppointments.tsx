@@ -1,3 +1,4 @@
+import type { CalendarHorse } from 'shared/horses/horseCalendarColours'
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { convexQuery } from '@convex-dev/react-query'
@@ -35,15 +36,23 @@ export function PersonalAppointments(props: ViewProps) {
     ...convexQuery(api.events.list),
     throwOnError: true,
   })
-  if (events === undefined) return <RoutePending />
-  return <PersonalAppointmentsView events={events} {...props} />
+  const { data: horses } = useQuery({
+    ...convexQuery(api.horses.calendarRoster, {}),
+    throwOnError: true,
+  })
+  if (events === undefined || horses === undefined) return <RoutePending />
+  return <PersonalAppointmentsView horses={horses} events={events} {...props} />
 }
 
 export function PersonalAppointmentsView({
   events,
+  horses = [],
   view = 'list',
   onViewChange,
-}: ViewProps & { events: Appointments }) {
+}: ViewProps & {
+  events: Appointments
+  horses?: ReadonlyArray<CalendarHorse>
+}) {
   const c = useAppointmentCopy()
   const small = useSmallScreen()
   const taskState = useTaskOriginState()
@@ -66,7 +75,11 @@ export function PersonalAppointmentsView({
         actions={small ? undefined : addEvent}
       >
         {view === 'calendar' ? (
-          <StableEventsCalendar events={events} surface="flat" />
+          <StableEventsCalendar
+            horses={horses}
+            events={events}
+            surface="flat"
+          />
         ) : (
           <EventTable
             events={events}

@@ -149,7 +149,11 @@ function HorseActivity({ stableId, horse, events }: HorseDetailSectionProps) {
                 {t('horseHistory.filterHelp')}
               </DashboardEmptyState>
             )}
-            <StableEventsCalendar events={visibleEvents} surface="flat" />
+            <StableEventsCalendar
+              horses={[horse]}
+              events={visibleEvents}
+              surface="flat"
+            />
           </>
         ) : visibleEvents.length === 0 ? (
           <DashboardEmptyState

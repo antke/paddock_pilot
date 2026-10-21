@@ -22,10 +22,14 @@ function RouteComponent() {
       stableId: stableId as Id<'stables'>,
     }),
   )
+  const { data: horses } = useSuspenseQuery(
+    convexQuery(api.horses.list, { stableId: stableId as Id<'stables'> }),
+  )
   return (
     <StableEventsPage
       stableId={stableId}
       events={events}
+      horses={horses}
       view={view}
       onViewChange={(next) =>
         void navigate({

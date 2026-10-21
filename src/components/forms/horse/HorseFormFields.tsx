@@ -1,3 +1,9 @@
+import { HorseCalendarColourField } from './HorseCalendarColourField'
+import { isCustomHorseColour } from 'shared/horses/horseCalendarColours'
+import type {
+  CalendarHorse,
+  HorseCalendarColourId,
+} from 'shared/horses/horseCalendarColours'
 import type { PersonNameSuggestion } from '#/components/forms/PersonNameAutocomplete'
 import { ProviderAutocomplete } from '#/components/ui/provider-autocomplete'
 import type { ProviderOption } from '#/components/ui/provider-autocomplete'
@@ -43,6 +49,7 @@ import { HorseNicknameField } from './HorseNicknameField'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 
 type Props = {
+  colourRoster?: ReadonlyArray<CalendarHorse>
   control: Control<HorseFormInput, unknown, HorseFormSchema>
   providers?: Array<ProviderOption>
   ownerSuggestions?: ReadonlyArray<PersonNameSuggestion>
@@ -62,6 +69,7 @@ type ShoeingStatusChoice =
 
 export function HorseFormFields({
   control,
+  colourRoster,
   providers = [],
   ownerSuggestions,
   ownerSuggestionScope,
@@ -105,6 +113,7 @@ export function HorseFormFields({
   const ownerName = useWatch({ control, name: 'ownerName' })
   const dateOfBirth = useWatch({ control, name: 'dateOfBirth' })
   const statedAge = useWatch({ control, name: 'age' })
+  const calendarColourId = useWatch({ control, name: 'calendarColourId' })
   const breed = useWatch({ control, name: 'breed' })
   const passportNumber = useWatch({ control, name: 'passportNumber' })
   const microchipNumber = useWatch({ control, name: 'microchipNumber' })
@@ -147,6 +156,9 @@ export function HorseFormFields({
     ]) || undefined
   const profileSummary =
     formatMetaText([
+      calendarColourId
+        ? `${t('calendar.colourField')}: ${isCustomHorseColour(calendarColourId) ? t('calendar.customColour') : t(`calendar.colours.${calendarColourId as HorseCalendarColourId}`)}`
+        : undefined,
       breed ? getHorseBreedLabel(breed, locale) : undefined,
       discipline,
       shoeingStatus && shoeingStatus !== 'unspecified'
@@ -182,6 +194,7 @@ export function HorseFormFields({
     errors.emergencyNotes,
   )
   const profileInvalid = Boolean(
+    errors.calendarColourId ||
     errors.sex ||
     errors.profileImage ||
     errors.sire ||
@@ -689,6 +702,11 @@ export function HorseFormFields({
         validationAttempt={submitCount}
       >
         <FieldGroup gap="compact">
+          <HorseCalendarColourField
+            control={control}
+            horses={colourRoster}
+            disabled={disabled}
+          />
           <FieldGrid>
             <Controller
               name="sex"

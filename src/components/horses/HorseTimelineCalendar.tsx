@@ -1,3 +1,4 @@
+import { useCalendarDensity } from '#/components/events/useCalendarDensity'
 import { useId, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react'
@@ -86,6 +87,10 @@ export function HorseTimelineCalendar({
     ...days,
   ]
   while (cells.length % 7) cells.push(null)
+  const density = useCalendarDensity(
+    cells.length / 7,
+    formatMonthLabel(visibleMonth, locale),
+  )
   const monthLabel = formatMonthLabel(visibleMonth, locale)
   const selectedEntries = selectedDate
     ? (entriesByDay.get(selectedDate) ?? [])
@@ -148,6 +153,9 @@ export function HorseTimelineCalendar({
           `. ${t('horseHistory.selectDay', { date: formatLongDateKey(selectedDate, locale), count: selectedEntries.length })}`}
       </p>
       <CalendarShell
+        ref={density.ref}
+        style={density.style}
+        className="calendar-timeline-month"
         data-touch-grid="true"
         role="table"
         aria-label={t('horseHistory.calendarRegion', { month: monthLabel })}
@@ -172,7 +180,7 @@ export function HorseTimelineCalendar({
                       key={`empty-${index}`}
                       role="cell"
                       muted
-                      className="h-14 md:h-40"
+                      className="h-14 md:h-[var(--calendar-row-height,120px)]"
                     />
                   )
                 const records = entriesByDay.get(day.key) ?? []
@@ -187,11 +195,11 @@ export function HorseTimelineCalendar({
                     isToday={day.key === today}
                     isSelected={day.key === selectedDate}
                     aria-current={day.key === today ? 'date' : undefined}
-                    className="h-14 p-0 md:h-40 md:p-2"
+                    className="h-14 p-0 md:h-[var(--calendar-row-height,120px)] md:p-1.5"
                   >
                     <Button
                       variant="subtle"
-                      className="h-auto min-h-11 w-full flex-col gap-0 px-0 py-1 md:flex-row md:justify-between md:px-2"
+                      className="h-auto min-h-11 w-full flex-col gap-0 px-0 py-1 md:min-h-6 md:flex-row md:justify-between md:px-1 md:py-0"
                       aria-label={label}
                       aria-pressed={day.key === selectedDate}
                       aria-controls={agendaId}
@@ -210,41 +218,43 @@ export function HorseTimelineCalendar({
                       )}
                     </Button>
                     <CalendarDayEventList className="hidden md:grid">
-                      {records.slice(0, 2).map((entry) => (
-                        <CalendarItemPreview
-                          key={`${entry.kind}-${entry.id}`}
-                          trigger={
-                            <Button
-                              variant="ghost"
-                              type="button"
-                              className={calendarCompactEventChipClassName()}
-                              onClick={() => setSelectedDate(day.key)}
-                              aria-controls={agendaId}
-                              aria-label={`${title(entry)}, ${formatLongDateKey(day.key, locale)}, ${entry.kind === 'event' ? t(`events.types.${entry.eventType}`) : t(kindLabels[entry.kind])}`}
-                            >
-                              <CalendarItemTypeDot
-                                type={
-                                  entry.kind === 'event'
-                                    ? entry.eventType
-                                    : entry.kind
-                                }
-                              />
-                              <CalendarEventChipTitle>
-                                {title(entry)}
-                              </CalendarEventChipTitle>
-                            </Button>
-                          }
-                        >
-                          {renderEntry(entry)}
-                        </CalendarItemPreview>
-                      ))}
+                      {records
+                        .slice(0, records.length > 2 ? 1 : 2)
+                        .map((entry) => (
+                          <CalendarItemPreview
+                            key={`${entry.kind}-${entry.id}`}
+                            trigger={
+                              <Button
+                                variant="ghost"
+                                type="button"
+                                className={calendarCompactEventChipClassName()}
+                                onClick={() => setSelectedDate(day.key)}
+                                aria-controls={agendaId}
+                                aria-label={`${title(entry)}, ${formatLongDateKey(day.key, locale)}, ${entry.kind === 'event' ? t(`events.types.${entry.eventType}`) : t(kindLabels[entry.kind])}`}
+                              >
+                                <CalendarItemTypeDot
+                                  type={
+                                    entry.kind === 'event'
+                                      ? entry.eventType
+                                      : entry.kind
+                                  }
+                                />
+                                <CalendarEventChipTitle>
+                                  {title(entry)}
+                                </CalendarEventChipTitle>
+                              </Button>
+                            }
+                          >
+                            {renderEntry(entry)}
+                          </CalendarItemPreview>
+                        ))}
                       {records.length > 2 && (
                         <CalendarMoreEventsButton
                           onClick={() => setSelectedDate(day.key)}
                           aria-controls={agendaId}
                           aria-label={label}
                         >
-                          {t('calendar.more', { count: records.length - 2 })}
+                          {t('calendar.more', { count: records.length - 1 })}
                         </CalendarMoreEventsButton>
                       )}
                     </CalendarDayEventList>

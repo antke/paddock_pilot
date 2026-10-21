@@ -38,9 +38,14 @@ type CalendarMoreEventsButtonProps = Omit<
   className?: string
 }
 
-export function CalendarShell({ className, ...props }: ComponentProps<'div'>) {
+export function CalendarShell({
+  className,
+  ref,
+  ...props
+}: ComponentProps<'div'>) {
   return (
     <div
+      ref={ref}
       data-slot="calendar-shell"
       className={calendarShellClassName(className)}
       {...props}

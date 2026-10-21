@@ -1,4 +1,44 @@
 export const calendar = {
+  useColour: 'Use colour',
+  customColourHelp:
+    'Choose a colour for {{name}}. Check how it looks in both themes.',
+
+  customColour: 'Custom colour',
+  colourPreview: 'Calendar preview',
+  previewHorse: 'Your horse',
+  lightPreview: 'Light mode',
+  darkPreview: 'Dark mode',
+  hue: 'Hue',
+  saturation: 'Saturation',
+  brightness: 'Brightness',
+  hexColour: 'Hex colour',
+
+  horseColours: 'Horse colours',
+  horseColoursHelp:
+    'Dots identify horses, not completed sessions. Select a day for names and details. +N means additional horses.',
+  generalEvent: 'Stable / other event',
+  colourInUse: 'In use',
+  colourField: 'Calendar colour',
+  colourFieldHelp:
+    'Shared with everyone who can see this horse. Used across events and training.',
+  colourUsed: 'Also used by: {{names}}.',
+  horseNames: 'Horses: {{names}}',
+  daySessions: 'Sessions on {{date}}',
+  colours: {
+    sage: 'Sage',
+    sky: 'Sky',
+    amber: 'Amber',
+    violet: 'Violet',
+    rose: 'Rose',
+    teal: 'Teal',
+    terracotta: 'Terracotta',
+    indigo: 'Indigo',
+    olive: 'Olive',
+    orchid: 'Orchid',
+    slate: 'Slate',
+    gold: 'Gold',
+  },
+
   previous: 'Previous',
   today: 'Today',
   next: 'Next',

@@ -1577,3 +1577,142 @@ body {
     transition-property: opacity !important;
   }
 }
+
+/* Shared horse identity palette: the token stays stable across themes. */
+:root,
+.horse-colour-preview.light {
+  --horse-sage: #347653;
+  --horse-sky: #2876a7;
+  --horse-amber: #956310;
+  --horse-violet: #7955ae;
+  --horse-rose: #b14068;
+  --horse-teal: #217d79;
+  --horse-terracotta: #b24e30;
+  --horse-indigo: #4c60b7;
+  --horse-olive: #6c752d;
+  --horse-orchid: #a0499c;
+  --horse-slate: #647581;
+  --horse-gold: #8c7415;
+}
+.dark {
+  --horse-sage: #91c8a9;
+  --horse-sky: #80bde6;
+  --horse-amber: #e2bb77;
+  --horse-violet: #b7adf0;
+  --horse-rose: #efa4bb;
+  --horse-teal: #75c9c3;
+  --horse-terracotta: #eba28a;
+  --horse-indigo: #9baff0;
+  --horse-olive: #bbc582;
+  --horse-orchid: #d9a0d7;
+  --horse-slate: #a8bbc8;
+  --horse-gold: #d9ce7c;
+}
+
+/* A calendar's usable width, not the device label, selects its detail level. */
+.calendar-container {
+  container-type: inline-size;
+  container-name: month-calendar;
+}
+.calendar-month-detail {
+  display: none;
+}
+.calendar-month-compact [data-slot='calendar-day-cell'] {
+  min-height: 0;
+}
+@container month-calendar (min-width: 56rem) {
+  .calendar-month-compact {
+    display: none;
+  }
+  .calendar-month-detail {
+    display: block;
+  }
+}
+
+.calendar-training-month [data-slot='calendar-day-cell'] {
+  min-height: 0;
+}
+@media (width < 48rem) {
+  .calendar-timeline-month [data-slot='calendar-day-cell'] {
+    min-height: 0;
+  }
+}
+@container month-calendar (min-width: 56rem) {
+  .calendar-training-month [data-slot='calendar-day-cell'] {
+    height: var(--calendar-row-height, 120px);
+    padding: 6px;
+  }
+  .calendar-training-month .calendar-date-button {
+    height: 24px;
+    min-height: 24px;
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: row;
+    padding: 0 2px;
+    margin-bottom: 4px;
+  }
+  .calendar-training-month .calendar-compact-markers {
+    display: inline-flex;
+  }
+  .calendar-training-month .calendar-month-detail {
+    display: grid;
+  }
+  @media (pointer: coarse) {
+    .calendar-training-month [data-slot='calendar-day-cell'] {
+      min-height: 160px;
+    }
+    .calendar-training-month .calendar-date-button {
+      height: 44px;
+    }
+  }
+}
+
+/* Native sliders retain keyboard and assistive-technology behaviour. */
+.horse-colour-slider {
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+.horse-colour-slider::-webkit-slider-runnable-track {
+  height: 12px;
+  border-radius: 6px;
+  background: var(--colour-track);
+  border: 1px solid var(--border);
+}
+.horse-colour-slider::-moz-range-track {
+  height: 12px;
+  border-radius: 6px;
+  background: var(--colour-track);
+  border: 1px solid var(--border);
+}
+.horse-colour-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background: var(--background);
+  border: 2px solid var(--foreground);
+}
+.horse-colour-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--background);
+  border: 2px solid var(--foreground);
+}
+.horse-colour-slider:disabled {
+  cursor: not-allowed;
+}
+.horse-colour-preview.light {
+  --foreground: #26382c;
+  color: #26382c;
+  background: #f5f4eb;
+  border-color: #d4d9cf;
+}
+.horse-colour-preview.dark {
+  --foreground: #e7e9e3;
+  color: #e7e9e3;
+  background: #303630;
+  border-color: #505b50;
+}

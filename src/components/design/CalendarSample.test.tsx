@@ -61,7 +61,7 @@ function selectMondayMonth() {
 function openDenseDay() {
   fireEvent.click(
     screen.getByRole('button', {
-      name: /Show 4 additional events on 18 Jun 2026/,
+      name: /Show 5 additional events on 18 Jun 2026/,
     }),
   )
   return screen.getByRole('region', { name: 'Events on 18 Jun 2026' })
@@ -94,8 +94,10 @@ describe('actual local calendar specimens', () => {
       vi.advanceTimersByTime(3000)
     })
     expect(
-      screen.queryByRole('region', { name: 'Events on 18 Jun 2026' }),
-    ).toBeNull()
+      within(
+        screen.getByRole('region', { name: 'Events on 18 Jun 2026' }),
+      ).getByText('No events on this date.'),
+    ).toBeTruthy()
     expect(screen.getByRole('status').textContent).toContain('Day 18 now has 0')
     expect(fetch).not.toHaveBeenCalled()
   })
@@ -110,7 +112,9 @@ describe('actual local calendar specimens', () => {
     await act(async () => {
       vi.advanceTimersByTime(3000)
     })
-    expect(screen.getByText('0 events this month', { exact: true })).toBeTruthy()
+    expect(
+      screen.getByText('0 events this month', { exact: true }),
+    ).toBeTruthy()
     fireEvent.change(screen.getByLabelText('Calendar sample'), {
       target: { value: 'dense' },
     })
@@ -124,7 +128,7 @@ describe('actual local calendar specimens', () => {
     })
     expect(
       screen.getByRole('button', {
-        name: /Show 4 additional events on 18 Feb 2024/,
+        name: /Show 5 additional events on 18 Feb 2024/,
       }),
     ).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /Keep two events/ }))
@@ -136,7 +140,7 @@ describe('actual local calendar specimens', () => {
     })
     expect(
       screen.getByRole('button', {
-        name: /Show 4 additional events on 18 Feb 2024/,
+        name: /Show 5 additional events on 18 Feb 2024/,
       }),
     ).toBeTruthy()
   })

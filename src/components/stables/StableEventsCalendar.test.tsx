@@ -232,7 +232,7 @@ describe('read-only month calendar', () => {
     expect(firstWeek[5].getAttribute('aria-label')).toBe('1 Aug 2026')
     const date = within(table()).getByRole('cell', { name: '12 Aug 2026' })
     const links = within(date).getAllByRole('link')
-    expect(links).toHaveLength(2)
+    expect(links).toHaveLength(1)
     expect(links[0].getAttribute('href')).toBe('/events/event-0')
     expect(links[0].hasAttribute('tabindex')).toBe(false)
   })
@@ -409,7 +409,7 @@ it('switches the selected agenda, weekday labels, counts, and announcements with
   expect(
     screen
       .getByRole('button', {
-        name: 'Ukryj 4 dodatkowe wydarzenia w dniu 12 sie 2026',
+        name: 'Ukryj 5 dodatkowych wydarzeń w dniu 12 sie 2026',
       })
       .getAttribute('aria-expanded'),
   ).toBe('true')

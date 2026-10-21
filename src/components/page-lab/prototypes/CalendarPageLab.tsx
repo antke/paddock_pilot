@@ -30,6 +30,7 @@ export function CalendarPageLab({ data }: { data: DashboardLabData }) {
       ) : (
         <StableEventsCalendar
           key={data.stable._id}
+          horses={data.horses}
           events={data.events.filter(
             (event) => event.stableId === data.stable._id,
           )}

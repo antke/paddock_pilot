@@ -1,4 +1,8 @@
 import {
+  getHorseCalendarColour,
+  nextHorseCalendarColour,
+} from '../shared/horses/horseCalendarColours'
+import {
   departurePreview,
   startDeparture,
   revokeHorseAccess,
@@ -52,6 +56,7 @@ const validateHorseInput = (args: {
   breed?: string
   sex?: 'mare' | 'gelding' | 'stallion'
   color?: string
+  calendarColourId?: string
   height?: string
   dateOfBirth?: string
   passportNumber?: string
@@ -233,8 +238,20 @@ export const add = mutation({
       await assertHorseProfileImageCanBeClaimed(ctx, horseInput.profileImageId)
     }
 
+    const colourRoster = await ctx.db
+      .query('horses')
+      .withIndex(args.stableId ? 'by_stable_id' : 'by_owner_id', (q) =>
+        args.stableId
+          ? q.eq('stableId', args.stableId)
+          : q.eq('ownerId', ownerId),
+      )
+      .collect()
+    const calendarColourId =
+      horseInput.calendarColourId ??
+      nextHorseCalendarColour(colourRoster.filter(isActiveHorse))
     const id = await ctx.db.insert('horses', {
       ...horseInput,
+      calendarColourId,
       ownerId,
       stableId: args.stableId,
     })
@@ -273,6 +290,8 @@ export const update = mutation({
 
     const horseInput = validateHorseInput({
       ...updates,
+      calendarColourId:
+        updates.calendarColourId ?? getHorseCalendarColour(horse),
       nickname: updates.nickname ?? horse.nickname,
       useNickname: updates.useNickname ?? horse.useNickname,
     })
@@ -623,6 +642,58 @@ export const listMine = query({
           : null,
       })),
     )
+  },
+})
+
+/** Public roster identity only; membership never grants private horse records. */
+export const calendarRoster = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUser(ctx)
+    const [personal, ownedStables, memberships] = await Promise.all([
+      accessibleHorses(ctx, user._id),
+      ctx.db
+        .query('stables')
+        .withIndex('by_owner_id', (q) => q.eq('ownerId', user._id))
+        .collect(),
+      ctx.db
+        .query('stableMembers')
+        .withIndex('by_user_id', (q) => q.eq('userId', user._id))
+        .collect(),
+    ])
+    const memberStables = await Promise.all(
+      memberships
+        .filter((m) => m.role === 'member')
+        .map((m) => ctx.db.get(m.stableId)),
+    )
+    const ids = [
+      ...new Set(
+        [...ownedStables, ...memberStables].flatMap((stable) =>
+          stable && stable.archivedAt === undefined ? [stable._id] : [],
+        ),
+      ),
+    ]
+    const rosters = await Promise.all(
+      ids.map((stableId) =>
+        ctx.db
+          .query('horses')
+          .withIndex('by_stable_id', (q) => q.eq('stableId', stableId))
+          .collect(),
+      ),
+    )
+    return [
+      ...new Map(
+        [...personal, ...rosters.flat()]
+          .filter(isActiveHorse)
+          .map((horse) => [horse._id, horse]),
+      ).values(),
+    ].map((horse) => ({
+      _id: horse._id,
+      name: horse.name,
+      nickname: horse.nickname,
+      useNickname: horse.useNickname,
+      calendarColourId: getHorseCalendarColour(horse),
+    }))
   },
 })
 

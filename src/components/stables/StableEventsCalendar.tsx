@@ -1,3 +1,15 @@
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
+import {
+  eventCalendarHorses,
+  uniqueCalendarHorses,
+} from 'shared/horses/horseCalendarColours'
+import type { CalendarHorse } from 'shared/horses/horseCalendarColours'
+import {
+  CalendarHorseMarkers,
+  HorseColourLegend,
+  HorseCalendarNames,
+} from '#/components/horses/HorseCalendarIdentity'
+import { useCalendarDensity } from '#/components/events/useCalendarDensity'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import {
   CalendarDayCell,
@@ -14,7 +26,6 @@ import {
 } from '#/components/events/EventCalendar'
 import { EventRow } from '#/components/events/EventRow'
 import { CalendarEventTooltip } from '#/components/events/CalendarEventTooltip'
-import { CalendarItemTypeDot } from '#/components/events/CalendarItemTypeDot'
 import { calendarCompactEventChipClassName } from '#/components/events/EventCalendarChrome'
 import { MotionList } from '#/components/motion/MotionList'
 import { MotionNotice } from '#/components/motion/MotionNotice'
@@ -66,6 +77,7 @@ import type {
 
 type StableEventsCalendarProps = {
   events: Array<StableDashboardEvent>
+  horses?: ReadonlyArray<CalendarHorse>
   surface?: 'flat' | 'panel'
   initialMonth?: Date
   storageKey?: string
@@ -76,6 +88,7 @@ type CalendarCell =
 
 export function StableEventsCalendar({
   events,
+  horses = [],
   initialMonth,
   surface = 'panel',
   storageKey,
@@ -137,6 +150,21 @@ export function StableEventsCalendar({
     (_, index) => calendarCells.slice(index * 7, index * 7 + 7),
   )
 
+  const density = useCalendarDensity(calendarWeeks.length, monthKey)
+  const participatingHorses = uniqueCalendarHorses(
+    visibleMonthOccurrences.flatMap((item) =>
+      eventCalendarHorses(item.event, horses),
+    ),
+  )
+  const generalEvent = (event: StableDashboardEvent) =>
+    eventCalendarHorses(event, horses).length === 0
+  const namesFor = (items: ReadonlyArray<StableCalendarDayOccurrence>) =>
+    uniqueCalendarHorses(
+      items.flatMap((item) =>
+        eventCalendarHorses(item.occurrence.event, horses),
+      ),
+    )
+
   // Track actual focus before a reactive render removes its node. A later
   // focus elsewhere clears ownership, so ordinary data updates cannot steal it.
   useEffect(() => {
@@ -160,15 +188,19 @@ export function StableEventsCalendar({
       const presentation = focused
         .closest('[data-calendar-view]')
         ?.getAttribute('data-calendar-view')
-      const hidden = breakpoint?.matches
-        ? presentation === 'mobile'
-        : presentation === 'month' || presentation === 'selected'
+      const hidden = Boolean(presentation && !isRendered(focused))
       if (hidden) calendarRef.current?.focus()
     }
     breakpoint?.addEventListener('change', recoverResponsiveFocus)
+    const observer =
+      typeof ResizeObserver === 'undefined'
+        ? undefined
+        : new ResizeObserver(recoverResponsiveFocus)
+    if (calendarRef.current) observer?.observe(calendarRef.current)
     return () => {
       document.removeEventListener('focusin', rememberFocus)
       breakpoint?.removeEventListener('change', recoverResponsiveFocus)
+      observer?.disconnect()
     }
   }, [])
 
@@ -214,7 +246,7 @@ export function StableEventsCalendar({
         month: formatMonthLabel(visibleMonth, locale),
       })}
       tabIndex={-1}
-      className="app-control-focus"
+      className="app-control-focus calendar-container"
       title={formatMonthLabel(visibleMonth, locale)}
       description={t('calendar.monthCount', {
         count: visibleMonthOccurrences.length,
@@ -264,7 +296,16 @@ export function StableEventsCalendar({
           : ''}
       </p>
 
-      <div className="grid gap-4 md:hidden" data-calendar-view="mobile">
+      <HorseColourLegend
+        horses={participatingHorses}
+        general={visibleMonthOccurrences.some((item) =>
+          generalEvent(item.event),
+        )}
+      />
+      <div
+        className="calendar-month-compact grid gap-4"
+        data-calendar-view="mobile"
+      >
         <CalendarShell
           data-touch-grid="true"
           role="table"
@@ -296,7 +337,9 @@ export function StableEventsCalendar({
                         className="h-14"
                       />
                     )
-                  const count = occurrencesByDate.get(cell.key)?.length ?? 0
+                  const dayOccurrences = occurrencesByDate.get(cell.key) ?? []
+                  const dayHorses = namesFor(dayOccurrences)
+                  const count = dayOccurrences.length
                   const selected = cell.key === mobileSelectedDate
                   return (
                     <CalendarDayCell
@@ -308,10 +351,7 @@ export function StableEventsCalendar({
                       <Button
                         variant={selected ? 'secondary' : 'ghost'}
                         className="h-full min-w-0 w-full flex-col gap-1 rounded-none border-0 px-0 py-1 text-sm [@media(pointer:coarse)]:min-w-0"
-                        aria-label={t('calendar.selectDay', {
-                          date: formatEventDate(cell.key, locale),
-                          count,
-                        })}
+                        aria-label={`${t('calendar.selectDay', { date: formatEventDate(cell.key, locale), count })}${dayHorses.length ? `, ${t('calendar.horseNames', { names: dayHorses.map(getHorseDisplayName).join(', ') })}` : ''}`}
                         aria-pressed={selected}
                         aria-current={
                           cell.key === todayKey ? 'date' : undefined
@@ -322,20 +362,12 @@ export function StableEventsCalendar({
                         <CalendarDayNumber isToday={cell.key === todayKey}>
                           {cell.date.getDate()}
                         </CalendarDayNumber>
-                        <span
-                          aria-hidden="true"
-                          className="flex h-1 items-center gap-0.5"
-                        >
-                          {Array.from(
-                            { length: Math.min(count, 3) },
-                            (_, dot) => (
-                              <span
-                                key={dot}
-                                className="size-1 rounded-full bg-primary"
-                              />
-                            ),
+                        <CalendarHorseMarkers
+                          horses={dayHorses}
+                          general={dayOccurrences.some((item) =>
+                            generalEvent(item.occurrence.event),
                           )}
-                        </span>
+                        />
                       </Button>
                     </CalendarDayCell>
                   )
@@ -361,6 +393,7 @@ export function StableEventsCalendar({
           <CalendarAgendaList
             key={mobileSelectedDate}
             occurrences={mobileDayOccurrences}
+            horses={horses}
             locale={locale}
             focusTarget={() => calendarRef.current}
             empty={
@@ -373,7 +406,9 @@ export function StableEventsCalendar({
       </div>
 
       <CalendarShell
-        className="hidden md:block"
+        ref={density.ref}
+        style={density.style}
+        className="calendar-month-detail"
         role="table"
         data-calendar-view="month"
         aria-colcount={7}
@@ -399,7 +434,10 @@ export function StableEventsCalendar({
                 }
 
                 const dateOccurrences = occurrencesByDate.get(cell.key) ?? []
-                const visibleEvents = dateOccurrences.slice(0, 2)
+                const visibleEvents = dateOccurrences.slice(
+                  0,
+                  dateOccurrences.length > 2 ? 1 : 2,
+                )
                 const hiddenEventCount =
                   dateOccurrences.length - visibleEvents.length
                 const isToday = cell.key === todayKey
@@ -416,9 +454,27 @@ export function StableEventsCalendar({
                     isSelected={isSelected}
                   >
                     <CalendarDayHeader>
-                      <CalendarDayNumber isToday={isToday}>
-                        {cell.date.getDate()}
-                      </CalendarDayNumber>
+                      <Button
+                        variant="subtle"
+                        className="h-6 min-h-6 min-w-6 justify-start gap-1.5 p-0 text-xs pointer-coarse:min-h-11"
+                        aria-controls={selectedAgendaId}
+                        aria-expanded={isSelected}
+                        aria-label={`${t('calendar.selectDay', { date: fullDate, count: dateOccurrences.length })}${namesFor(dateOccurrences).length ? `, ${t('calendar.horseNames', { names: namesFor(dateOccurrences).map(getHorseDisplayName).join(', ') })}` : ''}`}
+                        onClick={(event) => {
+                          selectedAgendaTriggerRef.current = event.currentTarget
+                          setSelectedDateKey(cell.key)
+                        }}
+                      >
+                        <CalendarDayNumber isToday={isToday}>
+                          {cell.date.getDate()}
+                        </CalendarDayNumber>
+                        <CalendarHorseMarkers
+                          horses={namesFor(dateOccurrences)}
+                          general={dateOccurrences.some((item) =>
+                            generalEvent(item.occurrence.event),
+                          )}
+                        />
+                      </Button>
                       {dateOccurrences.length > 0 && (
                         <DashboardCountBadge
                           count={dateOccurrences.length}
@@ -432,6 +488,7 @@ export function StableEventsCalendar({
                         <CalendarEventLink
                           key={`${dayOccurrence.occurrence.occurrenceKey}-${cell.key}`}
                           dayOccurrence={dayOccurrence}
+                          horses={horses}
                         />
                       ))}
 
@@ -471,10 +528,10 @@ export function StableEventsCalendar({
       </CalendarShell>
 
       <MotionNotice
-        show={Boolean(selectedDateKey && selectedDayOccurrences.length > 0)}
-        className="hidden md:block"
+        show={Boolean(selectedDateKey)}
+        className="calendar-month-detail"
       >
-        {selectedDateKey && selectedDayOccurrences.length > 0 && (
+        {selectedDateKey && (
           <div
             id={selectedAgendaId}
             ref={selectedAgendaRef}
@@ -487,7 +544,7 @@ export function StableEventsCalendar({
             onKeyDown={(event) => {
               if (event.key === 'Escape') closeSelectedAgenda()
             }}
-            className="hidden rounded-panel border-t border-border-subtle pt-5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:block"
+            className="calendar-month-detail rounded-panel border-t border-border-subtle pt-5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
             <DashboardSubsection
               as="h3"
@@ -508,6 +565,12 @@ export function StableEventsCalendar({
             >
               <CalendarAgendaList
                 occurrences={selectedDayOccurrences}
+                horses={horses}
+                empty={
+                  <DashboardEmptyState chrome="flat" spacing="flush">
+                    {t('calendar.dayEmpty')}
+                  </DashboardEmptyState>
+                }
                 locale={locale}
                 focusTarget={() =>
                   selectedAgendaRef.current ?? calendarRef.current
@@ -524,11 +587,13 @@ export function StableEventsCalendar({
 /** Agenda rows share record identity; dense calendar table cells stay unwrapped. */
 function CalendarAgendaList({
   occurrences,
+  horses,
   locale,
   empty,
   focusTarget,
 }: {
   occurrences: StableCalendarDayOccurrence[]
+  horses: ReadonlyArray<CalendarHorse>
   locale: Locale
   empty?: ReactNode
   focusTarget: () => HTMLElement | null
@@ -541,21 +606,26 @@ function CalendarAgendaList({
       focusTarget={focusTarget}
       empty={empty}
       renderItem={(dayOccurrence) => (
-        <EventRow
-          event={getOccurrenceDisplayEvent(dayOccurrence.occurrence)}
-          chrome="flat"
-          horseCount={dayOccurrence.occurrence.event.horseIds.length}
-          leadingLabel={getDayOccurrenceLabel(dayOccurrence, locale)}
-          showRecurrence={false}
-          supplementalMeta={
-            dayOccurrence.occurrence.durationDays > 1
-              ? [
-                  `${formatEventDate(dayOccurrence.occurrence.startDate, locale)} – ${formatEventDate(dayOccurrence.occurrence.endDate, locale)}`,
-                ]
-              : []
-          }
-          variant="contextual"
-        />
+        <div className="grid gap-1">
+          <HorseCalendarNames
+            horses={eventCalendarHorses(dayOccurrence.occurrence.event, horses)}
+          />
+          <EventRow
+            event={getOccurrenceDisplayEvent(dayOccurrence.occurrence)}
+            chrome="flat"
+            horseCount={dayOccurrence.occurrence.event.horseIds.length}
+            leadingLabel={getDayOccurrenceLabel(dayOccurrence, locale)}
+            showRecurrence={false}
+            supplementalMeta={
+              dayOccurrence.occurrence.durationDays > 1
+                ? [
+                    `${formatEventDate(dayOccurrence.occurrence.startDate, locale)} – ${formatEventDate(dayOccurrence.occurrence.endDate, locale)}`,
+                  ]
+                : []
+            }
+            variant="contextual"
+          />
+        </div>
       )}
     />
   )
@@ -563,14 +633,17 @@ function CalendarAgendaList({
 
 function CalendarEventLink({
   dayOccurrence,
+  horses,
 }: {
   dayOccurrence: StableCalendarDayOccurrence
+  horses: ReadonlyArray<CalendarHorse>
 }) {
   const t = useT()
   const { locale } = useLocale()
 
   const { occurrence } = dayOccurrence
   const event = occurrence.event
+  const participants = eventCalendarHorses(event, horses)
   const timingLabel = getDayOccurrenceLabel(dayOccurrence, locale)
   const statusLabel =
     event.status && event.status !== 'planned'
@@ -588,9 +661,12 @@ function CalendarEventLink({
             participationId: event.contextParticipationId,
           }}
           className={calendarCompactEventChipClassName()}
-          aria-label={`${event.title}, ${formatEventDateTime(occurrence.startDate, event.time, occurrence.endDate, locale)}${dayOccurrence.position === 'single' || dayOccurrence.position === 'start' ? '' : t('calendar.dayContext', { timing: timingLabel.toLowerCase(), date: formatEventDate(dayOccurrence.dateKey, locale) })}${statusLabel ? `, ${statusLabel.toLowerCase()}` : ''}, ${t(`events.types.${event.type}`)}`}
+          aria-label={`${event.title}, ${formatEventDateTime(occurrence.startDate, event.time, occurrence.endDate, locale)}${dayOccurrence.position === 'single' || dayOccurrence.position === 'start' ? '' : t('calendar.dayContext', { timing: timingLabel.toLowerCase(), date: formatEventDate(dayOccurrence.dateKey, locale) })}${statusLabel ? `, ${statusLabel.toLowerCase()}` : ''}, ${t(`events.types.${event.type}`)}${participants.length ? `, ${t('calendar.horseNames', { names: participants.map(getHorseDisplayName).join(', ') })}` : ''}`}
         >
-          <CalendarItemTypeDot type={event.type} />
+          <CalendarHorseMarkers
+            horses={participants}
+            general={!participants.length}
+          />
           <CalendarEventChipTitle>{event.title}</CalendarEventChipTitle>
         </CalendarEventChipLink>
       }
@@ -598,6 +674,7 @@ function CalendarEventLink({
       <div className="grid gap-3">
         <div className="grid gap-1">
           <span className="font-bold">{event.title}</span>
+          <HorseCalendarNames horses={participants} />
           <span>{t(`events.types.${event.type}`)}</span>
           <span>{t(`calendar.${event.status ?? 'planned'}`)}</span>
           <span>

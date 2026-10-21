@@ -1,3 +1,5 @@
+import { HorseColourDot } from '#/components/horses/HorseCalendarIdentity'
+import { calendarCompactEventChipClassName } from '#/components/events/EventCalendarChrome'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { cn } from '#/lib/utils'
 import { dashboardMobileRecordClassName } from '#/components/dashboard/dashboardChrome'
@@ -30,7 +32,9 @@ export function TrainingEntryLink({
   const { locale } = useLocale()
   const { today } = useLocalDateContext()
   const canComplete =
-    entry.horse.canRecord && entry.occurrence.startDate <= today
+    variant !== 'month' &&
+    entry.horse.canRecord &&
+    entry.occurrence.startDate <= today
 
   const { occurrence, horse, details, status, record } = entry
   const showStatus = !canComplete || status !== 'completed'
@@ -75,7 +79,7 @@ export function TrainingEntryLink({
             }
             className={cn(
               variant === 'month'
-                ? '@container/training-card grid min-w-0 gap-1 p-2 text-xs leading-5'
+                ? calendarCompactEventChipClassName()
                 : variant === 'summary'
                   ? cn(
                       'app-record min-h-16 min-w-0 border-0 bg-transparent px-0 py-3 text-sm leading-5 [overflow-wrap:anywhere]',
@@ -107,42 +111,14 @@ export function TrainingEntryLink({
               </span>
             ) : variant === 'month' ? (
               <>
+                <HorseColourDot horse={horse} />
                 <span
                   data-slot="training-entry-horse"
-                  className={cn(
-                    'flex min-h-8 min-w-0 items-center gap-1 font-semibold',
-                    canComplete && 'pr-10',
-                  )}
+                  className="min-w-0 flex-1 truncate font-semibold"
                 >
-                  <span className="min-w-0 flex-1 truncate">
-                    {showHorseName
-                      ? getHorseDisplayName(horse)
-                      : occurrence.event.title}
-                  </span>
-                  {!canComplete && (
-                    <TrainingStatusBadge status={status} iconOnly />
-                  )}
+                  {title}
                 </span>
-                <span className="flex min-w-0 items-center gap-1 text-muted-foreground">
-                  <TrainingActivityDot activity={details.activities[0]} />
-                  <span
-                    data-slot="training-entry-title"
-                    className="min-w-0 flex-1 truncate"
-                  >
-                    {showHorseName
-                      ? occurrence.event.title
-                      : details.activities
-                          .map((activity) =>
-                            t(`training.activities.${activity}`),
-                          )
-                          .join(' · ')}
-                  </span>
-                  {occurrence.event.time && (
-                    <span className="hidden shrink-0 tabular-nums @[8rem]/training-card:inline">
-                      {occurrence.event.time}
-                    </span>
-                  )}
-                </span>
+                <TrainingStatusBadge status={status} iconOnly />
               </>
             ) : variant === 'week' ? (
               <span className="grid min-w-0 gap-2">
@@ -163,6 +139,7 @@ export function TrainingEntryLink({
                   data-slot="training-entry-title"
                   className="line-clamp-2 min-h-10 text-sm font-bold leading-5 text-foreground"
                 >
+                  <HorseColourDot horse={horse} className="mr-1.5" />
                   {title}
                 </span>
                 <span className="grid min-w-0 gap-1 text-xs leading-5 text-muted-foreground">
@@ -202,6 +179,7 @@ export function TrainingEntryLink({
                   data-slot="training-entry-title"
                   className="text-sm font-bold leading-5 text-foreground"
                 >
+                  <HorseColourDot horse={horse} className="mr-1.5" />
                   {title}
                 </span>
                 <span className="grid gap-0.5 text-xs leading-5 text-muted-foreground">

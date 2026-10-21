@@ -1,3 +1,4 @@
+import { getHorseCalendarColour } from 'shared/horses/horseCalendarColours'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
@@ -17,11 +18,15 @@ export function PersonalHorseForm({ horseId }: { horseId?: string }) {
     horseId ? { id: horseId as Id<'horses'> } : 'skip',
   )
   const providers = useQuery(api.personalProviders.list)
+  const colourRoster = useQuery(api.horses.calendarRoster, {})
   const add = useMutation(api.horses.add)
   const update = useMutation(api.horses.update)
   const upload = useMutation(api.horses.generateProfileImageUploadUrl)
   const navigate = useNavigate()
-  if (horseId && (horse === undefined || permissions === undefined))
+  if (
+    colourRoster === undefined ||
+    (horseId && (horse === undefined || permissions === undefined))
+  )
     return <RoutePending />
   if (horseId && (!horse || !permissions?.canEditProfile))
     return <RouteEntityNotFoundAlert entity="horse" />
@@ -29,7 +34,12 @@ export function PersonalHorseForm({ horseId }: { horseId?: string }) {
     <HorseProfileForm
       key={horseId ?? 'new'}
       mode={horseId ? 'edit' : 'create'}
-      initialValues={horse ?? undefined}
+      initialValues={
+        horse
+          ? { ...horse, calendarColourId: getHorseCalendarColour(horse) }
+          : undefined
+      }
+      colourRoster={colourRoster.filter((item) => item._id !== horseId)}
       ownerSuggestionScope={{ horseIds: horseId ? [horseId] : [] }}
       providers={providers}
       contactMode="copied"

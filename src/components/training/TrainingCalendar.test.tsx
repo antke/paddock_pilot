@@ -194,7 +194,7 @@ describe('mobile training controls', () => {
     expect(within(calendar).getAllByRole('columnheader')).toHaveLength(7)
     expect(within(calendar).getAllByRole('button')).toHaveLength(31)
     const fifth = within(calendar).getByRole('button', {
-      name: '5 January 2026, 1 training entry',
+      name: '5 January 2026, 1 training entry, Horses: Atlas',
     })
     expect(fifth.getAttribute('aria-pressed')).toBe('true')
     expect(
@@ -222,7 +222,7 @@ describe('mobile training controls', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Previous month' }))
     fireEvent.click(
       within(calendar).getByRole('button', {
-        name: '5 January 2026, 1 training entry',
+        name: '5 January 2026, 1 training entry, Horses: Atlas',
       }),
     )
     fireEvent.click(screen.getByRole('button', { name: 'Week' }))
@@ -233,7 +233,9 @@ describe('mobile training controls', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Month' }))
     expect(
       screen
-        .getByRole('button', { name: '5 January 2026, 1 training entry' })
+        .getByRole('button', {
+          name: '5 January 2026, 1 training entry, Horses: Atlas',
+        })
         .getAttribute('aria-pressed'),
     ).toBe('true')
   })
@@ -251,7 +253,7 @@ describe('mobile training controls', () => {
     })
     fireEvent.click(
       within(calendar).getByRole('button', {
-        name: '13 January 2026, 1 training entry',
+        name: '13 January 2026, 1 training entry, Horses: Atlas',
       }),
     )
     expect(
@@ -323,10 +325,9 @@ describe('training calendar controls', () => {
       name: 'Monthly training calendar',
     })
     const monthEntries = within(month).getAllByRole('link')
-    expect(monthEntries).toHaveLength(2)
-    expect(within(monthEntries[0]).getByText('Atlas')).toBeTruthy()
-    expect(within(monthEntries[0]).getByText('Atlas session')).toBeTruthy()
-    expect(within(monthEntries[0]).getByText('10:00')).toBeTruthy()
+    expect(monthEntries).toHaveLength(1)
+    expect(monthEntries[0].textContent).toContain('Atlas · Atlas session')
+    expect(monthEntries[0].getAttribute('aria-label')).toContain('10:00')
     expect(monthEntries[0].getAttribute('aria-label')).toContain('Jumping')
     act(() => monthEntries[0].focus())
     const monthPreview = await screen.findByRole('dialog')
@@ -335,9 +336,18 @@ describe('training calendar controls', () => {
     expect(monthPreview.textContent).toContain('Transitions and rhythm')
     fireEvent.keyDown(monthEntries[0], { key: 'Escape' })
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
-    fireEvent.click(within(month).getByRole('button', { name: /\+1 more/ }))
+    fireEvent.click(
+      within(month).getByRole('button', {
+        name: '5 January 2026, 3 training entries',
+      }),
+    )
     expect(
-      within(screen.getByRole('table')).getByText('Meadow session'),
+      screen.getByRole('table', { name: 'Monthly training calendar' }),
+    ).toBeTruthy()
+    expect(
+      within(
+        screen.getByRole('region', { name: 'Sessions on 5 January 2026' }),
+      ).getByRole('link', { name: /Meadow · Meadow session/ }),
     ).toBeTruthy()
     fireEvent.click(await screen.findByRole('button', { name: 'Filters' }))
     await screen.findByRole('button', { name: 'Juniper' })

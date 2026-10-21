@@ -5,6 +5,7 @@ import { Field, FieldGrid, FieldLabel } from '#/components/ui/field'
 import { Select } from '#/components/ui/select'
 import {
   calendarSampleMonths,
+  calendarSampleHorses,
   createCalendarSampleEvents,
   getCalendarSampleMonth,
 } from './calendarSampleData'
@@ -133,6 +134,7 @@ export function CalendarSample({
       <StableEventsCalendar
         key={`${month}-${scenario}`}
         events={events}
+        horses={calendarSampleHorses}
         initialMonth={initialMonth}
       />
     </div>

@@ -19,23 +19,13 @@ import { Field, FieldLabel } from '#/components/ui/field'
 import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
-import {
-  CalendarShell,
-  CalendarGrid,
-  CalendarDayCell,
-  CalendarDayHeader,
-  CalendarDayNumber,
-  CalendarDayEventList,
-  CalendarMoreEventsButton,
-  CalendarWeekdayRow,
-  CalendarWeekdayCell,
-} from '#/components/events/EventCalendar'
+
 import {
   dateKeyToDate,
   formatDateKey,
   formatShortDateKey,
-  formatMonthYearDate,
   formatShortWeekdayDate,
+  formatMonthYearDate,
 } from '#/lib/dateDisplay'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import {
@@ -213,17 +203,6 @@ export function TrainingCalendar({
       ),
     )
   }
-  const inspectWeek = (date: string) => {
-    setAnchor(date)
-    changeView('week')
-  }
-  const leadingDays = (dateKeyToDate(period.start).getDay() + 6) % 7
-  const monthCells = [
-    ...Array<string | null>(leadingDays).fill(null),
-    ...period.days,
-  ]
-  while (monthCells.length % 7) monthCells.push(null)
-
   const viewControl = (
     <ChoiceButtonGroup
       aria-label={t('trainingViews.view')}
@@ -696,90 +675,13 @@ export function TrainingCalendar({
                   </Table>
                 </div>
               ) : (
-                <CalendarShell
-                  className="hidden overflow-x-auto md:block"
-                  tabIndex={0}
-                  role="table"
-                  aria-label={t('trainingViews.monthly')}
-                >
-                  <CalendarWeekdayRow role="row" className="min-w-[56rem]">
-                    {Array.from({ length: 7 }, (_, index) =>
-                      formatShortWeekdayDate(
-                        new Date(2026, 8, 28 + index),
-                        locale,
-                      ),
-                    ).map((day) => (
-                      <CalendarWeekdayCell role="columnheader" key={day}>
-                        {day}
-                      </CalendarWeekdayCell>
-                    ))}
-                  </CalendarWeekdayRow>
-                  <CalendarGrid
-                    period={anchor.slice(0, 7)}
-                    role="rowgroup"
-                    className="min-w-[56rem]"
-                  >
-                    {Array.from({ length: monthCells.length / 7 }, (_, row) => (
-                      <div role="row" className="contents" key={row}>
-                        {monthCells
-                          .slice(row * 7, row * 7 + 7)
-                          .map((day, index) =>
-                            day ? (
-                              <CalendarDayCell
-                                role="cell"
-                                className="h-auto min-h-64 md:pointer-coarse:h-auto"
-                                key={day}
-                                isToday={day === today}
-                              >
-                                <CalendarDayHeader>
-                                  <Button
-                                    variant="subtle"
-                                    size="sm"
-                                    aria-label={t('trainingViews.inspectWeek', {
-                                      date: formatShortDateKey(day, locale),
-                                    })}
-                                    onClick={() => inspectWeek(day)}
-                                  >
-                                    <CalendarDayNumber isToday={day === today}>
-                                      {dateKeyToDate(day).getDate()}
-                                    </CalendarDayNumber>
-                                  </Button>
-                                </CalendarDayHeader>
-                                <CalendarDayEventList>
-                                  {dayEntries(day)
-                                    .slice(0, 2)
-                                    .map((entry) => (
-                                      <TrainingEntryLink
-                                        key={entry.key}
-                                        entry={entry}
-                                        stableId={stableId}
-                                        variant="month"
-                                      />
-                                    ))}
-                                  {dayEntries(day).length > 2 && (
-                                    <CalendarMoreEventsButton
-                                      onClick={() => inspectWeek(day)}
-                                    >
-                                      {t('trainingViews.moreWeek', {
-                                        count: dayEntries(day).length - 2,
-                                      })}
-                                    </CalendarMoreEventsButton>
-                                  )}
-                                </CalendarDayEventList>
-                              </CalendarDayCell>
-                            ) : (
-                              <CalendarDayCell
-                                role="cell"
-                                className="h-auto min-h-64 md:pointer-coarse:h-auto"
-                                muted
-                                key={`empty-${index}`}
-                              />
-                            ),
-                          )}
-                      </div>
-                    ))}
-                  </CalendarGrid>
-                </CalendarShell>
+                <TrainingMonthCalendar
+                  days={period.days}
+                  entries={entries}
+                  selectedDate={anchor}
+                  today={today}
+                  onSelectDate={setAnchor}
+                />
               ))}
           </div>
         )}

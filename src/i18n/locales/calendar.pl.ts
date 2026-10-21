@@ -1,4 +1,44 @@
 export const calendar = {
+  useColour: 'Użyj koloru',
+  customColourHelp:
+    'Wybierz kolor dla konia {{name}}. Sprawdź, jak wygląda w obu motywach.',
+
+  customColour: 'Własny kolor',
+  colourPreview: 'Podgląd w kalendarzu',
+  previewHorse: 'Twój koń',
+  lightPreview: 'Tryb jasny',
+  darkPreview: 'Tryb ciemny',
+  hue: 'Odcień',
+  saturation: 'Nasycenie',
+  brightness: 'Jasność',
+  hexColour: 'Kod HEX',
+
+  horseColours: 'Kolory koni',
+  horseColoursHelp:
+    'Kropki oznaczają konie, nie ukończone treningi. Wybierz dzień, aby zobaczyć nazwy i szczegóły. +N oznacza dodatkowe konie.',
+  generalEvent: 'Wydarzenie stajni / inne',
+  colourInUse: 'W użyciu',
+  colourField: 'Kolor w kalendarzu',
+  colourFieldHelp:
+    'Wspólny dla wszystkich osób mających dostęp do konia. Używany w wydarzeniach i treningach.',
+  colourUsed: 'Używany również przez: {{names}}.',
+  horseNames: 'Konie: {{names}}',
+  daySessions: 'Treningi w dniu {{date}}',
+  colours: {
+    sage: 'Szałwiowy',
+    sky: 'Błękitny',
+    amber: 'Bursztynowy',
+    violet: 'Fioletowy',
+    rose: 'Różowy',
+    teal: 'Morski',
+    terracotta: 'Terakota',
+    indigo: 'Indygo',
+    olive: 'Oliwkowy',
+    orchid: 'Orchidea',
+    slate: 'Łupkowy',
+    gold: 'Złoty',
+  },
+
   previous: 'Poprzedni',
   today: 'Dzisiaj',
   next: 'Następny',

@@ -1,3 +1,11 @@
+import { useSmallScreen } from '#/lib/useSmallScreen'
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
+import { uniqueCalendarHorses } from 'shared/horses/horseCalendarColours'
+import {
+  CalendarHorseMarkers,
+  HorseColourLegend,
+} from '#/components/horses/HorseCalendarIdentity'
+import { useCalendarDensity } from '#/components/events/useCalendarDensity'
 import { useId } from 'react'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { Button } from '#/components/ui/button'
@@ -9,6 +17,8 @@ import {
   CalendarDayNumber,
   CalendarWeekdayRow,
   CalendarWeekdayCell,
+  CalendarDayEventList,
+  CalendarMoreEventsButton,
 } from '#/components/events/EventCalendar'
 import {
   dateKeyToDate,
@@ -33,6 +43,7 @@ export function TrainingMonthCalendar({
   today,
   onSelectDate,
 }: Props) {
+  const small = useSmallScreen()
   const t = useT()
   const { locale } = useLocale()
   const agendaId = useId()
@@ -50,6 +61,7 @@ export function TrainingMonthCalendar({
     ]),
   )
   const selectedEntries = entriesByDate.get(selectedDate) ?? []
+  const density = useCalendarDensity(cells.length / 7, days[0]?.slice(0, 7))
   const dayLabel = (date: string, count: number) =>
     t('trainingViews.selectDay', {
       date: formatLongDateKey(date, locale),
@@ -57,8 +69,12 @@ export function TrainingMonthCalendar({
     })
 
   return (
-    <div className="grid gap-4">
+    <div className="calendar-container grid gap-4">
+      <HorseColourLegend horses={entries.map((entry) => entry.horse)} />
       <CalendarShell
+        ref={density.ref}
+        style={density.style}
+        className="calendar-training-month"
         data-touch-grid="true"
         role="table"
         aria-label={t('trainingViews.monthly')}
@@ -89,7 +105,12 @@ export function TrainingMonthCalendar({
                       className="h-14"
                     />
                   )
-                const count = entriesByDate.get(date)?.length ?? 0
+                const dayEntries = entriesByDate.get(date) ?? []
+                const count = dayEntries.length
+                const dayHorses = uniqueCalendarHorses(
+                  dayEntries.map((entry) => entry.horse),
+                )
+                const visible = dayEntries.slice(0, count > 2 ? 1 : 2)
                 return (
                   <CalendarDayCell
                     key={date}
@@ -99,8 +120,8 @@ export function TrainingMonthCalendar({
                   >
                     <Button
                       variant={date === selectedDate ? 'secondary' : 'ghost'}
-                      className="h-full min-w-0 w-full flex-col gap-1 rounded-none border-0 px-0 py-1 text-sm [@media(pointer:coarse)]:min-w-0"
-                      aria-label={dayLabel(date, count)}
+                      className="calendar-date-button h-full min-w-0 w-full flex-col gap-1 rounded-none border-0 px-0 py-1 text-sm [@media(pointer:coarse)]:min-w-0"
+                      aria-label={`${dayLabel(date, count)}${dayHorses.length ? `, ${t('calendar.horseNames', { names: dayHorses.map(getHorseDisplayName).join(', ') })}` : ''}`}
                       aria-pressed={date === selectedDate}
                       aria-current={date === today ? 'date' : undefined}
                       aria-controls={agendaId}
@@ -109,21 +130,32 @@ export function TrainingMonthCalendar({
                       <CalendarDayNumber isToday={date === today}>
                         {dateKeyToDate(date).getDate()}
                       </CalendarDayNumber>
-                      <span
-                        aria-hidden="true"
-                        className="flex h-1 items-center gap-0.5"
-                      >
-                        {Array.from(
-                          { length: Math.min(count, 3) },
-                          (_, dot) => (
-                            <span
-                              key={dot}
-                              className="size-1 rounded-full bg-primary"
-                            />
-                          ),
-                        )}
+                      <span className="calendar-compact-markers">
+                        <CalendarHorseMarkers horses={dayHorses} />
                       </span>
                     </Button>
+                    {!small && (
+                      <CalendarDayEventList className="calendar-month-detail">
+                        {visible.map((entry) => (
+                          <TrainingEntryLink
+                            key={entry.key}
+                            entry={entry}
+                            variant="month"
+                          />
+                        ))}
+                        {count > visible.length && (
+                          <CalendarMoreEventsButton
+                            aria-controls={agendaId}
+                            aria-label={dayLabel(date, count)}
+                            onClick={() => onSelectDate(date)}
+                          >
+                            {t('calendar.more', {
+                              count: count - visible.length,
+                            })}
+                          </CalendarMoreEventsButton>
+                        )}
+                      </CalendarDayEventList>
+                    )}
                   </CalendarDayCell>
                 )
               })}
@@ -131,7 +163,13 @@ export function TrainingMonthCalendar({
           ))}
         </CalendarGrid>
       </CalendarShell>
-      <section id={agendaId} className="grid gap-2">
+      <section
+        id={agendaId}
+        className="grid scroll-mt-4 gap-2"
+        aria-label={t('calendar.daySessions', {
+          date: formatLongDateKey(selectedDate, locale),
+        })}
+      >
         <h3 className="font-semibold">
           {formatLongDateKey(selectedDate, locale)}
         </h3>

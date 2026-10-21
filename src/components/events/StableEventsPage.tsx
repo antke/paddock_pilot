@@ -1,3 +1,4 @@
+import type { CalendarHorse } from 'shared/horses/horseCalendarColours'
 import { useT } from '#/i18n/LocaleProvider'
 import type { Doc } from 'convex/_generated/dataModel'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
@@ -20,11 +21,13 @@ export function parseEventsSearch(search: Record<string, unknown>): {
 export function StableEventsPage({
   stableId,
   events,
+  horses = [],
   view = 'calendar',
   onViewChange,
 }: {
   stableId: string
   events: Array<Doc<'events'>>
+  horses?: ReadonlyArray<CalendarHorse>
   view?: EventsView
   onViewChange: (view: EventsView) => void
 }) {
@@ -59,6 +62,7 @@ export function StableEventsPage({
         {view === 'calendar' ? (
           <StableEventsCalendar
             events={events}
+            horses={horses}
             surface="flat"
             storageKey={`paddock:events:${stableId}:month`}
           />

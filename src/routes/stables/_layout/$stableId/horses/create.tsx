@@ -32,6 +32,7 @@ function RouteComponent() {
   return (
     <HorseProfileForm
       providers={directory.providers}
+      colourRoster={horses}
       key={stableId}
       mode="create"
       ownerSuggestionScope={{ stableId }}

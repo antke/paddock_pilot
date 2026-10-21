@@ -5,7 +5,7 @@ import { defaultTrainingDetails, getTrainingStatus } from './trainingSchema'
 
 export type TrainingHorse = Pick<
   Doc<'horses'>,
-  '_id' | 'name' | 'nickname' | 'useNickname'
+  '_id' | 'name' | 'nickname' | 'useNickname' | 'calendarColourId'
 > & {
   canRecord?: boolean
 }

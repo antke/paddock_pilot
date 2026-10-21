@@ -644,3 +644,57 @@ describe('saved horse contacts', () => {
     )
   })
 })
+
+it('saves a chosen calendar colour separately from the horse coat colour', async () => {
+  const { form, props } = setup({
+    initialValues: { ...initialValues, color: 'Bay', calendarColourId: 'sage' },
+  })
+  fireEvent.click(screen.getByRole('button', { name: /Profile & health/ }))
+  fireEvent.click(screen.getByRole('button', { name: 'Sky' }))
+  fireEvent.submit(form)
+  await waitFor(() => expect(props.save).toHaveBeenCalledTimes(1))
+  expect(vi.mocked(props.save).mock.calls[0][0]).toMatchObject({
+    color: 'Bay',
+    calendarColourId: 'sky',
+  })
+})
+
+it('validates custom colour drafts and saves the exact normalised colour', async () => {
+  const { form, props } = setup({
+    initialValues: { ...initialValues, calendarColourId: 'sage' },
+  })
+  fireEvent.click(screen.getByRole('button', { name: /Profile & health/ }))
+  fireEvent.click(screen.getByRole('button', { name: 'Custom colour' }))
+  const hex = screen.getByLabelText('Hex colour')
+  fireEvent.change(hex, { target: { value: '#zz1234' } })
+  expect(
+    screen.getByRole('button', { name: 'Use colour' }).hasAttribute('disabled'),
+  ).toBe(true)
+  await screen.findByText(
+    'Choose a preset or enter a six-digit hex colour, such as #347653.',
+  )
+  expect(props.save).not.toHaveBeenCalled()
+  fireEvent.change(hex, { target: { value: '#a23bc4' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Use colour' }))
+  fireEvent.submit(form)
+  await waitFor(() => expect(props.save).toHaveBeenCalledTimes(1))
+  expect(vi.mocked(props.save).mock.calls[0][0].calendarColourId).toBe(
+    '#A23BC4',
+  )
+})
+
+it('lets a preset replace a custom colour without retaining an invalid hex draft', async () => {
+  const { form, props } = setup({
+    initialValues: { ...initialValues, calendarColourId: '#A23BC4' },
+  })
+  fireEvent.click(screen.getByRole('button', { name: /Profile & health/ }))
+  fireEvent.click(screen.getByRole('button', { name: 'Custom colour' }))
+  fireEvent.change(screen.getByLabelText('Hex colour'), {
+    target: { value: '#bad' },
+  })
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Sky' }))
+  fireEvent.submit(form)
+  await waitFor(() => expect(props.save).toHaveBeenCalledTimes(1))
+  expect(vi.mocked(props.save).mock.calls[0][0].calendarColourId).toBe('sky')
+})

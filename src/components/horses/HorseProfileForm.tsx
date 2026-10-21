@@ -1,3 +1,5 @@
+import { nextHorseCalendarColour } from 'shared/horses/horseCalendarColours'
+import type { CalendarHorse } from 'shared/horses/horseCalendarColours'
 import type { PersonNameSuggestion } from '#/components/forms/PersonNameAutocomplete'
 import type { ProviderOption } from '#/components/ui/provider-autocomplete'
 import type { PersonNameScope } from '#/components/forms/PersonNameField'
@@ -24,6 +26,7 @@ import { Button } from '#/components/ui/button'
 import { UnsavedChangesGuard } from '#/components/forms/UnsavedChangesGuard'
 
 type HorseProfileFormProps = {
+  colourRoster?: ReadonlyArray<CalendarHorse>
   providers?: Array<ProviderOption>
   contactMode?: 'linked' | 'copied'
   breedSuggestions?: ReadonlyArray<string>
@@ -47,6 +50,7 @@ type HorseProfileFormProps = {
 /** Shared route and specimen lifecycle; photo, save and navigation acknowledge separately. */
 export function HorseProfileForm({
   mode,
+  colourRoster = [],
   providers = [],
   contactMode = 'linked',
   initialValues,
@@ -96,7 +100,10 @@ export function HorseProfileForm({
       createHorseFormSchema(existingBreed, additionalBreeds, locale),
     ),
     mode: 'onTouched',
-    defaultValues: horseProfileDefaults(initialValues),
+    defaultValues: horseProfileDefaults({
+      calendarColourId: nextHorseCalendarColour(colourRoster),
+      ...initialValues,
+    }),
   })
   useLocalizedValidation(form)
   const { trigger } = form
@@ -259,6 +266,7 @@ export function HorseProfileForm({
       />
       <HorseFormFields
         control={form.control}
+        colourRoster={colourRoster}
         providers={providers}
         ownerSuggestions={ownerSuggestions}
         ownerSuggestionScope={ownerSuggestionScope}

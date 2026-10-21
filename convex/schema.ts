@@ -529,6 +529,8 @@ export const horsesFields = {
     v.union(v.literal('mare'), v.literal('gelding'), v.literal('stallion')),
   ),
   color: v.optional(v.string()),
+  // Preset tokens or six-digit hex; both are validated by horseInputSchema.
+  calendarColourId: v.optional(v.string()),
   height: v.optional(v.string()),
   dateOfBirth: v.optional(v.string()),
   passportNumber: v.optional(v.string()),

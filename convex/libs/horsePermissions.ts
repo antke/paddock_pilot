@@ -160,6 +160,7 @@ export const horseRosterSummary = (horse: Doc<'horses'>): Doc<'horses'> => ({
   name: horse.name,
   nickname: horse.nickname,
   useNickname: horse.useNickname,
+  calendarColourId: horse.calendarColourId,
   age: horse.age,
   breed: horse.breed,
   sex: horse.sex,

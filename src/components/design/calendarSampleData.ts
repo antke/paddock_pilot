@@ -1,3 +1,4 @@
+import type { CalendarHorse } from 'shared/horses/horseCalendarColours'
 import type { Id } from 'convex/_generated/dataModel'
 import type { StableDashboardEvent } from '#/components/stables/stableDashboardDates'
 import { formatDateKey } from '#/lib/dateDisplay'
@@ -53,7 +54,12 @@ export function createCalendarSampleEvents(
     _creationTime: 0,
     stableId: 'sample-calendar-stable' as Id<'stables'>,
     createdBy: 'sample-calendar-user' as Id<'users'>,
-    horseIds: [],
+    horseIds:
+      id === 'spanning'
+        ? calendarSampleHorses.map((horse) => horse._id as Id<'horses'>)
+        : id === 'weekly'
+          ? []
+          : [calendarSampleHorses[day % 3]._id as Id<'horses'>],
     title,
     date: date(day),
     time,
@@ -136,3 +142,9 @@ export function createCalendarSampleEvents(
     event('second-3', 'Evening checks', 21, '17:00'),
   ]
 }
+
+export const calendarSampleHorses: Array<CalendarHorse> = [
+  { _id: 'sample-horse-zapi', name: 'Zapi', calendarColourId: 'sage' },
+  { _id: 'sample-horse-luna', name: 'Luna', calendarColourId: 'violet' },
+  { _id: 'sample-horse-amber', name: 'Amber', calendarColourId: 'amber' },
+]

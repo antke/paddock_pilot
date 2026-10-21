@@ -39,8 +39,8 @@ export function calendarDayCellClassName({
   className?: string
 } = {}) {
   return cn(
-    'h-40 min-w-0 border-r border-b border-border-subtle last:border-r-0 md:pointer-coarse:h-56',
-    muted ? 'bg-surface-muted' : 'bg-surface-elevated p-2.5',
+    'h-[var(--calendar-row-height,120px)] min-w-0 border-r border-b border-border-subtle last:border-r-0 pointer-coarse:min-h-40',
+    muted ? 'bg-surface-muted' : 'bg-surface-elevated p-1.5',
     isToday && 'bg-surface-muted',
     isSelected && 'bg-selection-surface ring-2 ring-inset ring-selection',
     className,
@@ -69,7 +69,7 @@ export function calendarDayNumberClassName({
 }
 
 export function calendarDayHeaderClassName(className?: string) {
-  return cn('mb-2 flex items-center justify-between gap-2', className)
+  return cn('mb-1 flex items-center justify-between gap-2', className)
 }
 
 export function calendarDayEventListClassName(className?: string) {
