@@ -5,7 +5,7 @@ export const trainingViews = {
   markIncompleteFor: 'Oznacz jako nieukończony: {{horse}} · {{title}}',
   markedComplete: 'Trening oznaczony jako ukończony.',
   markedIncomplete: 'Trening oznaczony jako nieukończony.',
-  recordCompleted: 'Dodaj zapis treningu',
+  recordCompleted: 'Dodaj trening',
   moreDetails: 'Więcej szczegółów',
   changeDetails: 'Zmień szczegóły treningu',
   titleHelp: 'Pozostaw puste, aby użyć rodzaju pracy.',
@@ -21,7 +21,7 @@ export const trainingViews = {
 
   audit: '{{horse}}: {{status}} · {{date}}',
   updateRecord: 'Zaktualizuj zapis treningu',
-  record: 'Dodaj zapis treningu',
+  record: 'Dodaj trening',
   focus: 'Ćwiczenia / cel',
   outcome: 'Przebieg treningu',
   nextFocus: 'Cel kolejnego treningu',

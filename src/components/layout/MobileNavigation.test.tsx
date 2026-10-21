@@ -66,7 +66,7 @@ it('has stable destinations, selected page semantics and a focus-restoring menu 
     '/stables/sample',
   )
   expect(
-    screen.getByRole('link', { name: 'Training log' }).getAttribute('href'),
+    screen.getByRole('link', { name: 'Training' }).getAttribute('href'),
   ).toBe('/stables/sample/training')
   const more = screen.getByRole('button', { name: 'Open navigation menu' })
   act(() => more.focus())
@@ -81,7 +81,7 @@ it('has stable destinations, selected page semantics and a focus-restoring menu 
 })
 it('uses personal destinations without a stable and removes navigation on task screens', async () => {
   await setup('/horses')
-  expect(await screen.findByRole('link', { name: 'Training log' })).toBeTruthy()
+  expect(await screen.findByRole('link', { name: 'Training' })).toBeTruthy()
   expect(screen.queryByRole('link', { name: 'Today' })).toBeNull()
   cleanup()
   await setup('/stables/sample/events/create', 'sample')
@@ -96,7 +96,7 @@ it.each(['/', '/horses/sample', '/events', '/training'])(
     expect(home.getAttribute('href')).toBe('/')
     expect(screen.queryByRole('link', { name: 'My horses' })).toBeNull()
     expect(
-      screen.getByRole('link', { name: 'Training log' }).getAttribute('href'),
+      screen.getByRole('link', { name: 'Training' }).getAttribute('href'),
     ).toBe('/training')
     expect(home.getAttribute('aria-current')).toBe(
       path === '/' || path.startsWith('/horses') ? 'page' : null,

@@ -221,13 +221,13 @@ it('persists collapse across remounts and expands from the drawer with restored 
   )
 })
 
-it('uses one icon-only mobile opener and restores focus from the full-screen menu', async () => {
+it('uses one labelled mobile opener and restores focus from the full-screen menu', async () => {
   setViewport(390)
   await setup('/stables/stable-a/events')
   const sidebar = await screen.findByRole('complementary', { name: 'Menu' })
   const expectedHrefs = navigationHrefs(sidebar)
   const menu = screen.getByRole('button', { name: 'Open navigation menu' })
-  expect(menu.textContent).toBe('')
+  expect(menu.textContent).toBe('Menu')
   expect(menu.closest('[data-slot="mobile-app-navigation"]')).toBeTruthy()
   expect(
     within(

@@ -1,5 +1,7 @@
 export const navigationShell = {
   menu: 'Menu',
+  mobileHome: 'Home',
+  mobileTraining: 'Training',
   openMenu: 'Open navigation menu',
   closeMenu: 'Close navigation menu',
   collapseSidebar: 'Collapse sidebar',

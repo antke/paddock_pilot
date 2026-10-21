@@ -201,8 +201,8 @@ export function MobileNavigationView({
   const base = `/stables/${stableId}`
   const itemClass = (active: boolean) =>
     cn(
-      'app-navigation-item app-control-focus flex min-h-14 min-w-0 flex-col items-center justify-start gap-1 rounded-row border border-transparent px-0 py-2 text-center text-xs leading-tight text-muted-foreground [&_svg]:size-5 [&_svg]:shrink-0',
-      active && 'bg-selection-surface font-semibold text-foreground',
+      'app-navigation-item app-control-focus grid min-h-14 min-w-0 grid-rows-[1.5rem_auto] content-start items-center justify-items-center gap-1 rounded-control border-0 px-0 py-1.5 text-center text-[0.75rem] leading-4 font-medium text-muted-foreground [&_svg]:size-5.5 [&_svg]:shrink-0',
+      active && 'bg-selection-surface font-bold text-foreground',
     )
   const personalHomeSelected =
     pathname === '/' ||
@@ -258,9 +258,11 @@ export function MobileNavigationView({
                     : undefined
                 }
               >
-                <HomeIcon aria-hidden="true" />
-                <span className="min-h-[2lh] w-full wrap-anywhere">
-                  {t('navigation.home')}
+                <MobileNavigationIcon>
+                  <HomeIcon aria-hidden="true" />
+                </MobileNavigationIcon>
+                <span className="w-full wrap-anywhere">
+                  {t('navigationShell.mobileHome')}
                 </span>
               </Link>
               <Link
@@ -271,8 +273,10 @@ export function MobileNavigationView({
                   pathname.startsWith(`${base}/events`) ? 'page' : undefined
                 }
               >
-                <EventIcon aria-hidden="true" />
-                <span className="min-h-[2lh] w-full wrap-anywhere">
+                <MobileNavigationIcon>
+                  <EventIcon aria-hidden="true" />
+                </MobileNavigationIcon>
+                <span className="w-full wrap-anywhere">
                   {t('dashboard.events')}
                 </span>
               </Link>
@@ -284,9 +288,11 @@ export function MobileNavigationView({
                   pathname.startsWith(`${base}/training`) ? 'page' : undefined
                 }
               >
-                <TrainingIcon aria-hidden="true" />
-                <span className="min-h-[2lh] w-full wrap-anywhere">
-                  {t('navigation.training')}
+                <MobileNavigationIcon>
+                  <TrainingIcon aria-hidden="true" />
+                </MobileNavigationIcon>
+                <span className="w-full wrap-anywhere">
+                  {t('navigationShell.mobileTraining')}
                 </span>
               </Link>
               <Link
@@ -297,8 +303,10 @@ export function MobileNavigationView({
                   pathname.startsWith(`${base}/horses`) ? 'page' : undefined
                 }
               >
-                <HorseIcon aria-hidden="true" />
-                <span className="min-h-[2lh] w-full wrap-anywhere">
+                <MobileNavigationIcon>
+                  <HorseIcon aria-hidden="true" />
+                </MobileNavigationIcon>
+                <span className="w-full wrap-anywhere">
                   {t('navigation.horses')}
                 </span>
               </Link>
@@ -311,9 +319,11 @@ export function MobileNavigationView({
                 className={itemClass(personalHomeSelected)}
                 aria-current={personalHomeSelected ? 'page' : undefined}
               >
-                <HomeIcon aria-hidden="true" />
-                <span className="min-h-[2lh] w-full wrap-anywhere">
-                  {t('navigation.home')}
+                <MobileNavigationIcon>
+                  <HomeIcon aria-hidden="true" />
+                </MobileNavigationIcon>
+                <span className="w-full wrap-anywhere">
+                  {t('navigationShell.mobileHome')}
                 </span>
               </Link>
               <Link
@@ -323,8 +333,10 @@ export function MobileNavigationView({
                   pathname.startsWith('/events') ? 'page' : undefined
                 }
               >
-                <EventIcon aria-hidden="true" />
-                <span className="min-h-[2lh] w-full wrap-anywhere">
+                <MobileNavigationIcon>
+                  <EventIcon aria-hidden="true" />
+                </MobileNavigationIcon>
+                <span className="w-full wrap-anywhere">
                   {t('dashboard.events')}
                 </span>
               </Link>
@@ -335,9 +347,11 @@ export function MobileNavigationView({
                   pathname.startsWith('/training') ? 'page' : undefined
                 }
               >
-                <TrainingIcon aria-hidden="true" />
-                <span className="min-h-[2lh] w-full wrap-anywhere">
-                  {t('navigation.training')}
+                <MobileNavigationIcon>
+                  <TrainingIcon aria-hidden="true" />
+                </MobileNavigationIcon>
+                <span className="w-full wrap-anywhere">
+                  {t('navigationShell.mobileTraining')}
                 </span>
               </Link>
             </>
@@ -350,7 +364,12 @@ export function MobileNavigationView({
                 className={itemClass(moreSelected)}
                 aria-label={t('navigationShell.openMenu')}
               >
-                <ListIcon aria-hidden="true" className="size-5" />
+                <MobileNavigationIcon>
+                  <ListIcon aria-hidden="true" className="size-5.5" />
+                </MobileNavigationIcon>
+                <span className="w-full wrap-anywhere">
+                  {t('navigationShell.menu')}
+                </span>
               </Button>,
             )
           ) : (
@@ -366,7 +385,12 @@ export function MobileNavigationView({
                   className={itemClass(moreSelected)}
                   aria-label={t('navigationShell.openMenu')}
                 >
-                  <ListIcon aria-hidden="true" className="size-5" />
+                  <MobileNavigationIcon>
+                    <ListIcon aria-hidden="true" className="size-5.5" />
+                  </MobileNavigationIcon>
+                  <span className="w-full wrap-anywhere">
+                    {t('navigationShell.menu')}
+                  </span>
                 </Button>
               }
             >
@@ -451,6 +475,17 @@ export function MobileNavigationView({
         </nav>
       )}
     </div>
+  )
+}
+
+function MobileNavigationIcon({ children }: { children: ReactNode }) {
+  return (
+    <span
+      data-slot="mobile-navigation-icon"
+      className="flex h-6 items-center justify-center"
+    >
+      {children}
+    </span>
   )
 }
 

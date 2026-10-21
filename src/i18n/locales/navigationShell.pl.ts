@@ -1,5 +1,7 @@
 export const navigationShell = {
   menu: 'Menu',
+  mobileHome: 'Start',
+  mobileTraining: 'Treningi',
   openMenu: 'Otwórz menu nawigacji',
   closeMenu: 'Zamknij menu nawigacji',
   collapseSidebar: 'Zwiń panel boczny',
