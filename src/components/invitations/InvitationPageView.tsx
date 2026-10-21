@@ -35,6 +35,7 @@ type Props = {
   onAccept?: () => Promise<void>
   onDecline?: () => Promise<void>
   authActions?: AuthActions
+  emailRecovery?: ReactNode
   sample?: boolean
 }
 
@@ -63,6 +64,7 @@ export function InvitationPageView({
   onAccept,
   onDecline,
   authActions = {},
+  emailRecovery,
   sample = false,
 }: Props) {
   const t = useT()
@@ -207,12 +209,14 @@ export function InvitationPageView({
           {authActions.switchAccount}
         </InvitationNotice>
       ) : (
-        <InvitationNotice
-          title={t('invitationFlow.emailUnavailable')}
-          description={t('invitationFlow.emailUnavailableHelp')}
-        >
-          {authActions.refreshAccount}
-        </InvitationNotice>
+        (emailRecovery ?? (
+          <InvitationNotice
+            title={t('invitationFlow.emailUnavailable')}
+            description={t('invitationFlow.emailUnavailableHelp')}
+          >
+            {authActions.refreshAccount}
+          </InvitationNotice>
+        ))
       )
     else
       content = (

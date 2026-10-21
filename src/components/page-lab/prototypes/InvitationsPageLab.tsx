@@ -6,6 +6,7 @@ import { DashboardInlinePanel } from '#/components/dashboard/DashboardInlinePane
 import { Field, FieldGrid, FieldLabel } from '#/components/ui/field'
 import { Select } from '#/components/ui/select'
 import { Button } from '#/components/ui/button'
+import { InvitationEmailRecoveryView } from '#/components/invitations/InvitationEmailRecovery'
 import {
   InvitationPageView,
   InvitationQueryErrorView,
@@ -88,6 +89,8 @@ function InvitationSample({
   const [pending, setPending] = useState(false)
   const [queryFailed, setQueryFailed] = useState(scenario === 'query-error')
   const [authMessage, setAuthMessage] = useState('')
+  const [emailVerified, setEmailVerified] = useState(false)
+  const verificationComplete = useRef(false)
   const generation = useRef(0)
   useEffect(
     () => () => {
@@ -122,7 +125,10 @@ function InvitationSample({
       {label}
     </Button>
   )
-  const preview = createInvitationSample(data, scenario)
+  const preview = createInvitationSample(
+    data,
+    emailVerified ? 'pending' : scenario,
+  )
   return (
     <>
       <FieldGrid>
@@ -163,6 +169,26 @@ function InvitationSample({
           sample
           onAccept={respond}
           onDecline={respond}
+          emailRecovery={
+            <InvitationEmailRecoveryView
+              email="member@example.com"
+              needsVerification
+              onSend={respond}
+              onVerify={async () => {
+                await respond()
+                verificationComplete.current = true
+              }}
+              onRefresh={async () => {
+                await respond()
+                if (verificationComplete.current) setEmailVerified(true)
+              }}
+              onManage={() =>
+                setAuthMessage(
+                  'Account settings are unavailable in this local sample.',
+                )
+              }
+            />
+          }
           authActions={{
             signIn: authButton('Sign in'),
             signUp: authButton('Create account'),

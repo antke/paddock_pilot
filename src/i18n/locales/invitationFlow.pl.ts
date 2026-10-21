@@ -1,4 +1,27 @@
 export const invitationFlow = {
+  verifyEmailTitle: 'Zweryfikuj e-mail, aby dołączyć',
+  verifyEmailHelp:
+    'Wpisz kod potwierdzający z wiadomości e-mail. Jeśli kod wygasł lub nie działa, poproś tutaj o nowy.',
+  emailRefreshHelp:
+    'Odśwież konto, aby sprawdzić zweryfikowany adres e-mail. Możesz też otworzyć ustawienia konta, aby dodać lub zweryfikować adres.',
+  verificationCode: 'Kod potwierdzający',
+  verifyEmail: 'Zweryfikuj e-mail',
+  verifyingEmail: 'Weryfikowanie…',
+  sendNewCode: 'Wyślij nowy kod',
+  sendingCode: 'Wysyłanie kodu…',
+  codeSent:
+    'Nowy kod został wysłany. Sprawdź skrzynkę odbiorczą i folder spam, a następnie wpisz najnowszy kod powyżej.',
+  verifyEmailFailed:
+    'Nie udało się zweryfikować kodu. Spróbuj ponownie lub poproś o nowy kod, jeśli poprzedni wygasł.',
+  sendCodeFailed:
+    'Nie udało się wysłać kodu. Sprawdź połączenie i spróbuj ponownie za chwilę.',
+  refreshAccountFailed:
+    'Nie udało się odświeżyć konta. Sprawdź połączenie i spróbuj ponownie.',
+  refreshingAccount: 'Odświeżanie konta…',
+  accountRefreshed:
+    'Konto zostało odświeżone. Jeśli zaproszenie nadal jest niedostępne, sprawdź weryfikację adresu e-mail w ustawieniach konta.',
+  manageAccount: 'Otwórz ustawienia konta',
+
   switchAccount: 'Zmień konto',
   refreshAccount: 'Odśwież konto',
   unavailable: 'Zaproszenie niedostępne',

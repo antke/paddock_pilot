@@ -186,6 +186,63 @@ describe('invited account lifecycle', () => {
     ).rejects.toThrow('invited email')
   })
 
+  it('unblocks a newly verified email after server sync even with a pre-verification token', async () => {
+    const { t, memberId } = await fixture()
+    await t.run((ctx) => ctx.db.patch(memberId, { verifiedEmails: [] }))
+    const member = t.withIdentity({
+      ...identity('member', 'member@example.com'),
+      emailVerified: false,
+    })
+    expect(
+      await member.query(api.stableInvitations.preview, {
+        token: 'invitation-token',
+      }),
+    ).toMatchObject({ viewer: { hasEmail: false, emailMatches: false } })
+    await expect(
+      member.mutation(api.stableInvitations.accept, {
+        token: 'invitation-token',
+      }),
+    ).rejects.toThrow('invited email')
+    vi.stubEnv('CLERK_SECRET_KEY', 'test-only-key')
+    getClerkUser.mockResolvedValue({
+      primaryEmailAddressId: 'primary',
+      firstName: 'Sam',
+      lastName: null,
+      imageUrl: '',
+      emailAddresses: [
+        {
+          id: 'primary',
+          emailAddress: 'member@example.com',
+          verification: { status: 'verified' },
+        },
+      ],
+    })
+    await member.action(api.users.syncCurrentUser, {})
+    expect(
+      await member.query(api.stableInvitations.preview, {
+        token: 'invitation-token',
+      }),
+    ).toMatchObject({ viewer: { hasEmail: true, emailMatches: true } })
+    await expect(
+      member.mutation(api.stableInvitations.accept, {
+        token: 'invitation-token',
+      }),
+    ).resolves.toMatchObject({ status: 'accepted' })
+  })
+
+  it('still rejects an unverified token when no authoritative email list exists', async () => {
+    const { t } = await fixture()
+    const member = t.withIdentity({
+      ...identity('member', 'member@example.com'),
+      emailVerified: false,
+    })
+    await expect(
+      member.mutation(api.stableInvitations.accept, {
+        token: 'invitation-token',
+      }),
+    ).rejects.toThrow('invited email')
+  })
+
   it('declines once without granting membership and allows creating a stable afterward', async () => {
     const { asMember, t, invitationId } = await fixture()
     await asMember.mutation(api.stableInvitations.decline, {

@@ -1,4 +1,27 @@
 export const invitationFlow = {
+  verifyEmailTitle: 'Verify your email to join',
+  verifyEmailHelp:
+    'Enter the confirmation code from your email. If it has expired or does not work, request a new code here.',
+  emailRefreshHelp:
+    'Refresh your account to check for a verified email. You can also open account settings to add or verify an email address.',
+  verificationCode: 'Confirmation code',
+  verifyEmail: 'Verify email',
+  verifyingEmail: 'Verifying…',
+  sendNewCode: 'Send a new code',
+  sendingCode: 'Sending code…',
+  codeSent:
+    'A new code has been sent. Check your inbox and spam folder, then enter the latest code above.',
+  verifyEmailFailed:
+    'We couldn’t verify that code. Try again, or request a new code if it has expired.',
+  sendCodeFailed:
+    'We couldn’t send a code. Check your connection and try again shortly.',
+  refreshAccountFailed:
+    'We couldn’t refresh your account. Check your connection and try refreshing again.',
+  refreshingAccount: 'Refreshing account…',
+  accountRefreshed:
+    'Account refreshed. If the invitation is still blocked, check your email verification in account settings.',
+  manageAccount: 'Open account settings',
+
   switchAccount: 'Switch account',
   refreshAccount: 'Refresh account',
   unavailable: 'Invitation unavailable',

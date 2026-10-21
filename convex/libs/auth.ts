@@ -28,11 +28,17 @@ export const getInvitationEmails = async (
 ) => {
   const identity = await requireAuth(ctx)
   const identityEmail = identity.email?.trim().toLowerCase()
+  // The server-synced Clerk list is authoritative. A session token issued
+  // before verification can still contain emailVerified: false.
   const emails =
-    user.verifiedEmails ?? (identityEmail ? [identityEmail] : [user.email])
+    user.verifiedEmails ??
+    (identityEmail
+      ? identity.emailVerified === false
+        ? []
+        : [identityEmail]
+      : [user.email])
 
   return [...new Set(emails.map((email) => email.trim().toLowerCase()))].filter(
-    (email) =>
-      email && !(email === identityEmail && identity.emailVerified === false),
+    Boolean,
   )
 }

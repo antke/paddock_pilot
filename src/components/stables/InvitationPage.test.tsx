@@ -35,8 +35,15 @@ const state = vi.hoisted(() => ({
   },
   accept: vi.fn(),
   decline: vi.fn(),
+  sync: vi.fn(),
+  reload: vi.fn(),
+  prepareVerification: vi.fn(),
+  attemptVerification: vi.fn(),
+  openUserProfile: vi.fn(),
+  emailStatus: 'unverified',
 }))
 vi.mock('convex/react', () => ({
+  useAction: () => state.sync,
   useMutation: (reference: Parameters<typeof getFunctionName>[0]) =>
     getFunctionName(reference) === 'stableInvitations:accept'
       ? state.accept
@@ -46,6 +53,21 @@ vi.mock('#/components/layout/AuthStateSwitch', () => ({
   AuthStateSwitch: ({ signedIn }: { signedIn: ReactNode }) => signedIn,
 }))
 vi.mock('@clerk/tanstack-react-start', () => ({
+  useClerk: () => ({ openUserProfile: state.openUserProfile }),
+  useUser: () => ({
+    isLoaded: true,
+    user: {
+      id: 'member',
+      reload: state.reload,
+      primaryEmailAddress: {
+        id: 'email',
+        emailAddress: 'member@example.com',
+        verification: { status: state.emailStatus },
+        prepareVerification: state.prepareVerification,
+        attemptVerification: state.attemptVerification,
+      },
+    },
+  }),
   SignOutButton: ({
     children,
     redirectUrl,
@@ -82,6 +104,14 @@ beforeEach(() => {
   }
   state.accept.mockReset().mockResolvedValue({ stableId: 'yard-id' })
   state.decline.mockReset().mockResolvedValue(undefined)
+  state.sync.mockReset().mockResolvedValue('member')
+  state.reload.mockReset().mockResolvedValue(undefined)
+  state.prepareVerification.mockReset().mockResolvedValue(undefined)
+  state.attemptVerification
+    .mockReset()
+    .mockResolvedValue({ verification: { status: 'verified' } })
+  state.openUserProfile.mockReset()
+  state.emailStatus = 'unverified'
 })
 afterEach(() => {
   cleanup()
@@ -164,13 +194,117 @@ describe('invitation response page', () => {
     ).toBeNull()
   })
 
-  it('does not mislabel a missing account email as a different account', () => {
+  it('offers code entry for an unverified account without sending another email automatically', () => {
     state.preview.viewer.emailMatches = false
     state.preview.viewer.hasEmail = false
     renderInvitationPage()
     expect(
-      screen.getByText('Your account email is not available yet'),
+      screen.getByRole('heading', { name: 'Verify your email to join' }),
     ).toBeTruthy()
+    expect(
+      screen.getByRole('textbox', { name: 'Confirmation code' }),
+    ).toBeTruthy()
+    expect(state.prepareVerification).not.toHaveBeenCalled()
     expect(screen.queryByRole('button', { name: 'Switch account' })).toBeNull()
+  })
+
+  function renderRecovery() {
+    state.preview.viewer.emailMatches = false
+    state.preview.viewer.hasEmail = false
+    renderInvitationPage()
+  }
+
+  it('verifies an existing code and then syncs the account without accepting automatically', async () => {
+    renderRecovery()
+    fireEvent.change(
+      screen.getByRole('textbox', { name: 'Confirmation code' }),
+      { target: { value: '012345' } },
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Verify email' }))
+    await waitFor(() => expect(state.sync).toHaveBeenCalledWith({}))
+    expect(state.attemptVerification).toHaveBeenCalledWith({ code: '012345' })
+    expect(state.reload).toHaveBeenCalledOnce()
+    expect(state.accept).not.toHaveBeenCalled()
+    expect(
+      screen.queryByRole('textbox', { name: 'Confirmation code' }),
+    ).toBeNull()
+  })
+
+  it('retains an invalid code and offers a new code without syncing', async () => {
+    state.attemptVerification.mockRejectedValue(new Error('Expired code'))
+    renderRecovery()
+    const input = screen.getByRole<HTMLInputElement>('textbox', {
+      name: 'Confirmation code',
+    })
+    fireEvent.change(input, { target: { value: '012345' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Verify email' }))
+    expect((await screen.findByRole('alert')).textContent).toContain(
+      'couldn’t verify',
+    )
+    expect(input.value).toBe('012345')
+    expect(state.sync).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Send a new code' }))
+    await waitFor(() =>
+      expect(state.prepareVerification).toHaveBeenCalledWith({
+        strategy: 'email_code',
+      }),
+    )
+    await waitFor(() => expect(input.value).toBe(''))
+    expect(document.activeElement).toBe(input)
+  })
+
+  it('keeps a verified email verified when sync fails and retries the sync', async () => {
+    state.sync.mockRejectedValueOnce(new Error('Offline'))
+    renderRecovery()
+    fireEvent.change(
+      screen.getByRole('textbox', { name: 'Confirmation code' }),
+      { target: { value: '012345' } },
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Verify email' }))
+    expect((await screen.findByRole('alert')).textContent).toContain(
+      'couldn’t refresh',
+    )
+    expect(screen.queryByRole('textbox')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh account' }))
+    await waitFor(() => expect(state.sync).toHaveBeenCalledTimes(2))
+    expect(state.attemptVerification).toHaveBeenCalledOnce()
+  })
+
+  it('refreshes an already verified account and provides account settings', async () => {
+    state.emailStatus = 'verified'
+    renderRecovery()
+    expect(screen.queryByRole('textbox')).toBeNull()
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Open account settings' }),
+    )
+    expect(state.openUserProfile).toHaveBeenCalledOnce()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh account' }))
+    await waitFor(() => expect(state.sync).toHaveBeenCalledOnce())
+    expect(state.reload).toHaveBeenCalledOnce()
+  })
+
+  it('prevents duplicate submissions while verification is pending', async () => {
+    let resolve!: (result: unknown) => void
+    state.attemptVerification.mockReturnValue(
+      new Promise((done) => {
+        resolve = done
+      }),
+    )
+    renderRecovery()
+    fireEvent.change(
+      screen.getByRole('textbox', { name: 'Confirmation code' }),
+      { target: { value: '012345' } },
+    )
+    const button = screen.getByRole('button', { name: 'Verify email' })
+    fireEvent.click(button)
+    fireEvent.click(button)
+    expect(state.attemptVerification).toHaveBeenCalledOnce()
+    expect(
+      screen.getByRole<HTMLButtonElement>('button', {
+        name: 'Send a new code',
+      }).disabled,
+    ).toBe(true)
+    resolve({ verification: { status: 'verified' } })
+    await waitFor(() => expect(state.sync).toHaveBeenCalledOnce())
   })
 })

@@ -24,6 +24,7 @@ import {
   InvitationQueryErrorView,
 } from '#/components/invitations/InvitationPageView'
 import type { InvitationPreview } from '#/components/invitations/InvitationPageView'
+import { InvitationEmailRecovery } from '#/components/invitations/InvitationEmailRecovery'
 
 export const Route = createFileRoute('/invitations/$token')({
   component: InvitationPage,
@@ -104,6 +105,7 @@ function ConnectedInvitation({
     <InvitationPageView
       preview={preview}
       signedIn
+      emailRecovery={<InvitationEmailRecovery />}
       onAccept={async () => {
         await accept({ token })
       }}
@@ -117,11 +119,6 @@ function ConnectedInvitation({
               {t('invitationFlow.switchAccount')}
             </Button>
           </SignOutButton>
-        ),
-        refreshAccount: (
-          <Button type="button" onClick={() => window.location.reload()}>
-            {t('invitationFlow.refreshAccount')}
-          </Button>
         ),
       }}
     />
