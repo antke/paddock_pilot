@@ -1,6 +1,11 @@
 import { StateFeedback } from '#/components/motion/StateFeedback'
 import { useT } from '#/i18n/LocaleProvider'
-import { CheckIcon, ClockCounterClockwiseIcon } from '@phosphor-icons/react'
+import {
+  CaretDownIcon,
+  CheckIcon,
+  ClockCounterClockwiseIcon,
+} from '@phosphor-icons/react'
+import { useId, useState } from 'react'
 import type { ComponentProps, CSSProperties } from 'react'
 
 import { cn } from '#/lib/utils'
@@ -26,6 +31,11 @@ export function OnboardingStepper({
   ...props
 }: OnboardingStepperProps) {
   const t = useT()
+  const listId = useId()
+  const currentIndex = steps.findIndex((step) => step.status === 'current')
+  const current = steps[currentIndex]
+  const [expandedStep, setExpandedStep] = useState<string>()
+  const expanded = expandedStep !== undefined && expandedStep === current?.id
 
   return (
     <nav
@@ -37,8 +47,32 @@ export function OnboardingStepper({
       )}
       {...props}
     >
+      {current && (
+        <button
+          type="button"
+          aria-expanded={expanded}
+          aria-controls={listId}
+          className="app-control-focus flex min-h-14 w-full items-center gap-3 bg-card px-4 py-3 text-left sm:hidden"
+          onClick={() => setExpandedStep(expanded ? undefined : current.id)}
+        >
+          <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
+            {currentIndex + 1} / {steps.length}
+          </span>
+          <span className="min-w-0 flex-1 text-sm font-semibold">
+            {current.label}
+          </span>
+          <CaretDownIcon
+            aria-hidden="true"
+            className={cn('size-4 shrink-0', expanded && 'rotate-180')}
+          />
+        </button>
+      )}
       <ol
-        className="grid bg-card sm:grid-cols-[repeat(var(--step-count),minmax(0,1fr))]"
+        id={listId}
+        className={cn(
+          'bg-card sm:grid sm:grid-cols-[repeat(var(--step-count),minmax(0,1fr))]',
+          current && !expanded ? 'hidden' : 'grid',
+        )}
         style={{ '--step-count': steps.length } as CSSProperties}
       >
         {steps.map((step, index) => (
@@ -59,7 +93,10 @@ export function OnboardingStepper({
                 (step.status !== 'completed' && step.status !== 'deferred')
               }
               className="app-choice-feedback app-control-focus flex min-h-16 w-full min-w-0 items-center gap-3 border border-transparent px-4 py-3 text-left outline-none ring-inset enabled:hover:bg-surface-muted disabled:pointer-events-none"
-              onClick={() => onStepSelect?.(step)}
+              onClick={() => {
+                setExpandedStep(undefined)
+                onStepSelect?.(step)
+              }}
             >
               <StepMarker index={index} status={step.status} />
               <span className="grid min-w-0 gap-0.5 text-left">

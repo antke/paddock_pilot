@@ -332,30 +332,12 @@ export const advance = internalMutation({
         await snapshot('reminder', reminder._id, reminder)
         if (reminder.status === 'pending') {
           if (transition.carryReminderIds.includes(reminder._id)) {
-            const {
-              _id: _oldId,
-              _creationTime: _created,
-              stableId: _stable,
-              sourcePlacementId: _placement,
-              eventId: _event,
-              completedBy: _completedBy,
-              completedAt: _completedAt,
-              followUpReminderId: _followUp,
-              ...values
-            } = reminder
-            const continuation = await ctx.db.insert('careReminders', {
-              ...values,
+            // Carry the canonical task; placement metadata remains provenance.
+            await ctx.db.patch(reminder._id, {
               assignedTo: transition.targetOwnerId ?? horse.ownerId,
-              createdBy:
-                transition.targetOwnerId ??
-                horse.ownerId ??
-                transition.actorUserId,
-              createdAt: Date.now(),
               updatedAt: Date.now(),
             })
-            await ctx.db.patch(reminder._id, {
-              followUpReminderId: continuation,
-            })
+            continue
           }
           await ctx.db.patch(reminder._id, {
             status: 'dismissed',
@@ -450,13 +432,14 @@ export const advance = internalMutation({
 
 export const stableHistory = query({
   args: { stableId: v.id('stables'), paginationOpts: paginationOptsValidator },
-  handler: async (ctx, { stableId, paginationOpts }) => {
+  handler: async (ctx, { stableId }) => {
     await assertCanManageStable(ctx, stableId)
-    return ctx.db
-      .query('horseSnapshots')
-      .withIndex('by_stable_id', (q) => q.eq('stableId', stableId))
-      .order('desc')
-      .paginate(paginationOpts)
+    // Retained snapshots are a recovery source for the horse, never a former-yard audience.
+    return {
+      page: [] as Array<Doc<'horseSnapshots'>>,
+      isDone: true,
+      continueCursor: '',
+    }
   },
 })
 

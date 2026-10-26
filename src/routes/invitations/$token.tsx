@@ -1,3 +1,4 @@
+import { ExistingHorseSharing } from '#/components/sharing/HistorySharing'
 import { useT } from '#/i18n/LocaleProvider'
 import { convexQuery } from '@convex-dev/react-query'
 import {
@@ -102,25 +103,32 @@ function ConnectedInvitation({
   const accept = useMutation(api.stableInvitations.accept)
   const decline = useMutation(api.stableInvitations.decline)
   return (
-    <InvitationPageView
-      preview={preview}
-      signedIn
-      emailRecovery={<InvitationEmailRecovery />}
-      onAccept={async () => {
-        await accept({ token })
-      }}
-      onDecline={async () => {
-        await decline({ token })
-      }}
-      authActions={{
-        switchAccount: (
-          <SignOutButton redirectUrl={getInvitationPath(token)}>
-            <Button type="button" variant="outline">
-              {t('invitationFlow.switchAccount')}
-            </Button>
-          </SignOutButton>
-        ),
-      }}
-    />
+    <>
+      <InvitationPageView
+        preview={preview}
+        signedIn
+        emailRecovery={<InvitationEmailRecovery />}
+        onAccept={async () => {
+          await accept({ token })
+        }}
+        onDecline={async () => {
+          await decline({ token })
+        }}
+        authActions={{
+          switchAccount: (
+            <SignOutButton redirectUrl={getInvitationPath(token)}>
+              <Button type="button" variant="outline">
+                {t('invitationFlow.switchAccount')}
+              </Button>
+            </SignOutButton>
+          ),
+        }}
+      />
+      {preview.state === 'found' &&
+      preview.status === 'accepted' &&
+      preview.viewer?.isAcceptedByViewer ? (
+        <ExistingHorseSharing stableId={preview.stableId} />
+      ) : null}
+    </>
   )
 }

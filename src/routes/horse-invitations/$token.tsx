@@ -1,3 +1,4 @@
+import { BackLink } from '#/components/ui/back-action'
 import { createFileRoute } from '@tanstack/react-router'
 import type { ErrorComponentProps } from '@tanstack/react-router'
 import {
@@ -13,7 +14,7 @@ import {
 import { AuthStateSwitch } from '#/components/layout/AuthStateSwitch'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
-import { Button, ButtonLink } from '#/components/ui/button'
+import { Button } from '#/components/ui/button'
 import { useOwnershipCopy } from '#/components/ownership/ownershipCopy'
 import { useOwnershipRecoveryCopy } from '#/components/ownership/ownershipRecoveryCopy'
 
@@ -57,6 +58,7 @@ function HorseInvitationError({ reset }: ErrorComponentProps) {
   const queryBoundary = useQueryErrorResetBoundary()
   return (
     <DashboardPage width="compact">
+      <BackLink to="/horses">{r.backHorses}</BackLink>
       <DashboardSectionCard title={r.loadError} description={r.loadErrorHelp}>
         <div className="flex flex-wrap gap-3">
           <Button
@@ -68,9 +70,6 @@ function HorseInvitationError({ reset }: ErrorComponentProps) {
             {r.retry}
           </Button>
           <AccountActions token={token} />
-          <ButtonLink to="/horses" variant="ghost">
-            {r.backHorses}
-          </ButtonLink>
         </div>
       </DashboardSectionCard>
     </DashboardPage>

@@ -80,7 +80,7 @@ describe('member and invitation interaction ownership', () => {
       await act(async () => pending[first].resolve(true))
       expect(
         rows[first]
-          .getByRole('button', { name: 'Resend' })
+          .getByRole('button', { name: 'Email queued' })
           .hasAttribute('disabled'),
       ).toBe(false)
       expect(

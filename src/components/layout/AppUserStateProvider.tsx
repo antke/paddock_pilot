@@ -1,4 +1,6 @@
-import { useLocale } from '#/i18n/LocaleProvider'
+import { WorkspaceContext } from './WorkspaceContext'
+import { stableIdFromPath } from './workspaceNavigation'
+import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { Navigate, useLocation } from '@tanstack/react-router'
 import { useAuth } from '@clerk/tanstack-react-start'
 import { api } from 'convex/_generated/api'
@@ -36,6 +38,7 @@ const AppUserStateContext = createContext<AppUserState | null>(null)
 const AppUserGateContext = createContext<ReactNode>(null)
 
 export function AppUserStateProvider({ children }: { children: ReactNode }) {
+  const t = useT()
   const { guestLocale, ready: localeReady } = useLocale()
   const { pathname, href } = useLocation()
   const { userId: clerkUserId } = useAuth()
@@ -117,7 +120,18 @@ export function AppUserStateProvider({ children }: { children: ReactNode }) {
     guestLocale,
   ])
 
-  const routeStableId = getRouteStableId(pathname)
+  const routeStableId = stableIdFromPath(pathname) as Id<'stables'> | undefined
+  const routeStable = stables.find((stable) => stable._id === routeStableId)
+  const personalRoute =
+    pathname === '/' || /^\/(horses|events|training)(\/|$)/.test(pathname)
+  const workspace = routeStableId
+    ? {
+        stableId: routeStableId,
+        label: routeStable?.name ?? t('navigation.stable'),
+      }
+    : personalRoute
+      ? { label: t('navigationShell.personal') }
+      : null
   const activeStable =
     stables.find((stable) => stable._id === routeStableId) ??
     stables.find((stable) => stable._id === preferredStableId) ??
@@ -226,7 +240,9 @@ export function AppUserStateProvider({ children }: { children: ReactNode }) {
   return (
     <AppUserStateContext.Provider value={value}>
       <AppUserGateContext.Provider value={gate}>
-        {children}
+        <WorkspaceContext.Provider value={workspace}>
+          {children}
+        </WorkspaceContext.Provider>
       </AppUserGateContext.Provider>
     </AppUserStateContext.Provider>
   )
@@ -246,11 +262,6 @@ export function useAppUserState() {
   }
 
   return state
-}
-
-function getRouteStableId(pathname: string) {
-  const match = pathname.match(/^\/stables\/([^/]+)/)
-  return match?.[1] as Id<'stables'> | undefined
 }
 
 function readStoredStableId() {

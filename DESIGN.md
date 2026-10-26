@@ -234,9 +234,9 @@ Horse Care keeps configured vet and farrier contacts in a shared reference secti
 
 Control, surface and panel shadow tokens are `none`. Hierarchy comes from surface contrast, spacing, type, selection fills and restrained record bands. Overlays use their shared stacking, border and backdrop treatments. Do not add ambient shadows to ordinary sections or records.
 
-Working-app motion uses Motion for React through `AppMotionProvider`: bounded list layout/presence, measured disclosures, shared segmented selection and local status feedback. Buttons keep stationary hit targets with interior press response. CSS owns simple control states and Base UI overlay transitions; native router View Transitions own navigation and persistent chrome. Do not animate the same node/property with two systems.
+Working-app motion uses Motion for React through `AppMotionProvider`: bounded list layout/presence, measured disclosures, continuous segmented tracks and local status feedback. Individually bordered choices fill in place; compact choices and segmented controls match regular button heights. Buttons keep stationary hit targets with interior press response. CSS owns simple control states and Base UI overlay transitions; native router View Transitions own navigation and persistent chrome. Do not animate the same node/property with two systems.
 
-Routine timing is 120–220ms with 140ms exits; confirmed care gets a 320ms drawn journal check and a modest ring only for the confirmed final outstanding item. Server results remain authoritative, including undo and retry. Initial data and background synchronization never earn completion celebrations. Reduced motion removes spatial travel and height tweening while retaining clear state feedback. See the [motion contract](src/components/motion/README.md) and [coverage/verification ledger](docs/design/motion/interaction-coverage.md) for conventions, intentional exceptions and evidence boundaries.
+Routine timing is 120–220ms with 140ms exits; dialog entrances use a six-pixel settle and slight scale, while form action contents transition through pending, confirmed and retry states without moving the button; confirmed care gets a 320ms drawn journal check and a modest ring only for the confirmed final outstanding item. Server results remain authoritative, including undo and retry. Initial data and background synchronization never earn completion celebrations. Reduced motion removes spatial travel and height tweening while retaining clear state feedback. See the [motion contract](src/components/motion/README.md) and [coverage/verification ledger](docs/design/motion/interaction-coverage.md) for conventions, intentional exceptions and evidence boundaries.
 
 ## Shapes
 
@@ -327,3 +327,7 @@ Review the remaining page families for specialized surfaces, local type override
 ### Styling ownership and exceptions
 
 Application pages inherit the approved consolidated dashboard direction through shared components. Public landing compositions keep their separate surface brief. Historical `dashboard-lab` studies retain scoped experimental CSS for comparison; production components must not import it. Print boundaries, calendar/time-grid geometry, sticky form action boundaries, input borders and overlays are functional exceptions, not alternate record designs.
+
+### Back navigation
+
+Use `BackButton` or `BackLink` from `src/components/ui/back-action.tsx` for every return control: left arrow plus localized text, transparent background, no border, and a minimum 44px touch target. Page-level back actions belong at the top left beneath the app navigation and above the title, using `DashboardPageHeader.backAction` when available. Never place them in the right-aligned primary action rail or below the form. Keep chart-local return controls with their chart context, using the same visual treatment. Preserve explicit destinations, history fallbacks, pending states, and unsaved-form protections.

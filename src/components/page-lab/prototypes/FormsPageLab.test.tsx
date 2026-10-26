@@ -6,7 +6,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createDashboardLabFixtureData } from '#/components/dashboard-lab/dashboardLabFixtures'
 import { FormsPageLab } from './FormsPageLab'
 
@@ -15,8 +15,16 @@ vi.mock('#/lib/devAuthBypass', () => ({
   useDevAuthBypassEnabled: () => fixtureAccess.enabled,
 }))
 
+beforeEach(() => {
+  vi.stubGlobal('matchMedia', () => ({
+    matches: false,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }))
+})
 afterEach(() => {
   cleanup()
+  vi.unstubAllGlobals()
   fixtureAccess.enabled = true
 })
 
@@ -95,7 +103,7 @@ describe('FormsPageLab', () => {
     fireEvent.change(screen.getByLabelText('Sample form'), {
       target: { value: 'create' },
     })
-    expect(screen.getByRole('button', { name: 'Create event' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /^Create in / })).toBeTruthy()
     expect(
       screen.getByLabelText<HTMLInputElement>('Title', { exact: true }).value,
     ).toBe('')

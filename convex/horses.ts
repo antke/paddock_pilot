@@ -1,3 +1,5 @@
+import { assertHorseWorkspace, visibleHorse } from './libs/recordCapabilities'
+import { accountDisplayName } from '../shared/users/displayName'
 import {
   getHorseCalendarColour,
   nextHorseCalendarColour,
@@ -136,7 +138,10 @@ export const list = query({
       horses.filter(isActiveHorse).map(async (horse) => {
         const access = await getHorseAccess(ctx, horse)
         const visible = access.canRead
-          ? await resolveHorseContacts(ctx, horse)
+          ? await resolveHorseContacts(
+              ctx,
+              await visibleHorse(ctx, horse, true),
+            )
           : horseRosterSummary(horse)
         return {
           ...visible,
@@ -151,7 +156,7 @@ export const list = query({
 })
 
 export const get = query({
-  args: { id: v.string() },
+  args: { id: v.string(), stableId: v.optional(v.id('stables')) },
   handler: async (ctx, args) => {
     const horseId = ctx.db.normalizeId('horses', args.id)
     if (!horseId) return null
@@ -161,9 +166,13 @@ export const get = query({
     if (!isActiveHorse(horse)) return null
 
     await assertCanReadHorse(ctx, horse)
+    await assertHorseWorkspace(ctx, horse, args.stableId)
 
     return {
-      ...(await resolveHorseContacts(ctx, horse)),
+      ...(await resolveHorseContacts(
+        ctx,
+        await visibleHorse(ctx, horse, Boolean(args.stableId)),
+      )),
       profileImageUrl: horse.profileImageId
         ? ((await ctx.storage.getUrl(horse.profileImageId)) ?? undefined)
         : undefined,
@@ -227,10 +236,7 @@ export const add = mutation({
       await assertIsStableParticipant(ctx, args.stableId, ownerId)
     const owner = await ctx.db.get(ownerId)
     if (!owner) throw new ConvexError('Horse owner not found')
-    const ownerName =
-      args.ownerName ||
-      owner.preferredName ||
-      [owner.firstName, owner.lastName].filter(Boolean).join(' ')
+    const ownerName = args.ownerName || accountDisplayName(owner, 'Horse owner')
 
     const horseInput = validateHorseInput({ ...args, ownerName })
     await validateHorseContacts(ctx, args.stableId, horseInput)
@@ -302,7 +308,17 @@ export const update = mutation({
     ) {
       await assertHorseProfileImageCanBeClaimed(ctx, horseInput.profileImageId)
     }
-    await ctx.db.patch(id, horseInput)
+    await ctx.db.patch(id, {
+      ...horseInput,
+      // Empty optional controls are omitted by Convex serialization. Explicit
+      // patch keys remove the old values instead of silently retaining them.
+      sex: horseInput.sex,
+      shoeingStatus: horseInput.shoeingStatus,
+      dateOfBirth: horseInput.dateOfBirth,
+      vetProviderId: horseInput.vetProviderId,
+      farrierProviderId: horseInput.farrierProviderId,
+      profileImageId: horseInput.profileImageId,
+    })
     if (
       horse.profileImageId &&
       horse.profileImageId !== horseInput.profileImageId
@@ -650,44 +666,7 @@ export const calendarRoster = query({
   args: {},
   handler: async (ctx) => {
     const user = await getCurrentUser(ctx)
-    const [personal, ownedStables, memberships] = await Promise.all([
-      accessibleHorses(ctx, user._id),
-      ctx.db
-        .query('stables')
-        .withIndex('by_owner_id', (q) => q.eq('ownerId', user._id))
-        .collect(),
-      ctx.db
-        .query('stableMembers')
-        .withIndex('by_user_id', (q) => q.eq('userId', user._id))
-        .collect(),
-    ])
-    const memberStables = await Promise.all(
-      memberships
-        .filter((m) => m.role === 'member')
-        .map((m) => ctx.db.get(m.stableId)),
-    )
-    const ids = [
-      ...new Set(
-        [...ownedStables, ...memberStables].flatMap((stable) =>
-          stable && stable.archivedAt === undefined ? [stable._id] : [],
-        ),
-      ),
-    ]
-    const rosters = await Promise.all(
-      ids.map((stableId) =>
-        ctx.db
-          .query('horses')
-          .withIndex('by_stable_id', (q) => q.eq('stableId', stableId))
-          .collect(),
-      ),
-    )
-    return [
-      ...new Map(
-        [...personal, ...rosters.flat()]
-          .filter(isActiveHorse)
-          .map((horse) => [horse._id, horse]),
-      ).values(),
-    ].map((horse) => ({
+    return (await accessibleHorses(ctx, user._id)).map((horse) => ({
       _id: horse._id,
       name: horse.name,
       nickname: horse.nickname,

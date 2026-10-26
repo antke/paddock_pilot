@@ -17,9 +17,7 @@ export function getDashboardAttention(data: DashboardCareData) {
         b.highIssueCount - a.highIssueCount ||
         a.horseName.localeCompare(b.horseName),
     )
-  const reminders = data.dueReminders.filter(
-    (reminder) => !data.stable || reminder.stableId === data.stable._id,
-  )
+  const reminders = data.dueReminders
   const availableIssueCount = healthHorses.reduce(
     (count, horse) => count + horse.highIssueCount,
     0,

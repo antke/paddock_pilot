@@ -1,3 +1,8 @@
+import {
+  assertHorseWorkspace,
+  readableRecords,
+  visibleHorse,
+} from './libs/recordCapabilities'
 import { horseEvent } from './libs/horseEventHistory'
 import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
@@ -20,12 +25,13 @@ const eventTimestamp = (event: Doc<'events'>) => {
 }
 
 export const listForHorse = query({
-  args: { horseId: v.id('horses') },
+  args: { horseId: v.id('horses'), stableId: v.optional(v.id('stables')) },
   handler: async (ctx, args) => {
     const horse = await ctx.db.get(args.horseId)
     if (!horse) return { horse: null, entries: [] }
 
     await assertCanReadHorse(ctx, horse)
+    await assertHorseWorkspace(ctx, horse, args.stableId)
 
     const [
       eventHorses,
@@ -41,30 +47,37 @@ export const listForHorse = query({
       ctx.db
         .query('horseHealthIssues')
         .withIndex('by_horse_id', (q) => q.eq('horseId', args.horseId))
-        .collect(),
+        .collect()
+        .then((records) => readableRecords(ctx, horse, records, args.stableId)),
       ctx.db
         .query('horseWeightRecords')
         .withIndex('by_horse_id', (q) => q.eq('horseId', args.horseId))
-        .collect(),
+        .collect()
+        .then((records) => readableRecords(ctx, horse, records, args.stableId)),
       ctx.db
         .query('horseMedicationRecords')
         .withIndex('by_horse_id', (q) => q.eq('horseId', args.horseId))
-        .collect(),
+        .collect()
+        .then((records) => readableRecords(ctx, horse, records, args.stableId)),
       ctx.db
         .query('horseNutritionLogs')
         .withIndex('by_horse_id', (q) => q.eq('horseId', args.horseId))
-        .collect(),
+        .collect()
+        .then((records) => readableRecords(ctx, horse, records, args.stableId)),
     ])
 
     const confirmedEventHorses = eventHorses.filter(isConfirmedEventHorse)
     const events = await Promise.all(
-      confirmedEventHorses.map((eventHorse) => horseEvent(ctx, eventHorse)),
+      confirmedEventHorses.map((eventHorse) =>
+        horseEvent(ctx, eventHorse, args.stableId),
+      ),
     )
 
     const trainingRecords = await ctx.db
       .query('trainingRecords')
       .withIndex('by_horse_id', (q) => q.eq('horseId', args.horseId))
       .collect()
+      .then((records) => readableRecords(ctx, horse, records, args.stableId))
     const recordedEventIds = new Set(
       trainingRecords.map((record) => record.eventId),
     )
@@ -105,7 +118,7 @@ export const listForHorse = query({
       await Promise.all(
         trainingRecords.map(async (record) => {
           const row = eventHorses.find((r) => r.eventId === record.eventId)
-          const event = row ? await horseEvent(ctx, row) : null
+          const event = row ? await horseEvent(ctx, row, args.stableId) : null
           if (!event) return null
           return {
             id: record._id,
@@ -201,6 +214,9 @@ export const listForHorse = query({
       ...nutritionEntries,
     ].sort((a, b) => b.occurredAt - a.occurredAt)
 
-    return { horse, entries }
+    return {
+      horse: await visibleHorse(ctx, horse, Boolean(args.stableId)),
+      entries,
+    }
   },
 })

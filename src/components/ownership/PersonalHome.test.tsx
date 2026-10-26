@@ -69,6 +69,8 @@ beforeEach(() => {
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
   state.reads = []
   state.queries = {
+    'events:listPendingHorseInvitations': [],
+    'horses:calendarRoster': [],
     'users:getCurrentUser': { _id: 'owner', profileCompletedAt: 1 },
     'horses:listMine': Array.from({ length: 11 }, (_, i) => ({
       _id: `horse-${i}`,
@@ -209,7 +211,11 @@ async function open(path = '/') {
 it('reuses live data across Home, Events and Training without mounting a loading screen', async () => {
   const router = await open()
   await screen.findByRole('heading', { level: 1, name: 'Home' })
-  const reads = state.reads.filter((name) => name !== 'users:getCurrentUser')
+  const reads = state.reads.filter(
+    (name) =>
+      name !== 'users:getCurrentUser' &&
+      name !== 'events:listPendingHorseInvitations',
+  )
   const pendingScreens: Element[] = []
   const observer = new MutationObserver((records) => {
     for (const record of records)
@@ -238,7 +244,11 @@ it('reuses live data across Home, Events and Training without mounting a loading
     }
     expect(pendingScreens).toHaveLength(0)
     expect(
-      state.reads.filter((name) => name !== 'users:getCurrentUser'),
+      state.reads.filter(
+        (name) =>
+          name !== 'users:getCurrentUser' &&
+          name !== 'events:listPendingHorseInvitations',
+      ),
     ).toEqual(reads)
   } finally {
     observer.disconnect()
@@ -372,12 +382,13 @@ it('hides creation actions for a workspace containing only read-only shared hors
   expect(screen.getByRole('heading', { name: 'Shared horse' })).toBeTruthy()
 })
 
-it('opens the combined training route and offers planned and completed personal sessions', async () => {
+it('opens the combined training route with one creation action beside the calendar controls', async () => {
   await open('/training')
   await screen.findByRole('heading', { level: 1, name: 'Training log' })
+  expect(screen.queryByRole('link', { name: 'Add training log' })).toBeNull()
   expect(
-    screen.getByRole('link', { name: 'Add training log' }).getAttribute('href'),
-  ).toBe('/events/create?training=true&intent=record')
+    screen.getAllByRole('link', { name: 'Add training session' }),
+  ).toHaveLength(1)
   expect(
     screen
       .getByRole('link', { name: 'Add training session' })
@@ -436,7 +447,7 @@ it('waits for every horse training subscription before presenting a complete day
   await open()
   expect(screen.queryByRole('heading', { level: 1, name: 'Home' })).toBeNull()
 })
-it('shows training in its own section and links each horse to the correct session context', async () => {
+it('shows shared training once and opens the whole session', async () => {
   for (const index of [0, 1]) {
     const horseId = `horse-${index}`
     state.queries['training:' + horseId] = {
@@ -463,11 +474,11 @@ it('shows training in its own section and links each horse to the correct sessio
   await open()
   await screen.findByRole('heading', { level: 1, name: 'Home' })
   const sessions = screen.getAllByRole('link', { name: /Morning work/ })
-  expect(sessions).toHaveLength(2)
-  expect(sessions.map((link) => link.getAttribute('href'))).toEqual([
-    expect.stringContaining('participationId=participation-0'),
-    expect.stringContaining('participationId=participation-1'),
-  ])
+  expect(sessions).toHaveLength(1)
+  expect(sessions[0].getAttribute('href')).toBe(
+    '/events/training?date=2026-10-09',
+  )
+  expect(sessions[0].textContent).toContain('Horse 1, Horse 2')
 })
 
 it('uses one mobile creation menu and keeps the page title available to screen readers', async () => {
@@ -478,7 +489,7 @@ it('uses one mobile creation menu and keeps the page title available to screen r
   }))
   await open()
   const heading = await screen.findByRole('heading', { level: 1, name: 'Home' })
-  expect(heading.classList.contains('sr-only')).toBe(true)
+  expect(heading.classList.contains('sr-only')).toBe(false)
   expect(screen.queryByText('9 October 2026')).toBeNull()
   expect(
     screen.getByRole('button', { name: 'Add event, training log or horse' }),

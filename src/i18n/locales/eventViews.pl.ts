@@ -1,4 +1,6 @@
 export const eventViews = {
+  createdBy: 'Autor: {{name}}',
+  creatorUnavailable: 'Autor niedostępny',
   validation: {
     textInvalid: 'Wpisz tekst.',
     notesMax: 'Notatki mogą mieć maksymalnie 1000 znaków.',

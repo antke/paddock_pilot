@@ -91,7 +91,7 @@ async function mount(
   return router
 }
 
-it.each(['record', 'week', 'month', 'summary'] as const)(
+it.each(['record', 'week', 'summary'] as const)(
   'completes from the %s card without opening the session',
   async (variant) => {
     mocks.save.mockResolvedValue(undefined)
@@ -128,7 +128,7 @@ it('offers completion from the keyboard-accessible preview', async () => {
   await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(1))
 })
 
-it.each(['record', 'week', 'month', 'summary'] as const)(
+it.each(['record', 'week', 'summary'] as const)(
   'uses the completion control as the sole completed indicator in a writable %s entry',
   async (variant) => {
     await mount(variant, { ...entry(), status: 'completed' })

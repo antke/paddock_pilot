@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import { OnboardingStepper } from '#/components/onboarding/OnboardingStepper'
 import type { OnboardingStep } from '#/components/onboarding/OnboardingStepper'
-import { Button } from '#/components/ui/button'
+import { BackButton } from '#/components/ui/back-action'
 
 const sampleSteps: Array<OnboardingStep> = [
   { id: 'profile', label: 'About you', status: 'completed' },
@@ -27,19 +27,22 @@ export function OnboardingStepperSample() {
 
   return (
     <div className="grid gap-3">
+      {reviewedStep && (
+        <div>
+          <BackButton onClick={() => setReviewedStep(null)}>
+            Return to current step
+          </BackButton>
+        </div>
+      )}
       <OnboardingStepper steps={steps} onStepSelect={setReviewedStep} />
-      <p className="text-sm leading-relaxed text-muted-foreground" role="status">
+      <p
+        className="text-sm leading-relaxed text-muted-foreground"
+        role="status"
+      >
         {reviewedStep
           ? `Sample preview: reviewing ${reviewedStep.label.toLowerCase()}. No live onboarding progress changed.`
           : 'Sample progress. Reopen a completed or deferred step to review it. No live onboarding progress changes.'}
       </p>
-      {reviewedStep && (
-        <div>
-          <Button variant="outline" onClick={() => setReviewedStep(null)}>
-            Return to current step
-          </Button>
-        </div>
-      )}
     </div>
   )
 }

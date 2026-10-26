@@ -11,7 +11,7 @@ import {
 import { DashboardSectionCard } from './DashboardSectionCard'
 import { DashboardEmptyState } from './DashboardEmptyState'
 import { Button } from '#/components/ui/button'
-import { Spinner } from '#/components/ui/spinner'
+import { ActionFeedback } from '#/components/ui/action-feedback'
 import { formatEventDateTime } from '#/components/events/eventDisplay'
 
 export type PendingHorseInvitation = FunctionReturnType<
@@ -223,12 +223,13 @@ export function PendingHorseInvitationList({
                           aria-describedby={state?.failed ? errorId : undefined}
                           onClick={() => void decide(item, 'decline')}
                         >
-                          {state?.pending === 'decline' && (
-                            <Spinner aria-hidden={true} />
-                          )}{' '}
-                          {state?.pending === 'decline'
-                            ? t('events.declining')
-                            : t('events.decline')}
+                          <ActionFeedback
+                            pending={state?.pending === 'decline'}
+                            failed={state?.failed === 'decline'}
+                            failedLabel={t('events.decline')}
+                            label={t('events.decline')}
+                            pendingLabel={t('events.declining')}
+                          />
                         </Button>
                         <Button
                           type="button"
@@ -243,18 +244,30 @@ export function PendingHorseInvitationList({
                           aria-describedby={state?.failed ? errorId : undefined}
                           onClick={() => void decide(item, 'approve')}
                         >
-                          {state?.pending === 'approve' && (
-                            <Spinner aria-hidden={true} />
-                          )}{' '}
-                          {state?.pending === 'approve'
-                            ? t('events.approving')
-                            : t('events.approve')}
+                          <ActionFeedback
+                            pending={state?.pending === 'approve'}
+                            failed={state?.failed === 'approve'}
+                            failedLabel={t('events.approve')}
+                            label={t('events.approve')}
+                            pendingLabel={t('events.approving')}
+                          />
                         </Button>
                       </>
                     }
                   >
                     <DashboardItemRecordContent
-                      title={t('events.invitedTitle', target)}
+                      title={
+                        event ? (
+                          <a
+                            className="app-control-focus rounded-control underline decoration-border underline-offset-4 hover:decoration-current"
+                            href={`/events/${event._id}`}
+                          >
+                            {t('events.invitedTitle', target)}
+                          </a>
+                        ) : (
+                          t('events.invitedTitle', target)
+                        )
+                      }
                       titleSize="dense"
                       meta={
                         event && (

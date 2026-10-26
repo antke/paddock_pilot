@@ -1,6 +1,8 @@
 export const userFacingErrorMessages = {
   futureTraining: 'Future sessions cannot be completed',
   chooseTrainingActivities: 'Choose training activities',
+  trainingRequiresPermission:
+    'Completed training requires recording permission for every horse. Remove the other horses or plan a session instead.',
   eventNeedsOwnHorse:
     'A member-created event must include at least one of their horses',
   eventRetainsOwnHorse:
@@ -11,6 +13,8 @@ export const userFacingErrorMessages = {
     'This session has training history. Keep its schedule and create a new session for a different schedule.',
   trainingHorseLocked:
     'A horse with recorded training cannot be removed from this session',
+  trainingHorseConflict:
+    'The selected horse already has training recorded for this session',
   trainingNotFound: 'Training session not found',
   trainingHorseUnconfirmed: 'This horse is not confirmed for this session',
   trainingPermission:

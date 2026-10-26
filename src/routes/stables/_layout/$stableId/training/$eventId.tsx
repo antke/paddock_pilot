@@ -1,3 +1,8 @@
+import { BackLink } from '#/components/ui/back-action'
+import { EventParticipation } from '#/components/events/EventParticipation'
+import { RecordAudienceLabel } from '#/components/sharing/RecordAudienceLabel'
+import { TrainingCompletionSummary } from '#/components/training/TrainingCompletionSummary'
+import { CreatorByline } from '#/components/events/CreatorByline'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
@@ -47,7 +52,10 @@ function TrainingSession() {
   const navigate = useNavigate()
   const { today } = useLocalDateContext()
   const { data } = useSuspenseQuery(
-    convexQuery(api.events.getWithHorses, { id: eventId }),
+    convexQuery(api.events.getWithHorses, {
+      id: eventId,
+      stableId: stableId as Id<'stables'>,
+    }),
   )
   const { data: permissions } = useSuspenseQuery(
     convexQuery(api.events.getPermissions, { id: eventId as Id<'events'> }),
@@ -57,11 +65,7 @@ function TrainingSession() {
       stableId: stableId as Id<'stables'>,
     }),
   )
-  if (
-    !data ||
-    data.event.stableId !== stableId ||
-    data.event.type !== 'training'
-  )
+  if (!data || data.event.type !== 'training')
     return <RouteEntityNotFoundAlert entity="event" />
   if (pathname.endsWith('/edit')) return <Outlet />
   const occurrenceDate = date ?? data.event.date
@@ -86,14 +90,22 @@ function TrainingSession() {
   return (
     <DashboardPage>
       <DashboardPageHeader
+        backAction={
+          <BackLink to="/stables/$stableId/training" params={{ stableId }}>
+            {t('trainingViews.back')}
+          </BackLink>
+        }
         title={data.event.title}
-        description={`${formatShortDateKey(occurrenceDate, locale)} · ${data.event.time}`}
+        description={
+          <>
+            <span className="block">
+              {formatShortDateKey(occurrenceDate, locale)} · {data.event.time}
+            </span>
+          </>
+        }
         actions={
-          completionEntry || (permissions?.canManageEvent && !smallScreen) ? (
+          permissions?.canManageEvent && !smallScreen ? (
             <>
-              {completionEntry && (
-                <TrainingCompletionControl entry={completionEntry} labelled />
-              )}
               {permissions?.canManageEvent && !smallScreen && (
                 <EventEditAction
                   eventId={eventId}
@@ -106,6 +118,14 @@ function TrainingSession() {
           ) : undefined
         }
       />
+      <div className="flex min-w-0 items-center justify-between gap-4">
+        <div className="min-w-0">
+          <CreatorByline name={data.createdByName} />
+        </div>
+        {completionEntry && (
+          <TrainingCompletionControl entry={completionEntry} labelled />
+        )}
+      </div>
       {permissions?.canManageEvent && smallScreen && (
         <EventEditAction
           search={editSearch}
@@ -140,6 +160,15 @@ function TrainingSession() {
         <p role="status">{t('trainingViews.noSession')}</p>
       )}
       {entries.map((entry) => (
+        <RecordAudienceLabel
+          key={entry.key}
+          horseId={entry.horse._id}
+          recordId={entry.occurrence.eventId}
+          date={entry.occurrence.startDate}
+        />
+      ))}
+      <TrainingCompletionSummary entries={entries} />
+      {entries.map((entry) => (
         <TrainingRecordCard
           key={entry.key}
           entry={entry}
@@ -151,6 +180,7 @@ function TrainingSession() {
           {t('trainingViews.legacyHelp')}
         </p>
       )}
+      <EventParticipation eventId={eventId as Id<'events'>} />
       {data.pendingEventHorses.length > 0 && (
         <p className="text-sm text-muted-foreground">
           {t('trainingViews.pending', {

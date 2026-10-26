@@ -1,11 +1,10 @@
-import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT } from '#/i18n/LocaleProvider'
 import { useId } from 'react'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { ButtonLink } from '#/components/ui/button'
-import { TrainingEntryLink } from '#/components/training/TrainingEntryLink'
-import type { TrainingEntry } from '#/components/training/trainingCalendarData'
+import { TrainingSessionLink } from '#/components/training/TrainingSessionLink'
+import { groupTrainingSessions } from '#/components/training/trainingSessions'
 import type { DashboardActivityData } from './dashboardTypes'
 import { useTaskOriginState } from '#/components/layout/mobileTaskNavigation'
 
@@ -22,12 +21,7 @@ export function TodayTrainingCard({
   const taskState = useTaskOriginState()
 
   const headingId = useId()
-  const byHorse = new Map<string, Array<TrainingEntry>>()
-  for (const entry of data.todayTraining ?? []) {
-    const sessions = byHorse.get(entry.horse._id) ?? []
-    sessions.push(entry)
-    byHorse.set(entry.horse._id, sessions)
-  }
+  const sessions = groupTrainingSessions(data.todayTraining ?? [])
 
   return (
     <DashboardSection
@@ -61,40 +55,23 @@ export function TodayTrainingCard({
         )
       }
     >
-      {byHorse.size === 0 ? (
+      {sessions.length === 0 ? (
         <DashboardEmptyState chrome="flat" spacing="flush">
           {t('dashboard.noTraining')}
         </DashboardEmptyState>
-      ) : compact ? (
-        <div className="grid gap-3">
-          {data.todayTraining?.slice(0, 2).map((entry) => (
-            <TrainingEntryLink
-              key={entry.key}
-              entry={entry}
-              stableId={data.stable?._id}
-              variant="summary"
-            />
-          ))}
-        </div>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {[...byHorse.values()].map((entries) => (
-            <section
-              key={entries[0].horse._id}
-              className="grid content-start gap-2"
-            >
-              <h3 className="text-base font-semibold">
-                {getHorseDisplayName(entries[0].horse)}
-              </h3>
-              {entries.map((entry) => (
-                <TrainingEntryLink
-                  key={entry.key}
-                  entry={entry}
-                  stableId={data.stable?._id}
-                  showHorseName={false}
-                />
-              ))}
-            </section>
+        <div
+          className={
+            compact ? 'grid gap-3' : 'grid gap-5 sm:grid-cols-2 xl:grid-cols-3'
+          }
+        >
+          {(compact ? sessions.slice(0, 2) : sessions).map((session) => (
+            <TrainingSessionLink
+              key={session.key}
+              session={session}
+              stableId={data.stable?._id}
+              variant={compact ? 'summary' : 'record'}
+            />
           ))}
         </div>
       )}
@@ -105,9 +82,7 @@ export function TodayTrainingCard({
         className="min-h-11 justify-self-start px-0"
       >
         {t('dashboard.viewTraining')}
-        {compact && (data.todayTraining?.length ?? 0) > 2
-          ? ` (${data.todayTraining?.length})`
-          : ''}
+        {compact && sessions.length > 2 ? ` (${sessions.length})` : ''}
       </ButtonLink>
     </DashboardSection>
   )

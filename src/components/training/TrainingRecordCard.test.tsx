@@ -17,6 +17,7 @@ import type * as ReactRouter from '@tanstack/react-router'
 
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal<typeof ReactRouter>()),
+  useNavigate: () => navigate,
   Link: ({
     params,
     children,
@@ -27,6 +28,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
 }))
 
 const save = vi.hoisted(() => vi.fn())
+const navigate = vi.hoisted(() => vi.fn())
 vi.mock('convex/react', async (importOriginal) => ({
   ...(await importOriginal<typeof ConvexReact>()),
   useMutation: () => save,
@@ -66,6 +68,7 @@ afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
   save.mockReset()
+  navigate.mockReset()
 })
 
 describe('focused training recording', () => {
@@ -127,7 +130,9 @@ describe('focused training recording', () => {
       today: record.date,
     })
     render(<TrainingRecordCard entry={readOnly} />)
-    expect(screen.queryByRole('button', { name: 'Update record' })).toBeNull()
+    expect(
+      screen.queryByRole('button', { name: 'Update training record' }),
+    ).toBeNull()
     expect(screen.queryByRole('button')).toBeNull()
   })
 
@@ -214,4 +219,54 @@ describe('focused training recording', () => {
       ),
     ).toBeTruthy()
   })
+})
+
+it('shows the author and saves a corrected recorded date', async () => {
+  save.mockResolvedValue(undefined)
+  const planned = entry()
+  const record = {
+    _id: 'record',
+    _creationTime: 0,
+    eventId: planned.occurrence.event._id,
+    horseId: planned.horse._id,
+    date: planned.occurrence.startDate,
+    status: 'completed',
+    details: planned.details,
+    recordedBy: 'owner',
+    createdAt: 0,
+    updatedAt: 0,
+    createdByName: 'Alex Rider',
+  } as Doc<'trainingRecords'> & { createdByName: string }
+  const [saved] = getTrainingEntries({
+    events: [planned.occurrence.event],
+    records: [record],
+    horses: [planned.horse],
+    start: record.date,
+    end: record.date,
+    today: record.date,
+  })
+  render(<TrainingRecordCard entry={saved} />)
+  expect(screen.getByText('Created by Alex Rider')).toBeTruthy()
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Update training record' }),
+  )
+  fireEvent.change(screen.getByLabelText('Date'), {
+    target: { value: '1999-12-31' },
+  })
+  fireEvent.click(screen.getByRole('button', { name: 'Save training record' }))
+  await waitFor(() =>
+    expect(save).toHaveBeenCalledWith(
+      expect.objectContaining({ date: '2000-01-01', newDate: '1999-12-31' }),
+    ),
+  )
+  await waitFor(() =>
+    expect(navigate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        search: expect.objectContaining({
+          date: '1999-12-31',
+          horseId: 'horse',
+        }),
+      }),
+    ),
+  )
 })

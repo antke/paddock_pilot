@@ -27,7 +27,11 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-async function mount(canManage = true, stable = false) {
+async function mount(
+  canManage = true,
+  stable = false,
+  createdByName: string | null = 'Alex Rider',
+) {
   const root = createRootRoute()
   const index = createRoute({
     getParentRoute: () => root,
@@ -37,6 +41,7 @@ async function mount(canManage = true, stable = false) {
         <EventEditAction eventId="session" stableId="yard" training mobile />
       ) : (
         <EventDetail
+          createdByName={createdByName}
           event={
             {
               _id: 'session',
@@ -99,4 +104,13 @@ it('does not offer a mobile edit action without management permission', async ()
   expect(
     screen.queryByRole('link', { name: 'Edit training session' }),
   ).toBeNull()
+})
+
+it('shows the event creator to participants who cannot edit the event', async () => {
+  await mount(false)
+  expect(await screen.findByText('Created by Alex Rider')).toBeTruthy()
+})
+it('keeps older events usable when the creator is unavailable', async () => {
+  await mount(true, false, null)
+  expect(await screen.findByText('Creator unavailable')).toBeTruthy()
 })

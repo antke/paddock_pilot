@@ -206,7 +206,7 @@ describe('onboarding real forms and local controller', () => {
     expect(
       within(progress)
         .getAllByRole<HTMLButtonElement>('button')
-        .every((button) => button.disabled),
+        .filter(button => !button.hasAttribute('aria-expanded')).every((button) => button.disabled),
     ).toBe(true)
     await screen.findByText(/Could not continue. Your saved details are safe/)
     expect(

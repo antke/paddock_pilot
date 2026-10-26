@@ -614,9 +614,11 @@ export function DashboardItemMediaCard({
           />
 
           {summary !== undefined && (
-            <p className={cn(dashboardItemSummaryClassName, summaryClassName)}>
+            <div
+              className={cn(dashboardItemSummaryClassName, summaryClassName)}
+            >
               {summary}
-            </p>
+            </div>
           )}
 
           {actions && (

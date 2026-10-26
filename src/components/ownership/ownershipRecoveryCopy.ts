@@ -55,11 +55,10 @@ const en = {
   horseStep: 'Your first horse',
   stableStep: 'Your stable',
   stepsLabel: 'Getting started',
-  profileHelp:
-    'Save your profile, then add your horse or set up your stable. You can change your starting option without losing this draft.',
-  continueHorse: 'Save profile and add a horse',
-  continueStable: 'Save profile and set up a stable',
-  continueDestination: 'Save profile and continue',
+  profileHelp: 'How should other stable members recognise you?',
+  continueHorse: 'Continue to horse',
+  continueStable: 'Continue to stable',
+  continueDestination: 'Save and continue',
   resumeHelp: 'Save your profile to continue to the page you opened.',
 }
 const pl: typeof en = {
@@ -118,10 +117,9 @@ const pl: typeof en = {
   horseStep: 'Twój pierwszy koń',
   stableStep: 'Twoja stajnia',
   stepsLabel: 'Pierwsze kroki',
-  profileHelp:
-    'Zapisz profil, a następnie dodaj konia lub utwórz stajnię. Możesz zmienić opcję rozpoczęcia bez utraty wpisanych danych.',
-  continueHorse: 'Zapisz profil i dodaj konia',
-  continueStable: 'Zapisz profil i utwórz stajnię',
+  profileHelp: 'Jak mają Cię rozpoznawać inni członkowie stajni?',
+  continueHorse: 'Dalej: Twój koń',
+  continueStable: 'Dalej: Twoja stajnia',
   continueDestination: 'Zapisz profil i kontynuuj',
   resumeHelp: 'Zapisz profil, aby przejść do otwartej strony.',
 }

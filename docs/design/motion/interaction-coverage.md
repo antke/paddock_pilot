@@ -85,3 +85,21 @@ On 16 October 2026 the user authorized deploying all current workspace work toge
 - The design sidecar was refreshed from the current tokens and motion contract. The archived overdrive study's intentional `4.5rem` responsive headline maximum has a file/value-specific detector exception; no global rule was disabled and no unresolved hook finding remains from release preparation.
 
 These release checks do not extend the authenticated live-flow verification claims above.
+
+## Selection and action refinement — 21 October 2026
+
+Applied the reviewed direction through shared primitives. Compact choices and descriptive cards now transition their own fill/border in place. Only segmented controls retain a shared indicator, inside a continuous track with no individual segment borders. Compact buttons and complete segmented controls match regular Button height: 40px on desktop and 44px at mobile/coarse-pointer sizes. Descriptive cards retain their text-driven height.
+
+ActionFeedback now transitions label/icon contents by four pixels, reserves each supplied label's geometry, and supports explicit failed/retry state. Pending supersedes failure and confirmation. Shared form submissions have an idle arrow, pending spinner, acknowledged check and explicit retry treatment. Weight, nutrition, health, medication and document-upload forms confirm after successful callbacks; a new draft clears the receipt. Existing copy/download/restore/remove consumers inherit the content transition. Invitation approve/decline, load-more and route retry use the shared feedback; invitation resend confirms only a successful queue acknowledgement, including when its token rotates. Identifier copy uses the shared drawn check. The dots-to-close idea remains unimplemented because there is no approved application placement.
+
+Disclosures unfold in 220ms with a short inner fade/settle; mounted drafts and inert closing controls are preserved. Base UI still owns dialogs, with a 220ms six-pixel/0.985-scale entrance and a 140ms four-pixel exit. No mutation, dialog dismissal or navigation waits for an animation.
+
+Verification:
+
+- TypeScript and lint pass; lint retains the three existing backend shadowing warnings.
+- Production build and anonymous SSR smoke checks pass.
+- Full suite: 216 files passed; the remaining file had two old resend-label assertions (1,278 passed / 2 failed). Updated those assertions to the acknowledged “Email queued” label, retaining the independent-row pending/disabled checks; the complete affected file then passed all seven tests. Other focused action, choice, motion, form, invitation, download and recovery tests passed.
+- Collaborative preview snapshots timed out twice. Local Playwright Chromium verified the DEV-only `/page-lab/motion` fixture at 1280px and 390px widths. Regular buttons and both compact/segmented choice buttons measured 40px/44px respectively; no horizontal overflow or page errors. The submit button stayed 153.5625px wide through idle, pending, error, retry and confirmed states. Drafts survived rejection and disclosure reversal; dialog Escape restored trigger focus; live reduced-motion emulation removed shared selection travel.
+- Visual inspection caught and corrected a full-width empty segmented track and selected hover fill competing with the indicator. One confirmation pass verified the final result. Captures: `/tmp/paddock-motion-verification/1280.png` and `/tmp/paddock-motion-verification/390.png`.
+
+These are local fixture and source/test checks, not live backend mutation or physical-device certification. No deployment was performed.

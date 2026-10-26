@@ -63,7 +63,7 @@ export type HorseDetailSectionProps = {
 }
 
 export function HorseDetail({
-  stableId,
+  stableId: placementStableId,
   horse,
   events,
   category,
@@ -83,6 +83,9 @@ export function HorseDetail({
   }))
 
   const { pathname, state: locationState } = useLocation()
+  const stableId = pathname.startsWith('/stables/')
+    ? placementStableId
+    : undefined
   const router = useRouter()
   const actionTrigger = useRef<HTMLButtonElement>(null)
   const consumeAction = useCallback(() => {
@@ -138,7 +141,12 @@ export function HorseDetail({
               <>
                 {canManageHorse && (
                   <ButtonLink
-                    to="/events/create"
+                    to={
+                      stableId
+                        ? '/stables/$stableId/events/create'
+                        : '/events/create'
+                    }
+                    params={{ stableId: stableId ?? '' }}
                     search={{ horseId: horse._id }}
                     variant="outline"
                     action="schedule"
@@ -200,8 +208,12 @@ export function HorseDetail({
                   render={
                     <Link
                       resetScroll={false}
-                      to={`/horses/$horseId/${item.id}`}
-                      params={{ horseId: horse._id }}
+                      to={
+                        stableId
+                          ? `/stables/$stableId/horses/$horseId/${item.id}`
+                          : `/horses/$horseId/${item.id}`
+                      }
+                      params={{ horseId: horse._id, stableId: stableId ?? '' }}
                     />
                   }
                   active={activeCategory === item.id}
@@ -224,8 +236,12 @@ export function HorseDetail({
                   render={
                     <Link
                       resetScroll={false}
-                      to={`/horses/$horseId/${item.path}`}
-                      params={{ horseId: horse._id }}
+                      to={
+                        stableId && item.path !== 'manage'
+                          ? `/stables/$stableId/horses/$horseId/${item.path}`
+                          : `/horses/$horseId/${item.path}`
+                      }
+                      params={{ horseId: horse._id, stableId: stableId ?? '' }}
                     />
                   }
                 >
@@ -273,8 +289,12 @@ export function HorseDetail({
                   render={
                     <Link
                       resetScroll={false}
-                      to="/horses/$horseId/timeline"
-                      params={{ horseId: horse._id }}
+                      to={
+                        stableId
+                          ? '/stables/$stableId/horses/$horseId/timeline'
+                          : '/horses/$horseId/timeline'
+                      }
+                      params={{ horseId: horse._id, stableId: stableId ?? '' }}
                     />
                   }
                 >
@@ -286,8 +306,12 @@ export function HorseDetail({
                   render={
                     <Link
                       resetScroll={false}
-                      to="/horses/$horseId/care-summary"
-                      params={{ horseId: horse._id }}
+                      to={
+                        stableId
+                          ? '/stables/$stableId/horses/$horseId/care-summary'
+                          : '/horses/$horseId/care-summary'
+                      }
+                      params={{ horseId: horse._id, stableId: stableId ?? '' }}
                     />
                   }
                 >
@@ -342,8 +366,10 @@ export function HorseDetail({
               activeTab={careView === 'health' ? 'health' : 'reminders'}
               onTabChange={(tab) => {
                 void navigate({
-                  to: '/horses/$horseId/care',
-                  params: { horseId: horse._id },
+                  to: stableId
+                    ? '/stables/$stableId/horses/$horseId/care'
+                    : '/horses/$horseId/care',
+                  params: { horseId: horse._id, stableId: stableId ?? '' },
                   search: tab === 'health' ? { careView: 'health' } : {},
                   replace: true,
                   resetScroll: false,
@@ -359,8 +385,10 @@ export function HorseDetail({
               activeTab={nutritionView ?? 'nutrition'}
               onTabChange={(tab) => {
                 void navigate({
-                  to: '/horses/$horseId/nutrition',
-                  params: { horseId: horse._id },
+                  to: stableId
+                    ? '/stables/$stableId/horses/$horseId/nutrition'
+                    : '/horses/$horseId/nutrition',
+                  params: { horseId: horse._id, stableId: stableId ?? '' },
                   search: tab === 'nutrition' ? {} : { nutritionView: tab },
                   replace: true,
                   resetScroll: false,

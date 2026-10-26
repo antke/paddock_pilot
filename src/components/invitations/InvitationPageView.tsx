@@ -1,3 +1,4 @@
+import { BackLink } from '#/components/ui/back-action'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { useId, useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
@@ -122,11 +123,13 @@ export function InvitationPageView({
           tabIndex={-1}
           className="outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <DashboardPageHeader title={t('invitationFlow.notFound')} />
+          <DashboardPageHeader
+            title={t('invitationFlow.notFound')}
+            backAction={
+              <BackLink to="/">{t('invitationFlow.returnHome')}</BackLink>
+            }
+          />
           <p>{t('invitationFlow.notFoundHelp')}</p>
-          <DashboardActions>
-            <ButtonLink to="/">{t('invitationFlow.returnHome')}</ButtonLink>
-          </DashboardActions>
         </div>
       </DashboardPage>
     )

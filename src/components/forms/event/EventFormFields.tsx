@@ -1,3 +1,4 @@
+import { Badge } from '#/components/ui/badge'
 import type { PersonNameSuggestion } from '#/components/forms/PersonNameAutocomplete'
 import { localeInstances } from '#/i18n/resources'
 import { displayLocales } from 'shared/i18n/locale'
@@ -56,6 +57,7 @@ import type { EventFormInput, EventFormSchema } from './eventFormSchema'
 import { ProviderAutocomplete } from './ProviderAutocomplete'
 
 type HorseOption = {
+  requiresApproval?: boolean
   _id: Id<'horses'>
   name: string
   ownerName?: string
@@ -72,6 +74,8 @@ type ProviderOption = {
 }
 
 type Props = {
+  allowTypeChange?: boolean
+  onTypeChange?: (type: EventType) => void
   control: Control<EventFormInput, unknown, EventFormSchema>
   setValue: UseFormSetValue<EventFormInput>
   horses: Array<HorseOption>
@@ -139,12 +143,10 @@ function getEventFormOptions(locale: Locale) {
     4: locale === 'pl' ? '4.' : '4th',
     last: t('eventForm.last'),
   } satisfies Record<RecurrenceOrdinal, string>
-  const eventTypeOptions = eventTypes
-    .filter((type) => type !== 'training')
-    .map((eventType) => ({
-      value: eventType,
-      label: t(`events.types.${eventType}`),
-    })) satisfies Array<{ value: EventType; label: string }>
+  const eventTypeOptions = eventTypes.map((eventType) => ({
+    value: eventType,
+    label: t(`events.types.${eventType}`),
+  })) satisfies Array<{ value: EventType; label: string }>
   const eventStatusOptions = eventStatuses.map((status) => ({
     value: status,
     label: t(`calendar.${status}`),
@@ -525,6 +527,8 @@ export function EventFormFields({
   riderSuggestions,
   disabled = false,
   trainingMode,
+  allowTypeChange = false,
+  onTypeChange,
   scheduleOnly = false,
   eventContext = 'stable',
 }: Props) {
@@ -545,6 +549,7 @@ export function EventFormFields({
   const endDate = useWatch({ control, name: 'endDate' })
   const eventTitle = useWatch({ control, name: 'title' })
   const eventType = useWatch({ control, name: 'type' })
+  const trainingDraft = useWatch({ control, name: 'training' })
   const location = useWatch({ control, name: 'location' })
   const providerName = useWatch({ control, name: 'providerName' })
   const totalCost = useWatch({ control, name: 'totalCost' })
@@ -792,6 +797,9 @@ export function EventFormFields({
             {t('eventForm.horses')}
           </FieldLegend>
 
+          {horses.some((h) => h.requiresApproval) && (
+            <FieldDescription>{t('eventEditor.approvalHelp')}</FieldDescription>
+          )}
           {horses.length === 0 ? (
             <FieldGroup gap="compact">
               <FieldDescription>
@@ -826,6 +834,13 @@ export function EventFormFields({
                   name={field.name}
                   value={horseId}
                   horse={horse}
+                  badges={
+                    horse.requiresApproval ? (
+                      <Badge variant="secondary">
+                        {t('eventEditor.requiresApproval')}
+                      </Badge>
+                    ) : undefined
+                  }
                   checked={checked}
                   disabled={disabled}
                   invalid={fieldState.invalid}
@@ -911,7 +926,7 @@ export function EventFormFields({
         {trainingMode && dateFields}
         {!trainingMode && titleField}
 
-        {!trainingMode && (
+        {(!trainingMode || allowTypeChange) && (
           <Controller
             name="type"
             control={control}
@@ -922,10 +937,23 @@ export function EventFormFields({
                 <ChoiceButtonGroup
                   aria-label={t('eventForm.eventType')}
                   value={field.value}
-                  options={eventTypeOptions}
-                  onValueChange={(nextValue) =>
-                    field.onChange(asEventType(nextValue))
+                  options={
+                    allowTypeChange
+                      ? eventTypeOptions
+                      : eventTypeOptions.filter(
+                          (option) => option.value !== 'training',
+                        )
                   }
+                  onValueChange={(nextValue) => {
+                    field.onChange(asEventType(nextValue))
+                    onTypeChange?.(asEventType(nextValue))
+                    if (nextValue === 'training' && !trainingDraft)
+                      setValue(
+                        'training',
+                        { activities: [], format: 'regular' },
+                        { shouldDirty: true },
+                      )
+                  }}
                   disabled={disabled}
                   aria-invalid={fieldState.invalid}
                   aria-describedby={

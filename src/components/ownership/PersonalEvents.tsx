@@ -1,8 +1,13 @@
+import { TrainingSessionCompletionControl } from '#/components/training/TrainingSessionCompletionControl'
+import { EventParticipation } from '#/components/events/EventParticipation'
+import { RecordAudienceLabel } from '#/components/sharing/RecordAudienceLabel'
+import { TrainingCompletionSummary } from '#/components/training/TrainingCompletionSummary'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
+import { useRef } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { EventEditor } from '#/components/forms/event/EventEditor'
+import { EventCreationEditor as EventEditor } from '#/components/forms/event/EventCreationEditor'
 import {
   createEventEditorValues,
   editEventEditorValues,
@@ -19,6 +24,7 @@ import { getTrainingEntries } from '#/components/training/trainingCalendarData'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
 
 export function PersonalEventEditor({
+  stableId: workspaceStableId,
   eventId,
   horseId,
   training,
@@ -26,6 +32,7 @@ export function PersonalEventEditor({
   date,
   participationId,
 }: {
+  stableId?: string
   eventId?: Id<'events'>
   horseId?: string
   training?: boolean
@@ -43,10 +50,16 @@ export function PersonalEventEditor({
     api.events.getPermissions,
     eventId ? { id: eventId } : 'skip',
   )
-  const stableHorses = useQuery(
-    api.horses.list,
-    data?.event.stableId ? { stableId: data.event.stableId } : 'skip',
+  // A personal carer may edit a stable-origin event without stable membership.
+  // Use the authorized roster options instead of querying that stable directly.
+  const stableOptions = useQuery(
+    api.events.creationOptions,
+    data?.event.stableId ? {} : 'skip',
   )
+  const stableHorses = data?.event.stableId
+    ? stableOptions?.stables.find((stable) => stable.id === data.event.stableId)
+        ?.horses
+    : undefined
   const trainingData = useQuery(
     api.training.listForEvent,
     eventId && data?.event.type === 'training'
@@ -72,13 +85,14 @@ export function PersonalEventEditor({
   const add = useMutation(api.events.add)
   const update = useMutation(api.events.update)
   const navigate = useNavigate()
+  const savedSearch = useRef({ date, horseId, participationId })
   if (
     !mine ||
     (eventId &&
       (data === undefined ||
         permissions === undefined ||
         (data?.event.type === 'training' && trainingData === undefined) ||
-        (data?.event.stableId && !stableHorses)))
+        (data?.event.stableId && !stableOptions)))
   )
     return <RoutePending />
   if (eventId && (!data || !permissions?.canManageEvent))
@@ -102,6 +116,7 @@ export function PersonalEventEditor({
       }
   return (
     <EventEditor
+      audienceEnabled
       eventContext={data?.event.stableId ? 'stable' : 'personal'}
       scheduleOnly={Boolean(
         data?.event.stableId && permissions?.role !== 'owner',
@@ -117,15 +132,31 @@ export function PersonalEventEditor({
       }
       initialValues={initial}
       providers={providers}
-      horses={
-        stableHorses ?? mine.filter((h) => h.access.canEditPersonalRecords)
-      }
+      horses={[
+        ...new Map(
+          [
+            ...(stableHorses ??
+              (data?.event.stableId
+                ? []
+                : mine.filter((h) => h.access.canEditPersonalRecords))),
+            ...(data?.horses ?? []),
+          ].map((horse) => [horse._id, horse]),
+        ).values(),
+      ]}
       onSave={async (values) => {
-        const { recurring, horseIds, stableId: _stableId, ...fields } = values
+        const {
+          recurring,
+          horseIds,
+          stableId: _stableId,
+          destination,
+          ...fields
+        } = values
         const args = {
           ...fields,
           horseIds: horseIds as Array<Id<'horses'>>,
-          stableId: data?.event.stableId,
+          stableId: eventId
+            ? data?.event.stableId
+            : (_stableId as Id<'stables'> | undefined),
           recurrence: recurring ? values.recurrence : undefined,
         }
         if (eventId) {
@@ -136,15 +167,47 @@ export function PersonalEventEditor({
             trainingHorseId: horseId as Id<'horses'> | undefined,
             trainingRecordId: selectedRecord?._id,
           })
+          const addedHorseIds = horseIds.filter(
+            (id) => !data?.event.horseIds.includes(id as Id<'horses'>),
+          )
+          const replacedHorseId = horseId ?? selectedRecord?.horseId
+          const savedDate =
+            data &&
+            fields.date !== data.event.date &&
+            (!data.event.recurrence || selectedRecord)
+              ? new Date(
+                  Date.parse(`${date ?? data.event.date}T00:00:00Z`) +
+                    Date.parse(`${fields.date}T00:00:00Z`) -
+                    Date.parse(`${data.event.date}T00:00:00Z`),
+                )
+                  .toISOString()
+                  .slice(0, 10)
+              : date
+          savedSearch.current =
+            replacedHorseId &&
+            !horseIds.includes(replacedHorseId) &&
+            addedHorseIds.length === 1
+              ? {
+                  date: savedDate,
+                  horseId: addedHorseIds[0],
+                  participationId: undefined,
+                }
+              : replacedHorseId && !horseIds.includes(replacedHorseId)
+                ? {
+                    date: savedDate,
+                    horseId: undefined,
+                    participationId: undefined,
+                  }
+                : { date: savedDate, horseId, participationId }
           return eventId
         }
-        return add(args)
+        return add({ ...args, destination, errorFormat: 'structured' })
       }}
       onSaved={(id) =>
         navigate({
           to: '/events/$eventId',
           params: { eventId: id },
-          search: { date, horseId, participationId },
+          search: { ...savedSearch.current, stableId: workspaceStableId },
         })
       }
     />
@@ -152,11 +215,13 @@ export function PersonalEventEditor({
 }
 export function PersonalEventDetail({
   eventId,
+  stableId,
   date,
   horseId,
   participationId,
 }: {
   eventId: Id<'events'>
+  stableId?: string
   date?: string
   horseId?: string
   participationId?: string
@@ -164,6 +229,7 @@ export function PersonalEventDetail({
   const t = useT()
   const data = useQuery(api.events.getWithHorses, {
     id: eventId,
+    stableId: stableId as Id<'stables'> | undefined,
     horseId: horseId as Id<'horses'> | undefined,
     participationId: participationId as Id<'eventsHorses'> | undefined,
   })
@@ -173,6 +239,7 @@ export function PersonalEventDetail({
     data?.event.type === 'training'
       ? {
           eventId,
+          stableId: stableId as Id<'stables'> | undefined,
           horseId: horseId as Id<'horses'> | undefined,
           participationId: participationId as Id<'eventsHorses'> | undefined,
         }
@@ -195,10 +262,12 @@ export function PersonalEventDetail({
   return (
     <DashboardPage>
       <EventDetail
+        stableId={stableId}
         event={data.event}
+        createdByName={data.createdByName}
         editSearch={
           isTraining
-            ? { date: selectedDate, horseId, participationId }
+            ? { date: selectedDate, horseId, participationId, stableId }
             : undefined
         }
         headerActions={
@@ -216,9 +285,20 @@ export function PersonalEventDetail({
         showHorses={!isTraining}
         showServiceDetails={!isTraining}
       />
+      <EventParticipation eventId={eventId} />
       {isTraining && entries.length === 0 && (
         <p role="status">{t('trainingViews.noSession')}</p>
       )}
+      {entries.map((entry) => (
+        <RecordAudienceLabel
+          key={entry.key}
+          horseId={entry.horse._id}
+          recordId={entry.occurrence.eventId}
+          date={entry.occurrence.startDate}
+        />
+      ))}
+      <TrainingCompletionSummary entries={entries} />
+      <TrainingSessionCompletionControl entries={entries} stableId={stableId} />
       {entries.map((entry) => (
         <TrainingRecordCard
           key={entry.key}

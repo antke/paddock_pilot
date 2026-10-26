@@ -5,7 +5,7 @@ const en = {
   custodian: 'Managed by the stable until the owner accepts',
   stableAccess: 'Access through the current stable',
   stableAccessHelp:
-    'This stable’s administrator can read the complete history and add stable care records. That access ends when the horse leaves, unless the administrator also has separately invited access.',
+    'This stable’s administrator can read shared details and add care records. Private history stays private. Stable access ends when the horse leaves; separately invited carer access remains independent.',
   ownerHelp:
     'Ownership changes only when a transfer invitation is accepted. Editing the profile’s owner display name does not change the account owner.',
   invited: 'Invited carers',
@@ -23,7 +23,7 @@ const en = {
   cancel: 'Cancel',
   connectPending: 'Connecting stable…',
   connected: (name: string) =>
-    `Connected to ${name}. The stable administrator can now read the horse’s history.`,
+    `Connected to ${name}. Existing history stays private until you share it.`,
   moveConfirm: (name: string) => `Move to ${name}`,
   leaveConfirm: 'Leave for personal care',
   moveTitle: (name: string) => `Move ${name}`,
@@ -34,7 +34,7 @@ const en = {
   deleting: 'Deleting horse…',
   deleteTitle: (name: string) => `Delete ${name}?`,
   deleteHelp: (name: string, date: string) =>
-    `${name} will leave the current stable and move to Deleted horses. You can restore the horse for 14 days, until ${date}. After that, the horse and its records are permanently removed. The former stable retains its own historical records.`,
+    `${name} will leave the current stable and move to Deleted horses. You can restore the horse for 14 days, until ${date}. After that, the horse and its records are permanently removed. The former stable loses access to this horse’s records.`,
   deleteFailed: 'The horse could not be deleted. Please try again.',
   deleted:
     'Horse moved to Deleted horses. Open that page to restore it during the next 14 days.',
@@ -59,7 +59,7 @@ const pl: typeof en = {
   custodian: 'Stajnia zarządza koniem do czasu akceptacji przez właściciela',
   stableAccess: 'Dostęp wynikający z obecnej stajni',
   stableAccessHelp:
-    'Administrator tej stajni może czytać pełną historię i dodawać stajenne wpisy opieki. Ten dostęp kończy się po wyprowadzce konia, chyba że administrator ma także osobne zaproszenie.',
+    'Administrator tej stajni może czytać udostępnione szczegóły i dodawać wpisy opieki. Prywatna historia pozostaje prywatna. Dostęp stajni kończy się po wyprowadzce; osobno nadany dostęp opiekuna pozostaje niezależny.',
   ownerHelp:
     'Własność zmienia się dopiero po przyjęciu zaproszenia do przekazania konia. Edycja nazwy właściciela w profilu konia nie przenosi własności na inne konto.',
   invited: 'Zaproszeni opiekunowie',
@@ -78,7 +78,7 @@ const pl: typeof en = {
   cancel: 'Anuluj',
   connectPending: 'Łączenie ze stajnią…',
   connected: (name) =>
-    `Połączono ze stajnią ${name}. Administrator może teraz czytać historię konia.`,
+    `Połączono ze stajnią ${name}. Dotychczasowa historia pozostaje prywatna, dopóki jej nie udostępnisz.`,
   moveConfirm: (name) => `Przenieś do stajni ${name}`,
   leaveConfirm: 'Przejdź do opieki indywidualnej',
   moveTitle: (name) => `Przenieś konia ${name}`,
@@ -89,7 +89,7 @@ const pl: typeof en = {
   deleting: 'Usuwanie konia…',
   deleteTitle: (name) => `Usunąć konia ${name}?`,
   deleteHelp: (name, date) =>
-    `${name} opuści obecną stajnię i trafi do sekcji Usunięte konie. Możesz go przywrócić przez 14 dni, do ${date}. Po tym terminie koń i jego wpisy zostaną trwale usunięte. Poprzednia stajnia zachowa własne historyczne wpisy.`,
+    `${name} opuści obecną stajnię i trafi do sekcji Usunięte konie. Możesz go przywrócić przez 14 dni, do ${date}. Po tym terminie koń i jego wpisy zostaną trwale usunięte. Poprzednia stajnia straci dostęp do wpisów tego konia.`,
   deleteFailed: 'Nie udało się usunąć konia. Spróbuj ponownie.',
   deleted:
     'Koń trafił do sekcji Usunięte konie. Otwórz ją, aby przywrócić go w ciągu 14 dni.',

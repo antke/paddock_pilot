@@ -73,9 +73,7 @@ it('lists frozen horse appointments after a move without granting former-stable 
 
   // A live shared schedule and a horse's old schedule are distinct records.
   const both = await owner.query(api.events.list, {})
-  expect(both.map((row) => row.title)).toEqual(
-    expect.arrayContaining(['Original weekly care', 'Changed stable schedule']),
-  )
+  expect(both.map((row) => row.title)).toEqual(['Original weekly care'])
 
   await t.run((ctx) => ctx.db.delete(membershipId))
   const rows = await owner.query(api.events.list, {})

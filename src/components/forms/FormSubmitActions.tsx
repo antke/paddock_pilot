@@ -1,5 +1,12 @@
 import { useT } from '#/i18n/LocaleProvider'
 import type { ComponentProps } from 'react'
+import {
+  ArrowRightIcon,
+  CheckIcon,
+  WarningCircleIcon,
+  XIcon,
+} from '@phosphor-icons/react'
+import { Spinner } from '#/components/ui/spinner'
 
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { Button } from '#/components/ui/button'
@@ -15,6 +22,7 @@ type FormSubmitActionsProps = Omit<
   }
 
 type FormSubmitButtonsProps = {
+  failed?: boolean
   confirmed?: boolean
   confirmedLabel?: string
   isSubmitting: boolean
@@ -26,6 +34,7 @@ type FormSubmitButtonsProps = {
 }
 
 export function FormSubmitActions({
+  failed,
   isSubmitting,
   confirmed,
   confirmedLabel,
@@ -49,6 +58,7 @@ export function FormSubmitActions({
       {...props}
     >
       <FormSubmitButtons
+        failed={failed}
         cancelLabel={cancelLabel}
         disabled={disabled}
         isSubmitting={isSubmitting}
@@ -63,6 +73,7 @@ export function FormSubmitActions({
 }
 
 export function FormSubmitButtons({
+  failed = false,
   isSubmitting,
   confirmed,
   confirmedLabel,
@@ -84,16 +95,42 @@ export function FormSubmitButtons({
           disabled={actionDisabled}
           onClick={onCancel}
         >
-          {cancelLabel ?? t('common.cancel')}
+          <span
+            data-slot="form-action-icon"
+            className="hidden"
+            aria-hidden="true"
+          >
+            <XIcon className="size-5" />
+          </span>
+          <span data-slot="form-action-label">
+            {cancelLabel ?? t('common.cancel')}
+          </span>
         </Button>
       )}
 
       <Button
         type="submit"
+        variant={failed && !isSubmitting ? 'destructive' : 'default'}
         disabled={actionDisabled}
         aria-busy={isSubmitting || undefined}
       >
+        <span
+          data-slot="form-action-icon"
+          className="hidden"
+          aria-hidden="true"
+        >
+          {isSubmitting ? (
+            <Spinner className="size-6" />
+          ) : failed ? (
+            <WarningCircleIcon className="size-6" />
+          ) : (
+            <CheckIcon className="size-6" weight="bold" />
+          )}
+        </span>
         <ActionFeedback
+          failed={failed}
+          failedLabel={t('common.retry')}
+          icon={<ArrowRightIcon aria-hidden="true" />}
           confirmed={confirmed}
           confirmedLabel={confirmedLabel}
           label={submitLabel}

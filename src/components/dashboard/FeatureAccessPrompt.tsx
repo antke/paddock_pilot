@@ -1,12 +1,10 @@
 import { useT } from '#/i18n/LocaleProvider'
-import { forwardRef } from 'react'
-import type { ComponentProps, ReactNode } from 'react'
-import { createLink } from '@tanstack/react-router'
+import type { ReactNode } from 'react'
 
 import { DashboardActions } from './DashboardActions'
 import { DashboardFeatureBadge } from './DashboardBadges'
 import { DashboardSectionCard } from './DashboardSectionCard'
-import { ButtonAnchor, ButtonLink } from '#/components/ui/button'
+import { ButtonLink } from '#/components/ui/button'
 
 type FeatureAccessPromptProps = {
   title: ReactNode
@@ -42,11 +40,4 @@ export function FeatureAccessPrompt({
   )
 }
 
-const FeatureAccessBackLinkAnchor = forwardRef<
-  HTMLAnchorElement,
-  Omit<ComponentProps<typeof ButtonAnchor>, 'variant'>
->(function FeatureAccessBackLinkAnchorRender(props, ref) {
-  return <ButtonAnchor ref={ref} variant="outline" {...props} />
-})
-
-export const FeatureAccessBackLink = createLink(FeatureAccessBackLinkAnchor)
+export { BackLink as FeatureAccessBackLink } from '#/components/ui/back-action'

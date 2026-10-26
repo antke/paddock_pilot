@@ -56,7 +56,7 @@ it('keeps a typed profile draft when going back and switching between personal a
     'Changed rider',
   )
   expect(
-    screen.getByRole('button', { name: 'Save profile and set up a stable' }),
+    screen.getByRole('button', { name: 'Continue to stable' }),
   ).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: 'Back to start options' }))
   fireEvent.click(screen.getByRole('button', { name: 'Manage my horses' }))

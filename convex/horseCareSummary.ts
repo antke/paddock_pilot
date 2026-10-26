@@ -1,3 +1,8 @@
+import {
+  assertHorseWorkspace,
+  readableRecords,
+  visibleHorse,
+} from './libs/recordCapabilities'
 import { horseEvent } from './libs/horseEventHistory'
 import { resolveHorseContacts } from './libs/horseContacts'
 import { v } from 'convex/values'
@@ -20,12 +25,13 @@ const byEventDateDesc = (a: Doc<'events'>, b: Doc<'events'>) => {
 }
 
 export const getForHorse = query({
-  args: { horseId: v.id('horses') },
+  args: { horseId: v.id('horses'), stableId: v.optional(v.id('stables')) },
   handler: async (ctx, args) => {
     const horse = await ctx.db.get(args.horseId)
     if (!horse) return { horse: null, hasAccess: true as const }
 
     const access = await assertCanReadHorse(ctx, horse)
+    await assertHorseWorkspace(ctx, horse, args.stableId)
 
     const [
       healthIssues,
@@ -38,23 +44,28 @@ export const getForHorse = query({
       ctx.db
         .query('horseHealthIssues')
         .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-        .collect(),
+        .collect()
+        .then((records) => readableRecords(ctx, horse, records, args.stableId)),
       ctx.db
         .query('horseMedicationRecords')
         .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-        .collect(),
+        .collect()
+        .then((records) => readableRecords(ctx, horse, records, args.stableId)),
       ctx.db
         .query('horseWeightRecords')
         .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-        .collect(),
+        .collect()
+        .then((records) => readableRecords(ctx, horse, records, args.stableId)),
       ctx.db
         .query('horseNutritionLogs')
         .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-        .collect(),
+        .collect()
+        .then((records) => readableRecords(ctx, horse, records, args.stableId)),
       ctx.db
         .query('stableDocuments')
         .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-        .collect(),
+        .collect()
+        .then((records) => readableRecords(ctx, horse, records, args.stableId)),
       ctx.db
         .query('eventsHorses')
         .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
@@ -62,7 +73,7 @@ export const getForHorse = query({
     ])
     const confirmedEventRows = eventRows.filter(isConfirmedEventHorse)
     const events = await Promise.all(
-      confirmedEventRows.map((row) => horseEvent(ctx, row)),
+      confirmedEventRows.map((row) => horseEvent(ctx, row, args.stableId)),
     )
     const recentEvents = events
       .filter(isEvent)
@@ -78,7 +89,10 @@ export const getForHorse = query({
     return {
       hasAccess: true as const,
       stable: access.stable,
-      horse: await resolveHorseContacts(ctx, horse),
+      horse: await resolveHorseContacts(
+        ctx,
+        await visibleHorse(ctx, horse, Boolean(args.stableId)),
+      ),
       activeHealthIssues: healthIssues
         .filter((issue) => issue.status === 'active')
         .sort((a, b) => b.notedAt - a.notedAt),

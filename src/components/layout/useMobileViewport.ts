@@ -52,25 +52,20 @@ export function useMobileViewport() {
       const dialogBody = active.closest<HTMLElement>(
         '[data-slot=record-dialog-body]',
       )
-      const bodyRect = dialogBody?.getBoundingClientRect()
-      const actions = dialogBody
-        ? dialogBody.querySelector<HTMLElement>(
-            '[data-slot=form-submit-actions]',
-          )
-        : document.querySelector<HTMLElement>(
-            '[data-mobile-route-form=true] [data-slot=card-footer]',
-          )
+      // Safari already reveals focused fields in the document. Scrolling the
+      // page again on visualViewport events fights its keyboard pan and can
+      // trigger another viewport event. Only contained dialogs need our help.
+      if (!dialogBody) return
+      const bodyRect = dialogBody.getBoundingClientRect()
+      const actions = dialogBody.querySelector<HTMLElement>(
+        '[data-slot=form-submit-actions]',
+      )
       const bottom =
-        Math.min(bodyRect?.bottom ?? Infinity, top + height) -
+        Math.min(bodyRect.bottom, top + height) -
         (actions?.getBoundingClientRect().height ?? 16) -
         16
-      const header = document.querySelector<HTMLElement>(
-        '[data-slot=app-header]',
-      )
-      const visibleTop = bodyRect
-        ? Math.max(top, bodyRect.top) + 12
-        : top + (header?.getBoundingClientRect().height ?? 0) + 12
-      const scrollContainer = dialogBody ?? window
+      const visibleTop = Math.max(top, bodyRect.top) + 12
+      const scrollContainer = dialogBody
       // A tall textarea cannot fit wholly in the remaining viewport. Align its
       // top once instead of oscillating between its two edges on scroll events.
       if (rect.height > bottom - visibleTop) {

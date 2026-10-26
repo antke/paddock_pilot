@@ -564,3 +564,70 @@ describe('EventEditor production composition', () => {
     expect(title.value).toBe('Local draft')
   })
 })
+
+it('filters horses by destination and confirms removal while preserving the draft', async () => {
+  const invitedId = 'invited-horse' as Id<'horses'>
+  const mine = {
+    _id: horseId,
+    _creationTime: 0,
+    name: 'Juniper',
+    age: 8,
+    requiresApproval: false,
+  }
+  const invited = {
+    ...mine,
+    _id: invitedId,
+    name: 'Maple',
+    requiresApproval: true,
+  }
+  const { title, props, form } = setup({
+    mode: 'create',
+    initialValues: {
+      ...createEventEditorValues(stableId),
+      title: 'Group visit',
+      date: '2026-10-10',
+      time: '10:00',
+      horseIds: [horseId, invitedId],
+    },
+    destinations: {
+      personal: [mine],
+      stables: [{ id: stableId, name: 'Willow', horses: [mine, invited] }],
+    },
+  })
+  expect(screen.getByText('Requires approval')).toBeTruthy()
+  expect(screen.getByText('Added directly: 1 · Invitations: 1')).toBeTruthy()
+  fireEvent.change(screen.getByLabelText('Create in'), {
+    target: { value: '' },
+  })
+  expect(screen.getByRole('alertdialog')).toBeTruthy()
+  expect(title.value).toBe('Group visit')
+  fireEvent.click(screen.getByRole('button', { name: 'Keep current space' }))
+  expect(screen.getByText('Maple')).toBeTruthy()
+  fireEvent.change(screen.getByLabelText('Create in'), {
+    target: { value: '' },
+  })
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Remove horses and switch' }),
+  )
+  await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
+  expect(screen.queryByText('Maple')).toBeNull()
+  expect(title.value).toBe('Group visit')
+  expect(
+    screen.getByRole('button', { name: 'Create private event' }),
+  ).toBeTruthy()
+  fireEvent.submit(form)
+  await waitFor(() => expect(props.onSave).toHaveBeenCalled())
+  expect(vi.mocked(props.onSave).mock.calls[0][0]).toMatchObject({
+    horseIds: [horseId],
+    title: 'Group visit',
+  })
+  expect(vi.mocked(props.onSave).mock.calls[0][0].stableId).toBeUndefined()
+})
+
+it('offers training in event creation and exposes its required activity fields', async () => {
+  setup({ mode: 'create', initialValues: createEventEditorValues() })
+  fireEvent.click(screen.getByRole('button', { name: 'Training' }))
+  expect(
+    await screen.findByText('Select all activities practised in this session.'),
+  ).toBeTruthy()
+})

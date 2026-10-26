@@ -76,7 +76,7 @@ it('names account ownership and stable access, and separates ownership transfer 
   expect(screen.getByText('Taylor Evans')).toBeTruthy()
   expect(screen.getByText('Willow Stables · Robin Brooks')).toBeTruthy()
   expect(
-    screen.getByText(/That access ends when the horse leaves/),
+    screen.getByText(/Stable access ends when the horse leaves/),
   ).toBeTruthy()
   expect(screen.getByRole('button', { name: 'Send invitation' })).toBeTruthy()
   expect(
@@ -146,7 +146,9 @@ it('makes source, destination, access consequences and task choices explicit bef
   expect(review.getAttribute('aria-expanded')).toBe('true')
   expect(screen.getByText('Move Juniper')).toBeTruthy()
   expect(screen.getByText(/Unchecked tasks are dismissed/)).toBeTruthy()
-  expect(screen.getByText(/stable admin will be able to read/)).toBeTruthy()
+  expect(
+    screen.getByText(/You choose which existing records to share/),
+  ).toBeTruthy()
   fireEvent.click(screen.getByRole('checkbox', { name: 'Dental check' }))
   fireEvent.click(screen.getByRole('button', { name: 'Move to Meadowbrook' }))
   await screen.findByText(/The move to Meadowbrook has started/)

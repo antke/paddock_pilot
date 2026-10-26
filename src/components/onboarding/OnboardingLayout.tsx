@@ -1,5 +1,5 @@
 import { useT } from '#/i18n/LocaleProvider'
-import { ArrowLeftIcon, SparkleIcon } from '@phosphor-icons/react'
+import { SparkleIcon } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
@@ -12,7 +12,7 @@ import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { Badge } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
+import { BackButton } from '#/components/ui/back-action'
 import { OnboardingStepper } from './OnboardingStepper'
 import type { OnboardingStep } from './OnboardingStepper'
 
@@ -49,32 +49,36 @@ export function OnboardingLayout({
 
   const [childPending, setChildPending] = useState(false)
   const sectionRef = useRef<HTMLDivElement>(null)
+  const progressRef = useRef<HTMLDivElement>(null)
   const stepId = steps.find((step) => step.status === 'current')?.id
   const previousStepId = useRef(stepId)
   useEffect(() => {
     if (previousStepId.current !== stepId) {
       previousStepId.current = stepId
-      sectionRef.current?.focus()
+      sectionRef.current?.focus({ preventScroll: true })
+      progressRef.current?.scrollIntoView?.({
+        block: 'start',
+        behavior: 'instant',
+      })
     }
   }, [stepId])
   const busy = pending || childPending
   const blocked = busy || Boolean(transitionError)
   return (
-    <DashboardPage width="narrow">
+    <DashboardPage
+      width="narrow"
+      ref={progressRef}
+      data-slot="onboarding-layout"
+      className="scroll-mt-20"
+    >
       <DashboardPageHeader
         title={pageTitle}
         description={pageDescription}
-        actions={
+        backAction={
           onBack ? (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={blocked}
-              onClick={onBack}
-            >
-              <ArrowLeftIcon aria-hidden="true" />
+            <BackButton disabled={blocked} onClick={onBack}>
               {t('onboarding.back')}
-            </Button>
+            </BackButton>
           ) : undefined
         }
       />

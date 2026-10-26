@@ -46,3 +46,30 @@ it('pending takes precedence over a prior confirmation', () => {
   expect(screen.getByRole('button', { name: 'Copying…' })).toBeTruthy()
   expect(screen.queryByRole('button', { name: 'Copied' })).toBeNull()
 })
+
+it('shows a retry after failure without exposing stale success, and returns to pending on retry', () => {
+  const ui = (pending: boolean, failed: boolean) => (
+    <FormSubmitButtons
+      isSubmitting={pending}
+      failed={failed}
+      confirmed
+      confirmedLabel="Saved"
+      submitLabel="Save record"
+      submittingLabel="Saving record…"
+    />
+  )
+  const view = render(ui(false, true))
+  expect(
+    screen.getByRole<HTMLButtonElement>('button', { name: 'Try again' })
+      .disabled,
+  ).toBe(false)
+  expect(screen.queryByRole('button', { name: 'Saved' })).toBeNull()
+  view.rerender(ui(true, true))
+  expect(
+    screen.getByRole<HTMLButtonElement>('button', { name: 'Saving record…' })
+      .disabled,
+  ).toBe(true)
+  expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull()
+  view.rerender(ui(false, false))
+  expect(screen.getByRole('button', { name: 'Saved' })).toBeTruthy()
+})

@@ -39,6 +39,7 @@ export function ChoiceButtonGroup<TValue extends string>({
 }: ChoiceButtonGroupProps<TValue>) {
   const id = useId()
   const { spatial } = useAppMotion()
+  const sliding = layout === 'segmented' && spatial
   return (
     <ToggleGroup
       data-slot="choice-button-group"
@@ -57,7 +58,8 @@ export function ChoiceButtonGroup<TValue extends string>({
         layout === 'compact' && 'flex w-full flex-wrap gap-2',
         layout === 'cards' &&
           'grid w-full auto-rows-fr items-stretch gap-2 sm:grid-cols-2',
-        layout === 'segmented' && 'inline-flex w-auto flex-nowrap gap-0',
+        layout === 'segmented' &&
+          'inline-flex w-fit max-w-full flex-nowrap gap-0 rounded-control bg-surface-muted inset-ring inset-ring-border',
         className,
       )}
       disabled={disabled}
@@ -70,22 +72,23 @@ export function ChoiceButtonGroup<TValue extends string>({
           key={option.value}
           value={option.value}
           className={cn(
-            spatial && 'isolate data-pressed:bg-transparent',
-            layout === 'compact' && 'px-4',
+            layout !== 'cards' && 'h-auto min-h-10 px-4 py-2 text-sm',
             layout === 'segmented' &&
-              'rounded-none first:rounded-l-control last:rounded-r-control',
+              'ml-0 border-transparent bg-transparent data-pressed:border-transparent hover:border-transparent hover:bg-selection-surface/50 data-pressed:hover:bg-selection-surface',
             layout === 'cards' &&
               'h-auto min-h-20 w-full flex-col items-start justify-start gap-1 px-4 py-3 text-left whitespace-normal',
+            sliding &&
+              'isolate data-pressed:bg-transparent data-pressed:hover:bg-transparent',
           )}
         >
-          {spatial && value === option.value && (
+          {sliding && value === option.value && (
             <motion.span
               aria-hidden="true"
               layoutId={`${id}-selection`}
               layoutDependency={value}
               initial={false}
               transition={journalMotion.spring}
-              className="pointer-events-none absolute inset-0 -z-10 rounded-[inherit] bg-selection-surface"
+              className="pointer-events-none absolute inset-0.5 -z-10 rounded-[calc(var(--radius-control)-2px)] bg-selection-surface"
             />
           )}
           <span

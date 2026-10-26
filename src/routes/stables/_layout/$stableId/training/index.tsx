@@ -1,3 +1,4 @@
+import { BackLink } from '#/components/ui/back-action'
 import { useT } from '#/i18n/LocaleProvider'
 import { createFileRoute } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -33,6 +34,7 @@ function TrainingLog() {
   return (
     <DashboardPage>
       <DashboardPageHeader
+        backAction={<BackLink to="/stables/$stableId" params={{ stableId }} />}
         title={t('trainingViews.log')}
         description={!small ? t('trainingViews.logHelp') : undefined}
       />

@@ -1,3 +1,4 @@
+import { useWorkspace } from '#/components/layout/WorkspaceContext'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import {
   isOnlyOutstandingFilter,
@@ -23,6 +24,7 @@ import type { CareReminderListItem } from './CareRemindersCard'
 import type { CareReminderSubmitData } from './CareReminderForm'
 
 type HorseCareRemindersCardProps = {
+  enableSharing?: boolean
   horse: Doc<'horses'>
   onCreateActionChange?: (action: ReactNode | null) => void
 }
@@ -33,8 +35,12 @@ export function HorseCareRemindersCard({
 }: HorseCareRemindersCardProps) {
   const horseDisplayName = getHorseDisplayName(horse)
   const t = useT()
+  const workspace = useWorkspace()
   const { data } = useSuspenseQuery(
-    convexQuery(api.careReminders.listForHorse, { horseId: horse._id }),
+    convexQuery(api.careReminders.listForHorse, {
+      stableId: workspace?.stableId,
+      horseId: horse._id,
+    }),
   )
   const addReminder = useMutation(api.careReminders.add)
   const actions = useCareReminderActions()
@@ -46,6 +52,8 @@ export function HorseCareRemindersCard({
     async (values: CareReminderSubmitData) => {
       try {
         await addReminder({
+          requestId: values.requestId,
+          shareWithStable: values.shareWithStable,
           stableId: horse.stableId,
           horseId: horse._id,
           title: values.title,
@@ -79,6 +87,7 @@ export function HorseCareRemindersCard({
 
   return (
     <HorseCareRemindersView
+      enableSharing
       horse={horse}
       records={data.reminders}
       canManage={data.canManage}
@@ -105,6 +114,7 @@ type HorseCareRemindersViewProps = HorseCareRemindersCardProps & {
 }
 
 export function HorseCareRemindersView({
+  enableSharing,
   horse,
   records,
   items,
@@ -139,6 +149,7 @@ export function HorseCareRemindersView({
 
   return (
     <CareRemindersCard
+      enableSharing={enableSharing}
       title={t('reminders.careReminders')}
       description={t('reminders.horseHelp')}
       outstandingCount={

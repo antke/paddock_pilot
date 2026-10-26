@@ -50,7 +50,6 @@ export function createHorseSchemas(
   const horseOwnerNameSchema = z
     .string({ error: message('textInvalid') })
     .trim()
-    .min(1, message('ownerMin'))
     .max(100, message('ownerMax'))
 
   const horseProfileImageIdSchema = z

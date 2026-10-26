@@ -148,6 +148,7 @@ function StableInvitationRow({
   >()
   const pendingRef = useRef(false)
   const copyConfirmation = useTransientConfirmation(invitation.token)
+  const resendConfirmation = useTransientConfirmation(invitation._id)
   const [isRevokeOpen, setIsRevokeOpen] = useState(false)
   const [failedAction, setFailedAction] = useState<
     'resend' | 'revoke' | 'copy'
@@ -173,7 +174,9 @@ function StableInvitationRow({
         await onCopy(invitation.token)
         copyConfirmation.confirm()
       } else if (action === 'resend') {
-        if (!(await onResend(invitation))) setFailedAction('resend')
+        resendConfirmation.clear()
+        if (await onResend(invitation)) resendConfirmation.confirm()
+        else setFailedAction('resend')
       } else if (await onRevoke(invitation)) setIsRevokeOpen(false)
       else setFailedAction('revoke')
     } catch {
@@ -225,6 +228,8 @@ function StableInvitationRow({
                   confirmedLabel={t('common.copied')}
                   pending={pendingAction === 'copy'}
                   confirmed={copyConfirmation.confirmed}
+                  failed={failedAction === 'copy'}
+                  failedLabel={t('invitationFlow.copy')}
                 />
               </Button>
             )}
@@ -239,6 +244,10 @@ function StableInvitationRow({
               >
                 <ActionFeedback
                   pending={pendingAction === 'resend'}
+                  confirmed={resendConfirmation.confirmed}
+                  confirmedLabel={t('invitationFlow.queuedShort')}
+                  failed={failedAction === 'resend'}
+                  failedLabel={t('invitationFlow.resend')}
                   label={t('invitationFlow.resend')}
                   pendingLabel={t('invitationFlow.resending')}
                 />

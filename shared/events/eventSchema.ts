@@ -92,6 +92,7 @@ export type EventValidationKey = keyof typeof defaultMessages
 export function createEventSchemas(
   message: (key: EventValidationKey) => string = (key) => defaultMessages[key],
   trainingMessage?: (key: TrainingValidationKey) => string,
+  options: { allowEmptyHorses?: boolean } = {},
 ) {
   const { trainingDetailsSchema, trainingDetailsFormSchema } =
     createTrainingSchemas(trainingMessage)
@@ -167,7 +168,7 @@ export function createEventSchemas(
     .array(z.string({ error: message('textInvalid') }).min(1), {
       error: message('listInvalid'),
     })
-    .min(1, message('horseRequired'))
+    .min(options.allowEmptyHorses ? 0 : 1, message('horseRequired'))
     .refine(
       (horseIds) => new Set(horseIds).size === horseIds.length,
       message('horseUnique'),
@@ -308,6 +309,10 @@ export function createEventSchemas(
     schema.optional().transform((val) => val || undefined)
 
   const eventInputFieldsSchema = z.object({
+    requestId: z.string().optional(),
+    sharing: z
+      .array(z.object({ horseId: z.string(), enabled: z.boolean() }))
+      .optional(),
     stableId: z
       .string({ error: message('textInvalid') })
       .min(1)
@@ -349,6 +354,7 @@ export function createEventSchemas(
 
   const eventFormSchema = eventInputFieldsSchema
     .extend({
+      destination: z.enum(['personal', 'stable']).optional(),
       recurring: z.boolean({ error: message('booleanInvalid') }),
       training: trainingDetailsFormSchema.optional(),
     })

@@ -58,7 +58,12 @@ export function PersonalHorseForm({ horseId }: { horseId?: string }) {
         return add(payload)
       }}
       onSaved={(id) =>
-        navigate({ to: '/horses/$horseId', params: { horseId: id } })
+        navigate({
+          to: '/horses/$horseId',
+          params: { horseId: id },
+          // A completed form must not be the next destination of Back.
+          replace: true,
+        })
       }
     />
   )

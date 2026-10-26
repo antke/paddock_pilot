@@ -1,3 +1,4 @@
+import { useWorkspace } from '#/components/layout/WorkspaceContext'
 import { useT } from '#/i18n/LocaleProvider'
 import { DashboardValueBadge } from '#/components/dashboard/DashboardBadges'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
@@ -10,6 +11,7 @@ type ActiveStableHeaderProps = {
 }
 
 export function ActiveStableHeader({ data }: ActiveStableHeaderProps) {
+  const workspace = useWorkspace()
   const t = useT()
 
   const eventLabel = t('dashboard.todayEntries', {
@@ -18,7 +20,7 @@ export function ActiveStableHeader({ data }: ActiveStableHeaderProps) {
 
   return (
     <DashboardPageHeader
-      title={data.stable.name}
+      title={workspace ? t('navigation.home') : data.stable.name}
       titleClassName="break-words"
       actions={
         <>

@@ -160,7 +160,19 @@ export function HorseList({ horses, stableId }: Props) {
       stickyFilters
       renderItem={(horse) => {
         if (horse.canRead === false)
-          return <HorseCard key={horse._id} horse={horse} />
+          return (
+            <HorseCard
+              key={horse._id}
+              horse={horse}
+              meta={
+                <span>
+                  {locale === 'pl'
+                    ? 'Tylko lista stajni. Poproś właściciela konia o zaproszenie do opieki, aby zobaczyć jego wpisy.'
+                    : 'Stable roster only. Ask the horse’s owner for a carer invitation to see its records.'}
+                </span>
+              }
+            />
+          )
         const matchedIdentifier = getMatchedIdentifier(
           horse,
           filtering.query,

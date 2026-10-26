@@ -99,3 +99,23 @@ describe('care reminder form recovery', () => {
     expect(title.value).toBe('Farrier')
   })
 })
+
+it('serializes repeated submits while a reminder write is pending', async () => {
+  let resolve!: () => void
+  const save = vi.fn(
+    () =>
+      new Promise<void>((done) => {
+        resolve = done
+      }),
+  )
+  render(<CareReminderForm onSubmit={save} presentation="plain" />)
+  const title = screen.getByLabelText<HTMLInputElement>('Title')
+  fireEvent.change(title, { target: { value: 'One task' } })
+  const form = title.closest('form')!
+  fireEvent.submit(form)
+  fireEvent.submit(form)
+  await waitFor(() => expect(save).toHaveBeenCalled())
+  expect(save).toHaveBeenCalledTimes(1)
+  resolve()
+  await waitFor(() => expect(title.value).toBe(''))
+})

@@ -79,7 +79,9 @@ it('returns each training horse and record once after departure and rejoining', 
     horseId: f.horseId,
     stableId: f.stableId,
   })
-  await f.admin.mutation(api.events.update, { ...input, id: eventId })
+  await expect(f.admin.query(api.training.listForEvent, { eventId })).rejects.toThrow()
+  await f.owner.mutation(api.events.update, { ...input, id: eventId })
+  await f.owner.mutation(api.recordSharing.set, { horseId: f.horseId, recordId: eventId, enabled: true })
 
   for (const context of [
     {},
@@ -96,7 +98,7 @@ it('returns each training horse and record once after departure and rejoining', 
   }
 })
 
-it('does not reveal shared provider phone numbers through a horse-specific event view', async () => {
+it('preserves single-horse shared event details for its owner', async () => {
   const f = await fixture()
   const eventId = await f.admin.mutation(api.events.add, {
     stableId: f.stableId,
@@ -108,16 +110,16 @@ it('does not reveal shared provider phone numbers through a horse-specific event
     providerPhone: '+48123456789',
   })
   const shared = await f.owner.query(api.events.getWithHorses, { id: eventId })
-  expect(shared!.event.providerPhone).toBeUndefined()
+  expect(shared!.event.providerPhone).toBe('+48123456789')
   const detail = await f.owner.query(api.events.getWithHorses, {
     id: eventId,
     horseId: f.horseId,
   })
-  expect(detail!.event.providerPhone).toBeUndefined()
+  expect(detail!.event.providerPhone).toBe('+48123456789')
   const history = await f.owner.query(api.events.listForHorse, {
     horseId: f.horseId,
   })
-  expect(history[0].providerPhone).toBeUndefined()
+  expect(history[0].providerPhone).toBe('+48123456789')
   const adminView = await f.admin.query(api.events.getWithHorses, {
     id: eventId,
   })
@@ -146,7 +148,7 @@ it('revoked transfer invitations must not return newly added horse tasks', async
   expect(result).toBeNull()
 })
 
-it('stable admins must not overwrite owner-authored training outcomes', async () => {
+it('stable admins can edit shared outcomes irrespective of authorship', async () => {
   const f = await fixture()
   const details = { activities: ['other' as const], format: 'regular' as const }
   const eventId = await f.admin.mutation(api.events.add, {
@@ -174,7 +176,7 @@ it('stable admins must not overwrite owner-authored training outcomes', async ()
       ...args,
       outcome: 'Admin overwrite',
     }),
-  ).rejects.toThrow()
+  ).resolves.toBeNull()
   await f.owner.mutation(api.training.saveRecord, {
     ...args,
     outcome: 'Owner correction',
@@ -187,7 +189,7 @@ it('stable admins must not overwrite owner-authored training outcomes', async ()
   const adminCalendar = await f.admin.query(api.training.listForStable, {
     stableId: f.stableId,
   })
-  expect(adminCalendar.records[0].canEdit).toBe(false)
+  expect(adminCalendar.records[0].canEdit).toBe(true)
   const preview = await f.owner.query(api.horseTransitions.preview, {
     horseId: f.horseId,
   })
@@ -386,7 +388,7 @@ it('applies author provenance when creating an already completed lesson', async 
     (record) => record.eventId === stableEvent,
   )!
   expect(personalRecord.stableId).toBeUndefined()
-  expect(personalRecord.canEdit).toBe(false)
+  expect(personalRecord.canEdit).toBe(true)
   expect(stableRecord.stableId).toBe(f.stableId)
   expect(stableRecord.sourcePlacementId).toBeDefined()
   expect(stableRecord.canEdit).toBe(true)

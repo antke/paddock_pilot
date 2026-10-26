@@ -91,6 +91,7 @@ export const invitationFlow = {
   linkCopied: 'Invitation link copied',
   copyFailed: 'Could not copy invitation link',
   queuedAgain: 'Invitation queued again',
+  queuedShort: 'Email queued',
   copy: 'Copy link',
   resendFailed: 'Could not resend invitation',
   revoked: 'Invitation revoked',

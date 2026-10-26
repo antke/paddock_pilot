@@ -27,9 +27,11 @@ import {
   formatShortWeekdayDate,
 } from '#/lib/dateDisplay'
 import type { TrainingEntry } from './trainingCalendarData'
-import { TrainingEntryLink } from './TrainingEntryLink'
+import { TrainingSessionLink } from './TrainingSessionLink'
+import { groupTrainingSessions } from './trainingSessions'
 
 type Props = {
+  stableId?: string
   days: Array<string>
   entries: Array<TrainingEntry>
   selectedDate?: string
@@ -38,6 +40,7 @@ type Props = {
 }
 
 export function TrainingMonthCalendar({
+  stableId,
   days,
   entries,
   selectedDate,
@@ -54,10 +57,12 @@ export function TrainingMonthCalendar({
   const entriesByDate = new Map(
     days.map((date) => [
       date,
-      entries.filter(
-        (entry) =>
-          entry.occurrence.startDate <= date &&
-          entry.occurrence.endDate >= date,
+      groupTrainingSessions(
+        entries.filter(
+          (entry) =>
+            entry.occurrence.startDate <= date &&
+            entry.occurrence.endDate >= date,
+        ),
       ),
     ]),
   )
@@ -110,7 +115,9 @@ export function TrainingMonthCalendar({
                 const dayEntries = entriesByDate.get(date) ?? []
                 const count = dayEntries.length
                 const dayHorses = uniqueCalendarHorses(
-                  dayEntries.map((entry) => entry.horse),
+                  dayEntries.flatMap((session) =>
+                    session.entries.map((entry) => entry.horse),
+                  ),
                 )
                 const visible = dayEntries.slice(0, count > 2 ? 1 : 2)
                 return (
@@ -140,9 +147,10 @@ export function TrainingMonthCalendar({
                     {!small && (
                       <CalendarDayEventList className="calendar-month-detail">
                         {visible.map((entry) => (
-                          <TrainingEntryLink
+                          <TrainingSessionLink
                             key={entry.key}
-                            entry={entry}
+                            session={entry}
+                            stableId={stableId}
                             variant="month"
                           />
                         ))}
@@ -183,7 +191,11 @@ export function TrainingMonthCalendar({
           </p>
           {selectedEntries.length ? (
             selectedEntries.map((entry) => (
-              <TrainingEntryLink key={entry.key} entry={entry} />
+              <TrainingSessionLink
+                key={entry.key}
+                session={entry}
+                stableId={stableId}
+              />
             ))
           ) : (
             <DashboardEmptyState chrome="flat" spacing="flush">

@@ -1,3 +1,4 @@
+import { accountDisplayName } from '../shared/users/displayName'
 import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import { horseIdentitySchema } from '../shared/horses/horseSchema'
 import { ConvexError, v } from 'convex/values'
@@ -163,25 +164,16 @@ export const management = query({
       : null
     return {
       horseName: getHorseDisplayName(horse),
-      ownerName:
-        owner?.preferredName ||
-        owner?.firstName ||
-        owner?.email ||
-        horse.ownerName ||
-        '',
-      stableAdminName:
-        stableAdmin?.preferredName ||
-        stableAdmin?.firstName ||
-        stableAdmin?.email ||
-        undefined,
+      ownerName: accountDisplayName(owner, horse.ownerName ?? ''),
+      stableAdminName: accountDisplayName(stableAdmin) || undefined,
       access,
-      placements: history,
+      placements: access.isOwner || access.carerRole ? history : [],
       carers: await Promise.all(
         carers.map(async (carer) => {
           const user = await ctx.db.get(carer.userId)
           return {
             ...carer,
-            name: user?.preferredName ?? user?.firstName ?? '',
+            name: accountDisplayName(user),
             email: user?.email ?? '',
           }
         }),
@@ -193,11 +185,14 @@ export const management = query({
               .withIndex('by_horse_id', (q) => q.eq('horseId', horseId))
               .collect()
           : [],
-      audit: await ctx.db
-        .query('horseAuditLogs')
-        .withIndex('by_horse_id', (q) => q.eq('horseId', horseId))
-        .order('desc')
-        .take(100),
+      audit:
+        access.isOwner || access.carerRole
+          ? await ctx.db
+              .query('horseAuditLogs')
+              .withIndex('by_horse_id', (q) => q.eq('horseId', horseId))
+              .order('desc')
+              .take(100)
+          : [],
     }
   },
 })
@@ -455,7 +450,7 @@ export const respond = mutation({
       }
       await ctx.db.patch(horse._id, {
         ownerId: user._id,
-        ownerName: user.preferredName ?? user.firstName,
+        ownerName: accountDisplayName(user),
         custodianStableId: undefined,
       })
       await revokeHorseAccess(ctx, horse._id, invitation._id)

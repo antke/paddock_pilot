@@ -116,7 +116,7 @@ export function HorseCalendarColourField({
             (horse) => getHorseCalendarColour(horse) === option,
           )
           return (
-            <button
+            <Button
               key={option}
               ref={index === 0 ? field.ref : undefined}
               type="button"
@@ -152,7 +152,7 @@ export function HorseCalendarColourField({
                   />
                 </span>
               )}
-            </button>
+            </Button>
           )
         })}
       </div>
@@ -378,10 +378,10 @@ function CustomColourEditor({
             key={channel}
             className="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-3"
           >
-            <label htmlFor={`${id}-${channel}`} className="text-sm">
+            <FieldLabel htmlFor={`${id}-${channel}`} className="text-sm">
               {label}
-            </label>
-            <input
+            </FieldLabel>
+            <Input
               id={`${id}-${channel}`}
               type="range"
               min={0}
@@ -410,9 +410,9 @@ function CustomColourEditor({
         )
       })}
       <div className="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-3">
-        <label htmlFor={`${id}-hex`} className="text-sm">
+        <FieldLabel htmlFor={`${id}-hex`} className="text-sm">
           {t('calendar.hexColour')}
-        </label>
+        </FieldLabel>
         <Input
           id={`${id}-hex`}
           value={value}

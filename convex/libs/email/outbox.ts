@@ -28,6 +28,28 @@ export const enqueueEmail = async (
       q.eq('email', input.recipient.trim().toLowerCase()),
     )
     .first()
+  const template = input.template
+  if (
+    recipient &&
+    recipient.deletedAt === undefined &&
+    [
+      'event_participation_update',
+      'event_details_changed',
+      'stable_membership_activated',
+      'stable_invitation_accepted',
+      'stable_membership_removed',
+      'stable_archived',
+    ].includes(template.kind)
+  ) {
+    await ctx.db.insert('notifications', {
+      userId: recipient._id,
+      kind: template.kind,
+      eventId: 'eventId' in template ? template.eventId : undefined,
+      stableId: 'stableId' in template ? template.stableId : undefined,
+      stableName: 'stableName' in template ? template.stableName : undefined,
+      createdAt: Date.now(),
+    })
+  }
   const locale = recipient?.locale ?? input.locale ?? 'en'
   const now = Date.now()
   const deliveryId = await ctx.db.insert('emailDeliveries', {

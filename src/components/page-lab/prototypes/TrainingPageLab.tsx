@@ -27,12 +27,17 @@ export function TrainingPageLab({ data }: { data: DashboardLabData }) {
         _creationTime: 0,
         stableId: data.stable._id,
         createdBy: horse.ownerId!,
-        horseIds: [horse._id],
+        horseIds:
+          horseIndex === 0 && i === 0
+            ? horses.map((item) => item._id)
+            : [horse._id],
         type: 'training',
         title:
-          i === 1
-            ? 'Trainer lesson — transitions, balance and rhythm'
-            : 'Training session',
+          horseIndex === 0 && i === 0
+            ? 'Group schooling — three horses'
+            : i === 1
+              ? 'Trainer lesson — transitions, balance and rhythm'
+              : 'Training session',
         date: formatDateKey(
           new Date(
             monday.getFullYear(),

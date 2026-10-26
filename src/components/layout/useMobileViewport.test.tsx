@@ -14,7 +14,7 @@ afterEach(() => {
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
-it('keeps a focused field above keyboard and actions, ignores zoom, and cleans up', async () => {
+it('detects the keyboard without fighting native page scrolling, ignores zoom, and cleans up', async () => {
   vi.stubGlobal('matchMedia', () => ({
     matches: true,
     addEventListener: vi.fn(),
@@ -64,7 +64,17 @@ it('keeps a focused field above keyboard and actions, ignores zoom, and cleans u
   expect(document.documentElement.hasAttribute('data-mobile-keyboard')).toBe(
     true,
   )
-  expect(scroll).toHaveBeenCalled()
+  expect(scroll).not.toHaveBeenCalled()
+  // Safari pans the visual viewport while moving between fields. Updating
+  // geometry must not start a competing document scroll.
+  viewport.offsetTop = 80
+  viewport.dispatchEvent(new Event('scroll'))
+  await waitFor(() =>
+    expect(
+      document.documentElement.style.getPropertyValue('--mobile-viewport-top'),
+    ).toBe('80px'),
+  )
+  expect(scroll).not.toHaveBeenCalled()
   viewport.scale = 2
   viewport.dispatchEvent(new Event('resize'))
   await waitFor(() =>

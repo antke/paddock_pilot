@@ -285,7 +285,7 @@ describe('mobile training controls', () => {
     expect(within(calendar).getAllByRole('columnheader')).toHaveLength(7)
     expect(within(calendar).getAllByRole('button')).toHaveLength(31)
     const fifth = within(calendar).getByRole('button', {
-      name: '5 January 2026, 1 training entry, Horses: Atlas',
+      name: '5 January 2026, 1 training session, Horses: Atlas',
     })
     expect(fifth.getAttribute('aria-pressed')).toBe('true')
     expect(
@@ -295,7 +295,7 @@ describe('mobile training controls', () => {
     ).toContain('date=2026-01-05')
     fireEvent.click(
       within(calendar).getByRole('button', {
-        name: '6 January 2026, 0 training entries',
+        name: '6 January 2026, 0 training sessions',
       }),
     )
     expect(screen.getByText('No training matches this date.')).toBeTruthy()
@@ -307,14 +307,14 @@ describe('mobile training controls', () => {
     expect(within(calendar).getAllByRole('button')).toHaveLength(28)
     expect(
       within(calendar)
-        .getByRole('button', { name: '1 February 2026, 0 training entries' })
+        .getByRole('button', { name: '1 February 2026, 0 training sessions' })
         .getAttribute('aria-pressed'),
     ).toBe('false')
     expect(screen.getByText('Choose a day in February 2026')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Previous month' }))
     fireEvent.click(
       within(calendar).getByRole('button', {
-        name: '5 January 2026, 1 training entry, Horses: Atlas',
+        name: '5 January 2026, 1 training session, Horses: Atlas',
       }),
     )
     fireEvent.click(screen.getByRole('button', { name: 'Week' }))
@@ -326,7 +326,7 @@ describe('mobile training controls', () => {
     expect(
       screen
         .getByRole('button', {
-          name: '5 January 2026, 1 training entry, Horses: Atlas',
+          name: '5 January 2026, 1 training session, Horses: Atlas',
         })
         .getAttribute('aria-pressed'),
     ).toBe('true')
@@ -345,7 +345,7 @@ describe('mobile training controls', () => {
     })
     fireEvent.click(
       within(calendar).getByRole('button', {
-        name: '13 January 2026, 1 training entry, Horses: Atlas',
+        name: '13 January 2026, 1 training session, Horses: Atlas',
       }),
     )
     expect(
@@ -359,7 +359,7 @@ describe('mobile training controls', () => {
     })
     expect(
       within(calendar)
-        .getByRole('button', { name: '13 January 2026, 0 training entries' })
+        .getByRole('button', { name: '13 January 2026, 0 training sessions' })
         .getAttribute('aria-pressed'),
     ).toBe('true')
     expect(screen.getByText('No training matches this date.')).toBeTruthy()
@@ -443,28 +443,28 @@ describe('training calendar controls', () => {
       })
       for (let day = 12; day <= 18; day++) {
         const date = within(month).getByRole('button', {
-          name: `${day} October 2026, 2 training entries, Horses: Atlas, Meadow`,
+          name: `${day} October 2026, 1 training session, Horses: Atlas, Meadow`,
         })
         expect(date.querySelectorAll('[data-horse-colour]')).toHaveLength(2)
       }
       fireEvent.click(
         within(month).getByRole('button', {
-          name: '15 October 2026, 2 training entries, Horses: Atlas, Meadow',
+          name: '15 October 2026, 1 training session, Horses: Atlas, Meadow',
         }),
       )
       const agenda = screen.getByRole('region', {
         name: 'Sessions on 15 October 2026',
       })
-      expect(within(agenda).getAllByRole('link')).toHaveLength(2)
-      expect(within(agenda).getAllByText('Completed')).toHaveLength(2)
+      expect(within(agenda).getAllByRole('link')).toHaveLength(1)
+      expect(within(agenda).getAllByText('Completed')).toHaveLength(1)
       fireEvent.click(screen.getByRole('button', { name: 'Week' }))
       expect(
         screen.getByRole('heading', { name: '12 Oct – 18 Oct' }),
       ).toBeTruthy()
       const week = screen.getByRole('region', {
-        name: small ? 'Training agenda' : 'Weekly training by horse',
+        name: small ? 'Training agenda' : 'Weekly training sessions',
       })
-      expect(within(week).getAllByRole('link')).toHaveLength(14)
+      expect(within(week).getAllByRole('link')).toHaveLength(7)
     },
   )
 
@@ -529,7 +529,7 @@ describe('training calendar controls', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     fireEvent.click(
       within(month).getByRole('button', {
-        name: '5 January 2026, 3 training entries',
+        name: '5 January 2026, 3 training sessions',
       }),
     )
     expect(
@@ -563,8 +563,7 @@ describe('training calendar controls', () => {
     ).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Week' }))
     table = screen.getByRole('table')
-    expect(within(table).getByText('Juniper session')).toBeTruthy()
-    expect(within(table).queryByText('Juniper · Juniper session')).toBeNull()
+    expect(within(table).getByText('Juniper · Juniper session')).toBeTruthy()
     expect(
       within(table).queryByRole('link', { name: /Atlas session/ }),
     ).toBeNull()
@@ -605,7 +604,7 @@ describe('training calendar controls', () => {
     expect(screen.getByRole('table').textContent).not.toContain('Atlas session')
     expect(
       screen.getByRole('table', {
-        name: '5 sty – 11 sty — treningi według konia i dnia',
+        name: '5 sty – 11 sty — treningi według dnia',
       }),
     ).toBeTruthy()
     expect(screen.getByRole('heading', { name: '5 sty – 11 sty' })).toBeTruthy()

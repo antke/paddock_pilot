@@ -83,7 +83,7 @@ export const getForCurrentUser = query({
     const accessibleStables = await getAccessibleStables(ctx, user._id)
     const stables = args.stableId
       ? accessibleStables.filter((stable) => stable._id === args.stableId)
-      : accessibleStables
+      : []
 
     const stableRows = await Promise.all(
       stables.map(async (stable) => {
@@ -97,7 +97,7 @@ export const getForCurrentUser = query({
         const activeHorses = horses.filter(
           (horse, index) => isActiveHorse(horse) && permissions[index].canRead,
         )
-        const data = await horseCareData(ctx, activeHorses)
+        const data = await horseCareData(ctx, activeHorses, stable._id)
         const stableReminders = await ctx.db
           .query('careReminders')
           .withIndex('by_stable_id_status_due_date', (q) =>
@@ -109,28 +109,19 @@ export const getForCurrentUser = query({
           stable,
           reminders: [
             ...data.reminders.filter((r) => r.status === 'pending'),
-            ...stableReminders.filter(
-              (r) =>
-                !r.horseId ||
-                (r.assignedTo === user._id &&
-                  !activeHorses.some((h) => h._id === r.horseId)),
-            ),
+            ...stableReminders.filter((r) => !r.horseId),
           ],
         }
       }),
     )
 
-    const stableHorseIds = new Set(
-      stableRows.flatMap((row) => row.horses.map((h) => h._id)),
-    )
     const personal = await horseCareData(
       ctx,
-      args.stableId
-        ? []
-        : (await accessibleHorses(ctx, user._id)).filter(
-            (h) => !stableHorseIds.has(h._id),
-          ),
+      args.stableId ? [] : await accessibleHorses(ctx, user._id),
     )
+    const unique = <T extends { _id: string }>(rows: T[]) => [
+      ...new Map(rows.map((row) => [row._id, row])).values(),
+    ]
     const allRows = [
       ...stableRows,
       {
@@ -138,7 +129,7 @@ export const getForCurrentUser = query({
         reminders: personal.reminders.filter((r) => r.status === 'pending'),
       },
     ]
-    const horses = allRows.flatMap((row) => row.horses)
+    const horses = unique(allRows.flatMap((row) => row.horses))
     const horseById = new Map(horses.map((horse) => [horse._id, horse]))
     const horseProfileImageUrls = new Map(
       await Promise.all(
@@ -154,11 +145,12 @@ export const getForCurrentUser = query({
         ),
       ),
     )
-    const stableById = new Map(stables.map((stable) => [stable._id, stable]))
+    const stableById = new Map(
+      accessibleStables.map((stable) => [stable._id, stable]),
+    )
     const horseMetrics = new Map<Id<'horses'>, HorseMetrics>()
 
-    const upcomingEvents = allRows
-      .flatMap((row) => row.events)
+    const upcomingEvents = unique(allRows.flatMap((row) => row.events))
       .filter(
         (event) =>
           (event.status ?? 'planned') === 'planned' &&
@@ -166,22 +158,22 @@ export const getForCurrentUser = query({
           event.date <= upcomingEnd,
       )
       .sort(byEventDateAndTime)
-    const pendingReminders = allRows.flatMap((row) => row.reminders)
+    const pendingReminders = unique(allRows.flatMap((row) => row.reminders))
     const dueReminders = pendingReminders
       .filter((reminder) => reminder.dueDate <= upcomingEnd)
       .sort(byReminderDueDate)
     const overdueReminders = pendingReminders.filter(
       (reminder) => reminder.dueDate < today,
     )
-    const activeHealthIssues = allRows
-      .flatMap((row) => row.healthIssues)
-      .filter((issue) => issue.status === 'active')
+    const activeHealthIssues = unique(
+      allRows.flatMap((row) => row.healthIssues),
+    ).filter((issue) => issue.status === 'active')
     const highSeverityIssues = activeHealthIssues.filter(
       (issue) => issue.severity === 'high',
     )
-    const activeMedicationRecords = allRows
-      .flatMap((row) => row.medicationRecords)
-      .filter((record) => record.status === 'active')
+    const activeMedicationRecords = unique(
+      allRows.flatMap((row) => row.medicationRecords),
+    ).filter((record) => record.status === 'active')
 
     for (const issue of activeHealthIssues) {
       incrementHorseMetric(horseMetrics, issue.horseId, 'activeIssueCount')

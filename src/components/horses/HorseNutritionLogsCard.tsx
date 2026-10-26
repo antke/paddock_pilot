@@ -1,3 +1,6 @@
+import { WorkspaceRecordAudience } from '#/components/sharing/RecordAudienceLabel'
+import { useWorkspace } from '#/components/layout/WorkspaceContext'
+import type { RecordCreationOptions } from '#/components/sharing/useRecordCreationAudience'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { NutritionLogForm } from '#/components/horses/NutritionLogForm'
@@ -32,6 +35,7 @@ import { useHorseDetailCreateAction } from './useHorseDetailCreateAction'
 import { HorseRecordRemoveAction } from './HorseRecordRemoveAction'
 
 type HorseNutritionLogsCardProps = {
+  enableSharing?: boolean
   horse: Doc<'horses'>
   onCreateActionChange?: HorseDetailCreateActionChange
 }
@@ -43,8 +47,12 @@ export function HorseNutritionLogsCard({
   const horseDisplayName = getHorseDisplayName(horse)
   const t = useT()
 
+  const workspace = useWorkspace()
   const { data: logs } = useSuspenseQuery(
-    convexQuery(api.horseNutritionLogs.listForHorse, { horseId: horse._id }),
+    convexQuery(api.horseNutritionLogs.listForHorse, {
+      stableId: workspace?.stableId,
+      horseId: horse._id,
+    }),
   )
   const { data: permissions } = useSuspenseQuery(
     convexQuery(api.horseNutritionLogs.getPermissions, { horseId: horse._id }),
@@ -52,10 +60,12 @@ export function HorseNutritionLogsCard({
   const addNutritionLog = useMutation(api.horseNutritionLogs.add)
   const removeNutritionLog = useMutation(api.horseNutritionLogs.remove)
   const onAddNutritionLog = useCallback(
-    async (data: NutritionLogFormSchema) => {
+    async (data: NutritionLogFormSchema & RecordCreationOptions) => {
       try {
         await addNutritionLog({
           horseId: horse._id,
+          requestId: data.requestId,
+          shareWithStable: data.shareWithStable,
           changedAt: dateKeyToTimestamp(data.changedDate),
           summary: data.summary,
           feedingRoutineSnapshot: data.feedingRoutineSnapshot,
@@ -99,6 +109,7 @@ export function HorseNutritionLogsCard({
 
   return (
     <HorseNutritionLogsView
+      enableSharing
       key={horse._id}
       horse={horse}
       logs={logs}
@@ -111,6 +122,7 @@ export function HorseNutritionLogsCard({
 }
 
 export function HorseNutritionLogsView({
+  enableSharing,
   horse,
   logs,
   canManage,
@@ -161,6 +173,7 @@ export function HorseNutritionLogsView({
           description={t('careRecords.createNutritionHelp')}
         >
           <NutritionLogForm
+            audienceHorseId={enableSharing ? horse._id : undefined}
             horse={horse}
             onSubmit={addAndClose}
             onPendingChange={onPendingChange}
@@ -304,6 +317,7 @@ function NutritionLogRow({
           </DetailListGrid>
         )}
       </DashboardItemRecordContent>
+      <WorkspaceRecordAudience horseId={log.horseId} recordId={log._id} />
     </DashboardItemRecordCard>
   )
 }

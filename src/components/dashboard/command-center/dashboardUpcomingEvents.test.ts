@@ -27,7 +27,7 @@ function upcoming(events: DashboardCommandEvent[]) {
   )
 }
 describe('upcoming dashboard events', () => {
-  it('shows tomorrow through the seventh day, excludes cancelled/completed/training and other stables', () => {
+  it('shows tomorrow through the seventh day, excludes cancelled/completed/training while retaining shared events from other origins', () => {
     const result = upcoming([
       event('today', '2026-10-09'),
       event('tomorrow', '2026-10-10'),
@@ -42,7 +42,11 @@ describe('upcoming dashboard events', () => {
     ])
     expect(result.startKey).toBe('2026-10-10')
     expect(result.endKey).toBe('2026-10-16')
-    expect(result.events.map((e) => e._id)).toEqual(['tomorrow', 'last'])
+    expect(result.events.map((e) => e._id)).toEqual([
+      'tomorrow',
+      'foreign',
+      'last',
+    ])
   })
   it('counts a multi-day occurrence once and leaves ongoing events in Today', () => {
     const result = upcoming([

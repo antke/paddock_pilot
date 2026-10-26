@@ -1,3 +1,4 @@
+import { useWorkspace } from '#/components/layout/WorkspaceContext'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { ContactLink } from '#/components/ui/contact-link'
 import { getHorseBreedLabel } from 'shared/i18n/horseBreedLabels'
@@ -51,8 +52,12 @@ type HorseCareSummaryPageProps = {
 }
 
 export function HorseCareSummaryPage({ horseId }: HorseCareSummaryPageProps) {
+  const workspace = useWorkspace()
   const { data: summary } = useSuspenseQuery(
-    convexQuery(api.horseCareSummary.getForHorse, { horseId }),
+    convexQuery(api.horseCareSummary.getForHorse, {
+      stableId: workspace?.stableId,
+      horseId,
+    }),
   )
 
   return <HorseCareSummaryView summary={summary} />

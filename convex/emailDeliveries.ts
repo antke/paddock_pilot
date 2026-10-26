@@ -1,4 +1,5 @@
-import { getHorseAccess } from './libs/horsePermissions'
+import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
+import { recordCapabilities } from './libs/recordCapabilities'
 import {
   getDigestClock,
   getReminderDigestStables,
@@ -213,30 +214,54 @@ const getDeliverySkipReason = async (
       .first()
     if (!recipient || recipient.deletedAt !== undefined)
       return 'Recipient is unavailable.'
-    let hasAccess = false
-    if (event.stableId && event.createdBy === recipient._id) {
-      const membership = await ctx.db
-        .query('stableMembers')
-        .withIndex('by_stable_id_user_id', (q) =>
-          q.eq('stableId', event.stableId!).eq('userId', recipient._id),
-        )
-        .unique()
-      hasAccess = membership?.role === 'member'
-    }
     const rows = await ctx.db
       .query('eventsHorses')
       .withIndex('by_event_id', (q) => q.eq('eventId', event._id))
       .collect()
-    const currentHorseIds = new Set([
+    if (template.kind === 'event_horse_invitation') {
+      const horses = []
+      for (const row of rows) {
+        if (row.status !== 'invited' || row.participationEndsAt) continue
+        const horse = await ctx.db.get(row.horseId)
+        if (
+          horse &&
+          horse.deletedAt === undefined &&
+          !horse.transitionId &&
+          horse.ownerId === recipient._id &&
+          horse.stableId === event.stableId &&
+          horse.currentPlacementId === row.sourcePlacementId
+        )
+          horses.push(horse)
+      }
+      if (!horses.length)
+        return 'No pending horse invitations remain for this recipient.'
+      // Rebuild the recipient's summary; never send stale names or other owners' horses.
+      template.horseNames = horses.map((horse) => getHorseDisplayName(horse))
+      template.eventTitle = event.title
+      await ctx.db.patch(delivery._id, { template })
+      return null
+    }
+    const participantIds = new Set([
       ...event.horseIds,
-      ...rows
-        .filter((row) => !row.participationEndsAt && row.status === 'invited')
-        .map((row) => row.horseId),
+      ...rows.map((row) => row.horseId),
     ])
-    for (const horseId of currentHorseIds) {
+    let hasAccess = participantIds.size > 0
+    // Queued templates may contain any participant's name/details. Suppress a
+    // stale mixed-audience delivery rather than sending its old protected text.
+    for (const horseId of participantIds) {
       const horse = await ctx.db.get(horseId)
-      if (horse && (await getHorseAccess(ctx, horse, recipient._id)).canRead)
-        hasAccess = true
+      if (
+        !horse ||
+        !(
+          await recordCapabilities(
+            ctx,
+            horse,
+            { _id: event._id, date: event.date },
+            recipient._id,
+          )
+        ).readDetails
+      )
+        hasAccess = false
     }
     if (!hasAccess) return 'Recipient no longer has access to this event.'
     return null

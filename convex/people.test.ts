@@ -24,7 +24,9 @@ async function fixture() {
       lastName: 'Rider',
       preferredName: 'Alex nickname',
     })
-    const owner = await user('owner', 'Yard', { preferredName: 'Yard owner' })
+    const owner = await user('owner', 'Yard owner', {
+      preferredName: 'Yard owner',
+    })
     const member = await user('member', 'Stable member')
     const inactive = await user('inactive', 'Inactive member')
     const deleted = await user('deleted', 'Deleted person', { deletedAt: 1 })
@@ -137,15 +139,20 @@ describe('people name suggestions', () => {
           horseIds: [f.horseId, f.horseId],
         }),
       ),
-    ).toEqual(['Alex Rider', 'Yard owner', 'Stable nickname', 'Trusted Helper'])
+    ).toEqual([
+      'Alex nickname',
+      'Yard owner',
+      'Stable member',
+      'Trusted Helper',
+    ])
   })
 
-  it('marks only the current user and uses their full name before directory aliases', async () => {
+  it('marks only the current user and uses their preferred account name before directory aliases', async () => {
     const f = await fixture()
     const result = await f.actorClient.query(api.people.suggestNames, {
       stableId: f.stableId,
     })
-    expect(result[0]).toEqual({ name: 'Alex Rider', isCurrentUser: true })
+    expect(result[0]).toEqual({ name: 'Alex nickname', isCurrentUser: true })
     expect(result.slice(1).every((person) => !person.isCurrentUser)).toBe(true)
   })
 
@@ -158,9 +165,9 @@ describe('people name suggestions', () => {
         horseIds: [f.horseId, f.otherHorseId],
       })
     expect(names(result)).toEqual([
-      'Yard',
+      'Yard owner',
       'Alex nickname',
-      'Stable nickname',
+      'Stable member',
       'Trusted Helper',
     ])
     const personal = await f.actorClient.query(api.people.suggestNames, {
@@ -178,7 +185,7 @@ describe('people name suggestions', () => {
           horseIds: [f.otherHorseId],
         }),
       ),
-    ).toEqual(['Alex Rider', 'Yard owner', 'Stable nickname', 'Other helper'])
+    ).toEqual(['Alex nickname', 'Yard owner', 'Stable member', 'Other helper'])
     await f.t.run((ctx) => ctx.db.delete(f.carerId))
     expect(
       names(
@@ -198,7 +205,7 @@ describe('people name suggestions', () => {
           horseIds: [f.privateHorseId],
         }),
       ),
-    ).toEqual(['Alex Rider'])
+    ).toEqual(['Alex nickname'])
   })
 
   it('supports a trusted carer without stable membership without exposing the stable directory', async () => {
@@ -225,7 +232,7 @@ describe('people name suggestions', () => {
           horseIds: [f.horseId],
         }),
       ),
-    ).toEqual(['Alex Rider'])
+    ).toEqual(['Alex nickname'])
   })
 
   it('requires authentication', async () => {
@@ -233,5 +240,20 @@ describe('people name suggestions', () => {
     await expect(f.t.query(api.people.suggestNames, {})).rejects.toThrow(
       'User not authenticated',
     )
+  })
+})
+
+it('uses the preferred name instead of the sign-in placeholder for the current user', async () => {
+  const f = await fixture()
+  await f.t.run((ctx) =>
+    ctx.db.patch(f.actor, {
+      firstName: 'Member',
+      lastName: '',
+      preferredName: 'xyz',
+    }),
+  )
+  expect((await f.actorClient.query(api.people.suggestNames, {}))[0]).toEqual({
+    name: 'xyz',
+    isCurrentUser: true,
   })
 })

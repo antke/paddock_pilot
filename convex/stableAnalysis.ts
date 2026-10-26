@@ -1,3 +1,4 @@
+import { readableRecords } from './libs/recordCapabilities'
 import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import { horseEvent } from './libs/horseEventHistory'
 import { horseCareData } from './libs/horseCareData'
@@ -580,10 +581,11 @@ export const getForStable = query({
     const horsePermissions = await Promise.all(
       allHorses.map((horse) => getHorseAccess(ctx, horse, access.userId)),
     )
-    const horses = allHorses.filter(
+    const readableHorses = allHorses.filter(
       (horse, index) => isActiveHorse(horse) && horsePermissions[index].canRead,
     )
     const {
+      horses,
       events: allEvents,
       healthIssues: allHealthIssues,
       medicationRecords: allMedicationRecords,
@@ -591,7 +593,7 @@ export const getForStable = query({
       weightRecords: allWeightRecords,
       reminders: horseReminders,
       trainingOutcomes: allTrainingOutcomes,
-    } = await horseCareData(ctx, horses)
+    } = await horseCareData(ctx, readableHorses, args.stableId)
     const stableReminders = await ctx.db
       .query('careReminders')
       .withIndex('by_stable_id_due_date', (q) =>
@@ -887,23 +889,28 @@ export const getHorseComparisons = query({
         ctx.db
           .query('horseWeightRecords')
           .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-          .collect(),
+          .collect()
+          .then((records) => readableRecords(ctx, horse, records)),
         ctx.db
           .query('horseNutritionLogs')
           .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-          .collect(),
+          .collect()
+          .then((records) => readableRecords(ctx, horse, records)),
         ctx.db
           .query('horseHealthIssues')
           .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-          .collect(),
+          .collect()
+          .then((records) => readableRecords(ctx, horse, records)),
         ctx.db
           .query('horseMedicationRecords')
           .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-          .collect(),
+          .collect()
+          .then((records) => readableRecords(ctx, horse, records)),
         ctx.db
           .query('trainingRecords')
           .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-          .collect(),
+          .collect()
+          .then((records) => readableRecords(ctx, horse, records)),
         ctx.db
           .query('eventsHorses')
           .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))

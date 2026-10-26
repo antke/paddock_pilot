@@ -1,3 +1,6 @@
+import { useWorkspace } from '#/components/layout/WorkspaceContext'
+import { useLocale } from '#/i18n/LocaleProvider'
+import { ButtonLink } from '#/components/ui/button'
 import type { ElementType, ReactNode } from 'react'
 
 import { cn } from '#/lib/utils'
@@ -15,6 +18,7 @@ type DashboardPageHeaderContentLayout = 'center' | 'default' | 'inline' | 'wide'
 type DashboardPageHeaderProps = {
   title: ReactNode
   as?: ElementType
+  backAction?: ReactNode
   actions?: ReactNode
   actionsClassName?: string
   badges?: ReactNode
@@ -35,6 +39,7 @@ export function DashboardPageHeader({
   title,
   as,
   actions,
+  backAction,
   actionsClassName,
   badges,
   className,
@@ -49,6 +54,8 @@ export function DashboardPageHeader({
   titleClassName,
   titleSize = 'default',
 }: DashboardPageHeaderProps) {
+  const workspace = useWorkspace()
+  const { locale } = useLocale()
   const contentLayoutClassName = {
     center: 'flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-center',
     default: 'grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-stretch',
@@ -61,6 +68,9 @@ export function DashboardPageHeader({
       data-slot="dashboard-page-header"
       className={cn(dashboardHeroClassName('flat'), className)}
     >
+      {backAction && (
+        <div className="mb-3 flex justify-start">{backAction}</div>
+      )}
       <div
         className={cn(contentLayoutClassName[contentLayout], contentClassName)}
       >
@@ -80,9 +90,24 @@ export function DashboardPageHeader({
               scale={titleSize === 'default' ? 'page' : 'section'}
               className={titleClassName}
             >
-              {title}
+              {workspace &&
+              typeof title === 'string' &&
+              title !== workspace.label
+                ? `${title} · ${workspace.label}`
+                : title}
             </DashboardDisplayHeading>
 
+            {workspace?.stableId && (
+              <ButtonLink
+                to="/horses"
+                variant="link"
+                className="h-auto justify-self-start whitespace-normal px-0 text-sm"
+              >
+                {locale === 'pl'
+                  ? 'Moje konie i prywatna historia · Osobiste'
+                  : 'My horses and private history · Personal'}
+              </ButtonLink>
+            )}
             {description && (
               <p
                 className={cn(

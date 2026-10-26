@@ -16,11 +16,17 @@ function RouteComponent() {
   const { stableId, horseId } = Route.useParams()
 
   const { data: horse } = useSuspenseQuery(
-    convexQuery(api.horses.get, { id: horseId }),
+    convexQuery(api.horses.get, {
+      id: horseId,
+      stableId: stableId as Id<'stables'>,
+    }),
   )
 
   const { data: events } = useSuspenseQuery(
-    convexQuery(api.events.listForHorse, { horseId }),
+    convexQuery(api.events.listForHorse, {
+      horseId,
+      stableId: stableId as Id<'stables'>,
+    }),
   )
   const { data: permissions } = useSuspenseQuery(
     convexQuery(api.horses.getPermissions, { id: horseId as Id<'horses'> }),

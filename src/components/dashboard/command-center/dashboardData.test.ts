@@ -57,6 +57,7 @@ describe('createDashboardCommandData', () => {
     }))
     const session: DashboardCommandEvent = {
       ...createEvent({ id: 'training', date: '2040-02-27', time: '10:00' }),
+      stableId: undefined,
       horseIds: horses.slice(0, 3).map((horse) => horse._id),
       type: 'training',
       status: 'completed',
@@ -66,7 +67,6 @@ describe('createDashboardCommandData', () => {
     const records = [0, 2].map((index) => ({
       _id: `record-${index}` as Id<'trainingRecords'>,
       _creationTime: 0,
-      stableId: stable._id,
       eventId: session._id,
       horseId: horses[index]._id,
       date: '2040-02-28',
@@ -94,11 +94,6 @@ describe('createDashboardCommandData', () => {
             _id: 'tomorrow' as Id<'events'>,
             date: '2040-02-29',
             recurrence: undefined,
-          },
-          {
-            ...session,
-            _id: 'elsewhere' as Id<'events'>,
-            stableId: 'another-stable' as Id<'stables'>,
           },
         ],
       },
@@ -210,7 +205,7 @@ describe('createDashboardCommandData', () => {
     ])
   })
 
-  it('uses the supplied local date key and keeps stable events ordered', () => {
+  it('keeps server-authorized events from another origin and orders by local date', () => {
     const afternoonEvent = createEvent({
       id: 'afternoon',
       date: '2040-02-28',
@@ -247,9 +242,10 @@ describe('createDashboardCommandData', () => {
       '2040-03-05',
     ])
     expect(data.todayEvents.map((event) => event._id)).toEqual([
+      otherStableEvent._id,
       morningEvent._id,
       afternoonEvent._id,
     ])
-    expect(data.events).not.toContain(otherStableEvent)
+    expect(data.events).toContain(otherStableEvent)
   })
 })

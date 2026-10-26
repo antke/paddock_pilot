@@ -9,7 +9,7 @@ const en = {
     'Horses remain here for 14 days. Restoring a horse returns it to personal care.',
   purgeOn: 'Scheduled removal',
   loadMore: 'Load more',
-  noSnapshots: 'No retained horse records yet.',
+  noSnapshots: 'Former horse records are no longer accessible.',
   title: 'My horses',
   personalWorkspace: 'Personal workspace',
   homeIntro: 'Appointments and care for your horses.',
@@ -44,14 +44,14 @@ const en = {
   connect: 'Connect stable',
   choose: 'Choose a stable',
   connectHelp:
-    'The stable admin will be able to read the complete horse history and add stable care records.',
+    'The stable sees basic horse information. You choose which existing records to share; administrators can read shared details and add care records.',
   departure: 'Leave or move stable',
   review: 'Review departure',
   leave: 'Confirm departure',
   future: 'Appointments to withdraw from',
   tasks: 'Keep these tasks in personal care',
   departureHelp:
-    'Your horse keeps its complete history. The former stable retains only its own records. Future stable appointments are withdrawn.',
+    'Your horse keeps its complete history. The former stable loses access, including to staff contributions. Future stable appointments are withdrawn.',
   noTasks: 'No unfinished stable care tasks.',
   noEvents: 'No future stable appointments.',
   moving: 'Updating placement and preserving history…',
@@ -93,7 +93,7 @@ const en = {
   audit: 'Recent changes',
   snapshot: 'Former horses',
   snapshotHelp:
-    'Historical records retained from this stable. These do not provide access to a horse’s current records.',
+    'Records remain with the horse. Leaving ends this stable’s access.',
 }
 const pl: typeof en = {
   accessLevel: 'Poziom dostępu',
@@ -139,14 +139,14 @@ const pl: typeof en = {
   connect: 'Połącz ze stajnią',
   choose: 'Wybierz stajnię',
   connectHelp:
-    'Administrator stajni będzie widział pełną historię konia i będzie mógł dodawać wpisy dotyczące opieki w stajni.',
+    'Stajnia widzi podstawowe informacje o koniu. Ty wybierasz, które istniejące zapisy udostępnić; administratorzy mogą czytać udostępnione szczegóły i dodawać wpisy opieki.',
   departure: 'Opuść lub zmień stajnię',
   review: 'Sprawdź wyprowadzkę',
   leave: 'Potwierdź wyprowadzkę',
   future: 'Wizyty, z których koń zostanie wycofany',
   tasks: 'Zachowaj te zadania w opiece indywidualnej',
   departureHelp:
-    'Pełna historia zostanie przy koniu. Poprzednia stajnia zachowa wyłącznie własne wpisy. Przyszłe wizyty stajenne zostaną wycofane.',
+    'Pełna historia zostanie przy koniu. Poprzednia stajnia traci dostęp, także do wpisów personelu. Przyszłe wizyty stajenne zostaną wycofane.',
   noTasks: 'Brak niedokończonych zadań stajennych.',
   noEvents: 'Brak przyszłych wizyt stajennych.',
   moving: 'Aktualizowanie pobytu i zachowywanie historii…',
@@ -188,7 +188,7 @@ const pl: typeof en = {
   audit: 'Ostatnie zmiany',
   snapshot: 'Dawne konie',
   snapshotHelp:
-    'Historyczne wpisy zachowane przez tę stajnię. Nie dają dostępu do aktualnych danych konia.',
+    'Zapisy pozostają przy koniu. Odejście kończy dostęp tej stajni.',
 }
 export function useOwnershipCopy() {
   return useLocale().locale === 'pl' ? pl : en

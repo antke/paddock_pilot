@@ -1,3 +1,4 @@
+import { BackButton } from '#/components/ui/back-action'
 import { useId, useRef } from 'react'
 import {
   useAnalysisSessionState,
@@ -246,9 +247,7 @@ export function HorseComparisonExplorer({
         })}
       </p>
       {previousRange && (
-        <Button
-          variant="ghost"
-          size="sm"
+        <BackButton
           className="justify-self-start"
           onClick={() => {
             setRange(previousRange.range)
@@ -257,7 +256,7 @@ export function HorseComparisonExplorer({
           }}
         >
           {t('horseComparison.returnRange')}
-        </Button>
+        </BackButton>
       )}
       <details
         className="min-w-0"
@@ -508,8 +507,7 @@ export function ComparisonResults({
           aria-live="polite"
         >
           <DashboardInlineHeader title={t('horseComparison.selected')} />
-          <Button
-            variant="ghost"
+          <BackButton
             className="justify-self-start lg:hidden"
             onClick={() => {
               plotRef.current?.scrollIntoView({ block: 'start' })
@@ -517,7 +515,7 @@ export function ComparisonResults({
             }}
           >
             {t('horseComparison.backToChart')}
-          </Button>
+          </BackButton>
           {selectedRecords.length ? (
             <ScrollableList
               ariaLabel={t('horseComparison.selected')}

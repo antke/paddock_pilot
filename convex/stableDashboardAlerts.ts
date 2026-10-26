@@ -1,3 +1,5 @@
+import { sharedEventsForStable } from './libs/eventPermissions'
+import { visibleHorse } from './libs/recordCapabilities'
 import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import { horseCareData } from './libs/horseCareData'
 import { getHorseAccess } from './libs/horsePermissions'
@@ -76,10 +78,7 @@ export const getForStable = query({
         .query('horses')
         .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
         .collect(),
-      ctx.db
-        .query('events')
-        .withIndex('by_stable_id_date', (q) => q.eq('stableId', args.stableId))
-        .collect(),
+      sharedEventsForStable(ctx, args.stableId),
       ctx.db
         .query('horseHealthIssues')
         .withIndex('by_stable_id', (q) => q.eq('stableId', args.stableId))
@@ -100,9 +99,10 @@ export const getForStable = query({
     const permissions = await Promise.all(
       horses.map((horse) => getHorseAccess(ctx, horse)),
     )
-    const activeHorses = horses.filter(
+    const readableHorses = horses.filter(
       (horse, index) => isActiveHorse(horse) && permissions[index].canRead,
     )
+    const activeHorses = await Promise.all(readableHorses.map(horse => visibleHorse(ctx, horse, true)))
     const activeHorseIds = new Set(activeHorses.map((horse) => horse._id))
     const visibleEvents = events
       .filter(
@@ -112,7 +112,8 @@ export const getForStable = query({
       .map((event) => withActiveEventHorseIds(event, activeHorseIds))
     const { healthIssues, reminders: horseReminders } = await horseCareData(
       ctx,
-      activeHorses,
+      readableHorses,
+      args.stableId,
     )
     const visibleHealthIssues = healthIssues.filter((issue) =>
       activeHorseIds.has(issue.horseId),

@@ -1,7 +1,7 @@
 import { isDateKey } from 'shared/training/trainingSchema'
 import { getTodayDateKey } from '#/lib/dateDisplay'
 import { useT } from '#/i18n/LocaleProvider'
-import { EventEditor } from '#/components/forms/event/EventEditor'
+import { EventCreationEditor as EventEditor } from '#/components/forms/event/EventCreationEditor'
 import { createEventEditorValues } from '#/components/forms/event/eventEditorValues'
 import { showAppSuccessToast } from '#/components/ui/sonner'
 import { convexQuery } from '@convex-dev/react-query'
@@ -48,6 +48,7 @@ function RouteComponent() {
 
   return (
     <EventEditor
+      audienceEnabled
       key={`${stableId}:${intent ?? 'plan'}`}
       mode="create"
       feature="training"
@@ -65,8 +66,11 @@ function RouteComponent() {
       providers={providerData.providers}
       onSave={async (data) => {
         return addEvent({
+          destination: data.destination,
+          sharing: data.sharing,
+          requestId: data.requestId,
           errorFormat: 'structured',
-          stableId: stableId as Id<'stables'>,
+          stableId: data.stableId as Id<'stables'> | undefined,
           horseIds: data.horseIds as Array<Id<'horses'>>,
           date: data.date,
           endDate: data.endDate,
@@ -93,8 +97,8 @@ function RouteComponent() {
       }}
       onSaved={async (eventId) => {
         await nav({
-          to: '/stables/$stableId/training/$eventId',
-          params: { stableId, eventId },
+          to: '/events/$eventId',
+          params: { eventId },
         })
       }}
     />

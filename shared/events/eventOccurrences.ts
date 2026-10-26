@@ -1,3 +1,5 @@
+import { effectiveShare } from '../sharing/rules'
+import type { SharingRule } from '../sharing/rules'
 import type {
   DayOfWeek,
   RecurrenceFrequency,
@@ -23,6 +25,8 @@ type EventRecurrence = {
 
 export type EventOccurrenceSource = {
   _id: string
+  audienceRules?: Array<{ horseId: string; rules: Array<SharingRule> }>
+  horseIds?: Array<string>
   contextParticipationId?: string
   date: string
   endDate?: string
@@ -67,6 +71,16 @@ function createSingleOccurrence<TEvent extends EventOccurrenceSource>(
   windowStart: string,
   windowEnd: string,
 ): Array<EventOccurrence<TEvent>> {
+  if (event.audienceRules) {
+    const horseIds = event.audienceRules
+      .filter((entry) => effectiveShare(entry.rules, startDate))
+      .map((entry) => entry.horseId)
+    if (!horseIds.length) return []
+    event = {
+      ...event,
+      horseIds: event.horseIds?.filter((id) => horseIds.includes(id)),
+    }
+  }
   const durationDays = getEventDurationDays(event)
   const endDate = addDaysKey(startDate, durationDays - 1)
 

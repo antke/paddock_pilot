@@ -46,6 +46,7 @@ function setup(
   const view = render(<HorseProfileForm {...props} />)
   const name = screen.getByLabelText<HTMLInputElement>('Horse name')
   const form = name.closest('form')!
+  if (props.mode === 'create') fireEvent.click(screen.getByRole('button', { name: 'Optional horse details' }))
   const imageInput = screen.getByLabelText('Profile picture')
   return { ...view, props, name, form, imageInput }
 }

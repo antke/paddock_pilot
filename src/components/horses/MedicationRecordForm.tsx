@@ -1,3 +1,7 @@
+import { useRecordCreationAudience } from '#/components/sharing/useRecordCreationAudience'
+import type { RecordCreationOptions } from '#/components/sharing/useRecordCreationAudience'
+import type { Id } from 'convex/_generated/dataModel'
+import { useTransientConfirmation } from '#/lib/useTransientConfirmation'
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { useT } from '#/i18n/LocaleProvider'
 import { useId, useRef, useState } from 'react'
@@ -22,18 +26,23 @@ import type {
 } from 'shared/horses/medicationRecordSchema'
 
 type MedicationRecordFormProps = {
+  audienceHorseId?: Id<'horses'>
   disabled?: boolean
   onPendingChange?: (pending: boolean) => void
-  onSubmit: (data: MedicationRecordFormSchema) => Promise<void>
+  onSubmit: (
+    data: MedicationRecordFormSchema & RecordCreationOptions,
+  ) => Promise<void>
 }
 
 const asMedicationStatus = (value: string) => value as MedicationRecordStatus
 
 export function MedicationRecordForm({
+  audienceHorseId,
   disabled = false,
   onPendingChange,
   onSubmit,
 }: MedicationRecordFormProps) {
+  const audience = useRecordCreationAudience(audienceHorseId)
   const t = useT()
 
   const { medicationRecordFormSchema } = createMedicationRecordSchemas((key) =>
@@ -44,6 +53,7 @@ export function MedicationRecordForm({
     label: t(`careLabels.medicationStatus.${status}`),
   }))
   const formId = useId()
+  const confirmation = useTransientConfirmation(formId)
 
   const submitting = useRef(false)
   const [failed, setFailed] = useState(false)
@@ -72,9 +82,11 @@ export function MedicationRecordForm({
     if (submitting.current) return
     submitting.current = true
     setFailed(false)
+    confirmation.clear()
     onPendingChange?.(true)
     try {
-      await onSubmit(data)
+      await onSubmit({ ...data, ...(audienceHorseId ? audience.options : {}) })
+      audience.reset()
       form.reset({
         medicationName: '',
         dosage: '',
@@ -85,6 +97,7 @@ export function MedicationRecordForm({
         notes: '',
         status: 'active',
       })
+      confirmation.confirm()
     } catch {
       setFailed(true)
     } finally {
@@ -94,7 +107,12 @@ export function MedicationRecordForm({
   }
 
   return (
-    <InlineForm noValidate onSubmit={form.handleSubmit(submitMedicationRecord)}>
+    <InlineForm
+      onChangeCapture={confirmation.clear}
+      noValidate
+      onSubmit={form.handleSubmit(submitMedicationRecord)}
+    >
+      {audience.control}
       <FormGroup
         title={t('careRecords.courseDetails')}
         description={t('careRecords.courseHelp')}
@@ -435,6 +453,9 @@ export function MedicationRecordForm({
       />
 
       <FormSubmitActions
+        failed={failed}
+        confirmed={confirmation.confirmed}
+        confirmedLabel={t('common.saved')}
         isSubmitting={form.formState.isSubmitting}
         disabled={disabled}
         submitLabel={t('careRecords.addMedication')}

@@ -1,0 +1,40 @@
+[
+  {
+    "mobile": false,
+    "locale": "en",
+    "width": 1280,
+    "destinationFiltering": true,
+    "keyboardHorseSelection": true,
+    "submitClickable": true,
+    "devtoolsLauncherHidden": true,
+    "cancelPreservesSelection": true,
+    "confirmedSwitchPreservesDraft": true,
+    "privateTraining": true,
+    "horizontalOverflow": false,
+    "errors": [
+      "Unhandled Promise Rejection: TypeError: path.endsWith is not a function. (In 'path.endsWith(\"/\")', 'path.endsWith' is undefined)\n    at handleError (http://localhost:9090/node_modules/.pnpm/@tanstack+router-devtools-core@1.168.1_@tanstack+router-core@1.171.34_csstype@3.2.3/node_modules/@tanstack/router-devtools-core/dist/context-De2EB1AA.js?v=63b973bd:680:23)\n    at runUpdates (http://localhost:9090/node_modules/.pnpm/@tanstack+router-devtools-core@1.168.1_@tanstack+router-core@1.171.34_csstype@3.2.3/node_modules/@tanstack/router-devtools-core/dist/context-De2EB1AA.js?v=63b973bd:514:14)\n    at completeLoad (http://localhost:9090/node_modules/.pnpm/@tanstack+router-devtools-core@1.168.1_@tanstack+router-core@1.171.34_csstype@3.2.3/node_modules/@tanstack/router-devtools-core/dist/context-De2EB1AA.js?v=63b973bd:153:13)\n    at loadEnd (http://localhost:9090/node_modules/.pnpm/@tanstack+router-devtools-core@1.168.1_@tanstack+router-core@1.171.34_csstype@3.2.3/node_modules/@tanstack/router-devtools-core/dist/context-De2EB1AA.js?v=63b973bd:148:23)"
+    ],
+    "devtoolsErrors": [
+      "Unhandled Promise Rejection: TypeError: path.endsWith is not a function. (In 'path.endsWith(\"/\")', 'path.endsWith' is undefined)\n    at handleError (http://localhost:9090/node_modules/.pnpm/@tanstack+router-devtools-core@1.168.1_@tanstack+router-core@1.171.34_csstype@3.2.3/node_modules/@tanstack/router-devtools-core/dist/context-De2EB1AA.js?v=63b973bd:680:23)\n    at runUpdates (http://localhost:9090/node_modules/.pnpm/@tanstack+router-devtools-core@1.168.1_@tanstack+router-core@1.171.34_csstype@3.2.3/node_modules/@tanstack/router-devtools-core/dist/context-De2EB1AA.js?v=63b973bd:514:14)\n    at completeLoad (http://localhost:9090/node_modules/.pnpm/@tanstack+router-devtools-core@1.168.1_@tanstack+router-core@1.171.34_csstype@3.2.3/node_modules/@tanstack/router-devtools-core/dist/context-De2EB1AA.js?v=63b973bd:153:13)\n    at loadEnd (http://localhost:9090/node_modules/.pnpm/@tanstack+router-devtools-core@1.168.1_@tanstack+router-core@1.171.34_csstype@3.2.3/node_modules/@tanstack/router-devtools-core/dist/context-De2EB1AA.js?v=63b973bd:148:23)"
+    ]
+  },
+  {
+    "mobile": true,
+    "locale": "pl",
+    "width": 390,
+    "destinationFiltering": true,
+    "keyboardHorseSelection": true,
+    "submitClickable": true,
+    "devtoolsLauncherHidden": true,
+    "cancelPreservesSelection": true,
+    "confirmedSwitchPreservesDraft": true,
+    "privateTraining": true,
+    "horizontalOverflow": false,
+    "errors": [
+      "Unhandled Promise Rejection: TypeError: path.endsWith is not a function. (In 'path.endsWith(\"/\")', 'path.endsWith' is undefined)\n    at handleError (http://localhost:9090/node_modules/.pnpm/@tanstack+router-devtools-core@1.168.1_@tanstack+router-core@1.171.34_csstype@3.2.3/node_modules/@tanstack/router-devtools-core/dist/context-De2EB1AA.js?v=63b973bd:680:23)\n    at runUpdates (http://localhost:9090/node_modules/.pnpm/@tanstack+router-devtools-core@1.168.1_@tanstack+router-core@1.171.34_csstype@3.2.3/node_modules/@tanstack/router-devtools-core/dist/context-De2EB1AA.js?v=63b973bd:514:14)\n    at completeLoad (http://localhost:9090/node_modules/.pnpm/@tanstack+router-devtools-core@1.168.1_@tanstack+router-core@1.171.34_csstype@3.2.3/node_modules/@tanstack/router-devtools-core/dist/context-De2EB1AA.js?v=63b973bd:153:13)\n    at loadEnd (http://localhost:9090/node_modules/.pnpm/@tanstack+router-devtools-core@1.168.1_@tanstack+router-core@1.171.34_csstype@3.2.3/node_modules/@tanstack/router-devtools-core/dist/context-De2EB1AA.js?v=63b973bd:148:23)"
+    ],
+    "devtoolsErrors": [
+      "Unhandled Promise Rejection: TypeError: path.endsWith is not a function. (In 'path.endsWith(\"/\")', 'path.endsWith' is undefined)\n    at handleError (http://localhost:9090/node_modules/.pnpm/@tanstack+router-devtools-core@1.168.1_@tanstack+router-core@1.171.34_csstype@3.2.3/node_modules/@tanstack/router-devtools-core/dist/context-De2EB1AA.js?v=63b973bd:680:23)\n    at runUpdates (http://localhost:9090/node_modules/.pnpm/@tanstack+router-devtools-core@1.168.1_@tanstack+router-core@1.171.34_csstype@3.2.3/node_modules/@tanstack/router-devtools-core/dist/context-De2EB1AA.js?v=63b973bd:514:14)\n    at completeLoad (http://localhost:9090/node_modules/.pnpm/@tanstack+router-devtools-core@1.168.1_@tanstack+router-core@1.171.34_csstype@3.2.3/node_modules/@tanstack/router-devtools-core/dist/context-De2EB1AA.js?v=63b973bd:153:13)\n    at loadEnd (http://localhost:9090/node_modules/.pnpm/@tanstack+router-devtools-core@1.168.1_@tanstack+router-core@1.171.34_csstype@3.2.3/node_modules/@tanstack/router-devtools-core/dist/context-De2EB1AA.js?v=63b973bd:148:23)"
+    ]
+  }
+]

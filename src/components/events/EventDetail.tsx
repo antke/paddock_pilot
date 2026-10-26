@@ -1,3 +1,5 @@
+import { BackLink } from '#/components/ui/back-action'
+import { CreatorByline } from './CreatorByline'
 import type { ReactNode } from 'react'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import {
@@ -28,6 +30,7 @@ import { EventDateBadge } from './EventDateBadge'
 
 type EventDetailProps = {
   stableId?: string
+  createdByName?: string | null
   event: Doc<'events'>
   horses: Array<Doc<'horses'>>
   canManageEvent: boolean
@@ -35,12 +38,18 @@ type EventDetailProps = {
   showHeader?: boolean
   showHorses?: boolean
   headerActions?: ReactNode
-  editSearch?: { date?: string; horseId?: string; participationId?: string }
+  editSearch?: {
+    date?: string
+    horseId?: string
+    participationId?: string
+    stableId?: string
+  }
 }
 
 export function EventDetail({
   stableId,
   event,
+  createdByName,
   horses,
   canManageEvent,
   showServiceDetails = true,
@@ -65,9 +74,22 @@ export function EventDetail({
   return (
     <>
       {showHeader && (
+        <BackLink
+          to={
+            stableId
+              ? event.type === 'training'
+                ? '/stables/$stableId/training'
+                : '/stables/$stableId/events'
+              : event.type === 'training'
+                ? '/training'
+                : '/events'
+          }
+          params={{ stableId: stableId ?? '' }}
+        />
+      )}
+      {showHeader && (
         <DashboardEntityHero
           title={event.title}
-          actionsLayout={headerActions ? 'inline' : 'stack'}
           leading={
             <EventDateBadge
               date={event.date}
@@ -81,9 +103,8 @@ export function EventDetail({
             ) : undefined
           }
           actions={
-            headerActions || (canManageEvent && !smallScreen) ? (
+            canManageEvent && !smallScreen ? (
               <>
-                {headerActions}
                 {canManageEvent && !smallScreen ? (
                   <EventEditAction
                     search={editSearch}
@@ -94,7 +115,16 @@ export function EventDetail({
               </>
             ) : undefined
           }
-        />
+        >
+          <div className="flex min-w-0 items-center justify-between gap-4">
+            <div className="min-w-0">
+              <CreatorByline name={createdByName} />
+            </div>
+            {headerActions && (
+              <div className="ml-auto shrink-0">{headerActions}</div>
+            )}
+          </div>
+        </DashboardEntityHero>
       )}
 
       {showHeader && canManageEvent && smallScreen && (

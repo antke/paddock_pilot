@@ -1,10 +1,11 @@
+import { CreatorByline } from '#/components/events/CreatorByline'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { getUserFacingErrorCode } from 'shared/i18n/errors'
 import type { UserFacingErrorCode } from 'shared/i18n/errors'
 import { formatMediumTimestampDateTime } from '#/lib/dateDisplay'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { CheckCircleIcon } from '@phosphor-icons/react'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import {
   DetailReferenceField,
   DetailReferenceList,
@@ -35,6 +36,7 @@ import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCar
 import { Field, FieldLabel } from '#/components/ui/field'
 import { Button } from '#/components/ui/button'
 import { Select } from '#/components/ui/select'
+import { Input } from '#/components/ui/input'
 import { Textarea } from '#/components/ui/textarea'
 import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
 import { TrainingFormFields } from './TrainingFormFields'
@@ -73,20 +75,25 @@ export function TrainingRecordCard({
   return (
     <DashboardSectionCard
       headerContent={
-        <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-          <h2 className="min-w-0 font-sans text-xl font-semibold leading-snug wrap-anywhere">
-            <Link
-              to="/horses/$horseId"
-              params={{ horseId: horse._id }}
-              className="app-control-focus rounded-control underline-offset-4 hover:underline"
-            >
-              {getHorseDisplayName(horse)}
-            </Link>
-          </h2>
-          {!editing && (
-            <div className="flex flex-wrap items-center gap-3">
-              <TrainingStatusBadge status={status} />
-              {showCompletion && (
+        <header className="grid min-w-0 gap-3">
+          <div className="flex min-w-0 items-center justify-between gap-4">
+            <h2 className="min-w-0 font-sans text-xl font-semibold leading-snug wrap-anywhere">
+              <Link
+                to="/horses/$horseId"
+                params={{ horseId: horse._id }}
+                className="app-control-focus rounded-control underline-offset-4 hover:underline"
+              >
+                {getHorseDisplayName(horse)}
+              </Link>
+            </h2>
+            {!editing && <TrainingStatusBadge status={status} />}
+          </div>
+          {(record || (!editing && showCompletion)) && (
+            <div className="flex min-w-0 items-center justify-between gap-4">
+              <div className="min-w-0">
+                {record && <CreatorByline name={record.createdByName} />}
+              </div>
+              {!editing && showCompletion && (
                 <TrainingCompletionControl entry={entry} labelled />
               )}
             </div>
@@ -222,6 +229,8 @@ function TrainingRecordEditor({
   const t = useT()
 
   const saveRecord = useMutation(api.training.saveRecord)
+  const navigate = useNavigate()
+  const [recordDate, setRecordDate] = useState(entry.occurrence.startDate)
   const { today } = useLocalDateContext()
   const defaultStatus =
     entry.record?.status ??
@@ -247,11 +256,17 @@ function TrainingRecordEditor({
     training: entry.details,
     status: defaultStatus,
     outcome: entry.record?.outcome ?? '',
+    date: entry.occurrence.startDate,
   })
   const isDirty = () =>
     !acknowledged.current &&
     hasDraftChanges(
-      { training: form.getValues('training'), status, outcome },
+      {
+        training: form.getValues('training'),
+        status,
+        outcome,
+        date: recordDate,
+      },
       initialDraft.current,
     )
   return (
@@ -307,12 +322,24 @@ function TrainingRecordEditor({
             eventId: entry.occurrence.event._id,
             horseId: entry.horse._id,
             date: entry.occurrence.startDate,
+            newDate: recordDate,
             status: nextStatus,
             details,
             outcome: nextOutcome,
           })
           acknowledged.current = true
           onSaved()
+          if (recordDate !== entry.occurrence.startDate) {
+            await navigate({
+              to: '/events/$eventId',
+              params: { eventId: entry.occurrence.event._id },
+              search: {
+                date: recordDate,
+                horseId: entry.horse._id,
+                participationId: entry.occurrence.event.contextParticipationId,
+              },
+            })
+          }
         } catch (reason) {
           console.error('Could not save training record', reason)
           setServerErrorCode(getUserFacingErrorCode(reason))
@@ -324,6 +351,21 @@ function TrainingRecordEditor({
       }}
     >
       <UnsavedChangesGuard shouldBlock={isDirty} />
+      {entry.record && (
+        <Field>
+          <FieldLabel htmlFor={`record-date-${entry.horse._id}`}>
+            {t('eventForm.date')}
+          </FieldLabel>
+          <Input
+            id={`record-date-${entry.horse._id}`}
+            type="date"
+            value={recordDate}
+            required
+            disabled={pending}
+            onChange={(event) => setRecordDate(event.target.value)}
+          />
+        </Field>
+      )}
       <Field>
         <FieldLabel htmlFor={`status-${entry.horse._id}`}>
           {t('trainingViews.statusForHorse')}

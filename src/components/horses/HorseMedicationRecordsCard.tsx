@@ -1,3 +1,5 @@
+import { WorkspaceRecordAudience } from '#/components/sharing/RecordAudienceLabel'
+import { useWorkspace } from '#/components/layout/WorkspaceContext'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { MedicationRecordForm } from '#/components/horses/MedicationRecordForm'
@@ -31,6 +33,7 @@ import { useHorseDetailCreateAction } from './useHorseDetailCreateAction'
 import { HorseRecordRemoveAction } from './HorseRecordRemoveAction'
 
 type HorseMedicationRecordsCardProps = {
+  enableSharing?: boolean
   horse: Doc<'horses'>
   onCreateActionChange?: HorseDetailCreateActionChange
 }
@@ -42,8 +45,10 @@ export function HorseMedicationRecordsCard({
   const t = useT()
 
   const { today } = useLocalDateContext()
+  const workspace = useWorkspace()
   const { data: records } = useSuspenseQuery(
     convexQuery(api.horseMedicationRecords.listForHorse, {
+      stableId: workspace?.stableId,
       horseId: horse._id,
     }),
   )
@@ -59,6 +64,7 @@ export function HorseMedicationRecordsCard({
   const removeMedicationRecord = useMutation(api.horseMedicationRecords.remove)
   return (
     <HorseMedicationRecordsCardView
+      enableSharing
       key={horse._id}
       horse={horse}
       records={records}
@@ -104,6 +110,7 @@ type HorseMedicationRecordsCardViewProps = HorseMedicationRecordsCardProps & {
 }
 
 export function HorseMedicationRecordsCardView({
+  enableSharing,
   horse,
   records,
   canManage,
@@ -179,6 +186,7 @@ export function HorseMedicationRecordsCardView({
           description={t('careRecords.createMedicationHelp')}
         >
           <MedicationRecordForm
+            audienceHorseId={enableSharing ? horse._id : undefined}
             onSubmit={onAddMedicationRecord}
             onPendingChange={setIsCreating}
           />
@@ -415,6 +423,7 @@ function MedicationRecordRow({
           <DashboardItemBodyText>{record.notes}</DashboardItemBodyText>
         )}
       </DashboardItemRecordContent>
+      <WorkspaceRecordAudience horseId={record.horseId} recordId={record._id} />
     </DashboardItemRecordCard>
   )
 }

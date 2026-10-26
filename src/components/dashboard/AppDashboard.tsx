@@ -44,7 +44,6 @@ export function AppDashboard({ stables, events }: AppDashboardProps) {
 function AppDashboardData({
   activeStable,
   stables,
-  events,
 }: {
   activeStable: Doc<'stables'>
   stables: Array<Doc<'stables'>>
@@ -61,11 +60,16 @@ function AppDashboardData({
   const { data: horses } = useSuspenseQuery(
     convexQuery(api.horses.list, { stableId: activeStable._id }),
   )
+  const { data: events } = useSuspenseQuery(
+    convexQuery(api.events.listForStable, { stableId: activeStable._id }),
+  )
   const { data: training } = useSuspenseQuery(
     convexQuery(api.training.listForStable, { stableId: activeStable._id }),
   )
   const { data: invitations } = useSuspenseQuery(
-    convexQuery(api.events.listPendingHorseInvitations),
+    convexQuery(api.events.listPendingHorseInvitations, {
+      stableId: activeStable._id,
+    }),
   )
   const approveInvitation = useMutation(api.events.approveHorseInvitation)
   const declineInvitation = useMutation(api.events.declineHorseInvitation)

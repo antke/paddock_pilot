@@ -21,7 +21,12 @@ export function getTrainingEntries({
   events: Array<
     Doc<'events'> & { contextParticipationId?: string; contextHorseId?: string }
   >
-  records: Array<Doc<'trainingRecords'> & { canEdit?: boolean }>
+  records: Array<
+    Doc<'trainingRecords'> & {
+      canEdit?: boolean
+      createdByName?: string | null
+    }
+  >
   horses: Array<TrainingHorse>
   start: string
   end: string
@@ -34,11 +39,53 @@ export function getTrainingEntries({
       record,
     ]),
   )
-  return createEventOccurrences({
-    events: events.filter((event) => event.type === 'training'),
+  const trainingEvents = events.filter((event) => event.type === 'training')
+  const occurrences = createEventOccurrences({
+    events: trainingEvents,
     windowStart: start,
     windowEnd: end,
   })
+  // Recorded sessions remain visible even after the series schedule changes.
+  // Use each horse's historical projection when one is present.
+  for (const event of trainingEvents) {
+    const dates = new Set(
+      records
+        .filter(
+          (record) =>
+            record.eventId === event._id &&
+            record.date >= start &&
+            record.date <= end &&
+            (!event.contextHorseId || event.contextHorseId === record.horseId),
+        )
+        .map((record) => record.date),
+    )
+    for (const date of dates) {
+      if (
+        occurrences.some(
+          (occurrence) =>
+            occurrence.eventId === event._id &&
+            occurrence.event.contextHorseId === event.contextHorseId &&
+            occurrence.startDate === date,
+        )
+      )
+        continue
+      const extra = createEventOccurrences({
+        events: [
+          {
+            ...event,
+            date,
+            endDate: undefined,
+            recurrence: undefined,
+            horseIds: [],
+          },
+        ],
+        windowStart: start,
+        windowEnd: end,
+      })
+      occurrences.push(...extra)
+    }
+  }
+  return occurrences
     .flatMap((occurrence) =>
       [
         ...new Set([
@@ -54,8 +101,18 @@ export function getTrainingEntries({
       ]
         .filter(
           (horseId) =>
-            !occurrence.event.contextHorseId ||
-            occurrence.event.contextHorseId === horseId,
+            (!occurrence.event.contextHorseId ||
+              occurrence.event.contextHorseId === horseId) &&
+            (byRecord.has(
+              `${occurrence.eventId}:${horseId}:${occurrence.startDate}`,
+            ) ||
+              !records.some(
+                (record) =>
+                  record.eventId === occurrence.eventId &&
+                  record.horseId === horseId &&
+                  record.scheduledDate === occurrence.startDate &&
+                  record.date !== record.scheduledDate,
+              )),
         )
         .flatMap((horseId) => {
           const horse = byHorse.get(horseId)

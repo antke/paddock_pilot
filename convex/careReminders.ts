@@ -1,3 +1,11 @@
+import {
+  assertHorseWorkspace,
+  initializeRecordSharing,
+  recordCapabilities,
+  readableRecords,
+} from './libs/recordCapabilities'
+import { sharedStableRecords } from './libs/sharedStableRecords'
+import { creationReplay, recordCreation } from './libs/creationRequests'
 import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import {
   assertCanReadHorse,
@@ -6,7 +14,6 @@ import {
 } from './libs/horsePermissions'
 import { ConvexError, v } from 'convex/values'
 import { paginationOptsValidator } from 'convex/server'
-import type { PaginationResult } from 'convex/server'
 import {
   careReminderDueDateSchema,
   careReminderInputSchema,
@@ -156,27 +163,32 @@ const mapStableReminderListItems = async (
       horse ? getHorseAccess(ctx, horse, access.userId) : null,
     ),
   )
+  const capabilities = await Promise.all(
+    reminders.map((reminder, index) =>
+      horses[index]
+        ? recordCapabilities(ctx, horses[index], reminder, access.userId)
+        : null,
+    ),
+  )
   return reminders.flatMap((reminder, index) => {
     const horse = horses[index]
     const event = events[index]
     if (reminder.horseId && !isActiveHorse(horse)) return []
     const permission = recordAccess[index]
-    if (horse && !permission?.canRead && reminder.assignedTo !== access.userId)
-      return []
+    if (horse && !capabilities[index]?.readSchedule) return []
     const itemAccess = {
       ...access,
       canManage: permission
-        ? permission.canEditPersonalRecords ||
-          (permission.isAdmin &&
-            reminder.sourcePlacementId === horse?.currentPlacementId &&
-            reminder.stableId === horse?.stableId &&
-            permission.canAddRecords)
+        ? Boolean(capabilities[index]?.editContent)
         : access.role === 'owner' || event?.createdBy === access.userId,
     }
 
     return [
       {
-        reminder,
+        reminder:
+          horse && !capabilities[index]?.readDetails
+            ? { ...reminder, description: undefined }
+            : reminder,
         horseName: getHorseDisplayName(horse),
         assigneeName: people[index].assignee
           ? personName(people[index].assignee)
@@ -186,10 +198,11 @@ const mapStableReminderListItems = async (
           : undefined,
         canComplete:
           canManageReminder(itemAccess, reminder, horse, event) ||
-          reminder.assignedTo === access.userId,
+          (!horse && reminder.assignedTo === access.userId),
         canReopen:
           canManageReminder(itemAccess, reminder, horse, event) ||
-          (reminder.completedBy === access.userId &&
+          (!horse &&
+            reminder.completedBy === access.userId &&
             reminder.assignedTo === access.userId),
         canManage: canManageReminder(itemAccess, reminder, horse, event),
       },
@@ -207,25 +220,22 @@ type StableReminderListItem = {
   completedByName?: string
 }
 
-const mapStableReminderPage = async (
-  ctx: QueryCtx,
-  access: { role: StableRole; userId: Id<'users'>; canManage?: boolean },
-  page: PaginationResult<Doc<'careReminders'>>,
-): Promise<PaginationResult<StableReminderListItem>> => ({
-  ...page,
-  page: await mapStableReminderListItems(ctx, access, page.page),
-})
+async function stableReminderRecords(ctx: QueryCtx, stableId: Id<'stables'>) {
+  const stable = await ctx.db
+    .query('careReminders')
+    .withIndex('by_stable_id_due_date', (q) => q.eq('stableId', stableId))
+    .collect()
+  return [
+    ...stable.filter((record) => !record.horseId),
+    ...(await sharedStableRecords(ctx, stableId, 'careReminders')),
+  ]
+}
 
 export const listForStable = query({
   args: { stableId: v.id('stables') },
   handler: async (ctx, args) => {
     const access = await assertCanViewStable(ctx, args.stableId)
-    const reminders = await ctx.db
-      .query('careReminders')
-      .withIndex('by_stable_id_due_date', (q) =>
-        q.eq('stableId', args.stableId),
-      )
-      .collect()
+    const reminders = await stableReminderRecords(ctx, args.stableId)
 
     return {
       canManageStableReminders: access.capabilities.canManageStableReminders,
@@ -262,149 +272,36 @@ export const listForStablePaginated = query({
   },
   handler: async (ctx, args) => {
     const access = await assertCanViewStable(ctx, args.stableId)
-    const searchQuery = args.searchQuery?.trim()
-
-    if (searchQuery) {
-      let remindersQuery = ctx.db
-        .query('careReminders')
-        .withSearchIndex('search_title', (q) =>
-          q.search('title', searchQuery).eq('stableId', args.stableId),
-        )
-
-      if (args.stableWideOnly) {
-        remindersQuery = remindersQuery.filter((q) =>
-          q.eq(q.field('horseId'), undefined),
-        )
-      } else if (args.horseId) {
-        remindersQuery = remindersQuery.filter((q) =>
-          q.eq(q.field('horseId'), args.horseId),
-        )
-      }
-
-      if (args.state === 'overdue') {
-        const today = resolveTodayDateKey(args.today)
-        remindersQuery = remindersQuery.filter((q) =>
-          q.and(
-            q.eq(q.field('status'), 'pending'),
-            q.lt(q.field('dueDate'), today),
-          ),
-        )
-      } else if (args.state) {
-        remindersQuery = remindersQuery.filter((q) =>
-          q.eq(q.field('status'), args.state),
-        )
-      }
-
-      if (args.category) {
-        remindersQuery = remindersQuery.filter((q) =>
-          q.eq(q.field('category'), args.category),
-        )
-      }
-
-      const page = await remindersQuery.paginate(args.paginationOpts)
-
-      return mapStableReminderPage(ctx, access, page)
-    }
-
-    if (args.stableWideOnly || args.horseId) {
-      const horseId = args.stableWideOnly ? undefined : args.horseId
-      let remindersQuery = ctx.db
-        .query('careReminders')
-        .withIndex('by_stable_id_horse_id_due_date', (q) =>
-          q.eq('stableId', args.stableId).eq('horseId', horseId),
-        )
-
-      if (args.state === 'overdue') {
-        const today = resolveTodayDateKey(args.today)
-        remindersQuery = remindersQuery.filter((q) =>
-          q.and(
-            q.eq(q.field('status'), 'pending'),
-            q.lt(q.field('dueDate'), today),
-          ),
-        )
-      } else if (args.state) {
-        remindersQuery = remindersQuery.filter((q) =>
-          q.eq(q.field('status'), args.state),
-        )
-      }
-
-      if (args.category) {
-        remindersQuery = remindersQuery.filter((q) =>
-          q.eq(q.field('category'), args.category),
-        )
-      }
-
-      const page = await remindersQuery.paginate(args.paginationOpts)
-
-      return mapStableReminderPage(ctx, access, page)
-    }
-
-    if (args.state === 'overdue') {
-      const today = resolveTodayDateKey(args.today)
-      let remindersQuery = ctx.db
-        .query('careReminders')
-        .withIndex('by_stable_id_status_due_date', (q) =>
-          q
-            .eq('stableId', args.stableId)
-            .eq('status', 'pending')
-            .lt('dueDate', today),
-        )
-
-      if (args.category) {
-        remindersQuery = remindersQuery.filter((q) =>
-          q.eq(q.field('category'), args.category),
-        )
-      }
-
-      const page = await remindersQuery.paginate(args.paginationOpts)
-
-      return mapStableReminderPage(ctx, access, page)
-    }
-
-    if (args.state) {
-      const status = args.state
-      let remindersQuery = ctx.db
-        .query('careReminders')
-        .withIndex('by_stable_id_status_due_date', (q) =>
-          q.eq('stableId', args.stableId).eq('status', status),
-        )
-
-      if (args.category) {
-        remindersQuery = remindersQuery.filter((q) =>
-          q.eq(q.field('category'), args.category),
-        )
-      }
-
-      const page = await remindersQuery.paginate(args.paginationOpts)
-
-      return mapStableReminderPage(ctx, access, page)
-    }
-
-    if (args.category) {
-      const category = args.category
-      const page = await ctx.db
-        .query('careReminders')
-        .withIndex('by_stable_id_category_due_date', (q) =>
-          q.eq('stableId', args.stableId).eq('category', category),
-        )
-        .paginate(args.paginationOpts)
-
-      return mapStableReminderPage(ctx, access, page)
-    }
-
-    const page = await ctx.db
-      .query('careReminders')
-      .withIndex('by_stable_id_due_date', (q) =>
-        q.eq('stableId', args.stableId),
+    const today = resolveTodayDateKey(args.today)
+    const search = args.searchQuery?.trim().toLocaleLowerCase()
+    const rows = (await stableReminderRecords(ctx, args.stableId))
+      .filter(
+        (record) =>
+          (!args.stableWideOnly || !record.horseId) &&
+          (!args.horseId || record.horseId === args.horseId) &&
+          (!args.category || record.category === args.category) &&
+          (!args.state ||
+            (args.state === 'overdue'
+              ? record.status === 'pending' && record.dueDate < today
+              : record.status === args.state)) &&
+          (!search || record.title.toLocaleLowerCase().includes(search)),
       )
-      .paginate(args.paginationOpts)
-
-    return mapStableReminderPage(ctx, access, page)
+      .sort(byReminderSort)
+    const visible = await mapStableReminderListItems(ctx, access, rows)
+    const offset = Number(args.paginationOpts.cursor ?? 0)
+    if (!Number.isSafeInteger(offset) || offset < 0)
+      throw new ConvexError('Invalid pagination cursor')
+    const end = offset + Math.min(args.paginationOpts.numItems, 100)
+    return {
+      page: visible.slice(offset, end),
+      isDone: end >= visible.length,
+      continueCursor: String(end),
+    }
   },
 })
 
 export const listForHorse = query({
-  args: { horseId: v.id('horses') },
+  args: { horseId: v.id('horses'), stableId: v.optional(v.id('stables')) },
   handler: async (ctx, args) => {
     const horse = await ctx.db.get(args.horseId)
     if (!isActiveHorse(horse)) {
@@ -412,11 +309,13 @@ export const listForHorse = query({
     }
 
     const permission = await assertCanReadHorse(ctx, horse)
+    await assertHorseWorkspace(ctx, horse, args.stableId)
     const access = { ...permission, canManage: permission.canAddRecords }
     const reminders = await ctx.db
       .query('careReminders')
       .withIndex('by_horse_id_due_date', (q) => q.eq('horseId', args.horseId))
       .collect()
+      .then((records) => readableRecords(ctx, horse, records, args.stableId))
 
     return {
       canManage: canManageReminder(
@@ -436,7 +335,9 @@ export const listForHorse = query({
 
 export const add = mutation({
   args: {
+    requestId: v.optional(v.string()),
     stableId: v.optional(v.id('stables')),
+    shareWithStable: v.optional(v.boolean()),
     assignedTo: v.optional(v.id('users')),
     horseId: v.optional(v.id('horses')),
     eventId: v.optional(v.id('events')),
@@ -449,6 +350,13 @@ export const add = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx)
+    const replay = await creationReplay(
+      ctx,
+      user._id,
+      args.requestId,
+      'careReminders.add',
+    )
+    if (replay) return ctx.db.normalizeId('careReminders', replay)!
     const targetHorse = args.horseId ? await ctx.db.get(args.horseId) : null
     const horsePermission = targetHorse
       ? await assertCanAddHorseRecord(ctx, targetHorse, user._id)
@@ -482,7 +390,7 @@ export const add = mutation({
       args.horseId,
     )
     const now = todayTimestamp()
-    return await ctx.db.insert('careReminders', {
+    const id = await ctx.db.insert('careReminders', {
       ...input,
       stableId: horsePermission
         ? horsePermission.recordOrigin.stableId
@@ -498,11 +406,24 @@ export const add = mutation({
       createdAt: now,
       updatedAt: now,
     })
+    if (horse)
+      await initializeRecordSharing(
+        ctx,
+        horse,
+        id,
+        args.shareWithStable ?? Boolean(args.stableId),
+      )
+    await recordCreation(ctx, user._id, args.requestId, 'careReminders.add', id)
+    return id
   },
 })
 
 export const addForHorses = mutation({
   args: {
+    sharing: v.optional(
+      v.array(v.object({ horseId: v.string(), enabled: v.boolean() })),
+    ),
+    requestId: v.optional(v.string()),
     stableId: v.id('stables'),
     horseIds: v.array(v.id('horses')),
     assignedTo: v.optional(v.id('users')),
@@ -561,7 +482,14 @@ export const addForHorses = mutation({
           args.assignedTo,
           horseId,
         )
-        return ctx.db.insert('careReminders', {
+        const replay = await creationReplay(
+          ctx,
+          user._id,
+          args.requestId ? `${args.requestId}:${horseId}` : undefined,
+          'careReminders.add',
+        )
+        if (replay) return ctx.db.normalizeId('careReminders', replay)!
+        const id = await ctx.db.insert('careReminders', {
           ...permission.recordOrigin,
           horseId,
           title: input.title,
@@ -577,6 +505,21 @@ export const addForHorses = mutation({
           createdAt: now,
           updatedAt: now,
         })
+        await initializeRecordSharing(
+          ctx,
+          horse,
+          id,
+          args.sharing?.find((choice) => choice.horseId === horseId)?.enabled ??
+            true,
+        )
+        await recordCreation(
+          ctx,
+          user._id,
+          args.requestId ? `${args.requestId}:${horseId}` : undefined,
+          'careReminders.add',
+          id,
+        )
+        return id
       }),
     )
   },
@@ -652,7 +595,10 @@ export const complete = mutation({
     const { reminder, horse, event } = await getReminderContext(ctx, args.id)
     const access = await getReminderAccess(ctx, reminder, user._id)
     const canManage = canManageReminder(access, reminder, horse, event)
-    if (!canManage && reminder.assignedTo !== user._id) {
+    if (
+      !canManage &&
+      (Boolean(reminder.horseId) || reminder.assignedTo !== user._id)
+    ) {
       throw new ConvexError('Not authorized to complete this reminder')
     }
     if (reminder.status === 'completed') return reminder.followUpReminderId
@@ -689,6 +635,13 @@ export const complete = mutation({
         createdAt: now,
         updatedAt: now,
       })
+      if (horse)
+        await initializeRecordSharing(
+          ctx,
+          horse,
+          followUpReminderId,
+          (await recordCapabilities(ctx, horse, reminder)).shared,
+        )
     }
     await ctx.db.patch(args.id, {
       status: 'completed',
@@ -710,6 +663,7 @@ export const reopen = mutation({
     if (
       !canManageReminder(access, reminder, horse, event) &&
       !(
+        !reminder.horseId &&
         reminder.status === 'completed' &&
         reminder.completedBy === user._id &&
         reminder.assignedTo === user._id
@@ -842,7 +796,13 @@ export const get = query({
     const access = await assertCanViewStable(ctx, args.stableId)
     const id = ctx.db.normalizeId('careReminders', args.id)
     const reminder = id ? await ctx.db.get(id) : null
-    if (!reminder || reminder.stableId !== args.stableId) return null
+    if (
+      !reminder ||
+      !(await stableReminderRecords(ctx, args.stableId)).some(
+        (record) => record._id === reminder._id,
+      )
+    )
+      return null
     return (
       (await mapStableReminderListItems(ctx, access, [reminder]))[0] ?? null
     )
@@ -859,20 +819,10 @@ async function getReminderAccess(
   const horse = await ctx.db.get(reminder.horseId)
   if (!horse) throw new ConvexError('Horse not found')
   const access = await getHorseAccess(ctx, horse, userId)
-  if (!access.canRead) {
-    if (reminder.assignedTo !== userId || !reminder.stableId)
-      throw new ConvexError('Not authorized to view this reminder')
-    await assertCanViewStable(ctx, reminder.stableId, userId)
-  }
+  const capabilities = await recordCapabilities(ctx, horse, reminder, userId)
+  if (!capabilities.readDetails)
+    throw new ConvexError('Not authorized to view this reminder')
   if (horse.transitionId)
     throw new ConvexError('Horse is moving; please try again shortly')
-  return {
-    ...access,
-    canManage:
-      access.canEditPersonalRecords ||
-      (access.isAdmin &&
-        access.canAddRecords &&
-        reminder.stableId === horse.stableId &&
-        reminder.sourcePlacementId === horse.currentPlacementId),
-  }
+  return { ...access, canManage: capabilities.editContent }
 }

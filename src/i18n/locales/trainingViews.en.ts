@@ -1,4 +1,5 @@
 export const trainingViews = {
+  complete: 'Complete',
   markComplete: 'Mark complete',
   markIncomplete: 'Mark incomplete',
   markCompleteFor: 'Mark complete: {{horse}} · {{title}}',
@@ -46,8 +47,8 @@ export const trainingViews = {
   month: 'Month',
   view: 'Calendar view',
   showResults: 'Show results',
-  selectDay_one: '{{date}}, {{count}} training entry',
-  selectDay_other: '{{date}}, {{count}} training entries',
+  selectDay_one: '{{date}}, {{count}} training session',
+  selectDay_other: '{{date}}, {{count}} training sessions',
   dayEmpty: 'No training matches this date.',
   today: 'Today',
   addSession: 'Add training session',
@@ -67,8 +68,8 @@ export const trainingViews = {
   noMatchesHelp:
     'Empty days mean no training recorded. Adjust the filters or add a session.',
   agenda: 'Training agenda',
-  weekly: 'Weekly training by horse',
-  weeklyCaption: '{{period}}, training by horse and day',
+  weekly: 'Weekly training sessions',
+  weeklyCaption: '{{period}}, training sessions by day',
   horse: 'Horse',
   monthly: 'Monthly training calendar',
   inspectWeek: 'Inspect week of {{date}}',
@@ -97,4 +98,7 @@ export const trainingViews = {
   log: 'Training log',
   logHelp:
     'Plan sessions, record completed work, and review each horse’s training.',
+  sessionProgress: '{{count}} of {{total}} horses completed',
+  completeSession: 'Complete session for all horses',
+  reopenSession: 'Reopen session for all horses',
 } as const

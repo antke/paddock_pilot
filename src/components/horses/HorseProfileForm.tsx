@@ -265,6 +265,7 @@ export function HorseProfileForm({
         shouldBlock={() => form.formState.isDirty && !acknowledged.current}
       />
       <HorseFormFields
+        essentialsOnly={mode === 'create'}
         control={form.control}
         colourRoster={colourRoster}
         providers={providers}

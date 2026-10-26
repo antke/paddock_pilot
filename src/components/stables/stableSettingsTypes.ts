@@ -1,3 +1,4 @@
+import { accountDisplayName } from 'shared/users/displayName'
 import type { Locale } from 'shared/i18n/locale'
 import { localeInstances } from '#/i18n/resources'
 import type { Doc } from 'convex/_generated/dataModel'
@@ -43,9 +44,9 @@ export function formatStableUserName(
 ) {
   if (!user) return localeInstances[locale].t('stables.unknown')
 
-  return (
-    user.preferredName ||
-    [user.firstName, user.lastName].filter(Boolean).join(' ')
+  return accountDisplayName(
+    user,
+    localeInstances[locale].t('stables.memberFallback'),
   )
 }
 
@@ -54,6 +55,7 @@ export function formatStableMemberName(
   locale: Locale = 'en',
 ) {
   return (
+    accountDisplayName(member.user) ||
     member.membership?.displayNameOverride ||
     formatStableUserName(member.user, locale)
   )

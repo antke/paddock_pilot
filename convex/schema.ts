@@ -770,6 +770,7 @@ export const trainingDetails = v.object({
 })
 
 const trainingRecordsSchema = defineTable({
+  scheduledDate: v.optional(v.string()),
   stableId: v.optional(v.id('stables')),
   sourcePlacementId: v.optional(v.id('horsePlacements')),
   eventId: v.id('events'),
@@ -865,6 +866,7 @@ const eventHorsesSchema = defineTable({ ...eventHorsesFields })
   .index('by_event_id', ['eventId'])
   .index('by_horse_id', ['horseId'])
   .index('by_horse_id_event_id', ['horseId', 'eventId'])
+  .index('by_horse_id_status', ['horseId', 'status'])
   .index('by_event_id_status', ['eventId', 'status'])
 
 /**
@@ -927,6 +929,20 @@ const careRemindersSchema = defineTable({ ...careRemindersFields })
   })
 
 export default defineSchema({
+  notificationReads: defineTable({
+    userId: v.id('users'),
+    key: v.string(),
+    readAt: v.number(),
+  }).index('by_user_key', ['userId', 'key']),
+  notifications: defineTable({
+    userId: v.id('users'),
+    kind: v.string(),
+    eventId: v.optional(v.id('events')),
+    stableId: v.optional(v.id('stables')),
+    // Only a historical stable label; clinical data is resolved at read time.
+    stableName: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index('by_user', ['userId']),
   ...horseOwnershipTables,
   users: userSchema,
   stables: stablesSchema,

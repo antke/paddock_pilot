@@ -1,3 +1,4 @@
+import { accountDisplayName } from 'shared/users/displayName'
 import { useT } from '#/i18n/LocaleProvider'
 import { useEffect, useRef, useState } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
@@ -163,13 +164,9 @@ function formatPersonName(
   person: StablePeople[number],
   t: ReturnType<typeof useT>,
 ) {
-  const accountName =
-    person.user?.preferredName ||
-    [person.user?.firstName, person.user?.lastName].filter(Boolean).join(' ')
-
   return (
+    accountDisplayName(person.user) ||
     person.membership?.displayNameOverride ||
-    accountName ||
     t('stables.memberFallback')
   )
 }

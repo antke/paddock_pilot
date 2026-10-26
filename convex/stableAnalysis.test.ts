@@ -46,6 +46,14 @@ describe('analysis weight chronology', () => {
           unit: 'kg',
           measuredAt: Date.UTC(2026, 0, 19, 22, 30),
         })
+      for (const horse of await ctx.db.query('horses').collect()) {
+        const placementId = await ctx.db.insert('horsePlacements', { horseId: horse._id, stableId, startedAt: 1, createdBy: ownerId })
+        await ctx.db.patch(horse._id, { currentPlacementId: placementId })
+        const records = [...await ctx.db.query('horseHealthIssues').collect(), ...await ctx.db.query('horseWeightRecords').collect(), ...await ctx.db.query('careReminders').collect()]
+        const ids = records.filter(r => r.horseId === horse._id).map(r => r._id as string)
+        ids.push(...(await ctx.db.query('events').collect()).filter(e => e.horseIds.includes(horse._id)).map(e => e._id))
+        for (const recordId of ids) await ctx.db.insert('recordShares', { horseId: horse._id, stableId, placementId, recordId, enabled: true, createdBy: ownerId, updatedAt: 1 })
+      }
       return stableId
     })
     const result = await t

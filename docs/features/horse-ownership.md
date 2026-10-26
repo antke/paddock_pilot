@@ -2,6 +2,8 @@
 
 Implemented locally on 2026-10-05. Deployed to the Convex development deployment `aware-llama-765` on 2026-10-07. The CLI validated the backend, installed the ownership indexes and reported functions ready; a subsequent read-only function-spec check confirmed the ownership, invitation recovery, transition, personal contact and event endpoints. Connected acceptance testing remains pending. No development-data preparation or reset was run.
 
+The 2026-10-24 local sharing revision supersedes the earlier retention rules. See [sharing delivery and rollout](../personal-stable-sharing-delivery.md); this revision has not been released to production.
+
 ## Domain model
 
 A Clerk-backed user is a global identity. `horses.ownerId` is the sole owner; it does not change when membership or placement changes. `horseCarers` grants a user viewer or editor access independently of stable membership. An unclaimed horse instead has a `custodianStableId` and is managed by that stable's admin until an invited owner accepts.
@@ -15,17 +17,17 @@ The central authorization helpers are in `convex/libs/horsePermissions.ts`. All 
 ## Lifecycles
 
 - **Create personally:** create the horse under the current user, with an optional stable placement. All horse-care features work without a stable.
-- **Connect:** the owner selects a stable they already own or belong to. The UI explains that its admin gains access to the complete horse history.
-- **Leave or move:** review future stable appointments and choose pending stable tasks to continue personally. A revision check rejects a changed review. A resumable background job locks writes, snapshots the stable's contributions, freezes per-horse event history, withdraws future participation, continues selected tasks, closes placement and optionally creates the next placement. Canonical records retain their IDs and original provenance.
+- **Connect:** the owner selects a stable they already own or belong to. Placement exposes basic roster information. The owner separately chooses existing history to share; administrators cannot read withheld records.
+- **Leave or move:** review future stable appointments and choose pending stable tasks to continue personally. A revision check rejects a changed review. A resumable background job locks writes, retains recovery snapshots of contributions without granting former-stable access, freezes per-horse event history, withdraws future participation, keeps selected pending tasks under their original IDs and reassigns them to the owner, closes placement and optionally creates the next placement. Canonical records retain their IDs and original provenance.
 - **Forced member removal:** ends placements for that member's horses and carries every pending stable task into personal care. It never reassigns horse ownership.
 - **Claim:** a stable admin creates an unclaimed horse and invites its owner. Acceptance attaches the existing horse to the recipient and grants membership in its current stable.
 - **Transfer:** an email-bound, expiring invitation must be accepted by the intended recipient. The recipient keeps the current placement only if already a stable participant; otherwise acceptance includes the departure review. Completion revokes previous carer grants and other pending invitations. Personal pending tasks are assigned to the new owner.
 - **Archive/delete account:** archiving departs the horse, revokes carers/invitations and retains the horse in trash for 14 days. Account deletion preserves identity tombstones and does not give the stable admin ownership. An owner can restore a horse into personal care; a custodian can restore an unclaimed horse into a new placement at its stable.
-- **Permanent purge:** removes the canonical horse and records after retention. Former-stable snapshots and their referenced document blobs survive. A running transition prevents purge until preservation finishes.
+- **Permanent purge:** removes the canonical horse and records after retention. Recovery snapshots and referenced blobs survive until a separate, verified recovery/cleanup procedure; former stable users cannot read them. A running transition prevents purge until preservation finishes.
 
-`horseTransitions.advance` commits pages of up to 50 records with its cursor. The scheduler continues each phase; the cron resumes interrupted jobs. Completion is idempotent. The former stable's paginated history is read-only and server-produced. Documents download through authenticated, no-store application/Convex endpoints, including snapshot documents; an old document link does not bypass revoked access.
+`horseTransitions.advance` commits pages of up to 50 records with its cursor. The scheduler continues each phase; the cron resumes interrupted jobs. Completion is idempotent. The former stable's history endpoint returns no horse snapshots. Owners/carers continue using canonical records. Documents download through authenticated, no-store application/Convex endpoints, with current audience checks; old canonical or snapshot links do not bypass revoked access.
 
-Shared scheduling and private horse records have separate permissions. Stable event organizers can update scheduling but cannot read or overwrite other horses' service notes, training outcomes, costs or clinical records. Personal multi-horse events require edit access to every participating horse. Dashboards, comparisons, reminders and email delivery recheck horse access.
+Shared scheduling and private horse records have separate permissions. Stable administrators can manage shared participants; whole-event changes require authority over every participant and occurrence. Ordinary members see only shared schedule/status. No stable role may read or overwrite private service notes, outcomes or clinical records. Personal multi-horse events require edit access to every participating horse. Dashboards, comparisons, reminders and email delivery recheck horse access.
 
 ## Ownership UI follow-up (2026-10-07)
 
@@ -37,7 +39,9 @@ The accepted Impeccable review recommendations are implemented:
 - **Appointments** provides a full searchable list and month calendar. My horses previews up to 12 occurrences within 90 days, including continuing recurring and multi-day visits, with View all. Frozen appointments retain their horse/participation context after a move.
 - Forms retain failed input and show local pending/error/success feedback. Onboarding can return to its starting choice without discarding the profile draft. Personal contact copying, owner display names, personal appointment help, history record types and dates now use accurate English/Polish copy.
 
-## Pre-release rollout
+## Historical ownership rollout (2026-10-07)
+
+The steps below document the earlier ownership deployment, not the sharing revision. For the current release use [sharing rollout](../personal-stable-sharing-delivery.md); do not reset or seed existing customer data.
 
 Existing records are disposable test fixtures. Keep the frontend and Convex functions on the same revision; deploy the backend before exercising the new signed-in UI.
 
@@ -48,9 +52,11 @@ Existing records are disposable test fixtures. Keep the frontend and Convex func
 
 No backward data migration or silent remote reset is included. Until fixture preparation or reset is run, legacy horses with `stableId` but no placement are not valid move candidates.
 
-## Verification
+## Historical ownership verification (2026-10-07)
 
-Local verification passed TypeScript, lint (zero errors and three existing shadowing warnings), 896 tests across 183 files, a Vercel-format production build and the anonymous production SSR smoke test. The first unrestricted parallel test run hit three timeouts in unrelated analysis suites; those passed in isolation, followed by a complete run with four workers. `convex/horseOwnership.test.ts` covers personal records, admin/member privacy, carer acceptance/revocation, claims, transfers, moves between two stables, immutable origin permissions after return, forced departure, account deletion, trash restoration, paginated/idempotent transitions, recurring shared history, authenticated documents and stale/expired invitations. The DEV-only specimen at `/page-lab/ownership` reuses production management/departure, contacts, invitation recovery and appointment views with labeled synthetic data and local callbacks. The follow-up browser pass checked management at 1280px and 390px, Polish management and deletion confirmation, contact editing and invitation recovery on phones, and appointment list/calendar layouts. One desktop select-caret alignment issue was corrected and visually confirmed. Authenticated persistence, live account switching, dark mode and screen-reader speech were not exercised by this specimen.
+Current sharing verification is recorded in [delivery evidence](../personal-stable-sharing-delivery.md).
+
+Local verification passed TypeScript, lint (zero errors and three existing shadowing warnings), 896 tests across 183 files, a Vercel-format production build and the anonymous production SSR smoke test. The first unrestricted parallel test run hit three timeouts in unrelated analysis suites; those passed in isolation, followed by a complete run with four workers. `convex/horseOwnership.test.ts` covers personal records, admin/member privacy, carer acceptance/revocation, claims, transfers, moves between two stables, placement-bound revocation after return, forced departure, account deletion, trash restoration, paginated/idempotent transitions, recurring shared history, authenticated documents and stale/expired invitations. The DEV-only specimen at `/page-lab/ownership` reuses production management/departure, contacts, invitation recovery and appointment views with labeled synthetic data and local callbacks. The follow-up browser pass checked management at 1280px and 390px, Polish management and deletion confirmation, contact editing and invitation recovery on phones, and appointment list/calendar layouts. One desktop select-caret alignment issue was corrected and visually confirmed. Authenticated persistence, live account switching, dark mode and screen-reader speech were not exercised by this specimen.
 
 Still required against the deployed development backend:
 

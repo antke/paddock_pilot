@@ -43,7 +43,8 @@ import {
 } from 'shared/training/trainingSchema'
 import { getTrainingEntries, trainingWindow } from './trainingCalendarData'
 import type { TrainingHorse } from './trainingCalendarData'
-import { TrainingEntryLink } from './TrainingEntryLink'
+import { TrainingSessionLink } from './TrainingSessionLink'
+import { groupTrainingSessions } from './trainingSessions'
 import { TrainingMonthCalendar } from './TrainingMonthCalendar'
 import { useSessionState } from '#/lib/useSessionState'
 import { useSmallScreen } from '#/lib/useSmallScreen'
@@ -205,12 +206,13 @@ export function TrainingCalendar({
     view === 'month'
       ? formatMonthYearDate(dateKeyToDate(anchor), locale)
       : `${formatShortDateKey(period.start, locale)} – ${formatShortDateKey(period.end, locale)}`
-  const dayEntries = (date: string, horseId?: string) =>
-    entries.filter(
-      (entry) =>
-        entry.occurrence.startDate <= date &&
-        entry.occurrence.endDate >= date &&
-        (!horseId || entry.horse._id === horseId),
+  const dayEntries = (date: string) =>
+    groupTrainingSessions(
+      entries.filter(
+        (entry) =>
+          entry.occurrence.startDate <= date &&
+          entry.occurrence.endDate >= date,
+      ),
     )
   const move = (direction: number) => {
     const date = dateKeyToDate(anchor)
@@ -371,7 +373,7 @@ export function TrainingCalendar({
                   }}
                   state={taskState}
                   variant="default"
-                  action="create"
+                  action="record"
                 >
                   {t('trainingViews.addSession')}
                 </ButtonLink>
@@ -382,7 +384,7 @@ export function TrainingCalendar({
                   search={{ horseId: fixedHorseId, training: true }}
                   state={taskState}
                   variant="default"
-                  action="create"
+                  action="record"
                 >
                   {t('trainingViews.addSession')}
                 </ButtonLink>
@@ -668,6 +670,7 @@ export function TrainingCalendar({
                   <TrainingMonthCalendar
                     days={period.days}
                     entries={entries}
+                    stableId={stableId}
                     selectedDate={
                       period.days.includes(selectedDate)
                         ? selectedDate
@@ -686,9 +689,9 @@ export function TrainingCalendar({
                             {formatShortDateKey(day, locale)}
                           </h3>
                           {dayEntries(day).map((entry) => (
-                            <TrainingEntryLink
+                            <TrainingSessionLink
                               key={entry.key}
-                              entry={entry}
+                              session={entry}
                               stableId={stableId}
                             />
                           ))}
@@ -704,15 +707,12 @@ export function TrainingCalendar({
                     role="region"
                     aria-label={t('trainingViews.weekly')}
                   >
-                    <Table className="w-full min-w-[76rem] table-fixed border-collapse text-sm">
+                    <Table className="w-full min-w-[64rem] table-fixed border-collapse text-sm">
                       <caption className="sr-only">
                         {t('trainingViews.weeklyCaption', { period: label })}
                       </caption>
                       <thead>
                         <tr className="border-b border-border-subtle bg-surface-muted">
-                          <th scope="col" className="w-32 p-3 text-left">
-                            {t('trainingViews.horse')}
-                          </th>
                           {period.days.map((day) => (
                             <th
                               scope="col"
@@ -730,34 +730,25 @@ export function TrainingCalendar({
                         </tr>
                       </thead>
                       <tbody>
-                        {selectedHorses.map((horse) => (
-                          <tr
-                            key={horse._id}
-                            className="border-b border-border-subtle last:border-b-0"
-                          >
-                            <th scope="row" className="p-3 text-left align-top">
-                              {getHorseDisplayName(horse)}
-                            </th>
-                            {period.days.map((day) => (
-                              <td
-                                key={day}
-                                className="border-l border-border-subtle p-2 align-top"
-                              >
-                                <div className="grid gap-2">
-                                  {dayEntries(day, horse._id).map((entry) => (
-                                    <TrainingEntryLink
-                                      key={entry.key}
-                                      entry={entry}
-                                      stableId={stableId}
-                                      showHorseName={false}
-                                      variant="week"
-                                    />
-                                  ))}
-                                </div>
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
+                        <tr>
+                          {period.days.map((day) => (
+                            <td
+                              key={day}
+                              className="border-l border-border-subtle p-2 align-top"
+                            >
+                              <div className="grid gap-2">
+                                {dayEntries(day).map((session) => (
+                                  <TrainingSessionLink
+                                    key={session.key}
+                                    session={session}
+                                    stableId={stableId}
+                                    variant="week"
+                                  />
+                                ))}
+                              </div>
+                            </td>
+                          ))}
+                        </tr>
                       </tbody>
                     </Table>
                   </div>
@@ -765,6 +756,7 @@ export function TrainingCalendar({
                   <TrainingMonthCalendar
                     days={period.days}
                     entries={entries}
+                    stableId={stableId}
                     selectedDate={
                       period.days.includes(selectedDate)
                         ? selectedDate

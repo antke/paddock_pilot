@@ -1,3 +1,4 @@
+import { useWorkspace } from '#/components/layout/WorkspaceContext'
 import type { ReactNode } from 'react'
 
 import { cn } from '#/lib/utils'
@@ -39,6 +40,7 @@ export function DashboardEntityHero({
   title,
   compactOnMobile = false,
 }: DashboardEntityHeroProps) {
+  const workspace = useWorkspace()
   return (
     <DashboardHeroSection
       chrome={chrome}
@@ -71,7 +73,13 @@ export function DashboardEntityHero({
           >
             {leading}
             <DashboardHeroText>
-              <DashboardHeroTitle>{title}</DashboardHeroTitle>
+              <DashboardHeroTitle>
+                {workspace &&
+                typeof title === 'string' &&
+                title !== workspace.label
+                  ? `${title} · ${workspace.label}`
+                  : title}
+              </DashboardHeroTitle>
               {description && (
                 <p
                   className={cn(

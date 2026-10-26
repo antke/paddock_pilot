@@ -44,6 +44,7 @@ function fillCreate() {
   fireEvent.change(screen.getByLabelText('Horse name'), {
     target: { value: 'Sample Rowan' },
   })
+  fireEvent.click(screen.getByRole('button', { name: 'Optional horse details' }))
   fireEvent.change(screen.getByLabelText('Owner name'), {
     target: { value: 'Sample rider' },
   })

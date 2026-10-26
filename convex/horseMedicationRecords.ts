@@ -1,5 +1,11 @@
 import {
-  canEditHorseRecord,
+  assertHorseWorkspace,
+  initializeRecordSharing,
+  readableRecords,
+  recordCapabilities,
+} from './libs/recordCapabilities'
+import { creationReplay, recordCreation } from './libs/creationRequests'
+import {
   auditHorse,
   assertCanReadHorse,
   assertCanAddHorseRecord,
@@ -65,24 +71,29 @@ const byStatusAndStartDate = (
 }
 
 export const listForHorse = query({
-  args: { horseId: v.id('horses') },
+  args: { horseId: v.id('horses'), stableId: v.optional(v.id('stables')) },
   handler: async (ctx, args) => {
     const horse = await ctx.db.get(args.horseId)
     if (!horse) return []
 
-    const access = await assertCanReadHorse(ctx, horse)
+    await assertCanReadHorse(ctx, horse)
+    await assertHorseWorkspace(ctx, horse, args.stableId)
 
     const records = await ctx.db
       .query('horseMedicationRecords')
       .withIndex('by_horse_id', (q) => q.eq('horseId', args.horseId))
       .collect()
 
-    return records
-      .map((record) => ({
-        ...record,
-        canEdit: canEditHorseRecord(access, horse, record),
-      }))
-      .sort(byStatusAndStartDate)
+    return (
+      await Promise.all(
+        (await readableRecords(ctx, horse, records, args.stableId)).map(
+          async (record) => ({
+            ...record,
+            canEdit: (await recordCapabilities(ctx, horse, record)).editContent,
+          }),
+        ),
+      )
+    ).sort(byStatusAndStartDate)
   },
 })
 
@@ -102,7 +113,9 @@ export const getPermissions = query({
 
 export const add = mutation({
   args: {
+    requestId: v.optional(v.string()),
     horseId: v.id('horses'),
+    shareWithStable: v.optional(v.boolean()),
     medicationName: v.string(),
     dosage: v.string(),
     frequency: v.optional(v.string()),
@@ -115,6 +128,13 @@ export const add = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx)
+    const replay = await creationReplay(
+      ctx,
+      user._id,
+      args.requestId,
+      'horseMedicationRecords.add',
+    )
+    if (replay) return ctx.db.normalizeId('horseMedicationRecords', replay)!
     const horse = await ctx.db.get(args.horseId)
     if (!horse) throw new ConvexError('Horse not found')
 
@@ -125,7 +145,7 @@ export const add = mutation({
     const status = medicationRecordStatusSchema.parse(input.status)
     const now = Date.now()
 
-    return await ctx.db.insert('horseMedicationRecords', {
+    const id = await ctx.db.insert('horseMedicationRecords', {
       horseId: horse._id,
       ...access.recordOrigin,
       medicationName: input.medicationName,
@@ -141,6 +161,15 @@ export const add = mutation({
       createdAt: now,
       updatedAt: now,
     })
+    await initializeRecordSharing(ctx, horse, id, args.shareWithStable)
+    await recordCreation(
+      ctx,
+      user._id,
+      args.requestId,
+      'horseMedicationRecords.add',
+      id,
+    )
+    return id
   },
 })
 

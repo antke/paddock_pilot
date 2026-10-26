@@ -1,4 +1,5 @@
 import { useT } from '#/i18n/LocaleProvider'
+import { ActionFeedback } from '#/components/ui/action-feedback'
 import type { ComponentProps, ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
 
@@ -172,7 +173,13 @@ export function RouteQueryErrorAlert({
             disabled={isPending}
             aria-busy={isPending}
           >
-            {isPending ? t('recovery.retrying') : t('common.retry')}
+            <ActionFeedback
+              label={t('common.retry')}
+              pendingLabel={t('recovery.retrying')}
+              pending={isPending}
+              failed={retryFailed}
+              failedLabel={t('common.retry')}
+            />
           </Button>
           {recoveryActions}
         </>

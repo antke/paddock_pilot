@@ -1,5 +1,9 @@
 # Feature Plan
 
+## Personal and stable sharing implementation
+
+See the [personal and stable records implementation plan](personal-stable-sharing-implementation-plan.md) for the agreed canonical-record, sharing, privacy, identity and onboarding changes. It includes phased delivery, migration requirements and acceptance criteria. Status: planned; existing behavior is not yet certified against those rules.
+
 ## Product goal
 
 Paddock Pilot should help regular horse owners and stable admins replace scattered text messages, notebooks, whiteboards, and memory-based care tracking with one shared place for horse records, care planning, stable events, and upcoming service coordination.

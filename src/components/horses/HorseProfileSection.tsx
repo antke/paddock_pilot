@@ -1,5 +1,6 @@
 import { useT, useLocale } from '#/i18n/LocaleProvider'
-import { CheckIcon, CopyIcon } from '@phosphor-icons/react'
+import { CopyIcon } from '@phosphor-icons/react'
+import { ConfirmedCheck } from '#/components/motion/StateFeedback'
 import { useRef, useState } from 'react'
 import { Spinner } from '#/components/ui/spinner'
 import { useTransientConfirmation } from '#/lib/useTransientConfirmation'
@@ -78,11 +79,7 @@ function HorseIdentifierValue({
           {isCopying ? (
             <Spinner aria-hidden="true" />
           ) : confirmation.confirmed ? (
-            <CheckIcon
-              className="app-success-feedback"
-              weight="bold"
-              aria-hidden="true"
-            />
+            <ConfirmedCheck />
           ) : (
             <CopyIcon aria-hidden="true" />
           )}

@@ -1,3 +1,7 @@
+import { hasSharedSchedule } from './recordSharing'
+import { getHorseAccess } from './horsePermissions'
+import type { SharingRule } from '../../shared/sharing/rules'
+import { recordCapabilities } from './recordCapabilities'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
 import { createEventOccurrences } from '../../shared/events/eventOccurrences'
@@ -5,8 +9,11 @@ import { createEventOccurrences } from '../../shared/events/eventOccurrences'
 export async function horseEvent(
   ctx: QueryCtx | MutationCtx,
   row: Doc<'eventsHorses'>,
+  stableId?: Id<'stables'>,
 ): Promise<
   | (Doc<'events'> & {
+      audienceRules?: Array<{ horseId: string; rules: Array<SharingRule> }>
+      contextHistorical?: boolean
       contextHorseId?: string
       contextParticipationId?: Id<'eventsHorses'>
     })
@@ -14,12 +21,55 @@ export async function horseEvent(
 > {
   const event = await ctx.db.get(row.eventId)
   if (!event) return null
+  const horse = await ctx.db.get(row.horseId)
+  if (!horse) return null
+  if (stableId && !(await hasSharedSchedule(ctx, event._id, horse, stableId)))
+    return null
+  const broad = await recordCapabilities(ctx, horse, { _id: event._id })
+  const shares = await ctx.db
+    .query('recordShares')
+    .withIndex('by_record_horse', (q) =>
+      q.eq('recordId', event._id).eq('horseId', horse._id),
+    )
+    .collect()
+  const current = shares.filter(
+    (rule) =>
+      rule.placementId === horse.currentPlacementId &&
+      rule.stableId === horse.stableId,
+  )
+  let allowed = broad.readSchedule
+  let details = broad.readDetails
+  if (!allowed) {
+    for (const rule of current) {
+      if (!rule.enabled) continue
+      const capability = await recordCapabilities(ctx, horse, {
+        _id: event._id,
+        date: rule.occurrenceDate ?? rule.throughDate ?? event.date,
+      })
+      allowed ||= capability.readSchedule
+      details ||= capability.readDetails
+    }
+  }
+  if (!allowed) return null
+  const access = await getHorseAccess(ctx, horse)
+  const personal = access.isOwner || access.carerRole || access.isCustodian
+  const audienceRules = [
+    {
+      horseId: horse._id,
+      rules:
+        personal && !stableId
+          ? [{ enabled: true }]
+          : current.map(({ enabled, occurrenceDate, throughDate }) => ({
+              enabled,
+              occurrenceDate,
+              throughDate,
+            })),
+    },
+  ]
   // A personal appointment for one horse has no other horse's private data.
   // Preserve its original notes and costs in that horse's history as well.
   const singlePersonal =
-    !event.stableId &&
-    event.horseIds.length === 1 &&
-    event.horseIds[0] === row.horseId
+    event.horseIds.length === 1 && event.horseIds[0] === row.horseId
   let recurrence = row.history ? row.history.recurrence : event.recurrence
   if (row.participationEndsAt && recurrence) {
     let cutoff = row.participationEndsAt
@@ -41,11 +91,14 @@ export async function horseEvent(
   }
   return {
     ...event,
+    audienceRules,
+    contextHistorical: Boolean(row.participationEndsAt || row.history),
     contextHorseId: row.horseId,
     contextParticipationId: row._id,
     ...(row.history ?? {}),
     horseIds:
-      row.status === 'withdrawn' || row.status === 'declined'
+      !row.participationEndsAt &&
+      (row.status === 'withdrawn' || row.status === 'declined')
         ? []
         : [row.horseId],
     // Shared event notes can describe other horses. Clinical notes live on participation.
@@ -60,5 +113,15 @@ export async function horseEvent(
     costPerHorse:
       row.costShare ?? (singlePersonal ? event.costPerHorse : undefined),
     recurrence,
+    ...(!details
+      ? {
+          training: undefined,
+          description: undefined,
+          notesAfterCompletion: undefined,
+          providerPhone: undefined,
+          totalCost: undefined,
+          costPerHorse: undefined,
+        }
+      : {}),
   }
 }

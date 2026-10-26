@@ -1,3 +1,5 @@
+import { PersonalOnboardingView } from '#/components/ownership/PersonalOnboarding'
+import type { ComponentProps } from 'react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { AccountProfileFormView } from '#/components/onboarding/AccountProfileForm'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
@@ -75,6 +77,10 @@ function LocalProfile() {
         </Field>
       </FieldGrid>
       <p role="status">{message}</p>
+      <PersonalOnboardingView
+        profile={profile}
+        ProfileForm={SampleOnboardingProfile}
+      />
       <DashboardPage>
         <DashboardPageHeader title="Your profile" />
         <DashboardSectionCard title="Profile details" contentGap="comfortable">
@@ -112,5 +118,17 @@ function LocalProfile() {
         </DashboardSectionCard>
       </DashboardPage>
     </div>
+  )
+}
+
+function SampleOnboardingProfile(
+  props: Omit<ComponentProps<typeof AccountProfileFormView>, 'onSave'>,
+) {
+  return (
+    <AccountProfileFormView
+      {...props}
+      onSave={async () => true}
+      onSaved={() => {}}
+    />
   )
 }

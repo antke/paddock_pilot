@@ -1,3 +1,5 @@
+import { recordCapabilities } from './recordCapabilities'
+import type { HorseRecordReference } from './recordCapabilities'
 import { ConvexError } from 'convex/values'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
@@ -142,13 +144,15 @@ export async function assertCanAddHorseRecord(
 export async function assertCanEditHorseRecord(
   ctx: Ctx,
   horse: Doc<'horses'>,
-  record: {
+  record: HorseRecordReference & {
     stableId?: Id<'stables'>
     sourcePlacementId?: Id<'horsePlacements'>
   },
 ) {
   const access = await getHorseAccess(ctx, horse)
-  if (!canEditHorseRecord(access, horse, record)) {
+  if (
+    !(await recordCapabilities(ctx, horse, record, access.userId)).editContent
+  ) {
     throw new ConvexError('Not authorized to edit this horse record')
   }
   return access

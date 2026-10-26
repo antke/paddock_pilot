@@ -1,3 +1,4 @@
+import { NotificationCenter } from '#/components/notifications/NotificationCenter'
 import {
   StableIcon,
   EventIcon,
@@ -44,7 +45,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '#/components/ui/dropdown-menu'
-import { useT } from '#/i18n/LocaleProvider'
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import HeaderUser from '#/integrations/clerk/header-user'
 import { DrawerAccount } from '#/integrations/clerk/DrawerAccount'
 import { cn } from '#/lib/utils'
@@ -100,9 +101,17 @@ export function WorkspaceNavigation() {
         isLoadingStables={isLoadingStables}
         canManageStable={Boolean(user && stable?.ownerId === user._id)}
         accountActions={
-          <HeaderUser compact={false} showStableSwitcher={false} />
+          <div className="flex items-center gap-2">
+            <NotificationCenter />
+            <HeaderUser compact={false} showStableSwitcher={false} />
+          </div>
         }
-        compactAccountActions={<HeaderUser showStableSwitcher={false} />}
+        compactAccountActions={
+          <div className="flex items-center gap-2">
+            <NotificationCenter />
+            <HeaderUser showStableSwitcher={false} />
+          </div>
+        }
         renderDrawerAccount={(closeDrawer) => (
           <DrawerAccount
             closeDrawer={closeDrawer}
@@ -414,6 +423,7 @@ function WorkspacePicker({
 }) {
   const t = useT()
   const navigate = useNavigate()
+  const { locale } = useLocale()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -437,6 +447,11 @@ function WorkspacePicker({
           <DropdownMenuLabel>
             {t('navigationShell.switchWorkspace')}
           </DropdownMenuLabel>
+          <p className="px-2 pb-3 text-xs text-muted-foreground">
+            {locale === 'pl'
+              ? 'Osobiste: Twoje konie i ich wpisy. Stajnia: wspólne konie i udostępnione wpisy. Zmiana widoku nie zmienia dostępu.'
+              : 'Personal: your horses and their records. Stable: the roster and shared records. Switching views does not change access.'}
+          </p>
           <DropdownMenuRadioGroup
             value={stableId ?? 'personal'}
             onValueChange={(value) => {

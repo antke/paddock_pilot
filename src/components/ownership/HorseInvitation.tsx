@@ -1,3 +1,4 @@
+import { BackLink } from '#/components/ui/back-action'
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { FunctionReturnType } from 'convex/server'
@@ -95,17 +96,17 @@ export function HorseInvitationView({
     }
     const [title, help] = messages[recoveryStatus]
     return (
-      <DashboardSectionCard title={title}>
-        <p role="status" tabIndex={-1} ref={resultRef}>
-          {help}
-        </p>
-        <div className="flex flex-wrap gap-3">
-          {recoveryStatus === 'wrong_account' && accountActions}
-          <ButtonLink to="/horses" variant="outline">
-            {r.backHorses}
-          </ButtonLink>
-        </div>
-      </DashboardSectionCard>
+      <div className="grid gap-3">
+        <BackLink to="/horses">{r.backHorses}</BackLink>
+        <DashboardSectionCard title={title}>
+          <p role="status" tabIndex={-1} ref={resultRef}>
+            {help}
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {recoveryStatus === 'wrong_account' && accountActions}
+          </div>
+        </DashboardSectionCard>
+      </div>
     )
   }
   if (
@@ -115,14 +116,14 @@ export function HorseInvitationView({
       data.invitation.status !== 'accepted')
   )
     return (
-      <DashboardSectionCard title={data.horseName}>
-        <p role="status" tabIndex={-1} ref={resultRef}>
-          {c.moving}
-        </p>
-        <ButtonLink to="/horses" variant="outline">
-          {r.backHorses}
-        </ButtonLink>
-      </DashboardSectionCard>
+      <div className="grid gap-3">
+        <BackLink to="/horses">{r.backHorses}</BackLink>
+        <DashboardSectionCard title={data.horseName}>
+          <p role="status" tabIndex={-1} ref={resultRef}>
+            {c.moving}
+          </p>
+        </DashboardSectionCard>
+      </div>
     )
   if (data.invitation.status === 'accepted' || response === true)
     return (

@@ -6,7 +6,7 @@ import { MotionConfig } from 'motion/react'
 export const journalMotion = {
   feedback: 0.12,
   state: 0.16,
-  disclosure: 0.18,
+  disclosure: 0.22,
   exit: 0.14,
   confirmation: 0.32,
   distance: 6,

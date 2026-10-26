@@ -1,3 +1,5 @@
+import { TrainingCompletionControlView } from '#/components/training/TrainingCompletionControl'
+import { getTrainingEntries } from '#/components/training/trainingCalendarData'
 import { useState } from 'react'
 import { Field, FieldLabel } from '#/components/ui/field'
 import { Select } from '#/components/ui/select'
@@ -22,6 +24,7 @@ type EventDetailPageLabProps = {
 export function EventDetailPageLab({ data }: EventDetailPageLabProps) {
   const fixtureMode = useDevAuthBypassEnabled()
   const [sample, setSample] = useState('standard')
+  const [completed, setCompleted] = useState(true)
   const requestedEventId = useSearch({
     strict: false,
     select: (search) =>
@@ -38,38 +41,45 @@ export function EventDetailPageLab({ data }: EventDetailPageLabProps) {
   const event =
     !originalEvent || !fixtureMode || sample === 'standard'
       ? originalEvent
-      : sample === 'minimal'
+      : sample === 'training'
         ? {
             ...originalEvent,
-            title: 'Sample yard visit',
-            status: 'planned' as const,
-            description: undefined,
-            providerName: undefined,
-            providerPhone: undefined,
-            totalCost: undefined,
-            costPerHorse: undefined,
-            notesAfterCompletion: undefined,
-            location: undefined,
+            type: 'training' as const,
+            title: 'Lunging · Groundwork · Other training',
             recurrence: undefined,
-            horseIds: [],
           }
-        : {
-            ...originalEvent,
-            title:
-              'Sample autumn care review and follow-up with the visiting equine team',
-            providerName:
-              'Sample Northern Pastures Equine Veterinary and Rehabilitation Practice',
-            providerPhone: '+48 555 010 200',
-            totalCost: 1200,
-            costPerHorse: 400,
-            location:
-              'North field shelter beside the main stable and rehabilitation arena',
-            description:
-              'Sample reference: VISIT-2026-ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ.\nPlease keep the visit notes with this event.',
-            notesAfterCompletion:
-              'Sample completion notes: discuss the next visit with the care team.',
-            horseIds: data.horses.map((horse) => horse._id),
-          }
+        : sample === 'minimal'
+          ? {
+              ...originalEvent,
+              title: 'Sample yard visit',
+              status: 'planned' as const,
+              description: undefined,
+              providerName: undefined,
+              providerPhone: undefined,
+              totalCost: undefined,
+              costPerHorse: undefined,
+              notesAfterCompletion: undefined,
+              location: undefined,
+              recurrence: undefined,
+              horseIds: [],
+            }
+          : {
+              ...originalEvent,
+              title:
+                'Sample autumn care review and follow-up with the visiting equine team',
+              providerName:
+                'Sample Northern Pastures Equine Veterinary and Rehabilitation Practice',
+              providerPhone: '+48 555 010 200',
+              totalCost: 1200,
+              costPerHorse: 400,
+              location:
+                'North field shelter beside the main stable and rehabilitation arena',
+              description:
+                'Sample reference: VISIT-2026-ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ.\nPlease keep the visit notes with this event.',
+              notesAfterCompletion:
+                'Sample completion notes: discuss the next visit with the care team.',
+              horseIds: data.horses.map((horse) => horse._id),
+            }
 
   if (!event) {
     return (
@@ -83,6 +93,17 @@ export function EventDetailPageLab({ data }: EventDetailPageLabProps) {
     event.horseIds.includes(horse._id),
   )
 
+  const trainingEntry =
+    sample === 'training' && horses[0]
+      ? getTrainingEntries({
+          events: [event],
+          records: [],
+          horses: [{ ...horses[0], canRecord: true }],
+          start: event.date,
+          end: event.date,
+          today: event.date,
+        })[0]
+      : undefined
   return (
     <DashboardLayoutStack>
       {fixtureMode && (
@@ -93,6 +114,7 @@ export function EventDetailPageLab({ data }: EventDetailPageLabProps) {
             value={sample}
             onChange={(change) => setSample(change.target.value)}
           >
+            <option value="training">Training completion</option>
             <option value="standard">Standard sample</option>
             <option value="detailed">Long title and detailed record</option>
             <option value="minimal">Minimal record · read-only</option>
@@ -132,6 +154,21 @@ export function EventDetailPageLab({ data }: EventDetailPageLabProps) {
       <EventDetail
         stableId={data.stable._id}
         event={event}
+        createdByName={fixtureMode ? 'Alexandra Nowak-Kowalska' : undefined}
+        headerActions={
+          fixtureMode && trainingEntry ? (
+            <TrainingCompletionControlView
+              entry={{
+                ...trainingEntry,
+                status: completed ? 'completed' : 'planned',
+              }}
+              labelled
+              setStatus={async () => {
+                setCompleted((value) => !value)
+              }}
+            />
+          ) : undefined
+        }
         horses={horses}
         canManageEvent={!fixtureMode || sample !== 'minimal'}
         showServiceDetails={false}

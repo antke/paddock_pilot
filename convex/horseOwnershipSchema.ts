@@ -9,6 +9,50 @@ export const horseInvitationKind = v.union(
 )
 
 export const horseOwnershipTables = {
+  recordCreationRequests: defineTable({
+    userId: v.id('users'),
+    requestId: v.string(),
+    operation: v.string(),
+    recordId: v.string(),
+  }).index('by_user_request', ['userId', 'requestId']),
+  historySharingJobs: defineTable({
+    horseId: v.id('horses'),
+    stableId: v.id('stables'),
+    placementId: v.id('horsePlacements'),
+    userId: v.id('users'),
+    requestId: v.string(),
+    cutoff: v.number(),
+    categories: v.array(v.string()),
+    phase: v.number(),
+    cursor: v.optional(v.string()),
+    processed: v.number(),
+    status: v.union(
+      v.literal('running'),
+      v.literal('complete'),
+      v.literal('failed'),
+    ),
+    error: v.optional(v.string()),
+  })
+    .index('by_user_request', ['userId', 'requestId'])
+    .index('by_horse', ['horseId'])
+    .index('by_user', ['userId']),
+  // Audience is independent of authorship and the record's original stable.
+  // A false row is an explicit withdrawal/occurrence exception, not deletion.
+  recordShares: defineTable({
+    recordId: v.string(),
+    horseId: v.id('horses'),
+    stableId: v.id('stables'),
+    placementId: v.id('horsePlacements'),
+    occurrenceDate: v.optional(v.string()),
+    throughDate: v.optional(v.string()),
+    enabled: v.boolean(),
+    createdBy: v.id('users'),
+    updatedAt: v.number(),
+  })
+    .index('by_record_horse', ['recordId', 'horseId'])
+    .index('by_stable', ['stableId'])
+    .index('by_horse', ['horseId'])
+    .index('by_placement', ['placementId']),
   horsePlacements: defineTable({
     horseId: v.id('horses'),
     stableId: v.id('stables'),
@@ -87,7 +131,8 @@ export const horseOwnershipTables = {
     status: v.union(v.literal('running'), v.literal('complete')),
   })
     .index('by_horse_id', ['horseId'])
-    .index('by_status', ['status']),
+    .index('by_status', ['status'])
+    .index('by_actor', ['actorUserId']),
   personalProviders: defineTable({
     userId: v.id('users'),
     name: v.string(),

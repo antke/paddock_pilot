@@ -37,7 +37,7 @@ afterEach(() => {
 const data = createDashboardLabFixtureData()
 const invitations = createHorseInvitationSamples(data).slice(0, 2)
 const target = (index: number) =>
-  `${invitations[index].horse!.name} to ${invitations[index].event!.title}`
+  `${invitations[index].horse.name} to ${invitations[index].event!.title}`
 function action(verb: string, index: number) {
   return screen.getByRole<HTMLButtonElement>('button', {
     name: `${verb} invitation for ${target(index)}`,

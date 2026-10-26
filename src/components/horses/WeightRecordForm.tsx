@@ -1,3 +1,7 @@
+import { useRecordCreationAudience } from '#/components/sharing/useRecordCreationAudience'
+import type { RecordCreationOptions } from '#/components/sharing/useRecordCreationAudience'
+import type { Id } from 'convex/_generated/dataModel'
+import { useTransientConfirmation } from '#/lib/useTransientConfirmation'
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { useT } from '#/i18n/LocaleProvider'
 import { InlineForm } from '#/components/forms/FormLayout'
@@ -22,9 +26,12 @@ import type {
 } from 'shared/horses/weightRecordSchema'
 
 type WeightRecordFormProps = {
+  audienceHorseId?: Id<'horses'>
   disabled?: boolean
   onPendingChange?: (pending: boolean) => void
-  onSubmit: (data: WeightRecordFormSchema) => Promise<void>
+  onSubmit: (
+    data: WeightRecordFormSchema & RecordCreationOptions,
+  ) => Promise<void>
 }
 
 const weightUnitLabels = {
@@ -40,16 +47,19 @@ const weightUnitOptions = weightUnits.map((unit) => ({
 const asWeightUnit = (value: string) => value as WeightUnit
 
 export function WeightRecordForm({
+  audienceHorseId,
   disabled = false,
   onSubmit,
   onPendingChange,
 }: WeightRecordFormProps) {
+  const audience = useRecordCreationAudience(audienceHorseId)
   const t = useT()
 
   const { weightRecordFormSchema } = createWeightRecordSchemas((key) =>
     t(`careValidation.${key}`),
   )
   const formId = useId()
+  const confirmation = useTransientConfirmation(formId)
   const pending = useRef(false)
   const [isPending, setIsPending] = useState(false)
   const [failed, setFailed] = useState(false)
@@ -70,9 +80,11 @@ export function WeightRecordForm({
     pending.current = true
     setIsPending(true)
     setFailed(false)
+    confirmation.clear()
     onPendingChange?.(true)
     try {
-      await onSubmit(data)
+      await onSubmit({ ...data, ...(audienceHorseId ? audience.options : {}) })
+      audience.reset()
       form.reset({
         weight: undefined,
         bodyConditionScore: undefined,
@@ -80,6 +92,7 @@ export function WeightRecordForm({
         measuredDate: getTodayDateKey(),
         notes: '',
       })
+      confirmation.confirm()
     } catch {
       setFailed(true)
     } finally {
@@ -90,7 +103,12 @@ export function WeightRecordForm({
   }
 
   return (
-    <InlineForm noValidate onSubmit={form.handleSubmit(submitWeightRecord)}>
+    <InlineForm
+      onChangeCapture={confirmation.clear}
+      noValidate
+      onSubmit={form.handleSubmit(submitWeightRecord)}
+    >
+      {audience.control}
       <FieldGrid breakpoint="sm" template="trailing-sm">
         <Controller
           name="weight"
@@ -277,6 +295,9 @@ export function WeightRecordForm({
       />
 
       <FormSubmitActions
+        failed={failed}
+        confirmed={confirmation.confirmed}
+        confirmedLabel={t('common.saved')}
         isSubmitting={form.formState.isSubmitting || isPending}
         disabled={disabled}
         submitLabel={t('careRecords.addWeightRecord')}

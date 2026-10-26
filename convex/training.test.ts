@@ -280,7 +280,7 @@ describe('training records', () => {
     expect(data.events[0].horseIds).not.toContain(f.horseId)
   })
 
-  it('preserves schedules with history and legacy records without inventing completion', async () => {
+  it('allows correcting legacy schedules without inventing completion', async () => {
     const f = await setup()
     const id = await f.t.run((ctx) =>
       ctx.db.insert('events', {
@@ -298,7 +298,7 @@ describe('training records', () => {
     const data = await f.asAdmin.query(api.training.listForStable, {
       stableId: f.stableId,
     })
-    expect(data.events[0]._id).toBe(id)
+    expect(data.events).toEqual([]) // Legacy origin alone never publishes a record.
     expect(data.records).toHaveLength(0)
     await expect(
       f.asMember.mutation(api.events.update, {
@@ -311,7 +311,17 @@ describe('training records', () => {
         type: 'training',
         training: details,
       }),
-    ).rejects.toThrow('training history')
+    ).resolves.toBeNull()
+    expect(await f.t.run((ctx) => ctx.db.get(id))).toMatchObject({
+      date: '2026-01-06',
+    })
+    expect(
+      (
+        await f.asAdmin.query(api.training.listForStable, {
+          stableId: f.stableId,
+        })
+      ).records,
+    ).toHaveLength(0)
     await expect(
       f.asMember.mutation(api.events.update, {
         id,
@@ -338,5 +348,115 @@ describe('training records', () => {
         })
       ).map((event) => event.type),
     ).toEqual(['competition'])
+  })
+})
+
+it('does not let an organizer move another owner’s training record', async () => {
+  const f = await setup()
+  const input = {
+    stableId: f.stableId,
+    horseIds: [f.horseId, f.otherHorseId],
+    date: '2026-01-05',
+    time: '10:00',
+    title: 'Lesson',
+    type: 'training' as const,
+    training: details,
+  }
+  const eventId = await f.asMember.mutation(api.events.add, input)
+  const association = await f.t.run((ctx) =>
+    ctx.db
+      .query('eventsHorses')
+      .withIndex('by_event_id', (q) => q.eq('eventId', eventId))
+      .collect(),
+  )
+  await f.asAdmin.mutation(api.events.approveHorseInvitation, {
+    eventHorseId: association.find((row) => row.horseId === f.otherHorseId)!
+      ._id,
+  })
+  await f.asAdmin.mutation(api.training.saveRecord, {
+    eventId,
+    horseId: f.otherHorseId,
+    date: input.date,
+    status: 'completed',
+    details,
+  })
+  const replacement = await f.t.run((ctx) =>
+    ctx.db.insert('horses', {
+      stableId: f.stableId,
+      ownerId: f.member,
+      name: 'Replacement',
+      age: 8,
+    }),
+  )
+  const before = await f.t.run((ctx) =>
+    ctx.db.query('trainingRecords').collect(),
+  )
+  await expect(
+    f.asMember.mutation(api.events.update, {
+      ...input,
+      id: eventId,
+      horseIds: [f.horseId, replacement],
+    }),
+  ).rejects.toThrow('Not authorized')
+  expect(
+    await f.t.run((ctx) => ctx.db.query('trainingRecords').collect()),
+  ).toEqual(before)
+})
+
+it('rejects whole-series changes that would overwrite an unshared participant', async () => {
+  const f = await setup()
+  const input = {
+    stableId: f.stableId,
+    horseIds: [f.horseId, f.otherHorseId],
+    date: '2026-01-05',
+    time: '10:00',
+    title: 'Shared lesson',
+    type: 'training' as const,
+    training: details,
+  }
+  const eventId = await f.asAdmin.mutation(api.events.add, input)
+  await f.asMember.mutation(api.training.saveRecord, {
+    eventId,
+    horseId: f.horseId,
+    date: input.date,
+    status: 'completed',
+    details,
+    outcome: 'Owner notes',
+  })
+  const before = await f.t.run((ctx) =>
+    ctx.db.query('trainingRecords').collect(),
+  )
+  await f.asMember.mutation(api.recordSharing.set, { horseId: f.horseId, recordId: eventId, enabled: false })
+  await expect(f.asAdmin.mutation(api.events.update, {
+    ...input,
+    id: eventId,
+    date: '2026-01-06',
+    training: { ...details, activities: ['jumping'] },
+    totalCost: 200,
+  })).rejects.toThrow()
+  expect(
+    await f.t.run((ctx) => ctx.db.query('trainingRecords').collect()),
+  ).toEqual(before)
+  expect(await f.t.run((ctx) => ctx.db.get(eventId))).toMatchObject({
+    date: input.date,
+  })
+  await expect(
+    f.asAdmin.mutation(api.training.saveRecord, {
+      eventId,
+      horseId: f.horseId,
+      date: input.date,
+      newDate: '2026-01-06',
+      status: 'completed',
+      details,
+    }),
+  ).rejects.toThrow()
+  await f.asMember.mutation(api.training.saveRecord, {
+    eventId,
+    horseId: f.horseId,
+    date: input.date,
+    newDate: '2026-01-06',
+    status: 'completed',
+    details,
+    outcome: 'Corrected by owner',
   })
 })

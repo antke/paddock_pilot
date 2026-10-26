@@ -3,6 +3,7 @@ import type { Doc, Id } from './_generated/dataModel'
 import { query } from './_generated/server'
 import { getCurrentUser } from './libs/stablePermissions'
 import { getHorseAccess } from './libs/horsePermissions'
+import { accountDisplayName } from '../shared/users/displayName'
 
 /** Display-name suggestions only; choosing a name never grants account access. */
 export const suggestNames = query({
@@ -18,17 +19,11 @@ export const suggestNames = query({
     >()
     const add = (user: Doc<'users'> | null, displayName?: string) => {
       if (!user || user.deletedAt !== undefined || people.has(user._id)) return
-      const name =
-        displayName?.trim() ||
-        user.preferredName?.trim() ||
-        [user.firstName, user.lastName].filter(Boolean).join(' ').trim()
+      const name = accountDisplayName(user) || displayName?.trim()
       if (name)
         people.set(user._id, { name, isCurrentUser: user._id === actor._id })
     }
-    add(
-      actor,
-      [actor.firstName, actor.lastName].filter(Boolean).join(' ').trim(),
-    )
+    add(actor)
 
     const [owned, memberships] = await Promise.all([
       ctx.db

@@ -17,9 +17,15 @@ Help the owner understand where the horse is, who can help, and the consequences
 
 The personal collection leads with horse identity, current placement and owned/shared context, followed by care and upcoming appointment occurrences. View all opens the personal Appointments route with search, filters and a month calendar; historical rows retain their frozen horse context. Creation and editing reuse the existing horse form. Entry and empty states lead directly to adding a horse; stable setup remains an available path. Invitation response states make acceptance, decline, processing and availability explicit.
 
+Record creation places the audience choice before saving and names the destination stable. Owner/editor choices default to shared; fixed staff audiences appear as explanatory text. No-stable copy explicitly preserves invited carers' access. The adjacent explanation distinguishes members' schedule/status view from administrators' shared details. Record details repeat the audience in an expandable disclosure, with a management link when permitted. These patterns live in `src/components/sharing/RecordAudience.tsx` and `RecordAudienceLabel.tsx`.
+
+Record sharing management keeps each record's title, named audience and available action together. Group withdrawal explains its effect on this horse before confirmation. Recurring records disclose individual-occurrence controls progressively, with a labeled date, current access and saved feedback. Existing-horse history sharing is optional: category counts and a fixed cutoff precede review, which repeats the selected scope and member/admin distinction before submission. Progress, retry and recoverable errors stay in context. `HorseSharingManager.tsx` and `HistorySharing.tsx` own these extensions; product and server rules remain authoritative.
+
 ## Chosen direction and memorable moment
 
 Extend the incumbent app through shared sections, fields and actions. Keep the horse identity above the working content, sentence-case headings and wrapping controls. Preserve the same section order on phones. The memorable interaction is the expanded departure review inside current placement: the affected future appointments and selectable tasks are visible before confirmation. Access invitations and transfer invitations remain distinguishable; transfer copy explains the recipient's acceptance step.
+
+Sharing continues this same journal treatment through canonical section, button, checkbox, field and error primitives. Use readable inline explanations and wrapping actions rather than a new visual hierarchy. The essential horse-creation variant reveals optional horse details through an expanded-state button and explains that photo, contacts and care information can be added after saving. Sharing labels and consequences are available in English and Polish; preserve labeled keyboard controls and readable wrapping in both languages.
 
 ## Constraints and evidence
 
@@ -28,6 +34,8 @@ Keep labels, keyboard focus, pending feedback and recoverable mutation failures.
 The DEV-only `/page-lab/ownership` fixture reuses `HorseManagementView`, `DepartureReviewView`, `PersonalContactsView`, `HorseInvitationView` and `PersonalAppointmentsView` with synthetic data and local callbacks. The 2026-10-07 implementation resolves the accepted critique’s deletion wording/protection, explicit move/access context, invitation recovery, full appointment browsing, local feedback and related copy issues. The browser pass inspected desktop management/calendar, 390px management/contact editing/appointment list/invitation recovery, and Polish management/deletion confirmation. A misplaced desktop carer-select caret was fixed in the bounded polish pass and visually confirmed.
 
 The earlier `.impeccable/review/desktop.jpg` and `mobile.jpg` remain evidence of the original narrow review; they do not show this follow-up implementation. The backend was deployed to development `aware-llama-765` on 2026-10-07. The wider authenticated paths still need connected acceptance testing. Do not present the fixture as proof of live email, account switching, persistence or background transition completion.
+
+The sharing extension has separate captures at `.impeccable/review/sharing/desktop.jpg`, `mobile.jpg` and `mobile-light.jpg`. They document the reviewed sharing surface only; they do not extend the earlier acceptance evidence to every authenticated workflow. This local extension introduces no palette, typography, token or layout-system changes.
 
 ## Unresolved decisions
 

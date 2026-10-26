@@ -1,3 +1,4 @@
+import { XIcon } from '@phosphor-icons/react'
 import { RequiredFieldsHint } from './FormLayout'
 import { useT } from '#/i18n/LocaleProvider'
 import type { ComponentProps, FormEventHandler, ReactNode } from 'react'
@@ -182,7 +183,14 @@ export function RouteFormActions({
               />
             }
           >
-            {effectiveResetLabel}
+            <span
+              data-slot="form-action-icon"
+              className="hidden"
+              aria-hidden="true"
+            >
+              <XIcon className="size-5" />
+            </span>
+            <span data-slot="form-action-label">{effectiveResetLabel}</span>
           </AlertDialogTrigger>
           <AlertDialogContent
             finalFocus={() => {

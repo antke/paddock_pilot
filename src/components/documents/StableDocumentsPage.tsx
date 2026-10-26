@@ -47,6 +47,7 @@ export function StableDocumentsPage({ stableId }: StableDocumentsPageProps) {
         title={t('documents.documents')}
         actions={
           <DocumentUploadDialog
+            enableSharing
             canAddDocument={data.canManageStableDocuments}
             horseOptions={horses}
             onAdd={documentActions.add}

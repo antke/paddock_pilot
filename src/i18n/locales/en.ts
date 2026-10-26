@@ -364,6 +364,7 @@ export const en = {
     home: 'Go home',
     cancel: 'Cancel',
     save: 'Save',
+    saved: 'Saved',
     loading: 'Loading',
     notFoundTitle: 'Page not found',
     notFoundDescription:

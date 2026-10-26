@@ -1,3 +1,4 @@
+import { HorseInvitationInbox } from '#/components/events/HorseInvitationInbox'
 import { useMemo } from 'react'
 import { CaretDownIcon } from '@phosphor-icons/react'
 import { useQuery } from '@tanstack/react-query'
@@ -40,6 +41,11 @@ export function PersonalHome() {
     ...convexQuery(api.events.list),
     throwOnError: true,
   })
+  // Warm the roster used by the adjacent Events view in the shared query cache.
+  useQuery({
+    ...convexQuery(api.horses.calendarRoster, {}),
+    throwOnError: true,
+  })
   const training = usePersonalTraining()
   const horses = training?.roster
   const { data: overview } = useQuery({
@@ -79,21 +85,18 @@ export function PersonalHome() {
 
   return (
     <DashboardPage>
-      {small ? (
-        <h1 className="sr-only">{t('navigation.home')}</h1>
-      ) : (
-        <DashboardPageHeader
-          title={t('navigation.home')}
-          description={formatLongDateKey(today, locale)}
-          className="py-1 md:py-6"
-          actions={
-            <ButtonLink to="/horses/contacts" variant="ghost" size="sm">
-              {c.providers}
-            </ButtonLink>
-          }
-        />
-      )}
+      <DashboardPageHeader
+        title={t('navigation.home')}
+        description={small ? undefined : formatLongDateKey(today, locale)}
+        className="py-1 md:py-6"
+        actions={
+          <ButtonLink to="/horses/contacts" variant="ghost" size="sm">
+            {c.providers}
+          </ButtonLink>
+        }
+      />
       {small && <DashboardCreateMenu canCreateActivity={canCreate} />}
+      <HorseInvitationInbox />
       <DashboardLayoutGrid
         variant={hasCare ? 'commandCenter' : 'equal'}
         className={!hasCare ? 'lg:grid-cols-1' : undefined}

@@ -29,14 +29,16 @@ Paddock Pilot combines personal horse care with shared coordination for small, c
 - Users need central access to calendars, messages or updates, horse and stable information, and details for vets and other local service providers.
 - Care coordination spans planning the work, recording what happened, and handing useful context to the next person or provider.
 - A horse has zero or one current stable placement; a user can belong to several stables. Moving a horse changes its placement, not its identity or history.
-- Owners can invite viewer or editor carers independently of stable membership. A current stable admin sees the horse's history, while ordinary members see shared scheduling and the roster unless separately granted horse access.
+- Owners can invite viewer or editor carers independently of stable membership. A current stable admin sees explicitly shared horse records, while ordinary members see shared schedules/status and the basic roster unless separately granted personal horse access.
+- Personal workspace lists only owned horses and invited-carer horses and their records. Stable workspace lists its roster and shared records only, including for horse owners who also have private access. Selecting a workspace never changes existing grants. New care records in Personal default to private with explicit sharing; stable care creation defaults to shared. Workspace-scoped page headings show “Page · Personal” or “Page · Stable name”, including with navigation closed.
+- Personal and stable screens use the same canonical activities and results. Event and training creation uses a visible Personal / named stable destination. Personal is private to the horse’s owners and authorised carers; stable creation is shared. Stable administrators and owner/editor carers add permitted horses directly; other members invite horses with explicit approval states. Other care forms retain their sharing controls. Staff creations for someone else’s horse are always shared. Sharing history uses a fixed cutoff and never enables future categories automatically.
 - Stable owners have wider operational and administrative responsibility, while members contribute within their role and their relationship to horses and records.
 
 ## Capabilities and Constraints
 
 - The existing web application includes authenticated accounts, stables, memberships and invitations; horse profiles and care records; events and calendars; reminders; documents; provider details; analysis; onboarding; activity records; and personal subscriptions.
 - Horse ownership, carer grants, current placement and record provenance determine access. Stable membership alone does not grant access to private horse records. Enforcement belongs on the server.
-- Ownership transfers and claims require the recipient's acceptance. A departing horse keeps its complete history; the former stable retains an immutable copy of only its own contribution.
+- Ownership transfers and claims require the recipient's acceptance. A departing horse keeps its complete history; the former stable loses access to all horse records, including staff contributions. Independent personal carer grants remain separate.
 - All users should retain access to the basic stable-coordination feature set. Subscriptions may unlock advanced or premium capabilities. Exact packaging and pricing remain product decisions rather than fixed commitments in this record.
 - Centralised communication is a confirmed product need. The current repository demonstrates transactional email and shared records, but does not establish a complete general-purpose messaging model; future work must distinguish shared updates, notifications, and direct messaging rather than assuming they are interchangeable.
 

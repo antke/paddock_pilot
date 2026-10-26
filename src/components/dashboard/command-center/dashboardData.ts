@@ -36,28 +36,16 @@ export function createDashboardCommandData({
   locale?: Locale
   training?: DashboardTrainingData
 }): DashboardCommandData {
-  const stableEvents = events
-    .filter((event) => event.stableId === stable._id)
-    .sort((a, b) => {
-      const dateSort = a.date.localeCompare(b.date)
-      if (dateSort !== 0) return dateSort
-      return a.time.localeCompare(b.time)
-    })
+  // Callers supply the server-authorized stable audience; origin is provenance.
+  const stableEvents = [...events].sort((a, b) => {
+    const dateSort = a.date.localeCompare(b.date)
+    return dateSort || a.time.localeCompare(b.time)
+  })
   const activity = createDashboardActivityData({
     events: stableEvents,
     todayKey,
     locale,
-    training: training
-      ? {
-          ...training,
-          events: training.events.filter(
-            (event) => event.stableId === stable._id,
-          ),
-          records: training.records.filter(
-            (record) => record.stableId === stable._id,
-          ),
-        }
-      : undefined,
+    training,
   })
 
   return {

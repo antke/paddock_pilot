@@ -1,3 +1,4 @@
+import { useWorkspace } from '#/components/layout/WorkspaceContext'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { convexQuery } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
@@ -27,8 +28,12 @@ export function HorseTrainingSection({ data, ...props }: Props) {
 }
 
 function ConnectedHorseTraining(props: Omit<Props, 'data'>) {
+  const workspace = useWorkspace()
   const { data } = useSuspenseQuery(
-    convexQuery(api.training.listForHorse, { horseId: props.horse._id }),
+    convexQuery(api.training.listForHorse, {
+      stableId: workspace?.stableId,
+      horseId: props.horse._id,
+    }),
   )
   return <HorseTrainingLog {...props} data={data} />
 }

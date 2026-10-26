@@ -128,6 +128,14 @@ describe('complete stable and horse evidence', () => {
         createdAt: 1,
         updatedAt: 1,
       })
+      for (const horse of await ctx.db.query('horses').collect()) {
+        const placementId = await ctx.db.insert('horsePlacements', { horseId: horse._id, stableId, startedAt: 1, createdBy: userId })
+        await ctx.db.patch(horse._id, { currentPlacementId: placementId })
+        const records = [...await ctx.db.query('horseHealthIssues').collect(), ...await ctx.db.query('horseWeightRecords').collect(), ...await ctx.db.query('careReminders').collect()]
+        const ids = records.filter(r => r.horseId === horse._id).map(r => r._id as string)
+        ids.push(...(await ctx.db.query('events').collect()).filter(e => e.horseIds.includes(horse._id)).map(e => e._id))
+        for (const recordId of ids) await ctx.db.insert('recordShares', { horseId: horse._id, stableId, placementId, recordId, enabled: true, createdBy: userId, updatedAt: 1 })
+      }
       return { stableId, horseId, horseIds }
     })
     const result = await t

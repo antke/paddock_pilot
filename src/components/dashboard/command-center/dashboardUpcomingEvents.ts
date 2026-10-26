@@ -17,7 +17,6 @@ export function dashboardUpcomingEvents(data: DashboardActivityData) {
   const events: Array<DashboardCommandScheduleEvent> = createEventOccurrences({
     events: data.events.filter(
       (event) =>
-        (!data.stable || event.stableId === data.stable._id) &&
         event.type !== 'training' &&
         event.status !== 'cancelled' &&
         event.status !== 'completed',

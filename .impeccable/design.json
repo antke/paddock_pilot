@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-16T17:02:21.480738Z",
+  "generatedAt": "2026-10-21T07:57:23.471069Z",
   "title": "Design System: Paddock Pilot — Stable journal",
   "extensions": {
     "colorMeta": {
@@ -221,12 +221,12 @@
       {
         "name": "state",
         "value": "160ms",
-        "purpose": "Local selection and state feedback."
+        "purpose": "In-place fill for bordered choices and four-pixel action-content transitions, with fixed button geometry."
       },
       {
         "name": "disclosure",
-        "value": "180ms",
-        "purpose": "Measured optional content, including dynamic resizing."
+        "value": "220ms",
+        "purpose": "Measured optional content with a short inner fade and settle; drafts stay mounted."
       },
       {
         "name": "exit",
@@ -251,12 +251,17 @@
       {
         "name": "layout-spring",
         "value": "stiffness 460; damping 38; mass 0.7",
-        "purpose": "Bounded list and segmented selection continuity."
+        "purpose": "Bounded list and continuous borderless segmented-track selection continuity."
       },
       {
         "name": "reduced-motion",
         "value": "No spatial travel or height tween; short fades",
         "purpose": "Live shared preference policy; CSS also reduces transitions and disables smooth scrolling."
+      },
+      {
+        "name": "overlay",
+        "value": "220ms",
+        "purpose": "Dialog arrival: 6px translate and 0.985 scale; exit: 140ms and 4px. Base UI retains lifecycle and focus ownership."
       }
     ],
     "breakpoints": [

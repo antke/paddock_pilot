@@ -1,4 +1,33 @@
 export const eventEditor = {
+  createIn: 'Create in',
+  personal: 'Personal',
+  personalHelp:
+    'Visible only to the selected horses’ owners and authorised carers. Not shared with a stable.',
+  stableHelp:
+    'Appears in this stable’s calendar. Members see the schedule; the stable administrator can view and manage the details.',
+  requiresApproval: 'Requires approval',
+  approvalHelp:
+    'The horse’s owner, authorised editor carer or stable administrator must accept before it joins.',
+  summary: 'Added directly: {{confirmed}} · Invitations: {{invited}}',
+  switchTitle: 'Remove horses before switching?',
+  switchHelp:
+    'These horses are not available in the selected space: {{horses}}. The rest of your draft will be kept.',
+  switchConfirm: 'Remove horses and switch',
+  keepSpace: 'Keep current space',
+  createPrivateEvent: 'Create private event',
+  createPrivateTraining: 'Create private training',
+  createStable: 'Create in {{stable}}',
+  recordPermission:
+    'Completed training requires recording permission for every horse. Remove horses requiring approval or change the status to Planned.',
+  awaiting: 'Awaiting approval',
+  participants: 'Horse participation',
+  confirmed: 'Confirmed',
+  declined: 'Declined',
+  withdrawn: 'Withdrawn',
+  invitationsLoading: 'Loading horse invitations…',
+  invitationsFailed:
+    'Horse invitations could not be loaded. Reload the page to try again.',
+
   eventSavedSentence: 'Event saved.',
   trainingSavedSentence: 'Training session saved.',
   eventSaveFailed:

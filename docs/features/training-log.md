@@ -1,6 +1,6 @@
 # Training log
 
-Training log is a separate stable feature at `/stables/$stableId/training`, also available in a Training tab beside Activity on each horse's profile. The horse tab stays scoped to that horse in both week and month views, hides horse-selection controls, and preselects the horse when adding a session. Events retains appointments, care visits and competitions. Existing `type: training` records appear in Training log automatically; original IDs, notes and links remain valid. No destructive data migration is required. Records previously filed under `other` are not guessed or reclassified.
+Training log is a separate stable feature at `/stables/$stableId/training`, also available in a Training tab beside Activity on each horse's profile. The horse tab stays scoped to that horse in both week and month views, hides horse-selection controls, and preselects the horse when adding a session. Events retains appointments, care visits and competitions. Existing `type: training` records appear in authorized Training views; original IDs, notes and links remain valid. No destructive data migration is required. Records previously filed under `other` are not guessed or reclassified.
 
 ## Shared implementation
 
@@ -10,9 +10,9 @@ The calendar offers Week (horse rows, day columns), Month and a mobile agenda. H
 
 ## Completion and access
 
-Stable members can read stable training. Only a horse owner or stable admin can record its completion. Creating and editing a shared schedule retains event permissions and the existing invitation flow. A member cannot confirm another owner's horse by selecting Completed in the creation form; only confirmed horses receive initial records.
+Stable members see explicitly shared schedules and completion status. Owners, editor carers and current stable administrators can complete shared work; viewers and ordinary members cannot. Private records are unavailable to administrators. Whole-activity edits require edit access to every participant; unshared participants and private recurrence exceptions prevent blanket series edits. A member cannot confirm another owner's horse by selecting Completed in the creation form; only confirmed horses receive initial records.
 
-Dashboard cards, calendar entries, interactive hover previews and the session detail offer direct completion for permitted users on today’s or past sessions. The round control shows a green tick after saving and can reopen the session. The status-only mutation reads the latest stored details and outcome, so marking complete or incomplete never replaces notes with stale card data. Future sessions and read-only records do not offer the control.
+Dashboard cards, week/list entries, interactive hover previews and the session detail offer direct completion for permitted users on today’s or past sessions. The round control shows a green tick after saving and can reopen the session. The status-only mutation reads the latest stored details and outcome, so marking complete or incomplete never replaces notes with stale card data. Future sessions and read-only records do not offer the control.
 
 Editing a selected recorded session loads that record’s work details and preserves its horse, occurrence date and participation context on return. Changes apply to that record without rewriting other horses or dates in the series. Shared one-off work-detail edits update the changed fields in the associated records while preserving their outcomes and other individual adjustments. Detail pages use the same coloured activity tags as the calendar.
 
@@ -27,3 +27,9 @@ Training is excluded from ordinary event lists, care summaries and care-cadence 
 Automated coverage exercises recurrence isolation, ownership, retry safety, legacy history, domain separation, withdrawal retention, date windows, multi-horse filtering and view switching. `/page-lab/training` provides a preview with sample records and the production editor; saves there are local to that preview.
 
 Further refinement can add structured exercise tags, horse-specific goals, future-only changes to a recurring schedule, and more advanced progress analysis. Current focus and next-focus inputs are free text.
+
+## Audience and history
+
+Personal and stable screens reference the same event, horse and occurrence result. New placed owner/editor records default to sharing with the named stable, regardless of entry route; editing preserves audience. Staff creations for another owner are fixed shared. Creation request keys make retries idempotent without title/date matching. “Log training” offers scheduled sessions explicitly, and group detail shows per-horse completion.
+
+Series grants support exact occurrence overrides; history sharing has an inclusive cutoff and does not publish future occurrences. Departure, unsharing and a new placement revoke old stable access without deleting canonical outcomes. Migration and browser-verification limits are recorded in [sharing delivery](../personal-stable-sharing-delivery.md).

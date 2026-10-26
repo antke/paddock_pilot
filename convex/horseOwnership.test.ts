@@ -81,11 +81,12 @@ describe('independent horse ownership', () => {
       },
     ])
   })
-  it('limits admins to their stable records and denies private history to members', async () => {
+  it('limits admins to explicitly shared records and denies private history to members', async () => {
     const { owner, admin, member, horseId, stableId } = await fixture()
     await owner.mutation(api.horseTransitions.connect, { horseId, stableId })
     const personalId = await owner.mutation(api.horseWeightRecords.add, {
       horseId,
+      shareWithStable: false,
       weight: 510,
       unit: 'kg',
       measuredAt: Date.now(),
@@ -98,7 +99,7 @@ describe('independent horse ownership', () => {
     })
     expect(
       await admin.query(api.horseWeightRecords.listForHorse, { horseId }),
-    ).toHaveLength(2)
+    ).toHaveLength(1)
     await expect(
       admin.mutation(api.horseWeightRecords.remove, { id: personalId }),
     ).rejects.toThrow()
@@ -173,7 +174,7 @@ describe('independent horse ownership', () => {
       viewer.query(api.horses.get, { id: horseId }),
     ).rejects.toThrow()
   })
-  it('retains only originating stable records while preserving the complete personal history', async () => {
+  it('revokes former-stable history while preserving complete personal history', async () => {
     vi.useFakeTimers()
     try {
       const { owner, admin, horseId, stableId } = await fixture()
@@ -214,10 +215,7 @@ describe('independent horse ownership', () => {
           paginationOpts: { numItems: 100, cursor: null },
         })
       ).page
-      expect(
-        snapshots.filter((s) => s.kind === 'horseWeightRecords'),
-      ).toHaveLength(1)
-      expect(snapshots[0].data.weight).toBe(510)
+      expect(snapshots).toHaveLength(0)
     } finally {
       vi.useRealTimers()
     }
@@ -338,8 +336,11 @@ describe('independent horse ownership', () => {
           paginationOpts: { numItems: 100, cursor: null },
         })
       ).page
+      expect(snapshots).toHaveLength(0)
       expect(
-        snapshots.filter((r) => r.kind === 'horseWeightRecords'),
+        await f.owner.query(api.horseWeightRecords.listForHorse, {
+          horseId: f.horseId,
+        }),
       ).toHaveLength(55)
       const tasks = (
         await f.owner.query(api.careReminders.listForHorse, {
@@ -347,12 +348,10 @@ describe('independent horse ownership', () => {
         })
       ).reminders
       expect(tasks.filter((r) => r.status === 'pending')).toMatchObject([
-        { assignedTo: f.ownerId },
+        { _id: taskId, assignedTo: f.ownerId, stableId: f.stableId },
       ])
-      expect(
-        tasks.find((r) => r.status === 'pending')?.stableId,
-      ).toBeUndefined()
-      expect(tasks.find((r) => r._id === taskId)?.status).toBe('dismissed')
+      expect(tasks).toHaveLength(1)
+      expect(tasks.find((r) => r._id === taskId)?.status).toBe('pending')
     } finally {
       vi.useRealTimers()
     }
@@ -537,22 +536,25 @@ describe('independent horse ownership', () => {
           id: documentId,
         }),
       ).rejects.toThrow()
+      expect(
+        (
+          await f.admin.query(api.horseTransitions.stableHistory, {
+            stableId: f.stableId,
+            paginationOpts: { numItems: 100, cursor: null },
+          })
+        ).page,
+      ).toEqual([])
       const snapshot = (
-        await f.admin.query(api.horseTransitions.stableHistory, {
-          stableId: f.stableId,
-          paginationOpts: { numItems: 100, cursor: null },
-        })
-      ).page.find((r) => r.kind === 'stableDocuments')!
+        await t.run((ctx) => ctx.db.query('horseSnapshots').collect())
+      ).find((r) => r.kind === 'stableDocuments')!
       vi.advanceTimersByTime(15 * 86400000)
       await t.mutation(internal.horses.purgeExpiredDeletedHorses, {})
       expect(await t.run((ctx) => ctx.db.get(f.horseId))).toBeNull()
-      expect(
-        (
-          await f.admin.query(api.stableDocuments.authorizeDownload, {
-            id: snapshot._id,
-          })
-        ).storageId,
-      ).toBe(storageId)
+      await expect(
+        f.admin.query(api.stableDocuments.authorizeDownload, {
+          id: snapshot._id,
+        }),
+      ).rejects.toThrow()
       expect(
         await t.run(async (ctx) => (await ctx.storage.get(storageId)) !== null),
       ).toBe(true)
@@ -609,7 +611,7 @@ describe('independent horse ownership', () => {
       vi.useRealTimers()
     }
   })
-  it('moves the same horse between two stables and preserves origin permissions on return', async () => {
+  it('moves the same horse between two stables and does not revive prior grants on return', async () => {
     vi.useFakeTimers()
     try {
       const f = await fixture()
@@ -654,7 +656,7 @@ describe('independent horse ownership', () => {
         await f.admin.query(api.horseWeightRecords.listForHorse, {
           horseId: f.horseId,
         }),
-      ).toHaveLength(1)
+      ).toHaveLength(0)
       await expect(
         f.admin.mutation(api.horseWeightRecords.remove, { id: recordId }),
       ).rejects.toThrow()
@@ -772,7 +774,7 @@ describe('independent horse ownership', () => {
       vi.useRealTimers()
     }
   })
-  it('preserves private shared-event fields when a member organizer updates scheduling', async () => {
+  it('lets an owner read and edit their shared event details', async () => {
     const f = await fixture()
     await f.owner.mutation(api.horseTransitions.connect, {
       horseId: f.horseId,
@@ -790,7 +792,7 @@ describe('independent horse ownership', () => {
     })
     expect(
       (await f.owner.query(api.events.get, { id: eventId }))?.description,
-    ).toBeUndefined()
+    ).toBe('Private clinical detail')
     await f.owner.mutation(api.events.update, {
       id: eventId,
       stableId: f.stableId,
@@ -802,9 +804,10 @@ describe('independent horse ownership', () => {
       description: '',
     })
     expect(await t.run((ctx) => ctx.db.get(eventId))).toMatchObject({
-      description: 'Private clinical detail',
-      totalCost: 300,
       date: '2027-01-03',
     })
+    expect(
+      (await t.run((ctx) => ctx.db.get(eventId)))?.description,
+    ).toBeUndefined()
   })
 })

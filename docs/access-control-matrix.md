@@ -1,52 +1,43 @@
 # Access-control matrix
 
-Status: horse-centred ownership model implemented locally; see [rollout and verification](features/horse-ownership.md).
+Status: explicit audience implementation in the local checkout (2026-10-24). See [delivery, rollout and verification](personal-stable-sharing-delivery.md). Production rollout is separate.
 
 ## Horse access
 
-An account is global. Stable membership and horse access are independent. Stable admins below mean the admin of the horse's **current** stable. A former admin has only retained snapshots, unless separately granted access by the horse owner.
+An account, horse ownership, personal carer grants, stable membership and record audience are independent. Origin and authorship are provenance, not authorization. Current placement is required for every stable grant.
 
-| Action | Horse owner | Editor carer | Viewer carer | Current stable admin | Ordinary stable member |
+| Action | Owner | Editor carer | Viewer carer | Current stable admin | Ordinary member |
 | --- | --- | --- | --- | --- | --- |
-| View horse profile and complete canonical history | Yes | Yes | Yes | Yes | No; basic roster only |
+| Read personal canonical history | Yes | Yes | Yes | Only explicitly shared records | No |
+| Read shared schedule/status | Yes | Yes | Yes | Yes | Yes |
+| Read shared clinical/training details | Yes | Yes | Yes | Yes | No |
 | Edit claimed horse profile | Yes | Yes | No | No | No |
-| Add horse records | Personal origin | Personal origin | No | Current placement origin | No |
-| Edit canonical horse records | Yes | Yes | No | Only own current placement's records | No |
-| Manage carers, move horse, offer ownership transfer | Yes | No | No | No | No |
-| Archive/restore horse | Yes | No | No | Only unclaimed horses in its custody | No |
-| Permanently purge after retention | Yes | No | No | Only unclaimed horses in its custody | No |
-| Read retained former-stable records | Via canonical history | Via canonical history | Via canonical history | Own stable's snapshots only | No |
+| Create records | Yes; sharing choice | Yes; sharing choice | No | Fixed shared for another owner's horse | No |
+| Edit/complete a record | Yes | Yes | No | Shared records only | No |
+| Manage sharing | Yes | Yes | No | Only through independent owner/editor role | No |
+| Move/transfer/manage carers | Yes | No | No | No | No |
+| Read former-stable snapshots | Canonical history instead | Canonical history instead | Canonical history instead | No | No |
 
-Roles combine: an admin who also owns a horse has owner permissions; a stable member invited as a carer has that carer grant. Former-stable snapshots are immutable regardless of later canonical edits. A returning horse receives a new placement: old stable-origin records remain read-only to its admin.
+Roles combine. An administrator acting on their own horse follows owner rules. An independently invited carer retains that grant after departure. An unclaimed horse's custodian manages its records until an owner accepts the claim. Horse deletion/restoration remains owner-controlled (or custodian-controlled for unclaimed horses).
 
-An unclaimed horse has no user owner. Its active custodian admin can manage it and invite the owner; accepting the claim grants ownership and current-stable membership. It cannot leave its custodian before being claimed. Ownership is never reassigned by removing a member or deleting an account.
+Care-profile sharing includes allergies, feeding routines, nutrition guidance and emergency notes. It does not include personal provider directories, insurance identifiers or contact phone directories. Basic roster fields never imply clinical access.
 
-## Stable operations
+## Activities and results
 
-Only the stable's `ownerId` grants stable admin authority. Only active `member` membership rows grant ordinary membership; legacy role values grant no authority. Active members can view the stable dashboard, roster, rules and shared calendar. Private horse details are filtered according to the table above, including analysis and dashboard aggregates.
+Every participant has an audience bound to its current placement. An exact occurrence rule overrides a series rule; a history grant may end at a fixed date. A missing occurrence cannot widen a bounded grant. Stable calendars filter participants and occurrences before display; training notes and outcomes require detail access. Whole-event edits require all participants to be editable and cannot overwrite unshared occurrences. Per-horse completion uses one event/horse/date result and status changes preserve current notes.
 
-Stable admins manage settings, membership invitations/removals, shared provider directories, stable-wide reminders/documents and the stable audit log. Members may update their own member contact details. Member removal starts a horse departure with all pending stable tasks carried personally. Archiving a stable first requires any unclaimed horses to be claimed or archived; claimed horses depart without changing owners.
+Event and training creation now starts with an explicit Personal / named stable destination. Personal permits only owner/editor horses and is private to owners and authorised carers; stable creation is shared to that stable. Stable administrators and owner/editor carers add permitted horses directly. Ordinary members must include an owned horse and invite other horses, labelled Requires approval. Pending invitations never count as confirmed participants or completed training results. Approval/decline is available on Home and event/training details to owners, editor carers and current-placement administrators. Edits do not reset sharing and preserve pending invitations unless deliberately removed. Personal edits cannot add admin-only horses.
 
-## Events and training
+The new frontend sends `destination` on every event/training creation. The backend also defaults creation without a stable destination to private, including older requests with obsolete `sharing` / `shareWithStable` overrides. Later sharing is explicit; this is not a data migration. Other care-record forms retain their existing audience controls. No existing record is reclassified by this release.
 
-| Scope | Read | Manage |
-| --- | --- | --- |
-| Shared stable scheduling | Active members; owners/carers of a participating horse see its relevant participation | Stable admin or current-member organizer |
-| Private per-horse event notes, cost shares and training outcomes | Horse access required, including for organizers | Horse owner/editor, or current admin for its own placement-origin records |
-| Personal event | Access through participating horses; other horses' private details are excluded | Edit access to every participating horse |
-| Horse participation invitation | Horse owner/editor; current stable admin | Same authorized horse editors/admin |
-| Historical participation after departure | Horse access to frozen schedule and per-horse history | Canonical horse records remain editable by owner/editor; former-stable snapshot stays immutable |
+## Lifecycle, documents and derived data
 
-A stable member's event must include their own horse; other horses are invited. An organizer's right to change scheduling never grants access to another horse's private records. Redacted fields are preserved on schedule updates. Stable admins can confirm current-stable participation; owners and editor carers can approve, decline or withdraw their horse.
+Leaving, moving, membership removal, archive and ownership transitions revoke obsolete placement grants. Rejoining creates a new placement and never revives old grants. The horse retains canonical history and attachment references; recovery snapshots are retained but provide no former-stable audience.
 
-## Documents, contacts, reminders and analysis
+Document downloads, direct links, summaries, clinical timelines, comparisons, stable counts and queued deliveries recheck current capabilities. Stable projections require an explicit destination grant even when the viewer personally owns the horse. Combined personal overviews deduplicate canonical records. Audit payloads involving inaccessible participants are withheld.
 
-- Horse documents and download endpoints enforce current horse access. Former-stable document snapshots use a separate stable-admin check.
-- Personal contacts belong to the user. Stable provider directories belong to the stable. Historical records retain captured names/details after a move.
-- Personal tasks may be assigned to the owner or an editor carer. Stable tasks may be assigned within the stable. Departure creates selected personal continuations and dismisses the former stable tasks.
-- Account-wide and stable dashboards/analysis use only authorized horse data. Stable membership alone does not expose clinical aggregates.
-- Subscriptions remain tied to the user's account. Existing premium checks are cumulative with data-access checks; billing never grants access to a horse.
+Stable-wide settings, rules, provider directories and records without a horse retain stable-operation permissions. Only the stable owner administers the stable. Subscription checks remain cumulative with access checks.
 
-## Server enforcement
+## Enforcement
 
-Use `convex/libs/horsePermissions.ts` for horse access, `eventPermissions.ts` for shared/personal event access and `stablePermissions.ts` for stable operations. The UI uses returned capabilities but is never the authorization boundary. Missing grants deny access. Verified recipient emails, invitation expiry, expected ownership/placement and fresh departure revisions protect acceptance workflows. Scheduled email delivery rechecks current eligibility so revoked or transferred access does not receive new private notifications.
+recordCapabilities.ts is the record-level capability layer; recordSharing.ts checks current stable/placement and recurrence rules. Horse and stable permission helpers control their respective containers. UI capabilities are feedback, never authorization. Migration withholds ambiguous legacy provenance and never merges similar activities automatically.

@@ -1,6 +1,10 @@
+import { useWorkspace } from '#/components/layout/WorkspaceContext'
+import { createRequestId } from '#/lib/createRequestId'
+import { NewRecordAudience } from '#/components/sharing/RecordAudience'
+import type { SharingChoice } from '#/components/sharing/RecordAudience'
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { useT } from '#/i18n/LocaleProvider'
-import { useId, useState } from 'react'
+import { useId, useState, useRef } from 'react'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
 import { DashboardValueBadge } from '#/components/dashboard/DashboardBadges'
@@ -45,8 +49,11 @@ type CareReminderSubmitBaseData = Omit<
   'targetType' | 'horseIds'
 >
 
-export type CareReminderSubmitData = CareReminderSubmitBaseData &
-  (
+export type CareReminderSubmitData = CareReminderSubmitBaseData & {
+  sharing?: Array<SharingChoice>
+  requestId?: string
+  shareWithStable?: boolean
+} & (
     | {
         targetType: 'stable'
         horseId?: undefined
@@ -70,6 +77,7 @@ type HorseOption = {
 }
 
 type CareReminderFormProps = {
+  enableSharing?: boolean
   horseOptions?: Array<HorseOption>
   assigneeOptions?: Array<HorseOption>
   initialValues?: CareReminderSubmitBaseData
@@ -85,6 +93,7 @@ const asTargetType = (value: string) => value as CareReminderFormTargetType
 const asPriority = (value: string) => value as CareReminderPriority
 
 export function CareReminderForm({
+  enableSharing = false,
   horseOptions = [],
   assigneeOptions = [],
   initialValues,
@@ -94,7 +103,12 @@ export function CareReminderForm({
   heading,
   presentation = 'panel',
 }: CareReminderFormProps) {
+  const defaultShared = Boolean(useWorkspace()?.stableId)
   const t = useT()
+  const requestId = useRef(createRequestId())
+  const pending = useRef(false)
+  const [saving, setSaving] = useState(false)
+  const [sharing, setSharing] = useState<Array<SharingChoice>>([])
 
   const targetOptions = careReminderFormTargetTypes.map((targetType) => ({
     value: targetType,
@@ -129,10 +143,11 @@ export function CareReminderForm({
     },
   })
   const {
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting: formSubmitting },
     control,
     register,
   } = form
+  const isSubmitting = formSubmitting || saving
   useLocalizedValidation(form)
   const targetType = form.watch('targetType')
   const selectedHorseIds = form.watch('horseIds')
@@ -144,6 +159,9 @@ export function CareReminderForm({
       : t('reminders.add')
 
   const handleSubmit = form.handleSubmit(async (values) => {
+    if (pending.current) return
+    pending.current = true
+    setSaving(true)
     setFailed(false)
     const reminder = {
       assignedTo: values.assignedTo,
@@ -158,22 +176,50 @@ export function CareReminderForm({
       if (fixedHorseId) {
         await onSubmit({
           ...reminder,
+          ...(enableSharing && !initialValues
+            ? {
+                sharing,
+                requestId: requestId.current,
+                shareWithStable:
+                  sharing.find((choice) => choice.horseId === fixedHorseId)
+                    ?.enabled ?? defaultShared,
+              }
+            : {}),
           targetType: 'horse',
           horseId: fixedHorseId,
         })
       } else if (values.targetType === 'horses') {
         await onSubmit({
           ...reminder,
+          ...(enableSharing && !initialValues
+            ? {
+                sharing,
+                requestId: requestId.current,
+                shareWithStable:
+                  sharing.find((choice) => choice.horseId === fixedHorseId)
+                    ?.enabled ?? defaultShared,
+              }
+            : {}),
           targetType: 'horses',
           horseIds: values.horseIds,
         })
       } else {
         await onSubmit({
           ...reminder,
+          ...(enableSharing && !initialValues
+            ? {
+                sharing,
+                requestId: requestId.current,
+                shareWithStable:
+                  sharing.find((choice) => choice.horseId === fixedHorseId)
+                    ?.enabled ?? defaultShared,
+              }
+            : {}),
           targetType: 'stable',
         })
       }
 
+      requestId.current = createRequestId()
       if (!initialValues)
         form.reset({
           targetType: fixedHorseId ? 'horses' : 'stable',
@@ -186,6 +232,9 @@ export function CareReminderForm({
         })
     } catch {
       setFailed(true)
+    } finally {
+      pending.current = false
+      setSaving(false)
     }
   })
 
@@ -196,6 +245,21 @@ export function CareReminderForm({
       presentation={presentation}
       onSubmit={handleSubmit}
     >
+      {enableSharing && !initialValues ? (
+        <NewRecordAudience
+          defaultShared={defaultShared}
+          horseIds={
+            fixedHorseId
+              ? [fixedHorseId]
+              : targetType === 'horses'
+                ? selectedHorseIds
+                : []
+          }
+          choices={sharing}
+          onChange={setSharing}
+          disabled={isSubmitting}
+        />
+      ) : null}
       {heading && (
         <DashboardInlineHeader
           as="h3"

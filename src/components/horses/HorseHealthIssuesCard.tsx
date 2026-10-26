@@ -1,3 +1,5 @@
+import { WorkspaceRecordAudience } from '#/components/sharing/RecordAudienceLabel'
+import { useWorkspace } from '#/components/layout/WorkspaceContext'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { HealthIssueForm } from '#/components/horses/HealthIssueForm'
@@ -29,6 +31,7 @@ import { useHorseDetailCreateAction } from './useHorseDetailCreateAction'
 import { HorseRecordRemoveAction } from './HorseRecordRemoveAction'
 
 type HorseHealthIssuesCardProps = {
+  enableSharing?: boolean
   horse: Doc<'horses'>
   onCreateActionChange?: HorseDetailCreateActionChange
 }
@@ -39,8 +42,12 @@ export function HorseHealthIssuesCard({
 }: HorseHealthIssuesCardProps) {
   const t = useT()
 
+  const workspace = useWorkspace()
   const { data: issues } = useSuspenseQuery(
-    convexQuery(api.horseHealthIssues.listForHorse, { horseId: horse._id }),
+    convexQuery(api.horseHealthIssues.listForHorse, {
+      stableId: workspace?.stableId,
+      horseId: horse._id,
+    }),
   )
   const { data: permissions } = useSuspenseQuery(
     convexQuery(api.horseHealthIssues.getPermissions, { horseId: horse._id }),
@@ -50,6 +57,7 @@ export function HorseHealthIssuesCard({
   const removeIssue = useMutation(api.horseHealthIssues.remove)
   return (
     <HorseHealthIssuesCardView
+      enableSharing
       key={horse._id}
       horse={horse}
       issues={issues}
@@ -95,6 +103,7 @@ type HorseHealthIssuesCardViewProps = HorseHealthIssuesCardProps & {
 }
 
 export function HorseHealthIssuesCardView({
+  enableSharing,
   horse,
   issues,
   canManage,
@@ -168,6 +177,7 @@ export function HorseHealthIssuesCardView({
           description={t('careRecords.createHealthHelp')}
         >
           <HealthIssueForm
+            audienceHorseId={enableSharing ? horse._id : undefined}
             onSubmit={onAddIssue}
             onPendingChange={setIsCreating}
           />
@@ -331,6 +341,7 @@ function IssueRow({
         }
         description={issue.description}
       />
+      <WorkspaceRecordAudience horseId={issue.horseId} recordId={issue._id} />
     </DashboardItemRecordCard>
   )
 }

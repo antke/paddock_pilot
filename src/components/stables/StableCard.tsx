@@ -32,6 +32,7 @@ export function StableCardLink({
       density="compact"
     >
       <DashboardItemCardContent
+        className="grid-cols-[minmax(0,1fr)_auto]"
         title={name}
         titleTone="open"
         meta={metaContent.length > 0 ? metaContent : undefined}

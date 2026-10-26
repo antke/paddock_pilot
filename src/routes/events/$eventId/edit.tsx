@@ -5,7 +5,13 @@ import { PersonalEventEditor } from '#/components/ownership/PersonalEvents'
 export const Route = createFileRoute('/events/$eventId/edit')({
   validateSearch: (
     s,
-  ): { date?: string; horseId?: string; participationId?: string } => ({
+  ): {
+    date?: string
+    horseId?: string
+    participationId?: string
+    stableId?: string
+  } => ({
+    stableId: typeof s.stableId === 'string' ? s.stableId : undefined,
     date: typeof s.date === 'string' ? s.date : undefined,
     horseId: typeof s.horseId === 'string' ? s.horseId : undefined,
     participationId:

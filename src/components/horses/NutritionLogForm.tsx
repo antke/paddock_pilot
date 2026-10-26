@@ -1,3 +1,7 @@
+import { useRecordCreationAudience } from '#/components/sharing/useRecordCreationAudience'
+import type { RecordCreationOptions } from '#/components/sharing/useRecordCreationAudience'
+import type { Id, Doc } from 'convex/_generated/dataModel'
+import { useTransientConfirmation } from '#/lib/useTransientConfirmation'
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { useT } from '#/i18n/LocaleProvider'
 import { FormGroup, InlineForm } from '#/components/forms/FormLayout'
@@ -7,7 +11,6 @@ import { Input } from '#/components/ui/input'
 import { Textarea } from '#/components/ui/textarea'
 import { getTodayDateKey } from '#/lib/dateDisplay'
 import { zodResolver } from '@hookform/resolvers/zod'
-import type { Doc } from 'convex/_generated/dataModel'
 import { Controller, useForm } from 'react-hook-form'
 import { useId, useRef, useState } from 'react'
 import z from 'zod'
@@ -16,10 +19,13 @@ import { createNutritionLogSchemas } from 'shared/horses/nutritionLogSchema'
 import type { NutritionLogFormSchema } from 'shared/horses/nutritionLogSchema'
 
 type NutritionLogFormProps = {
+  audienceHorseId?: Id<'horses'>
   disabled?: boolean
   onPendingChange?: (pending: boolean) => void
   horse: Doc<'horses'>
-  onSubmit: (data: NutritionLogFormSchema) => Promise<void>
+  onSubmit: (
+    data: NutritionLogFormSchema & RecordCreationOptions,
+  ) => Promise<void>
 }
 
 const toTextareaValue = (items: Array<string> | undefined) =>
@@ -64,11 +70,13 @@ const getDefaults = (horse: Doc<'horses'>): NutritionLogDraft => ({
 })
 
 export function NutritionLogForm({
+  audienceHorseId,
   disabled = false,
   horse,
   onSubmit,
   onPendingChange,
 }: NutritionLogFormProps) {
+  const audience = useRecordCreationAudience(audienceHorseId)
   const t = useT()
 
   const { nutritionLogFormSchema } = createNutritionLogSchemas((key) =>
@@ -78,6 +86,7 @@ export function NutritionLogForm({
     nutritionLogFormSchema,
   )
   const formId = useId()
+  const confirmation = useTransientConfirmation(formId)
   const pending = useRef(false)
   const [isPending, setIsPending] = useState(false)
   const [failed, setFailed] = useState(false)
@@ -94,10 +103,13 @@ export function NutritionLogForm({
     pending.current = true
     setIsPending(true)
     setFailed(false)
+    confirmation.clear()
     onPendingChange?.(true)
     try {
-      await onSubmit(data)
+      await onSubmit({ ...data, ...(audienceHorseId ? audience.options : {}) })
+      audience.reset()
       form.reset(getDefaults(horse))
+      confirmation.confirm()
     } catch {
       setFailed(true)
     } finally {
@@ -108,7 +120,12 @@ export function NutritionLogForm({
   }
 
   return (
-    <InlineForm noValidate onSubmit={form.handleSubmit(submitNutritionLog)}>
+    <InlineForm
+      onChangeCapture={confirmation.clear}
+      noValidate
+      onSubmit={form.handleSubmit(submitNutritionLog)}
+    >
+      {audience.control}
       <FormGroup
         title={t('careRecords.change')}
         description={t('careRecords.changeHelp')}
@@ -331,6 +348,9 @@ export function NutritionLogForm({
       />
 
       <FormSubmitActions
+        failed={failed}
+        confirmed={confirmation.confirmed}
+        confirmedLabel={t('common.saved')}
         isSubmitting={form.formState.isSubmitting || isPending}
         disabled={disabled}
         submitLabel={t('careRecords.addNutrition')}

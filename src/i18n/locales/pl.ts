@@ -370,6 +370,7 @@ export const pl = {
     home: 'Strona główna',
     cancel: 'Anuluj',
     save: 'Zapisz',
+    saved: 'Zapisano',
     loading: 'Wczytywanie…',
     notFoundTitle: 'Nie znaleziono strony',
     notFoundDescription: 'Ta strona nie istnieje lub została przeniesiona.',

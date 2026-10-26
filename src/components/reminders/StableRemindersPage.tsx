@@ -122,6 +122,8 @@ export function StableRemindersPage({
 
         if (values.targetType === 'horses') {
           await addReminderForHorses({
+            requestId: values.requestId,
+            sharing: values.sharing,
             ...reminder,
             horseIds: values.horseIds as Array<Id<'horses'>>,
           })
@@ -142,6 +144,8 @@ export function StableRemindersPage({
         }
 
         await addReminder({
+          requestId: values.requestId,
+          shareWithStable: values.shareWithStable,
           ...reminder,
           horseId:
             values.targetType === 'horse'
@@ -256,6 +260,7 @@ export function StableRemindersPageView(
       />
       <DashboardSectionCard contentGap="loose">
         <CareRemindersCard
+          enableSharing
           {...props}
           showHeader={false}
           onCreateActionChange={setCreateAction}

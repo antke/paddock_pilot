@@ -1,3 +1,6 @@
+import { WorkspaceRecordAudience } from '#/components/sharing/RecordAudienceLabel'
+import { useWorkspace } from '#/components/layout/WorkspaceContext'
+import type { RecordCreationOptions } from '#/components/sharing/useRecordCreationAudience'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { formatDecimal } from '#/lib/numberDisplay'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
@@ -35,6 +38,7 @@ import { useHorseDetailCreateAction } from './useHorseDetailCreateAction'
 import { HorseRecordRemoveAction } from './HorseRecordRemoveAction'
 
 type HorseWeightRecordsCardProps = {
+  enableSharing?: boolean
   horse: Doc<'horses'>
   onCreateActionChange?: HorseDetailCreateActionChange
 }
@@ -47,8 +51,12 @@ export function HorseWeightRecordsCard({
   const t = useT()
   const { locale } = useLocale()
 
+  const workspace = useWorkspace()
   const { data: records } = useSuspenseQuery(
-    convexQuery(api.horseWeightRecords.listForHorse, { horseId: horse._id }),
+    convexQuery(api.horseWeightRecords.listForHorse, {
+      stableId: workspace?.stableId,
+      horseId: horse._id,
+    }),
   )
   const { data: permissions } = useSuspenseQuery(
     convexQuery(api.horseWeightRecords.getPermissions, { horseId: horse._id }),
@@ -56,10 +64,12 @@ export function HorseWeightRecordsCard({
   const addWeightRecord = useMutation(api.horseWeightRecords.add)
   const removeWeightRecord = useMutation(api.horseWeightRecords.remove)
   const onAddWeightRecord = useCallback(
-    async (data: WeightRecordFormSchema) => {
+    async (data: WeightRecordFormSchema & RecordCreationOptions) => {
       try {
         await addWeightRecord({
           horseId: horse._id,
+          requestId: data.requestId,
+          shareWithStable: data.shareWithStable,
           weight: data.weight,
           unit: data.unit,
           measuredAt: dateKeyToTimestamp(data.measuredDate),
@@ -106,6 +116,7 @@ export function HorseWeightRecordsCard({
 
   return (
     <HorseWeightRecordsView
+      enableSharing
       key={horse._id}
       horse={horse}
       records={records}
@@ -118,6 +129,7 @@ export function HorseWeightRecordsCard({
 }
 
 export function HorseWeightRecordsView({
+  enableSharing,
   horse,
   records,
   canManage,
@@ -176,6 +188,7 @@ export function HorseWeightRecordsView({
           description={t('careRecords.createWeightHelp')}
         >
           <WeightRecordForm
+            audienceHorseId={enableSharing ? horse._id : undefined}
             key={horse._id}
             onSubmit={addAndClose}
             onPendingChange={onPendingChange}
@@ -353,6 +366,7 @@ function WeightRecordRow({
         }
         description={record.notes}
       />
+      <WorkspaceRecordAudience horseId={record.horseId} recordId={record._id} />
     </DashboardItemRecordCard>
   )
 }

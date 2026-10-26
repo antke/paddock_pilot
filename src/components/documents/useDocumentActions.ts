@@ -34,11 +34,20 @@ export function useDocumentActions({
 
       if (!result.ok) throw new Error('Failed to upload document')
 
-      const { storageId } = (await result.json()) as {
-        storageId: Id<'_storage'>
-      }
+      const uploaded: unknown = await result.json()
+      if (
+        !uploaded ||
+        typeof uploaded !== 'object' ||
+        !('storageId' in uploaded) ||
+        typeof uploaded.storageId !== 'string' ||
+        !uploaded.storageId
+      )
+        throw new Error('Document upload was not acknowledged')
+      const storageId = uploaded.storageId as Id<'_storage'>
 
       await addDocument({
+        requestId: values.requestId,
+        shareWithStable: values.shareWithStable,
         stableId,
         horseId: fixedHorseId ?? (values.horseId as Id<'horses'> | undefined),
         storageId,

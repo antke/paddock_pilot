@@ -1,7 +1,7 @@
 import { useT } from '#/i18n/LocaleProvider'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { Button } from '#/components/ui/button'
-import { Spinner } from '#/components/ui/spinner'
+import { ActionFeedback } from '#/components/ui/action-feedback'
 import { cn } from '#/lib/utils'
 
 export type ListPaginationStatus =
@@ -36,18 +36,14 @@ export function ListLoadMoreFooter({
         type="button"
         variant="secondary"
         disabled={status !== 'CanLoadMore'}
+        aria-busy={isLoading || undefined}
         onClick={() => onLoadMore(pageSize)}
       >
-        {isLoading && (
-          <Spinner
-            data-icon="inline-start"
-            role="presentation"
-            aria-hidden={true}
-          />
-        )}
-        {isLoading
-          ? (loadingLabel ?? t('uiRemainder.loading'))
-          : (loadMoreLabel ?? t('uiRemainder.loadMore'))}
+        <ActionFeedback
+          pending={isLoading}
+          label={loadMoreLabel ?? t('uiRemainder.loadMore')}
+          pendingLabel={loadingLabel ?? t('uiRemainder.loading')}
+        />
       </Button>
     </DashboardActions>
   )

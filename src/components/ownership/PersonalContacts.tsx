@@ -1,3 +1,4 @@
+import { BackLink } from '#/components/ui/back-action'
 import { ActionFeedback } from '#/components/ui/action-feedback'
 import { MotionList } from '#/components/motion/MotionList'
 import { useEffect, useId, useRef, useState } from 'react'
@@ -9,7 +10,7 @@ import type { Doc, Id } from 'convex/_generated/dataModel'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { RoutePending } from '#/components/layout/RoutePending'
 import { RecordRemoveAction } from '#/components/list-layout/RecordRemoveAction'
-import { Button, ButtonLink } from '#/components/ui/button'
+import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Select } from '#/components/ui/select'
 import { Field, FieldLabel } from '#/components/ui/field'
@@ -45,41 +46,36 @@ export function PersonalContactsView({
   const addName = useRef<HTMLInputElement>(null)
   const [notice, setNotice] = useState('')
   return (
-    <DashboardSectionCard
-      title={c.providers}
-      description={r.contactsHelp}
-      actions={
-        <ButtonLink to="/horses" variant="ghost">
-          {r.backHorses}
-        </ButtonLink>
-      }
-    >
-      {notice && <p role="status">{notice}</p>}
-      <MotionList
-        items={providers}
-        getKey={(provider) => provider._id}
-        focusTarget={() => addName.current}
-        empty={<p className="text-muted-foreground">{r.noContacts}</p>}
-        renderItem={(provider) => (
-          <ContactRow
-            key={provider._id}
-            provider={provider}
-            save={save}
-            remove={async () => {
-              await remove({ id: provider._id })
-              setNotice(r.deleted)
-            }}
-            removalFocusTarget={() => addName.current}
-          />
-        )}
-      />
-      <section className="grid gap-4" aria-labelledby="new-care-contact">
-        <h3 id="new-care-contact" className="text-lg font-semibold">
-          {r.newContact}
-        </h3>
-        <ContactEditor save={save} nameRef={addName} />
-      </section>
-    </DashboardSectionCard>
+    <div className="grid gap-3">
+      <BackLink to="/horses">{r.backHorses}</BackLink>
+      <DashboardSectionCard title={c.providers} description={r.contactsHelp}>
+        {notice && <p role="status">{notice}</p>}
+        <MotionList
+          items={providers}
+          getKey={(provider) => provider._id}
+          focusTarget={() => addName.current}
+          empty={<p className="text-muted-foreground">{r.noContacts}</p>}
+          renderItem={(provider) => (
+            <ContactRow
+              key={provider._id}
+              provider={provider}
+              save={save}
+              remove={async () => {
+                await remove({ id: provider._id })
+                setNotice(r.deleted)
+              }}
+              removalFocusTarget={() => addName.current}
+            />
+          )}
+        />
+        <section className="grid gap-4" aria-labelledby="new-care-contact">
+          <h3 id="new-care-contact" className="text-lg font-semibold">
+            {r.newContact}
+          </h3>
+          <ContactEditor save={save} nameRef={addName} />
+        </section>
+      </DashboardSectionCard>
+    </div>
   )
 }
 function ContactRow({

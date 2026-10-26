@@ -652,6 +652,7 @@ function CalendarEventLink({
 
   return (
     <CalendarEventTooltip
+      label={event.title}
       trigger={
         <CalendarEventChipLink
           to="/events/$eventId"

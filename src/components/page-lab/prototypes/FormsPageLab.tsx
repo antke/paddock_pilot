@@ -1,3 +1,7 @@
+import ThemeToggle from '#/components/ThemeToggle'
+import { LanguageSelector } from '#/i18n/LanguageSelector'
+import { RecordAudienceChoices } from '#/components/sharing/RecordAudience'
+import type { SharingChoice } from '#/components/sharing/RecordAudience'
 import { useEffect, useId, useRef, useState } from 'react'
 import type { Doc, Id } from 'convex/_generated/dataModel'
 import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
@@ -43,6 +47,7 @@ export function FormsPageLab({ data }: { data: DashboardLabData }) {
 }
 
 function SampleControls({ data }: { data: DashboardLabData }) {
+  const [sharing, setSharing] = useState<Array<SharingChoice>>([])
   const [mode, setMode] = useState<SampleMode>('edit')
   const [revision, setRevision] = useState(0)
   const modeId = useId()
@@ -73,6 +78,45 @@ function SampleControls({ data }: { data: DashboardLabData }) {
           Restart sample
         </Button>
       </FieldGrid>
+      <div className="flex items-end gap-4">
+        <LanguageSelector />
+        <ThemeToggle />
+      </div>
+      <section className="space-y-4" aria-label="Sample record audiences">
+        <h2 className="font-display text-xl font-semibold">
+          Record audience · interactive sample
+        </h2>
+        <RecordAudienceChoices
+          audience={[
+            {
+              horseId: 'sample-maple',
+              stableId: 'sample-willow',
+              stableName: 'Willow Stable',
+              fixed: false,
+            },
+            {
+              horseId: 'sample-birch',
+              stableId: 'sample-cedar',
+              stableName: 'Cedar Yard',
+              fixed: false,
+            },
+          ]}
+          choices={sharing}
+          onChange={setSharing}
+        />
+        <RecordAudienceChoices
+          audience={[
+            {
+              horseId: 'sample-staff',
+              stableId: 'sample-willow',
+              stableName: 'Willow Stable',
+              fixed: true,
+            },
+          ]}
+          onChange={setSharing}
+        />
+        <RecordAudienceChoices audience={[]} onChange={setSharing} />
+      </section>
       <LocalEventEditor key={mode + ':' + revision} data={data} mode={mode} />
     </div>
   )
@@ -180,6 +224,25 @@ function LocalEventEditor({
       </FieldGrid>
       <EventEditor
         mode={mode === 'create' ? 'create' : 'edit'}
+        destinations={
+          mode === 'create'
+            ? {
+                personal: data.horses
+                  .slice(0, 1)
+                  .map((h) => ({ ...h, requiresApproval: false })),
+                stables: [
+                  {
+                    id: data.stable._id,
+                    name: data.stable.name,
+                    horses: data.horses.map((h, index) => ({
+                      ...h,
+                      requiresApproval: index > 0,
+                    })),
+                  },
+                ],
+              }
+            : undefined
+        }
         initialValues={
           mode === 'create'
             ? createEventEditorValues(data.stable._id)

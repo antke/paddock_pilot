@@ -10,7 +10,7 @@ import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
 import type { Id } from 'convex/_generated/dataModel'
 
 import { FileUploadField } from '#/components/forms/FileUploadField'
-import { InlineForm } from '#/components/forms/FormLayout'
+import { FormSection, InlineForm } from '#/components/forms/FormLayout'
 import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
 import { UserAvatar } from '#/components/users/UserAvatar'
 import {
@@ -20,6 +20,7 @@ import {
   FieldGrid,
   FieldLabel,
 } from '#/components/ui/field'
+import { BackButton } from '#/components/ui/back-action'
 import { Input } from '#/components/ui/input'
 import { showAppErrorToast } from '#/components/ui/sonner'
 import { api } from 'convex/_generated/api'
@@ -33,6 +34,9 @@ type AccountProfileFormProps = {
     profileImageUrl?: string
   }
   onSaved: () => void | Promise<void>
+  onboarding?: boolean
+  onBack?: () => void
+  backLabel?: string
   submitLabel?: string
   onPendingChange?: (pending: boolean) => void
 }
@@ -89,6 +93,9 @@ export function AccountProfileFormView({
   onSave,
   onPendingChange,
   submitLabel,
+  onboarding = false,
+  onBack,
+  backLabel,
 }: AccountProfileFormProps & {
   onSave: (values: AccountProfileValues) => Promise<void | boolean>
 }) {
@@ -147,23 +154,61 @@ export function AccountProfileFormView({
   }
   const fieldsDisabled = isPending || continuationFailed
 
+  const imageField = (
+    <Controller
+      name="profileImage"
+      control={form.control}
+      render={({ field, fieldState }) => (
+        <FileUploadField
+          id={`${formId}-${field.name}`}
+          kind="image"
+          accept="image/*"
+          label={t('profileForm.imageLabel')}
+          uploadLabel={t('profileForm.imageUpload')}
+          uploadDescription={t('profileForm.imageDescription')}
+          help={t('profileForm.imageHelp')}
+          errors={fieldState.error ? [fieldState.error] : undefined}
+          files={field.value ?? null}
+          onFilesChange={(files) => field.onChange(files ?? undefined)}
+          controlRef={field.ref}
+          disabled={fieldsDisabled}
+          width="full"
+        />
+      )}
+    />
+  )
+
   return (
     <InlineForm
       data-slot="account-profile-form"
+      showRequiredHint={!onboarding}
       onSubmit={form.handleSubmit(onSubmit)}
     >
-      <div className="grid gap-4 border-b border-border-subtle pb-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
-        <UserAvatar
-          name={form.watch('preferredName') || initialValues.displayName}
-          photoUrl={initialValues.profileImageUrl}
-        />
-        <div className="grid gap-1">
-          <p className="font-semibold">
-            {form.watch('preferredName') || initialValues.displayName}
-          </p>
-          <FieldDescription>{t('profileForm.shared')}</FieldDescription>
+      {onBack && (
+        <BackButton
+          type="button"
+          aria-label={backLabel}
+          disabled={isPending}
+          onClick={onBack}
+        >
+          {t('onboarding.back')}
+        </BackButton>
+      )}
+
+      {!onboarding && (
+        <div className="grid gap-4 border-b border-border-subtle pb-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
+          <UserAvatar
+            name={form.watch('preferredName') || initialValues.displayName}
+            photoUrl={initialValues.profileImageUrl}
+          />
+          <div className="grid gap-1">
+            <p className="font-semibold">
+              {form.watch('preferredName') || initialValues.displayName}
+            </p>
+            <FieldDescription>{t('profileForm.shared')}</FieldDescription>
+          </div>
         </div>
-      </div>
+      )}
 
       <FieldGrid>
         <Controller
@@ -224,39 +269,37 @@ export function AccountProfileFormView({
         />
       </FieldGrid>
 
-      <Controller
-        name="profileImage"
-        control={form.control}
-        render={({ field, fieldState }) => (
-          <FileUploadField
-            id={`${formId}-${field.name}`}
-            kind="image"
-            accept="image/*"
-            label={t('profileForm.imageLabel')}
-            uploadLabel={t('profileForm.imageUpload')}
-            uploadDescription={t('profileForm.imageDescription')}
-            help={t('profileForm.imageHelp')}
-            errors={fieldState.error ? [fieldState.error] : undefined}
-            files={field.value ?? null}
-            onFilesChange={(files) => field.onChange(files ?? undefined)}
-            controlRef={field.ref}
-            disabled={fieldsDisabled}
-            width="full"
-          />
-        )}
-      />
+      {onboarding ? (
+        <FormSection
+          title={t('profileForm.imageLabel')}
+          invalid={!!form.formState.errors.profileImage}
+          validationAttempt={form.formState.submitCount}
+        >
+          {imageField}
+        </FormSection>
+      ) : (
+        imageField
+      )}
 
       <FormSubmissionError message={error ? t(error) : undefined} />
-      <FormSubmitActions
-        align="end"
-        isSubmitting={isPending}
-        submitLabel={
-          continuationFailed
-            ? t('profileForm.retryContinue')
-            : (submitLabel ?? t('profileForm.continue'))
+      <div
+        className={
+          onboarding
+            ? 'flex items-center justify-end gap-3 border-t border-border-subtle pt-5'
+            : undefined
         }
-        submittingLabel={t('profileForm.saving')}
-      />
+      >
+        <FormSubmitActions
+          align="end"
+          isSubmitting={isPending}
+          submitLabel={
+            continuationFailed
+              ? t('profileForm.retryContinue')
+              : (submitLabel ?? t('profileForm.continue'))
+          }
+          submittingLabel={t('profileForm.saving')}
+        />
+      </div>
     </InlineForm>
   )
 }

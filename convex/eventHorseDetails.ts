@@ -1,12 +1,9 @@
+import { recordCapabilities, visibleHorse } from './libs/recordCapabilities'
 import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import { ConvexError, v } from 'convex/values'
 import { eventHorseDetailsInputSchema } from '../shared/events/eventHorseDetailsSchema'
 import { mutation, query } from './_generated/server'
-import {
-  getHorseAccess,
-  assertCanEditHorseRecord,
-  auditHorse,
-} from './libs/horsePermissions'
+import { assertCanEditHorseRecord, auditHorse } from './libs/horsePermissions'
 import { eventReadAccess, visibleEvent } from './libs/eventPermissions'
 
 export const listForEvent = query({
@@ -23,19 +20,18 @@ export const listForEvent = query({
     for (const row of rows) {
       const horse = await ctx.db.get(row.horseId)
       if (!horse) continue
-      const horseAccess = await getHorseAccess(ctx, horse, access.userId)
-      if (!horseAccess.canRead) continue
-      const editable =
-        !horse.transitionId &&
-        (horseAccess.canEditPersonalRecords ||
-          (horseAccess.isAdmin &&
-            event.stableId === horse.stableId &&
-            row.sourcePlacementId === horse.currentPlacementId))
-      result.push({
+      const capabilities = await recordCapabilities(
+        ctx,
         horse,
+        { _id: event._id },
+        access.userId,
+      )
+      if (!capabilities.readDetails) continue
+      const editable = capabilities.editContent
+      result.push({
+        horse: await visibleHorse(ctx, horse),
         eventHorse: row,
-        canManage:
-          editable && row.status !== 'declined' && row.status !== 'withdrawn',
+        canManage: editable,
         canWithdraw:
           editable &&
           !row.participationEndsAt &&
@@ -67,11 +63,10 @@ export const update = mutation({
     if (!row) throw new ConvexError('Participation not found')
     const event = await ctx.db.get(row.eventId)
     if (!event) throw new ConvexError('Event not found')
-    if (row.status === 'declined' || row.status === 'withdrawn')
-      throw new ConvexError('Inactive horse participation cannot be updated')
     const horse = await ctx.db.get(row.horseId)
     if (!horse) throw new ConvexError('Horse not found')
     const access = await assertCanEditHorseRecord(ctx, horse, {
+      _id: event._id,
       stableId: event.stableId,
       sourcePlacementId: row.sourcePlacementId,
     })
@@ -82,6 +77,11 @@ export const update = mutation({
       'event.details.updated',
       JSON.stringify(row),
     )
-    await ctx.db.patch(id, { ...input.data, updatedAt: Date.now() })
+    await ctx.db.patch(id, {
+      requestedServiceNotes: input.data.requestedServiceNotes,
+      completionNotes: input.data.completionNotes,
+      costShare: input.data.costShare,
+      updatedAt: Date.now(),
+    })
   },
 })

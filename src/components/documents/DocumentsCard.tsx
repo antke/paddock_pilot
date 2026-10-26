@@ -1,3 +1,4 @@
+import { WorkspaceRecordAudience } from '#/components/sharing/RecordAudienceLabel'
 import { MotionList } from '#/components/motion/MotionList'
 import { localeInstances } from '#/i18n/resources'
 import type { Locale } from 'shared/i18n/locale'
@@ -50,6 +51,7 @@ type DocumentsCardProps = {
 }
 
 type DocumentUploadDialogProps = {
+  enableSharing?: boolean
   canAddDocument: boolean
   horseOptions?: Array<DocumentHorseOption>
   fixedHorseId?: Id<'horses'>
@@ -57,6 +59,7 @@ type DocumentUploadDialogProps = {
 }
 
 export function DocumentUploadDialog({
+  enableSharing,
   canAddDocument,
   horseOptions,
   fixedHorseId,
@@ -88,6 +91,7 @@ export function DocumentUploadDialog({
       description={t('documents.uploadHelp')}
     >
       <DocumentUploadForm
+        enableSharing={enableSharing}
         horseOptions={horseOptions}
         fixedHorseId={fixedHorseId}
         onSubmit={onAddFromDialog}
@@ -230,7 +234,17 @@ function DocumentRow({
         </>
       }
       metaSeparator="dot"
-      summary={document.notes || undefined}
+      summary={
+        <>
+          {document.notes}
+          {document.horseId && (
+            <WorkspaceRecordAudience
+              horseId={document.horseId}
+              recordId={document._id}
+            />
+          )}
+        </>
+      }
       badges={
         item.fileState !== 'available' ? (
           <DocumentFileStateBadge fileState={item.fileState} />

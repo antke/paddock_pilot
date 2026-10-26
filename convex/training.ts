@@ -1,18 +1,28 @@
+import {
+  assertHorseWorkspace,
+  recordCapabilities,
+  visibleHorse,
+} from './libs/recordCapabilities'
+import {
+  eventParticipantAccess,
+  eventReadAccess,
+  visibleEvent,
+  sharedEventsForStable,
+} from './libs/eventPermissions'
+import { isRecordShared, hasSharedSchedule } from './libs/recordSharing'
+import { creatorName } from './libs/creatorName'
 import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import { horseEvent } from './libs/horseEventHistory'
 import {
   assertCanReadHorse,
   assertCanAddHorseRecord,
   assertCanEditHorseRecord,
-  canEditHorseRecord,
   getHorseAccess,
-  horseRosterSummary,
 } from './libs/horsePermissions'
-import { eventReadAccess, visibleEvent } from './libs/eventPermissions'
 import { userFacingError } from './libs/userFacingError'
 import { ConvexError, v } from 'convex/values'
 import { query, mutation } from './_generated/server'
-import type { MutationCtx } from './_generated/server'
+import type { MutationCtx, QueryCtx } from './_generated/server'
 import type { Doc, Id } from './_generated/dataModel'
 import { assertCanViewStable, getCurrentUser } from './libs/stablePermissions'
 import { isActiveHorse } from './libs/horseState'
@@ -26,15 +36,48 @@ import {
 import { createEventOccurrences } from '../shared/events/eventOccurrences'
 import { recordStableAudit } from './libs/audit'
 
+async function projectTrainingRecords(
+  ctx: QueryCtx,
+  horse: Doc<'horses'>,
+  records: Array<Doc<'trainingRecords'>>,
+  stableId?: Id<'stables'>,
+) {
+  const result = []
+  for (const record of records) {
+    if (
+      stableId &&
+      !(await isRecordShared(
+        ctx,
+        record.eventId,
+        horse,
+        stableId,
+        record.scheduledDate ?? record.date,
+      ))
+    )
+      continue
+    const capabilities = await recordCapabilities(ctx, horse, record)
+    if (!capabilities.readSchedule) continue
+    result.push({
+      ...record,
+      details: capabilities.readDetails
+        ? record.details
+        : defaultTrainingDetails,
+      outcome: capabilities.readDetails ? record.outcome : undefined,
+      createdByName: capabilities.readDetails
+        ? await creatorName(ctx, record.recordedBy)
+        : null,
+      canEdit: capabilities.editContent,
+    })
+  }
+  return result
+}
+
 export const listForStable = query({
   args: { stableId: v.id('stables') },
   handler: async (ctx, { stableId }) => {
     const access = await assertCanViewStable(ctx, stableId)
     const [allEvents, allHorses] = await Promise.all([
-      ctx.db
-        .query('events')
-        .withIndex('by_stable_id', (q) => q.eq('stableId', stableId))
-        .collect(),
+      sharedEventsForStable(ctx, stableId),
       ctx.db
         .query('horses')
         .withIndex('by_stable_id', (q) => q.eq('stableId', stableId))
@@ -51,23 +94,14 @@ export const listForStable = query({
     const permissions = await Promise.all(
       horses.map((horse) => getHorseAccess(ctx, horse, access.userId)),
     )
-    const readable = new Set(
-      horses
-        .filter((_, index) => permissions[index].canRead)
-        .map((horse) => horse._id),
-    )
     const allRecords = (
       await Promise.all(
-        horses.map(async (horse, index) => {
-          if (!readable.has(horse._id)) return []
+        horses.map(async (horse) => {
           const records = await ctx.db
             .query('trainingRecords')
             .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
             .collect()
-          return records.map((record) => ({
-            ...record,
-            canEdit: canEditHorseRecord(permissions[index], horse, record),
-          }))
+          return projectTrainingRecords(ctx, horse, records, stableId)
         }),
       )
     ).flat()
@@ -88,23 +122,21 @@ export const listForStable = query({
       )
     const eventIds = new Set(events.map((event) => event._id))
     return {
-      events: await Promise.all(
-        events.map((event) => visibleEvent(ctx, event)),
+      events,
+      horses: await Promise.all(
+        horses.map(async (horse, index) => ({
+          ...(await visibleHorse(ctx, horse, true)),
+          canRecord: permissions[index].canAddRecords,
+        })),
       ),
-      horses: horses.map((horse, index) => ({
-        ...(permissions[index].canRead ? horse : horseRosterSummary(horse)),
-        canRecord: permissions[index].canAddRecords,
-      })),
-      records: allRecords.filter(
-        (record) =>
-          readable.has(record.horseId) && eventIds.has(record.eventId),
-      ),
+      records: allRecords.filter((record) => eventIds.has(record.eventId)),
     }
   },
 })
 
 export const saveRecord = mutation({
   args: {
+    newDate: v.optional(v.string()),
     errorFormat: v.optional(v.literal('structured')),
     eventId: v.id('events'),
     horseId: v.id('horses'),
@@ -133,6 +165,32 @@ export const setStatus = mutation({
   handler: saveTrainingRecord,
 })
 
+/** One transaction: reject the entire session change if any horse is unauthorized. */
+export const setSessionStatus = mutation({
+  args: {
+    eventId: v.id('events'),
+    horseIds: v.array(v.id('horses')),
+    date: v.string(),
+    stableId: v.optional(v.id('stables')),
+    status: v.union(v.literal('planned'), v.literal('completed')),
+    errorFormat: v.optional(v.literal('structured')),
+  },
+  handler: async (ctx, { horseIds, stableId, ...args }) => {
+    if (stableId) await assertCanViewStable(ctx, stableId)
+    for (const horseId of new Set(horseIds)) {
+      if (stableId) {
+        const horse = await ctx.db.get(horseId)
+        if (
+          !horse ||
+          !(await isRecordShared(ctx, args.eventId, horse, stableId, args.date))
+        )
+          throw userFacingError('trainingPermission', args.errorFormat)
+      }
+      await saveTrainingRecord(ctx, { ...args, horseId })
+    }
+  },
+})
+
 async function saveTrainingRecord(
   ctx: MutationCtx,
   args: {
@@ -140,6 +198,7 @@ async function saveTrainingRecord(
     eventId: Id<'events'>
     horseId: Id<'horses'>
     date: string
+    newDate?: string
     status: Doc<'trainingRecords'>['status']
     details?: Doc<'trainingRecords'>['details']
     outcome?: string
@@ -167,6 +226,11 @@ async function saveTrainingRecord(
   ) {
     throw userFacingError('trainingHorseUnconfirmed', args.errorFormat)
   }
+  if (
+    !(await recordCapabilities(ctx, horse, { _id: event._id, date: args.date }))
+      .complete
+  )
+    throw userFacingError('trainingPermission', args.errorFormat)
   if (existing) await assertCanEditHorseRecord(ctx, horse, existing)
   else if (!(await getHorseAccess(ctx, horse, user._id)).canAddRecords)
     throw userFacingError('trainingPermission', args.errorFormat)
@@ -187,11 +251,28 @@ async function saveTrainingRecord(
   ) {
     throw userFacingError('trainingOccurrence', args.errorFormat)
   }
+  const nextDate = args.newDate ?? args.date
+  if (!isDateKey(nextDate))
+    throw userFacingError('trainingOccurrence', args.errorFormat)
+  if (nextDate !== args.date) {
+    if (!existing) throw userFacingError('trainingOccurrence', args.errorFormat)
+    const conflict = await ctx.db
+      .query('trainingRecords')
+      .withIndex('by_event_horse_date', (q) =>
+        q
+          .eq('eventId', event._id)
+          .eq('horseId', horse._id)
+          .eq('date', nextDate),
+      )
+      .unique()
+    if (conflict)
+      throw userFacingError('trainingHorseConflict', args.errorFormat)
+  }
   // Allow the current local day anywhere on earth without trusting a client clock.
   const latestToday = new Date(Date.now() + 14 * 60 * 60 * 1000)
     .toISOString()
     .slice(0, 10)
-  if (args.status === 'completed' && args.date > latestToday)
+  if (!existing && args.status === 'completed' && nextDate > latestToday)
     throw userFacingError('futureTraining', args.errorFormat)
   const parsed = trainingRecordSchema.safeParse({
     ...(args.details ??
@@ -211,11 +292,14 @@ async function saveTrainingRecord(
     ...recordOrigin,
     eventId: event._id,
     horseId: horse._id,
-    date: args.date,
+    date: nextDate,
+    scheduledDate:
+      existing?.scheduledDate ??
+      (nextDate !== args.date ? args.date : undefined),
     status,
     details,
     outcome,
-    recordedBy: user._id,
+    recordedBy: existing?.recordedBy ?? user._id,
     updatedAt: now,
   }
   if (existing) await ctx.db.patch(existing._id, values)
@@ -229,37 +313,42 @@ async function saveTrainingRecord(
     action: 'training.recorded',
     entityType: 'event',
     entityId: event._id,
-    summary: `${getHorseDisplayName(horse)}: ${status} on ${args.date}`,
+    summary: `${getHorseDisplayName(horse)}: ${status} on ${nextDate}`,
     details: {
       kind: 'training_recorded',
       horseName: getHorseDisplayName(horse),
       status,
-      date: args.date,
+      date: nextDate,
     },
   })
 }
 
 export const listForHorse = query({
-  args: { horseId: v.id('horses') },
-  handler: async (ctx, { horseId }) => {
+  args: { horseId: v.id('horses'), stableId: v.optional(v.id('stables')) },
+  handler: async (ctx, { horseId, stableId }) => {
     const horse = await ctx.db.get(horseId)
     if (!horse) throw new ConvexError('Horse not found')
     const access = await assertCanReadHorse(ctx, horse)
+    await assertHorseWorkspace(ctx, horse, stableId)
     const rows = await ctx.db
       .query('eventsHorses')
       .withIndex('by_horse_id', (q) => q.eq('horseId', horseId))
       .collect()
-    const events = await Promise.all(rows.map((r) => horseEvent(ctx, r)))
+    const events = await Promise.all(
+      rows.map((r) => horseEvent(ctx, r, stableId)),
+    )
     const records = await ctx.db
       .query('trainingRecords')
       .withIndex('by_horse_id', (q) => q.eq('horseId', horseId))
       .collect()
     return {
-      horses: [{ ...horse, canRecord: access.canAddRecords }],
-      records: records.map((record) => ({
-        ...record,
-        canEdit: canEditHorseRecord(access, horse, record),
-      })),
+      horses: [
+        {
+          ...(await visibleHorse(ctx, horse, Boolean(stableId))),
+          canRecord: access.canAddRecords,
+        },
+      ],
+      records: await projectTrainingRecords(ctx, horse, records, stableId),
       events: events.flatMap((event) =>
         event?.type === 'training'
           ? [{ ...event, notesAfterCompletion: undefined }]
@@ -272,10 +361,12 @@ export const listForHorse = query({
 export const listForEvent = query({
   args: {
     eventId: v.id('events'),
+    stableId: v.optional(v.id('stables')),
     horseId: v.optional(v.id('horses')),
     participationId: v.optional(v.id('eventsHorses')),
   },
-  handler: async (ctx, { eventId, horseId, participationId }) => {
+  handler: async (ctx, { eventId, horseId, participationId, stableId }) => {
+    if (stableId) await assertCanViewStable(ctx, stableId)
     const event = await ctx.db.get(eventId)
     if (!event) throw new ConvexError('Event not found')
     await eventReadAccess(ctx, event)
@@ -306,37 +397,125 @@ export const listForEvent = query({
       )
         participants.set(row.horseId, row)
     }
-    const horses = []
+    const horses: Array<
+      Awaited<ReturnType<typeof visibleHorse>> & { canRecord: boolean }
+    > = []
     const records = []
     for (const row of participants.values()) {
       const horse = await ctx.db.get(row.horseId)
       if (!horse || (horseId && horse._id !== horseId)) continue
+      if (stableId && !(await hasSharedSchedule(ctx, eventId, horse, stableId)))
+        continue
       const access = await getHorseAccess(ctx, horse)
-      if (!access.canRead) continue
+      if (
+        !(await eventParticipantAccess(ctx, event)).participants.some(
+          (p) => p.horse._id === horse._id,
+        )
+      )
+        continue
       horses.push({
-        ...horse,
+        ...(await visibleHorse(ctx, horse)),
         canRecord:
+          (row.status === undefined || row.status === 'confirmed') &&
           access.canAddRecords &&
           (!row.participationEndsAt || access.canEditPersonalRecords),
       })
+      const horseRecords = await ctx.db
+        .query('trainingRecords')
+        .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
+        .collect()
       records.push(
-        ...(
-          await ctx.db
-            .query('trainingRecords')
-            .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-            .collect()
-        )
-          .filter((r) => r.eventId === eventId)
-          .map((record) => ({
-            ...record,
-            canEdit: canEditHorseRecord(access, horse, record),
-          })),
+        ...(await projectTrainingRecords(
+          ctx,
+          horse,
+          horseRecords.filter((record) => record.eventId === eventId),
+          stableId,
+        )),
       )
     }
     const projected =
       contextRow && horses.length
-        ? await horseEvent(ctx, contextRow)
-        : await visibleEvent(ctx, event)
-    return { events: projected ? [projected] : [], horses, records }
+        ? await horseEvent(ctx, contextRow, stableId)
+        : stableId
+          ? (await sharedEventsForStable(ctx, stableId)).find(
+              (item) => item._id === eventId,
+            )
+          : await visibleEvent(ctx, event)
+    return {
+      events: projected
+        ? [
+            {
+              ...projected,
+              horseIds: projected.horseIds.filter((id) =>
+                horses.some((horse) => horse._id === id),
+              ),
+            },
+          ]
+        : [],
+      horses,
+      records,
+    }
+  },
+})
+
+export const scheduledForLogging = query({
+  args: { horseIds: v.array(v.id('horses')), date: v.string() },
+  handler: async (ctx, { horseIds, date }) => {
+    const user = await getCurrentUser(ctx)
+    if (!isDateKey(date)) return []
+    const sessions = []
+    for (const horseId of new Set(horseIds)) {
+      const horse = await ctx.db.get(horseId)
+      if (!horse) continue
+      const rows = await ctx.db
+        .query('eventsHorses')
+        .withIndex('by_horse_id', (q) => q.eq('horseId', horseId))
+        .collect()
+      for (const row of rows) {
+        if (
+          row.participationEndsAt ||
+          (row.status && row.status !== 'confirmed')
+        )
+          continue
+        const event = await ctx.db.get(row.eventId)
+        if (
+          !event ||
+          event.type !== 'training' ||
+          !(
+            await recordCapabilities(
+              ctx,
+              horse,
+              { _id: event._id, date },
+              user._id,
+            )
+          ).complete
+        )
+          continue
+        if (
+          !createEventOccurrences({
+            events: [event],
+            windowStart: date,
+            windowEnd: date,
+          }).length
+        )
+          continue
+        const record = await ctx.db
+          .query('trainingRecords')
+          .withIndex('by_event_horse_date', (q) =>
+            q.eq('eventId', event._id).eq('horseId', horseId).eq('date', date),
+          )
+          .unique()
+        if (record && record.status !== 'planned') continue
+        sessions.push({
+          eventId: event._id,
+          horseId,
+          horseName: getHorseDisplayName(horse),
+          title: (await visibleEvent(ctx, event)).title,
+          date,
+          time: event.time,
+        })
+      }
+    }
+    return sessions
   },
 })

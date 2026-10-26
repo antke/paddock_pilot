@@ -14,6 +14,7 @@ type InlineFormGap = 'standard' | 'compact' | 'tight'
 type InlineFormLayout = 'stack' | 'invite'
 
 type InlineFormProps = ComponentProps<'form'> & {
+  showRequiredHint?: boolean
   gap?: InlineFormGap
   layout?: InlineFormLayout
 }
@@ -60,6 +61,7 @@ export function InlineForm({
   className,
   gap = 'standard',
   layout = 'stack',
+  showRequiredHint = true,
   ...props
 }: InlineFormProps) {
   return (
@@ -74,7 +76,7 @@ export function InlineForm({
       )}
       {...props}
     >
-      <RequiredFieldsHint />
+      {showRequiredHint && <RequiredFieldsHint />}
       {children}
     </form>
   )

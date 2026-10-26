@@ -1,10 +1,13 @@
-import type { Doc } from '../_generated/dataModel'
+import { sharedEventsForStable } from './eventPermissions'
+import { readableRecords, visibleHorse } from './recordCapabilities'
+import type { Doc, Id } from '../_generated/dataModel'
 import type { QueryCtx } from '../_generated/server'
 import { horseEvent } from './horseEventHistory'
 
 export async function horseCareData(
   ctx: QueryCtx,
   horses: Array<Doc<'horses'>>,
+  stableId?: Id<'stables'>,
 ) {
   const data = await Promise.all(
     horses.map(async (horse) => {
@@ -20,27 +23,33 @@ export async function horseCareData(
         ctx.db
           .query('careReminders')
           .withIndex('by_horse_id_due_date', (q) => q.eq('horseId', horse._id))
-          .collect(),
+          .collect()
+          .then((records) => readableRecords(ctx, horse, records, stableId)),
         ctx.db
           .query('horseHealthIssues')
           .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-          .collect(),
+          .collect()
+          .then((records) => readableRecords(ctx, horse, records, stableId)),
         ctx.db
           .query('horseMedicationRecords')
           .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-          .collect(),
+          .collect()
+          .then((records) => readableRecords(ctx, horse, records, stableId)),
         ctx.db
           .query('horseNutritionLogs')
           .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-          .collect(),
+          .collect()
+          .then((records) => readableRecords(ctx, horse, records, stableId)),
         ctx.db
           .query('horseWeightRecords')
           .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-          .collect(),
+          .collect()
+          .then((records) => readableRecords(ctx, horse, records, stableId)),
         ctx.db
           .query('trainingRecords')
           .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-          .collect(),
+          .collect()
+          .then((records) => readableRecords(ctx, horse, records, stableId)),
         ctx.db
           .query('eventsHorses')
           .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
@@ -88,13 +97,13 @@ export async function horseCareData(
     )
   }
   return {
-    horses,
+    horses: await Promise.all(horses.map((horse) => visibleHorse(ctx, horse, Boolean(stableId)))),
     reminders: data.flatMap((d) => d.reminders),
     healthIssues: data.flatMap((d) => d.healthIssues),
     medicationRecords: data.flatMap((d) => d.medicationRecords),
     nutritionLogs: data.flatMap((d) => d.nutritionLogs),
     weightRecords: data.flatMap((d) => d.weightRecords),
     trainingOutcomes: data.flatMap((d) => d.trainingOutcomes),
-    events: [...events.values()],
+    events: stableId ? await sharedEventsForStable(ctx, stableId) : [...events.values()],
   }
 }

@@ -1,3 +1,7 @@
+import { HorseSharingManager } from '#/components/sharing/HorseSharingManager'
+import { HorseHistorySharing } from '#/components/sharing/HistorySharing'
+import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
+import { useLocale } from '#/i18n/LocaleProvider'
 import type { FunctionArgs, FunctionReturnType } from 'convex/server'
 import type { ReactNode } from 'react'
 import { useMutation, useQuery } from 'convex/react'
@@ -38,6 +42,7 @@ export type ManagementProps = {
   renderDeparture?: (props: Parameters<typeof DepartureReview>[0]) => ReactNode
 }
 export function HorseManagement({ horseId }: { horseId: Id<'horses'> }) {
+  const { locale } = useLocale()
   const data = useQuery(api.horseCollaboration.management, { horseId })
   const stables = useQuery(api.stables.list)
   const invite = useMutation(api.horseCollaboration.invite)
@@ -47,15 +52,30 @@ export function HorseManagement({ horseId }: { horseId: Id<'horses'> }) {
   const archive = useMutation(api.horses.deleteHorse)
   if (!data || !stables) return <RoutePending />
   return (
-    <HorseManagementView
-      horseId={horseId}
-      data={data}
-      stables={stables}
-      invite={invite}
-      updateCarer={updateCarer}
-      revoke={revoke}
-      connect={connect}
-      archive={archive}
-    />
+    <>
+      <HorseSharingManager horseId={horseId} />
+      <HorseManagementView
+        horseId={horseId}
+        data={data}
+        stables={stables}
+        invite={invite}
+        updateCarer={updateCarer}
+        revoke={revoke}
+        connect={connect}
+        archive={archive}
+      />
+      {data.access.isOwner && data.access.stable ? (
+        <DashboardSectionCard
+          title={
+            locale === 'pl' ? 'Udostępnij historię' : 'Share existing history'
+          }
+        >
+          <HorseHistorySharing
+            horseId={horseId}
+            stableId={data.access.stable._id}
+          />
+        </DashboardSectionCard>
+      ) : null}
+    </>
   )
 }

@@ -1,3 +1,4 @@
+import { useWorkspace } from '#/components/layout/WorkspaceContext'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import {
   getListFilterEmptyMessage,
@@ -22,8 +23,12 @@ export function HorseDocumentsCard({ horse }: HorseDocumentsCardProps) {
   const t = useT()
   const { locale } = useLocale()
 
+  const workspace = useWorkspace()
   const { data } = useSuspenseQuery(
-    convexQuery(api.stableDocuments.listForHorse, { horseId: horse._id }),
+    convexQuery(api.stableDocuments.listForHorse, {
+      stableId: workspace?.stableId,
+      horseId: horse._id,
+    }),
   )
   const documents = data.documents as Array<DocumentListItem>
   const documentActions = useDocumentActions({
@@ -45,6 +50,7 @@ export function HorseDocumentsCard({ horse }: HorseDocumentsCardProps) {
       description={t('documents.horseDescription')}
       actions={
         <DocumentUploadDialog
+          enableSharing
           canAddDocument={data.canManage}
           fixedHorseId={horse._id}
           onAdd={documentActions.add}

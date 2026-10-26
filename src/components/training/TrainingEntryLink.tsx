@@ -20,11 +20,14 @@ import type { TrainingEntry } from './trainingCalendarData'
 
 export function TrainingEntryLink({
   entry,
+  stableId,
+  sessionNavigation = false,
   showHorseName = true,
   variant = 'record',
 }: {
   entry: TrainingEntry
   stableId?: string
+  sessionNavigation?: boolean
   showHorseName?: boolean
   variant?: 'record' | 'month' | 'week' | 'summary'
 }) {
@@ -37,6 +40,14 @@ export function TrainingEntryLink({
     entry.occurrence.startDate <= today
 
   const { occurrence, horse, details, status, record } = entry
+  const historical = Boolean(
+    (
+      occurrence.event as typeof occurrence.event & {
+        contextHistorical?: boolean
+      }
+    ).contextHistorical,
+  )
+  const openSession = sessionNavigation && !historical
   const showStatus = !canComplete || status !== 'completed'
   const title = `${showHorseName ? `${getHorseDisplayName(horse)} · ` : ''}${occurrence.event.title}`
   const dateTime = formatEventDateTime(
@@ -68,8 +79,11 @@ export function TrainingEntryLink({
             params={{ eventId: occurrence.eventId }}
             search={{
               date: occurrence.startDate,
-              horseId: horse._id,
-              participationId: occurrence.event.contextParticipationId,
+              horseId: openSession ? undefined : horse._id,
+              participationId: openSession
+                ? undefined
+                : occurrence.event.contextParticipationId,
+              stableId,
             }}
             data-training-entry={variant === 'record' ? 'compact' : variant}
             aria-label={

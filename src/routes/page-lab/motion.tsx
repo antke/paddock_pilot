@@ -195,6 +195,7 @@ function MotionFixture() {
               </FormSection>
               <FormSubmissionError message={error} />
               <FormSubmitActions
+                failed={Boolean(error)}
                 isSubmitting={pending}
                 confirmed={saved}
                 confirmedLabel="Saved"
@@ -202,6 +203,20 @@ function MotionFixture() {
                 submittingLabel="Saving sample…"
               />
             </InlineForm>
+            <div className="flex flex-wrap items-start gap-3">
+              <Button variant="outline">Regular button</Button>
+              <ChoiceButtonGroup
+                aria-label="Form choice"
+                value={choice}
+                onValueChange={setChoice}
+                className="w-auto"
+                options={[
+                  { value: 'day', label: 'Day' },
+                  { value: 'week', label: 'Week' },
+                  { value: 'month', label: 'Month' },
+                ]}
+              />
+            </div>
             <ChoiceButtonGroup
               aria-label="Period"
               layout="segmented"

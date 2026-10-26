@@ -1,4 +1,6 @@
-import { accessibleHorses, getHorseAccess } from '../horsePermissions'
+import { sharedStableRecords } from '../sharedStableRecords'
+import { recordCapabilities } from '../recordCapabilities'
+import { accessibleHorses } from '../horsePermissions'
 import type { Doc } from '../../_generated/dataModel'
 import type { MutationCtx } from '../../_generated/server'
 import { isActiveHorse } from '../horseState'
@@ -48,9 +50,10 @@ export const getReminderDigestStables = async (
         : [],
     ),
   )
+  const counted = new Set<string>()
   const summaries = await Promise.all(
     [...stables.values()].map(async (stable) => {
-      const reminders = await ctx.db
+      const originReminders = await ctx.db
         .query('careReminders')
         .withIndex('by_stable_id_status_due_date', (q) =>
           q
@@ -59,16 +62,19 @@ export const getReminderDigestStables = async (
             .lte('dueDate', date),
         )
         .collect()
+      const reminders = [...originReminders.filter(r => !r.horseId), ...(await sharedStableRecords(ctx, stable._id, 'careReminders')).filter(r => r.status === 'pending' && r.dueDate <= date)]
       const visible = await Promise.all(
         reminders.map(async (reminder) => {
-          if (!reminder.horseId) return true
+          if (!reminder.horseId) { counted.add(reminder._id); return true }
           const horse = await ctx.db.get(reminder.horseId)
-          return (
+          const allowed = (
             isActiveHorse(horse) &&
             horse.stableId === stable._id &&
-            (reminder.assignedTo === user._id ||
-              (await getHorseAccess(ctx, horse, user._id)).canRead)
+            (await recordCapabilities(ctx, horse, reminder, user._id))
+              .readSchedule
           )
+          if (allowed) counted.add(reminder._id)
+          return allowed
         }),
       )
       return {
@@ -88,7 +94,7 @@ export const getReminderDigestStables = async (
       (r) =>
         r.status === 'pending' &&
         r.dueDate <= date &&
-        (!r.stableId || !stables.has(r.stableId)),
+        !counted.has(r._id),
     ).length
   }
   return [

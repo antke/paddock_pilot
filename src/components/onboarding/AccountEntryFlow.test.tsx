@@ -96,6 +96,7 @@ vi.mock('convex/react', async () => {
       )
       if (args === 'skip') return undefined
       const name = getFunctionName(reference)
+      if (name === 'horses:calendarRoster') return []
       if (!(name in state.queries)) throw new Error(`Unexpected query ${name}`)
       return state.queries[name]
     },
@@ -304,10 +305,8 @@ it.each([false, true])(
         target: { files },
       })
     }
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Save profile and add a horse' }),
-    )
-    await screen.findByRole('heading', { name: 'Add horse' })
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to horse' }))
+    await screen.findByRole('heading', { name: 'Add horse · Personal' })
     expect(router.state.location.pathname).toBe('/horses/create')
     expect(state.saveProfile).toHaveBeenCalledTimes(1)
     expect(upload).toHaveBeenCalledTimes(withPhoto ? 1 : 0)
@@ -320,9 +319,12 @@ it.each([false, true])(
       )
     cleanup()
     router = await setup('/horses/create')
-    await screen.findByRole('heading', { name: 'Add horse' })
+    await screen.findByRole('heading', { name: 'Add horse · Personal' })
     const horseName = screen.getByLabelText('Horse name')
     fireEvent.change(horseName, { target: { value: 'Maple' } })
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Optional horse details' }),
+    )
     fireEvent.click(
       screen.getByRole('button', { name: 'Show owner name suggestions' }),
     )
@@ -351,21 +353,17 @@ it('stays on the profile after a rejected save and advances only after retry suc
   fireEvent.click(
     await screen.findByRole('button', { name: 'Manage my horses' }),
   )
-  fireEvent.click(
-    screen.getByRole('button', { name: 'Save profile and add a horse' }),
-  )
+  fireEvent.click(screen.getByRole('button', { name: 'Continue to horse' }))
   await screen.findByText(/Could not save your profile/)
   expect(router.state.location.pathname).toBe('/onboarding')
-  fireEvent.click(
-    screen.getByRole('button', { name: 'Save profile and add a horse' }),
-  )
-  await screen.findByRole('heading', { name: 'Add horse' })
+  fireEvent.click(screen.getByRole('button', { name: 'Continue to horse' }))
+  await screen.findByRole('heading', { name: 'Add horse · Personal' })
 })
 
 it('preserves a shared horse destination through required profile setup', async () => {
   const router = await setup('/horses/horse-1?tab=care#latest')
   fireEvent.click(
-    await screen.findByRole('button', { name: 'Save profile and continue' }),
+    await screen.findByRole('button', { name: 'Save and continue' }),
   )
   await screen.findByRole('heading', { name: 'Saved horse' })
   expect(router.state.location.href).toBe('/horses/horse-1?tab=care#latest')
@@ -377,9 +375,7 @@ it('reaches stable creation after saving the profile, then resumes the created s
   fireEvent.click(
     await screen.findByRole('button', { name: 'Set up a stable' }),
   )
-  fireEvent.click(
-    screen.getByRole('button', { name: 'Save profile and set up a stable' }),
-  )
+  fireEvent.click(screen.getByRole('button', { name: 'Continue to stable' }))
   const name = await screen.findByLabelText('Stable name')
   fireEvent.change(name, { target: { value: 'Sample Yard' } })
   fireEvent.change(screen.getByLabelText('Location'), {

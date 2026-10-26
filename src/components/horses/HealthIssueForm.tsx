@@ -1,3 +1,7 @@
+import { useRecordCreationAudience } from '#/components/sharing/useRecordCreationAudience'
+import type { RecordCreationOptions } from '#/components/sharing/useRecordCreationAudience'
+import type { Id } from 'convex/_generated/dataModel'
+import { useTransientConfirmation } from '#/lib/useTransientConfirmation'
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { useT } from '#/i18n/LocaleProvider'
 import { useId, useRef, useState } from 'react'
@@ -18,9 +22,12 @@ import type {
 import { horseHealthIssueSeverityLabels } from './horseCareLabels'
 
 type HealthIssueFormProps = {
+  audienceHorseId?: Id<'horses'>
   disabled?: boolean
   onPendingChange?: (pending: boolean) => void
-  onSubmit: (data: HealthIssueFormSchema) => Promise<void>
+  onSubmit: (
+    data: HealthIssueFormSchema & RecordCreationOptions,
+  ) => Promise<void>
 }
 
 const severityOptions = Object.keys(
@@ -30,10 +37,12 @@ const severityOptions = Object.keys(
 const asSeverity = (value: string) => value as HealthIssueSeverity
 
 export function HealthIssueForm({
+  audienceHorseId,
   disabled = false,
   onPendingChange,
   onSubmit,
 }: HealthIssueFormProps) {
+  const audience = useRecordCreationAudience(audienceHorseId)
   const t = useT()
 
   const { healthIssueFormSchema } = createHealthIssueSchemas((key) =>
@@ -44,6 +53,7 @@ export function HealthIssueForm({
     label: t(`careLabels.severity.${severity}`),
   })) satisfies Array<{ value: HealthIssueSeverity; label: string }>
   const formId = useId()
+  const confirmation = useTransientConfirmation(formId)
 
   const submitting = useRef(false)
   const [failed, setFailed] = useState(false)
@@ -62,10 +72,13 @@ export function HealthIssueForm({
     if (submitting.current) return
     submitting.current = true
     setFailed(false)
+    confirmation.clear()
     onPendingChange?.(true)
     try {
-      await onSubmit(data)
+      await onSubmit({ ...data, ...(audienceHorseId ? audience.options : {}) })
+      audience.reset()
       form.reset()
+      confirmation.confirm()
     } catch {
       setFailed(true)
     } finally {
@@ -75,7 +88,12 @@ export function HealthIssueForm({
   }
 
   return (
-    <InlineForm noValidate onSubmit={form.handleSubmit(submitIssue)}>
+    <InlineForm
+      onChangeCapture={confirmation.clear}
+      noValidate
+      onSubmit={form.handleSubmit(submitIssue)}
+    >
+      {audience.control}
       <FieldGrid>
         <Controller
           name="title"
@@ -180,6 +198,9 @@ export function HealthIssueForm({
       />
 
       <FormSubmitActions
+        failed={failed}
+        confirmed={confirmation.confirmed}
+        confirmedLabel={t('common.saved')}
         isSubmitting={form.formState.isSubmitting}
         disabled={disabled}
         submitLabel={t('careRecords.addIssue')}

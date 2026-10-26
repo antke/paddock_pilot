@@ -1,3 +1,4 @@
+import { EventParticipation } from '#/components/events/EventParticipation'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { EventDetail } from '#/components/events/EventDetail'
 import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
@@ -17,13 +18,16 @@ function RouteComponent() {
   const { stableId, eventId } = Route.useParams()
 
   const { data } = useSuspenseQuery(
-    convexQuery(api.events.getWithHorses, { id: eventId }),
+    convexQuery(api.events.getWithHorses, {
+      id: eventId,
+      stableId: stableId as Id<'stables'>,
+    }),
   )
   const { data: permissions } = useSuspenseQuery(
     convexQuery(api.events.getPermissions, { id: eventId as Id<'events'> }),
   )
 
-  if (!data || data.event.stableId !== stableId) {
+  if (!data) {
     return <RouteEntityNotFoundAlert entity="event" />
   }
 
@@ -41,9 +45,11 @@ function RouteComponent() {
       <EventDetail
         stableId={stableId}
         event={data.event}
+        createdByName={data.createdByName}
         horses={data.horses}
         canManageEvent={permissions?.canManageEvent ?? false}
       />
+      <EventParticipation eventId={eventId as Id<'events'>} />
       <Outlet />
     </DashboardPage>
   )

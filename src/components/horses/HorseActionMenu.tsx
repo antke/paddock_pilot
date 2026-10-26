@@ -1,3 +1,4 @@
+import { useWorkspace } from '#/components/layout/WorkspaceContext'
 import { EventIcon, TrainingIcon } from '#/components/icons/domain-icons'
 import { Link } from '@tanstack/react-router'
 import {
@@ -39,6 +40,7 @@ export function HorseActionMenu({
   canAddRecords?: boolean
   triggerRef?: Ref<HTMLButtonElement>
 }) {
+  const workspace = useWorkspace()
   const t = useT()
   const taskState = useTaskOriginState()
   if (!canManageHorse && !canAddRecords) return null
@@ -96,7 +98,16 @@ export function HorseActionMenu({
       {canManageHorse && (
         <MobileActionMenuItem
           render={
-            <Link to="/events/create" search={{ horseId }} state={taskState} />
+            <Link
+              to={
+                workspace?.stableId
+                  ? '/stables/$stableId/events/create'
+                  : '/events/create'
+              }
+              params={{ stableId: workspace?.stableId ?? '' }}
+              search={{ horseId }}
+              state={taskState}
+            />
           }
         >
           <EventIcon aria-hidden="true" className="size-5" />
@@ -107,7 +118,12 @@ export function HorseActionMenu({
         <MobileActionMenuItem
           render={
             <Link
-              to="/events/create"
+              to={
+                workspace?.stableId
+                  ? '/stables/$stableId/events/create'
+                  : '/events/create'
+              }
+              params={{ stableId: workspace?.stableId ?? '' }}
               search={{ horseId, training: true, intent: 'record' }}
               state={taskState}
             />
@@ -123,8 +139,8 @@ export function HorseActionMenu({
             key={id}
             render={
               <Link
-                to={to}
-                params={{ horseId }}
+                to={workspace?.stableId ? `/stables/$stableId${to}` : to}
+                params={{ horseId, stableId: workspace?.stableId ?? '' }}
                 search={search}
                 state={() => ({ ...taskState(), horseCreateAction: id })}
               />

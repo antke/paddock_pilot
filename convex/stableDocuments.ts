@@ -1,3 +1,11 @@
+import {
+  assertHorseWorkspace,
+  readableRecords,
+  initializeRecordSharing,
+  recordCapabilities,
+} from './libs/recordCapabilities'
+import { sharedStableRecords } from './libs/sharedStableRecords'
+import { creationReplay, recordCreation } from './libs/creationRequests'
 import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import { ConvexError, v } from 'convex/values'
 import { stableDocumentInputSchema } from '../shared/stables/stableDocumentSchema'
@@ -12,7 +20,10 @@ import {
   assertCanEditHorseRecord,
   getHorseAccess,
 } from './libs/horsePermissions'
-import { eventReadAccess } from './libs/eventPermissions'
+import {
+  eventReadAccess,
+  eventParticipantAccess,
+} from './libs/eventPermissions'
 import {
   assertStorageObjectCanBeClaimed,
   deleteStorageObjectIfUnreferenced,
@@ -23,15 +34,11 @@ async function documentAccess(ctx: Ctx, document: Doc<'stableDocuments'>) {
   if (document.horseId) {
     const horse = await ctx.db.get(document.horseId)
     if (!horse) throw new ConvexError('Horse not found')
-    const access = await assertCanReadHorse(ctx, horse)
+    const capabilities = await recordCapabilities(ctx, horse, document)
+    if (!capabilities.readDetails) throw new ConvexError('Document not found')
     return {
       horse,
-      canManage:
-        access.canEditPersonalRecords ||
-        (access.canAddRecords &&
-          access.isAdmin &&
-          document.stableId === horse.stableId &&
-          document.sourcePlacementId === horse.currentPlacementId),
+      canManage: capabilities.editContent,
     }
   }
   const access = await assertCanViewStable(ctx, document.stableId)
@@ -42,7 +49,11 @@ async function enrich(ctx: Ctx, documents: Array<Doc<'stableDocuments'>>) {
   for (const document of documents) {
     if (document.horseId) {
       const horse = await ctx.db.get(document.horseId)
-      if (!horse || !(await getHorseAccess(ctx, horse)).canRead) continue
+      if (
+        !horse ||
+        !(await recordCapabilities(ctx, horse, document)).readDetails
+      )
+        continue
     }
     const access = await documentAccess(ctx, document)
     const { storageId: _storageId, ...publicDocument } = document
@@ -52,7 +63,10 @@ async function enrich(ctx: Ctx, documents: Array<Doc<'stableDocuments'>>) {
     result.push({
       document: publicDocument,
       horseName: getHorseDisplayName(access.horse),
-      eventTitle: event?.title,
+      eventTitle:
+        event && (await eventParticipantAccess(ctx, event)).participants.length
+          ? event.title
+          : undefined,
       fileUrl: available ? `/api/documents/${document._id}` : null,
       fileState: available
         ? ('available' as const)
@@ -81,29 +95,38 @@ export const listForStable = query({
       .collect()
     return {
       canManageStableDocuments: access.role === 'owner',
-      documents: await enrich(ctx, documents),
+      documents: await enrich(ctx, [
+        ...documents.filter((document) => !document.horseId),
+        ...(await sharedStableRecords(ctx, stableId, 'stableDocuments')),
+      ]),
     }
   },
 })
 export const listForHorse = query({
-  args: { horseId: v.id('horses') },
-  handler: async (ctx, { horseId }) => {
+  args: { horseId: v.id('horses'), stableId: v.optional(v.id('stables')) },
+  handler: async (ctx, { horseId, stableId }) => {
     const horse = await ctx.db.get(horseId)
     if (!horse) return { canManage: false, documents: [] }
     const access = await assertCanReadHorse(ctx, horse)
+    await assertHorseWorkspace(ctx, horse, stableId)
     const documents = await ctx.db
       .query('stableDocuments')
       .withIndex('by_horse_id', (q) => q.eq('horseId', horseId))
       .collect()
     return {
       canManage: access.canAddRecords,
-      documents: await enrich(ctx, documents),
+      documents: await enrich(
+        ctx,
+        await readableRecords(ctx, horse, documents, stableId),
+      ),
     }
   },
 })
 export const add = mutation({
   args: {
+    requestId: v.optional(v.string()),
     stableId: v.optional(v.id('stables')),
+    shareWithStable: v.optional(v.boolean()),
     horseId: v.optional(v.id('horses')),
     eventId: v.optional(v.id('events')),
     storageId: v.optional(v.id('_storage')),
@@ -115,6 +138,13 @@ export const add = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx)
+    const replay = await creationReplay(
+      ctx,
+      user._id,
+      args.requestId,
+      'stableDocuments.add',
+    )
+    if (replay) return ctx.db.normalizeId('stableDocuments', replay)!
     const parsed = stableDocumentInputSchema.safeParse(args)
     if (!parsed.success)
       throw new ConvexError(
@@ -151,12 +181,22 @@ export const add = mutation({
       )
         throw new ConvexError('Uploaded file does not match the document')
     }
-    return ctx.db.insert('stableDocuments', {
-      ...args,
+    const { shareWithStable, requestId: _requestId, ...values } = args
+    const id = await ctx.db.insert('stableDocuments', {
+      ...values,
       ...origin,
       createdBy: user._id,
       createdAt: Date.now(),
     })
+    if (horse) await initializeRecordSharing(ctx, horse, id, shareWithStable)
+    await recordCreation(
+      ctx,
+      user._id,
+      args.requestId,
+      'stableDocuments.add',
+      id,
+    )
+    return id
   },
 })
 export const remove = mutation({
@@ -185,9 +225,12 @@ export const authorizeDownload = query({
       return { storageId: document.storageId, fileName: document.fileName }
     }
     const snapshot = snapshotId ? await ctx.db.get(snapshotId) : null
+    const horse = snapshot ? await ctx.db.get(snapshot.horseId) : null
+    const access = horse ? await getHorseAccess(ctx, horse) : null
     if (
       !snapshot ||
-      (await assertCanViewStable(ctx, snapshot.stableId)).role !== 'owner'
+      !access?.canRead ||
+      (!access.isOwner && !access.carerRole && !access.isCustodian)
     )
       throw new ConvexError('Document not found')
     return {

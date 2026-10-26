@@ -1,3 +1,6 @@
+import { useRecordCreationAudience } from '#/components/sharing/useRecordCreationAudience'
+import type { RecordCreationOptions } from '#/components/sharing/useRecordCreationAudience'
+import { useTransientConfirmation } from '#/lib/useTransientConfirmation'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { useT } from '#/i18n/LocaleProvider'
@@ -20,9 +23,10 @@ import {
 } from 'shared/stables/stableDocumentSchema'
 import type { StableDocumentFormSchema } from 'shared/stables/stableDocumentSchema'
 
-export type DocumentUploadValues = Omit<StableDocumentFormSchema, 'horseId'> & {
-  horseId?: string
-}
+export type DocumentUploadValues = Omit<StableDocumentFormSchema, 'horseId'> &
+  RecordCreationOptions & {
+    horseId?: string
+  }
 
 type HorseOption = {
   _id: Id<'horses'>
@@ -30,6 +34,7 @@ type HorseOption = {
 }
 
 type DocumentUploadFormProps = {
+  enableSharing?: boolean
   horseOptions?: Array<HorseOption>
   fixedHorseId?: Id<'horses'>
   onSubmit: (values: DocumentUploadValues) => Promise<void>
@@ -37,6 +42,7 @@ type DocumentUploadFormProps = {
 }
 
 export function DocumentUploadForm({
+  enableSharing = false,
   horseOptions = [],
   fixedHorseId,
   onSubmit,
@@ -48,6 +54,7 @@ export function DocumentUploadForm({
     t(`documents.validation.${key}`),
   )
   const formId = useId()
+  const confirmation = useTransientConfirmation(formId)
   const pending = useRef(false)
   const mounted = useRef(false)
   const pendingCallback = useRef(onPendingChange)
@@ -71,6 +78,12 @@ export function DocumentUploadForm({
       notes: '',
     },
   })
+  const audience = useRecordCreationAudience(
+    enableSharing
+      ? ((fixedHorseId ?? (form.watch('horseId') || undefined)) as
+          Id<'horses'> | undefined)
+      : undefined,
+  )
   useLocalizedValidation(form)
   const selectedFile = form.watch('file')?.item(0)
   const showHorseSelect = !fixedHorseId && horseOptions.length > 0
@@ -89,13 +102,16 @@ export function DocumentUploadForm({
     pending.current = true
     setIsPending(true)
     setFailed(false)
+    confirmation.clear()
     onPendingChange?.(true)
     try {
       await onSubmit({
         ...values,
+        ...(enableSharing ? audience.options : {}),
         horseId: (fixedHorseId ?? values.horseId) || undefined,
       })
       if (!mounted.current) return
+      audience.reset()
       form.reset({
         horseId: fixedHorseId ?? '',
         type: values.type,
@@ -103,6 +119,7 @@ export function DocumentUploadForm({
         fileName: '',
         notes: '',
       })
+      confirmation.confirm()
     } catch {
       if (mounted.current) setFailed(true)
     } finally {
@@ -115,7 +132,12 @@ export function DocumentUploadForm({
   }
 
   return (
-    <InlineForm noValidate onSubmit={form.handleSubmit(submit)}>
+    <InlineForm
+      onChangeCapture={confirmation.clear}
+      noValidate
+      onSubmit={form.handleSubmit(submit)}
+    >
+      {audience.control}
       <FormSubmissionError
         message={failed ? t('documents.saveFailed') : undefined}
       />
@@ -234,6 +256,9 @@ export function DocumentUploadForm({
       />
 
       <FormSubmitActions
+        failed={failed}
+        confirmed={confirmation.confirmed}
+        confirmedLabel={t('common.saved')}
         isSubmitting={form.formState.isSubmitting || isPending}
         submitLabel={t('documents.add')}
         submittingLabel={t('documents.uploading')}

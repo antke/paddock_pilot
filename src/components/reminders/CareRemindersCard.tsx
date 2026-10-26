@@ -1,3 +1,4 @@
+import { WorkspaceRecordAudience } from '#/components/sharing/RecordAudienceLabel'
 import { MotionList } from '#/components/motion/MotionList'
 import { MotionNotice } from '#/components/motion/MotionNotice'
 import { ConfirmedCheck } from '#/components/motion/StateFeedback'
@@ -66,6 +67,7 @@ type HorseOption = {
 }
 
 type CareRemindersCardProps = {
+  enableSharing?: boolean
   title?: string
   as?: ElementType
   description?: string
@@ -101,6 +103,7 @@ type CareRemindersCardProps = {
 }
 
 export function CareRemindersCard({
+  enableSharing,
   title,
   as,
   description,
@@ -192,6 +195,7 @@ export function CareRemindersCard({
     () =>
       canAddReminder ? (
         <CareReminderForm
+          enableSharing={enableSharing}
           horseOptions={horseOptions}
           assigneeOptions={assigneeOptions}
           fixedHorseId={fixedHorseId}
@@ -202,6 +206,7 @@ export function CareRemindersCard({
       ) : null,
     [
       canAddReminder,
+      enableSharing,
       chrome,
       fixedHorseId,
       horseOptions,
@@ -663,6 +668,12 @@ function ReminderRow({
             </DashboardRecordDetails>
           )}
         </div>
+        {reminder.horseId && (
+          <WorkspaceRecordAudience
+            horseId={reminder.horseId}
+            recordId={reminder._id}
+          />
+        )}
       </DashboardItemRecordCard>
       <EditRecordDialog
         open={editor !== null}

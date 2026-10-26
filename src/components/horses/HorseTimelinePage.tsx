@@ -1,3 +1,4 @@
+import { useWorkspace } from '#/components/layout/WorkspaceContext'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useMemo, useState } from 'react'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
@@ -57,8 +58,10 @@ type HorseTimelinePageProps = {
 }
 
 export function HorseTimelinePage({ horseId }: HorseTimelinePageProps) {
+  const workspace = useWorkspace()
   const { data: timeline } = useSuspenseQuery(
     convexQuery(api.horseTimeline.listForHorse, {
+      stableId: workspace?.stableId,
       horseId: horseId as Id<'horses'>,
     }),
   )

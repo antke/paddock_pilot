@@ -1,4 +1,5 @@
 export const trainingViews = {
+  complete: 'Ukończono',
   markComplete: 'Oznacz jako ukończony',
   markIncomplete: 'Oznacz jako nieukończony',
   markCompleteFor: 'Oznacz jako ukończony: {{horse}} · {{title}}',
@@ -46,10 +47,10 @@ export const trainingViews = {
   month: 'Miesiąc',
   view: 'Widok kalendarza',
   showResults: 'Pokaż wyniki',
-  selectDay_one: '{{date}}, {{count}} zapis treningu',
-  selectDay_few: '{{date}}, {{count}} zapisy treningu',
-  selectDay_many: '{{date}}, {{count}} zapisów treningu',
-  selectDay_other: '{{date}}, {{count}} zapisu treningu',
+  selectDay_one: '{{date}}, {{count}} trening',
+  selectDay_few: '{{date}}, {{count}} treningi',
+  selectDay_many: '{{date}}, {{count}} treningów',
+  selectDay_other: '{{date}}, {{count}} treningu',
   dayEmpty: 'Brak treningów pasujących do tego dnia.',
   today: 'Dzisiaj',
   addSession: 'Dodaj trening',
@@ -69,8 +70,8 @@ export const trainingViews = {
   noMatchesHelp:
     'Puste dni oznaczają brak zapisanych treningów. Zmień filtry lub dodaj trening.',
   agenda: 'Plan treningów',
-  weekly: 'Treningi koni w ujęciu tygodniowym',
-  weeklyCaption: '{{period}} — treningi według konia i dnia',
+  weekly: 'Treningi w tym tygodniu',
+  weeklyCaption: '{{period}} — treningi według dnia',
   horse: 'Koń',
   monthly: 'Miesięczny kalendarz treningów',
   inspectWeek: 'Pokaż tydzień obejmujący {{date}}',
@@ -99,4 +100,7 @@ export const trainingViews = {
   log: 'Dziennik treningów',
   logHelp:
     'Planuj treningi, zapisuj wykonaną pracę i przeglądaj treningi każdego konia.',
+  sessionProgress: 'Ukończono dla {{count}} z {{total}} koni',
+  completeSession: 'Oznacz trening wszystkich koni jako ukończony',
+  reopenSession: 'Cofnij ukończenie treningu wszystkich koni',
 } as const

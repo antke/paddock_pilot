@@ -65,9 +65,9 @@ describe('actual members settings sample', () => {
     outcome('reject')
     const edit = row('Sample Rae').getByRole('button', { name: 'Edit details' })
     fireEvent.click(edit)
-    const input = screen.getByLabelText<HTMLInputElement>('Yard display name')
+    const input = screen.getByLabelText<HTMLInputElement>('Phone')
     expect(document.activeElement).toBe(input)
-    fireEvent.change(input, { target: { value: 'Sample Rowan' } })
+    fireEvent.change(input, { target: { value: '+48 500 123 456' } })
     fireEvent.submit(input.closest('form')!)
     await waitFor(() =>
       expect(
@@ -84,13 +84,13 @@ describe('actual members settings sample', () => {
     await screen.findByText(
       'Could not save member details. Your changes are still here. Please try again.',
     )
-    expect(input.value).toBe('Sample Rowan')
+    expect(input.value).toBe('+48 500 123 456')
     fireEvent.submit(input.closest('form')!)
     await waitFor(() =>
-      expect(screen.queryByLabelText('Yard display name')).toBeNull(),
+      expect(screen.queryByLabelText('Phone')).toBeNull(),
     )
     await waitFor(() => expect(document.activeElement).toBe(edit))
-    expect(screen.getByText('Sample Rowan')).toBeTruthy()
+    expect(screen.getByText('+48 500 123 456')).toBeTruthy()
     fireEvent.click(edit)
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(document.activeElement).toBe(edit)

@@ -1,3 +1,4 @@
+import { BackButton } from '#/components/ui/back-action'
 import {
   HomeIcon,
   EventIcon,
@@ -11,12 +12,7 @@ import {
   useCanGoBack,
   useRouter,
 } from '@tanstack/react-router'
-import {
-  HorseIcon,
-  ListIcon,
-  CaretDownIcon,
-  ArrowLeftIcon,
-} from '@phosphor-icons/react'
+import { HorseIcon, ListIcon, CaretDownIcon } from '@phosphor-icons/react'
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { useT } from '#/i18n/LocaleProvider'
 import { useOwnershipCopy } from '#/components/ownership/ownershipCopy'
@@ -126,10 +122,8 @@ export function MobileBackButton() {
     )
   if (!detail || isMobileTaskPath(pathname)) return null
   return (
-    <Button
+    <BackButton
       type="button"
-      variant="ghost"
-      size="icon"
       className="min-h-11 min-w-11"
       aria-label={t('dashboard.back')}
       onClick={() =>
@@ -144,8 +138,8 @@ export function MobileBackButton() {
             })
       }
     >
-      <ArrowLeftIcon aria-hidden="true" />
-    </Button>
+      {t('dashboard.back')}
+    </BackButton>
   )
 }
 

@@ -1,3 +1,4 @@
+import { DashboardPageHeader } from '../DashboardPageHeader'
 import type { ReactNode } from 'react'
 import { CaretDownIcon } from '@phosphor-icons/react'
 import { useT } from '#/i18n/LocaleProvider'
@@ -24,7 +25,7 @@ export function MobileStableDashboard({
   const attention = getDashboardAttention(data)
   return (
     <DashboardLayoutStack data-slot="mobile-stable-dashboard">
-      <h1 className="sr-only">{t('navigation.home')}</h1>
+      <DashboardPageHeader title={t('navigation.home')} />
       <DashboardCreateMenu stableId={data.stable._id} />
       <MobileHealthSummary data={data} />
       <TodayTrainingCard data={data} compact />

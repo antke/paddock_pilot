@@ -1,5 +1,5 @@
+import { BackLink } from '#/components/ui/back-action'
 import { useId, useLayoutEffect, useState } from 'react'
-import { Link } from '@tanstack/react-router'
 import { LandingLabThemeBoundary } from '#/components/landing-lab/LandingLabThemeBoundary'
 import { AppShell, AppSkipLink } from '#/components/layout/AppShell'
 import { PageLayout } from '#/components/layout/PageLayout'
@@ -114,14 +114,10 @@ export function DarkModeLab({
                   forms.
                 </span>
               }
-              actions={
-                <Link
-                  data-lab-exit
-                  to="/style-lab"
-                  className="text-sm text-primary underline underline-offset-4"
-                >
+              backAction={
+                <BackLink data-lab-exit to="/style-lab">
                   Back to style lab
-                </Link>
+                </BackLink>
               }
             />
             <div className="grid min-w-0 gap-4 border-b border-border-subtle pb-6">

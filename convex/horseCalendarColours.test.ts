@@ -79,7 +79,8 @@ it.each(['violet', '#a23bc4'])(
       calendarColourId: chosen.startsWith('#') ? chosen.toUpperCase() : chosen,
       color: 'Bay',
     })
-    const roster = await member.query(api.horses.calendarRoster, {})
+    expect(await member.query(api.horses.calendarRoster, {})).toEqual([])
+    const roster = await owner.query(api.horses.calendarRoster, {})
     expect(roster.find((horse) => horse._id === id)).toMatchObject({
       name: 'Zapi',
       calendarColourId: chosen.startsWith('#') ? chosen.toUpperCase() : chosen,

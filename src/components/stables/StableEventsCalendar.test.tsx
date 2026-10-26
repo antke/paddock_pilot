@@ -190,7 +190,7 @@ describe('read-only month calendar', () => {
     expect(link.textContent).toBe('Visit 0')
     fireEvent.mouseEnter(link)
     fireEvent.mouseMove(link)
-    const preview = await screen.findByRole('tooltip')
+    const preview = await screen.findByRole('dialog')
     expect(preview.textContent).toContain('19 Aug 2026 at 08:00')
     expect(preview.textContent).toContain('Ben Carter')
     expect(preview.textContent).toContain('Wash bay')
@@ -199,14 +199,14 @@ describe('read-only month calendar', () => {
     expect(link.getAttribute('aria-describedby')).toBe(preview.id)
     expect(link.getAttribute('href')).toBe('/events/event-0')
     fireEvent.keyDown(link, { key: 'Escape' })
-    await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull())
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     const nextOccurrence = within(table()).getByRole('link', {
       name: /Visit 0, 26 Aug 2026/,
     })
     act(() => nextOccurrence.focus())
-    expect(await screen.findByRole('tooltip')).toBeTruthy()
+    expect(await screen.findByRole('dialog')).toBeTruthy()
     act(() => screen.getByRole('button', { name: 'Outside calendar' }).focus())
-    await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull())
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })
 
   it('exposes a seven-column table with empty cells and full date labels, preserving links', async () => {
@@ -234,7 +234,7 @@ describe('read-only month calendar', () => {
     const links = within(date).getAllByRole('link')
     expect(links).toHaveLength(1)
     expect(links[0].getAttribute('href')).toBe('/events/event-0')
-    expect(links[0].hasAttribute('tabindex')).toBe(false)
+    expect(links[0].tabIndex).toBe(0)
   })
 
   it('opens the real day agenda and returns Escape to its visible connected disclosure', async () => {

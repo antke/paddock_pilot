@@ -1,3 +1,6 @@
+import { Link } from '@tanstack/react-router'
+import { HorseAvatar } from '#/components/horses/HorseAvatar'
+import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT } from '#/i18n/LocaleProvider'
 import { ButtonLink } from '#/components/ui/button'
 import { HorseCard, HorseCardLink } from '#/components/horses/HorseCard'
@@ -59,19 +62,29 @@ export function HorseRosterCard({
       }
     >
       {data.horses.length > 0 ? (
-        <DashboardItemList
-          gap="compact"
-          className={compact ? 'max-md:gap-3' : undefined}
-        >
-          {horses.map((horse) => (
-            <HorseRosterItem
-              key={horse._id}
-              data={data}
-              horse={horse}
-              compact={compact}
-            />
-          ))}
-        </DashboardItemList>
+        compact ? (
+          <ul className="min-w-0 divide-y divide-border-subtle">
+            {horses.map((horse) => (
+              <li key={horse._id}>
+                <CompactHorseRosterItem data={data} horse={horse} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <DashboardItemList
+            gap="compact"
+            className={compact ? 'max-md:gap-3' : undefined}
+          >
+            {horses.map((horse) => (
+              <HorseRosterItem
+                key={horse._id}
+                data={data}
+                horse={horse}
+                compact={compact}
+              />
+            ))}
+          </DashboardItemList>
+        )
       ) : (
         <NoHorsesPrompt chrome="flat" />
       )}
@@ -124,5 +137,56 @@ function HorseRosterItem({
         ) : undefined
       }
     />
+  )
+}
+
+function CompactHorseRosterItem({
+  data,
+  horse,
+}: {
+  data: DashboardCommandData
+  horse: DashboardCommandHorse
+}) {
+  const t = useT()
+  const attention = data.attentionHorses.some(
+    (item) => item.horseId === horse._id,
+  )
+  const content = (
+    <>
+      <HorseAvatar
+        name={getHorseDisplayName(horse)}
+        profileImageUrl={horse.profileImageUrl}
+        size="sm"
+      />
+      <span className="grid min-w-0 gap-1">
+        <span className="line-clamp-2 text-base font-semibold leading-5 wrap-anywhere">
+          {getHorseDisplayName(horse)}
+        </span>
+        <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-5 text-muted-foreground">
+          {horse.ownerName && (
+            <span className="min-w-0 wrap-anywhere">{horse.ownerName}</span>
+          )}
+          {attention && (
+            <Badge variant="warning">{t('dashboard.needsCare')}</Badge>
+          )}
+        </span>
+      </span>
+    </>
+  )
+  const rowClass =
+    'grid min-h-18 min-w-0 grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-3 py-3'
+  return horse.canRead === false ? (
+    <div className={rowClass}>{content}</div>
+  ) : (
+    <Link
+      to="/stables/$stableId/horses/$horseId"
+      params={{ stableId: data.stable._id, horseId: horse._id }}
+      className={cn(
+        rowClass,
+        'app-control-focus rounded-control hover:bg-surface active:bg-surface-muted',
+      )}
+    >
+      {content}
+    </Link>
   )
 }

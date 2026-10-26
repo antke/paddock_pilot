@@ -1,3 +1,4 @@
+import { Button } from '#/components/ui/button'
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { useT } from '#/i18n/LocaleProvider'
 import { InlineForm } from '#/components/forms/FormLayout'
@@ -123,36 +124,41 @@ function MemberDetailsFields({
           </AlertDescription>
         </Alert>
       )}
+      <Button render={<a href="/profile" />} variant="outline">
+        {t('navigation.profile')}
+      </Button>
       <FieldGrid gap="compact">
-        <Controller
-          name="displayNameOverride"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={`${formId}-${field.name}`}>
-                {t('onboarding.yardDisplayName')}
-              </FieldLabel>
-              <Input
-                {...field}
-                id={`${formId}-${field.name}`}
-                disabled={form.formState.isSubmitting || isPending}
-                aria-invalid={fieldState.invalid}
-                aria-describedby={
-                  fieldState.invalid
-                    ? `${formId}-${field.name}-error`
-                    : undefined
-                }
-                placeholder={t('onboarding.yardNamePlaceholder')}
-              />
-              {fieldState.invalid && (
-                <FieldError
-                  id={`${formId}-${field.name}-error`}
-                  errors={[fieldState.error]}
+        {member.displayNameOverride ? (
+          <Controller
+            name="displayNameOverride"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={`${formId}-${field.name}`}>
+                  {t('onboarding.yardDisplayName')}
+                </FieldLabel>
+                <Input
+                  {...field}
+                  id={`${formId}-${field.name}`}
+                  disabled={form.formState.isSubmitting || isPending}
+                  aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.invalid
+                      ? `${formId}-${field.name}-error`
+                      : undefined
+                  }
+                  placeholder={t('onboarding.yardNamePlaceholder')}
                 />
-              )}
-            </Field>
-          )}
-        />
+                {fieldState.invalid && (
+                  <FieldError
+                    id={`${formId}-${field.name}-error`}
+                    errors={[fieldState.error]}
+                  />
+                )}
+              </Field>
+            )}
+          />
+        ) : null}
 
         <Controller
           name="phone"

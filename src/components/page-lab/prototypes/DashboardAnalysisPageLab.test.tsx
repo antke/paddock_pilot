@@ -113,7 +113,11 @@ it('offers true empty command-center state through the shared dashboard composit
   const training = await screen.findByRole('region', {
     name: 'Today’s training',
   })
-  expect(within(training).getAllByRole('heading', { level: 3 })).toHaveLength(2)
+  expect(
+    within(training)
+      .getAllByRole('link')
+      .filter((link) => link.getAttribute('href')?.startsWith('/events/')),
+  ).toHaveLength(2)
   expect(within(training).queryByText('Meadow')).toBeNull()
   expect(
     within(training)

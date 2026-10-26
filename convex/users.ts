@@ -317,6 +317,16 @@ export const deleteUser = internalMutation({
       .withIndex('by_user_id', (q) => q.eq('userId', user._id))
       .collect()
     for (const carer of carerRows) await ctx.db.delete(carer._id)
+    for (const notification of await ctx.db
+      .query('notifications')
+      .withIndex('by_user', (q) => q.eq('userId', user._id))
+      .collect())
+      await ctx.db.delete(notification._id)
+    for (const read of await ctx.db
+      .query('notificationReads')
+      .withIndex('by_user_key', (q) => q.eq('userId', user._id))
+      .collect())
+      await ctx.db.delete(read._id)
     const remainingOnboarding = await ctx.db
       .query('stableOnboarding')
       .withIndex('by_user_id', (q) => q.eq('userId', user._id))

@@ -1,3 +1,4 @@
+import { accountDisplayName } from '../shared/users/displayName'
 import { ConvexError, v } from 'convex/values'
 
 import { mutation, query } from './_generated/server'
@@ -62,9 +63,7 @@ export const getAccountProfile = query({
 
     return {
       ...user,
-      displayName:
-        user.preferredName ||
-        [user.firstName, user.lastName].filter(Boolean).join(' '),
+      displayName: accountDisplayName(user),
       profileImageUrl: user.profileImageId
         ? ((await ctx.storage.getUrl(user.profileImageId)) ?? user.photoUrl)
         : user.photoUrl,

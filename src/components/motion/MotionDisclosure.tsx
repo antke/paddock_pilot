@@ -70,9 +70,17 @@ function MeasuredDisclosure({ open, children, ...props }: DisclosureProps) {
         overflow: open && (settledOpen || !spatial) ? 'visible' : 'clip',
       }}
     >
-      <div ref={content} className="flow-root min-w-0">
+      <motion.div
+        ref={content}
+        className="flow-root min-w-0"
+        initial={false}
+        animate={{ opacity: open ? 1 : 0, y: !open && spatial ? 4 : 0 }}
+        transition={{
+          duration: open ? journalMotion.state : journalMotion.exit,
+        }}
+      >
         {children}
-      </div>
+      </motion.div>
     </motion.div>
   )
 }

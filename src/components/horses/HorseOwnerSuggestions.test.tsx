@@ -68,6 +68,7 @@ it('uses the shared people picker scoped to the current stable with the signed-i
       <RouterProvider router={router} />
     </QueryClientProvider>,
   )
+  fireEvent.click(await screen.findByRole('button', { name: 'Optional horse details' }))
   fireEvent.click(
     await screen.findByRole('button', { name: 'Show owner name suggestions' }),
   )

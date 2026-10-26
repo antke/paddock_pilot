@@ -92,6 +92,7 @@ export const invitationFlow = {
   linkCopied: 'Skopiowano link do zaproszenia',
   copyFailed: 'Nie udało się skopiować linku do zaproszenia',
   queuedAgain: 'Zaproszenie ponownie oczekuje na wysłanie',
+  queuedShort: 'E-mail w kolejce',
   copy: 'Kopiuj link',
   resendFailed: 'Nie udało się ponownie wysłać zaproszenia',
   revoked: 'Zaproszenie cofnięte',

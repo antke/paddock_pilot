@@ -1,3 +1,4 @@
+import { Button } from '#/components/ui/button'
 import { HorseCalendarColourField } from './HorseCalendarColourField'
 import { isCustomHorseColour } from 'shared/horses/horseCalendarColours'
 import type {
@@ -32,7 +33,7 @@ import {
   splitHorseBirthDate,
 } from 'shared/horses/horseAge'
 import type { ReactNode, Ref } from 'react'
-import { useId } from 'react'
+import { useId, useState } from 'react'
 import {
   Controller,
   useController,
@@ -49,6 +50,7 @@ import { HorseNicknameField } from './HorseNicknameField'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 
 type Props = {
+  essentialsOnly?: boolean
   colourRoster?: ReadonlyArray<CalendarHorse>
   control: Control<HorseFormInput, unknown, HorseFormSchema>
   providers?: Array<ProviderOption>
@@ -68,6 +70,7 @@ type ShoeingStatusChoice =
   NonNullable<HorseFormSchema['shoeingStatus']> | 'unspecified'
 
 export function HorseFormFields({
+  essentialsOnly: initiallyEssential = false,
   control,
   colourRoster,
   providers = [],
@@ -80,6 +83,8 @@ export function HorseFormFields({
   additionalBreeds,
   onAddBreed,
 }: Props) {
+  const [showOptional, setShowOptional] = useState(false)
+  const essentialsOnly = initiallyEssential && !showOptional
   const t = useT()
   const { locale } = useLocale()
 
@@ -216,6 +221,16 @@ export function HorseFormFields({
 
   return (
     <>
+      {initiallyEssential && (
+        <Button
+          type="button"
+          variant="ghost"
+          aria-expanded={showOptional}
+          onClick={() => setShowOptional((value) => !value)}
+        >
+          {locale === 'pl' ? 'Opcjonalne dane konia' : 'Optional horse details'}
+        </Button>
+      )}
       <FormSection
         defaultOpen
         collapsible={false}
@@ -270,869 +285,899 @@ export function HorseFormFields({
               disabled={disabled}
             />
           </FieldGrid>
-          <FieldGrid>
-            <Controller
-              name="ownerName"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>
-                    {t('horseForm.owner')}
-                  </FieldLabel>
+          {!essentialsOnly && (
+            <FieldGrid>
+              <Controller
+                name="ownerName"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>
+                      {t('horseForm.owner')}
+                    </FieldLabel>
 
-                  <HorseOwnerAutocomplete
-                    aria-required="true"
-                    aria-label={t('horseForm.owner')}
-                    suggestions={ownerSuggestions}
-                    scope={ownerSuggestionScope}
-                    inputRef={field.ref}
-                    name={field.name}
-                    id={field.name}
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    onBlur={field.onBlur}
-                    disabled={disabled}
-                    aria-invalid={fieldState.invalid}
-                    aria-describedby={
-                      fieldState.invalid
-                        ? `horse-owner-name-help ${field.name}-error`
-                        : 'horse-owner-name-help'
-                    }
-                  />
-
-                  <FieldDescription id="horse-owner-name-help">
-                    {t('horseForm.ownerHelp')}
-                  </FieldDescription>
-
-                  {fieldState.invalid && (
-                    <FieldError
-                      id={`${field.name}-error`}
-                      errors={[fieldState.error]}
+                    <HorseOwnerAutocomplete
+                      aria-required="true"
+                      aria-label={t('horseForm.owner')}
+                      suggestions={ownerSuggestions}
+                      scope={ownerSuggestionScope}
+                      inputRef={field.ref}
+                      name={field.name}
+                      id={field.name}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      onBlur={field.onBlur}
+                      disabled={disabled}
+                      aria-invalid={fieldState.invalid}
+                      aria-describedby={
+                        fieldState.invalid
+                          ? `horse-owner-name-help ${field.name}-error`
+                          : 'horse-owner-name-help'
+                      }
                     />
-                  )}
-                </Field>
-              )}
-            />
-          </FieldGrid>
+
+                    <FieldDescription id="horse-owner-name-help">
+                      {t('horseForm.ownerHelp')}
+                    </FieldDescription>
+
+                    {fieldState.invalid && (
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={[fieldState.error]}
+                      />
+                    )}
+                  </Field>
+                )}
+              />
+            </FieldGrid>
+          )}
 
           <BirthDateOrAgeFields control={control} disabled={disabled} />
         </FieldGroup>
       </FormSection>
 
-      <FormSection
-        description={t('horseForm.careHelp')}
-        invalid={careInvalid}
-        summary={careSummary}
-        optionalLabel={t('horseForm.optional')}
-        title={t('horseForm.care')}
-        validationAttempt={submitCount}
-      >
-        <FieldGroup gap="compact">
-          <CareRecordRow label={t('horseForm.identification')}>
-            <FieldGrid>
-              <Controller
-                name="passportNumber"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>
-                      {t('horseForm.passport')}
-                    </FieldLabel>
+      {!essentialsOnly ? (
+        <>
+          <FormSection
+            description={t('horseForm.careHelp')}
+            invalid={careInvalid}
+            summary={careSummary}
+            optionalLabel={t('horseForm.optional')}
+            title={t('horseForm.care')}
+            validationAttempt={submitCount}
+          >
+            <FieldGroup gap="compact">
+              <CareRecordRow label={t('horseForm.identification')}>
+                <FieldGrid>
+                  <Controller
+                    name="passportNumber"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor={field.name}>
+                          {t('horseForm.passport')}
+                        </FieldLabel>
 
-                    <Input
-                      {...field}
-                      id={field.name}
-                      value={field.value ?? ''}
-                      type="text"
-                      disabled={disabled}
-                      aria-invalid={fieldState.invalid}
-                      aria-describedby={
-                        fieldState.invalid ? `${field.name}-error` : undefined
-                      }
-                      placeholder={t('horseForm.passportPlaceholder')}
-                      autoComplete="off"
-                    />
+                        <Input
+                          {...field}
+                          id={field.name}
+                          value={field.value ?? ''}
+                          type="text"
+                          disabled={disabled}
+                          aria-invalid={fieldState.invalid}
+                          aria-describedby={
+                            fieldState.invalid
+                              ? `${field.name}-error`
+                              : undefined
+                          }
+                          placeholder={t('horseForm.passportPlaceholder')}
+                          autoComplete="off"
+                        />
 
-                    {fieldState.invalid && (
-                      <FieldError
-                        id={`${field.name}-error`}
-                        errors={[fieldState.error]}
-                      />
+                        {fieldState.invalid && (
+                          <FieldError
+                            id={`${field.name}-error`}
+                            errors={[fieldState.error]}
+                          />
+                        )}
+                      </Field>
                     )}
-                  </Field>
-                )}
-              />
-
-              <Controller
-                name="microchipNumber"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>
-                      {t('horseForm.microchip')}
-                    </FieldLabel>
-
-                    <Input
-                      {...field}
-                      id={field.name}
-                      value={field.value ?? ''}
-                      type="text"
-                      disabled={disabled}
-                      aria-invalid={fieldState.invalid}
-                      aria-describedby={
-                        fieldState.invalid ? `${field.name}-error` : undefined
-                      }
-                      placeholder={t('horseForm.microchipPlaceholder')}
-                      autoComplete="off"
-                    />
-
-                    {fieldState.invalid && (
-                      <FieldError
-                        id={`${field.name}-error`}
-                        errors={[fieldState.error]}
-                      />
-                    )}
-                  </Field>
-                )}
-              />
-            </FieldGrid>
-          </CareRecordRow>
-
-          <CareRecordRow label={t('horseForm.insurance')}>
-            <FieldGrid>
-              <Controller
-                name="insuranceProvider"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>
-                      {t('horseForm.insurer')}
-                    </FieldLabel>
-
-                    <Input
-                      {...field}
-                      id={field.name}
-                      value={field.value ?? ''}
-                      type="text"
-                      disabled={disabled}
-                      aria-invalid={fieldState.invalid}
-                      aria-describedby={
-                        fieldState.invalid ? `${field.name}-error` : undefined
-                      }
-                      placeholder={t('horseForm.insurerPlaceholder')}
-                      autoComplete="off"
-                    />
-
-                    {fieldState.invalid && (
-                      <FieldError
-                        id={`${field.name}-error`}
-                        errors={[fieldState.error]}
-                      />
-                    )}
-                  </Field>
-                )}
-              />
-              <Controller
-                name="insurancePolicyNumber"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>
-                      {t('horseForm.policy')}
-                    </FieldLabel>
-
-                    <Input
-                      {...field}
-                      id={field.name}
-                      value={field.value ?? ''}
-                      type="text"
-                      disabled={disabled}
-                      aria-invalid={fieldState.invalid}
-                      aria-describedby={
-                        fieldState.invalid ? `${field.name}-error` : undefined
-                      }
-                      placeholder={t('horseForm.policyPlaceholder')}
-                      autoComplete="off"
-                    />
-
-                    {fieldState.invalid && (
-                      <FieldError
-                        id={`${field.name}-error`}
-                        errors={[fieldState.error]}
-                      />
-                    )}
-                  </Field>
-                )}
-              />
-            </FieldGrid>
-          </CareRecordRow>
-
-          <CareRecordRow label={t('horseForm.veterinary')}>
-            <FieldDescription>
-              {t(
-                contactMode === 'copied'
-                  ? 'horseForm.copiedContactHelp'
-                  : 'horseForm.savedContactHelp',
-              )}
-            </FieldDescription>
-            <FieldGrid>
-              <Controller
-                name="vetName"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>
-                      {t('horseForm.vetName')}
-                    </FieldLabel>
-                    <ProviderAutocomplete
-                      id={field.name}
-                      name={field.name}
-                      value={field.value ?? ''}
-                      providers={providers.filter(
-                        (provider) => provider.type === 'vet',
-                      )}
-                      disabled={disabled}
-                      invalid={fieldState.invalid}
-                      describedBy={
-                        fieldState.invalid ? `${field.name}-error` : undefined
-                      }
-                      inputRef={field.ref}
-                      onBlur={field.onBlur}
-                      onValueChange={(value) => {
-                        field.onChange(value)
-                        setValue('vetProviderId', undefined, {
-                          shouldDirty: true,
-                        })
-                      }}
-                      onProviderSelect={(provider) => {
-                        setValue('vetProviderId', provider._id, {
-                          shouldDirty: true,
-                        })
-                        setValue('vetPhone', provider.phone ?? '', {
-                          shouldDirty: true,
-                        })
-                      }}
-                    />
-                    {fieldState.invalid && (
-                      <FieldError
-                        id={`${field.name}-error`}
-                        errors={[fieldState.error]}
-                      />
-                    )}
-                  </Field>
-                )}
-              />
-
-              <Controller
-                name="vetPhone"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>
-                      {t('horseForm.vetPhone')}
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      onChange={(event) => {
-                        field.onChange(event)
-                        setValue('vetProviderId', undefined, {
-                          shouldDirty: true,
-                        })
-                      }}
-                      id={field.name}
-                      value={field.value ?? ''}
-                      disabled={disabled}
-                      aria-invalid={fieldState.invalid}
-                      aria-describedby={
-                        fieldState.invalid ? `${field.name}-error` : undefined
-                      }
-                      placeholder="+1 555 0123"
-                      autoComplete="tel"
-                      type="tel"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError
-                        id={`${field.name}-error`}
-                        errors={[fieldState.error]}
-                      />
-                    )}
-                  </Field>
-                )}
-              />
-            </FieldGrid>
-          </CareRecordRow>
-
-          <CareRecordRow label={t('horseForm.farrier')}>
-            <FieldDescription>
-              {t(
-                contactMode === 'copied'
-                  ? 'horseForm.copiedContactHelp'
-                  : 'horseForm.savedContactHelp',
-              )}
-            </FieldDescription>
-            <FieldGrid>
-              <Controller
-                name="farrierName"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>
-                      {t('horseForm.farrierName')}
-                    </FieldLabel>
-                    <ProviderAutocomplete
-                      id={field.name}
-                      name={field.name}
-                      value={field.value ?? ''}
-                      providers={providers.filter(
-                        (provider) => provider.type === 'farrier',
-                      )}
-                      disabled={disabled}
-                      invalid={fieldState.invalid}
-                      describedBy={
-                        fieldState.invalid ? `${field.name}-error` : undefined
-                      }
-                      inputRef={field.ref}
-                      onBlur={field.onBlur}
-                      onValueChange={(value) => {
-                        field.onChange(value)
-                        setValue('farrierProviderId', undefined, {
-                          shouldDirty: true,
-                        })
-                      }}
-                      onProviderSelect={(provider) => {
-                        setValue('farrierProviderId', provider._id, {
-                          shouldDirty: true,
-                        })
-                        setValue('farrierPhone', provider.phone ?? '', {
-                          shouldDirty: true,
-                        })
-                      }}
-                    />
-                    {fieldState.invalid && (
-                      <FieldError
-                        id={`${field.name}-error`}
-                        errors={[fieldState.error]}
-                      />
-                    )}
-                  </Field>
-                )}
-              />
-
-              <Controller
-                name="farrierPhone"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>
-                      {t('horseForm.farrierPhone')}
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      onChange={(event) => {
-                        field.onChange(event)
-                        setValue('farrierProviderId', undefined, {
-                          shouldDirty: true,
-                        })
-                      }}
-                      id={field.name}
-                      value={field.value ?? ''}
-                      disabled={disabled}
-                      aria-invalid={fieldState.invalid}
-                      aria-describedby={
-                        fieldState.invalid ? `${field.name}-error` : undefined
-                      }
-                      placeholder="+1 555 0456"
-                      autoComplete="tel"
-                      type="tel"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError
-                        id={`${field.name}-error`}
-                        errors={[fieldState.error]}
-                      />
-                    )}
-                  </Field>
-                )}
-              />
-            </FieldGrid>
-          </CareRecordRow>
-
-          <CareRecordRow label={t('horseForm.emergency')}>
-            <Controller
-              name="emergencyNotes"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>
-                    {t('horseForm.emergencyNotes')}
-                  </FieldLabel>
-
-                  <Textarea
-                    {...field}
-                    id={field.name}
-                    value={field.value ?? ''}
-                    disabled={disabled}
-                    aria-invalid={fieldState.invalid}
-                    aria-describedby={
-                      fieldState.invalid ? `${field.name}-error` : undefined
-                    }
-                    placeholder={t('horseForm.emergencyPlaceholder')}
-                    autoComplete="off"
                   />
 
-                  {fieldState.invalid && (
-                    <FieldError
-                      id={`${field.name}-error`}
-                      errors={[fieldState.error]}
-                    />
+                  <Controller
+                    name="microchipNumber"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor={field.name}>
+                          {t('horseForm.microchip')}
+                        </FieldLabel>
+
+                        <Input
+                          {...field}
+                          id={field.name}
+                          value={field.value ?? ''}
+                          type="text"
+                          disabled={disabled}
+                          aria-invalid={fieldState.invalid}
+                          aria-describedby={
+                            fieldState.invalid
+                              ? `${field.name}-error`
+                              : undefined
+                          }
+                          placeholder={t('horseForm.microchipPlaceholder')}
+                          autoComplete="off"
+                        />
+
+                        {fieldState.invalid && (
+                          <FieldError
+                            id={`${field.name}-error`}
+                            errors={[fieldState.error]}
+                          />
+                        )}
+                      </Field>
+                    )}
+                  />
+                </FieldGrid>
+              </CareRecordRow>
+
+              <CareRecordRow label={t('horseForm.insurance')}>
+                <FieldGrid>
+                  <Controller
+                    name="insuranceProvider"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor={field.name}>
+                          {t('horseForm.insurer')}
+                        </FieldLabel>
+
+                        <Input
+                          {...field}
+                          id={field.name}
+                          value={field.value ?? ''}
+                          type="text"
+                          disabled={disabled}
+                          aria-invalid={fieldState.invalid}
+                          aria-describedby={
+                            fieldState.invalid
+                              ? `${field.name}-error`
+                              : undefined
+                          }
+                          placeholder={t('horseForm.insurerPlaceholder')}
+                          autoComplete="off"
+                        />
+
+                        {fieldState.invalid && (
+                          <FieldError
+                            id={`${field.name}-error`}
+                            errors={[fieldState.error]}
+                          />
+                        )}
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    name="insurancePolicyNumber"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor={field.name}>
+                          {t('horseForm.policy')}
+                        </FieldLabel>
+
+                        <Input
+                          {...field}
+                          id={field.name}
+                          value={field.value ?? ''}
+                          type="text"
+                          disabled={disabled}
+                          aria-invalid={fieldState.invalid}
+                          aria-describedby={
+                            fieldState.invalid
+                              ? `${field.name}-error`
+                              : undefined
+                          }
+                          placeholder={t('horseForm.policyPlaceholder')}
+                          autoComplete="off"
+                        />
+
+                        {fieldState.invalid && (
+                          <FieldError
+                            id={`${field.name}-error`}
+                            errors={[fieldState.error]}
+                          />
+                        )}
+                      </Field>
+                    )}
+                  />
+                </FieldGrid>
+              </CareRecordRow>
+
+              <CareRecordRow label={t('horseForm.veterinary')}>
+                <FieldDescription>
+                  {t(
+                    contactMode === 'copied'
+                      ? 'horseForm.copiedContactHelp'
+                      : 'horseForm.savedContactHelp',
                   )}
-                </Field>
-              )}
-            />
-          </CareRecordRow>
-        </FieldGroup>
-      </FormSection>
-
-      <FormSection
-        description={t('horseForm.profileHelp')}
-        invalid={profileInvalid}
-        summary={profileSummary}
-        optionalLabel={t('horseForm.optional')}
-        title={t('horseForm.profile')}
-        validationAttempt={submitCount}
-      >
-        <FieldGroup gap="compact">
-          <HorseCalendarColourField
-            control={control}
-            horses={colourRoster}
-            disabled={disabled}
-          />
-          <FieldGrid>
-            <Controller
-              name="sex"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>{t('horseForm.sex')}</FieldLabel>
-
-                  <ChoiceButtonGroup
-                    aria-label={t('horseForm.sex')}
-                    value={field.value ?? 'unspecified'}
-                    options={sexOptions}
-                    disabled={disabled}
-                    aria-invalid={fieldState.invalid}
-                    aria-describedby={
-                      fieldState.invalid ? `${field.name}-error` : undefined
-                    }
-                    onValueChange={field.onChange}
+                </FieldDescription>
+                <FieldGrid>
+                  <Controller
+                    name="vetName"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor={field.name}>
+                          {t('horseForm.vetName')}
+                        </FieldLabel>
+                        <ProviderAutocomplete
+                          id={field.name}
+                          name={field.name}
+                          value={field.value ?? ''}
+                          providers={providers.filter(
+                            (provider) => provider.type === 'vet',
+                          )}
+                          disabled={disabled}
+                          invalid={fieldState.invalid}
+                          describedBy={
+                            fieldState.invalid
+                              ? `${field.name}-error`
+                              : undefined
+                          }
+                          inputRef={field.ref}
+                          onBlur={field.onBlur}
+                          onValueChange={(value) => {
+                            field.onChange(value)
+                            setValue('vetProviderId', undefined, {
+                              shouldDirty: true,
+                            })
+                          }}
+                          onProviderSelect={(provider) => {
+                            setValue('vetProviderId', provider._id, {
+                              shouldDirty: true,
+                            })
+                            setValue('vetPhone', provider.phone ?? '', {
+                              shouldDirty: true,
+                            })
+                          }}
+                        />
+                        {fieldState.invalid && (
+                          <FieldError
+                            id={`${field.name}-error`}
+                            errors={[fieldState.error]}
+                          />
+                        )}
+                      </Field>
+                    )}
                   />
 
-                  {fieldState.invalid && (
-                    <FieldError
-                      id={`${field.name}-error`}
-                      errors={[fieldState.error]}
-                    />
-                  )}
-                </Field>
-              )}
-            />
-          </FieldGrid>
+                  <Controller
+                    name="vetPhone"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor={field.name}>
+                          {t('horseForm.vetPhone')}
+                        </FieldLabel>
+                        <Input
+                          {...field}
+                          onChange={(event) => {
+                            field.onChange(event)
+                            setValue('vetProviderId', undefined, {
+                              shouldDirty: true,
+                            })
+                          }}
+                          id={field.name}
+                          value={field.value ?? ''}
+                          disabled={disabled}
+                          aria-invalid={fieldState.invalid}
+                          aria-describedby={
+                            fieldState.invalid
+                              ? `${field.name}-error`
+                              : undefined
+                          }
+                          placeholder="+1 555 0123"
+                          autoComplete="tel"
+                          type="tel"
+                        />
+                        {fieldState.invalid && (
+                          <FieldError
+                            id={`${field.name}-error`}
+                            errors={[fieldState.error]}
+                          />
+                        )}
+                      </Field>
+                    )}
+                  />
+                </FieldGrid>
+              </CareRecordRow>
 
-          <FieldGrid>
-            <Controller
-              name="profileImage"
-              control={control}
-              render={({
-                field: { name, onBlur, onChange, ref, value },
-                fieldState,
-              }) => (
-                <FileUploadField
-                  id={`${profileImageId}-${name}`}
-                  name={name}
-                  label={t('horseForm.picture')}
-                  helpLabel={t('horseForm.pictureLabel')}
-                  help={t('horseForm.pictureHelp')}
-                  accept="image/*"
-                  kind="image"
-                  width="full"
-                  disabled={disabled}
-                  autoComplete="off"
-                  files={value ?? null}
-                  controlRef={ref}
-                  errors={fieldState.invalid ? [fieldState.error] : undefined}
-                  onBlur={onBlur}
-                  onFilesChange={onChange}
+              <CareRecordRow label={t('horseForm.farrier')}>
+                <FieldDescription>
+                  {t(
+                    contactMode === 'copied'
+                      ? 'horseForm.copiedContactHelp'
+                      : 'horseForm.savedContactHelp',
+                  )}
+                </FieldDescription>
+                <FieldGrid>
+                  <Controller
+                    name="farrierName"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor={field.name}>
+                          {t('horseForm.farrierName')}
+                        </FieldLabel>
+                        <ProviderAutocomplete
+                          id={field.name}
+                          name={field.name}
+                          value={field.value ?? ''}
+                          providers={providers.filter(
+                            (provider) => provider.type === 'farrier',
+                          )}
+                          disabled={disabled}
+                          invalid={fieldState.invalid}
+                          describedBy={
+                            fieldState.invalid
+                              ? `${field.name}-error`
+                              : undefined
+                          }
+                          inputRef={field.ref}
+                          onBlur={field.onBlur}
+                          onValueChange={(value) => {
+                            field.onChange(value)
+                            setValue('farrierProviderId', undefined, {
+                              shouldDirty: true,
+                            })
+                          }}
+                          onProviderSelect={(provider) => {
+                            setValue('farrierProviderId', provider._id, {
+                              shouldDirty: true,
+                            })
+                            setValue('farrierPhone', provider.phone ?? '', {
+                              shouldDirty: true,
+                            })
+                          }}
+                        />
+                        {fieldState.invalid && (
+                          <FieldError
+                            id={`${field.name}-error`}
+                            errors={[fieldState.error]}
+                          />
+                        )}
+                      </Field>
+                    )}
+                  />
+
+                  <Controller
+                    name="farrierPhone"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor={field.name}>
+                          {t('horseForm.farrierPhone')}
+                        </FieldLabel>
+                        <Input
+                          {...field}
+                          onChange={(event) => {
+                            field.onChange(event)
+                            setValue('farrierProviderId', undefined, {
+                              shouldDirty: true,
+                            })
+                          }}
+                          id={field.name}
+                          value={field.value ?? ''}
+                          disabled={disabled}
+                          aria-invalid={fieldState.invalid}
+                          aria-describedby={
+                            fieldState.invalid
+                              ? `${field.name}-error`
+                              : undefined
+                          }
+                          placeholder="+1 555 0456"
+                          autoComplete="tel"
+                          type="tel"
+                        />
+                        {fieldState.invalid && (
+                          <FieldError
+                            id={`${field.name}-error`}
+                            errors={[fieldState.error]}
+                          />
+                        )}
+                      </Field>
+                    )}
+                  />
+                </FieldGrid>
+              </CareRecordRow>
+
+              <CareRecordRow label={t('horseForm.emergency')}>
+                <Controller
+                  name="emergencyNotes"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        {t('horseForm.emergencyNotes')}
+                      </FieldLabel>
+
+                      <Textarea
+                        {...field}
+                        id={field.name}
+                        value={field.value ?? ''}
+                        disabled={disabled}
+                        aria-invalid={fieldState.invalid}
+                        aria-describedby={
+                          fieldState.invalid ? `${field.name}-error` : undefined
+                        }
+                        placeholder={t('horseForm.emergencyPlaceholder')}
+                        autoComplete="off"
+                      />
+
+                      {fieldState.invalid && (
+                        <FieldError
+                          id={`${field.name}-error`}
+                          errors={[fieldState.error]}
+                        />
+                      )}
+                    </Field>
+                  )}
                 />
-              )}
-            />
-          </FieldGrid>
-          <FieldGrid>
-            <Controller
-              name="breed"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>
-                    {t('horseForm.breed')}
-                  </FieldLabel>
+              </CareRecordRow>
+            </FieldGroup>
+          </FormSection>
 
-                  <HorseBreedAutocomplete
-                    inputRef={field.ref}
-                    existingBreed={existingBreed}
-                    additionalBreeds={additionalBreeds}
-                    onAddBreed={onAddBreed}
-                    id={field.name}
-                    name={field.name}
-                    value={field.value ?? ''}
-                    disabled={disabled}
-                    invalid={fieldState.invalid}
-                    describedBy={
-                      fieldState.invalid ? `${field.name}-error` : undefined
-                    }
-                    onBlur={field.onBlur}
-                    onValueChange={field.onChange}
-                  />
+          <FormSection
+            description={t('horseForm.profileHelp')}
+            invalid={profileInvalid}
+            summary={profileSummary}
+            optionalLabel={t('horseForm.optional')}
+            title={t('horseForm.profile')}
+            validationAttempt={submitCount}
+          >
+            <FieldGroup gap="compact">
+              <HorseCalendarColourField
+                control={control}
+                horses={colourRoster}
+                disabled={disabled}
+              />
+              <FieldGrid>
+                <Controller
+                  name="sex"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>{t('horseForm.sex')}</FieldLabel>
 
-                  {fieldState.invalid && (
-                    <FieldError
-                      id={`${field.name}-error`}
-                      errors={[fieldState.error]}
+                      <ChoiceButtonGroup
+                        aria-label={t('horseForm.sex')}
+                        value={field.value ?? 'unspecified'}
+                        options={sexOptions}
+                        disabled={disabled}
+                        aria-invalid={fieldState.invalid}
+                        aria-describedby={
+                          fieldState.invalid ? `${field.name}-error` : undefined
+                        }
+                        onValueChange={field.onChange}
+                      />
+
+                      {fieldState.invalid && (
+                        <FieldError
+                          id={`${field.name}-error`}
+                          errors={[fieldState.error]}
+                        />
+                      )}
+                    </Field>
+                  )}
+                />
+              </FieldGrid>
+
+              <FieldGrid>
+                <Controller
+                  name="profileImage"
+                  control={control}
+                  render={({
+                    field: { name, onBlur, onChange, ref, value },
+                    fieldState,
+                  }) => (
+                    <FileUploadField
+                      id={`${profileImageId}-${name}`}
+                      name={name}
+                      label={t('horseForm.picture')}
+                      helpLabel={t('horseForm.pictureLabel')}
+                      help={t('horseForm.pictureHelp')}
+                      accept="image/*"
+                      kind="image"
+                      width="full"
+                      disabled={disabled}
+                      autoComplete="off"
+                      files={value ?? null}
+                      controlRef={ref}
+                      errors={
+                        fieldState.invalid ? [fieldState.error] : undefined
+                      }
+                      onBlur={onBlur}
+                      onFilesChange={onChange}
                     />
                   )}
-                </Field>
-              )}
-            />
+                />
+              </FieldGrid>
+              <FieldGrid>
+                <Controller
+                  name="breed"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        {t('horseForm.breed')}
+                      </FieldLabel>
 
-            <Controller
-              name="color"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>
-                    {t('horseForm.color')}
-                  </FieldLabel>
+                      <HorseBreedAutocomplete
+                        inputRef={field.ref}
+                        existingBreed={existingBreed}
+                        additionalBreeds={additionalBreeds}
+                        onAddBreed={onAddBreed}
+                        id={field.name}
+                        name={field.name}
+                        value={field.value ?? ''}
+                        disabled={disabled}
+                        invalid={fieldState.invalid}
+                        describedBy={
+                          fieldState.invalid ? `${field.name}-error` : undefined
+                        }
+                        onBlur={field.onBlur}
+                        onValueChange={field.onChange}
+                      />
 
-                  <Input
-                    {...field}
-                    id={field.name}
-                    value={field.value ?? ''}
-                    type="text"
-                    disabled={disabled}
-                    aria-invalid={fieldState.invalid}
-                    aria-describedby={
-                      fieldState.invalid ? `${field.name}-error` : undefined
-                    }
-                    placeholder={t('horseForm.colorPlaceholder')}
-                    autoComplete="off"
-                  />
-
-                  {fieldState.invalid && (
-                    <FieldError
-                      id={`${field.name}-error`}
-                      errors={[fieldState.error]}
-                    />
+                      {fieldState.invalid && (
+                        <FieldError
+                          id={`${field.name}-error`}
+                          errors={[fieldState.error]}
+                        />
+                      )}
+                    </Field>
                   )}
-                </Field>
-              )}
-            />
-            <Controller
-              name="height"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>
-                    {t('horseForm.height')}
-                  </FieldLabel>
+                />
 
-                  <Input
-                    {...field}
-                    id={field.name}
-                    value={field.value ?? ''}
-                    type="text"
-                    disabled={disabled}
-                    aria-invalid={fieldState.invalid}
-                    aria-describedby={
-                      fieldState.invalid ? `${field.name}-error` : undefined
-                    }
-                    placeholder="16.1hh"
-                    autoComplete="off"
-                  />
+                <Controller
+                  name="color"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        {t('horseForm.color')}
+                      </FieldLabel>
 
-                  {fieldState.invalid && (
-                    <FieldError
-                      id={`${field.name}-error`}
-                      errors={[fieldState.error]}
-                    />
+                      <Input
+                        {...field}
+                        id={field.name}
+                        value={field.value ?? ''}
+                        type="text"
+                        disabled={disabled}
+                        aria-invalid={fieldState.invalid}
+                        aria-describedby={
+                          fieldState.invalid ? `${field.name}-error` : undefined
+                        }
+                        placeholder={t('horseForm.colorPlaceholder')}
+                        autoComplete="off"
+                      />
+
+                      {fieldState.invalid && (
+                        <FieldError
+                          id={`${field.name}-error`}
+                          errors={[fieldState.error]}
+                        />
+                      )}
+                    </Field>
                   )}
-                </Field>
-              )}
-            />
+                />
+                <Controller
+                  name="height"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        {t('horseForm.height')}
+                      </FieldLabel>
 
-            <Controller
-              name="discipline"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>
-                    {t('horseForm.discipline')}
-                  </FieldLabel>
+                      <Input
+                        {...field}
+                        id={field.name}
+                        value={field.value ?? ''}
+                        type="text"
+                        disabled={disabled}
+                        aria-invalid={fieldState.invalid}
+                        aria-describedby={
+                          fieldState.invalid ? `${field.name}-error` : undefined
+                        }
+                        placeholder="16.1hh"
+                        autoComplete="off"
+                      />
 
-                  <Input
-                    {...field}
-                    id={field.name}
-                    value={field.value ?? ''}
-                    type="text"
-                    disabled={disabled}
-                    aria-invalid={fieldState.invalid}
-                    aria-describedby={
-                      fieldState.invalid ? `${field.name}-error` : undefined
-                    }
-                    placeholder={t('horseForm.disciplinePlaceholder')}
-                    autoComplete="off"
-                  />
-
-                  {fieldState.invalid && (
-                    <FieldError
-                      id={`${field.name}-error`}
-                      errors={[fieldState.error]}
-                    />
+                      {fieldState.invalid && (
+                        <FieldError
+                          id={`${field.name}-error`}
+                          errors={[fieldState.error]}
+                        />
+                      )}
+                    </Field>
                   )}
-                </Field>
-              )}
-            />
-          </FieldGrid>
+                />
 
-          <FieldGrid>
-            <Controller
-              name="sire"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>
-                    {t('horseForm.sire')}
-                  </FieldLabel>
-                  <Input
-                    {...field}
-                    id={field.name}
-                    value={field.value ?? ''}
-                    disabled={disabled}
-                    aria-invalid={fieldState.invalid}
-                    aria-describedby={
-                      fieldState.invalid ? `${field.name}-error` : undefined
-                    }
-                    placeholder={t('horseForm.sirePlaceholder')}
-                    autoComplete="off"
-                  />
-                  {fieldState.invalid && (
-                    <FieldError
-                      id={`${field.name}-error`}
-                      errors={[fieldState.error]}
-                    />
+                <Controller
+                  name="discipline"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        {t('horseForm.discipline')}
+                      </FieldLabel>
+
+                      <Input
+                        {...field}
+                        id={field.name}
+                        value={field.value ?? ''}
+                        type="text"
+                        disabled={disabled}
+                        aria-invalid={fieldState.invalid}
+                        aria-describedby={
+                          fieldState.invalid ? `${field.name}-error` : undefined
+                        }
+                        placeholder={t('horseForm.disciplinePlaceholder')}
+                        autoComplete="off"
+                      />
+
+                      {fieldState.invalid && (
+                        <FieldError
+                          id={`${field.name}-error`}
+                          errors={[fieldState.error]}
+                        />
+                      )}
+                    </Field>
                   )}
-                </Field>
-              )}
-            />
+                />
+              </FieldGrid>
 
-            <Controller
-              name="dam"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>
-                    {t('horseForm.dam')}
-                  </FieldLabel>
-                  <Input
-                    {...field}
-                    id={field.name}
-                    value={field.value ?? ''}
-                    disabled={disabled}
-                    aria-invalid={fieldState.invalid}
-                    aria-describedby={
-                      fieldState.invalid ? `${field.name}-error` : undefined
-                    }
-                    placeholder={t('horseForm.damPlaceholder')}
-                    autoComplete="off"
-                  />
-                  {fieldState.invalid && (
-                    <FieldError
-                      id={`${field.name}-error`}
-                      errors={[fieldState.error]}
-                    />
+              <FieldGrid>
+                <Controller
+                  name="sire"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        {t('horseForm.sire')}
+                      </FieldLabel>
+                      <Input
+                        {...field}
+                        id={field.name}
+                        value={field.value ?? ''}
+                        disabled={disabled}
+                        aria-invalid={fieldState.invalid}
+                        aria-describedby={
+                          fieldState.invalid ? `${field.name}-error` : undefined
+                        }
+                        placeholder={t('horseForm.sirePlaceholder')}
+                        autoComplete="off"
+                      />
+                      {fieldState.invalid && (
+                        <FieldError
+                          id={`${field.name}-error`}
+                          errors={[fieldState.error]}
+                        />
+                      )}
+                    </Field>
                   )}
-                </Field>
-              )}
-            />
-          </FieldGrid>
+                />
 
-          <FieldGrid>
-            <Controller
-              name="shoeingStatus"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>{t('horseForm.shoeing')}</FieldLabel>
-
-                  <ChoiceButtonGroup
-                    aria-label={t('horseForm.shoeing')}
-                    value={field.value ?? 'unspecified'}
-                    options={shoeingOptions}
-                    disabled={disabled}
-                    aria-invalid={fieldState.invalid}
-                    aria-describedby={
-                      fieldState.invalid ? `${field.name}-error` : undefined
-                    }
-                    onValueChange={field.onChange}
-                  />
-
-                  {fieldState.invalid && (
-                    <FieldError
-                      id={`${field.name}-error`}
-                      errors={[fieldState.error]}
-                    />
+                <Controller
+                  name="dam"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        {t('horseForm.dam')}
+                      </FieldLabel>
+                      <Input
+                        {...field}
+                        id={field.name}
+                        value={field.value ?? ''}
+                        disabled={disabled}
+                        aria-invalid={fieldState.invalid}
+                        aria-describedby={
+                          fieldState.invalid ? `${field.name}-error` : undefined
+                        }
+                        placeholder={t('horseForm.damPlaceholder')}
+                        autoComplete="off"
+                      />
+                      {fieldState.invalid && (
+                        <FieldError
+                          id={`${field.name}-error`}
+                          errors={[fieldState.error]}
+                        />
+                      )}
+                    </Field>
                   )}
-                </Field>
-              )}
-            />
-          </FieldGrid>
+                />
+              </FieldGrid>
 
-          <FieldGrid>
-            <Controller
-              name="dewormingNotes"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>
-                    {t('horseForm.deworming')}
-                  </FieldLabel>
+              <FieldGrid>
+                <Controller
+                  name="shoeingStatus"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>{t('horseForm.shoeing')}</FieldLabel>
 
-                  <Textarea
-                    {...field}
-                    id={field.name}
-                    value={field.value ?? ''}
-                    disabled={disabled}
-                    aria-invalid={fieldState.invalid}
-                    aria-describedby={
-                      fieldState.invalid ? `${field.name}-error` : undefined
-                    }
-                    placeholder={t('horseForm.dewormingPlaceholder')}
-                    autoComplete="off"
-                  />
+                      <ChoiceButtonGroup
+                        aria-label={t('horseForm.shoeing')}
+                        value={field.value ?? 'unspecified'}
+                        options={shoeingOptions}
+                        disabled={disabled}
+                        aria-invalid={fieldState.invalid}
+                        aria-describedby={
+                          fieldState.invalid ? `${field.name}-error` : undefined
+                        }
+                        onValueChange={field.onChange}
+                      />
 
-                  {fieldState.invalid && (
-                    <FieldError
-                      id={`${field.name}-error`}
-                      errors={[fieldState.error]}
-                    />
+                      {fieldState.invalid && (
+                        <FieldError
+                          id={`${field.name}-error`}
+                          errors={[fieldState.error]}
+                        />
+                      )}
+                    </Field>
                   )}
-                </Field>
-              )}
-            />
+                />
+              </FieldGrid>
 
-            <HorseStringListField
-              control={control}
-              name="allergies"
-              label={t('horseForm.allergies')}
-              placeholder={t('horseForm.allergiesPlaceholder')}
-              disabled={disabled}
-            />
-          </FieldGrid>
-        </FieldGroup>
-      </FormSection>
+              <FieldGrid>
+                <Controller
+                  name="dewormingNotes"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        {t('horseForm.deworming')}
+                      </FieldLabel>
 
-      <FormSection
-        description={t('horseForm.nutritionHelp')}
-        invalid={nutritionInvalid}
-        summary={nutritionSummary}
-        optionalLabel={t('horseForm.optional')}
-        title={t('horseForm.nutrition')}
-        validationAttempt={submitCount}
-      >
-        <FieldGroup gap="compact">
-          <FieldGrid>
-            <Controller
-              name="feedingRoutine"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>
-                    {t('horseForm.feeding')}
-                  </FieldLabel>
+                      <Textarea
+                        {...field}
+                        id={field.name}
+                        value={field.value ?? ''}
+                        disabled={disabled}
+                        aria-invalid={fieldState.invalid}
+                        aria-describedby={
+                          fieldState.invalid ? `${field.name}-error` : undefined
+                        }
+                        placeholder={t('horseForm.dewormingPlaceholder')}
+                        autoComplete="off"
+                      />
 
-                  <Textarea
-                    {...field}
-                    id={field.name}
-                    value={field.value ?? ''}
-                    disabled={disabled}
-                    aria-invalid={fieldState.invalid}
-                    aria-describedby={
-                      fieldState.invalid ? `${field.name}-error` : undefined
-                    }
-                    placeholder={t('horseForm.feedingPlaceholder')}
-                    autoComplete="off"
-                  />
-
-                  {fieldState.invalid && (
-                    <FieldError
-                      id={`${field.name}-error`}
-                      errors={[fieldState.error]}
-                    />
+                      {fieldState.invalid && (
+                        <FieldError
+                          id={`${field.name}-error`}
+                          errors={[fieldState.error]}
+                        />
+                      )}
+                    </Field>
                   )}
-                </Field>
-              )}
-            />
+                />
 
-            <Controller
-              name="nutritionNotes"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>
-                    {t('horseForm.nutritionNotes')}
-                  </FieldLabel>
+                <HorseStringListField
+                  control={control}
+                  name="allergies"
+                  label={t('horseForm.allergies')}
+                  placeholder={t('horseForm.allergiesPlaceholder')}
+                  disabled={disabled}
+                />
+              </FieldGrid>
+            </FieldGroup>
+          </FormSection>
 
-                  <Textarea
-                    {...field}
-                    id={field.name}
-                    value={field.value ?? ''}
-                    disabled={disabled}
-                    aria-invalid={fieldState.invalid}
-                    aria-describedby={
-                      fieldState.invalid ? `${field.name}-error` : undefined
-                    }
-                    placeholder={t('horseForm.nutritionPlaceholder')}
-                    autoComplete="off"
-                  />
+          <FormSection
+            description={t('horseForm.nutritionHelp')}
+            invalid={nutritionInvalid}
+            summary={nutritionSummary}
+            optionalLabel={t('horseForm.optional')}
+            title={t('horseForm.nutrition')}
+            validationAttempt={submitCount}
+          >
+            <FieldGroup gap="compact">
+              <FieldGrid>
+                <Controller
+                  name="feedingRoutine"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        {t('horseForm.feeding')}
+                      </FieldLabel>
 
-                  {fieldState.invalid && (
-                    <FieldError
-                      id={`${field.name}-error`}
-                      errors={[fieldState.error]}
-                    />
+                      <Textarea
+                        {...field}
+                        id={field.name}
+                        value={field.value ?? ''}
+                        disabled={disabled}
+                        aria-invalid={fieldState.invalid}
+                        aria-describedby={
+                          fieldState.invalid ? `${field.name}-error` : undefined
+                        }
+                        placeholder={t('horseForm.feedingPlaceholder')}
+                        autoComplete="off"
+                      />
+
+                      {fieldState.invalid && (
+                        <FieldError
+                          id={`${field.name}-error`}
+                          errors={[fieldState.error]}
+                        />
+                      )}
+                    </Field>
                   )}
-                </Field>
-              )}
-            />
-          </FieldGrid>
+                />
 
-          <FieldGrid>
-            <HorseStringListField
-              control={control}
-              name="nutritionRecommended"
-              label={t('horseForm.recommended')}
-              placeholder={t('horseForm.recommendedPlaceholder')}
-              disabled={disabled}
-            />
+                <Controller
+                  name="nutritionNotes"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        {t('horseForm.nutritionNotes')}
+                      </FieldLabel>
 
-            <HorseStringListField
-              control={control}
-              name="nutritionAvoid"
-              label={t('horseForm.avoid')}
-              placeholder={t('horseForm.avoidPlaceholder')}
-              disabled={disabled}
-            />
-          </FieldGrid>
-        </FieldGroup>
-      </FormSection>
+                      <Textarea
+                        {...field}
+                        id={field.name}
+                        value={field.value ?? ''}
+                        disabled={disabled}
+                        aria-invalid={fieldState.invalid}
+                        aria-describedby={
+                          fieldState.invalid ? `${field.name}-error` : undefined
+                        }
+                        placeholder={t('horseForm.nutritionPlaceholder')}
+                        autoComplete="off"
+                      />
+
+                      {fieldState.invalid && (
+                        <FieldError
+                          id={`${field.name}-error`}
+                          errors={[fieldState.error]}
+                        />
+                      )}
+                    </Field>
+                  )}
+                />
+              </FieldGrid>
+
+              <FieldGrid>
+                <HorseStringListField
+                  control={control}
+                  name="nutritionRecommended"
+                  label={t('horseForm.recommended')}
+                  placeholder={t('horseForm.recommendedPlaceholder')}
+                  disabled={disabled}
+                />
+
+                <HorseStringListField
+                  control={control}
+                  name="nutritionAvoid"
+                  label={t('horseForm.avoid')}
+                  placeholder={t('horseForm.avoidPlaceholder')}
+                  disabled={disabled}
+                />
+              </FieldGrid>
+            </FieldGroup>
+          </FormSection>
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          {locale === 'pl'
+            ? 'Zdjęcie, dane kontaktowe i profil opieki możesz uzupełnić po zapisaniu konia.'
+            : 'Add a photo, contact details and care profile after saving your horse.'}
+        </p>
+      )}
     </>
   )
 }

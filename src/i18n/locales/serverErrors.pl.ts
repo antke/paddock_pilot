@@ -2,6 +2,8 @@ export const serverErrors = {
   futureTraining: 'Nie można oznaczyć przyszłego treningu jako ukończonego.',
   chooseTrainingActivities:
     'Wybierz rodzaj pracy wykonywanej podczas treningu.',
+  trainingRequiresPermission:
+    'Ukończony trening możesz zapisać tylko dla koni, którymi możesz zarządzać. Usuń pozostałe konie lub zaplanuj trening.',
   eventNeedsOwnHorse:
     'Wydarzenie utworzone przez członka stajni musi obejmować co najmniej jednego z jego koni.',
   eventRetainsOwnHorse:
@@ -12,6 +14,7 @@ export const serverErrors = {
     'Ten trening ma już zapisany przebieg. Zachowaj jego harmonogram, a dla innych terminów utwórz nowy trening.',
   trainingHorseLocked:
     'Nie można usunąć konia z tego treningu, ponieważ zapisano już jego przebieg.',
+  trainingHorseConflict: 'Wybrany koń ma już zapisany trening w tej sesji.',
   trainingNotFound: 'Nie znaleziono treningu.',
   trainingHorseUnconfirmed:
     'Udział tego konia w tym treningu nie został potwierdzony.',

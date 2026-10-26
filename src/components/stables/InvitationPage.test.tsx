@@ -44,6 +44,7 @@ const state = vi.hoisted(() => ({
 }))
 vi.mock('convex/react', () => ({
   useAction: () => state.sync,
+  useQuery: () => [],
   useMutation: (reference: Parameters<typeof getFunctionName>[0]) =>
     getFunctionName(reference) === 'stableInvitations:accept'
       ? state.accept
