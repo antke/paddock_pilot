@@ -1,3 +1,6 @@
+import { PeopleSelection } from './PeopleSelection'
+import type { PersonOption } from './PeopleSelection'
+import { ALL_DAY_TIME, isAllDay } from 'shared/events/eventTime'
 import { Badge } from '#/components/ui/badge'
 import type { PersonNameSuggestion } from '#/components/forms/PersonNameAutocomplete'
 import { localeInstances } from '#/i18n/resources'
@@ -36,7 +39,7 @@ import { Textarea } from '#/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group'
 import { TextLabel } from '#/components/ui/text-label'
 import type { Id } from 'convex/_generated/dataModel'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Controller, useFormState, useWatch } from 'react-hook-form'
 import type { Control, UseFormSetValue } from 'react-hook-form'
 import {
@@ -57,6 +60,7 @@ import type { EventFormInput, EventFormSchema } from './eventFormSchema'
 import { ProviderAutocomplete } from './ProviderAutocomplete'
 
 type HorseOption = {
+  ownerId?: string
   requiresApproval?: boolean
   _id: Id<'horses'>
   name: string
@@ -74,6 +78,7 @@ type ProviderOption = {
 }
 
 type Props = {
+  people?: PersonOption[]
   allowTypeChange?: boolean
   onTypeChange?: (type: EventType) => void
   control: Control<EventFormInput, unknown, EventFormSchema>
@@ -523,6 +528,7 @@ export function EventFormFields({
   control,
   setValue,
   horses,
+  people,
   providers = [],
   riderSuggestions,
   disabled = false,
@@ -532,6 +538,8 @@ export function EventFormFields({
   scheduleOnly = false,
   eventContext = 'stable',
 }: Props) {
+  const selectedPeople = useWatch({ control, name: 'peopleIds' }) ?? []
+  const timedValue = useRef('')
   const t = useT()
   const { locale } = useLocale()
 
@@ -591,7 +599,7 @@ export function EventFormFields({
     ? recurrencePreview || t('eventForm.repeating')
     : t('eventForm.noRepeat')
   const essentialsInvalid = Boolean(
-    (!trainingMode && errors.title) ||
+    errors.title ||
     errors.type ||
     errors.date ||
     errors.time ||
@@ -749,14 +757,38 @@ export function EventFormFields({
         control={control}
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor={field.name}>{t('eventForm.time')}</FieldLabel>
+            <FieldLabelRow className="justify-between gap-3">
+              <FieldLabel htmlFor={field.name}>
+                {t('eventForm.time')}
+              </FieldLabel>
+              <FieldInlineControl>
+                <FieldLabel htmlFor={`${field.name}-all-day`} size="compact">
+                  {t('events.wholeDay')}
+                </FieldLabel>
+                <Switch
+                  id={`${field.name}-all-day`}
+                  aria-label={t('events.wholeDay')}
+                  checked={isAllDay(field.value)}
+                  disabled={disabled}
+                  onCheckedChange={(checked) => {
+                    if (checked) timedValue.current = field.value
+                    setValue(
+                      'time',
+                      checked ? ALL_DAY_TIME : timedValue.current,
+                      { shouldDirty: true, shouldValidate: true },
+                    )
+                  }}
+                />
+              </FieldInlineControl>
+            </FieldLabelRow>
 
             <Input
-              aria-required={true}
               {...field}
+              value={isAllDay(field.value) ? '' : field.value}
+              aria-required={!isAllDay(field.value)}
               id={field.name}
               type="time"
-              disabled={disabled}
+              disabled={disabled || isAllDay(field.value)}
               aria-invalid={fieldState.invalid}
               aria-describedby={
                 fieldState.invalid ? 'event-time-error' : undefined
@@ -845,6 +877,18 @@ export function EventFormFields({
                   disabled={disabled}
                   invalid={fieldState.invalid}
                   onCheckedChange={(isChecked) => {
+                    if (
+                      isChecked &&
+                      horse.ownerId &&
+                      people?.some((p) => p.id === horse.ownerId) &&
+                      !selectedPeople.includes(horse.ownerId)
+                    ) {
+                      setValue(
+                        'peopleIds',
+                        [...selectedPeople, horse.ownerId],
+                        { shouldDirty: true },
+                      )
+                    }
                     field.onChange(
                       isChecked
                         ? [...field.value, horseId]
@@ -862,6 +906,25 @@ export function EventFormFields({
         </FieldSet>
       )}
     />
+  )
+  const participantFields = (
+    <>
+      {horseFields}
+      {people && (
+        <Controller
+          name="peopleIds"
+          control={control}
+          render={({ field }) => (
+            <PeopleSelection
+              people={people}
+              value={field.value ?? []}
+              onChange={field.onChange}
+              disabled={disabled}
+            />
+          )}
+        />
+      )}
+    </>
   )
   const outcomeField = (
     <Controller
@@ -922,9 +985,7 @@ export function EventFormFields({
         }
         validationAttempt={submitCount}
       >
-        {horseFields}
-        {trainingMode && dateFields}
-        {!trainingMode && titleField}
+        {titleField}
 
         {(!trainingMode || allowTypeChange) && (
           <Controller
@@ -979,14 +1040,14 @@ export function EventFormFields({
           />
         )}
 
-        {!trainingMode && dateFields}
+        {dateFields}
+        {participantFields}
       </FormSection>
 
       <FormSection
         title={t('eventForm.additionalDetails')}
         optionalLabel={t('eventForm.optional')}
         invalid={Boolean(
-          (trainingMode && errors.title) ||
           errors.endDate ||
           errors.status ||
           errors.training?.durationMinutes ||
@@ -996,7 +1057,6 @@ export function EventFormFields({
         )}
         validationAttempt={submitCount}
       >
-        {trainingMode && titleField}
         {trainingMode && !scheduleOnly && (
           <TrainingFormFields
             control={control}

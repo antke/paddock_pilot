@@ -1,3 +1,4 @@
+import { isAllDay } from 'shared/events/eventTime'
 import type { Doc } from 'convex/_generated/dataModel'
 import type { Locale } from 'shared/i18n/locale'
 import { formatMediumDateKey } from '#/lib/dateDisplay'
@@ -17,16 +18,23 @@ export function formatEventDateRange(
   return `${formatEventDate(date, locale)} – ${formatEventDate(endDate, locale)}`
 }
 
+export function formatEventTime(time: string, locale: Locale = 'en') {
+  return isAllDay(time) ? localeInstances[locale].t('events.wholeDay') : time
+}
+
 export function formatEventDateTime(
   date: string,
   time: string,
   endDate?: string,
   locale: Locale = 'en',
 ) {
-  return localeInstances[locale].t('events.dateTime', {
-    date: formatEventDateRange(date, endDate, locale),
-    time,
-  })
+  return localeInstances[locale].t(
+    isAllDay(time) ? 'events.dateWholeDay' : 'events.dateTime',
+    {
+      date: formatEventDateRange(date, endDate, locale),
+      time: formatEventTime(time, locale),
+    },
+  )
 }
 
 export function formatEventType(

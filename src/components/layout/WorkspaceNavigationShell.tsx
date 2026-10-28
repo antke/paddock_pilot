@@ -45,7 +45,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '#/components/ui/dropdown-menu'
-import { useT, useLocale } from '#/i18n/LocaleProvider'
+import { useT } from '#/i18n/LocaleProvider'
 import HeaderUser from '#/integrations/clerk/header-user'
 import { DrawerAccount } from '#/integrations/clerk/DrawerAccount'
 import { cn } from '#/lib/utils'
@@ -230,7 +230,7 @@ export function WorkspaceNavigationView({
     }
   }
 
-  const workspace = (
+  const workspace = stableId ? (
     <WorkspacePicker
       stables={stables}
       stableId={stableId}
@@ -238,7 +238,7 @@ export function WorkspaceNavigationView({
       loading={isLoadingStables}
       onNavigate={() => setOpen(false)}
     />
-  )
+  ) : null
   const navigation = (
     <WorkspaceLinks groups={groups} onNavigate={() => setOpen(false)} />
   )
@@ -263,9 +263,13 @@ export function WorkspaceNavigationView({
         data-collapsed={collapsed}
       >
         {!collapsed && (
-          <aside data-slot="app-sidebar" aria-label={t('navigationShell.menu')}>
+          <aside
+            data-slot="app-sidebar"
+            data-local-stable={Boolean(stableId)}
+            aria-label={t('navigationShell.menu')}
+          >
             <div className="flex items-center justify-between gap-1">
-              <WorkspaceBrand stableId={stableId} />
+              <WorkspaceBrand />
               <Button
                 ref={collapseTrigger}
                 variant="ghost"
@@ -306,13 +310,15 @@ export function WorkspaceNavigationView({
                 </span>
               </DialogPrimitive.Trigger>
             )}
-            <WorkspaceBrand stableId={stableId} />
-            <span
-              className="ml-3 hidden min-w-0 truncate border-l border-border-subtle pl-4 text-sm text-muted-foreground md:block"
-              title={name}
-            >
-              {name}
-            </span>
+            <WorkspaceBrand />
+            {stableId && (
+              <span
+                className="ml-3 hidden min-w-0 truncate border-l border-border-subtle pl-4 text-sm text-muted-foreground md:block"
+                title={name}
+              >
+                {name}
+              </span>
+            )}
             <div className="ml-auto shrink-0">{compactAccountActions}</div>
           </div>
         </AppHeader>
@@ -328,6 +334,7 @@ export function WorkspaceNavigationView({
         <DialogPrimitive.Viewport className="app-workspace-menu-viewport fixed inset-0 z-50 flex items-stretch justify-start overflow-hidden">
           <DialogPrimitive.Popup
             data-slot="workspace-drawer"
+            data-local-stable={Boolean(stableId)}
             className="app-workspace-drawer bg-sidebar text-sidebar-foreground outline-none"
             finalFocus={() => {
               if (!collapsed && window.matchMedia('(min-width: 64rem)').matches)
@@ -357,12 +364,7 @@ export function WorkspaceNavigationView({
             <DialogDescription className="sr-only">
               {t('navigationShell.menuDescription')}
             </DialogDescription>
-            <div className="grid min-w-0 gap-2">
-              <span className="text-sm font-medium text-muted-foreground">
-                {t('navigationShell.workspace')}
-              </span>
-              {workspace}
-            </div>
+            {workspace}
             <div
               data-slot="workspace-drawer-scroll"
               className="app-workspace-drawer-scroll"
@@ -392,11 +394,10 @@ export function WorkspaceNavigationView({
   )
 }
 
-function WorkspaceBrand({ stableId }: { stableId?: string }) {
+function WorkspaceBrand() {
   return (
     <Link
-      to={stableId ? '/stables/$stableId' : '/'}
-      params={stableId ? { stableId } : {}}
+      to="/"
       activeOptions={{ exact: true }}
       className="app-control-focus flex min-h-11 min-w-0 shrink-0 items-center rounded-control"
       aria-label="Paddock Pilot"
@@ -423,7 +424,6 @@ function WorkspacePicker({
 }) {
   const t = useT()
   const navigate = useNavigate()
-  const { locale } = useLocale()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -431,7 +431,7 @@ function WorkspacePicker({
           <Button
             variant="secondary"
             className="min-h-11 min-w-0 w-full justify-between gap-2 text-left font-medium"
-            aria-label={t('navigationShell.currentWorkspaceName', { name })}
+            aria-label={t('navigationShell.currentStableName', { name })}
             disabled={loading}
           />
         }
@@ -445,31 +445,18 @@ function WorkspacePicker({
       >
         <DropdownMenuGroup>
           <DropdownMenuLabel>
-            {t('navigationShell.switchWorkspace')}
+            {t('navigationShell.switchStable')}
           </DropdownMenuLabel>
-          <p className="px-2 pb-3 text-xs text-muted-foreground">
-            {locale === 'pl'
-              ? 'Osobiste: Twoje konie i ich wpisy. Stajnia: wspólne konie i udostępnione wpisy. Zmiana widoku nie zmienia dostępu.'
-              : 'Personal: your horses and their records. Stable: the roster and shared records. Switching views does not change access.'}
-          </p>
           <DropdownMenuRadioGroup
-            value={stableId ?? 'personal'}
+            value={stableId}
             onValueChange={(value) => {
               onNavigate()
-              if (value === 'personal') void navigate({ to: '/' })
-              else
-                void navigate({
-                  to: '/stables/$stableId',
-                  params: { stableId: value },
-                })
+              void navigate({
+                to: '/stables/$stableId',
+                params: { stableId: value },
+              })
             }}
           >
-            <DropdownMenuRadioItem
-              value="personal"
-              className="min-h-11 text-sm"
-            >
-              {t('navigationShell.personal')}
-            </DropdownMenuRadioItem>
             {stables.map((stable) => (
               <DropdownMenuRadioItem
                 key={stable._id}

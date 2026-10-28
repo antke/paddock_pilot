@@ -1,3 +1,5 @@
+import { isAllDay } from 'shared/events/eventTime'
+import { formatEventTime } from '#/components/events/eventDisplay'
 import type { Locale } from 'shared/i18n/locale'
 import { localeInstances } from '#/i18n/resources'
 import { dateKeyToDate, formatDateKey } from '#/lib/dateDisplay'
@@ -36,6 +38,7 @@ export function formatTrainingTimeRange(
   locale: Locale = 'en',
 ) {
   const t = localeInstances[locale].t
+  if (isAllDay(start)) return formatEventTime(start, locale)
   if (!durationMinutes) return t('training.endUnset', { start })
   const [hours, minutes] = start.split(':').map(Number)
   const endMinutes = hours * 60 + minutes + durationMinutes

@@ -59,7 +59,7 @@ const pl: typeof en = {
     'Nie udało się odpowiedzieć. Zaproszenie mogło się zmienić. Spróbuj ponownie.',
   title: 'Powiadomienia',
   description:
-    'Zaproszenia i aktualizacje z przestrzeni osobistej i wszystkich Twoich stajni.',
+    'Zaproszenia i aktualizacje z przestrzeni prywatnej i wszystkich Twoich stajni.',
   unread: 'Nieprzeczytane',
   all: 'Wszystkie',
   decisions: 'Wymagają decyzji',

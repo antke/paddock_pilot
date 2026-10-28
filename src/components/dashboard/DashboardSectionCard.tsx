@@ -22,6 +22,7 @@ type DashboardSectionCardProps = Omit<
 > &
   Pick<
     DashboardSectionHeaderProps,
+    | 'titleSupplement'
     | 'actions'
     | 'actionsClassName'
     | 'as'
@@ -118,6 +119,7 @@ export function DashboardSectionCard({
   surface = 'panel',
   size = 'panel',
   title,
+  titleSupplement,
   titleClassName,
   width = 'auto',
   ...props
@@ -126,6 +128,7 @@ export function DashboardSectionCard({
   const hasFooter = footer !== undefined && footer !== null
   const hasHeader =
     headerContent !== undefined ||
+    titleSupplement !== undefined ||
     title !== undefined ||
     description !== undefined ||
     actions !== undefined ||
@@ -146,6 +149,7 @@ export function DashboardSectionCard({
         <CardHeader className={headerClassName}>
           {headerContent ?? (
             <DashboardSectionHeader
+              titleSupplement={titleSupplement}
               actions={actions}
               actionsClassName={actionsClassName}
               as={as}

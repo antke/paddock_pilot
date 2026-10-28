@@ -103,7 +103,7 @@ describe('FormsPageLab', () => {
     fireEvent.change(screen.getByLabelText('Sample form'), {
       target: { value: 'create' },
     })
-    expect(screen.getByRole('button', { name: /^Create in / })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Create event' })).toBeTruthy()
     expect(
       screen.getByLabelText<HTMLInputElement>('Title', { exact: true }).value,
     ).toBe('')

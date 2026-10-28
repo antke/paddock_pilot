@@ -90,3 +90,8 @@ describe('training calendar', () => {
     ).toEqual([])
   })
 })
+
+it('does not calculate an end time for a whole-day session, even with a recorded duration', () => {
+  expect(formatTrainingTimeRange('all-day', 60)).toBe('Whole day')
+  expect(formatTrainingTimeRange('all-day', undefined, 'pl')).toBe('Cały dzień')
+})

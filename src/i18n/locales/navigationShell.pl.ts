@@ -1,4 +1,8 @@
 export const navigationShell = {
+  stableOverview: 'Przegląd stajni',
+  stableHorses: 'Konie w stajni',
+  currentStableName: 'Obecna stajnia: {{name}}',
+  switchStable: 'Otwórz stajnię',
   menu: 'Menu',
   mobileHome: 'Start',
   mobileTraining: 'Treningi',
@@ -6,7 +10,7 @@ export const navigationShell = {
   closeMenu: 'Zamknij menu nawigacji',
   collapseSidebar: 'Zwiń panel boczny',
   expandSidebar: 'Rozwiń panel boczny',
-  personal: 'Osobista',
+  personal: 'Prywatna',
   workspace: 'Przestrzeń robocza',
   currentWorkspaceName: 'Obecna przestrzeń: {{name}}',
   dailyWork: 'Codzienna praca',

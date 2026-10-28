@@ -1,5 +1,5 @@
-import { Select } from '#/components/ui/select'
-import { Field, FieldLabel, FieldDescription } from '#/components/ui/field'
+import { CalendarSourceChoices } from '#/components/events/CalendarSourceChoices'
+import { Field, FieldDescription } from '#/components/ui/field'
 import {
   AlertDialog,
   AlertDialogContent,
@@ -19,7 +19,7 @@ import { NewRecordAudience } from '#/components/sharing/RecordAudience'
 import { getUserFacingErrorCode } from 'shared/i18n/errors'
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { createEventSchemas } from 'shared/events/eventSchema'
-import { useT } from '#/i18n/LocaleProvider'
+import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { useId, useRef, useState } from 'react'
 import type { ComponentProps } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -40,8 +40,13 @@ import { getEventEditorDefaults } from './eventEditorValues'
 import { useMobileTaskReturn } from '#/components/layout/mobileTaskNavigation'
 
 type Props = {
+  eventId?: Id<'events'>
+  people?: ComponentProps<typeof EventFormFields>['people']
   onDestinationChange?: (stableId: string | undefined) => void
-  destinations?: FunctionReturnType<typeof api.events.creationOptions>
+  destinations?: Omit<
+    FunctionReturnType<typeof api.events.creationOptions>,
+    'people'
+  > & { people?: ComponentProps<typeof EventFormFields>['people'] }
   mode: 'create' | 'edit'
   audienceEnabled?: boolean
   scheduleOnly?: boolean
@@ -69,6 +74,7 @@ export function EventEditor({
   feature = 'events',
   initialValues,
   horses,
+  people,
   providers,
   riderSuggestions,
   onSave,
@@ -78,9 +84,11 @@ export function EventEditor({
   completionMessage,
 }: Props) {
   const t = useT()
+  const { locale } = useLocale()
+  const pl = locale === 'pl'
 
   const [selectedType, setSelectedType] = useState(initialValues.type)
-  const [switchTo, setSwitchTo] = useState<string | null>(null)
+  const [switchTo, setSwitchTo] = useState<string[] | null>(null)
   const isTraining = feature === 'training' || selectedType === 'training'
   const returnFromTask = useMobileTaskReturn(
     initialValues.stableId
@@ -96,8 +104,41 @@ export function EventEditor({
   )
   const formId = useId()
   const requestId = useRef(createRequestId())
+  const initialPeople =
+    mode === 'create'
+      ? [
+          ...new Set([
+            ...(initialValues.peopleIds ?? []),
+            ...[
+              ...horses,
+              ...(destinations?.personal ?? []),
+              ...(destinations?.stables.flatMap((s) => s.horses) ?? []),
+            ]
+              .filter(
+                (h) =>
+                  initialValues.horseIds.includes(h._id) &&
+                  h.ownerId &&
+                  (people ?? destinations?.people)?.some(
+                    (p) => p.id === h.ownerId,
+                  ),
+              )
+              .map((h) => h.ownerId!),
+          ]),
+        ]
+      : initialValues.peopleIds
+  const seededValues = { ...initialValues, peopleIds: initialPeople }
   const initialDraft = useRef(
-    getEventEditorDefaults(initialValues, isTraining && !scheduleOnly),
+    getEventEditorDefaults(
+      destinations
+        ? {
+            ...seededValues,
+            sharedStableIds:
+              initialValues.sharedStableIds ??
+              (initialValues.stableId ? [initialValues.stableId] : []),
+          }
+        : seededValues,
+      isTraining && !scheduleOnly,
+    ),
   )
   const resolve = zodResolver(eventFormSchema)
   const form = useForm<EventFormInput, unknown, EventFormSchema>({
@@ -119,34 +160,84 @@ export function EventEditor({
     defaultValues: initialDraft.current,
   })
   const currentDraft = useWatch({ control: form.control })
-  const destination = currentDraft.stableId ?? ''
-  const destinationHorses = (value: string) =>
-    value
-      ? (destinations?.stables.find((stable) => stable.id === value)?.horses ??
-        [])
-      : (destinations?.personal ?? [])
-  const availableHorses = destinations ? destinationHorses(destination) : horses
-  const selectedHorses = availableHorses.filter((h) =>
-    currentDraft.horseIds?.includes(h._id),
+  const selectedStableIds = (currentDraft.sharedStableIds ?? []).filter(
+    (id): id is string => Boolean(id),
+  )
+  const destinationHorses = (ids: string[]) => [
+    ...new Map(
+      [
+        ...(destinations?.personal ?? []),
+        ...(destinations?.stables
+          .filter((stable) => ids.includes(stable.id))
+          .flatMap((stable) => stable.horses) ?? []),
+      ].map((horse) => [horse._id, horse]),
+    ).values(),
+  ]
+  const allPeople = people ?? destinations?.people
+  const availableHorses = (
+    destinations ? destinationHorses(selectedStableIds) : horses
+  ).map((horse) => ({
+    ...horse,
+    ownerName:
+      allPeople?.find((person) => person.id === horse.ownerId)?.name ??
+      horse.ownerName,
+  }))
+  const availablePeople = allPeople
+    ?.filter(
+      (person) =>
+        !destinations ||
+        person.personal ||
+        person.stableIds?.some((id) => selectedStableIds.includes(id)) ||
+        availableHorses.some((horse) => horse.ownerId === person.id) ||
+        currentDraft.peopleIds?.includes(person.id) ||
+        (person.personal === undefined && person.stableIds === undefined),
+    )
+    .map((person) => ({
+      ...person,
+      horseNames: availableHorses
+        .filter((horse) => horse.ownerId === person.id)
+        .map((horse) => getHorseDisplayName(horse) ?? horse.name),
+    }))
+  const selectedHorses = availableHorses.filter((horse) =>
+    currentDraft.horseIds?.includes(horse._id),
   )
   const invitationCount = selectedHorses.filter(
-    (h) => h.requiresApproval,
+    (horse) => horse.requiresApproval,
   ).length
+  const needsStablePermission =
+    destinations &&
+    selectedHorses.some(
+      (horse) =>
+        !destinations.personal.some(
+          (personal) =>
+            personal._id === horse._id && personal.canShareAcrossStables,
+        ),
+    )
+  const invalidSharing = Boolean(
+    needsStablePermission &&
+    (selectedStableIds.length !== 1 ||
+      selectedHorses.some(
+        (horse) =>
+          !destinations?.stables
+            .find((stable) => stable.id === selectedStableIds[0])
+            ?.horses.some((candidate) => candidate._id === horse._id),
+      )),
+  )
   const incompatible =
     switchTo === null
       ? []
-      : availableHorses.filter(
-          (h) =>
-            currentDraft.horseIds?.includes(h._id) &&
-            !destinationHorses(switchTo).some((next) => next._id === h._id),
+      : selectedHorses.filter(
+          (horse) =>
+            !destinationHorses(switchTo).some((next) => next._id === horse._id),
         )
-  const switchDestination = (value: string) => {
-    form.setValue('stableId', value || undefined, { shouldDirty: true })
-    onDestinationChange?.(value || undefined)
+  const switchDestination = (ids: string[]) => {
+    form.setValue('sharedStableIds', ids, { shouldDirty: true })
+    form.setValue('stableId', ids[0], { shouldDirty: true })
+    onDestinationChange?.(ids[0])
     form.setValue(
       'horseIds',
       (form.getValues('horseIds') ?? []).filter((id) =>
-        destinationHorses(value).some((h) => h._id === id),
+        destinationHorses(ids).some((horse) => horse._id === id),
       ),
       { shouldDirty: true },
     )
@@ -261,7 +352,7 @@ export function EventEditor({
         ) : (
           <RouteFormActions
             isSubmitting={pending}
-            disabled={Boolean(recording && invitationCount)}
+            disabled={invalidSharing || Boolean(recording && invitationCount)}
             onReset={() => {
               if (pending) return
               form.reset()
@@ -282,31 +373,17 @@ export function EventEditor({
                   }
                 : undefined
             }
-            submitLabel={
-              destinations && mode === 'create'
-                ? destination
-                  ? t('eventEditor.createStable', {
-                      stable:
-                        destinations.stables.find((s) => s.id === destination)
-                          ?.name ?? '',
-                    })
-                  : t(
-                      isTraining
-                        ? 'eventEditor.createPrivateTraining'
-                        : 'eventEditor.createPrivateEvent',
-                    )
-                : t(
-                    isTraining
-                      ? mode === 'create'
-                        ? recording
-                          ? 'trainingViews.saveRecord'
-                          : 'eventEditor.createTraining'
-                        : 'eventEditor.updateTraining'
-                      : mode === 'create'
-                        ? 'eventEditor.createEvent'
-                        : 'eventEditor.updateEvent',
-                  )
-            }
+            submitLabel={t(
+              isTraining
+                ? mode === 'create'
+                  ? recording
+                    ? 'trainingViews.saveRecord'
+                    : 'eventEditor.createTraining'
+                  : 'eventEditor.updateTraining'
+                : mode === 'create'
+                  ? 'eventEditor.createEvent'
+                  : 'eventEditor.updateEvent',
+            )}
             submittingLabel={
               mode === 'create' && !recording
                 ? t('eventEditor.creating')
@@ -324,33 +401,37 @@ export function EventEditor({
       />
       {destinations && mode === 'create' && (
         <Field>
-          <FieldLabel htmlFor={`${formId}-destination`}>
-            {t('eventEditor.createIn')}
-          </FieldLabel>
-          <Select
-            id={`${formId}-destination`}
-            value={destination}
+          <CalendarSourceChoices
+            label={t('eventEditor.createIn')}
+            choices={[
+              {
+                id: 'mine',
+                name: pl ? 'Mój kalendarz' : 'My calendar',
+                disabled: true,
+              },
+              ...destinations.stables.map((stable) => ({
+                id: stable.id,
+                name: stable.name,
+              })),
+            ]}
+            value={[
+              ...(needsStablePermission ? [] : ['mine']),
+              ...selectedStableIds,
+            ]}
             disabled={pending || save.acknowledged}
-            aria-describedby={`${formId}-visibility`}
-            onChange={(event) => {
-              const next = event.target.value
+            describedBy={`${formId}-visibility`}
+            onChange={(selection) => {
+              const next = selection.filter((id) => id !== 'mine')
               const conflicts = (form.getValues('horseIds') ?? []).some(
                 (id) => !destinationHorses(next).some((h) => h._id === id),
               )
               if (conflicts) setSwitchTo(next)
               else switchDestination(next)
             }}
-          >
-            <option value="">{t('eventEditor.personal')}</option>
-            {destinations.stables.map((stable) => (
-              <option key={stable.id} value={stable.id}>
-                {stable.name}
-              </option>
-            ))}
-          </Select>
+          />
           <FieldDescription id={`${formId}-visibility`}>
             {t(
-              destination
+              selectedStableIds.length
                 ? 'eventEditor.stableHelp'
                 : 'eventEditor.personalHelp',
             )}
@@ -417,7 +498,11 @@ export function EventEditor({
       ) : null}
       <EventFormFields
         eventContext={
-          destinations ? (destination ? 'stable' : 'personal') : eventContext
+          destinations
+            ? selectedStableIds.length
+              ? 'stable'
+              : 'personal'
+            : eventContext
         }
         allowTypeChange={feature === 'events' && mode === 'create'}
         onTypeChange={setSelectedType}
@@ -426,6 +511,7 @@ export function EventEditor({
         control={form.control}
         setValue={form.setValue}
         horses={availableHorses}
+        people={availablePeople}
         providers={providers}
         riderSuggestions={riderSuggestions}
         disabled={pending || save.acknowledged}
@@ -436,6 +522,13 @@ export function EventEditor({
             confirmed: selectedHorses.length - invitationCount,
             invited: invitationCount,
           })}
+        </p>
+      )}
+      {invalidSharing && (
+        <p role="alert" className="text-sm text-destructive">
+          {pl
+            ? 'Udostępnianie kilku stajniom wymaga uprawnień właściciela lub opiekuna z prawem edycji do każdego konia. Dla pozostałych koni wybierz tylko ich stajnię.'
+            : 'Sharing across stables requires owner or editor access to every horse. For other horses, select only their stable.'}
         </p>
       )}
       {recording && invitationCount > 0 && (

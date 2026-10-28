@@ -111,9 +111,10 @@ describe('personal upcoming appointments', () => {
   })
 })
 
-it('keeps calendar links bookmarkable and defaults unsupported views to the full list', () => {
+it('keeps explicit calendar and list links bookmarkable and defaults unsupported views', () => {
   expect(parseAppointmentSearch({ view: 'calendar' })).toEqual({
     view: 'calendar',
   })
+  expect(parseAppointmentSearch({ view: 'list' })).toEqual({ view: 'list' })
   expect(parseAppointmentSearch({ view: 'unknown' })).toEqual({})
 })

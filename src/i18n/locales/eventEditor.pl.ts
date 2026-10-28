@@ -1,20 +1,20 @@
 export const eventEditor = {
-  createIn: 'Utwórz w',
-  personal: 'Osobiste',
+  createIn: 'Udostępnianie',
+  personal: 'Prywatna',
   personalHelp:
     'Widoczne tylko dla właścicieli wybranych koni i upoważnionych opiekunów. Nie jest udostępniane stajni.',
   stableHelp:
-    'Pojawi się w kalendarzu tej stajni. Członkowie widzą termin, a administrator stajni może przeglądać szczegóły i nimi zarządzać.',
+    'Wpis pojawi się w wybranych stajniach. Właściciele i uprawnieni opiekunowie zachowują dostęp. Członkowie widzą harmonogram i status, a administratorzy udostępnione szczegóły. Udostępnienie nie daje dostępu do innych wpisów konia.',
   requiresApproval: 'Wymaga akceptacji',
   approvalHelp:
     'Właściciel konia, opiekun z prawem edycji lub administrator stajni musi zaakceptować zaproszenie.',
   summary:
     'Konie dodane od razu: {{confirmed}} · Konie do zaproszenia: {{invited}}',
-  switchTitle: 'Usunąć konie przed zmianą?',
+  switchTitle: 'Usunąć konie z tego wpisu?',
   switchHelp:
-    'Te konie nie są dostępne w wybranej przestrzeni: {{horses}}. Pozostałe dane formularza zostaną zachowane.',
-  switchConfirm: 'Usuń konie i zmień przestrzeń',
-  keepSpace: 'Zostań w tej przestrzeni',
+    'Te konie wymagają kalendarza stajni, który odznaczasz: {{horses}}. Pozostała część wpisu zostanie zachowana.',
+  switchConfirm: 'Usuń konie i kontynuuj',
+  keepSpace: 'Zachowaj wybrane kalendarze',
   createPrivateEvent: 'Utwórz prywatne wydarzenie',
   createPrivateTraining: 'Utwórz prywatny trening',
   createStable: 'Utwórz w: {{stable}}',

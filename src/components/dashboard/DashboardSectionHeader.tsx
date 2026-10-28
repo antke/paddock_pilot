@@ -12,6 +12,7 @@ type DashboardSectionHeaderDescriptionWidth = 'default' | 'narrow'
 type DashboardSectionHeaderTitleStyle = 'ui' | 'display'
 
 type DashboardSectionHeaderProps = {
+  titleSupplement?: ReactNode
   title?: ReactNode
   actions?: ReactNode
   actionsClassName?: string
@@ -31,6 +32,7 @@ type DashboardSectionHeaderProps = {
 
 export function DashboardSectionHeader({
   title,
+  titleSupplement,
   actions,
   actionsClassName,
   as,
@@ -88,6 +90,7 @@ export function DashboardSectionHeader({
           </Heading>
         )}
 
+        {titleSupplement}
         {description && (
           <p
             className={cn(

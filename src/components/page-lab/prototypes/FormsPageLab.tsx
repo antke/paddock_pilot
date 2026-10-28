@@ -227,9 +227,19 @@ function LocalEventEditor({
         destinations={
           mode === 'create'
             ? {
-                personal: data.horses
-                  .slice(0, 1)
-                  .map((h) => ({ ...h, requiresApproval: false })),
+                people: [
+                  {
+                    id: data.horses[0]?.ownerId ?? 'sample-person',
+                    name: 'Anna Kowalska',
+                  },
+                  { id: 'sample-rider', name: 'Marek Nowak' },
+                  { id: 'sample-guest', name: 'Julia Wiśniewska' },
+                ],
+                personal: data.horses.slice(0, 1).map((h) => ({
+                  ...h,
+                  requiresApproval: false,
+                  canShareAcrossStables: true,
+                })),
                 stables: [
                   {
                     id: data.stable._id,
@@ -237,6 +247,7 @@ function LocalEventEditor({
                     horses: data.horses.map((h, index) => ({
                       ...h,
                       requiresApproval: index > 0,
+                      canShareAcrossStables: index === 0,
                     })),
                   },
                 ],

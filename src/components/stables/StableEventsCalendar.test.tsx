@@ -30,9 +30,9 @@ beforeEach(() => {
   vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['en-GB'])
   desktop = true
   listeners = new Set()
-  vi.stubGlobal('matchMedia', () => ({
+  vi.stubGlobal('matchMedia', (query: string) => ({
     get matches() {
-      return desktop
+      return query.includes('max-width') ? !desktop : desktop
     },
     addEventListener: (_event: string, listener: () => void) =>
       listeners.add(listener),
@@ -79,6 +79,7 @@ function event(
 async function setup(
   initial = Array.from({ length: 6 }, (_, index) => event(index)),
   localized = false,
+  horses: Array<{ _id: string; name: string }> = [],
 ) {
   let update!: (events: Array<StableDashboardEvent>) => void
   let month!: (date: Date) => void
@@ -90,7 +91,11 @@ async function setup(
     return (
       <>
         <button>Outside calendar</button>
-        <StableEventsCalendar events={events} initialMonth={initialMonth} />
+        <StableEventsCalendar
+          events={events}
+          horses={horses}
+          initialMonth={initialMonth}
+        />
       </>
     )
   }
@@ -310,7 +315,7 @@ describe('read-only month calendar', () => {
     month(new Date(2027, 0, 1))
     expect(table()).toBeTruthy()
     open()
-    const next = screen.getByRole('button', { name: 'Next' })
+    const next = screen.getByRole('button', { name: 'Next month' })
     next.focus()
     fireEvent.click(next)
     expect(document.activeElement).toBe(next)
@@ -374,7 +379,7 @@ it('offers a mobile month grid and shows only the selected date, including repea
   expect(
     within(mobile).queryByRole('link', { name: /Three-day event/ }),
   ).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Next month' }))
   expect(
     within(mobile).getByRole('table', {
       name: 'Choose a day in September 2026',
@@ -413,7 +418,7 @@ it('switches the selected agenda, weekday labels, counts, and announcements with
       })
       .getAttribute('aria-expanded'),
   ).toBe('true')
-  fireEvent.click(screen.getByRole('button', { name: 'Następny' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Następny miesiąc' }))
   expect(
     screen.queryByRole('region', { name: 'Wydarzenia w dniu 12 sie 2026' }),
   ).toBeNull()
@@ -425,5 +430,83 @@ it('switches the selected agenda, weekday labels, counts, and announcements with
   fireEvent.change(selector, { target: { value: 'en' } })
   expect(
     screen.getByText('September 2026, 0 events this month.', { exact: true }),
+  ).toBeTruthy()
+})
+
+it('filters calendar entries by horse, event type and default planned status, and clears every filter', async () => {
+  const juniper = 'juniper' as Id<'horses'>
+  const maple = 'maple' as Id<'horses'>
+  await setup(
+    [
+      event(0, { title: 'Juniper vet', type: 'vet', horseIds: [juniper] }),
+      event(1, {
+        title: 'Maple vet',
+        type: 'vet',
+        horseIds: [maple],
+        status: 'completed',
+      }),
+      event(2, {
+        title: 'Juniper dentist',
+        type: 'dentist',
+        horseIds: [juniper],
+      }),
+    ],
+    false,
+    [
+      { _id: juniper, name: 'Juniper' },
+      { _id: maple, name: 'Maple' },
+    ],
+  )
+  const toggle = screen.getByRole('button', { name: 'Filters (0)' })
+  expect(toggle.getAttribute('aria-expanded')).toBe('false')
+  fireEvent.click(toggle)
+  fireEvent.change(screen.getByRole('combobox', { name: 'Type' }), {
+    target: { value: 'vet' },
+  })
+  fireEvent.change(screen.getByRole('combobox', { name: 'Status' }), {
+    target: { value: 'planned' },
+  })
+  expect(screen.getByRole('button', { name: 'Filters (2)' })).toBeTruthy()
+  expect(screen.getByRole('link', { name: /^Juniper vet,/ })).toBeTruthy()
+  expect(screen.queryByRole('link', { name: /^Maple vet,/ })).toBeNull()
+  expect(screen.queryByRole('link', { name: /^Juniper dentist,/ })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Clear all' }))
+  const picker = screen.getByRole('combobox', { name: 'Find horses' })
+  fireEvent.click(screen.getByRole('button', { name: 'Show suggestions' }))
+  fireEvent.input(picker, {
+    target: { value: 'Maple' },
+    inputType: 'insertText',
+  })
+  fireEvent.click(await screen.findByRole('option', { name: 'Maple' }))
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Filters (1)' })).toBeTruthy(),
+  )
+  if (screen.queryByRole('listbox'))
+    fireEvent.keyDown(picker, { key: 'Escape' })
+  await waitFor(() => expect(screen.queryByRole('listbox')).toBeNull())
+  expect(screen.getByRole('button', { name: 'Filters (1)' })).toBeTruthy()
+  expect(screen.getByRole('link', { name: /^Maple vet,/ })).toBeTruthy()
+  expect(screen.queryByRole('link', { name: /^Juniper vet,/ })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Next month' }))
+  expect(screen.getByRole('button', { name: 'Filters (1)' })).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Previous month' }))
+  expect(screen.getByRole('link', { name: /^Maple vet,/ })).toBeTruthy()
+  fireEvent.keyDown(screen.getByRole('combobox', { name: 'Status' }), {
+    key: 'Escape',
+  })
+  expect(
+    screen
+      .getByRole('button', { name: 'Filters (1)' })
+      .getAttribute('aria-expanded'),
+  ).toBe('false')
+  expect(document.activeElement).toBe(
+    screen.getByRole('button', { name: 'Filters (1)' }),
+  )
+  fireEvent.click(screen.getByRole('button', { name: 'Clear all' }))
+  expect(screen.getByRole('button', { name: 'Filters (0)' })).toBeTruthy()
+  expect(
+    within(
+      screen.getByRole('table', { name: 'August 2026 event calendar' }),
+    ).getByRole('button', { name: /12 Aug 2026, 3 events/ }),
   ).toBeTruthy()
 })

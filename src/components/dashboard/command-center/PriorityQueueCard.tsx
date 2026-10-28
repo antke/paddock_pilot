@@ -183,7 +183,7 @@ export function PriorityQueueCard({
                 <DashboardItemLinkCard
                   key={reminder.id}
                   to={
-                    reminder.horseId
+                    reminder.horseId && reminder.canReadHorse !== false
                       ? '/horses/$horseId/care'
                       : reminder.stableId
                         ? '/stables/$stableId/reminders'

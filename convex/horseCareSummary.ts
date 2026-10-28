@@ -1,3 +1,4 @@
+import { compareEventTimes } from '../shared/events/eventTime'
 import {
   assertHorseWorkspace,
   readableRecords,
@@ -21,7 +22,7 @@ const byEventDateDesc = (a: Doc<'events'>, b: Doc<'events'>) => {
 
   if (dateSort !== 0) return dateSort
 
-  return b.time.localeCompare(a.time)
+  return compareEventTimes(b.time, a.time)
 }
 
 export const getForHorse = query({

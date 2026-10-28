@@ -60,10 +60,10 @@ describe('workspace navigation scope', () => {
       'current-stable',
     )
     expect(navigation[0].items.map((item) => item.href)).toEqual([
-      '/stables/current-stable',
-      '/stables/current-stable/events',
-      '/stables/current-stable/training',
-      '/stables/current-stable/horses',
+      '/',
+      '/events',
+      '/training',
+      '/horses',
     ])
     expect(
       navigation
@@ -73,15 +73,15 @@ describe('workspace navigation scope', () => {
   })
 
   it.each(['/stables/stable-a', '/stables/stable-a/'])(
-    'links Home to the same stable dashboard represented by %s',
+    'keeps Home global and exposes a local stable overview for %s',
     (pathname) => {
       const home = items({ pathname }).find((item) => item.id === 'home')
       expect(home).toMatchObject({
-        href: '/stables/stable-a',
+        href: '/',
         labelKey: 'navigation.home',
-        active: true,
+        active: false,
       })
-      expect(activeIds({ pathname })).toEqual(['home'])
+      expect(activeIds({ pathname })).toEqual(['stable-overview'])
     },
   )
 
@@ -101,7 +101,17 @@ describe('workspace navigation scope', () => {
     ).toEqual([
       { id: 'primary', items: ['home', 'events', 'training', 'horses'] },
       { id: 'records', items: ['care', 'contacts', 'documents', 'analysis'] },
-      { id: 'management', items: ['stable', 'people', 'welcome'] },
+      {
+        id: 'management',
+        items: [
+          'stable-overview',
+          'stable-horses',
+          'stable',
+          'people',
+          'welcome',
+          'manage-stables',
+        ],
+      },
     ])
   })
 
@@ -139,7 +149,7 @@ describe('workspace navigation selection', () => {
     ['/stables/create', 'manage-stables'],
     ['/stables/stable-a/events/event-a', 'events'],
     ['/stables/stable-a/training/session-a/edit', 'training'],
-    ['/stables/stable-a/horses/horse-a/care', 'horses'],
+    ['/stables/stable-a/horses/horse-a/care', 'stable-horses'],
     ['/stables/stable-a/reminders', 'care'],
     ['/stables/stable-a/documents', 'documents'],
     ['/stables/stable-a/analysis', 'analysis'],

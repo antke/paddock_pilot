@@ -1,3 +1,12 @@
+import { AttendingPeople } from '#/components/events/AttendingPeople'
+import { formatEventTime } from '#/components/events/eventDisplay'
+import { useQuery } from 'convex/react'
+import { RoutePending } from '#/components/layout/RoutePending'
+import { ActivitySharing } from '#/components/events/ActivitySharing'
+import {
+  ActivityPeople,
+  MyActivityInvitations,
+} from '#/components/events/ActivityPeople'
 import { BackLink } from '#/components/ui/back-action'
 import { EventParticipation } from '#/components/events/EventParticipation'
 import { RecordAudienceLabel } from '#/components/sharing/RecordAudienceLabel'
@@ -8,6 +17,7 @@ import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { formatShortDateKey } from '#/lib/dateDisplay'
 import {
+  Navigate,
   createFileRoute,
   Outlet,
   useLocation,
@@ -42,6 +52,25 @@ export const Route = createFileRoute(
   component: TrainingSession,
 })
 function TrainingSession() {
+  const { stableId, eventId } = Route.useParams()
+  const { date } = Route.useSearch()
+  const shared = useQuery(api.activitySharing.detail, {
+    eventId: eventId as Id<'events'>,
+    stableId: stableId as Id<'stables'>,
+  })
+  if (shared === undefined) return <RoutePending />
+  if (shared)
+    return (
+      <Navigate
+        to="/events/$eventId"
+        params={{ eventId }}
+        search={{ date }}
+        replace
+      />
+    )
+  return <OriginalDetail />
+}
+function OriginalDetail() {
   const t = useT()
   const { locale } = useLocale()
   const smallScreen = useSmallScreen()
@@ -99,7 +128,8 @@ function TrainingSession() {
         description={
           <>
             <span className="block">
-              {formatShortDateKey(occurrenceDate, locale)} · {data.event.time}
+              {formatShortDateKey(occurrenceDate, locale)} ·{' '}
+              {formatEventTime(data.event.time, locale)}
             </span>
           </>
         }
@@ -181,6 +211,10 @@ function TrainingSession() {
         </p>
       )}
       <EventParticipation eventId={eventId as Id<'events'>} />
+      <ActivitySharing eventId={eventId as Id<'events'>} />
+      <AttendingPeople eventId={eventId as Id<'events'>} />
+      <ActivityPeople eventId={eventId as Id<'events'>} date={occurrenceDate} />
+      <MyActivityInvitations eventId={eventId} />
       {data.pendingEventHorses.length > 0 && (
         <p className="text-sm text-muted-foreground">
           {t('trainingViews.pending', {

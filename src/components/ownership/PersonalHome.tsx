@@ -1,9 +1,6 @@
 import { HorseInvitationInbox } from '#/components/events/HorseInvitationInbox'
 import { useMemo } from 'react'
 import { CaretDownIcon } from '@phosphor-icons/react'
-import { useQuery } from '@tanstack/react-query'
-import { convexQuery } from '@convex-dev/react-query'
-import { api } from 'convex/_generated/api'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
@@ -27,8 +24,9 @@ import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { useSmallScreen } from '#/lib/useSmallScreen'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import { formatLongDateKey } from '#/lib/dateDisplay'
-import { usePersonalTraining } from './usePersonalTraining'
-import { PersonalHorseList } from './PersonalHorses'
+import { useDashboardData } from '#/components/dashboard/useDashboardData'
+import { ActivityCalendarFilter } from '#/components/events/ActivityCalendarFilter'
+import { DashboardHorseList } from '#/components/dashboard/DashboardHorseList'
 import { useOwnershipCopy } from './ownershipCopy'
 
 export function PersonalHome() {
@@ -37,21 +35,8 @@ export function PersonalHome() {
   const { locale } = useLocale()
   const { today } = useLocalDateContext()
   const small = useSmallScreen()
-  const { data: events } = useQuery({
-    ...convexQuery(api.events.list),
-    throwOnError: true,
-  })
-  // Warm the roster used by the adjacent Events view in the shared query cache.
-  useQuery({
-    ...convexQuery(api.horses.calendarRoster, {}),
-    throwOnError: true,
-  })
-  const training = usePersonalTraining()
-  const horses = training?.roster
-  const { data: overview } = useQuery({
-    ...convexQuery(api.userCareOverview.getForCurrentUser, { today }),
-    throwOnError: true,
-  })
+  const dashboard = useDashboardData(today)
+  const { events, training, horses, overview } = dashboard.data ?? {}
   const activity = useMemo(
     () =>
       events && training
@@ -66,7 +51,7 @@ export function PersonalHome() {
   )
   if (!horses || !activity || !overview) return <RoutePending />
 
-  const canCreate = horses.some((horse) => horse.access.canEditPersonalRecords)
+  const canCreate = horses.some((horse) => horse.canRecord)
   const care = {
     overview,
     dueReminders: overview.dueReminders,
@@ -84,7 +69,7 @@ export function PersonalHome() {
   )
 
   return (
-    <DashboardPage>
+    <DashboardPage aria-busy={dashboard.loading}>
       <DashboardPageHeader
         title={t('navigation.home')}
         description={small ? undefined : formatLongDateKey(today, locale)}
@@ -94,6 +79,12 @@ export function PersonalHome() {
             {c.providers}
           </ButtonLink>
         }
+      />
+      <ActivityCalendarFilter
+        stables={dashboard.stables}
+        selected={dashboard.selected}
+        onChange={dashboard.setSelected}
+        loading={dashboard.loading}
       />
       {small && <DashboardCreateMenu canCreateActivity={canCreate} />}
       <HorseInvitationInbox />
@@ -129,7 +120,7 @@ export function PersonalHome() {
               />
             </details>
           )}
-          {horses.length > 0 && (
+          {(horses.length > 0 || activity.todayTraining.length > 0) && (
             <TodayTrainingCard
               data={activity}
               compact={small}
@@ -143,7 +134,9 @@ export function PersonalHome() {
             showWeek
           />
           <DashboardSection
-            title={c.title}
+            title={
+              dashboard.data?.stableIds.length ? t('dashboard.horses') : c.title
+            }
             titleStyle="display"
             headerLayout="inline"
             actions={
@@ -162,7 +155,7 @@ export function PersonalHome() {
             }
           >
             {horses.length ? (
-              <PersonalHorseList horses={horses} headingLevel={3} compact />
+              <DashboardHorseList horses={horses} />
             ) : (
               <DashboardEmptyState
                 title={c.empty}
@@ -175,15 +168,6 @@ export function PersonalHome() {
               >
                 {c.emptyHelp}
               </DashboardEmptyState>
-            )}
-            {horses.length > 0 && (
-              <ButtonLink
-                to="/horses/deleted"
-                variant="link"
-                className="min-h-11 justify-self-start px-0"
-              >
-                {c.trash}
-              </ButtonLink>
             )}
           </DashboardSection>
         </DashboardLayoutStack>

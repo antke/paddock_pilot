@@ -226,6 +226,27 @@
         "files": ["src/components/landing-lab/landingLabOverdrive.css"],
         "createdAt": "2026-10-16T17:01:34.898Z",
         "reason": "Agent: intentional archived landing study; the responsive display clamp preserves whole words in narrow captures and is outside the working-app type ramp."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#26382c",
+        "files": ["src/styles.css"],
+        "createdAt": "2026-10-27T22:13:36.558Z",
+        "reason": "Existing isolated horse-colour-preview.light palette; preserving the incumbent preview treatment, unrelated to navigation changes."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#d4d9cf",
+        "files": ["src/styles.css"],
+        "createdAt": "2026-10-27T22:13:36.965Z",
+        "reason": "Existing isolated horse-colour-preview.light border; preserving the incumbent preview treatment, unrelated to navigation changes."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#e7e9e3",
+        "files": ["src/styles.css"],
+        "createdAt": "2026-10-27T22:13:37.448Z",
+        "reason": "Existing isolated horse-colour-preview.dark foreground; preserving the incumbent preview treatment, unrelated to navigation changes."
       }
     ]
   }

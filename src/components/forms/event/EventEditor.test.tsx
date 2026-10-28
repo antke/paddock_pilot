@@ -573,6 +573,7 @@ it('filters horses by destination and confirms removal while preserving the draf
     name: 'Juniper',
     age: 8,
     requiresApproval: false,
+    canShareAcrossStables: true,
   }
   const invited = {
     ...mine,
@@ -596,25 +597,21 @@ it('filters horses by destination and confirms removal while preserving the draf
   })
   expect(screen.getByText('Requires approval')).toBeTruthy()
   expect(screen.getByText('Added directly: 1 · Invitations: 1')).toBeTruthy()
-  fireEvent.change(screen.getByLabelText('Create in'), {
-    target: { value: '' },
-  })
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Willow' }))
   expect(screen.getByRole('alertdialog')).toBeTruthy()
   expect(title.value).toBe('Group visit')
-  fireEvent.click(screen.getByRole('button', { name: 'Keep current space' }))
-  expect(screen.getByText('Maple')).toBeTruthy()
-  fireEvent.change(screen.getByLabelText('Create in'), {
-    target: { value: '' },
-  })
   fireEvent.click(
-    screen.getByRole('button', { name: 'Remove horses and switch' }),
+    screen.getByRole('button', { name: 'Keep selected calendars' }),
+  )
+  expect(screen.getByText('Maple')).toBeTruthy()
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Willow' }))
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Remove horses and continue' }),
   )
   await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
   expect(screen.queryByText('Maple')).toBeNull()
   expect(title.value).toBe('Group visit')
-  expect(
-    screen.getByRole('button', { name: 'Create private event' }),
-  ).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Create event' })).toBeTruthy()
   fireEvent.submit(form)
   await waitFor(() => expect(props.onSave).toHaveBeenCalled())
   expect(vi.mocked(props.onSave).mock.calls[0][0]).toMatchObject({
@@ -630,4 +627,245 @@ it('offers training in event creation and exposes its required activity fields',
   expect(
     await screen.findByText('Select all activities practised in this session.'),
   ).toBeTruthy()
+})
+
+it.each(['events', 'training'] as const)(
+  'keeps one %s draft while selecting several stable audiences',
+  async (feature) => {
+    const mine = {
+      _id: horseId,
+      _creationTime: 0,
+      name: 'Juniper',
+      age: 8,
+      requiresApproval: false,
+      canShareAcrossStables: true,
+    }
+    const secondStable = 'second-stable' as Id<'stables'>
+    const { props, form, title } = setup({
+      mode: 'create',
+      feature,
+      initialValues: {
+        ...createEventEditorValues(),
+        horseIds: [horseId],
+        title: 'Shared session',
+        date: '2026-10-01',
+        time: '10:00',
+        ...(feature === 'training'
+          ? {
+              type: 'training',
+              training: { activities: ['jumping'], format: 'lesson' },
+            }
+          : {}),
+      },
+      destinations: {
+        personal: [mine],
+        stables: [
+          { id: stableId, name: 'Willow', horses: [mine] },
+          { id: secondStable, name: 'Oak', horses: [] },
+        ],
+      },
+    })
+    expect(
+      screen
+        .getByRole('checkbox', { name: 'My calendar' })
+        .getAttribute('aria-disabled'),
+    ).toBe('true')
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Willow' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Oak' }))
+    expect(
+      screen
+        .getByRole('checkbox', { name: 'Willow' })
+        .getAttribute('aria-checked'),
+    ).toBe('true')
+    expect(
+      screen
+        .getByRole('checkbox', { name: 'Oak' })
+        .getAttribute('aria-checked'),
+    ).toBe('true')
+    expect(title.value).toBe('Shared session')
+    fireEvent.submit(form)
+    await waitFor(() => expect(props.onSave).toHaveBeenCalledOnce())
+    expect(vi.mocked(props.onSave).mock.calls[0][0]).toMatchObject({
+      horseIds: [horseId],
+      sharedStableIds: [stableId, secondStable],
+    })
+  },
+)
+
+it.each(['events', 'training'] as const)(
+  'saves a whole-day %s entry and restores its clock time when toggled off',
+  async (feature) => {
+    const { props, form } = setup({
+      mode: 'create',
+      feature,
+      initialValues: {
+        ...createEventEditorValues(),
+        title: 'Whole-day session',
+        horseIds: [horseId],
+        date: '2026-10-01',
+        time: '10:30',
+        ...(feature === 'training'
+          ? {
+              type: 'training',
+              training: { activities: ['jumping'], format: 'lesson' },
+            }
+          : {}),
+      },
+    })
+    const time = screen.getByLabelText<HTMLInputElement>('Time', {
+      exact: true,
+    })
+    const wholeDay = screen.getByRole('switch', { name: 'Whole day' })
+    fireEvent.click(wholeDay)
+    expect(time.disabled).toBe(true)
+    expect(time.value).toBe('')
+    fireEvent.click(wholeDay)
+    expect(time.disabled).toBe(false)
+    expect(time.value).toBe('10:30')
+    fireEvent.click(wholeDay)
+    fireEvent.submit(form)
+    await waitFor(() => expect(props.onSave).toHaveBeenCalledOnce())
+    expect(vi.mocked(props.onSave).mock.calls[0][0].time).toBe('all-day')
+  },
+)
+
+it('opens an existing whole-day entry and requires a time when changing it to a timed entry', async () => {
+  const { props, form } = setup({
+    initialValues: { ...editEventEditorValues(event, []), time: 'all-day' },
+  })
+  const time = screen.getByLabelText<HTMLInputElement>('Time', { exact: true })
+  expect(time.disabled).toBe(true)
+  fireEvent.click(screen.getByRole('switch', { name: 'Whole day' }))
+  expect(time.disabled).toBe(false)
+  expect(time.value).toBe('')
+  fireEvent.submit(form)
+  await waitFor(() =>
+    expect(screen.getByText('Use a valid time.')).toBeTruthy(),
+  )
+  expect(props.onSave).not.toHaveBeenCalled()
+  fireEvent.change(time, { target: { value: '15:00' } })
+  fireEvent.submit(form)
+  await waitFor(() => expect(props.onSave).toHaveBeenCalledOnce())
+  expect(vi.mocked(props.onSave).mock.calls[0][0].time).toBe('15:00')
+})
+
+it('preselects the horse owner, allows removing them and keeps independent attendees when the horse is removed', async () => {
+  const { form, props } = setup({
+    mode: 'create',
+    initialValues: {
+      ...editEventEditorValues(event, []),
+      horseIds: [],
+      peopleIds: [],
+    },
+    horses: [{ _id: horseId, name: 'Juniper', ownerId: 'anna' }],
+    people: [
+      { id: 'anna', name: 'Anna' },
+      { id: 'rider', name: 'Rider without a horse' },
+    ],
+  })
+  const horse = screen.getByRole('checkbox', { name: /Juniper/ })
+  const owner = screen.getByRole<HTMLInputElement>('checkbox', { name: 'Anna' })
+  const rider = screen.getByRole<HTMLInputElement>('checkbox', {
+    name: 'Rider without a horse',
+  })
+  fireEvent.click(horse)
+  expect(owner.checked).toBe(true)
+  fireEvent.click(owner)
+  fireEvent.click(rider)
+  expect(owner.checked).toBe(false)
+  fireEvent.click(horse)
+  expect(rider.checked).toBe(true)
+  fireEvent.click(horse)
+  fireEvent.click(owner)
+  fireEvent.submit(form)
+  await waitFor(() => expect(props.onSave).toHaveBeenCalledOnce())
+  expect(vi.mocked(props.onSave).mock.calls[0][0].peopleIds).toEqual(['rider'])
+})
+
+it('preselects an initial horse’s owner only when creating, and preserves an explicit empty attendance list when editing', () => {
+  const options = {
+    horses: [{ _id: horseId, name: 'Juniper', ownerId: 'anna' }],
+    people: [{ id: 'anna', name: 'Anna' }],
+  }
+  const created = setup({ ...options, mode: 'create' })
+  expect(
+    screen.getByRole<HTMLInputElement>('checkbox', { name: 'Anna' }).checked,
+  ).toBe(true)
+  created.unmount()
+  setup({ ...options, mode: 'edit' })
+  expect(
+    screen.getByRole<HTMLInputElement>('checkbox', { name: 'Anna' }).checked,
+  ).toBe(false)
+})
+
+it('scopes people and their horse subtitles to the selected calendars', () => {
+  const zapiId = 'zapi' as Id<'horses'>
+  const otherStableId = 'other-stable' as Id<'stables'>
+  const personalHorse = {
+    _id: horseId,
+    _creationTime: 0,
+    name: 'Juniper',
+    ownerId: 'owner' as Id<'users'>,
+    ownerName: 'Outdated owner',
+    age: 8,
+    requiresApproval: false,
+    canShareAcrossStables: true,
+  }
+  const zapi = {
+    ...personalHorse,
+    _id: zapiId,
+    name: 'Zapi',
+    ownerId: 'visitor' as Id<'users'>,
+  }
+  setup({
+    mode: 'create',
+    initialValues: {
+      ...editEventEditorValues(event, []),
+      stableId: undefined,
+      sharedStableIds: [],
+      horseIds: [],
+      peopleIds: [],
+    },
+    horses: [personalHorse],
+    people: [
+      { id: 'owner', name: 'Current owner', personal: true, stableIds: [] },
+      {
+        id: 'visitor',
+        name: 'Test stable member',
+        personal: false,
+        stableIds: [stableId],
+      },
+      {
+        id: 'horseless',
+        name: 'Member without horses',
+        personal: false,
+        stableIds: [stableId],
+      },
+    ],
+    destinations: {
+      personal: [personalHorse],
+      stables: [
+        { id: stableId, name: 'Test stable', horses: [zapi] },
+        { id: otherStableId, name: 'Other stable', horses: [] },
+      ],
+    },
+  })
+  expect(screen.queryByText(/Horses: Zapi/)).toBeNull()
+  expect(
+    screen.queryByRole('checkbox', { name: /Test stable member/ }),
+  ).toBeNull()
+  expect(screen.queryByText('Outdated owner')).toBeNull()
+  expect(screen.getByText('Horses: Juniper')).toBeTruthy()
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Other stable' }))
+  expect(screen.queryByText(/Horses: Zapi/)).toBeNull()
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Test stable' }))
+  expect(screen.getByText('Horses: Zapi')).toBeTruthy()
+  expect(
+    screen.getByRole('checkbox', { name: 'Member without horses' }),
+  ).toBeTruthy()
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Test stable' }))
+  expect(screen.queryByText(/Horses: Zapi/)).toBeNull()
+  expect(
+    screen.queryByRole('checkbox', { name: /Test stable member/ }),
+  ).toBeNull()
 })

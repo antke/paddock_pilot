@@ -1,6 +1,4 @@
 import { useWorkspace } from '#/components/layout/WorkspaceContext'
-import { useLocale } from '#/i18n/LocaleProvider'
-import { ButtonLink } from '#/components/ui/button'
 import type { ElementType, ReactNode } from 'react'
 
 import { cn } from '#/lib/utils'
@@ -16,6 +14,7 @@ type DashboardPageHeaderDescriptionWidth = 'default' | 'narrow'
 type DashboardPageHeaderContentLayout = 'center' | 'default' | 'inline' | 'wide'
 
 type DashboardPageHeaderProps = {
+  showWorkspace?: boolean
   title: ReactNode
   as?: ElementType
   backAction?: ReactNode
@@ -36,6 +35,7 @@ type DashboardPageHeaderProps = {
 }
 
 export function DashboardPageHeader({
+  showWorkspace = true,
   title,
   as,
   actions,
@@ -55,7 +55,6 @@ export function DashboardPageHeader({
   titleSize = 'default',
 }: DashboardPageHeaderProps) {
   const workspace = useWorkspace()
-  const { locale } = useLocale()
   const contentLayoutClassName = {
     center: 'flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-center',
     default: 'grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-stretch',
@@ -90,24 +89,14 @@ export function DashboardPageHeader({
               scale={titleSize === 'default' ? 'page' : 'section'}
               className={titleClassName}
             >
-              {workspace &&
+              {showWorkspace &&
+              workspace?.stableId &&
               typeof title === 'string' &&
               title !== workspace.label
                 ? `${title} · ${workspace.label}`
                 : title}
             </DashboardDisplayHeading>
 
-            {workspace?.stableId && (
-              <ButtonLink
-                to="/horses"
-                variant="link"
-                className="h-auto justify-self-start whitespace-normal px-0 text-sm"
-              >
-                {locale === 'pl'
-                  ? 'Moje konie i prywatna historia · Osobiste'
-                  : 'My horses and private history · Personal'}
-              </ButtonLink>
-            )}
             {description && (
               <p
                 className={cn(

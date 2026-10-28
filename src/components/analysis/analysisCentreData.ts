@@ -1,3 +1,4 @@
+import { compareEventTimes } from 'shared/events/eventTime'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import type { AnalysisSignalDisplayData } from 'shared/i18n/analysisSignal'
 import type { Locale } from 'shared/i18n/locale'
@@ -308,7 +309,7 @@ function compareEventDateAndTime(a: DashboardLabEvent, b: DashboardLabEvent) {
 
   if (dateSort !== 0) return dateSort
 
-  return a.time.localeCompare(b.time)
+  return compareEventTimes(a.time, b.time)
 }
 
 function compareTimelineSignal(a: LabTimelineSignal, b: LabTimelineSignal) {

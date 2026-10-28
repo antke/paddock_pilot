@@ -1,12 +1,13 @@
 import {
+  ActivityCalendarFilter,
+  useActivityCalendars,
+} from '#/components/events/ActivityCalendarFilter'
+import { MyActivityInvitations } from '#/components/events/ActivityPeople'
+import {
   StableEventsPage,
   parseEventsSearch,
 } from '#/components/events/StableEventsPage'
-import { convexQuery } from '@convex-dev/react-query'
-import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { api } from 'convex/_generated/api'
-import type { Id } from 'convex/_generated/dataModel'
 
 export const Route = createFileRoute('/stables/_layout/$stableId/events/')({
   validateSearch: parseEventsSearch,
@@ -17,19 +18,21 @@ function RouteComponent() {
   const { stableId } = Route.useParams()
   const { view } = Route.useSearch()
   const navigate = Route.useNavigate()
-  const { data: events } = useSuspenseQuery(
-    convexQuery(api.events.listForStable, {
-      stableId: stableId as Id<'stables'>,
-    }),
-  )
-  const { data: horses } = useSuspenseQuery(
-    convexQuery(api.horses.list, { stableId: stableId as Id<'stables'> }),
-  )
+  const calendars = useActivityCalendars(false, stableId)
   return (
     <StableEventsPage
       stableId={stableId}
-      events={events}
-      horses={horses}
+      events={calendars.data?.events ?? []}
+      horses={calendars.data?.horses ?? []}
+      notices={<MyActivityInvitations invitationsOnly />}
+      filters={
+        <ActivityCalendarFilter
+          stables={calendars.stables}
+          selected={calendars.selected}
+          onChange={calendars.setSelected}
+          loading={calendars.loading}
+        />
+      }
       view={view}
       onViewChange={(next) =>
         void navigate({

@@ -57,11 +57,12 @@ async function open(component: () => React.ReactNode) {
 it('keeps appointments beyond the preview limit and past visits searchable in the full list', async () => {
   await open(() => (
     <PersonalAppointmentsView
+      view="list"
       events={[history, ...events]}
       onViewChange={() => {}}
     />
   ))
-  await screen.findByRole('tab', { name: 'All events' })
+  await screen.findByRole('button', { name: 'All events' })
   expect(screen.getAllByRole('listitem')).toHaveLength(16)
   expect(screen.getByText('Earlier dental visit')).toBeTruthy()
   expect(screen.getByText('Appointment 15')).toBeTruthy()
@@ -90,5 +91,5 @@ it('offers the complete list from a limited occurrence preview', async () => {
     screen
       .getByRole('link', { name: 'View all appointments' })
       .getAttribute('href'),
-  ).toBe('/events')
+  ).toBe('/events?view=list')
 })

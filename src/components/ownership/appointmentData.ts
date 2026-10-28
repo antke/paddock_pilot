@@ -1,3 +1,4 @@
+import { compareEventTimes } from 'shared/events/eventTime'
 import { createEventOccurrences } from 'shared/events/eventOccurrences'
 import type { EventOccurrenceSource } from 'shared/events/eventOccurrences'
 import { dateKeyToDate, formatDateKey } from '#/lib/dateDisplay'
@@ -5,9 +6,11 @@ import { dateKeyToDate, formatDateKey } from '#/lib/dateDisplay'
 export type AppointmentView = 'list' | 'calendar'
 
 export function parseAppointmentSearch(search: Record<string, unknown>): {
-  view?: 'calendar'
+  view?: AppointmentView
 } {
-  return search.view === 'calendar' ? { view: 'calendar' } : {}
+  return search.view === 'calendar' || search.view === 'list'
+    ? { view: search.view }
+    : {}
 }
 
 /** Expand only the next 90 days; the complete event list is never truncated. */
@@ -31,7 +34,7 @@ export function getUpcomingAppointmentOccurrences<
     .sort(
       (a, b) =>
         a.startDate.localeCompare(b.startDate) ||
-        a.event.time.localeCompare(b.event.time) ||
+        compareEventTimes(a.event.time, b.event.time) ||
         a.event.title.localeCompare(b.event.title) ||
         a.occurrenceKey.localeCompare(b.occurrenceKey),
     )

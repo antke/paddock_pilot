@@ -6,13 +6,7 @@ import { Table } from '#/components/ui/table'
 import { useEffect, useId, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { Doc } from 'convex/_generated/dataModel'
-import {
-  CaretLeftIcon,
-  CaretRightIcon,
-  FunnelSimpleIcon,
-  XIcon,
-  CheckIcon,
-} from '@phosphor-icons/react'
+import { FunnelSimpleIcon, XIcon, CheckIcon } from '@phosphor-icons/react'
 import { Button, ButtonLink } from '#/components/ui/button'
 import {
   Combobox,
@@ -24,7 +18,10 @@ import {
 } from '#/components/ui/combobox'
 import { Select } from '#/components/ui/select'
 import { Field, FieldLabel } from '#/components/ui/field'
-import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
+import {
+  CalendarToolbar,
+  CalendarViewControl,
+} from '#/components/events/CalendarToolbar'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 
@@ -52,6 +49,7 @@ import { MobileActionBar } from '#/components/layout/MobileActionBar'
 import { useTaskOriginState } from '#/components/layout/mobileTaskNavigation'
 
 type Props = {
+  mixedSources?: boolean
   stableId?: string
   events: Array<Doc<'events'>>
   records: Array<Doc<'trainingRecords'>>
@@ -63,6 +61,7 @@ type Props = {
   renderMobileActions?: (canRecord: boolean) => ReactNode
 }
 export function TrainingCalendar({
+  mixedSources = false,
   stableId,
   events,
   records,
@@ -229,14 +228,8 @@ export function TrainingCalendar({
     )
   }
   const viewControl = (
-    <ChoiceButtonGroup
-      aria-label={t('trainingViews.view')}
-      layout={small ? 'segmented' : 'compact'}
-      className={
-        small
-          ? '[&>button]:min-h-11 [&>button]:px-3 [&>button]:text-sm'
-          : 'grid w-auto grid-cols-2 [&>button]:h-(--control-height) [&>button]:px-3 [&>button]:text-sm [&>button]:pointer-coarse:min-h-11'
-      }
+    <CalendarViewControl
+      label={t('trainingViews.view')}
       value={view}
       options={[
         { value: 'week', label: t('trainingViews.week') },
@@ -267,131 +260,53 @@ export function TrainingCalendar({
       title={small ? undefined : label}
       contentGap="default"
     >
-      {small ? (
-        <div className="grid gap-3">
-          <div
-            role="group"
-            aria-label={t('trainingViews.navigation')}
-            className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem_auto] items-center gap-1"
-          >
-            <Button
-              variant="ghost"
-              size="icon-lg"
-              onClick={() => move(-1)}
-              aria-label={t(
-                view === 'week'
-                  ? 'trainingViews.previousWeek'
-                  : 'trainingViews.previousMonth',
-              )}
-            >
-              <CaretLeftIcon aria-hidden="true" />
-            </Button>
-            <h2
-              className="min-w-0 text-center font-display text-lg font-semibold leading-tight"
-              aria-live="polite"
-              aria-atomic="true"
-            >
-              {label}
-            </h2>
-            <Button
-              variant="ghost"
-              size="icon-lg"
-              onClick={() => move(1)}
-              aria-label={t(
-                view === 'week'
-                  ? 'trainingViews.nextWeek'
-                  : 'trainingViews.nextMonth',
-              )}
-            >
-              <CaretRightIcon aria-hidden="true" />
-            </Button>
-            <Button
-              variant="ghost"
+      <CalendarToolbar
+        label={label}
+        previousLabel={t(
+          view === 'week'
+            ? 'trainingViews.previousWeek'
+            : 'trainingViews.previousMonth',
+        )}
+        nextLabel={t(
+          view === 'week'
+            ? 'trainingViews.nextWeek'
+            : 'trainingViews.nextMonth',
+        )}
+        onPrevious={() => move(-1)}
+        onNext={() => move(1)}
+        onToday={() => selectDate(today)}
+        viewControl={viewControl}
+        mobileFilters={filterControl}
+        actions={
+          horses.some((horse) => horse.canRecord) &&
+          (stableId && !fixedHorseId ? (
+            <ButtonLink
               size="control"
-              className="min-h-11 px-2"
-              onClick={() => selectDate(today)}
+              to="/stables/$stableId/training/create"
+              params={{ stableId }}
+              search={{
+                horseIds: fixedHorseId ? [fixedHorseId] : undefined,
+              }}
+              state={taskState}
+              variant="default"
+              action="record"
             >
-              {t('trainingViews.today')}
-            </Button>
-          </div>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            {viewControl}
-            {filterControl}
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div
-            role="group"
-            aria-label={t('trainingViews.navigation')}
-            className="grid max-w-full grid-cols-3 items-center gap-2 [&>button]:px-2 [&>button]:whitespace-nowrap sm:[&>button]:px-3"
-          >
-            <Button
-              variant="outline"
+              {t('trainingViews.addSession')}
+            </ButtonLink>
+          ) : (
+            <ButtonLink
               size="control"
-              onClick={() => move(-1)}
-              aria-label={t(
-                view === 'week'
-                  ? 'trainingViews.previousWeek'
-                  : 'trainingViews.previousMonth',
-              )}
+              to="/events/create"
+              search={{ horseId: fixedHorseId, training: true }}
+              state={taskState}
+              variant="default"
+              action="record"
             >
-              <CaretLeftIcon aria-hidden="true" className="hidden sm:block" />
-              {t('trainingViews.previous')}
-            </Button>
-            <Button
-              variant="outline"
-              size="control"
-              onClick={() => selectDate(today)}
-            >
-              {t('trainingViews.today')}
-            </Button>
-            <Button
-              variant="outline"
-              size="control"
-              onClick={() => move(1)}
-              aria-label={t(
-                view === 'week'
-                  ? 'trainingViews.nextWeek'
-                  : 'trainingViews.nextMonth',
-              )}
-            >
-              {t('trainingViews.next')}
-              <CaretRightIcon aria-hidden="true" className="hidden sm:block" />
-            </Button>
-          </div>
-          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-            {viewControl}
-            {horses.some((horse) => horse.canRecord) &&
-              (stableId && !fixedHorseId ? (
-                <ButtonLink
-                  size="control"
-                  to="/stables/$stableId/training/create"
-                  params={{ stableId }}
-                  search={{
-                    horseIds: fixedHorseId ? [fixedHorseId] : undefined,
-                  }}
-                  state={taskState}
-                  variant="default"
-                  action="record"
-                >
-                  {t('trainingViews.addSession')}
-                </ButtonLink>
-              ) : (
-                <ButtonLink
-                  size="control"
-                  to="/events/create"
-                  search={{ horseId: fixedHorseId, training: true }}
-                  state={taskState}
-                  variant="default"
-                  action="record"
-                >
-                  {t('trainingViews.addSession')}
-                </ButtonLink>
-              ))}
-          </div>
-        </div>
-      )}
+              {t('trainingViews.addSession')}
+            </ButtonLink>
+          ))
+        }
+      />
       {small &&
         (renderMobileActions
           ? renderMobileActions(horses.some((horse) => horse.canRecord))
@@ -670,7 +585,7 @@ export function TrainingCalendar({
                   <TrainingMonthCalendar
                     days={period.days}
                     entries={entries}
-                    stableId={stableId}
+                    stableId={mixedSources ? undefined : stableId}
                     selectedDate={
                       period.days.includes(selectedDate)
                         ? selectedDate
@@ -692,7 +607,7 @@ export function TrainingCalendar({
                             <TrainingSessionLink
                               key={entry.key}
                               session={entry}
-                              stableId={stableId}
+                              stableId={mixedSources ? undefined : stableId}
                             />
                           ))}
                         </section>
@@ -741,7 +656,9 @@ export function TrainingCalendar({
                                   <TrainingSessionLink
                                     key={session.key}
                                     session={session}
-                                    stableId={stableId}
+                                    stableId={
+                                      mixedSources ? undefined : stableId
+                                    }
                                     variant="week"
                                   />
                                 ))}
@@ -756,7 +673,7 @@ export function TrainingCalendar({
                   <TrainingMonthCalendar
                     days={period.days}
                     entries={entries}
-                    stableId={stableId}
+                    stableId={mixedSources ? undefined : stableId}
                     selectedDate={
                       period.days.includes(selectedDate)
                         ? selectedDate

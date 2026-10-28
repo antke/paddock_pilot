@@ -1,4 +1,8 @@
 export const navigationShell = {
+  stableOverview: 'Stable overview',
+  stableHorses: 'Stable horses',
+  currentStableName: 'Current stable: {{name}}',
+  switchStable: 'Open stable',
   menu: 'Menu',
   mobileHome: 'Home',
   mobileTraining: 'Training',

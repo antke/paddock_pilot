@@ -15,7 +15,7 @@ function AppointmentsPage() {
       view={view}
       onViewChange={(next) =>
         void navigate({
-          search: next === 'calendar' ? { view: 'calendar' } : {},
+          search: next === 'list' ? { view: 'list' } : {},
           resetScroll: false,
         })
       }

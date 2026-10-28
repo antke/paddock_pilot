@@ -1,3 +1,4 @@
+import { compareEventTimes } from '../shared/events/eventTime'
 import { sharedEventsForStable } from './libs/eventPermissions'
 import { visibleHorse } from './libs/recordCapabilities'
 import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
@@ -21,7 +22,7 @@ const byEventDateAndTime = (a: Doc<'events'>, b: Doc<'events'>) => {
 
   if (dateSort !== 0) return dateSort
 
-  return a.time.localeCompare(b.time)
+  return compareEventTimes(a.time, b.time)
 }
 
 const getHorseName = (
@@ -102,7 +103,9 @@ export const getForStable = query({
     const readableHorses = horses.filter(
       (horse, index) => isActiveHorse(horse) && permissions[index].canRead,
     )
-    const activeHorses = await Promise.all(readableHorses.map(horse => visibleHorse(ctx, horse, true)))
+    const activeHorses = await Promise.all(
+      readableHorses.map((horse) => visibleHorse(ctx, horse, true)),
+    )
     const activeHorseIds = new Set(activeHorses.map((horse) => horse._id))
     const visibleEvents = events
       .filter(

@@ -63,11 +63,11 @@ it('has stable destinations, selected page semantics and a focus-restoring menu 
     ),
   ).toBe('page')
   expect(screen.getByRole('link', { name: 'Home' }).getAttribute('href')).toBe(
-    '/stables/sample',
+    '/',
   )
   expect(
     screen.getByRole('link', { name: 'Training' }).getAttribute('href'),
-  ).toBe('/stables/sample/training')
+  ).toBe('/training')
   const more = screen.getByRole('button', { name: 'Open navigation menu' })
   act(() => more.focus())
   fireEvent.click(more)

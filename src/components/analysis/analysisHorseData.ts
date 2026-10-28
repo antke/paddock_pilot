@@ -1,3 +1,4 @@
+import { compareEventTimes } from 'shared/events/eventTime'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import type {
   DashboardLabData,
@@ -317,7 +318,7 @@ function compareEventDateAndTimeAscending(
 
   if (dateSort !== 0) return dateSort
 
-  return a.time.localeCompare(b.time)
+  return compareEventTimes(a.time, b.time)
 }
 
 function compareEventDateAndTimeDescending(
@@ -328,7 +329,7 @@ function compareEventDateAndTimeDescending(
 
   if (dateSort !== 0) return dateSort
 
-  return b.time.localeCompare(a.time)
+  return compareEventTimes(b.time, a.time)
 }
 
 function compareTimelineSignalDescending(

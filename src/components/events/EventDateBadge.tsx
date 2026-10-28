@@ -1,4 +1,6 @@
-import { useLocale, useT } from '#/i18n/LocaleProvider'
+import { isAllDay } from 'shared/events/eventTime'
+import { formatEventDateTime, formatEventTime } from './eventDisplay'
+import { useLocale } from '#/i18n/LocaleProvider'
 import { cn } from '#/lib/utils'
 import { formatMediumDateKey, getDateBadgeParts } from '#/lib/dateDisplay'
 import { TextLabel } from '#/components/ui/text-label'
@@ -21,19 +23,15 @@ export function EventDateBadge({
   className,
 }: EventDateBadgeProps) {
   const { locale } = useLocale()
-  const t = useT()
   const dateBadge = getDateBadgeParts(date, locale)
 
   return (
     <time
       data-slot="event-date-badge"
-      dateTime={time ? `${date}T${time}` : date}
+      dateTime={time && !isAllDay(time) ? `${date}T${time}` : date}
       aria-label={
         time
-          ? t('events.dateTime', {
-              date: formatMediumDateKey(date, locale),
-              time,
-            })
+          ? formatEventDateTime(date, time, undefined, locale)
           : formatMediumDateKey(date, locale)
       }
       className={cn(
@@ -42,6 +40,7 @@ export function EventDateBadge({
           'app-row size-14 gap-0.5 rounded-control px-1 py-0.5',
         variant === 'rail' && 'app-row size-16 rounded-control px-2 py-1',
         variant === 'hero' && 'app-row size-24 p-3',
+        isAllDay(time) && variant !== 'hero' && 'min-w-20',
         className,
       )}
     >
@@ -68,7 +67,7 @@ export function EventDateBadge({
           tracking="none"
           className="whitespace-nowrap leading-none"
         >
-          {time}
+          {formatEventTime(time, locale)}
         </TextLabel>
       )}
     </time>

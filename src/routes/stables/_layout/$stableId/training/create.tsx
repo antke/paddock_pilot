@@ -66,11 +66,13 @@ function RouteComponent() {
       providers={providerData.providers}
       onSave={async (data) => {
         return addEvent({
+          sharedStableIds: data.sharedStableIds as Id<'stables'>[] | undefined,
           destination: data.destination,
           sharing: data.sharing,
           requestId: data.requestId,
           errorFormat: 'structured',
           stableId: data.stableId as Id<'stables'> | undefined,
+          peopleIds: data.peopleIds as Array<Id<'users'>> | undefined,
           horseIds: data.horseIds as Array<Id<'horses'>>,
           date: data.date,
           endDate: data.endDate,

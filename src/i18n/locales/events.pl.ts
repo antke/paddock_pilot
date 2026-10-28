@@ -1,4 +1,6 @@
 export const events = {
+  wholeDay: 'Cały dzień',
+  dateWholeDay: '{{date}} · Cały dzień',
   dateTime: '{{date}}, godz. {{time}}',
   weeklyDays: '{{frequency}}: {{days}}',
   monthlyWeekday: '{{frequency}}: {{ordinal}} {{weekday}}',

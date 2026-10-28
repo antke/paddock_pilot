@@ -5,7 +5,10 @@ import { cn } from '#/lib/utils'
 import { dashboardMobileRecordClassName } from '#/components/dashboard/dashboardChrome'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { CalendarEventChipLink } from '#/components/events/EventCalendar'
-import { formatEventDateTime } from '#/components/events/eventDisplay'
+import {
+  formatEventDateTime,
+  formatEventTime,
+} from '#/components/events/eventDisplay'
 import { TrainingEntryPreview } from './TrainingEntryPreview'
 import { TrainingCompletionControl } from './TrainingCompletionControl'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
@@ -67,7 +70,7 @@ export function TrainingEntryLink({
         details.durationMinutes,
         locale,
       )
-    : occurrence.event.time
+    : formatEventTime(occurrence.event.time, locale)
 
   return (
     <div className="relative min-w-0">

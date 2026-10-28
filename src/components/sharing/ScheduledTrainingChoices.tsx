@@ -1,3 +1,4 @@
+import { formatEventTime } from '#/components/events/eventDisplay'
 import { useState } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from 'convex/_generated/api'
@@ -33,7 +34,8 @@ export function ScheduledTrainingChoices({
           className="flex flex-wrap items-center justify-between gap-3"
         >
           <span>
-            {session.horseName} · {session.title} · {session.time}
+            {session.horseName} · {session.title} ·{' '}
+            {formatEventTime(session.time, locale)}
           </span>
           <ButtonLink
             to="/events/$eventId"

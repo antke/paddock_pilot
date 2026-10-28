@@ -1,3 +1,4 @@
+import { compareEventTimes } from 'shared/events/eventTime'
 import type { Locale } from 'shared/i18n/locale'
 import { localeInstances } from '#/i18n/resources'
 import { getTrainingEntries } from '#/components/training/trainingCalendarData'
@@ -39,7 +40,7 @@ export function createDashboardCommandData({
   // Callers supply the server-authorized stable audience; origin is provenance.
   const stableEvents = [...events].sort((a, b) => {
     const dateSort = a.date.localeCompare(b.date)
-    return dateSort || a.time.localeCompare(b.time)
+    return dateSort || compareEventTimes(a.time, b.time)
   })
   const activity = createDashboardActivityData({
     events: stableEvents,
@@ -103,7 +104,7 @@ export function createDashboardActivityData({
       .sort(
         (a, b) =>
           a.date.localeCompare(b.date) ||
-          a.time.localeCompare(b.time) ||
+          compareEventTimes(a.time, b.time) ||
           (a.occurrenceKey ?? '').localeCompare(b.occurrenceKey ?? ''),
       )
 

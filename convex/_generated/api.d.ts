@@ -8,9 +8,13 @@
  * @module
  */
 
+import type * as activities from "../activities.js";
+import type * as activityParticipants from "../activityParticipants.js";
+import type * as activitySharing from "../activitySharing.js";
 import type * as auditLogs from "../auditLogs.js";
 import type * as careReminders from "../careReminders.js";
 import type * as crons from "../crons.js";
+import type * as dashboard from "../dashboard.js";
 import type * as devHorseAnalysisSeed from "../devHorseAnalysisSeed.js";
 import type * as devOwnership from "../devOwnership.js";
 import type * as devSeed from "../devSeed.js";
@@ -31,6 +35,7 @@ import type * as horseTransitions from "../horseTransitions.js";
 import type * as horseWeightRecords from "../horseWeightRecords.js";
 import type * as horses from "../horses.js";
 import type * as http from "../http.js";
+import type * as libs_activitySharing from "../libs/activitySharing.js";
 import type * as libs_audit from "../libs/audit.js";
 import type * as libs_auth from "../libs/auth.js";
 import type * as libs_creationRequests from "../libs/creationRequests.js";
@@ -48,6 +53,7 @@ import type * as libs_email_resendWebhook from "../libs/email/resendWebhook.js";
 import type * as libs_email_templates from "../libs/email/templates.js";
 import type * as libs_email_types from "../libs/email/types.js";
 import type * as libs_entitlements from "../libs/entitlements.js";
+import type * as libs_eventAttendees from "../libs/eventAttendees.js";
 import type * as libs_eventPermissions from "../libs/eventPermissions.js";
 import type * as libs_horseAnalysisDemo from "../libs/horseAnalysisDemo.js";
 import type * as libs_horseCareData from "../libs/horseCareData.js";
@@ -92,9 +98,13 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  activities: typeof activities;
+  activityParticipants: typeof activityParticipants;
+  activitySharing: typeof activitySharing;
   auditLogs: typeof auditLogs;
   careReminders: typeof careReminders;
   crons: typeof crons;
+  dashboard: typeof dashboard;
   devHorseAnalysisSeed: typeof devHorseAnalysisSeed;
   devOwnership: typeof devOwnership;
   devSeed: typeof devSeed;
@@ -115,6 +125,7 @@ declare const fullApi: ApiFromModules<{
   horseWeightRecords: typeof horseWeightRecords;
   horses: typeof horses;
   http: typeof http;
+  "libs/activitySharing": typeof libs_activitySharing;
   "libs/audit": typeof libs_audit;
   "libs/auth": typeof libs_auth;
   "libs/creationRequests": typeof libs_creationRequests;
@@ -132,6 +143,7 @@ declare const fullApi: ApiFromModules<{
   "libs/email/templates": typeof libs_email_templates;
   "libs/email/types": typeof libs_email_types;
   "libs/entitlements": typeof libs_entitlements;
+  "libs/eventAttendees": typeof libs_eventAttendees;
   "libs/eventPermissions": typeof libs_eventPermissions;
   "libs/horseAnalysisDemo": typeof libs_horseAnalysisDemo;
   "libs/horseCareData": typeof libs_horseCareData;

@@ -1,3 +1,4 @@
+import { isAllDay } from '../shared/events/eventTime'
 import {
   assertHorseWorkspace,
   readableRecords,
@@ -17,7 +18,9 @@ const isConfirmedEventHorse = (eventHorse: Doc<'eventsHorses'>) => {
 }
 
 const eventTimestamp = (event: Doc<'events'>) => {
-  const timestamp = new Date(`${event.date}T${event.time || '00:00'}`).getTime()
+  const timestamp = new Date(
+    `${event.date}T${isAllDay(event.time) ? '00:00' : event.time || '00:00'}`,
+  ).getTime()
 
   return Number.isNaN(timestamp)
     ? new Date(`${event.date}T00:00:00`).getTime()

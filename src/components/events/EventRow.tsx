@@ -16,7 +16,11 @@ import type {
 } from 'shared/events/eventSchema'
 import { EventStatusBadge } from './EventBadges'
 import { EventDateBadge } from './EventDateBadge'
-import { formatEventDateTime, formatRecurrence } from './eventDisplay'
+import {
+  formatEventDateTime,
+  formatEventTime,
+  formatRecurrence,
+} from './eventDisplay'
 
 export type EventRowVariant = 'agenda' | 'contextual' | 'compact' | 'summary'
 
@@ -138,7 +142,7 @@ function EventRowContent({
   variant: EventRowVariant
 }) {
   const { locale } = useLocale()
-  const leading = getLeading(event, variant, density, leadingLabel)
+  const leading = getLeading(event, variant, density, leadingLabel, locale)
   const metaItems = getMetaItems({
     locale,
     event,
@@ -215,6 +219,7 @@ function getLeading(
   variant: EventRowVariant,
   density: EventRowDensity,
   leadingLabel?: string,
+  locale: Locale = 'en',
 ): ReactNode {
   if (variant === 'agenda') {
     return (
@@ -235,7 +240,7 @@ function getLeading(
           density === 'compact' ? 'size-12 text-xs' : 'size-16 text-sm',
         )}
       >
-        {leadingLabel ?? event.time}
+        {leadingLabel ?? formatEventTime(event.time, locale)}
       </span>
     )
   }

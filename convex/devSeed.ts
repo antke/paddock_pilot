@@ -321,7 +321,14 @@ const resetStableRows = async (ctx: MutationCtx, stableId: Id<'stables'>) => {
   }
   await Promise.all([
     ...eventHorseRows.flat().map((row) => ctx.db.delete(row._id)),
-    ...events.map((event) => ctx.db.delete(event._id)),
+    ...events.map(async (event) => {
+      for (const attendee of await ctx.db
+        .query('eventAttendees')
+        .withIndex('by_event', (q) => q.eq('eventId', event._id))
+        .collect())
+        await ctx.db.delete(attendee._id)
+      await ctx.db.delete(event._id)
+    }),
     ...healthIssues.map((issue) => ctx.db.delete(issue._id)),
     ...weightRecords.map((record) => ctx.db.delete(record._id)),
     ...medicationRecords.map((record) => ctx.db.delete(record._id)),
@@ -1904,6 +1911,7 @@ const seedEvents = async (
     )
     const eventId = await ctx.db.insert('events', {
       ...eventInput,
+      peopleIds: undefined,
       stableId,
       horseIds: selectedHorseIds,
       createdBy: ownerId,

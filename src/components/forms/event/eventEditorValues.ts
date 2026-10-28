@@ -45,6 +45,7 @@ export function createEventEditorValues(stableId?: string): EventFormInput {
   return {
     stableId,
     horseIds: [],
+    peopleIds: [],
     date: '',
     endDate: '',
     time: '',
@@ -77,6 +78,7 @@ export function editEventEditorValues(
 
   return {
     stableId: event.stableId,
+    peopleIds: event.peopleIds ?? [],
     horseIds: selectedHorseIds.length > 0 ? selectedHorseIds : event.horseIds,
     date: event.date,
     endDate: event.endDate ?? '',

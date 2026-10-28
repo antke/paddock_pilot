@@ -29,9 +29,7 @@ it('keeps the workspace in the visible heading independently of navigation', () 
       <DashboardPageHeader title="Events" />
     </WorkspaceContext.Provider>,
   )
-  expect(
-    screen.getByRole('heading', { name: 'Events · Personal' }),
-  ).toBeTruthy()
+  expect(screen.getByRole('heading', { name: 'Events' })).toBeTruthy()
   rerender(
     <WorkspaceContext.Provider
       value={{ label: 'Oak Farm', stableId: 'stable' as Id<'stables'> }}

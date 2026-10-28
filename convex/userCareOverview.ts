@@ -1,10 +1,12 @@
+import { compareEventTimes } from '../shared/events/eventTime'
 import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import { horseCareData } from './libs/horseCareData'
 import { accessibleHorses, getHorseAccess } from './libs/horsePermissions'
 import type { Doc, Id } from './_generated/dataModel'
 import { query } from './_generated/server'
 import type { QueryCtx } from './_generated/server'
-import { v } from 'convex/values'
+import { ConvexError, v } from 'convex/values'
+import { recordCapabilities } from './libs/recordCapabilities'
 import { addDaysToDateKey, resolveTodayDateKey } from './libs/dateKeys'
 import { getCurrentUser } from './libs/stablePermissions'
 import { isActiveHorse } from './libs/horseState'
@@ -14,7 +16,7 @@ const upcomingWindowDays = 14
 const byEventDateAndTime = (a: Doc<'events'>, b: Doc<'events'>) => {
   const dateSort = a.date.localeCompare(b.date)
   if (dateSort !== 0) return dateSort
-  return a.time.localeCompare(b.time)
+  return compareEventTimes(a.time, b.time)
 }
 
 const byReminderDueDate = (
@@ -71,265 +73,305 @@ const incrementHorseMetric = (
   map.set(horseId, current)
 }
 
+export async function getCareOverview(
+  ctx: QueryCtx,
+  args: {
+    stableId?: Id<'stables'>
+    stableIds?: Id<'stables'>[]
+    today?: string
+  },
+) {
+  const user = await getCurrentUser(ctx)
+  const today = resolveTodayDateKey(args.today)
+  const upcomingEnd = addDaysToDateKey(today, upcomingWindowDays)
+  const accessibleStables = await getAccessibleStables(ctx, user._id)
+  const selectedIds = args.stableIds ? [...new Set(args.stableIds)] : undefined
+  if (
+    selectedIds &&
+    (selectedIds.length > 30 ||
+      selectedIds.some(
+        (id) => !accessibleStables.some((stable) => stable._id === id),
+      ))
+  )
+    throw new ConvexError('Not authorized to view the selected stables')
+  const stables = selectedIds
+    ? accessibleStables.filter((stable) => selectedIds.includes(stable._id))
+    : args.stableId
+      ? accessibleStables.filter((stable) => stable._id === args.stableId)
+      : []
+
+  const stableRows = await Promise.all(
+    stables.map(async (stable) => {
+      const horses = await ctx.db
+        .query('horses')
+        .withIndex('by_stable_id', (q) => q.eq('stableId', stable._id))
+        .collect()
+      const permissions = await Promise.all(
+        horses.map((horse) => getHorseAccess(ctx, horse)),
+      )
+      const activeHorses = horses.filter(
+        (horse, index) =>
+          isActiveHorse(horse) &&
+          !horse.transitionId &&
+          (selectedIds !== undefined || permissions[index].canRead),
+      )
+      const data = await horseCareData(ctx, activeHorses, stable._id)
+      const stableReminders = await ctx.db
+        .query('careReminders')
+        .withIndex('by_stable_id_status_due_date', (q) =>
+          q.eq('stableId', stable._id).eq('status', 'pending'),
+        )
+        .collect()
+      return {
+        ...data,
+        stable,
+        reminders: [
+          ...new Map(
+            [
+              ...data.reminders.filter((r) => r.status === 'pending'),
+              ...stableReminders.filter((r) => !r.horseId),
+              ...(selectedIds !== undefined
+                ? (
+                    await Promise.all(
+                      stableReminders
+                        .filter((r) => r.horseId)
+                        .map(async (reminder) => {
+                          const horse = activeHorses.find(
+                            (candidate) => candidate._id === reminder.horseId,
+                          )
+                          return horse &&
+                            (await recordCapabilities(ctx, horse, reminder))
+                              .readSchedule
+                            ? reminder
+                            : null
+                        }),
+                    )
+                  ).filter((reminder) => reminder !== null)
+                : []),
+            ].map((reminder) => [reminder._id, reminder]),
+          ).values(),
+        ],
+      }
+    }),
+  )
+
+  const personal = await horseCareData(
+    ctx,
+    args.stableId ? [] : await accessibleHorses(ctx, user._id),
+  )
+  const unique = <T extends { _id: string }>(rows: T[]) => [
+    ...new Map(rows.map((row) => [row._id, row])).values(),
+  ]
+  const allRows = [
+    ...stableRows,
+    {
+      ...personal,
+      reminders: personal.reminders.filter((r) => r.status === 'pending'),
+    },
+  ]
+  const horses = unique(allRows.flatMap((row) => row.horses))
+  const horseById = new Map(horses.map((horse) => [horse._id, horse]))
+  const horseProfileImageUrls = new Map(
+    await Promise.all(
+      horses.map(
+        async (horse) =>
+          [
+            horse._id,
+            horse.profileImageId
+              ? ((await ctx.storage.getUrl(horse.profileImageId)) ?? undefined)
+              : undefined,
+          ] as const,
+      ),
+    ),
+  )
+  const stableById = new Map(
+    accessibleStables.map((stable) => [stable._id, stable]),
+  )
+  const horseMetrics = new Map<Id<'horses'>, HorseMetrics>()
+
+  const upcomingEvents = unique(allRows.flatMap((row) => row.events))
+    .filter(
+      (event) =>
+        (event.status ?? 'planned') === 'planned' &&
+        event.date >= today &&
+        event.date <= upcomingEnd,
+    )
+    .sort(byEventDateAndTime)
+  const pendingReminders = unique(allRows.flatMap((row) => row.reminders))
+  const dueReminders = pendingReminders
+    .filter((reminder) => reminder.dueDate <= upcomingEnd)
+    .sort(byReminderDueDate)
+  const overdueReminders = pendingReminders.filter(
+    (reminder) => reminder.dueDate < today,
+  )
+  const activeHealthIssues = unique(
+    allRows.flatMap((row) => row.healthIssues),
+  ).filter((issue) => issue.status === 'active')
+  const highSeverityIssues = activeHealthIssues.filter(
+    (issue) => issue.severity === 'high',
+  )
+  const activeMedicationRecords = unique(
+    allRows.flatMap((row) => row.medicationRecords),
+  ).filter((record) => record.status === 'active')
+
+  for (const issue of activeHealthIssues) {
+    incrementHorseMetric(horseMetrics, issue.horseId, 'activeIssueCount')
+    if (issue.severity === 'high') {
+      incrementHorseMetric(horseMetrics, issue.horseId, 'highIssueCount')
+    }
+  }
+
+  for (const record of activeMedicationRecords) {
+    incrementHorseMetric(horseMetrics, record.horseId, 'activeMedicationCount')
+  }
+
+  for (const reminder of overdueReminders) {
+    if (reminder.horseId) {
+      incrementHorseMetric(
+        horseMetrics,
+        reminder.horseId,
+        'overdueReminderCount',
+      )
+    }
+  }
+
+  return {
+    summary: {
+      stableCount: stables.length,
+      horseCount: horses.length,
+      upcomingEventCount: upcomingEvents.length,
+      dueReminderCount: dueReminders.length,
+      overdueReminderCount: overdueReminders.length,
+      highSeverityIssueCount: highSeverityIssues.length,
+      activeMedicationCount: activeMedicationRecords.length,
+    },
+    stableSummaries: stableRows
+      .map(
+        ({
+          stable,
+          horses: stableHorses,
+          events,
+          reminders,
+          healthIssues,
+          medicationRecords,
+        }) => {
+          const stableUpcomingEvents = events.filter(
+            (event) =>
+              (event.status ?? 'planned') === 'planned' &&
+              event.date >= today &&
+              event.date <= upcomingEnd,
+          )
+          const stableDueReminders = reminders.filter(
+            (reminder) => reminder.dueDate <= upcomingEnd,
+          )
+          const stableOverdueReminders = stableDueReminders.filter(
+            (reminder) => reminder.dueDate < today,
+          )
+          const stableHighIssues = healthIssues.filter(
+            (issue) => issue.status === 'active' && issue.severity === 'high',
+          )
+          const stableActiveMedications = medicationRecords.filter(
+            (record) => record.status === 'active',
+          )
+
+          return {
+            stableId: stable._id,
+            stableName: stable.name,
+            location: stable.location,
+            horseCount: stableHorses.length,
+            upcomingEventCount: stableUpcomingEvents.length,
+            dueReminderCount: stableDueReminders.length,
+            overdueReminderCount: stableOverdueReminders.length,
+            highSeverityIssueCount: stableHighIssues.length,
+            activeMedicationCount: stableActiveMedications.length,
+          }
+        },
+      )
+      .sort((a, b) => {
+        const alertSort =
+          b.overdueReminderCount +
+          b.highSeverityIssueCount -
+          (a.overdueReminderCount + a.highSeverityIssueCount)
+        if (alertSort !== 0) return alertSort
+        return a.stableName.localeCompare(b.stableName)
+      }),
+    dueReminders: dueReminders.slice(0, 8).map((reminder) => {
+      const horse = reminder.horseId
+        ? horseById.get(reminder.horseId)
+        : undefined
+      const stable = reminder.stableId
+        ? stableById.get(reminder.stableId)
+        : undefined
+
+      return {
+        id: reminder._id,
+        stableId: reminder.stableId,
+        stableName: stable?.name ?? 'Stable',
+        horseId: reminder.horseId,
+        horseName: getHorseDisplayName(horse),
+        title: reminder.title,
+        dueDate: reminder.dueDate,
+        category: reminder.category,
+        priority: reminder.priority,
+        overdue: reminder.dueDate < today,
+      }
+    }),
+    upcomingEvents: upcomingEvents.slice(0, 8).map((event) => ({
+      id: event._id,
+      stableId: event.stableId,
+      stableName:
+        (event.stableId ? stableById.get(event.stableId) : undefined)?.name ??
+        'Stable',
+      title: event.title,
+      date: event.date,
+      time: event.time,
+      type: event.type,
+      horseCount: event.horseIds.length,
+    })),
+    attentionHorses: [...horseMetrics.entries()]
+      .map(([horseId, metrics]) => {
+        const horse = horseById.get(horseId)
+        if (!horse) return null
+
+        return {
+          horseId,
+          horseName: getHorseDisplayName(horse),
+          ownerName: horse.ownerName,
+          breed: horse.breed,
+          profileImageUrl: horseProfileImageUrls.get(horse._id),
+          stableId: horse.stableId,
+          stableName:
+            (horse.stableId ? stableById.get(horse.stableId) : undefined)
+              ?.name ?? 'Stable',
+          activeIssueCount: metrics.activeIssueCount ?? 0,
+          highIssueCount: metrics.highIssueCount ?? 0,
+          activeMedicationCount: metrics.activeMedicationCount ?? 0,
+          overdueReminderCount: metrics.overdueReminderCount ?? 0,
+        }
+      })
+      .filter((horse) => horse !== null)
+      .sort((a, b) => {
+        const alertSort =
+          b.highIssueCount +
+          b.overdueReminderCount -
+          (a.highIssueCount + a.overdueReminderCount)
+        if (alertSort !== 0) return alertSort
+        return (
+          b.activeIssueCount +
+          b.activeMedicationCount -
+          (a.activeIssueCount + a.activeMedicationCount)
+        )
+      })
+      // Keep the compact attention preview, but never hide a high-severity
+      // care target behind the ranking cap. Access filtering happens above.
+      .filter((horse, index) => index < 8 || horse.highIssueCount > 0),
+  }
+}
+
 export const getForCurrentUser = query({
   args: {
     stableId: v.optional(v.id('stables')),
     today: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
-    const user = await getCurrentUser(ctx)
-    const today = resolveTodayDateKey(args.today)
-    const upcomingEnd = addDaysToDateKey(today, upcomingWindowDays)
-    const accessibleStables = await getAccessibleStables(ctx, user._id)
-    const stables = args.stableId
-      ? accessibleStables.filter((stable) => stable._id === args.stableId)
-      : []
-
-    const stableRows = await Promise.all(
-      stables.map(async (stable) => {
-        const horses = await ctx.db
-          .query('horses')
-          .withIndex('by_stable_id', (q) => q.eq('stableId', stable._id))
-          .collect()
-        const permissions = await Promise.all(
-          horses.map((horse) => getHorseAccess(ctx, horse)),
-        )
-        const activeHorses = horses.filter(
-          (horse, index) => isActiveHorse(horse) && permissions[index].canRead,
-        )
-        const data = await horseCareData(ctx, activeHorses, stable._id)
-        const stableReminders = await ctx.db
-          .query('careReminders')
-          .withIndex('by_stable_id_status_due_date', (q) =>
-            q.eq('stableId', stable._id).eq('status', 'pending'),
-          )
-          .collect()
-        return {
-          ...data,
-          stable,
-          reminders: [
-            ...data.reminders.filter((r) => r.status === 'pending'),
-            ...stableReminders.filter((r) => !r.horseId),
-          ],
-        }
-      }),
-    )
-
-    const personal = await horseCareData(
-      ctx,
-      args.stableId ? [] : await accessibleHorses(ctx, user._id),
-    )
-    const unique = <T extends { _id: string }>(rows: T[]) => [
-      ...new Map(rows.map((row) => [row._id, row])).values(),
-    ]
-    const allRows = [
-      ...stableRows,
-      {
-        ...personal,
-        reminders: personal.reminders.filter((r) => r.status === 'pending'),
-      },
-    ]
-    const horses = unique(allRows.flatMap((row) => row.horses))
-    const horseById = new Map(horses.map((horse) => [horse._id, horse]))
-    const horseProfileImageUrls = new Map(
-      await Promise.all(
-        horses.map(
-          async (horse) =>
-            [
-              horse._id,
-              horse.profileImageId
-                ? ((await ctx.storage.getUrl(horse.profileImageId)) ??
-                  undefined)
-                : undefined,
-            ] as const,
-        ),
-      ),
-    )
-    const stableById = new Map(
-      accessibleStables.map((stable) => [stable._id, stable]),
-    )
-    const horseMetrics = new Map<Id<'horses'>, HorseMetrics>()
-
-    const upcomingEvents = unique(allRows.flatMap((row) => row.events))
-      .filter(
-        (event) =>
-          (event.status ?? 'planned') === 'planned' &&
-          event.date >= today &&
-          event.date <= upcomingEnd,
-      )
-      .sort(byEventDateAndTime)
-    const pendingReminders = unique(allRows.flatMap((row) => row.reminders))
-    const dueReminders = pendingReminders
-      .filter((reminder) => reminder.dueDate <= upcomingEnd)
-      .sort(byReminderDueDate)
-    const overdueReminders = pendingReminders.filter(
-      (reminder) => reminder.dueDate < today,
-    )
-    const activeHealthIssues = unique(
-      allRows.flatMap((row) => row.healthIssues),
-    ).filter((issue) => issue.status === 'active')
-    const highSeverityIssues = activeHealthIssues.filter(
-      (issue) => issue.severity === 'high',
-    )
-    const activeMedicationRecords = unique(
-      allRows.flatMap((row) => row.medicationRecords),
-    ).filter((record) => record.status === 'active')
-
-    for (const issue of activeHealthIssues) {
-      incrementHorseMetric(horseMetrics, issue.horseId, 'activeIssueCount')
-      if (issue.severity === 'high') {
-        incrementHorseMetric(horseMetrics, issue.horseId, 'highIssueCount')
-      }
-    }
-
-    for (const record of activeMedicationRecords) {
-      incrementHorseMetric(
-        horseMetrics,
-        record.horseId,
-        'activeMedicationCount',
-      )
-    }
-
-    for (const reminder of overdueReminders) {
-      if (reminder.horseId) {
-        incrementHorseMetric(
-          horseMetrics,
-          reminder.horseId,
-          'overdueReminderCount',
-        )
-      }
-    }
-
-    return {
-      summary: {
-        stableCount: stables.length,
-        horseCount: horses.length,
-        upcomingEventCount: upcomingEvents.length,
-        dueReminderCount: dueReminders.length,
-        overdueReminderCount: overdueReminders.length,
-        highSeverityIssueCount: highSeverityIssues.length,
-        activeMedicationCount: activeMedicationRecords.length,
-      },
-      stableSummaries: stableRows
-        .map(
-          ({
-            stable,
-            horses: stableHorses,
-            events,
-            reminders,
-            healthIssues,
-            medicationRecords,
-          }) => {
-            const stableUpcomingEvents = events.filter(
-              (event) =>
-                (event.status ?? 'planned') === 'planned' &&
-                event.date >= today &&
-                event.date <= upcomingEnd,
-            )
-            const stableDueReminders = reminders.filter(
-              (reminder) => reminder.dueDate <= upcomingEnd,
-            )
-            const stableOverdueReminders = stableDueReminders.filter(
-              (reminder) => reminder.dueDate < today,
-            )
-            const stableHighIssues = healthIssues.filter(
-              (issue) => issue.status === 'active' && issue.severity === 'high',
-            )
-            const stableActiveMedications = medicationRecords.filter(
-              (record) => record.status === 'active',
-            )
-
-            return {
-              stableId: stable._id,
-              stableName: stable.name,
-              location: stable.location,
-              horseCount: stableHorses.length,
-              upcomingEventCount: stableUpcomingEvents.length,
-              dueReminderCount: stableDueReminders.length,
-              overdueReminderCount: stableOverdueReminders.length,
-              highSeverityIssueCount: stableHighIssues.length,
-              activeMedicationCount: stableActiveMedications.length,
-            }
-          },
-        )
-        .sort((a, b) => {
-          const alertSort =
-            b.overdueReminderCount +
-            b.highSeverityIssueCount -
-            (a.overdueReminderCount + a.highSeverityIssueCount)
-          if (alertSort !== 0) return alertSort
-          return a.stableName.localeCompare(b.stableName)
-        }),
-      dueReminders: dueReminders.slice(0, 8).map((reminder) => {
-        const horse = reminder.horseId
-          ? horseById.get(reminder.horseId)
-          : undefined
-        const stable = reminder.stableId
-          ? stableById.get(reminder.stableId)
-          : undefined
-
-        return {
-          id: reminder._id,
-          stableId: reminder.stableId,
-          stableName: stable?.name ?? 'Stable',
-          horseId: reminder.horseId,
-          horseName: getHorseDisplayName(horse),
-          title: reminder.title,
-          dueDate: reminder.dueDate,
-          category: reminder.category,
-          priority: reminder.priority,
-          overdue: reminder.dueDate < today,
-        }
-      }),
-      upcomingEvents: upcomingEvents.slice(0, 8).map((event) => ({
-        id: event._id,
-        stableId: event.stableId,
-        stableName:
-          (event.stableId ? stableById.get(event.stableId) : undefined)?.name ??
-          'Stable',
-        title: event.title,
-        date: event.date,
-        time: event.time,
-        type: event.type,
-        horseCount: event.horseIds.length,
-      })),
-      attentionHorses: [...horseMetrics.entries()]
-        .map(([horseId, metrics]) => {
-          const horse = horseById.get(horseId)
-          if (!horse) return null
-
-          return {
-            horseId,
-            horseName: getHorseDisplayName(horse),
-            ownerName: horse.ownerName,
-            breed: horse.breed,
-            profileImageUrl: horseProfileImageUrls.get(horse._id),
-            stableId: horse.stableId,
-            stableName:
-              (horse.stableId ? stableById.get(horse.stableId) : undefined)
-                ?.name ?? 'Stable',
-            activeIssueCount: metrics.activeIssueCount ?? 0,
-            highIssueCount: metrics.highIssueCount ?? 0,
-            activeMedicationCount: metrics.activeMedicationCount ?? 0,
-            overdueReminderCount: metrics.overdueReminderCount ?? 0,
-          }
-        })
-        .filter((horse) => horse !== null)
-        .sort((a, b) => {
-          const alertSort =
-            b.highIssueCount +
-            b.overdueReminderCount -
-            (a.highIssueCount + a.overdueReminderCount)
-          if (alertSort !== 0) return alertSort
-          return (
-            b.activeIssueCount +
-            b.activeMedicationCount -
-            (a.activeIssueCount + a.activeMedicationCount)
-          )
-        })
-        // Keep the compact attention preview, but never hide a high-severity
-        // care target behind the ranking cap. Access filtering happens above.
-        .filter((horse, index) => index < 8 || horse.highIssueCount > 0),
-    }
-  },
+  handler: getCareOverview,
 })

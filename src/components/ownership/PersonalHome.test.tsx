@@ -1,5 +1,12 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react'
 import {
   createMemoryHistory,
   createRootRoute,
@@ -30,10 +37,91 @@ const state = vi.hoisted(
   }),
 )
 const queryClients: QueryClient[] = []
+
+function dashboardResult(stableIds: string[]) {
+  const roster = state.queries['horses:listMine'] as Array<{
+    _id: string
+    name: string
+    profileImageUrl?: string | null
+    access: {
+      canEditPersonalRecords: boolean
+      isOwner: boolean
+      stable: { _id?: string; name?: string } | null
+    }
+  }>
+  const rows = roster.map(
+    (horse) =>
+      state.queries['training:' + horse._id] as
+        { events: unknown[]; records: unknown[] } | undefined,
+  )
+  if (
+    state.queries['events:list'] === undefined ||
+    roster.some(
+      (horse, index) =>
+        'training:' + horse._id in state.queries && rows[index] === undefined,
+    )
+  )
+    return undefined
+  return {
+    stableIds,
+    events: state.queries['events:list'],
+    overview: state.overview,
+    horses: roster.map((horse) => ({
+      _id: horse._id,
+      name: horse.name,
+      profileImageUrl: horse.profileImageUrl,
+      stableId: horse.access.stable?._id,
+      stableName: horse.access.stable?.name,
+      personal: true,
+      isOwner: horse.access.isOwner,
+      canRead: true,
+      canRecord: horse.access.canEditPersonalRecords,
+    })),
+    training: {
+      horses: roster.map((horse) => ({
+        ...horse,
+        canRecord: horse.access.canEditPersonalRecords,
+      })),
+      events: rows.flatMap((row) => row?.events ?? []),
+      records: rows.flatMap((row) => row?.records ?? []),
+    },
+  }
+}
+
 vi.mock('convex/react', () => ({
-  useQuery: (reference: Parameters<typeof getFunctionName>[0]) => {
+  useQuery: (
+    reference: Parameters<typeof getFunctionName>[0],
+    args?: { training?: boolean },
+  ) => {
     const name = getFunctionName(reference)
     state.reads.push(name)
+    if (name === 'stables:list') return state.queries['stables:list'] ?? []
+    if (name === 'activityParticipants:mine') return []
+    if (name === 'activities:view') {
+      const horses = (
+        state.queries['horses:listMine'] as Array<{
+          _id: string
+          access: { canEditPersonalRecords: boolean }
+        }>
+      ).map((horse) => ({
+        ...horse,
+        canRecord: horse.access.canEditPersonalRecords,
+      }))
+      const training = horses.map(
+        (horse) =>
+          state.queries['training:' + horse._id] as
+            { events: unknown[]; records: unknown[] } | undefined,
+      )
+      return {
+        horses,
+        events: args?.training
+          ? training.flatMap((row) => row?.events ?? [])
+          : state.queries['events:list'],
+        records: args?.training
+          ? training.flatMap((row) => row?.records ?? [])
+          : [],
+      }
+    }
     if (name === 'userCareOverview:getForCurrentUser') return state.overview
     if (!(name in state.queries)) throw new Error(`Unexpected query ${name}`)
     return state.queries[name]
@@ -67,6 +155,8 @@ beforeEach(() => {
     removeEventListener: vi.fn(),
   }))
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+  window.sessionStorage.clear()
+  window.localStorage.clear()
   state.reads = []
   state.queries = {
     'events:listPendingHorseInvitations': [],
@@ -184,6 +274,13 @@ async function open(path = '/') {
         queryFn: ({ queryKey }) => {
           const name = getFunctionName(queryKey[1] as never)
           state.reads.push(name)
+          if (name === 'dashboard:view') {
+            const stableIds = (queryKey[2] as { stableIds: string[] }).stableIds
+            const key = 'dashboard:' + stableIds.join(',')
+            return key in state.queries
+              ? state.queries[key]
+              : (dashboardResult(stableIds) ?? new Promise(() => {}))
+          }
           if (name === 'userCareOverview:getForCurrentUser')
             return state.overview
           if (name === 'training:listForHorse') {
@@ -214,7 +311,12 @@ it('reuses live data across Home, Events and Training without mounting a loading
   const reads = state.reads.filter(
     (name) =>
       name !== 'users:getCurrentUser' &&
-      name !== 'events:listPendingHorseInvitations',
+      name !== 'events:listPendingHorseInvitations' &&
+      ![
+        'stables:list',
+        'activities:view',
+        'activityParticipants:mine',
+      ].includes(name),
   )
   const pendingScreens: Element[] = []
   const observer = new MutationObserver((records) => {
@@ -247,7 +349,12 @@ it('reuses live data across Home, Events and Training without mounting a loading
       state.reads.filter(
         (name) =>
           name !== 'users:getCurrentUser' &&
-          name !== 'events:listPendingHorseInvitations',
+          name !== 'events:listPendingHorseInvitations' &&
+          ![
+            'stables:list',
+            'activities:view',
+            'activityParticipants:mine',
+          ].includes(name),
       ),
     ).toEqual(reads)
   } finally {
@@ -531,4 +638,94 @@ it('lets read-only horse viewers add their own horse without offering record cre
     ),
   ).toBe('/horses/create')
   expect(screen.getAllByRole('menuitem')).toHaveLength(1)
+})
+
+it('updates all dashboard sections together from stable toggles without blanking existing cards', async () => {
+  state.queries['stables:list'] = [{ _id: 'stable-a', name: 'Stable A' }]
+  let complete!: (
+    value: NonNullable<ReturnType<typeof dashboardResult>>,
+  ) => void
+  state.queries['dashboard:stable-a'] = new Promise((resolve) => {
+    complete = resolve
+  })
+  await open()
+  const home = await screen.findByRole('heading', { level: 1, name: 'Home' })
+  const personalHorse = screen.getByRole('heading', { name: 'Horse 1' })
+  const mine = screen.getByRole('checkbox', { name: 'My calendar' })
+  expect(mine.getAttribute('aria-checked')).toBe('true')
+  expect(mine.getAttribute('aria-disabled')).toBe('true')
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Stable A' }))
+  expect(screen.getByRole('heading', { level: 1, name: 'Home' })).toBe(home)
+  expect(screen.getByRole('heading', { name: 'Horse 1' })).toBe(personalHorse)
+  expect(document.querySelector('[data-slot="route-pending"]')).toBeNull()
+  expect(document.querySelector('fieldset[aria-busy="true"]')).not.toBeNull()
+  const combined = dashboardResult(['stable-a'])!
+  combined.events = [
+    ...(state.queries['events:list'] as unknown[]),
+    {
+      _id: 'stable-event',
+      _creationTime: 0,
+      createdBy: 'someone',
+      horseIds: ['stable-horse'],
+      title: 'Stable event today',
+      date: '2026-10-09',
+      time: '10:00',
+      type: 'vet',
+      status: 'planned',
+    },
+  ]
+  combined.horses.push({
+    _id: 'stable-horse',
+    name: 'Stable horse',
+    personal: false,
+    isOwner: false,
+    canRead: false,
+    canRecord: false,
+    profileImageUrl: null,
+    stableId: 'stable-a',
+    stableName: 'Stable A',
+  })
+  combined.overview = {
+    ...state.overview,
+    summary: {
+      ...(state.overview.summary as Record<string, unknown>),
+      dueReminderCount: 2,
+    },
+    dueReminders: [
+      ...(state.overview.dueReminders as unknown[]),
+      {
+        id: 'stable-reminder',
+        stableId: 'stable-a',
+        stableName: 'Stable A',
+        title: 'Stable reminder',
+        horseId: 'stable-horse',
+        canReadHorse: false,
+        dueDate: '2026-10-09',
+        category: 'general',
+        overdue: false,
+      },
+    ],
+  }
+  await act(async () => complete(combined))
+  await screen.findAllByText('Stable event today')
+  expect(
+    (await screen.findByRole('heading', { name: 'Stable horse' })).closest('a'),
+  ).toBeNull()
+  expect(screen.getAllByText('Stable reminder').length).toBeGreaterThan(0)
+  expect(
+    screen
+      .getAllByRole('link', { name: /Stable reminder/ })[0]
+      .getAttribute('href'),
+  ).toBe('/stables/stable-a/reminders?reminderId=stable-reminder')
+  expect(document.querySelector('fieldset[aria-busy="true"]')).toBeNull()
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Stable A' }))
+  await waitFor(() =>
+    expect(screen.queryByRole('heading', { name: 'Stable horse' })).toBeNull(),
+  )
+  expect(screen.queryByText('Stable reminder')).toBeNull()
+  expect(screen.queryByText('Stable event today')).toBeNull()
+  expect(screen.getByRole('heading', { name: 'Horse 1' })).toBeTruthy()
+  expect(
+    JSON.parse(localStorage.getItem('paddock:calendar-selection:anonymous')!),
+  ).toEqual(['mine'])
 })

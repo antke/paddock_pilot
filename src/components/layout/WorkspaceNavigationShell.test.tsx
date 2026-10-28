@@ -128,13 +128,18 @@ function navigationHrefs(container: HTMLElement) {
     .map((link) => link.getAttribute('href'))
 }
 
-it('keeps stable Home on the stable dashboard with one current item in the sidebar', async () => {
+it('keeps Home global and marks the local stable overview', async () => {
   await setup('/stables/stable-a')
   const sidebar = await screen.findByRole('complementary', { name: 'Menu' })
   const nav = navigation(sidebar)
   const home = within(nav).getByRole('link', { name: 'Home' })
-  expect(home.getAttribute('href')).toBe('/stables/stable-a')
-  expect(home.getAttribute('aria-current')).toBe('page')
+  expect(home.getAttribute('href')).toBe('/')
+  expect(home.getAttribute('aria-current')).toBeNull()
+  expect(
+    within(nav)
+      .getByRole('link', { name: 'Stable overview' })
+      .getAttribute('aria-current'),
+  ).toBe('page')
   expect(nav.querySelectorAll('[aria-current="page"]')).toHaveLength(1)
   expect(
     within(nav)
@@ -144,44 +149,30 @@ it('keeps stable Home on the stable dashboard with one current item in the sideb
   ).toEqual(['Home', 'Events', 'Training log', 'Horses'])
 })
 
-it.each([
-  ['/events', 'Personal', '/'],
-  ['/stables/stable-a/events', 'Oak Farm', '/stables/stable-a'],
-])(
-  'shows one route-scoped workspace in each navigation instance at %s',
-  async (href, name, homeHref) => {
+it.each(['/events', '/stables/stable-a/events'])(
+  'uses fixed daily links and a stable-only local switch at %s',
+  async (href) => {
     window.localStorage.setItem(savedStableKey, 'stable-b')
     await setup(href)
     const sidebar = await screen.findByRole('complementary', { name: 'Menu' })
     const sidebarHrefs = navigationHrefs(sidebar)
+    expect(sidebarHrefs.slice(0, 4)).toEqual([
+      '/',
+      '/events',
+      '/training',
+      '/horses',
+    ])
+    expect(sidebarHrefs).toContain('/stables')
     expect(
-      within(sidebar).getAllByRole('button', { name: /^Current workspace:/ }),
-    ).toHaveLength(1)
+      within(sidebar).queryByRole('button', { name: /Current workspace:/ }),
+    ).toBeNull()
     expect(
-      within(sidebar).getByRole('button', {
-        name: `Current workspace: ${name}`,
+      within(sidebar).queryAllByRole('button', {
+        name: 'Current stable: Oak Farm',
       }),
-    ).toBeTruthy()
-    expect(
-      within(navigation(sidebar))
-        .getByRole('link', { name: 'Home' })
-        .getAttribute('href'),
-    ).toBe(homeHref)
-    if (homeHref === '/') {
-      expect(
-        sidebarHrefs.some((target) => target?.startsWith('/stables/')),
-      ).toBe(false)
-    } else {
-      expect(
-        sidebarHrefs.every((target) => target?.startsWith('/stables/stable-a')),
-      ).toBe(true)
-    }
-
+    ).toHaveLength(href.startsWith('/stables/') ? 1 : 0)
     fireEvent.click(headerMenu())
     const drawer = await screen.findByRole('dialog', { name: 'Paddock Pilot' })
-    expect(
-      within(drawer).getAllByRole('button', { name: /^Current workspace:/ }),
-    ).toHaveLength(1)
     expect(navigationHrefs(drawer)).toEqual(sidebarHrefs)
     expect(
       navigation(drawer).querySelectorAll('[aria-current="page"]'),
@@ -285,7 +276,7 @@ it('returns focus to Menu when resizing hides the mobile menu opener', async () 
   await waitFor(() => expect(document.activeElement).toBe(headerMenu()))
 })
 
-it('switches to Personal home and closes the drawer despite a saved stable preference', async () => {
+it('opens global Home and closes the drawer despite a saved stable preference', async () => {
   setViewport(390)
   window.localStorage.setItem(savedStableKey, 'stable-a')
   const router = await setup('/stables/stable-a/events')
@@ -294,19 +285,14 @@ it('switches to Personal home and closes the drawer despite a saved stable prefe
   )
   const drawer = await screen.findByRole('dialog', { name: 'Paddock Pilot' })
   fireEvent.click(
-    within(drawer).getByRole('button', { name: 'Current workspace: Oak Farm' }),
-  )
-  fireEvent.click(
-    await screen.findByRole('menuitemradio', { name: 'Personal' }),
+    within(navigation(drawer)).getByRole('link', { name: 'Home' }),
   )
   await waitFor(() => expect(router.state.location.href).toBe('/'))
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   const sidebar = await screen.findByRole('complementary', { name: 'Menu' })
   expect(
-    within(sidebar).getByRole('button', {
-      name: 'Current workspace: Personal',
-    }),
-  ).toBeTruthy()
+    within(sidebar).queryByRole('button', { name: /Current stable:/ }),
+  ).toBeNull()
   expect(
     within(navigation(sidebar))
       .getByRole('link', { name: 'Home' })

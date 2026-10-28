@@ -1,3 +1,10 @@
+import { useQuery } from 'convex/react'
+import { RoutePending } from '#/components/layout/RoutePending'
+import { ActivitySharing } from '#/components/events/ActivitySharing'
+import {
+  ActivityPeople,
+  MyActivityInvitations,
+} from '#/components/events/ActivityPeople'
 import { EventParticipation } from '#/components/events/EventParticipation'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { EventDetail } from '#/components/events/EventDetail'
@@ -15,6 +22,17 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
+  const { stableId, eventId } = Route.useParams()
+  const shared = useQuery(api.activitySharing.detail, {
+    eventId: eventId as Id<'events'>,
+    stableId: stableId as Id<'stables'>,
+  })
+  if (shared === undefined) return <RoutePending />
+  if (shared)
+    return <Navigate to="/events/$eventId" params={{ eventId }} replace />
+  return <OriginalDetail />
+}
+function OriginalDetail() {
   const { stableId, eventId } = Route.useParams()
 
   const { data } = useSuspenseQuery(
@@ -50,6 +68,12 @@ function RouteComponent() {
         canManageEvent={permissions?.canManageEvent ?? false}
       />
       <EventParticipation eventId={eventId as Id<'events'>} />
+      <ActivitySharing eventId={eventId as Id<'events'>} />
+      <ActivityPeople
+        eventId={eventId as Id<'events'>}
+        date={data.event.date}
+      />
+      <MyActivityInvitations eventId={eventId} />
       <Outlet />
     </DashboardPage>
   )

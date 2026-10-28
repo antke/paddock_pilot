@@ -1,3 +1,4 @@
+import { AttendingPeople } from './AttendingPeople'
 import { BackLink } from '#/components/ui/back-action'
 import { CreatorByline } from './CreatorByline'
 import type { ReactNode } from 'react'
@@ -22,6 +23,7 @@ import { formatCurrencyAmount } from '#/lib/numberDisplay'
 import { EventStatusBadge } from './EventBadges'
 import {
   formatEventDateRange,
+  formatEventTime,
   formatEventType,
   formatRecurrence,
 } from './eventDisplay'
@@ -136,6 +138,7 @@ export function EventDetail({
         />
       )}
 
+      <AttendingPeople eventId={event._id} />
       <DashboardSectionCard contentGap="compact">
         <DetailPanelGrid
           className={hasProviderDetails ? 'gap-3' : 'gap-3 lg:grid-cols-1'}
@@ -152,7 +155,7 @@ export function EventDetail({
               />
               <DetailSummaryField
                 label={t('eventViews.time')}
-                value={event.time}
+                value={formatEventTime(event.time, locale)}
               />
               <DetailSummaryField
                 label={t('eventViews.type')}

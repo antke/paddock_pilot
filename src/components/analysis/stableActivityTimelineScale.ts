@@ -1,3 +1,4 @@
+import { compareEventTimes } from 'shared/events/eventTime'
 import type { Locale } from 'shared/i18n/locale'
 import { localeInstances } from '#/i18n/resources'
 import type {
@@ -188,7 +189,7 @@ function compareOccurrence(a: LabTimelineOccurrence, b: LabTimelineOccurrence) {
 
   if (dateSort !== 0) return dateSort
 
-  const timeSort = a.event.time.localeCompare(b.event.time)
+  const timeSort = compareEventTimes(a.event.time, b.event.time)
 
   if (timeSort !== 0) return timeSort
 

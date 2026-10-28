@@ -12,7 +12,7 @@ import {
   useCanGoBack,
   useRouter,
 } from '@tanstack/react-router'
-import { HorseIcon, ListIcon, CaretDownIcon } from '@phosphor-icons/react'
+import { ListIcon } from '@phosphor-icons/react'
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { useT } from '#/i18n/LocaleProvider'
 import { useOwnershipCopy } from '#/components/ownership/ownershipCopy'
@@ -42,70 +42,6 @@ export function mobileStableId(pathname: string) {
   return match && !['create', 'deleted'].includes(match[1])
     ? match[1]
     : undefined
-}
-
-export function MobileWorkspaceControl() {
-  const { activeStable, stables } = useAppUserState()
-  const { pathname } = useLocation()
-  const t = useT()
-  const c = useOwnershipCopy()
-  const [open, setOpen] = useState(false)
-  const stable =
-    activeStable?._id === mobileStableId(pathname) ? activeStable : undefined
-  return (
-    <div className="flex min-w-0 items-center gap-2">
-      <MobileBackButton />
-      {
-        <MobileSheet
-          open={open}
-          onOpenChange={setOpen}
-          title={t('dashboard.workspace')}
-          description={t('dashboard.workspaceHelp')}
-          trigger={
-            <Button
-              variant="ghost"
-              className="min-h-11 max-w-full justify-start gap-2 px-0 text-base"
-              aria-label={t('dashboard.changeWorkspace')}
-            >
-              <span className="line-clamp-2 text-left">
-                {stable?.name ?? c.personalWorkspace}
-              </span>
-              <CaretDownIcon className="shrink-0" aria-hidden="true" />
-            </Button>
-          }
-        >
-          <ButtonLink
-            to="/"
-            variant="ghost"
-            className="min-h-12 justify-start"
-            onClick={() => setOpen(false)}
-          >
-            {c.personalWorkspace}
-          </ButtonLink>
-          {stables.map((item) => (
-            <ButtonLink
-              key={item._id}
-              to="/stables/$stableId"
-              params={{ stableId: item._id }}
-              variant="ghost"
-              className="min-h-12 justify-start"
-              onClick={() => setOpen(false)}
-            >
-              {item.name}
-            </ButtonLink>
-          ))}
-          <ButtonLink
-            to="/stables"
-            variant="outline"
-            className="min-h-12"
-            onClick={() => setOpen(false)}
-          >
-            {t('navigation.stables')}
-          </ButtonLink>
-        </MobileSheet>
-      }
-    </div>
-  )
 }
 
 export function MobileBackButton() {
@@ -192,7 +128,6 @@ export function MobileNavigationView({
     }
   }, [small, pathname])
   const task = isMobileTaskPath(pathname)
-  const base = `/stables/${stableId}`
   const itemClass = (active: boolean) =>
     cn(
       'app-navigation-item app-control-focus grid min-h-14 min-w-0 grid-rows-[1.5rem_auto] content-start items-center justify-items-center gap-1 rounded-control border-0 px-0 py-1.5 text-center text-[0.75rem] leading-4 font-medium text-muted-foreground [&_svg]:size-5.5 [&_svg]:shrink-0',
@@ -204,25 +139,23 @@ export function MobileNavigationView({
       !['/horses/contacts', '/horses/deleted'].some((path) =>
         pathname.startsWith(path),
       ))
-  const moreSelected = stableId
-    ? ![
-        base,
-        `${base}/`,
-        ...['events', 'training', 'horses'].flatMap((s) => [
-          `${base}/${s}`,
-          `${base}/${s}/`,
-        ]),
-      ].includes(pathname) &&
-      !['events', 'training', 'horses'].some((s) =>
-        pathname.startsWith(`${base}/${s}/`),
-      )
-    : [
-        '/profile',
-        '/pricing',
-        '/stables',
-        '/horses/contacts',
-        '/horses/deleted',
-      ].some((destination) => pathname.startsWith(destination))
+  const eventsSelected =
+    pathname.startsWith('/events') ||
+    Boolean(stableId && pathname.startsWith(`/stables/${stableId}/events`))
+  const trainingSelected =
+    pathname.startsWith('/training') ||
+    Boolean(stableId && pathname.startsWith(`/stables/${stableId}/training`))
+  const moreSelected =
+    [
+      '/profile',
+      '/pricing',
+      '/stables',
+      '/horses/contacts',
+      '/horses/deleted',
+    ].some((destination) => pathname.startsWith(destination)) &&
+    !eventsSelected &&
+    !trainingSelected
+
   return (
     // Keep the shell marker without adding a row to the header/main/footer grid.
     <div
@@ -235,121 +168,47 @@ export function MobileNavigationView({
           ref={navigation}
           data-slot="mobile-app-navigation"
           aria-label={t('navigation.primary')}
-          className={cn('md:hidden', stableId ? 'grid-cols-5' : 'grid-cols-4')}
+          className="md:hidden grid-cols-4"
         >
-          {stableId ? (
-            <>
-              <Link
-                to="/stables/$stableId"
-                params={{ stableId }}
-                activeOptions={{ exact: true }}
-                className={itemClass(
-                  pathname === base || pathname === `${base}/`,
-                )}
-                aria-current={
-                  pathname === base || pathname === `${base}/`
-                    ? 'page'
-                    : undefined
-                }
-              >
-                <MobileNavigationIcon>
-                  <HomeIcon aria-hidden="true" />
-                </MobileNavigationIcon>
-                <span className="w-full wrap-anywhere">
-                  {t('navigationShell.mobileHome')}
-                </span>
-              </Link>
-              <Link
-                to="/stables/$stableId/events"
-                params={{ stableId }}
-                className={itemClass(pathname.startsWith(`${base}/events`))}
-                aria-current={
-                  pathname.startsWith(`${base}/events`) ? 'page' : undefined
-                }
-              >
-                <MobileNavigationIcon>
-                  <EventIcon aria-hidden="true" />
-                </MobileNavigationIcon>
-                <span className="w-full wrap-anywhere">
-                  {t('dashboard.events')}
-                </span>
-              </Link>
-              <Link
-                to="/stables/$stableId/training"
-                params={{ stableId }}
-                className={itemClass(pathname.startsWith(`${base}/training`))}
-                aria-current={
-                  pathname.startsWith(`${base}/training`) ? 'page' : undefined
-                }
-              >
-                <MobileNavigationIcon>
-                  <TrainingIcon aria-hidden="true" />
-                </MobileNavigationIcon>
-                <span className="w-full wrap-anywhere">
-                  {t('navigationShell.mobileTraining')}
-                </span>
-              </Link>
-              <Link
-                to="/stables/$stableId/horses"
-                params={{ stableId }}
-                className={itemClass(pathname.startsWith(`${base}/horses`))}
-                aria-current={
-                  pathname.startsWith(`${base}/horses`) ? 'page' : undefined
-                }
-              >
-                <MobileNavigationIcon>
-                  <HorseIcon aria-hidden="true" />
-                </MobileNavigationIcon>
-                <span className="w-full wrap-anywhere">
-                  {t('navigation.horses')}
-                </span>
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link
-                to="/"
-                activeOptions={{ exact: true }}
-                className={itemClass(personalHomeSelected)}
-                aria-current={personalHomeSelected ? 'page' : undefined}
-              >
-                <MobileNavigationIcon>
-                  <HomeIcon aria-hidden="true" />
-                </MobileNavigationIcon>
-                <span className="w-full wrap-anywhere">
-                  {t('navigationShell.mobileHome')}
-                </span>
-              </Link>
-              <Link
-                to="/events"
-                className={itemClass(pathname.startsWith('/events'))}
-                aria-current={
-                  pathname.startsWith('/events') ? 'page' : undefined
-                }
-              >
-                <MobileNavigationIcon>
-                  <EventIcon aria-hidden="true" />
-                </MobileNavigationIcon>
-                <span className="w-full wrap-anywhere">
-                  {t('dashboard.events')}
-                </span>
-              </Link>
-              <Link
-                to="/training"
-                className={itemClass(pathname.startsWith('/training'))}
-                aria-current={
-                  pathname.startsWith('/training') ? 'page' : undefined
-                }
-              >
-                <MobileNavigationIcon>
-                  <TrainingIcon aria-hidden="true" />
-                </MobileNavigationIcon>
-                <span className="w-full wrap-anywhere">
-                  {t('navigationShell.mobileTraining')}
-                </span>
-              </Link>
-            </>
-          )}
+          <>
+            <Link
+              to="/"
+              activeOptions={{ exact: true }}
+              className={itemClass(personalHomeSelected)}
+              aria-current={personalHomeSelected ? 'page' : undefined}
+            >
+              <MobileNavigationIcon>
+                <HomeIcon aria-hidden="true" />
+              </MobileNavigationIcon>
+              <span className="w-full wrap-anywhere">
+                {t('navigationShell.mobileHome')}
+              </span>
+            </Link>
+            <Link
+              to="/events"
+              className={itemClass(eventsSelected)}
+              aria-current={eventsSelected ? 'page' : undefined}
+            >
+              <MobileNavigationIcon>
+                <EventIcon aria-hidden="true" />
+              </MobileNavigationIcon>
+              <span className="w-full wrap-anywhere">
+                {t('dashboard.events')}
+              </span>
+            </Link>
+            <Link
+              to="/training"
+              className={itemClass(trainingSelected)}
+              aria-current={trainingSelected ? 'page' : undefined}
+            >
+              <MobileNavigationIcon>
+                <TrainingIcon aria-hidden="true" />
+              </MobileNavigationIcon>
+              <span className="w-full wrap-anywhere">
+                {t('navigationShell.mobileTraining')}
+              </span>
+            </Link>
+          </>
           {renderMore ? (
             renderMore(
               <Button

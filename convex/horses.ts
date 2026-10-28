@@ -623,6 +623,11 @@ async function permanentlyDeleteHorseData(
     }
     for (const reminder of eventReminders) reminderIds.add(reminder._id)
     for (const row of rows) await ctx.db.delete(row._id)
+    for (const attendee of await ctx.db
+      .query('eventAttendees')
+      .withIndex('by_event', (q) => q.eq('eventId', event._id))
+      .collect())
+      await ctx.db.delete(attendee._id)
     await ctx.db.delete(event._id)
   }
 

@@ -794,6 +794,7 @@ const trainingRecordsSchema = defineTable({
   .index('by_event_horse_date', ['eventId', 'horseId', 'date'])
 
 export const eventFields = {
+  peopleIds: v.optional(v.array(v.id('users'))),
   horseIds: v.array(v.id('horses')),
   createdBy: v.id('users'),
   stableId: v.optional(v.id('stables')),
@@ -971,6 +972,47 @@ export default defineSchema({
   horseWeightRecords: horseWeightRecordsSchema,
   horseMedicationRecords: horseMedicationRecordsSchema,
   horseNutritionLogs: horseNutritionLogsSchema,
+  activityParticipants: defineTable({
+    eventId: v.id('events'),
+    horseId: v.id('horses'),
+    eventHorseId: v.id('eventsHorses'),
+    date: v.string(),
+    email: v.string(),
+    userId: v.optional(v.id('users')),
+    role: v.union(v.literal('rider'), v.literal('instructor')),
+    status: v.union(
+      v.literal('invited'),
+      v.literal('accepted'),
+      v.literal('declined'),
+      v.literal('revoked'),
+    ),
+    invitedBy: v.id('users'),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    // An accepted person's own history survives changes to stable membership.
+    title: v.string(),
+    horseName: v.string(),
+    time: v.string(),
+    location: v.optional(v.string()),
+    type: eventType,
+  })
+    .index('by_event', ['eventId'])
+    .index('by_email', ['email'])
+    .index('by_user', ['userId']),
+  activityCalendarShares: defineTable({
+    eventId: v.id('events'),
+    stableId: v.id('stables'),
+    sharedBy: v.id('users'),
+    horseIds: v.array(v.id('horses')),
+  })
+    .index('by_event', ['eventId'])
+    .index('by_stable', ['stableId']),
+  eventAttendees: defineTable({
+    eventId: v.id('events'),
+    userId: v.id('users'),
+  })
+    .index('by_event', ['eventId'])
+    .index('by_user', ['userId']),
   events: eventsSchema,
   trainingRecords: trainingRecordsSchema,
   eventsHorses: eventHorsesSchema,

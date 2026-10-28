@@ -23,11 +23,19 @@ export function RecordAudienceLabel({
     occurrenceDate: date,
   })
   if (!audience) return null
+  const sharedCalendars = [
+    ...new Map(
+      [
+        ...(audience.shared && audience.stable ? [audience.stable] : []),
+        ...(audience.activityCalendars ?? []),
+      ].map((stable) => [stable._id, stable]),
+    ).values(),
+  ]
   return (
     <details className="text-sm">
       <summary className="app-control-focus min-h-11 cursor-pointer py-3">
-        {audience.shared
-          ? `${pl ? 'Udostępnione' : 'Shared'} · ${audience.stable?.name}`
+        {sharedCalendars.length
+          ? `${pl ? 'Udostępnione' : 'Shared'} · ${sharedCalendars.map((stable) => stable.name).join(', ')}`
           : pl
             ? 'Prywatne · właściciel i opiekunowie'
             : 'Private · owner and carers'}

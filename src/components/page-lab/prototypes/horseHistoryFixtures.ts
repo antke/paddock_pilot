@@ -1,3 +1,4 @@
+import { isAllDay } from 'shared/events/eventTime'
 import type { Id } from 'convex/_generated/dataModel'
 import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
 import type { HorseCareSummaryData } from '#/components/horses/HorseCareSummaryPage'
@@ -157,7 +158,9 @@ export function createHorseHistoryTimeline(
     ...summary.recentEvents.map(({ event, eventHorse }) => ({
       id: event._id,
       kind: 'event' as const,
-      occurredAt: new Date(`${event.date}T${event.time || '00:00'}`).getTime(),
+      occurredAt: new Date(
+        `${event.date}T${isAllDay(event.time) ? '00:00' : event.time || '00:00'}`,
+      ).getTime(),
       title: event.title,
       eventType: event.type,
       status: event.status ?? 'planned',

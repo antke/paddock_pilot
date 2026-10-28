@@ -1,20 +1,23 @@
+import type { ReactNode } from 'react'
+import {
+  ActivityCalendarFilter,
+  useActivityCalendars,
+} from '#/components/events/ActivityCalendarFilter'
+import { MyActivityInvitations } from '#/components/events/ActivityPeople'
 import type { CalendarHorse } from 'shared/horses/horseCalendarColours'
 import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { convexQuery } from '@convex-dev/react-query'
-import { api } from 'convex/_generated/api'
+import type { api } from 'convex/_generated/api'
 import type { FunctionReturnType } from 'convex/server'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
-import { DashboardTabbedCard } from '#/components/dashboard/DashboardTabbedCard'
+import { CalendarViewControl } from '#/components/events/CalendarToolbar'
 import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { EventTable } from '#/components/events/EventList'
 import { EventRow } from '#/components/events/EventRow'
 import { formatEventDate } from '#/components/events/eventDisplay'
 import { StableEventsCalendar } from '#/components/stables/StableEventsCalendar'
-import { RoutePending } from '#/components/layout/RoutePending'
 import { MobileActionBar } from '#/components/layout/MobileActionBar'
 import { useTaskOriginState } from '#/components/layout/mobileTaskNavigation'
 import { ButtonLink } from '#/components/ui/button'
@@ -32,63 +35,93 @@ type ViewProps = {
 }
 
 export function PersonalAppointments(props: ViewProps) {
-  const { data: events } = useQuery({
-    ...convexQuery(api.events.list),
-    throwOnError: true,
-  })
-  const { data: horses } = useQuery({
-    ...convexQuery(api.horses.calendarRoster, {}),
-    throwOnError: true,
-  })
-  if (events === undefined || horses === undefined) return <RoutePending />
-  return <PersonalAppointmentsView horses={horses} events={events} {...props} />
+  const calendars = useActivityCalendars(false)
+  return (
+    <PersonalAppointmentsView
+      horses={calendars.data?.horses ?? []}
+      events={calendars.data?.events ?? []}
+      {...props}
+      notices={<MyActivityInvitations invitationsOnly />}
+      filters={
+        <ActivityCalendarFilter
+          stables={calendars.stables}
+          selected={calendars.selected}
+          onChange={calendars.setSelected}
+          loading={calendars.loading}
+        />
+      }
+    />
+  )
 }
 
 export function PersonalAppointmentsView({
   events,
+  filters,
+  notices,
   horses = [],
-  view = 'list',
+  view = 'calendar',
   onViewChange,
 }: ViewProps & {
   events: Appointments
+  filters?: ReactNode
+  notices?: ReactNode
   horses?: ReadonlyArray<CalendarHorse>
 }) {
   const c = useAppointmentCopy()
   const small = useSmallScreen()
   const taskState = useTaskOriginState()
   const addEvent = (
-    <ButtonLink to="/events/create" action="schedule" state={taskState}>
+    <ButtonLink
+      to="/events/create"
+      action="schedule"
+      size="control"
+      state={taskState}
+    >
       {c.add}
     </ButtonLink>
   )
+  const viewControl = (
+    <CalendarViewControl
+      value={view}
+      options={[
+        { value: 'calendar', label: c.calendar },
+        { value: 'list', label: c.list },
+      ]}
+      label={c.views}
+      onValueChange={onViewChange}
+    />
+  )
   return (
     <DashboardPage>
-      <DashboardPageHeader title={c.title} description={c.intro} />
-      <DashboardTabbedCard
-        activeId={view}
-        items={[
-          { id: 'list', label: c.list, description: c.listHelp },
-          { id: 'calendar', label: c.calendar },
-        ]}
-        ariaLabel={c.views}
-        onSelect={onViewChange}
-        actions={small ? undefined : addEvent}
-      >
-        {view === 'calendar' ? (
-          <StableEventsCalendar
-            horses={horses}
-            events={events}
-            surface="flat"
-          />
-        ) : (
+      <DashboardPageHeader
+        showWorkspace={false}
+        title={c.title}
+        description={c.intro}
+      />
+      {filters}
+      {notices}
+      {view === 'calendar' ? (
+        <StableEventsCalendar
+          horses={horses}
+          events={events}
+          storageKey="paddock:events:personal:month"
+          viewControl={viewControl}
+          actions={addEvent}
+        />
+      ) : (
+        <DashboardSectionCard>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {viewControl}
+            {!small && addEvent}
+          </div>
           <EventTable
             events={events}
             chrome="flat"
             emptyTitle={c.empty}
             emptyDescription={c.emptyHelp}
           />
-        )}
-      </DashboardTabbedCard>
+        </DashboardSectionCard>
+      )}
       {small && <MobileActionBar>{addEvent}</MobileActionBar>}
     </DashboardPage>
   )
@@ -108,7 +141,7 @@ export function UpcomingAppointments({ events }: { events: Appointments }) {
       title={c.upcoming}
       description={c.previewHelp}
       actions={
-        <ButtonLink to="/events" variant="outline">
+        <ButtonLink to="/events" search={{ view: 'list' }} variant="outline">
           {c.viewAll}
         </ButtonLink>
       }

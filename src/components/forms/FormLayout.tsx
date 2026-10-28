@@ -241,7 +241,8 @@ export function FormSection({
       <Header
         type={collapsible ? 'button' : undefined}
         className={cn(
-          'flex min-w-0 w-full items-center gap-3 px-4 py-4 text-left sm:px-5',
+          'flex min-w-0 w-full items-center gap-3 rounded-t-[calc(var(--radius-row)-1px)] px-4 py-4 text-left sm:px-5',
+          !open && 'rounded-b-[calc(var(--radius-row)-1px)]',
           collapsible &&
             'app-choice-feedback app-control-focus cursor-pointer hover:bg-primary/5 focus-visible:outline-none',
         )}
@@ -300,7 +301,7 @@ export function FormSection({
 
       {/* Normal block flow avoids WebKit intrinsic sizing bugs in nested grid disclosures. */}
       <MotionDisclosure id={contentId} open={open}>
-        <div className="grid min-w-0 grid-cols-1 gap-5 border-t border-border-subtle bg-card px-4 py-5 sm:px-5 sm:py-6">
+        <div className="grid min-w-0 grid-cols-1 gap-5 rounded-b-[calc(var(--radius-row)-1px)] border-t border-border-subtle bg-card px-4 py-5 sm:px-5 sm:py-6">
           {children}
         </div>
       </MotionDisclosure>

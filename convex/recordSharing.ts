@@ -1,3 +1,4 @@
+import { projectActivityShare } from './libs/activitySharing'
 import { recordCapabilities } from './libs/recordCapabilities'
 import { createEventOccurrences } from '../shared/events/eventOccurrences'
 import { ConvexError, v } from 'convex/values'
@@ -83,7 +84,23 @@ export const audience = query({
       true,
       args.occurrenceDate,
     )
+    const eventId = ctx.db.normalizeId('events', args.recordId)
+    const activityCalendars = []
+    if (eventId) {
+      const shares = await ctx.db
+        .query('activityCalendarShares')
+        .withIndex('by_event', (q) => q.eq('eventId', eventId))
+        .collect()
+      for (const share of shares) {
+        const projected = await projectActivityShare(ctx, share, access.userId)
+        if (!projected?.horses.some((item) => item._id === horse._id)) continue
+        const stable = await ctx.db.get(share.stableId)
+        if (stable)
+          activityCalendars.push({ _id: stable._id, name: stable.name })
+      }
+    }
     return {
+      activityCalendars,
       stable: access.stable
         ? { _id: access.stable._id, name: access.stable.name }
         : null,

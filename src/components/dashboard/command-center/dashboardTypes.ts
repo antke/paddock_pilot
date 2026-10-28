@@ -15,9 +15,14 @@ export type DashboardCommandEvent = Doc<'events'>
 export type DashboardCommandScheduleEvent = DashboardCommandEvent & {
   occurrenceKey?: string
 }
-export type DashboardCommandOverview = FunctionReturnType<
+type CareOverview = FunctionReturnType<
   typeof api.userCareOverview.getForCurrentUser
 >
+export type DashboardCommandOverview = Omit<CareOverview, 'dueReminders'> & {
+  dueReminders: Array<
+    CareOverview['dueReminders'][number] & { canReadHorse?: boolean }
+  >
+}
 export type DashboardCommandHorse = FunctionReturnType<
   typeof api.horses.list
 >[number]

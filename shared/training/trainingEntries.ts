@@ -1,3 +1,4 @@
+import { compareEventTimes } from '../events/eventTime'
 import { getHorseDisplayName } from '../horses/horseDisplayName'
 import type { Doc } from '../../convex/_generated/dataModel'
 import { createEventOccurrences } from '../events/eventOccurrences'
@@ -19,7 +20,11 @@ export function getTrainingEntries({
   today,
 }: {
   events: Array<
-    Doc<'events'> & { contextParticipationId?: string; contextHorseId?: string }
+    Doc<'events'> & {
+      contextParticipationId?: string
+      contextHorseId?: string
+      participantOnlyDates?: Array<{ horseId: string; date: string }>
+    }
   >
   records: Array<
     Doc<'trainingRecords'> & {
@@ -124,7 +129,14 @@ export function getTrainingEntries({
               key,
               horse: {
                 ...horse,
-                canRecord: horse.canRecord && record?.canEdit !== false,
+                canRecord:
+                  horse.canRecord &&
+                  record?.canEdit !== false &&
+                  !occurrence.event.participantOnlyDates?.some(
+                    (participant) =>
+                      participant.horseId === horseId &&
+                      participant.date === occurrence.startDate,
+                  ),
               },
               occurrence,
               record,
@@ -145,7 +157,7 @@ export function getTrainingEntries({
     .sort(
       (a, b) =>
         a.occurrence.startDate.localeCompare(b.occurrence.startDate) ||
-        a.occurrence.event.time.localeCompare(b.occurrence.event.time) ||
+        compareEventTimes(a.occurrence.event.time, b.occurrence.event.time) ||
         getHorseDisplayName(a.horse).localeCompare(
           getHorseDisplayName(b.horse),
         ),

@@ -1,3 +1,4 @@
+import { compareEventTimes } from 'shared/events/eventTime'
 import type { Locale } from 'shared/i18n/locale'
 import {
   dateKeyToDate,
@@ -134,7 +135,7 @@ export function getUpcomingEvents(
 
       if (dateSort !== 0) return dateSort
 
-      return a.time.localeCompare(b.time)
+      return compareEventTimes(a.time, b.time)
     })
 }
 
@@ -150,7 +151,7 @@ function compareCalendarOccurrences(
 ) {
   return (
     left.startDate.localeCompare(right.startDate) ||
-    left.event.time.localeCompare(right.event.time) ||
+    compareEventTimes(left.event.time, right.event.time) ||
     left.event.title.localeCompare(right.event.title) ||
     left.occurrenceKey.localeCompare(right.occurrenceKey)
   )

@@ -1,3 +1,4 @@
+import { compareEventTimes } from 'shared/events/eventTime'
 import { createEventOccurrences } from 'shared/events/eventOccurrences'
 import { dateKeyToDate, formatDateKey } from '#/lib/dateDisplay'
 import type {
@@ -32,7 +33,8 @@ export function dashboardUpcomingEvents(data: DashboardActivityData) {
       endDate: occurrence.durationDays > 1 ? occurrence.endDate : undefined,
     }))
     .sort(
-      (a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time),
+      (a, b) =>
+        a.date.localeCompare(b.date) || compareEventTimes(a.time, b.time),
     )
   return { events, startKey, endKey }
 }

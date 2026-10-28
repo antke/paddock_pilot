@@ -1,3 +1,4 @@
+import { formatEventTime } from './eventDisplay'
 import { localeInstances } from '#/i18n/resources'
 import type { Locale } from 'shared/i18n/locale'
 import type {
@@ -47,7 +48,11 @@ export function createEventListFilterConfig(
       {
         id: 'schedule',
         weight: 4,
-        getValues: (event) => [event.date, event.endDate, event.time],
+        getValues: (event) => [
+          event.date,
+          event.endDate,
+          formatEventTime(event.time, locale),
+        ],
       },
       {
         id: 'labels',

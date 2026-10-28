@@ -1,3 +1,9 @@
+import { SharedActivityDetail } from '#/components/events/SharedActivityDetail'
+import { ActivitySharing } from '#/components/events/ActivitySharing'
+import {
+  ActivityPeople,
+  MyActivityInvitations,
+} from '#/components/events/ActivityPeople'
 import { TrainingSessionCompletionControl } from '#/components/training/TrainingSessionCompletionControl'
 import { EventParticipation } from '#/components/events/EventParticipation'
 import { RecordAudienceLabel } from '#/components/sharing/RecordAudienceLabel'
@@ -116,6 +122,7 @@ export function PersonalEventEditor({
       }
   return (
     <EventEditor
+      eventId={eventId}
       audienceEnabled
       eventContext={data?.event.stableId ? 'stable' : 'personal'}
       scheduleOnly={Boolean(
@@ -149,10 +156,12 @@ export function PersonalEventEditor({
           horseIds,
           stableId: _stableId,
           destination,
+          sharedStableIds,
           ...fields
         } = values
         const args = {
           ...fields,
+          peopleIds: values.peopleIds as Id<'users'>[] | undefined,
           horseIds: horseIds as Array<Id<'horses'>>,
           stableId: eventId
             ? data?.event.stableId
@@ -201,7 +210,12 @@ export function PersonalEventEditor({
                 : { date: savedDate, horseId, participationId }
           return eventId
         }
-        return add({ ...args, destination, errorFormat: 'structured' })
+        return add({
+          ...args,
+          destination,
+          sharedStableIds: sharedStableIds as Id<'stables'>[] | undefined,
+          errorFormat: 'structured',
+        })
       }}
       onSaved={(id) =>
         navigate({
@@ -213,7 +227,42 @@ export function PersonalEventEditor({
     />
   )
 }
-export function PersonalEventDetail({
+export function PersonalEventDetail(props: {
+  eventId: Id<'events'>
+  stableId?: string
+  date?: string
+  horseId?: string
+  participationId?: string
+}) {
+  const access = useQuery(api.activities.detailAccess, {
+    eventId: props.eventId,
+  })
+  const explicit = useQuery(
+    api.activitySharing.detail,
+    props.stableId
+      ? { eventId: props.eventId, stableId: props.stableId as Id<'stables'> }
+      : 'skip',
+  )
+  if (access === undefined) return <RoutePending />
+  if (access === 'missing') return <RouteEntityNotFoundAlert entity="event" />
+  if (access === 'shared')
+    return <SharedActivityDetail eventId={props.eventId} date={props.date} />
+  if (access === 'participant')
+    return (
+      <DashboardPage>
+        <MyActivityInvitations eventId={props.eventId} />
+      </DashboardPage>
+    )
+  if (props.stableId && explicit === undefined) return <RoutePending />
+  return (
+    <HorseEventDetail
+      {...props}
+      stableId={explicit ? undefined : props.stableId}
+    />
+  )
+}
+
+function HorseEventDetail({
   eventId,
   stableId,
   date,
@@ -286,6 +335,9 @@ export function PersonalEventDetail({
         showServiceDetails={!isTraining}
       />
       <EventParticipation eventId={eventId} />
+      <ActivitySharing eventId={eventId} />
+      <ActivityPeople eventId={eventId} date={selectedDate} />
+      <MyActivityInvitations eventId={eventId} />
       {isTraining && entries.length === 0 && (
         <p role="status">{t('trainingViews.noSession')}</p>
       )}

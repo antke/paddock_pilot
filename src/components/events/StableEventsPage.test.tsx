@@ -55,46 +55,56 @@ async function setup(initial = '/stables/sample-stable/events') {
   })
   await router.load()
   render(<RouterProvider router={router} />)
-  await screen.findByRole('tab', { name: 'Calendar' })
+  await screen.findByRole('button', { name: 'Calendar' })
   return router
 }
 
 it('defaults to calendar, switches to the event log and restores calendar with Back', async () => {
   const router = await setup()
   expect(
-    screen.getByRole('tab', { name: 'Calendar' }).getAttribute('aria-selected'),
+    screen
+      .getByRole('button', { name: 'Calendar' })
+      .getAttribute('aria-pressed'),
   ).toBe('true')
-  expect(screen.getByRole('tabpanel', { name: 'Calendar' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Next month' })).toBeTruthy()
   expect(
     screen.getByRole('link', { name: 'Add event' }).getAttribute('href'),
   ).toBe('/stables/sample-stable/events/create')
-  fireEvent.click(screen.getByRole('tab', { name: 'Event log' }))
-  expect(
-    await screen.findByRole('tabpanel', { name: 'Event log' }),
-  ).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Event log' }))
+  await waitFor(() =>
+    expect(
+      screen
+        .getByRole('button', { name: 'Event log' })
+        .getAttribute('aria-pressed'),
+    ).toBe('true'),
+  )
   expect(router.state.location.search).toEqual({ view: 'log' })
   expect(screen.getByText('No events added yet.')).toBeTruthy()
   await act(async () => router.history.back())
   await waitFor(() =>
     expect(
       screen
-        .getByRole('tab', { name: 'Calendar' })
-        .getAttribute('aria-selected'),
+        .getByRole('button', { name: 'Calendar' })
+        .getAttribute('aria-pressed'),
     ).toBe('true'),
   )
 })
 
 it('opens a bookmarked event log and supports keyboard switching', async () => {
   await setup('/stables/sample-stable/events?view=log')
-  const log = screen.getByRole('tab', { name: 'Event log' })
-  expect(log.getAttribute('aria-selected')).toBe('true')
+  const log = screen.getByRole('button', { name: 'Event log' })
+  expect(log.getAttribute('aria-pressed')).toBe('true')
   act(() => log.focus())
   fireEvent.keyDown(log, { key: 'ArrowLeft' })
+  const calendar = screen.getByRole('button', { name: 'Calendar' })
+  await waitFor(() => expect(document.activeElement).toBe(calendar))
+  // jsdom does not synthesize the native button click produced by Enter.
+  fireEvent.click(calendar)
   await waitFor(() =>
     expect(
       screen
-        .getByRole('tab', { name: 'Calendar' })
-        .getAttribute('aria-selected'),
+        .getByRole('button', { name: 'Calendar' })
+        .getAttribute('aria-pressed'),
     ).toBe('true'),
   )
 })

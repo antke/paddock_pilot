@@ -74,65 +74,70 @@ async function projectTrainingRecords(
 
 export const listForStable = query({
   args: { stableId: v.id('stables') },
-  handler: async (ctx, { stableId }) => {
-    const access = await assertCanViewStable(ctx, stableId)
-    const [allEvents, allHorses] = await Promise.all([
-      sharedEventsForStable(ctx, stableId),
-      ctx.db
-        .query('horses')
-        .withIndex('by_stable_id', (q) => q.eq('stableId', stableId))
-        .collect(),
-    ])
-    const horses = allHorses.filter(isActiveHorse).map((horse) => ({
-      ...horse,
-      canRecord: canManageOwnedRecord({
-        role: access.role,
-        userId: access.userId,
-        ownerId: horse.ownerId,
-      }),
-    }))
-    const permissions = await Promise.all(
-      horses.map((horse) => getHorseAccess(ctx, horse, access.userId)),
-    )
-    const allRecords = (
-      await Promise.all(
-        horses.map(async (horse) => {
-          const records = await ctx.db
-            .query('trainingRecords')
-            .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-            .collect()
-          return projectTrainingRecords(ctx, horse, records, stableId)
-        }),
-      )
-    ).flat()
-    const active = new Set(horses.map((horse) => horse._id))
-    const recordedEvents = new Set(
-      allRecords
-        .filter((record) => active.has(record.horseId))
-        .map((record) => record.eventId),
-    )
-    const events = allEvents
-      .filter((event) => event.type === 'training')
-      .map((event) => ({
-        ...event,
-        horseIds: event.horseIds.filter((id) => active.has(id)),
-      }))
-      .filter(
-        (event) => event.horseIds.length > 0 || recordedEvents.has(event._id),
-      )
-    const eventIds = new Set(events.map((event) => event._id))
-    return {
-      events,
-      horses: await Promise.all(
-        horses.map(async (horse, index) => ({
-          ...(await visibleHorse(ctx, horse, true)),
-          canRecord: permissions[index].canAddRecords,
-        })),
-      ),
-      records: allRecords.filter((record) => eventIds.has(record.eventId)),
-    }
-  },
+  handler: listStableTraining,
 })
+
+export async function listStableTraining(
+  ctx: QueryCtx,
+  { stableId }: { stableId: Id<'stables'> },
+) {
+  const access = await assertCanViewStable(ctx, stableId)
+  const [allEvents, allHorses] = await Promise.all([
+    sharedEventsForStable(ctx, stableId),
+    ctx.db
+      .query('horses')
+      .withIndex('by_stable_id', (q) => q.eq('stableId', stableId))
+      .collect(),
+  ])
+  const horses = allHorses.filter(isActiveHorse).map((horse) => ({
+    ...horse,
+    canRecord: canManageOwnedRecord({
+      role: access.role,
+      userId: access.userId,
+      ownerId: horse.ownerId,
+    }),
+  }))
+  const permissions = await Promise.all(
+    horses.map((horse) => getHorseAccess(ctx, horse, access.userId)),
+  )
+  const allRecords = (
+    await Promise.all(
+      horses.map(async (horse) => {
+        const records = await ctx.db
+          .query('trainingRecords')
+          .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
+          .collect()
+        return projectTrainingRecords(ctx, horse, records, stableId)
+      }),
+    )
+  ).flat()
+  const active = new Set(horses.map((horse) => horse._id))
+  const recordedEvents = new Set(
+    allRecords
+      .filter((record) => active.has(record.horseId))
+      .map((record) => record.eventId),
+  )
+  const events = allEvents
+    .filter((event) => event.type === 'training')
+    .map((event) => ({
+      ...event,
+      horseIds: event.horseIds.filter((id) => active.has(id)),
+    }))
+    .filter(
+      (event) => event.horseIds.length > 0 || recordedEvents.has(event._id),
+    )
+  const eventIds = new Set(events.map((event) => event._id))
+  return {
+    events,
+    horses: await Promise.all(
+      horses.map(async (horse, index) => ({
+        ...(await visibleHorse(ctx, horse, true)),
+        canRecord: permissions[index].canAddRecords,
+      })),
+    ),
+    records: allRecords.filter((record) => eventIds.has(record.eventId)),
+  }
+}
 
 export const saveRecord = mutation({
   args: {
@@ -325,38 +330,43 @@ async function saveTrainingRecord(
 
 export const listForHorse = query({
   args: { horseId: v.id('horses'), stableId: v.optional(v.id('stables')) },
-  handler: async (ctx, { horseId, stableId }) => {
-    const horse = await ctx.db.get(horseId)
-    if (!horse) throw new ConvexError('Horse not found')
-    const access = await assertCanReadHorse(ctx, horse)
-    await assertHorseWorkspace(ctx, horse, stableId)
-    const rows = await ctx.db
-      .query('eventsHorses')
-      .withIndex('by_horse_id', (q) => q.eq('horseId', horseId))
-      .collect()
-    const events = await Promise.all(
-      rows.map((r) => horseEvent(ctx, r, stableId)),
-    )
-    const records = await ctx.db
-      .query('trainingRecords')
-      .withIndex('by_horse_id', (q) => q.eq('horseId', horseId))
-      .collect()
-    return {
-      horses: [
-        {
-          ...(await visibleHorse(ctx, horse, Boolean(stableId))),
-          canRecord: access.canAddRecords,
-        },
-      ],
-      records: await projectTrainingRecords(ctx, horse, records, stableId),
-      events: events.flatMap((event) =>
-        event?.type === 'training'
-          ? [{ ...event, notesAfterCompletion: undefined }]
-          : [],
-      ),
-    }
-  },
+  handler: listHorseTraining,
 })
+
+export async function listHorseTraining(
+  ctx: QueryCtx,
+  { horseId, stableId }: { horseId: Id<'horses'>; stableId?: Id<'stables'> },
+) {
+  const horse = await ctx.db.get(horseId)
+  if (!horse) throw new ConvexError('Horse not found')
+  const access = await assertCanReadHorse(ctx, horse)
+  await assertHorseWorkspace(ctx, horse, stableId)
+  const rows = await ctx.db
+    .query('eventsHorses')
+    .withIndex('by_horse_id', (q) => q.eq('horseId', horseId))
+    .collect()
+  const events = await Promise.all(
+    rows.map((r) => horseEvent(ctx, r, stableId)),
+  )
+  const records = await ctx.db
+    .query('trainingRecords')
+    .withIndex('by_horse_id', (q) => q.eq('horseId', horseId))
+    .collect()
+  return {
+    horses: [
+      {
+        ...(await visibleHorse(ctx, horse, Boolean(stableId))),
+        canRecord: access.canAddRecords,
+      },
+    ],
+    records: await projectTrainingRecords(ctx, horse, records, stableId),
+    events: events.flatMap((event) =>
+      event?.type === 'training'
+        ? [{ ...event, notesAfterCompletion: undefined }]
+        : [],
+    ),
+  }
+}
 
 export const listForEvent = query({
   args: {

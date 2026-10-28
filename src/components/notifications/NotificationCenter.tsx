@@ -1,3 +1,4 @@
+import { formatEventTime } from '#/components/events/eventDisplay'
 import { useQuery } from '@tanstack/react-query'
 import { convexQuery } from '@convex-dev/react-query'
 import { useState } from 'react'
@@ -226,7 +227,9 @@ export function NotificationCenterView({
                           {new Intl.DateTimeFormat(locale, {
                             dateStyle: 'medium',
                           }).format(new Date(`${item.eventDate}T12:00:00`))}
-                          {item.eventTime ? ` · ${item.eventTime}` : ''}
+                          {item.eventTime
+                            ? ` · ${formatEventTime(item.eventTime, locale)}`
+                            : ''}
                         </p>
                       )}
                       <time

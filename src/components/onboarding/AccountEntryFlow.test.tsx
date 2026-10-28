@@ -306,7 +306,7 @@ it.each([false, true])(
       })
     }
     fireEvent.click(screen.getByRole('button', { name: 'Continue to horse' }))
-    await screen.findByRole('heading', { name: 'Add horse · Personal' })
+    await screen.findByRole('heading', { name: 'Add horse' })
     expect(router.state.location.pathname).toBe('/horses/create')
     expect(state.saveProfile).toHaveBeenCalledTimes(1)
     expect(upload).toHaveBeenCalledTimes(withPhoto ? 1 : 0)
@@ -319,7 +319,7 @@ it.each([false, true])(
       )
     cleanup()
     router = await setup('/horses/create')
-    await screen.findByRole('heading', { name: 'Add horse · Personal' })
+    await screen.findByRole('heading', { name: 'Add horse' })
     const horseName = screen.getByLabelText('Horse name')
     fireEvent.change(horseName, { target: { value: 'Maple' } })
     fireEvent.click(
@@ -357,7 +357,7 @@ it('stays on the profile after a rejected save and advances only after retry suc
   await screen.findByText(/Could not save your profile/)
   expect(router.state.location.pathname).toBe('/onboarding')
   fireEvent.click(screen.getByRole('button', { name: 'Continue to horse' }))
-  await screen.findByRole('heading', { name: 'Add horse · Personal' })
+  await screen.findByRole('heading', { name: 'Add horse' })
 })
 
 it('preserves a shared horse destination through required profile setup', async () => {

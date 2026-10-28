@@ -1,10 +1,10 @@
-import { BackLink } from '#/components/ui/back-action'
+import {
+  ActivityCalendarFilter,
+  useActivityCalendars,
+} from '#/components/events/ActivityCalendarFilter'
+import { MyActivityInvitations } from '#/components/events/ActivityPeople'
 import { useT } from '#/i18n/LocaleProvider'
 import { createFileRoute } from '@tanstack/react-router'
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { convexQuery } from '@convex-dev/react-query'
-import { api } from 'convex/_generated/api'
-import type { Id } from 'convex/_generated/dataModel'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { TrainingCalendar } from '#/components/training/TrainingCalendar'
@@ -26,22 +26,26 @@ function TrainingLog() {
 
   const { stableId } = Route.useParams()
   const { horseIds } = Route.useSearch()
-  const { data } = useSuspenseQuery(
-    convexQuery(api.training.listForStable, {
-      stableId: stableId as Id<'stables'>,
-    }),
-  )
+  const calendars = useActivityCalendars(true, stableId)
   return (
     <DashboardPage>
       <DashboardPageHeader
-        backAction={<BackLink to="/stables/$stableId" params={{ stableId }} />}
+        showWorkspace={false}
         title={t('trainingViews.log')}
         description={!small ? t('trainingViews.logHelp') : undefined}
       />
+      <ActivityCalendarFilter
+        stables={calendars.stables}
+        selected={calendars.selected}
+        onChange={calendars.setSelected}
+        loading={calendars.loading}
+      />
+      <MyActivityInvitations invitationsOnly />
       <TrainingCalendar
         key={`${stableId}:${horseIds?.join(',') ?? ''}`}
         stableId={stableId}
-        {...data}
+        {...(calendars.data ?? { horses: [], events: [], records: [] })}
+        mixedSources={calendars.mixedSources}
         initialHorseIds={horseIds}
       />
     </DashboardPage>

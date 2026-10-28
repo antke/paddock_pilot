@@ -1,4 +1,14 @@
 import {
+  attendanceDetail,
+  attendanceOptions,
+  saveAttendees,
+} from './libs/eventAttendees'
+import { compareEventTimes } from '../shared/events/eventTime'
+import {
+  projectActivityShare,
+  writeActivityCalendars,
+} from './libs/activitySharing'
+import {
   assertHorseWorkspace,
   initializeRecordSharing,
   recordCapabilities,
@@ -39,7 +49,7 @@ import {
 } from '../shared/events/eventSchema'
 import type { Doc, Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
-import type { MutationCtx } from './_generated/server'
+import type { MutationCtx, QueryCtx } from './_generated/server'
 import { getCurrentUser, assertCanViewStable } from './libs/stablePermissions'
 import { eventFields } from './schema'
 import { canCreateEventForHorseOwners } from '../shared/stables/stableAccess'
@@ -96,7 +106,7 @@ const byEventDateAndTime = (a: Doc<'events'>, b: Doc<'events'>) => {
 
   if (dateSort !== 0) return dateSort
 
-  return a.time.localeCompare(b.time)
+  return compareEventTimes(a.time, b.time)
 }
 
 const isEvent = (event: Doc<'events'> | null): event is Doc<'events'> => {
@@ -299,76 +309,76 @@ const syncConfirmedHorseIds = async (
 
 export const list = query({
   args: {},
-  handler: async (ctx) => {
-    const user = await getCurrentUser(ctx)
-    const personalHorses = await accessibleHorses(ctx, user._id)
-    const links = (
-      await Promise.all(
-        personalHorses.map((horse) =>
-          ctx.db
-            .query('eventsHorses')
-            .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-            .collect(),
-        ),
-      )
-    ).flat()
-    const personalEvents = await Promise.all(
-      [
-        ...new Set(
-          links
-            .filter(
-              (row) => !row.participationEndsAt && isConfirmedEventHorse(row),
-            )
-            .map((row) => row.eventId),
-        ),
-      ].map((id) => ctx.db.get(id)),
+  handler: listPersonalEvents,
+})
+
+export async function listPersonalEvents(ctx: QueryCtx) {
+  const user = await getCurrentUser(ctx)
+  const personalHorses = await accessibleHorses(ctx, user._id)
+  const links = (
+    await Promise.all(
+      personalHorses.map((horse) =>
+        ctx.db
+          .query('eventsHorses')
+          .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
+          .collect(),
+      ),
     )
-    const unassigned = (
-      await ctx.db
-        .query('events')
-        .withIndex('by_created_by', (q) => q.eq('createdBy', user._id))
-        .collect()
-    ).filter((event) => !event.stableId && !event.horseIds.length)
-    const personal = [...personalEvents.filter(isEvent), ...unassigned]
-    // A moved horse keeps its frozen participation even when the owner no
-    // longer belongs to the former stable. Keep its context separate from a
-    // still-visible shared appointment so links open the correct history.
-    const historical = (
-      await Promise.all(
+  ).flat()
+  const personalEvents = await Promise.all(
+    [
+      ...new Set(
         links
           .filter(
-            (row) => row.participationEndsAt && isConfirmedEventHorse(row),
+            (row) => !row.participationEndsAt && isConfirmedEventHorse(row),
           )
-          .map((row) => horseEvent(ctx, row)),
-      )
-    ).filter(isEvent)
-    const candidates = personal
-    const projections = await Promise.all(
-      candidates.map(async (event) => {
-        if ('contextParticipationId' in event) return event
-        const canonical = await ctx.db.get(event._id)
-        return canonical ? visibleEvent(ctx, canonical) : event
-      }),
+          .map((row) => row.eventId),
+      ),
+    ].map((id) => ctx.db.get(id)),
+  )
+  const unassigned = (
+    await ctx.db
+      .query('events')
+      .withIndex('by_created_by', (q) => q.eq('createdBy', user._id))
+      .collect()
+  ).filter((event) => !event.stableId && !event.horseIds.length)
+  const personal = [...personalEvents.filter(isEvent), ...unassigned]
+  // A moved horse keeps its frozen participation even when the owner no
+  // longer belongs to the former stable. Keep its context separate from a
+  // still-visible shared appointment so links open the correct history.
+  const historical = (
+    await Promise.all(
+      links
+        .filter((row) => row.participationEndsAt && isConfirmedEventHorse(row))
+        .map((row) => horseEvent(ctx, row)),
     )
-    const personalIds = new Set(personalHorses.map((horse) => horse._id))
-    const merged = new Map(
-      [...projections, ...historical].map((event) => [
-        event._id +
-          ('contextParticipationId' in event
-            ? ':' + event.contextParticipationId
-            : ''),
-        event,
-      ]),
-    )
-    return [...merged.values()]
-      .map((event) => ({
-        ...event,
-        horseIds: event.horseIds.filter((id) => personalIds.has(id)),
-      }))
-      .filter((event) => event.type !== 'training')
-      .sort(byEventDateAndTime)
-  },
-})
+  ).filter(isEvent)
+  const candidates = personal
+  const projections = await Promise.all(
+    candidates.map(async (event) => {
+      if ('contextParticipationId' in event) return event
+      const canonical = await ctx.db.get(event._id)
+      return canonical ? visibleEvent(ctx, canonical) : event
+    }),
+  )
+  const personalIds = new Set(personalHorses.map((horse) => horse._id))
+  const merged = new Map(
+    [...projections, ...historical].map((event) => [
+      event._id +
+        ('contextParticipationId' in event
+          ? ':' + event.contextParticipationId
+          : ''),
+      event,
+    ]),
+  )
+  return [...merged.values()]
+    .map((event) => ({
+      ...event,
+      horseIds: event.horseIds.filter((id) => personalIds.has(id)),
+    }))
+    .filter((event) => event.type !== 'training')
+    .sort(byEventDateAndTime)
+}
 
 export const get = query({
   args: { id: v.id('events') },
@@ -607,6 +617,7 @@ export const listForHorse = query({
 
 export const add = mutation({
   args: {
+    sharedStableIds: v.optional(v.array(v.id('stables'))),
     destination: v.optional(
       v.union(v.literal('personal'), v.literal('stable')),
     ),
@@ -657,6 +668,22 @@ export const add = mutation({
         )
       if (permission.canAddRecords) directIds.add(horse._id)
     }
+    if (args.sharedStableIds) {
+      const selected = [...new Set(args.sharedStableIds)]
+      if (selected.length > 30)
+        throw new ConvexError('Select up to 30 calendars')
+      for (const id of selected) await assertCanViewStable(ctx, id, user._id)
+      for (const horse of horses) {
+        const permission = await getHorseAccess(ctx, horse, user._id)
+        if (
+          (!permission.canEditPersonalRecords || permission.isCustodian) &&
+          (selected.length !== 1 || selected[0] !== args.stableId)
+        )
+          throw new ConvexError(
+            'Sharing across stables requires owner or editor access to every horse',
+          )
+      }
+    }
     const confirmedHorses = horses.filter((horse) => directIds.has(horse._id))
     const invitedHorses = horses.filter((horse) => !directIds.has(horse._id))
     if (
@@ -698,8 +725,35 @@ export const add = mutation({
       training: eventInput.training,
     })
 
+    await saveAttendees(ctx, eventId, args.peopleIds ?? [], user._id)
+
     for (const horse of confirmedHorses) {
-      await initializeRecordSharing(ctx, horse, eventId, Boolean(args.stableId))
+      await initializeRecordSharing(
+        ctx,
+        horse,
+        eventId,
+        args.sharedStableIds === undefined
+          ? Boolean(args.stableId)
+          : Boolean(
+              args.stableId && args.sharedStableIds.includes(args.stableId),
+            ),
+      )
+    }
+
+    if (args.sharedStableIds?.length && !args.stableId) {
+      await writeActivityCalendars(
+        ctx,
+        (await ctx.db.get(eventId))!,
+        args.sharedStableIds,
+        user._id,
+      )
+    } else if (args.sharedStableIds?.some((id) => id !== args.stableId)) {
+      await writeActivityCalendars(
+        ctx,
+        (await ctx.db.get(eventId))!,
+        args.sharedStableIds,
+        user._id,
+      )
     }
 
     await Promise.all([
@@ -809,6 +863,8 @@ export const update = mutation({
     if (newParticipantIds.length)
       await eventInputAccess(ctx, args.stableId, newParticipantIds)
     const eventInput = validateEventInput(updates, true)
+    if (args.peopleIds !== undefined)
+      await saveAttendees(ctx, id, args.peopleIds, user._id)
 
     if ((event.type === 'training') !== (eventInput.type === 'training')) {
       throw userFacingError('eventTypeLocked', args.errorFormat)
@@ -1441,8 +1497,8 @@ export const listPendingHorseInvitations = query({
 
 /** One source of truth for destination pickers; no clinical horse data. */
 export const creationOptions = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { eventId: v.optional(v.id('events')) },
+  handler: async (ctx, { eventId }) => {
     const user = await getCurrentUser(ctx)
     const owned = await ctx.db
       .query('stables')
@@ -1466,18 +1522,47 @@ export const creationOptions = query({
           .map((s) => [s._id, s]),
       ).values(),
     ]
-    const option = async (horse: Doc<'horses'>) => ({
-      ...horseRosterSummary(horse),
-      requiresApproval: !(await getHorseAccess(ctx, horse, user._id))
-        .canAddRecords,
-    })
+    const option = async (horse: Doc<'horses'>) => {
+      const access = await getHorseAccess(ctx, horse, user._id)
+      const summary = horseRosterSummary(horse)
+      if (horse.ownerId)
+        summary.ownerName =
+          (await creatorName(ctx, horse.ownerId)) ?? horse.ownerName
+      return {
+        ...summary,
+        requiresApproval: !access.canAddRecords,
+        canShareAcrossStables:
+          access.canEditPersonalRecords && !access.isCustodian,
+      }
+    }
     const personal = []
     for (const horse of await accessibleHorses(ctx, user._id)) {
       if ((await getHorseAccess(ctx, horse, user._id)).canEditPersonalRecords)
         personal.push(await option(horse))
     }
+    const people = await attendanceOptions(ctx, user._id)
+    if (eventId) {
+      const event = await ctx.db.get(eventId)
+      if (!event || !(await canEditEvent(ctx, event)))
+        throw new ConvexError('Not authorized to edit this event')
+      for (const id of event.peopleIds ?? []) {
+        if (people.some((person) => person.id === id)) continue
+        const person = await ctx.db.get(id)
+        if (person)
+          people.push({
+            id,
+            name:
+              person.preferredName ||
+              [person.firstName, person.lastName].filter(Boolean).join(' '),
+            photoUrl: person.photoUrl,
+            stableIds: [],
+            personal: false,
+          })
+      }
+    }
     return {
       personal,
+      people,
       stables: await Promise.all(
         stables.map(async (stable) => ({
           id: stable._id,
@@ -1547,5 +1632,42 @@ export const participationSummary = query({
       })
     }
     return result
+  },
+})
+
+/** Attendance names are scheduling information; this never grants horse access. */
+export const attendingPeople = query({
+  args: { eventId: v.id('events') },
+  handler: async (ctx, { eventId }) => {
+    const event = await ctx.db.get(eventId)
+    if (!event) return []
+    const { user, participants } = await eventParticipantAccess(ctx, event)
+    let allowed =
+      participants.length > 0 ||
+      Boolean(await attendanceDetail(ctx, eventId, user._id))
+    if (!allowed) {
+      const shares = await ctx.db
+        .query('activityCalendarShares')
+        .withIndex('by_event', (q) => q.eq('eventId', eventId))
+        .collect()
+      for (const share of shares)
+        if (await projectActivityShare(ctx, share, user._id)) {
+          allowed = true
+          break
+        }
+    }
+    if (!allowed) return []
+    const people = []
+    for (const id of event.peopleIds ?? []) {
+      const person = await ctx.db.get(id)
+      if (person && person.deletedAt === undefined)
+        people.push({
+          id,
+          name:
+            person.preferredName ||
+            [person.firstName, person.lastName].filter(Boolean).join(' '),
+        })
+    }
+    return people
   },
 })

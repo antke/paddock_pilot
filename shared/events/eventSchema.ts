@@ -107,7 +107,7 @@ export function createEventSchemas(
 
   const eventTimeSchema = z
     .string({ error: message('textInvalid') })
-    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, message('timeInvalid'))
+    .regex(/^(?:all-day|([01]\d|2[0-3]):[0-5]\d)$/, message('timeInvalid'))
 
   const eventTypeSchema = z.enum(eventTypes, {
     error: message('choiceInvalid'),
@@ -309,6 +309,8 @@ export function createEventSchemas(
     schema.optional().transform((val) => val || undefined)
 
   const eventInputFieldsSchema = z.object({
+    peopleIds: z.array(z.string()).max(100).optional(),
+    sharedStableIds: z.array(z.string()).max(30).optional(),
     requestId: z.string().optional(),
     sharing: z
       .array(z.object({ horseId: z.string(), enabled: z.boolean() }))

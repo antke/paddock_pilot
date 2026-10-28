@@ -1,3 +1,4 @@
+import { useCalendarSelection } from '#/components/events/calendarSourceSelection'
 import { useQuery } from 'convex/react'
 import { api } from 'convex/_generated/api'
 import { useState } from 'react'
@@ -8,6 +9,7 @@ import { EventEditor } from './EventEditor'
 
 /** Creation owns a visible destination; editing retains the existing audience. */
 export function EventCreationEditor(props: ComponentProps<typeof EventEditor>) {
+  const { includeSavedStables } = useCalendarSelection()
   const [stableId, setStableId] = useState(props.initialValues.stableId)
   const stableProviders = useQuery(
     api.stableProviders.listForStable,
@@ -19,29 +21,41 @@ export function EventCreationEditor(props: ComponentProps<typeof EventEditor>) {
     api.personalProviders.list,
     props.mode === 'create' && !stableId ? {} : 'skip',
   )
-  const options = useQuery(
-    api.events.creationOptions,
-    props.mode === 'create' ? {} : 'skip',
-  )
-  if (props.mode === 'edit') return <EventEditor {...props} />
+  const options = useQuery(api.events.creationOptions, {
+    eventId: props.eventId,
+  })
   if (!options) return <RoutePending />
+  if (props.mode === 'edit')
+    return <EventEditor {...props} people={options.people} />
   return (
     <EventEditor
       {...props}
       destinations={options}
+      people={options.people}
       onDestinationChange={setStableId}
       providers={
         stableId
           ? (stableProviders?.providers ?? [])
           : (personalProviders ?? [])
       }
-      onSave={(values) =>
-        props.onSave({
+      onAcknowledged={(id, values) => {
+        includeSavedStables(values.sharedStableIds ?? [])
+        props.onAcknowledged?.(id, values)
+      }}
+      onSave={(values) => {
+        const personal = values.horseIds.every((id) =>
+          options.personal.some(
+            (horse) => horse._id === id && horse.canShareAcrossStables,
+          ),
+        )
+        const origin = personal ? undefined : values.sharedStableIds?.[0]
+        return props.onSave({
           ...values,
-          destination: values.stableId ? 'stable' : 'personal',
+          stableId: origin,
+          destination: origin ? 'stable' : 'personal',
           sharing: undefined,
         })
-      }
+      }}
     />
   )
 }

@@ -117,6 +117,7 @@ export function TrainingPageLab({ data }: { data: DashboardLabData }) {
             _id: `sample-training-${Date.now()}` as Id<'events'>,
             _creationTime: Date.now(),
             stableId: data.stable._id,
+            peopleIds: values.peopleIds as Id<'users'>[] | undefined,
             horseIds: values.horseIds as Array<Id<'horses'>>,
             createdBy: data.stable.ownerId,
             status: 'planned',

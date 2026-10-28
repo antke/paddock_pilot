@@ -103,6 +103,11 @@ it.each(['unchanged', 'replace', 'add'])(
     mocks.queries.set('horses:listMine', [
       { _id: 'horse', access: { canEditPersonalRecords: true } },
     ])
+    mocks.queries.set('events:creationOptions', {
+      personal: [],
+      stables: [],
+      people: [],
+    })
     mocks.queries.set('personalProviders:list', [])
     mocks.queries.set('training:listForEvent', {
       records: [

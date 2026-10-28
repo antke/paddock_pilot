@@ -1,3 +1,4 @@
+import { compareEventTimes } from 'shared/events/eventTime'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import type { Locale } from 'shared/i18n/locale'
 import { localeInstances } from '#/i18n/resources'
@@ -15,7 +16,10 @@ import {
 import type { TimelineScrollState } from './timelineOverviewGeometry'
 import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
 import { DashboardMetaList } from '#/components/dashboard/DashboardMetaList'
-import { formatEventDateRange } from '#/components/events/eventDisplay'
+import {
+  formatEventDateRange,
+  formatEventTime,
+} from '#/components/events/eventDisplay'
 import {
   ActivityTimelineBody,
   ActivityTimelineActivitySummary,
@@ -524,7 +528,7 @@ function TimelineOccurrenceBlock({
         className="min-w-0 overflow-hidden"
       >
         <span className="truncate">{t(`events.types.${event.type}`)}</span>
-        <span>{event.time}</span>
+        <span>{formatEventTime(event.time, locale)}</span>
         <span>{t(`calendar.${status}`)}</span>
       </DashboardMetaList>
       {badges.length > 0 && (
@@ -933,7 +937,8 @@ function getMergedTimelineBlocks(
       const periodSort = a.startIndex - b.startIndex
       if (periodSort !== 0) return periodSort
 
-      const timeSort = a.occurrence.event.time.localeCompare(
+      const timeSort = compareEventTimes(
+        a.occurrence.event.time,
         b.occurrence.event.time,
       )
       if (timeSort !== 0) return timeSort

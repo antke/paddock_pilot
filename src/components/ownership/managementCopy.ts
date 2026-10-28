@@ -85,7 +85,7 @@ const pl: typeof en = {
   moveStarted: (name) =>
     `Rozpoczęto przenoszenie do: ${name}. Historia jest zachowywana; edycja będzie dostępna po zakończeniu.`,
   tasksHelp:
-    'Zaznaczone zadania pozostaną na Twojej osobistej liście opieki, także po przeprowadzce do innej stajni. Pozostałe zadania zostaną odrzucone; ich historia zostanie zachowana.',
+    'Zaznaczone zadania pozostaną na Twojej prywatnej liście opieki, także po przeprowadzce do innej stajni. Pozostałe zadania zostaną odrzucone; ich historia zostanie zachowana.',
   deleting: 'Usuwanie konia…',
   deleteTitle: (name) => `Usunąć konia ${name}?`,
   deleteHelp: (name, date) =>

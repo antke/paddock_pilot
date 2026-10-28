@@ -1,3 +1,4 @@
+import { compareEventTimes } from 'shared/events/eventTime'
 import type { Doc } from 'convex/_generated/dataModel'
 
 /** Legacy events without a status follow the existing planned-event contract. */
@@ -21,5 +22,5 @@ export function groupHorseActivityEvents(
 }
 
 export function compareActivityDates(a: Doc<'events'>, b: Doc<'events'>) {
-  return `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)
+  return a.date.localeCompare(b.date) || compareEventTimes(a.time, b.time)
 }

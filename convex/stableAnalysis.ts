@@ -1,3 +1,4 @@
+import { compareEventTimes } from '../shared/events/eventTime'
 import { readableRecords } from './libs/recordCapabilities'
 import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import { horseEvent } from './libs/horseEventHistory'
@@ -40,7 +41,7 @@ const compareEventDateAndTime = (a: Doc<'events'>, b: Doc<'events'>) => {
 
   if (dateSort !== 0) return dateSort
 
-  return a.time.localeCompare(b.time)
+  return compareEventTimes(a.time, b.time)
 }
 
 const hasNutritionDetails = (horse: Doc<'horses'>) => {

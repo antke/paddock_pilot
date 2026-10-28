@@ -32,6 +32,7 @@ import { MotionNotice } from '#/components/motion/MotionNotice'
 import {
   formatEventDate,
   formatEventDateTime,
+  formatEventTime,
 } from '#/components/events/eventDisplay'
 import { DashboardCountBadge } from '#/components/dashboard/DashboardBadges'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
@@ -47,7 +48,9 @@ import {
 } from '#/lib/dateDisplay'
 import { useSessionState } from '#/lib/useSessionState'
 import { isDateKey } from 'shared/training/trainingSchema'
-import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react'
+import { useEventCalendarFilters } from '#/components/events/useEventCalendarFilters'
+import { CalendarToolbar } from '#/components/events/CalendarToolbar'
+import { useSmallScreen } from '#/lib/useSmallScreen'
 import {
   useEffect,
   useId,
@@ -80,6 +83,9 @@ type StableEventsCalendarProps = {
   horses?: ReadonlyArray<CalendarHorse>
   surface?: 'flat' | 'panel'
   initialMonth?: Date
+  filters?: ReactNode
+  viewControl?: ReactNode
+  actions?: ReactNode
   storageKey?: string
 }
 
@@ -87,13 +93,17 @@ type CalendarCell =
   { key: string; kind: 'empty' } | { date: Date; key: string; kind: 'day' }
 
 export function StableEventsCalendar({
-  events,
+  events: sourceEvents,
   horses = [],
   initialMonth,
   surface = 'panel',
   storageKey,
+  filters,
+  viewControl,
+  actions,
 }: StableEventsCalendarProps) {
   const t = useT()
+  const small = useSmallScreen()
   const { locale } = useLocale()
 
   const [visibleMonth, setVisibleMonth] = useSessionState<Date>(
@@ -109,6 +119,16 @@ export function StableEventsCalendar({
   const [mobileDateKey, setMobileDateKey] = useState<string>()
   const [announcedMonth, setAnnouncedMonth] = useState<Date>()
   const calendarRef = useRef<HTMLDivElement>(null)
+  const calendarFilters = useEventCalendarFilters({
+    events: sourceEvents,
+    horses,
+    storageKey,
+    onShowResults: () => {
+      calendarRef.current?.focus({ preventScroll: true })
+      calendarRef.current?.scrollIntoView({ block: 'start' })
+    },
+  })
+  const events = calendarFilters.events
   const lastFocusedRef = useRef<HTMLElement | null>(null)
   const selectedAgendaId = useId()
   const mobileAgendaId = useId()
@@ -247,43 +267,28 @@ export function StableEventsCalendar({
       })}
       tabIndex={-1}
       className="app-control-focus calendar-container"
-      title={formatMonthLabel(visibleMonth, locale)}
-      description={t('calendar.monthCount', {
-        count: visibleMonthOccurrences.length,
-      })}
-      descriptionSize="sm"
-      contentGap="comfortable"
-      actions={
-        <>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => selectMonth(addMonths(visibleMonth, -1))}
-          >
-            <CaretLeftIcon aria-hidden="true" />
-            {t('calendar.previous')}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => selectMonth(startOfMonth(new Date()))}
-          >
-            {t('calendar.today')}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => selectMonth(addMonths(visibleMonth, 1))}
-          >
-            {t('calendar.next')}
-            <CaretRightIcon aria-hidden="true" />
-          </Button>
-        </>
-      }
+      title={small ? undefined : formatMonthLabel(visibleMonth, locale)}
+      contentGap="default"
     >
+      <CalendarToolbar
+        label={formatMonthLabel(visibleMonth, locale)}
+        previousLabel={t('trainingViews.previousMonth')}
+        nextLabel={t('trainingViews.nextMonth')}
+        onPrevious={() => selectMonth(addMonths(visibleMonth, -1))}
+        onNext={() => selectMonth(addMonths(visibleMonth, 1))}
+        onToday={() => selectMonth(startOfMonth(new Date()))}
+        viewControl={viewControl}
+        mobileFilters={calendarFilters.control}
+        actions={actions}
+      />
+      {calendarFilters.content}
+      {filters}
+      {calendarFilters.activeFilterCount > 0 &&
+        visibleMonthOccurrences.length === 0 && (
+          <DashboardEmptyState chrome="flat" spacing="flush">
+            {t('eventViews.filteredEmpty')}
+          </DashboardEmptyState>
+        )}
       <p className="sr-only" aria-live="polite" aria-atomic="true">
         {announcedMonth
           ? t('calendar.monthAnnouncement', {
@@ -296,12 +301,6 @@ export function StableEventsCalendar({
           : ''}
       </p>
 
-      <HorseColourLegend
-        horses={participatingHorses}
-        general={visibleMonthOccurrences.some((item) =>
-          generalEvent(item.event),
-        )}
-      />
       <div
         className="calendar-month-compact grid gap-4"
         data-calendar-view="mobile"
@@ -526,6 +525,12 @@ export function StableEventsCalendar({
           ))}
         </CalendarGrid>
       </CalendarShell>
+      <HorseColourLegend
+        horses={participatingHorses}
+        general={visibleMonthOccurrences.some((item) =>
+          generalEvent(item.event),
+        )}
+      />
 
       <MotionNotice
         show={Boolean(selectedDateKey)}
@@ -714,7 +719,7 @@ function getDayOccurrenceLabel(
 ) {
   const t = localeInstances[locale].t
   if (position === 'single' || position === 'start')
-    return occurrence.event.time
+    return formatEventTime(occurrence.event.time, locale)
   if (position === 'end') return t('calendar.endsToday')
   return t('calendar.continues')
 }

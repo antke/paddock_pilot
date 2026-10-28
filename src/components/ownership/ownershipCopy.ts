@@ -106,7 +106,7 @@ const pl: typeof en = {
   loadMore: 'Wczytaj więcej',
   noSnapshots: 'Brak zachowanych wpisów dotyczących koni.',
   title: 'Moje konie',
-  personalWorkspace: 'Przestrzeń osobista',
+  personalWorkspace: 'Przestrzeń prywatna',
   homeIntro: 'Wizyty i opieka nad Twoimi końmi.',
   viewHorses: 'Zobacz wszystkie konie',
   intro: 'Twoje konie i ich historia, niezależnie od miejsca pobytu.',

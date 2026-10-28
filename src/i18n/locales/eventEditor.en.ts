@@ -1,19 +1,19 @@
 export const eventEditor = {
-  createIn: 'Create in',
-  personal: 'Personal',
+  createIn: 'Sharing',
+  personal: 'Private',
   personalHelp:
     'Visible only to the selected horses’ owners and authorised carers. Not shared with a stable.',
   stableHelp:
-    'Appears in this stable’s calendar. Members see the schedule; the stable administrator can view and manage the details.',
+    'Appears in the selected stables. Owners and authorised carers keep their access. Members see the schedule and status; stable administrators can read shared details. Sharing does not grant access to other horse records.',
   requiresApproval: 'Requires approval',
   approvalHelp:
     'The horse’s owner, authorised editor carer or stable administrator must accept before it joins.',
   summary: 'Added directly: {{confirmed}} · Invitations: {{invited}}',
-  switchTitle: 'Remove horses before switching?',
+  switchTitle: 'Remove horses from this activity?',
   switchHelp:
-    'These horses are not available in the selected space: {{horses}}. The rest of your draft will be kept.',
-  switchConfirm: 'Remove horses and switch',
-  keepSpace: 'Keep current space',
+    'These horses need a stable calendar you are deselecting: {{horses}}. The rest of your draft will be kept.',
+  switchConfirm: 'Remove horses and continue',
+  keepSpace: 'Keep selected calendars',
   createPrivateEvent: 'Create private event',
   createPrivateTraining: 'Create private training',
   createStable: 'Create in {{stable}}',

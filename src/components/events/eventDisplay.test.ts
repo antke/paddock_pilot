@@ -59,3 +59,12 @@ describe('localized event summaries', () => {
     expect(formatRecurrence(undefined, 'pl')).toBeNull()
   })
 })
+
+it('formats whole-day entries in English and Polish without inventing a clock time', () => {
+  expect(formatEventDateTime('2026-09-29', 'all-day')).toBe(
+    '29 Sept 2026 · Whole day',
+  )
+  expect(formatEventDateTime('2026-09-29', 'all-day', undefined, 'pl')).toBe(
+    '29 wrz 2026 · Cały dzień',
+  )
+})

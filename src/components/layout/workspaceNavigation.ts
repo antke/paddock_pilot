@@ -25,6 +25,9 @@ type WorkspaceNavigationLabelKey =
   | 'navigation.gettingStarted'
   | 'navigation.settings'
   | 'navigation.manageStables'
+  | 'navigation.stables'
+  | 'navigationShell.stableOverview'
+  | 'navigationShell.stableHorses'
   | 'dashboard.contacts'
   | 'navigationShell.personalContacts'
 
@@ -80,9 +83,9 @@ export function getWorkspaceNavigation({
   const path = normalizedPath(pathname)
   const routeStableId = stableIdFromPath(path)
   const base = routeStableId ? `/stables/${routeStableId}` : ''
-  const home = base || '/'
-  const horses = `${base}/horses`
-  const contacts = `${base}/horses/contacts`
+  const home = '/'
+  const horses = '/horses'
+  const contacts = '/horses/contacts'
   const item = (
     id: string,
     href: string,
@@ -95,15 +98,28 @@ export function getWorkspaceNavigation({
     labelKey: 'navigationShell.dailyWork',
     items: [
       item('home', home, 'navigation.home', 'home', path === home),
-      item('events', `${base}/events`, 'navigation.events', 'events'),
-      item('training', `${base}/training`, 'navigation.training', 'training'),
+      item(
+        'events',
+        '/events',
+        'navigation.events',
+        'events',
+        isWithin(path, '/events') ||
+          Boolean(base && isWithin(path, `${base}/events`)),
+      ),
+      item(
+        'training',
+        '/training',
+        'navigation.training',
+        'training',
+        isWithin(path, '/training') ||
+          Boolean(base && isWithin(path, `${base}/training`)),
+      ),
       item(
         'horses',
         horses,
         'navigation.horses',
         'horses',
-        isWithin(path, horses) &&
-          (Boolean(routeStableId) || !isWithin(path, contacts)),
+        isWithin(path, horses) && !isWithin(path, contacts),
       ),
     ],
   }
@@ -125,14 +141,8 @@ export function getWorkspaceNavigation({
       },
       {
         id: 'management',
-        labelKey: 'navigationShell.workspace',
         items: [
-          item(
-            'manage-stables',
-            '/stables',
-            'navigation.manageStables',
-            'stable',
-          ),
+          item('manage-stables', '/stables', 'navigation.stables', 'stable'),
         ],
       },
     ]
@@ -145,6 +155,19 @@ export function getWorkspaceNavigation({
     : 'contacts'
   const directoryActive = path === directory
   const management: Array<WorkspaceNavigationItem> = [
+    item(
+      'stable-overview',
+      base,
+      'navigationShell.stableOverview',
+      'home',
+      path === base,
+    ),
+    item(
+      'stable-horses',
+      `${base}/horses`,
+      'navigationShell.stableHorses',
+      'horses',
+    ),
     item(
       'stable',
       `${directory}?tab=yard`,
@@ -194,7 +217,16 @@ export function getWorkspaceNavigation({
     {
       id: 'management',
       labelKey: 'navigationShell.stableManagement',
-      items: management,
+      items: [
+        ...management,
+        item(
+          'manage-stables',
+          '/stables',
+          'navigation.stables',
+          'stable',
+          false,
+        ),
+      ],
     },
   ]
 }
