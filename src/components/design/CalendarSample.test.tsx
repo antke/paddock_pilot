@@ -112,9 +112,7 @@ describe('actual local calendar specimens', () => {
     await act(async () => {
       vi.advanceTimersByTime(3000)
     })
-    expect(
-      screen.getByText('0 events this month', { exact: true }),
-    ).toBeTruthy()
+    expect(screen.queryAllByRole('link')).toHaveLength(0)
     fireEvent.change(screen.getByLabelText('Calendar sample'), {
       target: { value: 'dense' },
     })

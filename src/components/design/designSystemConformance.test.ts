@@ -8,6 +8,8 @@ const rawControlOwners = new Set([
   'components/dashboard/DashboardInlinePanel.tsx',
   'components/forms/FileUploadField.tsx',
   'components/forms/FormLayout.tsx',
+  // Accessible person cards own their native checkbox and enclosing label.
+  'components/forms/event/PeopleSelection.tsx',
   'components/horses/HorseCard.tsx',
   // The public care example owns its scoped, accessible status controls.
   'components/landing/CountryLandingHero.tsx',

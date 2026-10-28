@@ -18,6 +18,8 @@ import type { Doc } from 'convex/_generated/dataModel'
 import { EventDetail } from './EventDetail'
 import { EventEditAction } from './EventEditAction'
 
+vi.mock('convex/react', () => ({ useQuery: () => [] }))
+
 vi.mock('#/lib/useSmallScreen', () => ({ useSmallScreen: () => true }))
 beforeEach(() => {
   vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined)
