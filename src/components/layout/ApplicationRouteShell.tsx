@@ -6,6 +6,7 @@ import Footer from '../Footer'
 import Header from '../Header'
 import { AppShell, AppSkipLink } from './AppShell'
 import { AuthStateSwitch } from './AuthStateSwitch'
+import { FloatingActionsProvider } from './FloatingActions'
 import { PageLayout } from './PageLayout'
 
 type ApplicationRouteShellProps = {
@@ -26,7 +27,9 @@ export function ApplicationRouteShell({
       <AppShell data-app-motion-scope={motionEnabled || undefined}>
         <AppSkipLink />
         <Header />
-        <PageLayout>{children}</PageLayout>
+        <FloatingActionsProvider>
+          <PageLayout>{children}</PageLayout>
+        </FloatingActionsProvider>
         <AuthStateSwitch
           signedIn={null}
           signedOut={<Footer />}

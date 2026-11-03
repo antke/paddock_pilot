@@ -110,7 +110,7 @@ export const onboarding = {
     'Na początek wystarczy krótki opis. Możesz go rozbudować później.',
   saveContinue: 'Zapisz i kontynuuj',
   inviteLaterHelp:
-    'Stajnia jest gotowa. Zaproś kogoś teraz lub później w sekcji Osoby w ustawieniach stajni.',
+    'Stajnia jest gotowa. Zaproś kogoś teraz lub później na stronie Osoby w stajni.',
   ready: 'Zaczynamy',
   reviewTitle: 'Sprawdź konfigurację',
   aboutYou: 'O Tobie',
@@ -131,7 +131,7 @@ export const onboarding = {
   growRecords: 'Rozbuduj dokumentację koni',
   growRecordsHelp: 'Stopniowo dodawaj informacje o opiece i zdrowiu.',
   manageMembersHelp:
-    'Zapraszaj osoby i zarządzaj dostępem w ustawieniach stajni.',
+    'Zapraszaj osoby i zarządzaj dostępem na stronie Osoby w stajni.',
   planActivity: 'Zaplanuj wydarzenia w stajni',
   planActivityHelp:
     'Twórz wydarzenia i ustalaj, które konie w nich uczestniczą.',

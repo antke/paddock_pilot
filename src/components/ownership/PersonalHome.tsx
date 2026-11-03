@@ -1,6 +1,6 @@
 import { HorseInvitationInbox } from '#/components/events/HorseInvitationInbox'
 import { useMemo } from 'react'
-import { CaretDownIcon } from '@phosphor-icons/react'
+import { CaretDownIcon, PhoneIcon } from '@phosphor-icons/react'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
@@ -27,6 +27,7 @@ import { formatLongDateKey } from '#/lib/dateDisplay'
 import { useDashboardData } from '#/components/dashboard/useDashboardData'
 import { ActivityCalendarFilter } from '#/components/events/ActivityCalendarFilter'
 import { DashboardHorseList } from '#/components/dashboard/DashboardHorseList'
+import { HorseListShortcut } from '#/components/dashboard/HorseListShortcut'
 import { useOwnershipCopy } from './ownershipCopy'
 
 export function PersonalHome() {
@@ -74,8 +75,17 @@ export function PersonalHome() {
         title={t('navigation.home')}
         description={small ? undefined : formatLongDateKey(today, locale)}
         className="py-1 md:py-6"
+        // One row: the title holds the line, contacts sit in the top-right.
+        contentLayout="inline"
+        contentClassName="items-start"
         actions={
-          <ButtonLink to="/horses/contacts" variant="ghost" size="sm">
+          <ButtonLink
+            to="/horses/contacts"
+            variant="ghost"
+            size="sm"
+            className="min-h-11 md:-mt-1"
+          >
+            <PhoneIcon data-icon="inline-start" aria-hidden="true" />
             {c.providers}
           </ButtonLink>
         }
@@ -86,7 +96,12 @@ export function PersonalHome() {
         onChange={dashboard.setSelected}
         loading={dashboard.loading}
       />
-      {small && <DashboardCreateMenu canCreateActivity={canCreate} />}
+      {small && (
+        <DashboardCreateMenu
+          canCreateActivity={canCreate}
+          stables={dashboard.stables ?? []}
+        />
+      )}
       <HorseInvitationInbox />
       <DashboardLayoutGrid
         variant={hasCare ? 'commandCenter' : 'equal'}
@@ -140,17 +155,25 @@ export function PersonalHome() {
             titleStyle="display"
             headerLayout="inline"
             actions={
-              !small &&
               horses.length > 0 && (
-                <ButtonLink
-                  to="/horses/create"
-                  action="create"
-                  variant="outline"
-                  size="sm"
-                  className="min-h-11"
-                >
-                  {c.add}
-                </ButtonLink>
+                <>
+                  <HorseListShortcut
+                    stables={(dashboard.stables ?? []).filter((stable) =>
+                      dashboard.stableIds.includes(stable._id),
+                    )}
+                  />
+                  {!small && (
+                    <ButtonLink
+                      to="/horses/create"
+                      action="create"
+                      variant="outline"
+                      size="sm"
+                      className="min-h-11"
+                    >
+                      {c.add}
+                    </ButtonLink>
+                  )}
+                </>
               )
             }
           >

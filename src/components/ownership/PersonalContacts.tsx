@@ -1,4 +1,3 @@
-import { BackLink } from '#/components/ui/back-action'
 import { ActionFeedback } from '#/components/ui/action-feedback'
 import { MotionList } from '#/components/motion/MotionList'
 import { useEffect, useId, useRef, useState } from 'react'
@@ -7,10 +6,14 @@ import { useMutation, useQuery } from 'convex/react'
 import type { FunctionArgs } from 'convex/server'
 import { api } from 'convex/_generated/api'
 import type { Doc, Id } from 'convex/_generated/dataModel'
+import { DashboardPage } from '#/components/dashboard/DashboardPage'
+import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
+import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { RoutePending } from '#/components/layout/RoutePending'
 import { RecordRemoveAction } from '#/components/list-layout/RecordRemoveAction'
 import { Button } from '#/components/ui/button'
+import { EditActionButton } from '#/components/ui/edit-action'
 import { Input } from '#/components/ui/input'
 import { Select } from '#/components/ui/select'
 import { Field, FieldLabel } from '#/components/ui/field'
@@ -43,17 +46,42 @@ export function PersonalContactsView({
 }) {
   const c = useOwnershipCopy()
   const r = useOwnershipRecoveryCopy()
-  const addName = useRef<HTMLInputElement>(null)
   const [notice, setNotice] = useState('')
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const directory = useRef<HTMLDivElement>(null)
   return (
-    <div className="grid gap-3">
-      <BackLink to="/horses">{r.backHorses}</BackLink>
-      <DashboardSectionCard title={c.providers} description={r.contactsHelp}>
+    <DashboardPage>
+      <DashboardPageHeader
+        title={c.providers}
+        description={r.contactsHelp}
+        actions={
+          <CreateRecordDialog
+            open={isCreateOpen}
+            onOpenChange={setIsCreateOpen}
+            triggerLabel={r.addContact}
+            title={r.newContact}
+          >
+            <ContactEditor
+              save={save}
+              onCancel={() => setIsCreateOpen(false)}
+              onSaved={() => {
+                setIsCreateOpen(false)
+                setNotice(r.saved)
+              }}
+            />
+          </CreateRecordDialog>
+        }
+      />
+      <DashboardSectionCard
+        ref={directory}
+        tabIndex={-1}
+        aria-label={c.providers}
+      >
         {notice && <p role="status">{notice}</p>}
         <MotionList
           items={providers}
           getKey={(provider) => provider._id}
-          focusTarget={() => addName.current}
+          focusTarget={() => directory.current}
           empty={<p className="text-muted-foreground">{r.noContacts}</p>}
           renderItem={(provider) => (
             <ContactRow
@@ -64,18 +92,12 @@ export function PersonalContactsView({
                 await remove({ id: provider._id })
                 setNotice(r.deleted)
               }}
-              removalFocusTarget={() => addName.current}
+              removalFocusTarget={() => directory.current}
             />
           )}
         />
-        <section className="grid gap-4" aria-labelledby="new-care-contact">
-          <h3 id="new-care-contact" className="text-lg font-semibold">
-            {r.newContact}
-          </h3>
-          <ContactEditor save={save} nameRef={addName} />
-        </section>
       </DashboardSectionCard>
-    </div>
+    </DashboardPage>
   )
 }
 function ContactRow({
@@ -129,17 +151,14 @@ function ContactRow({
               )}
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button
+              <EditActionButton
                 ref={editButton}
-                variant="outline"
-                action="edit"
+                label={r.editName(provider.name)}
                 onClick={() => {
                   setNotice('')
                   setEditing(true)
                 }}
-              >
-                {r.edit}
-              </Button>
+              />
               <RecordRemoveAction
                 triggerLabel={r.delete}
                 triggerAriaLabel={`${r.delete}: ${provider.name}`}

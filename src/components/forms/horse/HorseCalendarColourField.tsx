@@ -16,6 +16,7 @@ import type {
   HorseCalendarColour,
 } from 'shared/horses/horseCalendarColours'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
+import { FieldHelpLabel } from '#/components/forms/FormHelpTooltip'
 import { useT } from '#/i18n/LocaleProvider'
 import { HorseColourDot } from '#/components/horses/HorseCalendarIdentity'
 import { Button } from '#/components/ui/button'
@@ -89,155 +90,164 @@ export function HorseCalendarColourField({
     (horse) => getHorseCalendarColour(horse) === colour,
   )
   return (
-    <Field
-      data-invalid={fieldState.invalid}
-      className="max-w-md"
-      data-slot="horse-colour-picker"
-    >
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <FieldLabel id={`${id}-label`}>{t('calendar.colourField')}</FieldLabel>
+    <Field data-invalid={fieldState.invalid} data-slot="horse-colour-picker">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <FieldHelpLabel
+          id={`${id}-label`}
+          label={t('calendar.colourField')}
+          help={t('calendar.colourFieldHelp')}
+          helpId={`${id}-help`}
+        />
         <span className="text-sm text-muted-foreground" aria-live="polite">
           {colourName}
           {custom ? ` · ${field.value}` : ''}
         </span>
       </div>
-      <FieldDescription id={`${id}-help`}>
-        {t('calendar.colourFieldHelp')}
-      </FieldDescription>
-      <div
-        role="group"
-        aria-labelledby={`${id}-label`}
-        aria-describedby={`${id}-help`}
-        className="grid w-full max-w-72 grid-cols-[repeat(auto-fit,minmax(2.75rem,1fr))] gap-1"
-      >
-        {horseCalendarColourIds.map((option, index) => {
-          const selected = field.value === option
-          const inUse = horses.filter(
-            (horse) => getHorseCalendarColour(horse) === option,
-          )
-          return (
-            <Button
-              key={option}
-              ref={index === 0 ? field.ref : undefined}
-              type="button"
-              disabled={disabled}
-              aria-label={t(`calendar.colours.${option}`)}
-              aria-pressed={selected}
-              title={`${t(`calendar.colours.${option}`)}${inUse.length ? ` · ${t('calendar.colourUsed', { names: inUse.map(getHorseDisplayName).join(', ') })}` : ''}`}
-              onBlur={field.onBlur}
-              onClick={() => {
-                field.onChange(option)
-                setCustomOpen(false)
-              }}
-              className="app-control-focus relative flex h-11 w-full cursor-pointer items-center justify-center rounded-full hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <span
-                className="size-8 rounded-full"
-                style={{ backgroundColor: horseCalendarColourCss(option) }}
-              />
-              {selected && (
-                <motion.span
-                  layoutId={spatial ? `${id}-selection` : undefined}
-                  initial={false}
-                  transition={journalMotion.spring}
-                  className="absolute inset-0 rounded-full border-2 border-foreground"
-                />
-              )}
-              {selected && (
-                <span className="absolute flex size-5 items-center justify-center rounded-full bg-background text-foreground">
-                  <CheckIcon
-                    weight="bold"
-                    className="size-3.5"
+      {/* Swatches beside their live preview on wider screens keeps the
+          field short; it stacks on phones. */}
+      <div className="grid min-w-0 items-start gap-4 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
+        <div className="grid min-w-0 gap-3">
+          <div
+            role="group"
+            aria-labelledby={`${id}-label`}
+            aria-describedby={`${id}-help`}
+            className="grid w-full max-w-72 grid-cols-[repeat(auto-fit,minmax(2.75rem,1fr))] gap-1"
+          >
+            {horseCalendarColourIds.map((option, index) => {
+              const selected = field.value === option
+              const inUse = horses.filter(
+                (horse) => getHorseCalendarColour(horse) === option,
+              )
+              return (
+                <Button
+                  key={option}
+                  ref={index === 0 ? field.ref : undefined}
+                  type="button"
+                  disabled={disabled}
+                  aria-label={t(`calendar.colours.${option}`)}
+                  aria-pressed={selected}
+                  title={`${t(`calendar.colours.${option}`)}${inUse.length ? ` · ${t('calendar.colourUsed', { names: inUse.map(getHorseDisplayName).join(', ') })}` : ''}`}
+                  onBlur={field.onBlur}
+                  onClick={() => {
+                    field.onChange(option)
+                    setCustomOpen(false)
+                  }}
+                  variant="ghost"
+                  size="icon-lg"
+                  className="app-control-focus relative mx-auto size-11 cursor-pointer rounded-full p-0 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span
                     aria-hidden="true"
+                    className="size-8 shrink-0 rounded-full"
+                    style={{ backgroundColor: horseCalendarColourCss(option) }}
                   />
-                </span>
-              )}
-            </Button>
-          )
-        })}
-      </div>
-      <Dialog open={customOpen} onOpenChange={setCustomOpen}>
-        <DialogTrigger
-          disabled={disabled}
-          onClick={(event) =>
-            setDraft(
-              custom
-                ? field.value!
-                : getComputedStyle(event.currentTarget)
-                    .getPropertyValue(`--horse-${colour}`)
-                    .trim() || '#347653',
-            )
-          }
-          render={<Button type="button" variant="outline" className="w-fit" />}
-        >
-          {custom ? (
-            <HorseColourDot colour={colour} className="size-4" />
-          ) : (
-            <SlidersHorizontalIcon className="size-4" aria-hidden="true" />
-          )}
-          {t('calendar.customColour')}
-        </DialogTrigger>
-        <DialogContent
-          className="max-h-[calc(100dvh-2rem)] max-w-md grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 sm:max-w-md"
-          onKeyDown={(event) => {
-            if (
-              event.key === 'Enter' &&
-              event.target instanceof HTMLInputElement &&
-              event.target.type !== 'range'
-            ) {
-              event.preventDefault()
-              event.stopPropagation()
-              applyDraft()
-            }
-          }}
-        >
-          <DialogHeader className="p-5 pr-12">
-            <DialogTitle>{t('calendar.customColour')}</DialogTitle>
-            <DialogDescription>
-              {t('calendar.customColourHelp', { name: horseName })}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid min-h-0 gap-4 overflow-y-auto px-5 pb-5">
-            <CustomColourEditor
-              value={draft}
-              onChange={setDraft}
-              onBlur={() => {}}
-              disabled={disabled}
-              errorId={`${id}-draft-error`}
-              invalid={!draftValid}
-            />
-            {!draftValid && (
-              <div id={`${id}-draft-error`}>
-                <FieldError>
-                  {t('horseValidation.calendarColourInvalid')}
-                </FieldError>
-              </div>
-            )}
-            <ColourPreview
-              colour={draftValid ? draft : colour}
-              horseName={horseName}
-            />
+                  {selected && (
+                    <motion.span
+                      layoutId={spatial ? `${id}-selection` : undefined}
+                      initial={false}
+                      transition={journalMotion.spring}
+                      className="absolute inset-0 rounded-full border-2 border-foreground"
+                    />
+                  )}
+                  {selected && (
+                    <span className="absolute flex size-5 items-center justify-center rounded-full bg-background text-foreground">
+                      <CheckIcon
+                        weight="bold"
+                        className="size-3.5"
+                        aria-hidden="true"
+                      />
+                    </span>
+                  )}
+                </Button>
+              )
+            })}
           </div>
-          <DialogFooter className="border-t border-border px-5 py-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setCustomOpen(false)}
+          <Dialog open={customOpen} onOpenChange={setCustomOpen}>
+            <DialogTrigger
+              disabled={disabled}
+              onClick={(event) =>
+                setDraft(
+                  custom
+                    ? field.value!
+                    : getComputedStyle(event.currentTarget)
+                        .getPropertyValue(`--horse-${colour}`)
+                        .trim() || '#347653',
+                )
+              }
+              render={
+                <Button type="button" variant="outline" className="w-fit" />
+              }
             >
-              {t('common.cancel')}
-            </Button>
-            <Button
-              type="button"
-              disabled={!draftValid || disabled}
-              onClick={applyDraft}
+              {custom ? (
+                <HorseColourDot colour={colour} className="size-4" />
+              ) : (
+                <SlidersHorizontalIcon className="size-4" aria-hidden="true" />
+              )}
+              {t('calendar.customColour')}
+            </DialogTrigger>
+            <DialogContent
+              className="max-h-[calc(100dvh-2rem)] max-w-md grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 sm:max-w-md"
+              onKeyDown={(event) => {
+                if (
+                  event.key === 'Enter' &&
+                  event.target instanceof HTMLInputElement &&
+                  event.target.type !== 'range'
+                ) {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  applyDraft()
+                }
+              }}
             >
-              {t('calendar.useColour')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              <DialogHeader className="p-5 pr-12">
+                <DialogTitle>{t('calendar.customColour')}</DialogTitle>
+                <DialogDescription>
+                  {t('calendar.customColourHelp', { name: horseName })}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid min-h-0 gap-4 overflow-y-auto px-5 pb-5">
+                <CustomColourEditor
+                  value={draft}
+                  onChange={setDraft}
+                  onBlur={() => {}}
+                  disabled={disabled}
+                  errorId={`${id}-draft-error`}
+                  invalid={!draftValid}
+                />
+                {!draftValid && (
+                  <div id={`${id}-draft-error`}>
+                    <FieldError>
+                      {t('horseValidation.calendarColourInvalid')}
+                    </FieldError>
+                  </div>
+                )}
+                <ColourPreview
+                  colour={draftValid ? draft : colour}
+                  horseName={horseName}
+                />
+              </div>
+              <DialogFooter className="border-t border-border px-5 py-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setCustomOpen(false)}
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button
+                  type="button"
+                  disabled={!draftValid || disabled}
+                  onClick={applyDraft}
+                >
+                  {t('calendar.useColour')}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+        <ColourPreview colour={colour} horseName={horseName} />
+      </div>
       {fieldState.error && <FieldError errors={[fieldState.error]} />}
-      <ColourPreview colour={colour} horseName={horseName} />
       {used.length > 0 && (
         <FieldDescription>
           {t('calendar.colourUsed', {

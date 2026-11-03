@@ -1,9 +1,10 @@
+import { EditActionLink } from '#/components/ui/edit-action'
 import { useState } from 'react'
 import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { StableSettingsOverviewContent } from '#/components/stables/StableSettingsOverview'
-import { Button, ButtonLink } from '#/components/ui/button'
+import { Button } from '#/components/ui/button'
 import { Field, FieldGrid, FieldLabel } from '#/components/ui/field'
 import { Select } from '#/components/ui/select'
 import { useDevAuthBypassEnabled } from '#/lib/devAuthBypass'
@@ -116,14 +117,11 @@ function SampleOverview({ data }: { data: DashboardLabData }) {
             email: 'mae@example.com',
           }}
           editAction={
-            <ButtonLink
+            <EditActionLink
               to="/page-lab/$page"
               params={{ page: 'stable-form' }}
-              action="edit"
-              variant="outline"
-            >
-              Edit stable
-            </ButtonLink>
+              label="Edit stable"
+            />
           }
           onArchive={async () => {
             setPending(true)

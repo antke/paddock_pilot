@@ -697,19 +697,17 @@ function SourceLink({
       variant="ghost"
       size="sm"
       to={
-        record.kind === 'health'
+        record.kind === 'health' || record.kind === 'medication'
           ? '/horses/$horseId/care'
           : '/horses/$horseId/nutrition'
       }
       params={{ horseId }}
       search={
-        record.kind === 'health'
-          ? { careView: 'health' }
+        record.kind === 'health' || record.kind === 'medication'
+          ? { careView: record.kind }
           : record.kind === 'weight'
             ? { nutritionView: 'weight' }
-            : record.kind === 'medication'
-              ? { nutritionView: 'medication' }
-              : {}
+            : {}
       }
     >
       {t('horseComparison.openSource')}

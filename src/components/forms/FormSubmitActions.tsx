@@ -30,6 +30,8 @@ type FormSubmitButtonsProps = {
   submittingLabel: string
   onCancel?: () => void
   cancelLabel?: string
+  /** Marks a Cancel button that only resets fields, so phones can replace it. */
+  cancelAction?: 'cancel' | 'reset'
   disabled?: boolean
 }
 
@@ -81,6 +83,7 @@ export function FormSubmitButtons({
   submittingLabel,
   onCancel,
   cancelLabel,
+  cancelAction = 'cancel',
   disabled = false,
 }: FormSubmitButtonsProps) {
   const t = useT()
@@ -92,6 +95,7 @@ export function FormSubmitButtons({
         <Button
           type="button"
           variant="outline"
+          data-form-action={cancelAction}
           disabled={actionDisabled}
           onClick={onCancel}
         >

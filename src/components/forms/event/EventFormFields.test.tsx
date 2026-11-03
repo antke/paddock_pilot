@@ -51,7 +51,9 @@ function Harness({
   onSubmit = () => undefined,
   empty = false,
   eventContext,
+  initialFocus,
 }: {
+  initialFocus?: 'status'
   recurrence?: EventFormInput['recurrence']
   onSubmit?: (data: EventFormSchema) => void
   empty?: boolean
@@ -70,6 +72,7 @@ function Harness({
     <form aria-label="Event" onSubmit={form.handleSubmit(onSubmit)}>
       <EventFormFields
         eventContext={eventContext}
+        initialFocus={initialFocus}
         control={form.control}
         setValue={form.setValue}
         horses={
@@ -200,6 +203,24 @@ describe('EventFormFields', () => {
       time: '10:30',
       recurring: false,
     })
+  })
+
+  it('opens Additional details on the current status for Change status', async () => {
+    render(<Harness initialFocus="status" />)
+    expect(
+      screen
+        .getByRole('button', { name: /Additional details Optional/ })
+        .getAttribute('aria-expanded'),
+    ).toBe('true')
+    const status = screen.getByRole('group', { name: 'Event status' })
+    await waitFor(() =>
+      expect(status.contains(document.activeElement)).toBe(true),
+    )
+    expect(
+      screen
+        .getByRole('button', { name: /Place & provider Optional/ })
+        .getAttribute('aria-expanded'),
+    ).toBe('false')
   })
 
   it('keeps optional labels visible alongside entered details', () => {

@@ -111,7 +111,7 @@ export const onboarding = {
   yardRulesHelp: 'Keep this short for now; it can grow with the stable.',
   saveContinue: 'Save and continue',
   inviteLaterHelp:
-    'Your stable is ready to use. Invite someone now, or add people later from the Members section in Stable settings.',
+    'Your stable is ready to use. Invite someone now, or add people later from the stable’s People page.',
   ready: 'I’m ready',
   reviewTitle: 'Review your setup',
   aboutYou: 'About you',
@@ -131,7 +131,7 @@ export const onboarding = {
   noPendingInvitations: 'No pending invitations',
   growRecords: 'Grow the horse records',
   growRecordsHelp: 'Add care and health details over time.',
-  manageMembersHelp: 'Invite and manage members from Stable settings.',
+  manageMembersHelp: 'Invite and manage members from the stable’s People page.',
   planActivity: 'Plan stable activity',
   planActivityHelp: 'Create events and coordinate the horses involved.',
   keepCurrent: 'Keep your horses current',

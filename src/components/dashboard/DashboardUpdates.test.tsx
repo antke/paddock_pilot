@@ -49,7 +49,14 @@ describe('shared yard updates view', () => {
         onRemove={vi.fn()}
       />,
     )
+    expect(
+      screen.getByRole('button', { name: /^Edit update from / }),
+    ).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Add update' }))
+    expect(
+      screen.getByRole<HTMLButtonElement>('button', { name: 'Add update' })
+        .disabled,
+    ).toBe(true)
     const body = screen.getByLabelText('Update')
     fireEvent.submit(body.closest('form')!)
     expect(screen.getByText(/Write an update between/)).toBeTruthy()
@@ -72,7 +79,7 @@ describe('shared yard updates view', () => {
         onRemove={vi.fn()}
       />,
     )
-    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Edit update/ })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Remove' })).toBeNull()
     rerender(
       <DashboardUpdates

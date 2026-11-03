@@ -126,9 +126,9 @@ it('groups all stable destinations in one navigation and keeps section links add
     ['Contacts', '/stable?tab=contacts'],
     ['People', '/stable?tab=people'],
     ['Yard information', '/stable?tab=yard'],
-    ['Documents', '/documents'],
+    ['Documents', '/stable?tab=documents'],
     ['Analysis', '/analysis'],
-    ['Getting started', '/welcome'],
+    ['Getting started', '/stable?tab=welcome'],
   ]) {
     expect(within(nav).getByRole('link', { name }).getAttribute('href')).toBe(
       `/stables/sample-stable${destination}`,
@@ -151,8 +151,15 @@ it('groups all stable destinations in one navigation and keeps section links add
       .hasAttribute('aria-current'),
   ).toBe(false)
   expect(nav.querySelectorAll('[aria-current="page"]')).toHaveLength(1)
+  // Documents is a tab of the stable view now, not a separate page.
   fireEvent.click(within(nav).getByRole('link', { name: 'Documents' }))
-  await waitFor(() => expect(current().textContent).toBe('Documents'))
+  await waitFor(() =>
+    expect(
+      within(nav)
+        .getByRole('link', { name: 'Documents' })
+        .getAttribute('aria-current'),
+    ).toBe('page'),
+  )
   expect(outerRouter.state.location.pathname).toBe('/')
 })
 it('keeps special list/create paths as their actual terminal pages', async () => {

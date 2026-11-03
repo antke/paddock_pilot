@@ -1,4 +1,3 @@
-import { BackButton } from '#/components/ui/back-action'
 import {
   HomeIcon,
   EventIcon,
@@ -6,12 +5,7 @@ import {
 } from '#/components/icons/domain-icons'
 import { useEffect, useRef, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
-import {
-  Link,
-  useLocation,
-  useCanGoBack,
-  useRouter,
-} from '@tanstack/react-router'
+import { Link, useLocation } from '@tanstack/react-router'
 import { ListIcon } from '@phosphor-icons/react'
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { useT } from '#/i18n/LocaleProvider'
@@ -42,41 +36,6 @@ export function mobileStableId(pathname: string) {
   return match && !['create', 'deleted'].includes(match[1])
     ? match[1]
     : undefined
-}
-
-export function MobileBackButton() {
-  const { pathname } = useLocation()
-  const router = useRouter()
-  const canGoBack = useCanGoBack()
-  const t = useT()
-  const stable = mobileStableId(pathname)
-  const path = stable ? pathname.slice(`/stables/${stable}`.length) : pathname
-  const detail =
-    /^\/(horses|events|training)\/[^/]+/.test(path) &&
-    !/^\/(horses|events|training)\/(create|contacts|history|unclaimed)(\/|$)/.test(
-      path,
-    )
-  if (!detail || isMobileTaskPath(pathname)) return null
-  return (
-    <BackButton
-      type="button"
-      className="min-h-11 min-w-11"
-      aria-label={t('dashboard.back')}
-      onClick={() =>
-        canGoBack
-          ? router.history.back()
-          : void router.navigate({
-              href: stable
-                ? `/stables/${stable}`
-                : path.startsWith('/horses')
-                  ? '/'
-                  : '/events',
-            })
-      }
-    >
-      {t('dashboard.back')}
-    </BackButton>
-  )
 }
 
 export function MobileNavigation() {
@@ -250,6 +209,14 @@ export function MobileNavigationView({
               {stableId && (
                 <>
                   <ButtonLink
+                    to="/stables/$stableId/horses"
+                    params={{ stableId }}
+                    variant="ghost"
+                    onClick={() => setOpen(false)}
+                  >
+                    {t('navigationShell.stableHorses')}
+                  </ButtonLink>
+                  <ButtonLink
                     to="/stables/$stableId/reminders"
                     params={{ stableId }}
                     variant="ghost"
@@ -276,8 +243,9 @@ export function MobileNavigationView({
                     {t('navigation.stable')}
                   </ButtonLink>
                   <ButtonLink
-                    to="/stables/$stableId/documents"
+                    to="/stables/$stableId/stable"
                     params={{ stableId }}
+                    search={{ tab: 'documents' }}
                     variant="ghost"
                     onClick={() => setOpen(false)}
                   >

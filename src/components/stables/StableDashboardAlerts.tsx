@@ -295,9 +295,9 @@ export function StableDashboardAlerts({
               {alerts.pendingStableInvitations.slice(0, 2).map((invitation) => (
                 <DashboardItemOpenLink
                   key={invitation.id}
-                  to="/stables/$stableId/settings"
+                  to="/stables/$stableId/stable"
                   params={{ stableId }}
-                  search={{ tab: 'members' }}
+                  search={{ tab: 'people' }}
                   tone={alertRowTone.stable}
                   density="compact"
                 >

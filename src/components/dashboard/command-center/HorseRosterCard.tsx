@@ -3,6 +3,7 @@ import { HorseAvatar } from '#/components/horses/HorseAvatar'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT } from '#/i18n/LocaleProvider'
 import { ButtonLink } from '#/components/ui/button'
+import { StableHorseListShortcut } from '#/components/dashboard/HorseListShortcut'
 import { HorseCard, HorseCardLink } from '#/components/horses/HorseCard'
 import { NoHorsesPrompt } from '#/components/horses/NoHorsesPrompt'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
@@ -46,6 +47,12 @@ export function HorseRosterCard({
       headerLayout="inline"
       actions={
         <>
+          {data.horses.length > 0 && (
+            <StableHorseListShortcut
+              stableId={data.stable._id}
+              count={data.horses.length}
+            />
+          )}
           {!compact && data.horses.length > 0 && (
             <ButtonLink
               to="/stables/$stableId/horses/create"
@@ -87,16 +94,6 @@ export function HorseRosterCard({
         )
       ) : (
         <NoHorsesPrompt chrome="flat" />
-      )}
-      {data.horses.length > 0 && (
-        <ButtonLink
-          to="/stables/$stableId/horses"
-          params={{ stableId: data.stable._id }}
-          variant="link"
-          className="min-h-11 justify-self-start px-0"
-        >
-          {t('dashboard.viewAllHorses')} ({data.horses.length})
-        </ButtonLink>
       )}
     </DashboardSection>
   )

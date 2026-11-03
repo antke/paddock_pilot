@@ -7,7 +7,6 @@ import {
   ActivityPeople,
   MyActivityInvitations,
 } from '#/components/events/ActivityPeople'
-import { BackLink } from '#/components/ui/back-action'
 import { EventParticipation } from '#/components/events/EventParticipation'
 import { RecordAudienceLabel } from '#/components/sharing/RecordAudienceLabel'
 import { TrainingCompletionSummary } from '#/components/training/TrainingCompletionSummary'
@@ -119,11 +118,6 @@ function OriginalDetail() {
   return (
     <DashboardPage>
       <DashboardPageHeader
-        backAction={
-          <BackLink to="/stables/$stableId/training" params={{ stableId }}>
-            {t('trainingViews.back')}
-          </BackLink>
-        }
         title={data.event.title}
         description={
           <>

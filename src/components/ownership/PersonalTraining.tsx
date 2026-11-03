@@ -1,3 +1,4 @@
+import { TrainingAddSessionAction } from '#/components/training/TrainingAddSessionAction'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { useOwnershipCopy } from './ownershipCopy'
 import { ButtonLink } from '#/components/ui/button'
@@ -24,6 +25,11 @@ export function PersonalTraining() {
         showWorkspace={false}
         title={t('trainingViews.log')}
         description={!small ? t('trainingViews.logHelp') : undefined}
+        actions={
+          <TrainingAddSessionAction
+            canRecord={data.horses.some((horse) => horse.canRecord)}
+          />
+        }
       />
       <ActivityCalendarFilter
         stables={calendars.stables}
@@ -50,7 +56,7 @@ export function PersonalTraining() {
           calendars.data && !data.horses.length && calendars.personal,
         )}
       >
-        <TrainingCalendar {...data} />
+        <TrainingCalendar {...data} pageOwnsAddAction />
       </div>
     </DashboardPage>
   )

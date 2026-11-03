@@ -39,7 +39,7 @@ import { Textarea } from '#/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group'
 import { TextLabel } from '#/components/ui/text-label'
 import type { Id } from 'convex/_generated/dataModel'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Controller, useFormState, useWatch } from 'react-hook-form'
 import type { Control, UseFormSetValue } from 'react-hook-form'
 import {
@@ -90,6 +90,7 @@ type Props = {
   trainingMode?: 'create' | 'edit'
   scheduleOnly?: boolean
   eventContext?: 'stable' | 'personal'
+  initialFocus?: 'status'
 }
 
 type RecurrenceEditorMode = 'simple' | 'advanced'
@@ -537,7 +538,19 @@ export function EventFormFields({
   onTypeChange,
   scheduleOnly = false,
   eventContext = 'stable',
+  initialFocus,
 }: Props) {
+  const statusFieldRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (initialFocus !== 'status') return
+    const field = statusFieldRef.current
+    const target =
+      field?.querySelector<HTMLElement>(
+        '[aria-checked="true"], [aria-pressed="true"], [data-pressed]',
+      ) ?? field?.querySelector<HTMLElement>('button')
+    target?.focus({ preventScroll: true })
+    field?.scrollIntoView?.({ block: 'center' })
+  }, [initialFocus])
   const selectedPeople = useWatch({ control, name: 'peopleIds' }) ?? []
   const timedValue = useRef('')
   const t = useT()
@@ -1046,6 +1059,7 @@ export function EventFormFields({
 
       <FormSection
         title={t('eventForm.additionalDetails')}
+        defaultOpen={initialFocus === 'status'}
         optionalLabel={t('eventForm.optional')}
         invalid={Boolean(
           errors.endDate ||
@@ -1071,7 +1085,7 @@ export function EventFormFields({
             name="status"
             control={control}
             render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
+              <Field ref={statusFieldRef} data-invalid={fieldState.invalid}>
                 <FieldLabel>{t('eventForm.status')}</FieldLabel>
 
                 <ChoiceButtonGroup

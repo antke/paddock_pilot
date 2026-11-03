@@ -131,7 +131,7 @@ describe('focused training recording', () => {
     })
     render(<TrainingRecordCard entry={readOnly} />)
     expect(
-      screen.queryByRole('button', { name: 'Update training record' }),
+      screen.queryByRole('button', { name: 'Edit training record' }),
     ).toBeNull()
     expect(screen.queryByRole('button')).toBeNull()
   })
@@ -247,9 +247,7 @@ it('shows the author and saves a corrected recorded date', async () => {
   })
   render(<TrainingRecordCard entry={saved} />)
   expect(screen.getByText('Created by Alex Rider')).toBeTruthy()
-  fireEvent.click(
-    screen.getByRole('button', { name: 'Update training record' }),
-  )
+  fireEvent.click(screen.getByRole('button', { name: 'Edit training record' }))
   fireEvent.change(screen.getByLabelText('Date'), {
     target: { value: '1999-12-31' },
   })

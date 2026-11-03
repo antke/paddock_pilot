@@ -2,6 +2,7 @@ export const stableUpdates = {
   title: 'Aktualności stajni',
   add: 'Dodaj aktualność',
   edit: 'Edytuj',
+  editNamed: 'Edytuj aktualność z {{date}}',
   remove: 'Usuń',
   body: 'Aktualność',
   expires: 'Pokazuj do (opcjonalnie)',

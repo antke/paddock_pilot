@@ -1,3 +1,4 @@
+import type { StableFormSection } from '#/components/forms/stable/StableFormFields'
 import { useT } from '#/i18n/LocaleProvider'
 import { useId } from 'react'
 import type { ReactNode } from 'react'
@@ -44,8 +45,11 @@ export function StableProfileForm({
   onAcknowledged,
   onPendingChange,
   sampleNotice,
+  section,
 }: {
   mode: 'create' | 'edit'
+  /** Edit only one yard section's fields, opened from that section's pencil. */
+  section?: StableFormSection
   stableId?: string
   initialValues?: Partial<StableFormSchema>
   save: (values: StableFormSchema) => Promise<Id<'stables'>>
@@ -80,8 +84,18 @@ export function StableProfileForm({
   return (
     <RouteFormCard
       formId={formId}
-      title={mode === 'create' ? t('stables.create') : t('stables.edit')}
-      sectionTitle={mode === 'edit' ? t('stables.details') : undefined}
+      title={
+        mode === 'create'
+          ? t('stables.create')
+          : section === 'information'
+            ? t('stables.editYardDetails')
+            : section === 'contacts'
+              ? t('stables.editYardContacts')
+              : t('stables.edit')
+      }
+      sectionTitle={
+        mode === 'edit' && !section ? t('stables.details') : undefined
+      }
       stickyActions
       onSubmit={(event) => {
         if (submission.acknowledged) {
@@ -159,6 +173,7 @@ export function StableProfileForm({
     >
       {sampleNotice}
       <StableFormFields
+        section={section}
         stableId={stableId}
         headingLevel={mode === 'create' ? 2 : 3}
         control={form.control}

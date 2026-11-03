@@ -1086,7 +1086,9 @@ body {
 :root[data-transition-scope] [data-slot='app-sidebar'] {
   view-transition-name: app-sidebar;
 }
-:root[data-transition-scope] [data-slot='mobile-app-chrome'] {
+/* The chrome wrapper is display: contents and has no box to snapshot, so the
+   name must sit on the fixed navigation itself or it animates with the page. */
+:root[data-transition-scope] [data-slot='mobile-app-navigation'] {
   view-transition-name: app-navigation;
 }
 :root[data-transition-scope] [data-slot='mobile-action-menu'] {
@@ -1422,9 +1424,9 @@ body {
     align-items: center;
     gap: 0.75rem;
   }
-  [data-mobile-route-form='true']
-    [data-slot='card-footer']
-    [data-slot='button'] {
+  /* Every floating action is round, including dialog triggers whose
+     data-slot differs from a plain button. */
+  [data-mobile-route-form='true'] [data-slot='card-footer'] button {
     width: 3rem;
     height: 3rem;
     min-height: 3rem;
@@ -1439,6 +1441,17 @@ body {
   }
   [data-mobile-route-form='true'] [data-slot='form-action-icon'] {
     display: inline-flex;
+  }
+  /* On phones the floating X closes the form; Reset stays a desktop action. */
+  [data-mobile-route-form='true']
+    [data-slot='card-footer']
+    [data-form-action='close'] {
+    display: inline-flex;
+  }
+  [data-mobile-route-form='true']
+    [data-slot='card-footer']
+    [data-form-action='reset'] {
+    display: none;
   }
   [data-mobile-route-form='true']
     [data-slot='card-footer']

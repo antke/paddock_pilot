@@ -30,8 +30,9 @@ export function StableSetupNotice({ stableId }: { stableId: Id<'stables'> }) {
       </AlertDescription>
       <DashboardActions align="start">
         <ButtonLink
-          to="/stables/$stableId/welcome"
+          to="/stables/$stableId/stable"
           params={{ stableId }}
+          search={{ tab: 'welcome' }}
           variant="outline"
           size="sm"
         >

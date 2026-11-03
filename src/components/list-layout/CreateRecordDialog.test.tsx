@@ -7,69 +7,121 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { FloatingActionsProvider } from '#/components/layout/FloatingActions'
+import { MobileFloatingAction } from '#/components/layout/MobileFloatingAction'
 import { CreateRecordDialog } from './CreateRecordDialog'
+
+beforeEach(() => {
+  // jsdom has no layout; treat every rendered control as visible.
+  vi.spyOn(HTMLElement.prototype, 'getClientRects').mockImplementation(
+    () => [new DOMRect(0, 0, 100, 40)] as unknown as DOMRectList,
+  )
+})
 
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
 })
-function Sample() {
+
+function Sample({ label = 'Add reminder' }: { label?: string }) {
   const [open, setOpen] = useState(false)
   return (
     <CreateRecordDialog
       open={open}
       onOpenChange={setOpen}
-      triggerLabel="Add reminder"
-      title="Add care reminder"
-      description="Sample reminder"
+      triggerLabel={label}
+      title={`${label} form`}
+      description="Sample record"
     >
       <button onClick={() => setOpen(false)}>Apply sample</button>
     </CreateRecordDialog>
   )
 }
 
-describe('responsive create dialog focus return', () => {
-  it.each([true, false])(
-    'returns to the surviving trigger after changing viewport (starts desktop: %s)',
-    async (startsDesktop) => {
-      let desktopVisible = startsDesktop
-      // jsdom has no layout; emulate the CSS breakpoint hiding one trigger.
-      vi.spyOn(HTMLElement.prototype, 'getClientRects').mockImplementation(
-        function (this: HTMLElement) {
-          const desktop = this.closest(
-            '[data-slot="record-dialog-desktop-trigger"]',
-          )
-          const floating = this.matches(
-            '[data-slot="record-dialog-floating-trigger"]',
-          )
-          const visible = desktop
-            ? desktopVisible
-            : floating
-              ? !desktopVisible
-              : true
-          return (visible
-            ? [new DOMRect(0, 0, 100, 40)]
-            : []) as unknown as DOMRectList
-        },
+const titleTrigger = (name: string) =>
+  screen
+    .getAllByRole('button', { name })
+    .find((button) =>
+      button.closest('[data-slot="record-dialog-title-trigger"]'),
+    )!
+
+describe('create dialog triggers', () => {
+  it('keeps the title-row trigger and returns focus to it', async () => {
+    render(<Sample />)
+    const trigger = titleTrigger('Add reminder')
+    trigger.focus()
+    fireEvent.click(trigger)
+    await screen.findByRole('dialog')
+    fireEvent.click(screen.getByRole('button', { name: 'Apply sample' }))
+    await waitFor(() => expect(document.activeElement).toBe(trigger))
+  })
+
+  it('falls back to a local phone shortcut without the app registry', () => {
+    render(<Sample />)
+    expect(
+      document.querySelector('[data-slot="record-dialog-floating-trigger"]'),
+    ).toBeTruthy()
+  })
+
+  it('mirrors a single section action as one direct shortcut that owns focus return', async () => {
+    render(
+      <FloatingActionsProvider>
+        <Sample />
+      </FloatingActionsProvider>,
+    )
+    expect(
+      document.querySelector('[data-slot="record-dialog-floating-trigger"]'),
+    ).toBeNull()
+    const shortcut = await waitFor(() => {
+      const element = document.querySelector<HTMLButtonElement>(
+        '[data-slot="floating-create-action"]',
       )
-      render(<Sample />)
-      const triggers = screen.getAllByRole('button', { name: 'Add reminder' })
-      const desktop = triggers.find((button) =>
-        button.closest('[data-slot="record-dialog-desktop-trigger"]'),
-      )!
-      const floating = triggers.find((button) =>
-        button.matches('[data-slot="record-dialog-floating-trigger"]'),
-      )!
-      const opener = startsDesktop ? desktop : floating
-      opener.focus()
-      fireEvent.click(opener)
-      await screen.findByRole('dialog')
-      desktopVisible = !startsDesktop
-      fireEvent.click(screen.getByRole('button', { name: 'Apply sample' }))
-      await waitFor(() =>
-        expect(document.activeElement).toBe(startsDesktop ? floating : desktop),
-      )
-    },
-  )
+      expect(element).toBeTruthy()
+      return element!
+    })
+    expect(shortcut.getAttribute('aria-label')).toBe('Add reminder')
+    expect(titleTrigger('Add reminder')).toBeTruthy()
+    shortcut.focus()
+    fireEvent.click(shortcut)
+    await screen.findByRole('dialog')
+    fireEvent.click(screen.getByRole('button', { name: 'Apply sample' }))
+    await waitFor(() => expect(document.activeElement).toBe(shortcut))
+  })
+
+  it('collects several section actions into one shortcut menu', async () => {
+    render(
+      <FloatingActionsProvider>
+        <Sample label="Add provider" />
+        <Sample label="Invite member" />
+      </FloatingActionsProvider>,
+    )
+    await waitFor(() =>
+      expect(
+        document.querySelector('[data-slot="mobile-action-menu"]'),
+      ).toBeTruthy(),
+    )
+    expect(
+      document.querySelector('[data-slot="floating-create-action"]'),
+    ).toBeNull()
+  })
+
+  it('stays out of the way when the page renders its own floating action', async () => {
+    render(
+      <FloatingActionsProvider>
+        <Sample />
+        <MobileFloatingAction>
+          <button>Edit event</button>
+        </MobileFloatingAction>
+      </FloatingActionsProvider>,
+    )
+    await waitFor(() =>
+      expect(
+        document.querySelectorAll('[data-slot="mobile-floating-action"]'),
+      ).toHaveLength(1),
+    )
+    expect(
+      document.querySelector('[data-slot="floating-create-action"]'),
+    ).toBeNull()
+  })
 })

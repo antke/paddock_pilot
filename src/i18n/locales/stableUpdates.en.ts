@@ -2,6 +2,7 @@ export const stableUpdates = {
   title: 'Yard updates',
   add: 'Add update',
   edit: 'Edit',
+  editNamed: 'Edit update from {{date}}',
   remove: 'Remove',
   body: 'Update',
   expires: 'Show through (optional)',

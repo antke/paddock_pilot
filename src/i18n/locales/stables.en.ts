@@ -1,6 +1,24 @@
 export const stables = {
-  providerActions: 'Actions for {{name}}',
   callProvider: 'Call {{name}}',
+  destinations: {
+    label: '{{name}} sections',
+    more: 'More',
+    moreLabel: 'More sections for {{name}}',
+    overview: 'Overview',
+    horses: 'Horses',
+    care: 'Care',
+    people: 'People',
+    contacts: 'Contacts',
+    yard: 'Yard information',
+    documents: 'Documents',
+    analysis: 'Analysis',
+    gettingStarted: 'Getting started',
+    settings: 'Settings',
+  },
+  historyUnavailable: 'Former horse records are not available',
+  historyUnavailableHelp:
+    'When a horse leaves this stable, its records stay with the horse and this stable no longer has access to them.',
+  backToHorses: 'Back to stable horses',
   sharedTabs: {
     contacts: 'Contacts',
     people: 'People',
@@ -103,9 +121,6 @@ export const stables = {
   notAdded: 'Not added yet',
   phone: 'Phone',
   emergencyContact: 'Emergency contact',
-  manageMembersHelp:
-    'Invite members, update their details, and manage access from Stable settings.',
-  manageMembers: 'Manage members',
   memberFallback: 'Stable member',
   unknown: 'Unknown',
   overview: 'Overview',
@@ -134,6 +149,7 @@ export const stables = {
   removeMemberFailed: 'Could not remove member',
   reassignmentCheck: 'Refresh the member details and try again.',
   remove: 'Remove',
+  removeNamed: 'Remove {{name}}',
   removeMemberFailedHelp:
     'Could not remove this member. Refresh the member details and try again.',
   newOwner: 'New owner',
@@ -162,6 +178,13 @@ export const stables = {
   addProviderHelp: 'Add a care contact to the stable provider directory.',
   noProviders: 'No providers saved yet.',
   editAction: 'Edit',
+  editMemberDetails: 'Edit details for {{name}}',
+  editProvider: 'Edit {{name}}',
+  editYardDetails: 'Edit yard information',
+  yardContacts: 'Yard contacts',
+  editYardContacts: 'Edit yard contacts',
+  yardContactsHelp: 'Who to call at the yard, day to day and in an emergency.',
+  editYourYardProfile: 'Edit your yard profile',
   removeProviderHelp:
     'This removes the contact from the shared provider directory. This cannot be undone.',
   removeProviderFailed: 'Could not remove provider',

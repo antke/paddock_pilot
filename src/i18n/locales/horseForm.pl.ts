@@ -20,7 +20,8 @@ export const horseForm = {
   microchipAdded: 'Dodano mikroczip',
   optional: 'Opcjonalnie',
   nutritionAdded: 'Dodano informacje o żywieniu',
-  detailsHelp: 'Podaj imię konia, właściciela oraz datę urodzenia lub wiek.',
+  detailsHelp:
+    'Imię, właściciel, wiek i podstawowe dane widoczne w profilu konia.',
   details: 'Dane konia',
   name: 'Imię konia',
   owner: 'Imię i nazwisko właściciela',
@@ -35,7 +36,7 @@ export const horseForm = {
   pictureHelp:
     'Możesz dodać zdjęcie o rozmiarze do 5 MB, które będzie widoczne na karcie konia.',
   careHelp:
-    'Zbierz w jednym miejscu dokumenty, dane ubezpieczenia i kontakty do specjalistów.',
+    'Zbierz w jednym miejscu dokumenty, ubezpieczenie, kontakty do specjalistów i informacje o zdrowiu.',
   care: 'Opieka i dokumentacja',
   identification: 'Identyfikacja',
   passport: 'Numer paszportu',
@@ -53,13 +54,11 @@ export const horseForm = {
   farrier: 'Kowal',
   farrierName: 'Imię i nazwisko kowala',
   farrierPhone: 'Telefon kowala',
+  health: 'Zdrowie',
   emergency: 'Nagłe przypadki',
   emergencyNotes: 'Informacje na nagłe przypadki',
   emergencyPlaceholder:
     'Ważne informacje dla osób udzielających pilnej pomocy lub specjalistów',
-  profileHelp:
-    'Zapisz pochodzenie konia oraz informacje o pielęgnacji kopyt i zdrowiu.',
-  profile: 'Profil i zdrowie',
   breed: 'Rasa',
   color: 'Maść',
   colorPlaceholder: 'Kasztanowata',

@@ -194,7 +194,7 @@ export const createStableInvitationAcceptedEmail = (input: {
   stableName: string
 }): MessageContent => {
   const copy = getEmailCopy(input.locale)
-  const url = `${getStableUrl(input.appUrl, input.stableId)}/settings?tab=members`
+  const url = `${getStableUrl(input.appUrl, input.stableId)}/stable?tab=people`
   return renderMessage(input.locale, {
     category: 'stable_invitation_accepted',
     subject: copy.acceptedSubject(

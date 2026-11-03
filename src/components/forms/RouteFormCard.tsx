@@ -7,6 +7,7 @@ import { useRef, useState } from 'react'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
+import { PageBack } from '#/components/layout/PageBack'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import {
   AlertDialog,
@@ -21,6 +22,7 @@ import {
 } from '#/components/ui/alert-dialog'
 import { Button } from '#/components/ui/button'
 import { FormSubmitButtons } from './FormSubmitActions'
+import { useRouteFormClose } from '#/components/layout/mobileTaskNavigation'
 
 export const formStickyActionsClassName =
   'sticky bottom-0 z-10 border-t border-border-subtle bg-card py-4 pb-[max(1rem,env(safe-area-inset-bottom))]'
@@ -99,7 +101,7 @@ export function RouteFormCard({
   onCancel,
   cancelDisabled = false,
 }: RouteFormCardProps) {
-  const t = useT()
+  const closeForm = useRouteFormClose()
   const formCard = (
     <form
       data-slot="route-form-card"
@@ -130,19 +132,8 @@ export function RouteFormCard({
     <DashboardPage>
       <DashboardPageHeader
         title={title}
-        contentLayout={onCancel ? 'inline' : 'default'}
-        actions={
-          onCancel ? (
-            <Button
-              type="button"
-              variant="ghost"
-              className="min-h-11 md:hidden"
-              onClick={onCancel}
-              disabled={cancelDisabled}
-            >
-              {t('common.cancel')}
-            </Button>
-          ) : undefined
+        backAction={
+          <PageBack onClick={onCancel ?? closeForm} disabled={cancelDisabled} />
         }
       />
       {formCard}
@@ -165,6 +156,7 @@ export function RouteFormActions({
   const resetTrigger = useRef<HTMLButtonElement>(null)
   const ownerForm = useRef<HTMLFormElement | null>(null)
   const actionDisabled = disabled || isSubmitting
+  const closeForm = useRouteFormClose()
 
   return (
     <>
@@ -173,6 +165,7 @@ export function RouteFormActions({
           <AlertDialogTrigger
             render={
               <Button
+                data-form-action="reset"
                 ref={(element) => {
                   resetTrigger.current = element
                   if (element) ownerForm.current = element.closest('form')
@@ -229,9 +222,21 @@ export function RouteFormActions({
         </AlertDialog>
       )}
 
+      {/* Phones show Close in place of Reset in the floating actions. */}
+      <Button
+        type="button"
+        variant="outline"
+        data-form-action="close"
+        className="hidden"
+        aria-label={t('common.close')}
+        onClick={closeForm}
+      >
+        <XIcon className="size-5" aria-hidden="true" />
+      </Button>
       <FormSubmitButtons
         isSubmitting={isSubmitting}
         onCancel={resetConfirmation ? undefined : onReset}
+        cancelAction="reset"
         cancelLabel={effectiveResetLabel}
         disabled={disabled}
         submitLabel={submitLabel}

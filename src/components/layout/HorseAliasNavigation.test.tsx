@@ -27,10 +27,9 @@ it.each([
 ])(
   'replaces the $suffix horse alias so Back escapes and Forward returns to $destination',
   async ({ alias, suffix, destination }) => {
-    // Only the file-route match lookup is supplied locally. The actual exported
-    // route component, Navigate, router and memory history remain installed code.
+    // The exported redirect runs in beforeLoad, so the alias never renders and
+    // cannot fire mid-navigation from inside the horse layout's outlet.
     const params = { stableId: 'sample-stable-42', horseId: 'sample-horse-73' }
-    vi.spyOn(alias, 'useParams').mockReturnValue(params)
     const root = createRootRoute({ component: Outlet })
     const previous = createRoute({
       getParentRoute: () => root,
@@ -40,7 +39,7 @@ it.each([
     const aliasPage = createRoute({
       getParentRoute: () => root,
       path: `/stables/$stableId/horses/$horseId${suffix}`,
-      component: alias.options.component,
+      beforeLoad: (context) => alias.options.beforeLoad?.(context as never),
     })
     const destinationPage = createRoute({
       getParentRoute: () => root,

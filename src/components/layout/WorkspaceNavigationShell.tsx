@@ -53,11 +53,7 @@ import { useSmallScreen } from '#/lib/useSmallScreen'
 import { AppHeader } from './AppShell'
 import { AccountPreferencesDialog } from './AccountPreferencesDialog'
 import { useAppUserState } from './AppUserStateProvider'
-import {
-  isMobileTaskPath,
-  MobileBackButton,
-  MobileNavigationView,
-} from './MobileNavigation'
+import { isMobileTaskPath, MobileNavigationView } from './MobileNavigation'
 import { getWorkspaceNavigation, stableIdFromPath } from './workspaceNavigation'
 import type {
   WorkspaceNavigationGroup,
@@ -119,7 +115,6 @@ export function WorkspaceNavigation() {
             onPreferences={() => setPreferencesOpen(true)}
           />
         )}
-        backAction={<MobileBackButton />}
       />
       <AccountPreferencesDialog
         open={preferencesOpen}

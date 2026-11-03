@@ -34,10 +34,12 @@ const en = {
   acceptedHelp:
     'Your invitation has been accepted. Open the horse to see the records available to you.',
   newContact: 'Add a care contact',
+  addContact: 'Add contact',
   contactsHelp: 'Keep the people who help care for your horses close at hand.',
   noContacts:
-    'No care contacts yet. Add your vet, farrier or another care provider below.',
+    'No care contacts yet. Add your vet, farrier or another care provider.',
   edit: 'Edit contact',
+  editName: (name: string) => `Edit ${name}`,
   delete: 'Delete contact',
   deleteTitle: (name: string) => `Delete ${name}?`,
   deleteHelp:
@@ -95,11 +97,13 @@ const pl: typeof en = {
   acceptedHelp:
     'Zaproszenie zostało przyjęte. Otwórz konia, aby zobaczyć dostępne wpisy.',
   newContact: 'Dodaj kontakt',
+  addContact: 'Dodaj kontakt',
   contactsHelp:
     'Miej pod ręką kontakty do osób pomagających w opiece nad końmi.',
   noContacts:
-    'Nie masz jeszcze kontaktów. Dodaj poniżej weterynarza, kowala lub inną osobę pomagającą w opiece.',
+    'Nie masz jeszcze kontaktów. Dodaj weterynarza, kowala lub inną osobę pomagającą w opiece.',
   edit: 'Edytuj kontakt',
+  editName: (name: string) => `Edytuj: ${name}`,
   delete: 'Usuń kontakt',
   deleteTitle: (name: string) => `Usunąć kontakt: ${name}?`,
   deleteHelp:

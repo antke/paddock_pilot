@@ -5,6 +5,7 @@ import { DashboardActions } from './DashboardActions'
 import { DashboardBadgeList } from './DashboardBadgeList'
 import { DashboardDisplayHeading } from './DashboardDisplayHeading'
 import { DashboardHeaderRail } from './DashboardHeaderRail'
+import { SectionEditSlot } from './SectionEditSlot'
 
 type DashboardSectionHeaderSize = 'compact' | 'panel' | 'section' | 'page'
 type DashboardSectionHeaderDescriptionSize = 'default' | 'sm'
@@ -16,6 +17,12 @@ type DashboardSectionHeaderProps = {
   title?: ReactNode
   actions?: ReactNode
   actionsClassName?: string
+  /**
+   * The section's pencil (`EditActionButton`, `EditActionLink` or
+   * `HorseEditEntry appearance="icon"`). Always rendered last, in the title
+   * row's top-right corner, after any Add actions.
+   */
+  edit?: ReactNode
   as?: ElementType
   badges?: ReactNode
   className?: string
@@ -35,6 +42,7 @@ export function DashboardSectionHeader({
   titleSupplement,
   actions,
   actionsClassName,
+  edit,
   as,
   badges,
   className,
@@ -57,7 +65,8 @@ export function DashboardSectionHeader({
       className={cn(
         layout === 'inline'
           ? 'flex flex-wrap items-center justify-between gap-x-6 gap-y-2'
-          : 'grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-stretch',
+          : // Actions stay on the title row at every width.
+            'grid grid-cols-[minmax(50%,1fr)_auto] items-start gap-x-4 gap-y-2 sm:items-stretch',
         className,
       )}
     >
@@ -121,7 +130,7 @@ export function DashboardSectionHeader({
           ) : undefined
         }
         bottom={
-          actions ? (
+          actions || edit ? (
             <DashboardActions
               align="end"
               className={cn(
@@ -131,6 +140,7 @@ export function DashboardSectionHeader({
               )}
             >
               {actions}
+              {edit && <SectionEditSlot>{edit}</SectionEditSlot>}
             </DashboardActions>
           ) : undefined
         }

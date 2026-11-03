@@ -46,7 +46,7 @@ async function openSample() {
 describe('member directory sample', () => {
   it('moves focus into profile editing and returns it after cancellation', async () => {
     await openSample()
-    const edit = screen.getByRole('button', { name: 'Edit details' })
+    const edit = screen.getByRole('button', { name: 'Edit your yard profile' })
     expect(document.activeElement).not.toBe(edit)
     fireEvent.click(edit)
     const name = screen.getByRole<HTMLInputElement>('textbox', {
@@ -56,9 +56,11 @@ describe('member directory sample', () => {
     fireEvent.change(name, { target: { value: 'Unsaved nickname' } })
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(document.activeElement).toBe(
-      screen.getByRole('button', { name: 'Edit details' }),
+      screen.getByRole('button', { name: 'Edit your yard profile' }),
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Edit details' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit your yard profile' }),
+    )
     expect(
       screen.getByRole<HTMLInputElement>('textbox', {
         name: 'Yard display name',
@@ -71,7 +73,9 @@ describe('member directory sample', () => {
     fireEvent.change(screen.getByLabelText('Next sample save'), {
       target: { value: 'failure' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Edit details' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit your yard profile' }),
+    )
     const name = screen.getByRole<HTMLInputElement>('textbox', {
       name: 'Yard display name',
     })
@@ -105,7 +109,7 @@ describe('member directory sample', () => {
     // The acknowledged view commits before its focus-restoration effect runs.
     await waitFor(() =>
       expect(document.activeElement).toBe(
-        screen.getByRole('button', { name: 'Edit details' }),
+        screen.getByRole('button', { name: 'Edit your yard profile' }),
       ),
     )
     expect(screen.getAllByText('Sample new name').length).toBeGreaterThan(0)

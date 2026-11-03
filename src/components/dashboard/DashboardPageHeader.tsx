@@ -2,6 +2,8 @@ import { useWorkspace } from '#/components/layout/WorkspaceContext'
 import type { ElementType, ReactNode } from 'react'
 
 import { cn } from '#/lib/utils'
+import { PageBack } from '#/components/layout/PageBack'
+import { PageBackSlot } from './PageBackSlot'
 import { dashboardHeroClassName } from './dashboardChrome'
 import { DashboardActions } from './DashboardActions'
 import { DashboardBadgeList } from './DashboardBadgeList'
@@ -17,6 +19,7 @@ type DashboardPageHeaderProps = {
   showWorkspace?: boolean
   title: ReactNode
   as?: ElementType
+  /** Defaults to the route's `PageBack`; pass `null` to suppress it. */
   backAction?: ReactNode
   actions?: ReactNode
   actionsClassName?: string
@@ -57,7 +60,9 @@ export function DashboardPageHeader({
   const workspace = useWorkspace()
   const contentLayoutClassName = {
     center: 'flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-center',
-    default: 'grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-stretch',
+    // Page actions stay on the title row at every width.
+    default:
+      'grid grid-cols-[minmax(50%,1fr)_auto] items-start gap-x-4 gap-y-2 md:items-stretch',
     inline: 'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4',
     wide: 'grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-stretch',
   } satisfies Record<DashboardPageHeaderContentLayout, string>
@@ -67,9 +72,9 @@ export function DashboardPageHeader({
       data-slot="dashboard-page-header"
       className={cn(dashboardHeroClassName('flat'), className)}
     >
-      {backAction && (
-        <div className="mb-3 flex justify-start">{backAction}</div>
-      )}
+      <PageBackSlot>
+        {backAction === undefined ? <PageBack /> : backAction}
+      </PageBackSlot>
       <div
         className={cn(contentLayoutClassName[contentLayout], contentClassName)}
       >

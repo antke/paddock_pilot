@@ -37,7 +37,9 @@ export function PersonalEventEditor({
   intent,
   date,
   participationId,
+  focus,
 }: {
+  focus?: 'status'
   stableId?: string
   eventId?: Id<'events'>
   horseId?: string
@@ -134,6 +136,7 @@ export function PersonalEventEditor({
           : (horseId ?? 'new')
       }
       mode={eventId ? 'edit' : 'create'}
+      initialFocus={eventId ? focus : undefined}
       feature={
         training || data?.event.type === 'training' ? 'training' : 'events'
       }

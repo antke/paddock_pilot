@@ -51,6 +51,8 @@ type Props = {
   audienceEnabled?: boolean
   scheduleOnly?: boolean
   eventContext?: 'stable' | 'personal'
+  /** Opens the relevant disclosure and focuses its control, e.g. from Change status. */
+  initialFocus?: 'status'
   feature?: 'events' | 'training'
   initialValues: EventFormInput
   horses: ComponentProps<typeof EventFormFields>['horses']
@@ -82,6 +84,7 @@ export function EventEditor({
   onAcknowledged,
   onPendingChange,
   completionMessage,
+  initialFocus,
 }: Props) {
   const t = useT()
   const { locale } = useLocale()
@@ -507,6 +510,7 @@ export function EventEditor({
         allowTypeChange={feature === 'events' && mode === 'create'}
         onTypeChange={setSelectedType}
         scheduleOnly={scheduleOnly}
+        initialFocus={initialFocus}
         trainingMode={isTraining ? mode : undefined}
         control={form.control}
         setValue={form.setValue}

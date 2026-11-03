@@ -102,26 +102,22 @@ it('groups standing care before administrative facts with semantic label/value p
   expect(definition('Height').textContent).toBe('15')
 })
 
-it('keeps derived age beside the recorded partial birth date', () => {
+it('keeps derived age with the recorded partial birth date in one field', () => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date(2026, 9, 9))
   open({ ...completeHorse, age: 99 })
   const terms = within(
     screen.getByRole('region', { name: 'Horse details' }),
   ).getAllByRole('term')
-  expect(terms.slice(0, 3).map((term) => term.textContent)).toEqual([
-    'Full name',
-    'Age',
-    'Date of birth',
-  ])
-  expect(definition('Age').textContent).toBe('15')
-  expect(definition('Date of birth').textContent).toBe('2011')
+  // The hero already shows the name, so the facts start with age.
+  expect(terms[0]?.textContent).toBe('Age')
+  expect(screen.queryByText('Date of birth', { selector: 'dt' })).toBeNull()
+  expect(definition('Age').textContent).toBe('15Born 2011')
 })
 
 it('keeps zero age and makes unknown allergies explicit without empty optional groups', () => {
   open({ ...baseHorse, age: 0 })
   expect(definition('Age').textContent).toBe('0')
-  expect(definition('Date of birth').textContent).toBe('Not recorded')
   expect(definition('Allergies').textContent).toBe('Not recorded')
   expect(
     screen.queryByRole('region', { name: 'Identification and insurance' }),

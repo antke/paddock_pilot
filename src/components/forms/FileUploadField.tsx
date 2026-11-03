@@ -38,6 +38,8 @@ type FileUploadFieldProps = Omit<
   errors?: Array<{ message?: string } | undefined>
   files?: FileList | null
   controlRef?: Ref<HTMLButtonElement>
+  /** The saved image this field would replace, shown until a new file is chosen. */
+  currentImageUrl?: string | null
   help?: ReactNode
   helpLabel?: string
   inputRef?: Ref<HTMLInputElement>
@@ -53,6 +55,7 @@ export function FileUploadField({
   errors,
   files,
   controlRef,
+  currentImageUrl,
   help,
   helpLabel,
   inputRef,
@@ -162,6 +165,8 @@ export function FileUploadField({
     }
   }
 
+  const showCurrentImage = kind === 'image' && Boolean(currentImageUrl)
+
   const typeLabel = selectedFile
     ? getFileTypeLabel(selectedFile, kind, t)
     : undefined
@@ -178,6 +183,7 @@ export function FileUploadField({
         </FieldLabel>
         {help && (
           <FormHelpTooltip
+            inline
             label={
               helpLabel ??
               t('upload.about', {
@@ -280,8 +286,14 @@ export function FileUploadField({
           }}
           onDrop={handleDrop}
         >
-          <span className="flex size-16 shrink-0 items-center justify-center rounded-control border border-border-subtle bg-card text-primary transition-transform motion-safe:group-data-[dragging=true]/dropzone:scale-105 motion-reduce:transition-none">
-            {kind === 'image' ? (
+          <span className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-control border border-border-subtle bg-card text-primary transition-transform motion-safe:group-data-[dragging=true]/dropzone:scale-105 motion-reduce:transition-none">
+            {showCurrentImage ? (
+              <img
+                src={currentImageUrl!}
+                alt=""
+                className="size-full object-cover"
+              />
+            ) : kind === 'image' ? (
               <ImageSquareIcon
                 className="size-7"
                 weight="duotone"
@@ -299,24 +311,26 @@ export function FileUploadField({
             <span className="text-sm font-bold text-foreground">
               {dragging
                 ? t('upload.releaseToSelect')
-                : (uploadLabel ?? (
-                    <>
-                      <span className="md:hidden">
-                        {t(
-                          kind === 'image'
-                            ? 'upload.chooseImage'
-                            : 'upload.chooseFileLabel',
-                        )}
-                      </span>
-                      <span className="hidden md:inline">
-                        {t(
-                          kind === 'image'
-                            ? 'upload.dropImage'
-                            : 'upload.dropFile',
-                        )}
-                      </span>
-                    </>
-                  ))}
+                : showCurrentImage
+                  ? t('upload.replaceImage')
+                  : (uploadLabel ?? (
+                      <>
+                        <span className="md:hidden">
+                          {t(
+                            kind === 'image'
+                              ? 'upload.chooseImage'
+                              : 'upload.chooseFileLabel',
+                          )}
+                        </span>
+                        <span className="hidden md:inline">
+                          {t(
+                            kind === 'image'
+                              ? 'upload.dropImage'
+                              : 'upload.dropFile',
+                          )}
+                        </span>
+                      </>
+                    ))}
             </span>
             <span
               className={cn(
@@ -324,10 +338,12 @@ export function FileUploadField({
                 kind === 'file' && !uploadDescription && 'hidden md:block',
               )}
             >
-              {uploadDescription ??
-                (kind === 'image'
-                  ? t('upload.imageTypes')
-                  : t('upload.chooseFile'))}
+              {showCurrentImage
+                ? t('upload.currentImage')
+                : (uploadDescription ??
+                  (kind === 'image'
+                    ? t('upload.imageTypes')
+                    : t('upload.chooseFile')))}
             </span>
           </span>
         </button>

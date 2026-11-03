@@ -1,3 +1,4 @@
+import type { StableFormSection } from '#/components/forms/stable/StableFormFields'
 import { useT } from '#/i18n/LocaleProvider'
 import { StableProfileForm } from '#/components/stables/StableProfileForm'
 import {
@@ -16,6 +17,14 @@ import type { Doc, Id } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 
 export const Route = createFileRoute('/stables/_layout/$stableId/edit')({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { section?: StableFormSection } => ({
+    section:
+      search.section === 'information' || search.section === 'contacts'
+        ? search.section
+        : undefined,
+  }),
   component: RouteComponent,
   errorComponent: EditStableError,
 })
@@ -60,6 +69,7 @@ type EditStableFormProps = {
 
 function EditStableForm({ stable }: EditStableFormProps) {
   const t = useT()
+  const { section } = Route.useSearch()
 
   const nav = useNavigate()
   const updateStable = useMutation(api.stables.update)
@@ -68,6 +78,7 @@ function EditStableForm({ stable }: EditStableFormProps) {
     <StableProfileForm
       stableId={stable._id}
       mode="edit"
+      section={section}
       initialValues={stable}
       save={async (values) => {
         await updateStable({ ...values, id: stable._id })
@@ -82,7 +93,13 @@ function EditStableForm({ stable }: EditStableFormProps) {
         })
       }
       onSaved={(stableId) =>
-        nav({ to: '/stables/$stableId', params: { stableId } })
+        section
+          ? nav({
+              to: '/stables/$stableId/stable',
+              params: { stableId },
+              search: { tab: 'yard' },
+            })
+          : nav({ to: '/stables/$stableId', params: { stableId } })
       }
     />
   )

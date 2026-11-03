@@ -2,7 +2,6 @@ import { useT } from '#/i18n/LocaleProvider'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DeletedHorsesCard } from '#/components/stables/DeletedHorsesCard'
-import { BackLink } from '#/components/ui/back-action'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
@@ -27,14 +26,7 @@ function RouteComponent() {
 
   return (
     <DashboardPage>
-      <DashboardPageHeader
-        title={t('horseDeletion.deletedHorses')}
-        backAction={
-          <BackLink to="/stables/$stableId/horses" params={{ stableId }}>
-            {t('uiRemainder.backHorses')}
-          </BackLink>
-        }
-      />
+      <DashboardPageHeader title={t('horseDeletion.deletedHorses')} />
 
       <DeletedHorsesCard horses={deletedHorses} />
     </DashboardPage>

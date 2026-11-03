@@ -21,7 +21,7 @@ export const trainingViews = {
   afterSession: 'Dodatkowe notatki po treningu',
 
   audit: '{{horse}}: {{status}} · {{date}}',
-  updateRecord: 'Zaktualizuj zapis treningu',
+  editRecord: 'Edytuj zapis treningu',
   record: 'Dodaj trening',
   focus: 'Ćwiczenia / cel',
   outcome: 'Przebieg treningu',

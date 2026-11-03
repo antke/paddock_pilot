@@ -21,10 +21,13 @@ function RouteComponent() {
   )
 
   return (
-    <>
-      <HorseListPage horses={horses} stableId={stableId} />
-      <StableOwnershipTools stableId={stableId as Id<'stables'>} />
-    </>
+    <HorseListPage
+      horses={horses}
+      stableId={stableId}
+      extraActions={
+        <StableOwnershipTools stableId={stableId as Id<'stables'>} />
+      }
+    />
   )
 }
 

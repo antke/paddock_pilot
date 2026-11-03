@@ -10,6 +10,7 @@ import type {
   DashboardActivityData,
 } from './dashboardTypes'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
+import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
 import { EventLinkCard } from './EventLinkCard'
 import { ButtonLink } from '#/components/ui/button'
 
@@ -68,10 +69,15 @@ export function TodayBriefingCard({
       }
     >
       {!compact && (
-        <h3 className="text-base font-semibold">
-          {t('dashboard.today')} ·{' '}
-          {formatShortDateKey(data.weekDays[0].key, locale)}
-        </h3>
+        <DashboardInlineHeader
+          as="h3"
+          title={
+            <>
+              {t('dashboard.today')} ·{' '}
+              {formatShortDateKey(data.weekDays[0].key, locale)}
+            </>
+          }
+        />
       )}
       {events.length === 0 ? (
         <DashboardEmptyState chrome={recordChrome} spacing="flush">
@@ -115,9 +121,10 @@ export function TodayBriefingCard({
               [...new Set(upcoming.events.map((event) => event.date))].map(
                 (date) => (
                   <section key={date} className="grid gap-2">
-                    <h3 className="text-base font-semibold">
-                      {formatShortDateKey(date, locale)}
-                    </h3>
+                    <DashboardInlineHeader
+                      as="h3"
+                      title={formatShortDateKey(date, locale)}
+                    />
                     <DashboardItemList className="max-md:gap-3">
                       {upcoming.events
                         .filter((event) => event.date === date)

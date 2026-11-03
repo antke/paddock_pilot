@@ -77,9 +77,17 @@ export const list = query({
         .map((stable) => [stable._id, stable]),
     )
 
-    return [...stablesById.values()].sort(
-      (a, b) => b._creationTime - a._creationTime,
-    )
+    // The viewer's role lets stable gateways hide owner-only destinations; each
+    // destination still enforces its own server-side permission.
+    return [...stablesById.values()]
+      .sort((a, b) => b._creationTime - a._creationTime)
+      .map((stable) => ({
+        ...stable,
+        viewerRole:
+          stable.ownerId === user._id
+            ? ('owner' as const)
+            : ('member' as const),
+      }))
   },
 })
 

@@ -17,6 +17,7 @@ import type {
   HorseFormSchema,
 } from '#/components/forms/horse/horseFormSchema'
 import { horseProfileDefaults } from '#/components/forms/horse/horseProfileValues'
+import type { HorseEditSection } from '#/components/forms/horse/horseEditSection'
 import {
   RouteFormActions,
   RouteFormCard,
@@ -45,6 +46,8 @@ type HorseProfileFormProps = {
   disabled?: boolean
   onPendingChange?: (pending: boolean) => void
   sampleNotice?: ReactNode
+  focusSection?: HorseEditSection
+  currentProfileImageUrl?: string | null
 }
 
 /** Shared route and specimen lifecycle; photo, save and navigation acknowledge separately. */
@@ -65,6 +68,8 @@ export function HorseProfileForm({
   breedSuggestions = [],
   ownerSuggestions,
   ownerSuggestionScope,
+  focusSection,
+  currentProfileImageUrl,
 }: HorseProfileFormProps) {
   const t = useT()
   const { locale } = useLocale()
@@ -266,6 +271,10 @@ export function HorseProfileForm({
       />
       <HorseFormFields
         essentialsOnly={mode === 'create'}
+        focusSection={mode === 'edit' ? focusSection : undefined}
+        currentProfileImageUrl={
+          mode === 'edit' ? currentProfileImageUrl : undefined
+        }
         control={form.control}
         colourRoster={colourRoster}
         providers={providers}

@@ -62,3 +62,31 @@ export function useMobileTaskReturn(fallback: string) {
     return false
   }
 }
+
+/**
+ * Leaves a route form: back to the view that opened it, otherwise one step back
+ * in history, otherwise Home. Unsaved-change guards still confirm the exit.
+ */
+export function useRouteFormClose() {
+  const router = useRouter({ warn: false })
+  return () => {
+    if (!router) return
+    const location = router.state.location
+    const origin = location.state.taskOrigin
+    if (isLocalTaskOrigin(origin)) {
+      if (location.state.__TSR_index === origin.index + 1) {
+        router.history.back()
+        return
+      }
+      void router
+        .navigate({ href: origin.href, replace: true })
+        .then(() => window.scrollTo({ top: origin.scrollY }))
+      return
+    }
+    if ((location.state.__TSR_index ?? 0) > 0) {
+      router.history.back()
+      return
+    }
+    void router.navigate({ to: '/', replace: true })
+  }
+}

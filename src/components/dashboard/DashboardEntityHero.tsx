@@ -1,3 +1,5 @@
+import { PageBack } from '#/components/layout/PageBack'
+import { PageBackSlot } from './PageBackSlot'
 import { useWorkspace } from '#/components/layout/WorkspaceContext'
 import type { ReactNode } from 'react'
 
@@ -17,6 +19,8 @@ type DashboardEntityHeroProps = {
   actions?: ReactNode
   actionsLayout?: 'stack' | 'inline'
   badges?: ReactNode
+  /** A quiet row above the title, such as a phone Back action. */
+  before?: ReactNode
   children?: ReactNode
   chrome?: DashboardChrome
   className?: string
@@ -25,12 +29,15 @@ type DashboardEntityHeroProps = {
   media?: ReactNode
   title: ReactNode
   compactOnMobile?: boolean
+  /** Defaults to the route's `PageBack`; pass `null` to suppress it. */
+  backAction?: ReactNode
 }
 
 export function DashboardEntityHero({
   actions,
   actionsLayout = 'stack',
   badges,
+  before,
   children,
   chrome = 'flat',
   className,
@@ -39,6 +46,7 @@ export function DashboardEntityHero({
   media,
   title,
   compactOnMobile = false,
+  backAction,
 }: DashboardEntityHeroProps) {
   const workspace = useWorkspace()
   return (
@@ -50,6 +58,10 @@ export function DashboardEntityHero({
         className,
       )}
     >
+      <PageBackSlot className="-mb-3">
+        {backAction === undefined ? <PageBack /> : backAction}
+      </PageBackSlot>
+      {before && <div className="-mb-3 min-w-0">{before}</div>}
       <div
         className={cn(
           'grid gap-6',

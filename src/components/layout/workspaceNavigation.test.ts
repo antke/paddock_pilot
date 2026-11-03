@@ -100,12 +100,14 @@ describe('workspace navigation scope', () => {
       ),
     ).toEqual([
       { id: 'primary', items: ['home', 'events', 'training', 'horses'] },
-      { id: 'records', items: ['care', 'contacts', 'documents', 'analysis'] },
+      {
+        id: 'records',
+        items: ['stable-horses', 'care', 'contacts', 'documents', 'analysis'],
+      },
       {
         id: 'management',
         items: [
           'stable-overview',
-          'stable-horses',
           'stable',
           'people',
           'welcome',

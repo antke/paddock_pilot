@@ -17,6 +17,8 @@ import { UnsavedChangesGuard } from '#/components/forms/UnsavedChangesGuard'
 import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
 import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
 import { Button } from '#/components/ui/button'
+import { EditActionButton } from '#/components/ui/edit-action'
+import { useFloatingCreateAction } from '#/components/layout/floatingActionsContext'
 import {
   Field,
   FieldLabel,
@@ -79,6 +81,12 @@ export function DashboardUpdates({
     setEditing(undefined)
     section.current?.focus()
   }
+  // Mirrors the title-row Add button as the phone shortcut.
+  useFloatingCreateAction(
+    preview
+      ? undefined
+      : { label: t('stableUpdates.add'), onSelect: () => setEditing('new') },
+  )
   if (preview && !updates.length) return null
   return (
     <DashboardSectionCard
@@ -86,13 +94,18 @@ export function DashboardUpdates({
       tabIndex={-1}
       title={t('stableUpdates.title')}
       actions={
-        preview
-          ? viewAll
-          : !editing && (
-              <Button variant="outline" onClick={() => setEditing('new')}>
-                {t('stableUpdates.add')}
-              </Button>
-            )
+        preview ? (
+          viewAll
+        ) : (
+          <Button
+            type="button"
+            action="create"
+            disabled={Boolean(editing)}
+            onClick={() => setEditing('new')}
+          >
+            {t('stableUpdates.add')}
+          </Button>
+        )
       }
       footer={more}
     >
@@ -131,14 +144,16 @@ export function DashboardUpdates({
                 !preview &&
                 update.canManage && (
                   <DashboardActions>
-                    <Button
-                      size="sm"
-                      variant="ghost"
+                    <EditActionButton
+                      label={t('stableUpdates.editNamed', {
+                        date: formatShortDate(
+                          new Date(update.createdAt),
+                          locale,
+                        ),
+                      })}
                       disabled={Boolean(editing)}
                       onClick={() => setEditing(update)}
-                    >
-                      {t('stableUpdates.edit')}
-                    </Button>
+                    />
                     <Button
                       size="sm"
                       variant="ghost"

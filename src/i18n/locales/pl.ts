@@ -248,6 +248,9 @@ export const pl = {
     dropImage: 'Przeciągnij tu zdjęcie lub wybierz plik',
     dropFile: 'Przeciągnij tu plik lub wybierz go z urządzenia',
     imageTypes: 'JPG, PNG lub WEBP',
+    replaceImage: 'Zmień zdjęcie',
+    currentImage:
+      'Obecne zdjęcie. Wybierz lub przeciągnij nowe, aby je zastąpić.',
     chooseFile: 'Wybierz plik z urządzenia',
     image: 'Zdjęcie',
     file: 'Plik',
@@ -330,6 +333,8 @@ export const pl = {
   },
   profile: {
     notifications: 'Przypomnienia e-mail',
+    notificationsDescription:
+      'Wybierz, jakie wiadomości e-mail wysyła Ci Paddock Pilot.',
     digestLabel: 'Codzienne podsumowanie opieki',
     digestDescription:
       'Jeden e-mail około 09:00 ({{timezone}}), gdy w którejś z Twoich stajni jest opieka do wykonania lub zaległa. Domyślnie wyłączone; przypomnienia są zawsze dostępne w Opiece.',
@@ -340,6 +345,8 @@ export const pl = {
       'Twój profil jest wspólny dla wszystkich stajni, które prowadzisz lub do których należysz.',
     title: 'Twój profil',
     details: 'Dane profilu',
+    detailsDescription:
+      'Tak widzą Cię i kontaktują się z Tobą inni członkowie Twoich stajni.',
     save: 'Zapisz profil',
     saved: 'Zaktualizowano profil',
     errorTitle: 'Nie udało się wczytać profilu',
@@ -347,6 +354,7 @@ export const pl = {
       'Sprawdź połączenie i spróbuj ponownie. Twój profil nie został zmieniony.',
   },
   common: {
+    aboutField: 'Pomoc: {{label}}',
     requiredFields: 'Pola oznaczone * są wymagane.',
     unsavedTitle: 'Wyjść bez zapisywania?',
     unsavedHelp:

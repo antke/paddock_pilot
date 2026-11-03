@@ -75,12 +75,12 @@ export function HorseSharingManager({ horseId }: { horseId: Id<'horses'> }) {
   return (
     <DashboardSectionCard
       title={pl ? 'Udostępnianie zapisów' : 'Record sharing'}
-    >
-      <p className="mb-4 text-sm text-muted-foreground">
-        {pl
+      description={
+        pl
           ? 'Zmiana dostępu zachowuje treść, załączniki i status. Opiekunowie zachowują niezależny dostęp.'
-          : 'Changing access preserves content, attachments and status. Personal carers keep their independent access.'}
-      </p>
+          : 'Changing access preserves content, attachments and status. Personal carers keep their independent access.'
+      }
+    >
       <div className="divide-y divide-border">
         {data.records.map((record) => (
           <div key={record.id} className="space-y-3 py-4">

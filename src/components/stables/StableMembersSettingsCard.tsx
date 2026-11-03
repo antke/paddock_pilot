@@ -6,6 +6,8 @@ import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
+import { convexQuery } from '@convex-dev/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Alert, AlertDescription } from '#/components/ui/alert'
@@ -29,6 +31,7 @@ import {
   AlertDialogTrigger,
 } from '#/components/ui/alert-dialog'
 import { Button } from '#/components/ui/button'
+import { EditActionButton } from '#/components/ui/edit-action'
 import {
   FieldDescription,
   FieldHeader,
@@ -63,6 +66,37 @@ type DetailsFormSlotProps = {
   onCancel: () => void
   onSaved: () => void
   onPendingChange: (pending: boolean) => void
+}
+
+/**
+ * Owner membership controls for People. Mount only for a stable owner: the
+ * queries below are owner-only (invitation emails and member contact details),
+ * and the server rejects them for anyone else.
+ */
+export function StableMembersManagement({
+  stableId,
+}: {
+  stableId: Doc<'stables'>['_id']
+}) {
+  const { data: settings } = useSuspenseQuery(
+    convexQuery(api.stableMembers.listWithUsers, { stableId }),
+  )
+  const { data: horses } = useSuspenseQuery(
+    convexQuery(api.horses.list, { stableId }),
+  )
+  const { data: deletedHorses } = useSuspenseQuery(
+    convexQuery(api.horses.listDeleted, { stableId }),
+  )
+
+  return (
+    <StableMembersSettingsCard
+      stableId={stableId}
+      stableName={settings.stable.name}
+      members={settings.members}
+      invitations={settings.invitations}
+      horses={[...horses, ...deletedHorses]}
+    />
+  )
 }
 
 export function StableMembersSettingsCard(
@@ -190,11 +224,10 @@ export function StableMembersSettingsCardView({
                 actions={
                   editableMembership ? (
                     <>
-                      <Button
-                        type="button"
-                        action="edit"
-                        variant="ghost"
-                        size="sm"
+                      <EditActionButton
+                        label={t('stables.editMemberDetails', {
+                          name: formatStableMemberName(member, locale),
+                        })}
                         ref={(element) => {
                           if (element)
                             editButtons.current.set(
@@ -208,9 +241,7 @@ export function StableMembersSettingsCardView({
                         onClick={() =>
                           setEditingMemberId(editableMembership._id)
                         }
-                      >
-                        {t('stables.editDetails')}
-                      </Button>
+                      />
                       {renderRemoveMember({
                         member,
                         membership: editableMembership,

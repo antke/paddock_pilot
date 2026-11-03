@@ -2,12 +2,8 @@ import { useId } from 'react'
 import type { Ref } from 'react'
 import type { FieldError as FormFieldError } from 'react-hook-form'
 import { Checkbox } from '#/components/ui/checkbox'
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldLabel,
-} from '#/components/ui/field'
+import { Field, FieldError, FieldLabel } from '#/components/ui/field'
+import { FieldHelpLabel } from '#/components/forms/FormHelpTooltip'
 import { Input } from '#/components/ui/input'
 import { useT } from '#/i18n/LocaleProvider'
 
@@ -34,9 +30,14 @@ export function HorseNicknameField({
   const id = useId()
   return (
     <Field data-invalid={Boolean(error)}>
-      <FieldLabel htmlFor={id} required={checked}>
-        {t('horseForm.nickname')}
-      </FieldLabel>
+      <FieldHelpLabel
+        htmlFor={id}
+        id={`${id}-label`}
+        required={checked}
+        label={t('horseForm.nickname')}
+        help={t('horseForm.nicknameHelp')}
+        helpId={`${id}-help`}
+      />
       <div className="flex items-center gap-4">
         <Input
           aria-required={checked || undefined}
@@ -71,9 +72,6 @@ export function HorseNicknameField({
           </FieldLabel>
         </div>
       </div>
-      <FieldDescription id={`${id}-help`}>
-        {t('horseForm.nicknameHelp')}
-      </FieldDescription>
       {error && <FieldError id={`${id}-error`} errors={[error]} />}
     </Field>
   )

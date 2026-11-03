@@ -1,6 +1,24 @@
 export const stables = {
-  providerActions: 'Działania dla {{name}}',
   callProvider: 'Zadzwoń do {{name}}',
+  destinations: {
+    label: 'Sekcje stajni {{name}}',
+    more: 'Więcej',
+    moreLabel: 'Więcej sekcji stajni {{name}}',
+    overview: 'Przegląd',
+    horses: 'Konie',
+    care: 'Opieka',
+    people: 'Osoby',
+    contacts: 'Kontakty',
+    yard: 'Informacje o stajni',
+    documents: 'Dokumenty',
+    analysis: 'Analizy',
+    gettingStarted: 'Pierwsze kroki',
+    settings: 'Ustawienia',
+  },
+  historyUnavailable: 'Zapisy dawnych koni nie są dostępne',
+  historyUnavailableHelp:
+    'Gdy koń opuszcza stajnię, jego zapisy pozostają przy koniu, a ta stajnia traci do nich dostęp.',
+  backToHorses: 'Wróć do koni stajni',
   sharedTabs: {
     contacts: 'Kontakty',
     people: 'Osoby',
@@ -104,9 +122,6 @@ export const stables = {
   notAdded: 'Jeszcze nie dodano',
   phone: 'Telefon',
   emergencyContact: 'Kontakt alarmowy',
-  manageMembersHelp:
-    'Zapraszaj osoby, aktualizuj ich dane i zarządzaj dostępem w ustawieniach stajni.',
-  manageMembers: 'Zarządzaj osobami',
   memberFallback: 'Osoba ze stajni',
   unknown: 'Nieznana osoba',
   overview: 'Przegląd',
@@ -134,6 +149,7 @@ export const stables = {
   removeMemberFailed: 'Nie udało się usunąć osoby',
   reassignmentCheck: 'Odśwież dane osoby i spróbuj ponownie.',
   remove: 'Usuń',
+  removeNamed: 'Usuń: {{name}}',
   removeMemberFailedHelp:
     'Nie udało się usunąć tej osoby. Odśwież dane osoby i spróbuj ponownie.',
   newOwner: 'Nowy właściciel',
@@ -163,6 +179,13 @@ export const stables = {
   addProviderHelp: 'Dodaj kontakt do specjalisty zajmującego się końmi.',
   noProviders: 'Nie dodano jeszcze specjalistów.',
   editAction: 'Edytuj',
+  editMemberDetails: 'Edytuj dane: {{name}}',
+  editProvider: 'Edytuj: {{name}}',
+  editYardDetails: 'Edytuj informacje o stajni',
+  yardContacts: 'Kontakty stajni',
+  editYardContacts: 'Edytuj kontakty stajni',
+  yardContactsHelp: 'Do kogo dzwonić w stajni na co dzień i w nagłych przypadkach.',
+  editYourYardProfile: 'Edytuj swój profil w stajni',
   removeProviderHelp:
     'Kontakt zostanie usunięty ze wspólnej listy specjalistów. Tej operacji nie można cofnąć.',
   removeProviderFailed: 'Nie udało się usunąć specjalisty',

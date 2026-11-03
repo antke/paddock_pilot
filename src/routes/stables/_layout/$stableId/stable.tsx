@@ -1,3 +1,5 @@
+import { StableDocumentsPage } from '#/components/documents/StableDocumentsPage'
+import { StableWelcomeTab } from '#/components/stables/StableWelcomeTab'
 import { StableUpdates } from '#/components/stables/StableUpdates'
 import { DashboardLayoutStack } from '#/components/dashboard/DashboardLayoutGrid'
 import { useT } from '#/i18n/LocaleProvider'
@@ -16,12 +18,13 @@ import {
 } from '#/components/layout/RouteStatusAlert'
 import { StableProvidersCard } from '#/components/stables/StableProvidersCard'
 import { StableMembersPage } from '#/components/stables/StableMembersPage'
+import { StableMembersManagement } from '#/components/stables/StableMembersSettingsCard'
 import {
   StableDirectoryHeader,
   stableDirectoryTabs,
 } from '#/components/stables/StableDirectoryHeader'
 import type { StableDirectoryTab } from '#/components/stables/StableDirectoryHeader'
-import { ButtonLink } from '#/components/ui/button'
+import { EditActionLink } from '#/components/ui/edit-action'
 import { ContactLink } from '#/components/ui/contact-link'
 
 export const Route = createFileRoute('/stables/_layout/$stableId/stable')({
@@ -61,52 +64,30 @@ function StableDirectory() {
         {tab === 'people' && (
           <People key={id} stable={stable} access={access} />
         )}
+        {tab === 'documents' && (
+          <StableDocumentsPage key={id} stableId={id} embedded />
+        )}
+        {tab === 'welcome' && <StableWelcomeTab key={id} stableId={id} />}
         {tab === 'yard' && (
           <DashboardLayoutStack>
             <DashboardSectionCard
               title={t('stables.sharedTabs.yard')}
               contentLayout="twoColumn"
               contentTextSize="sm"
-              actions={
-                access.role === 'owner' && (
-                  <ButtonLink
+              edit={
+                access.capabilities.canManageStable && (
+                  <EditActionLink
                     to="/stables/$stableId/edit"
                     params={{ stableId }}
-                    action="edit"
-                    variant="outline"
-                  >
-                    {t('stables.edit')}
-                  </ButtonLink>
+                    search={{ section: 'information' }}
+                    label={t('stables.editYardDetails')}
+                  />
                 )
               }
             >
               <DetailDisplayField
                 label={t('stables.location')}
                 value={stable.location}
-              />
-              <DetailDisplayField
-                label={t('stables.contact')}
-                value={stable.contactName || t('stables.notAdded')}
-              />
-              <DetailDisplayField
-                label={t('stables.contactPhone')}
-                value={
-                  stable.contactPhone ? (
-                    <ContactLink kind="phone" value={stable.contactPhone} />
-                  ) : (
-                    t('stables.notAdded')
-                  )
-                }
-              />
-              <DetailDisplayField
-                label={t('stables.emergencyPhone')}
-                value={
-                  stable.emergencyPhone ? (
-                    <ContactLink kind="phone" value={stable.emergencyPhone} />
-                  ) : (
-                    t('stables.notAdded')
-                  )
-                }
               />
               {(
                 [
@@ -135,6 +116,47 @@ function StableDirectory() {
                 />
               ))}
             </DashboardSectionCard>
+            <DashboardSectionCard
+              title={t('stables.yardContacts')}
+              description={t('stables.yardContactsHelp')}
+              contentLayout="twoColumn"
+              contentTextSize="sm"
+              edit={
+                access.capabilities.canManageStable && (
+                  <EditActionLink
+                    to="/stables/$stableId/edit"
+                    params={{ stableId }}
+                    search={{ section: 'contacts' }}
+                    label={t('stables.editYardContacts')}
+                  />
+                )
+              }
+            >
+              <DetailDisplayField
+                label={t('stables.contact')}
+                value={stable.contactName || t('stables.notAdded')}
+              />
+              <DetailDisplayField
+                label={t('stables.contactPhone')}
+                value={
+                  stable.contactPhone ? (
+                    <ContactLink kind="phone" value={stable.contactPhone} />
+                  ) : (
+                    t('stables.notAdded')
+                  )
+                }
+              />
+              <DetailDisplayField
+                label={t('stables.emergencyPhone')}
+                value={
+                  stable.emergencyPhone ? (
+                    <ContactLink kind="phone" value={stable.emergencyPhone} />
+                  ) : (
+                    t('stables.notAdded')
+                  )
+                }
+              />
+            </DashboardSectionCard>
             <StableUpdates key={id} stableId={id} />
           </DashboardLayoutStack>
         )}
@@ -161,6 +183,11 @@ function People({
       access={access}
       people={people}
       myDetails={myDetails}
+      management={
+        access.role === 'owner' ? (
+          <StableMembersManagement stableId={stable._id} />
+        ) : undefined
+      }
       embedded
     />
   )

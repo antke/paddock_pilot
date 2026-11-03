@@ -48,10 +48,11 @@ export function ActivityPeople({
     }
   }
   return (
-    <DashboardSectionCard title={c.participants}>
-      <p className="max-w-prose text-sm text-muted-foreground">
-        {c.participantHelp}
-      </p>
+    <DashboardSectionCard
+      title={c.participants}
+      description={c.participantHelp}
+      descriptionSize="sm"
+    >
       <p className="max-w-prose text-sm text-muted-foreground">{c.inApp}</p>
       <ul className="divide-y divide-border-subtle">
         {data.participants.map((person) => (

@@ -59,6 +59,8 @@ type Props = {
   initialDate?: string
   initialView?: 'week' | 'month'
   renderMobileActions?: (canRecord: boolean) => ReactNode
+  /** The page header shows Add session (and the phone shortcut) instead. */
+  pageOwnsAddAction?: boolean
 }
 export function TrainingCalendar({
   mixedSources = false,
@@ -71,6 +73,7 @@ export function TrainingCalendar({
   initialDate,
   initialView,
   renderMobileActions,
+  pageOwnsAddAction = false,
 }: Props) {
   const t = useT()
   const { locale } = useLocale()
@@ -278,6 +281,7 @@ export function TrainingCalendar({
         viewControl={viewControl}
         mobileFilters={filterControl}
         actions={
+          !pageOwnsAddAction &&
           horses.some((horse) => horse.canRecord) &&
           (stableId && !fixedHorseId ? (
             <ButtonLink
@@ -308,6 +312,7 @@ export function TrainingCalendar({
         }
       />
       {small &&
+        !pageOwnsAddAction &&
         (renderMobileActions
           ? renderMobileActions(horses.some((horse) => horse.canRecord))
           : horses.some((horse) => horse.canRecord) && (

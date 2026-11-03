@@ -21,7 +21,7 @@ export const trainingViews = {
   afterSession: 'Additional notes after the session',
 
   audit: '{{horse}}: {{status}} · {{date}}',
-  updateRecord: 'Update training record',
+  editRecord: 'Edit training record',
   record: 'Add training log',
   focus: 'Exercises / focus',
   outcome: 'What happened',

@@ -7,7 +7,7 @@ import { useMutation } from 'convex/react'
 import { DetailDisplayField } from '#/components/dashboard/DetailBlocks'
 import { DashboardLayoutStack } from '#/components/dashboard/DashboardLayoutGrid'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
-import { ButtonLink } from '#/components/ui/button'
+import { EditActionLink } from '#/components/ui/edit-action'
 import { showAppSuccessToast } from '#/components/ui/sonner'
 import { formatLineText } from '#/lib/textDisplay'
 import { StableArchiveCard } from './StableArchiveCard'
@@ -70,16 +70,13 @@ export function StableSettingsOverviewContent({
     <DashboardLayoutStack gap="comfortable">
       <DashboardSectionCard
         title={stable.name}
-        actions={
+        edit={
           editAction ?? (
-            <ButtonLink
+            <EditActionLink
               to="/stables/$stableId/edit"
               params={{ stableId: stable._id }}
-              action="edit"
-              variant="outline"
-            >
-              {t('stables.edit')}
-            </ButtonLink>
+              label={t('stables.edit')}
+            />
           )
         }
         contentLayout="twoColumn"

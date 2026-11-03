@@ -244,6 +244,8 @@ export const en = {
     dropImage: 'Drop an image here or browse',
     dropFile: 'Drop a file here or browse',
     imageTypes: 'JPG, PNG or WEBP',
+    replaceImage: 'Replace photo',
+    currentImage: 'Current photo. Choose or drop a new image to replace it.',
     chooseFile: 'Choose a file from your device',
     image: 'Image',
     file: 'File',
@@ -324,6 +326,7 @@ export const en = {
   },
   profile: {
     notifications: 'Email reminders',
+    notificationsDescription: 'Choose which emails Paddock Pilot sends you.',
     digestLabel: 'Daily care summary',
     digestDescription:
       'One email around 09:00 ({{timezone}}) when any of your stables has care due or overdue. Off by default; reminders remain available in Care.',
@@ -334,6 +337,8 @@ export const en = {
       'Your profile follows you across the stables you own and join.',
     title: 'Your profile',
     details: 'Profile details',
+    detailsDescription:
+      'How other members of your stables see and contact you.',
     save: 'Save profile',
     saved: 'Profile updated',
     errorTitle: 'Your profile couldn’t load',
@@ -341,6 +346,7 @@ export const en = {
       'Check your connection, then try again. Your profile has not been changed.',
   },
   common: {
+    aboutField: 'About {{label}}',
     requiredFields: 'Fields marked * are required.',
     unsavedTitle: 'Leave without saving?',
     unsavedHelp:

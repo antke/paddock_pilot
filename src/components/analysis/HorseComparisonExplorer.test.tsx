@@ -396,7 +396,7 @@ it.each([
     title: 'Weight record',
     value: 500,
     selection: horseComparisonPresets.weightTraining,
-    query: 'weight',
+    query: 'nutrition?nutritionView=weight',
     label: /500 kg/,
   },
   {
@@ -404,7 +404,7 @@ it.each([
     title: 'Medication record',
     value: undefined,
     selection: horseComparisonPresets.trainingCare,
-    query: 'medication',
+    query: 'care?careView=medication',
     label: /Medication record/,
   },
 ])(
@@ -432,6 +432,6 @@ it.each([
       screen
         .getByRole('link', { name: 'Open source records' })
         .getAttribute('href'),
-    ).toBe(`/horses/sample/nutrition?nutritionView=${query}`)
+    ).toBe(`/horses/sample/${query}`)
   },
 )

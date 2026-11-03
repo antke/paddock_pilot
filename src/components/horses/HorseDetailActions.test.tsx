@@ -50,7 +50,7 @@ vi.mock('./HorseCareSection', () => ({
   HorseCareSection: ({ activeTab }: { activeTab: string }) => (
     <SectionCreate
       key={activeTab}
-      actionId={activeTab === 'health' ? 'health' : 'reminder'}
+      actionId={activeTab === 'reminders' ? 'reminder' : activeTab}
     />
   ),
 }))
@@ -266,9 +266,6 @@ it.each(['profile', 'activity', 'training', 'care', 'nutrition', 'documents'])(
     expect(
       document.querySelector('[data-slot="record-dialog-floating-trigger"]'),
     ).toBeNull()
-    expect(
-      document.querySelector('[data-slot="record-dialog-desktop-trigger"]'),
-    ).toBeNull()
     fireEvent.click(
       screen.getByRole('button', { name: `Actions for ${horse.name}` }),
     )
@@ -369,5 +366,105 @@ it.each([true, false])(
     fireEvent.click(screen.getByRole('link', { name: 'Profile' }))
     await screen.findByText('Profile content')
     expect(window.scrollTo).not.toHaveBeenCalled()
+  },
+)
+
+it.each([
+  { canManageHorse: true, canRecord: true },
+  { canManageHorse: true, canRecord: false },
+])(
+  'offers desktop Add record only to record contributors ($canRecord)',
+  async ({ canManageHorse, canRecord }) => {
+    const { horse } = await renderHeader({
+      mobile: false,
+      canManageHorse,
+      canRecord,
+      section: 'profile',
+    })
+    const trigger = screen.queryByRole('button', {
+      name: `Add record for ${horse.name}`,
+    })
+    // Direct event entry stays separate from the record menu.
+    expect(screen.getByRole('link', { name: 'Add event' })).toBeTruthy()
+    if (!canRecord) {
+      expect(trigger).toBeNull()
+      return
+    }
+    fireEvent.click(trigger!)
+    const menu = await screen.findByRole('menu')
+    const items = within(menu).getAllByRole('menuitem')
+    expect(items.map((item) => item.textContent)).toEqual([
+      'Add care reminder',
+      'Add health issue',
+      'Add medication',
+      'Add nutrition log',
+      'Add weight',
+      'Add document',
+    ])
+    expect(items.map((item) => item.getAttribute('href'))).toEqual([
+      `/horses/${horse._id}/care`,
+      `/horses/${horse._id}/care?careView=health`,
+      `/horses/${horse._id}/care?careView=medication`,
+      `/horses/${horse._id}/nutrition`,
+      `/horses/${horse._id}/nutrition?nutritionView=weight`,
+      `/horses/${horse._id}/documents`,
+    ])
+  },
+)
+
+it('opens the health form from Documents on desktop and restores focus on close', async () => {
+  vi.spyOn(HTMLElement.prototype, 'getClientRects').mockImplementation(
+    () => [new DOMRect(0, 0, 56, 56)] as unknown as DOMRectList,
+  )
+  const { horse, router } = await renderHeader({
+    mobile: false,
+    canManageHorse: false,
+    canRecord: true,
+    section: 'documents',
+  })
+  const trigger = screen.getByRole('button', {
+    name: `Add record for ${horse.name}`,
+  })
+  fireEvent.click(trigger)
+  fireEvent.click(
+    await screen.findByRole('menuitem', { name: 'Add health issue' }),
+  )
+  const dialog = await screen.findByRole('dialog', { name: 'Create health' })
+  expect(router.state.location.pathname).toBe(`/horses/${horse._id}/care`)
+  expect(router.state.location.search).toEqual({ careView: 'health' })
+  await waitFor(() =>
+    expect(router.state.location.state.horseCreateAction).toBeUndefined(),
+  )
+  fireEvent.keyDown(dialog, { key: 'Escape' })
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+  await waitFor(() =>
+    expect(document.activeElement).toBe(
+      screen.getByRole('button', { name: `Add record for ${horse.name}` }),
+    ),
+  )
+})
+
+it.each([
+  { mobile: false, canManageHorse: true },
+  { mobile: true, canManageHorse: true },
+  { mobile: false, canManageHorse: false },
+])(
+  'offers Change photo beside the horse identity to editors (mobile: $mobile, editor: $canManageHorse)',
+  async ({ mobile, canManageHorse }) => {
+    const { horse } = await renderHeader({
+      mobile,
+      canManageHorse,
+      section: 'profile',
+    })
+    const link = screen.queryByRole('link', {
+      name: `Change photo of ${horse.name}`,
+    })
+    if (!canManageHorse) {
+      expect(link).toBeNull()
+      return
+    }
+    expect(link?.getAttribute('href')).toBe(
+      `/horses/${horse._id}/edit?section=photo`,
+    )
   },
 )

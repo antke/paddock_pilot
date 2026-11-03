@@ -7,8 +7,22 @@ import {
 } from '#/components/dashboard/DashboardNavigation'
 import { ButtonLink } from '#/components/ui/button'
 
-export const stableDirectoryTabs = ['contacts', 'people', 'yard'] as const
+export const stableDirectoryTabs = [
+  'contacts',
+  'people',
+  'yard',
+  'documents',
+  'welcome',
+] as const
 export type StableDirectoryTab = (typeof stableDirectoryTabs)[number]
+
+const stableDirectoryTabLabels = {
+  contacts: 'stables.sharedTabs.contacts',
+  people: 'stables.sharedTabs.people',
+  yard: 'stables.sharedTabs.yard',
+  documents: 'navigation.documents',
+  welcome: 'navigation.gettingStarted',
+} as const satisfies Record<StableDirectoryTab, string>
 
 export function StableDirectoryHeader({
   stableId,
@@ -39,11 +53,12 @@ export function StableDirectoryHeader({
           )
         }
       />
+      {/* Phones use the stable rail for these sections instead of a second rail. */}
       <DashboardNavigation
         ariaLabel={t('navigation.stable')}
         overflow="scroll"
         inset={false}
-        className="w-full border-b border-border-subtle pb-2"
+        className="w-full border-b border-border-subtle pb-2 max-md:hidden"
         listClassName="p-1"
       >
         {stableDirectoryTabs.map((tab) => (
@@ -62,25 +77,19 @@ export function StableDirectoryHeader({
               />
             }
           >
-            {t(`stables.sharedTabs.${tab}`)}
+            {t(stableDirectoryTabLabels[tab])}
           </DashboardNavigationLinkItem>
         ))}
-        {(
-          [
-            { to: '/stables/$stableId/documents', label: 'documents' },
-            { to: '/stables/$stableId/analysis', label: 'analysis' },
-            { to: '/stables/$stableId/welcome', label: 'gettingStarted' },
-          ] as const
-        ).map(({ to, label }) => (
-          <DashboardNavigationLinkItem
-            key={label}
-            variant="section"
-            className="h-11"
-            render={<Link to={to} params={{ stableId }} />}
-          >
-            {t(`navigation.${label}`)}
-          </DashboardNavigationLinkItem>
-        ))}
+        {/* Analysis is its own page, not a tab of the stable view. */}
+        <DashboardNavigationLinkItem
+          variant="section"
+          className="h-11"
+          render={
+            <Link to="/stables/$stableId/analysis" params={{ stableId }} />
+          }
+        >
+          {t('navigation.analysis')}
+        </DashboardNavigationLinkItem>
       </DashboardNavigation>
     </div>
   )

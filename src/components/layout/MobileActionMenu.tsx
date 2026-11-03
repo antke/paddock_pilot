@@ -4,21 +4,29 @@ import { Button } from '#/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '#/components/ui/dropdown-menu'
 import { cn } from '#/lib/utils'
+import { useClaimFloatingSlot } from './floatingActionsContext'
 
 /** One thumb-reachable action menu above the mobile navigation. */
 export function MobileActionMenu({
   label,
   children,
   triggerRef,
+  claimSlot = true,
 }: {
   label: string
   children: ReactNode
   triggerRef?: Ref<HTMLButtonElement>
+  /** Page menus own the floating slot; the shortcut registry passes false. */
+  claimSlot?: boolean
 }) {
+  useClaimFloatingSlot(claimSlot)
   return (
     <div data-slot="mobile-action-menu" className="md:hidden print:hidden">
       <DropdownMenu modal={false}>
@@ -63,4 +71,27 @@ export function MobileActionMenuItem({
       {...props}
     />
   )
+}
+
+/** A labelled section of the action menu, such as Add or Go to. */
+export function MobileActionMenuGroup({
+  label,
+  children,
+}: {
+  label: string
+  children: ReactNode
+}) {
+  return (
+    <DropdownMenuGroup className="grid gap-0.5">
+      <DropdownMenuLabel className="px-3 pt-1 pb-1 text-xs font-semibold text-muted-foreground">
+        {label}
+      </DropdownMenuLabel>
+      {children}
+    </DropdownMenuGroup>
+  )
+}
+
+/** Full-bleed divider with equal space above and below inside the p-2 popup. */
+export function MobileActionMenuSeparator() {
+  return <DropdownMenuSeparator className="-mx-2 my-2" />
 }

@@ -1,5 +1,9 @@
 import { useEffect, useRef } from 'react'
 import { useRecordCreateActions } from './RecordCreateActionsContext'
+import {
+  useFloatingActionsRegistry,
+  useFloatingCreateAction,
+} from '#/components/layout/floatingActionsContext'
 import type { ReactNode } from 'react'
 
 import {
@@ -11,8 +15,8 @@ import {
 import {
   RecordDialogBody,
   RecordDialogContent,
-  RecordDialogDesktopTrigger,
   RecordDialogFloatingTrigger,
+  RecordDialogTitleTrigger,
 } from './RecordDialog'
 
 type CreateRecordDialogProps = {
@@ -39,11 +43,27 @@ export function CreateRecordDialog({
   actionId,
 }: CreateRecordDialogProps) {
   const pageActions = useRecordCreateActions()
-  const desktopTrigger = useRef<HTMLButtonElement>(null)
+  const floatingRegistry = useFloatingActionsRegistry()
+  const titleTrigger = useRef<HTMLButtonElement>(null)
   const floatingTrigger = useRef<HTMLButtonElement>(null)
+  // A page-level menu or the phone shortcut owns focus return when it opened us.
+  const openedFromPage = useRef(false)
+  const pageOwnsShortcut = pageActions?.ownsFloatingAction ?? false
+  const registered = useFloatingCreateAction(
+    pageOwnsShortcut
+      ? undefined
+      : {
+          label: triggerLabel,
+          onSelect: () => {
+            openedFromPage.current = true
+            onOpenChange(true)
+          },
+        },
+  )
 
   useEffect(() => {
     if (actionId && pageActions?.requestedAction === actionId) {
+      openedFromPage.current = true
       onOpenChange(true)
       pageActions.consumeAction()
     }
@@ -54,19 +74,21 @@ export function CreateRecordDialog({
       data-slot="create-record-dialog"
       open={open}
       onOpenChange={(nextOpen) => {
-        if (!isPending) onOpenChange(nextOpen)
+        if (isPending) return
+        if (nextOpen) openedFromPage.current = false
+        onOpenChange(nextOpen)
       }}
     >
-      {!pageActions?.hideTriggers && (
-        <>
-          <RecordDialogDesktopTrigger triggerRef={desktopTrigger}>
-            {triggerLabel}
-          </RecordDialogDesktopTrigger>
-          <RecordDialogFloatingTrigger
-            triggerRef={floatingTrigger}
-            label={triggerLabel}
-          />
-        </>
+      {/* The title-row trigger is visible on every viewport. */}
+      <RecordDialogTitleTrigger triggerRef={titleTrigger}>
+        {triggerLabel}
+      </RecordDialogTitleTrigger>
+      {/* Without the app's shortcut registry (labs, isolated renders) keep a local phone shortcut. */}
+      {!registered && !pageOwnsShortcut && (
+        <RecordDialogFloatingTrigger
+          triggerRef={floatingTrigger}
+          label={triggerLabel}
+        />
       )}
 
       <RecordDialogContent
@@ -74,11 +96,19 @@ export function CreateRecordDialog({
         showCloseButton={!isPending}
         finalFocus={() =>
           // The opener can become hidden when the viewport crosses the mobile breakpoint.
-          [
-            desktopTrigger.current,
-            floatingTrigger.current,
-            pageActions?.returnFocus(),
-          ].find(
+          (openedFromPage.current
+            ? [
+                pageActions?.returnFocus(),
+                floatingRegistry?.returnFocus(),
+                titleTrigger.current,
+                floatingTrigger.current,
+              ]
+            : [
+                titleTrigger.current,
+                floatingTrigger.current,
+                pageActions?.returnFocus(),
+              ]
+          ).find(
             (trigger) =>
               trigger?.isConnected && trigger.getClientRects().length > 0,
           ) ?? true

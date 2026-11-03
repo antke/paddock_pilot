@@ -10,6 +10,7 @@ import {
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { HorseCardContent } from '#/components/horses/HorseCard'
 import { Button } from '#/components/ui/button'
+import { EditActionButton } from '#/components/ui/edit-action'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -192,6 +193,7 @@ function EventHorseServiceRow({
   }
 
   const { eventHorse, horse, canManage, canWithdraw } = row
+  const horseName = getHorseDisplayName(horse) ?? t('eventViews.unknownHorse')
   const hasDetails = Boolean(
     eventHorse.requestedServiceNotes ||
     eventHorse.completionNotes ||
@@ -207,9 +209,7 @@ function EventHorseServiceRow({
     <DashboardItemRecordCard
       ref={rowFocusTarget}
       role="group"
-      aria-label={t('eventViews.serviceRegion', {
-        name: getHorseDisplayName(horse) ?? t('eventViews.unknownHorse'),
-      })}
+      aria-label={t('eventViews.serviceRegion', { name: horseName })}
       tabIndex={-1}
       chrome="flat"
       density="compact"
@@ -217,20 +217,25 @@ function EventHorseServiceRow({
       actions={
         !isEditing && (canManage || canWithdraw) ? (
           <>
-            {canManage && (
-              <Button
-                type="button"
-                ref={editTrigger}
-                action={hasDetails ? 'edit' : 'create'}
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditing(true)}
-              >
-                {hasDetails
-                  ? t('eventViews.editDetails')
-                  : t('eventViews.addDetails')}
-              </Button>
-            )}
+            {canManage &&
+              (hasDetails ? (
+                <EditActionButton
+                  ref={editTrigger}
+                  label={t('eventViews.editDetailsNamed', { name: horseName })}
+                  onClick={() => setIsEditing(true)}
+                />
+              ) : (
+                <Button
+                  type="button"
+                  ref={editTrigger}
+                  action="create"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                >
+                  {t('eventViews.addDetails')}
+                </Button>
+              ))}
             {canWithdraw && (
               <AlertDialog
                 open={withdrawOpen}

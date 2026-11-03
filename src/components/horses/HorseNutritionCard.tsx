@@ -12,10 +12,13 @@ import {
 } from '#/components/dashboard/DashboardSectionCard'
 import { CheckIcon, XIcon } from '@phosphor-icons/react'
 import type { Doc } from 'convex/_generated/dataModel'
+import type { ReactNode } from 'react'
 
 type HorseNutritionCardProps = {
   horse: Doc<'horses'>
   showHeader?: boolean
+  /** Contextual editor entry; keeps the plan visible to editors when empty. */
+  editAction?: ReactNode
 }
 
 const hasText = (value: string | undefined) => Boolean(value?.trim())
@@ -24,6 +27,7 @@ const hasItems = (items: Array<string> | undefined) => Boolean(items?.length)
 export function HorseNutritionCard({
   horse,
   showHeader = true,
+  editAction,
 }: HorseNutritionCardProps) {
   const t = useT()
 
@@ -33,10 +37,13 @@ export function HorseNutritionCard({
     hasItems(horse.nutritionRecommended) ||
     hasItems(horse.nutritionAvoid)
 
-  if (!hasNutrition) return null
+  if (!hasNutrition && !editAction) return null
 
   const content = (
     <>
+      {!hasNutrition && (
+        <p className="text-muted-foreground">{t('horseDetail.notRecorded')}</p>
+      )}
       {horse.feedingRoutine && (
         <DetailTextBlock
           label={t('careRecords.feedingRoutine')}
@@ -77,6 +84,7 @@ export function HorseNutritionCard({
     return (
       <DashboardSubsection
         title={t('careRecords.currentFeedingPlan')}
+        edit={editAction}
         className="rounded-row bg-surface-muted p-4 sm:p-5"
         contentClassName="grid gap-4 text-sm"
       >
@@ -88,6 +96,7 @@ export function HorseNutritionCard({
     <DashboardSectionCard
       title={t('careRecords.nutrition')}
       contentTextSize="sm"
+      edit={editAction}
     >
       {content}
     </DashboardSectionCard>

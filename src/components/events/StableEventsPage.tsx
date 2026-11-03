@@ -9,8 +9,7 @@ import { CalendarViewControl } from './CalendarToolbar'
 import { StableEventsCalendar } from '#/components/stables/StableEventsCalendar'
 import { ButtonLink } from '#/components/ui/button'
 import { EventTable } from './EventList'
-import { useSmallScreen } from '#/lib/useSmallScreen'
-import { MobileActionBar } from '#/components/layout/MobileActionBar'
+import { PagePrimaryAction } from '#/components/layout/PagePrimaryAction'
 import { useTaskOriginState } from '#/components/layout/mobileTaskNavigation'
 
 export type EventsView = 'calendar' | 'log'
@@ -38,19 +37,7 @@ export function StableEventsPage({
   onViewChange: (view: EventsView) => void
 }) {
   const t = useT()
-  const small = useSmallScreen()
   const taskState = useTaskOriginState()
-  const addEvent = (
-    <ButtonLink
-      to="/stables/$stableId/events/create"
-      params={{ stableId }}
-      state={taskState}
-      size="control"
-      action="schedule"
-    >
-      {t('eventViews.add')}
-    </ButtonLink>
-  )
 
   const views = [
     { value: 'calendar', label: t('eventViews.calendar') },
@@ -69,6 +56,18 @@ export function StableEventsPage({
       <DashboardPageHeader
         showWorkspace={false}
         title={t('eventViews.events')}
+        actions={
+          <PagePrimaryAction>
+            <ButtonLink
+              to="/stables/$stableId/events/create"
+              params={{ stableId }}
+              state={taskState}
+              action="schedule"
+            >
+              {t('eventViews.add')}
+            </ButtonLink>
+          </PagePrimaryAction>
+        }
       />
       {filters}
       {notices}
@@ -77,19 +76,16 @@ export function StableEventsPage({
           events={events}
           horses={horses}
           viewControl={viewControl}
-          actions={addEvent}
           storageKey={`paddock:events:${stableId}:month`}
         />
       ) : (
         <DashboardSectionCard>
           <div className="flex flex-wrap items-center justify-end gap-2">
             {viewControl}
-            {!small && addEvent}
           </div>
           <EventTable stableId={stableId} events={events} />
         </DashboardSectionCard>
       )}
-      {small && <MobileActionBar>{addEvent}</MobileActionBar>}
     </DashboardPage>
   )
 }

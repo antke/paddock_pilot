@@ -1,3 +1,5 @@
+import { DashboardActions } from '#/components/dashboard/DashboardActions'
+import { FloatingCreateShortcut } from '#/components/layout/floatingActionsContext'
 import { MotionList } from '#/components/motion/MotionList'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useRef, useState } from 'react'
@@ -9,7 +11,7 @@ import type { Id } from 'convex/_generated/dataModel'
 import type { FunctionReturnType } from 'convex/server'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from 'convex/_generated/api'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
@@ -21,27 +23,35 @@ import { useOwnershipCopy } from './ownershipCopy'
 export function PersonalHorses() {
   const c = useOwnershipCopy()
   const horses = useQuery(api.horses.listMine)
+  const navigate = useNavigate()
   if (horses === undefined) return <RoutePending />
   return (
     <DashboardPage>
+      <FloatingCreateShortcut
+        label={c.add}
+        onSelect={() => void navigate({ to: '/horses/create' })}
+      />
       <DashboardPageHeader
         title={c.title}
         description={c.intro}
         actions={
-          <div className="flex flex-wrap gap-2">
-            <ButtonLink to="/horses/create" action="create">
-              {c.add}
-            </ButtonLink>
-            <ButtonLink to="/horses/contacts" variant="ghost">
-              {c.providers}
-            </ButtonLink>
-            <ButtonLink to="/horses/deleted" variant="ghost">
-              {c.trash}
-            </ButtonLink>
-          </div>
+          <ButtonLink to="/horses/create" action="create">
+            {c.add}
+          </ButtonLink>
         }
       />
-      <PersonalHorseList horses={horses} />
+      <div className="grid gap-3">
+        <PersonalHorseList horses={horses} />
+        {/* Same quiet footer as the stable horse list. Care contacts live in navigation. */}
+        <DashboardActions
+          align="end"
+          className="border-t border-border-subtle pt-3"
+        >
+          <ButtonLink to="/horses/deleted" variant="subtle">
+            {c.trash}
+          </ButtonLink>
+        </DashboardActions>
+      </div>
     </DashboardPage>
   )
 }

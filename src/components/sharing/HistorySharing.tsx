@@ -225,12 +225,12 @@ export function ExistingHorseSharing({
   return (
     <DashboardSectionCard
       title={pl ? 'Dodaj swoje konie' : 'Add your existing horses'}
-    >
-      <p className="mb-4 text-sm text-muted-foreground">
-        {pl
+      description={
+        pl
           ? 'Członkostwo jest aktywne. Dodanie koni jest opcjonalne; nie trzeba tworzyć ich ponownie.'
-          : 'Your membership is active. Adding horses is optional; you do not need to create them again.'}
-      </p>
+          : 'Your membership is active. Adding horses is optional; you do not need to create them again.'
+      }
+    >
       <div className="space-y-5">
         {owned.map((horse) => (
           <div key={horse._id} className="space-y-3">

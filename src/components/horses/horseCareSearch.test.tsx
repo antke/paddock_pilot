@@ -70,9 +70,12 @@ describe('horse care deep-link selection', () => {
     expect(screen.getByRole('region', { name: 'Emergency notes' })).toBe(notes)
   })
 
-  it('accepts only the supported optional health view', () => {
+  it('accepts only the supported optional health and medication views', () => {
     expect(parseHorseCareSearch({ careView: 'health' })).toEqual({
       careView: 'health',
+    })
+    expect(parseHorseCareSearch({ careView: 'medication' })).toEqual({
+      careView: 'medication',
     })
     for (const careView of ['reminders', 'invalid', ['health'], undefined])
       expect(parseHorseCareSearch({ careView })).toEqual({})

@@ -60,7 +60,9 @@ describe('Event horse service interactions', () => {
     expect(screen.getByRole('button', { name: 'Withdraw horse' })).toBeTruthy()
     expect(screen.getByText('Before the session')).toBeTruthy()
     expect(screen.getByText('Original notes')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: /Edit details/ }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit details for Juniper' }),
+    )
     expect(screen.getByLabelText('Before the session')).toBeTruthy()
     expect(
       screen.getByLabelText('Additional notes after the session'),
@@ -146,7 +148,9 @@ describe('Event horse service interactions', () => {
         onWithdraw={async () => undefined}
       />,
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Edit details' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit details for Juniper' }),
+    )
     const notes = screen.getByRole<HTMLTextAreaElement>('textbox', {
       name: 'Requested notes',
     })
@@ -174,10 +178,12 @@ describe('Event horse service interactions', () => {
     expect(notes.value).toBe('Check front shoes\nDiscuss follow-up')
     fireEvent.click(screen.getByRole('button', { name: 'Save details' }))
     await waitFor(() => expect(save).toHaveBeenCalledTimes(2))
-    expect(screen.queryByRole('button', { name: 'Edit details' })).toBeNull()
+    expect(
+      screen.queryByRole('button', { name: 'Edit details for Juniper' }),
+    ).toBeNull()
     await act(async () => retry.resolve())
     expect(document.activeElement).toBe(
-      screen.getByRole('button', { name: 'Edit details' }),
+      screen.getByRole('button', { name: 'Edit details for Juniper' }),
     )
     expect(
       screen.queryByRole('textbox', { name: 'Requested notes' }),
@@ -240,7 +246,9 @@ describe('Event horse service interactions', () => {
         onWithdraw={async () => undefined}
       />,
     )
-    for (const edit of screen.getAllByRole('button', { name: 'Edit details' }))
+    for (const edit of screen.getAllByRole('button', {
+      name: 'Edit details for Juniper',
+    }))
       fireEvent.click(edit)
     const inputs = screen.getAllByRole<HTMLTextAreaElement>('textbox', {
       name: 'Requested notes',

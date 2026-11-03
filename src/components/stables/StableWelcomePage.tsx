@@ -30,6 +30,8 @@ type StableMember = NonNullable<
 >
 
 type OwnerWelcomePageProps = {
+  /** Inside the stable view: no page header of its own. */
+  embedded?: boolean
   stable: Stable
   horseCount: number
   memberCount: number
@@ -38,6 +40,8 @@ type OwnerWelcomePageProps = {
 }
 
 type MemberWelcomePageProps = {
+  /** Inside the stable view: no page header of its own. */
+  embedded?: boolean
   stable: Stable
   member: StableMember
   ownHorseCount: number
@@ -49,6 +53,7 @@ type MemberWelcomePageProps = {
 }
 
 export function OwnerStableWelcomePage({
+  embedded = false,
   stable,
   horseCount,
   memberCount,
@@ -79,8 +84,8 @@ export function OwnerStableWelcomePage({
             }
           : id === 'team'
             ? {
-                to: '/stables/$stableId/settings' as const,
-                search: { tab: 'members' as const },
+                to: '/stables/$stableId/stable' as const,
+                search: { tab: 'people' as const },
               }
             : { to: '/stables/$stableId/edit' as const }
     return {
@@ -96,6 +101,7 @@ export function OwnerStableWelcomePage({
 
   return (
     <StableWelcomeLayout
+      embedded={embedded}
       stable={stable}
       title={t('stableSetup.ownerTitle')}
       description={t('stableSetup.ownerHelp')}
@@ -106,6 +112,7 @@ export function OwnerStableWelcomePage({
 }
 
 export function MemberStableWelcomePage({
+  embedded = false,
   stable,
   member,
   ownHorseCount,
@@ -158,6 +165,7 @@ export function MemberStableWelcomePage({
   return (
     <>
       <StableWelcomeLayout
+        embedded={embedded}
         stable={stable}
         title={t('stableSetup.memberTitle', { name: stable.name })}
         description={t('stableSetup.memberHelp')}
@@ -222,19 +230,20 @@ type WelcomeStep = {
     | '/stables/$stableId/edit'
     | '/stables/$stableId/horses'
     | '/stables/$stableId/horses/create'
-    | '/stables/$stableId/settings'
     | '/stables/$stableId/stable'
-  search?: { tab: 'members' | 'contacts' }
+  search?: { tab: 'people' | 'contacts' }
   customAction?: ReactNode
 }
 
 function StableWelcomeLayout({
+  embedded,
   stable,
   title,
   description,
   role,
   steps,
 }: {
+  embedded: boolean
   stable: Stable
   title: string
   description: string
@@ -247,21 +256,23 @@ function StableWelcomeLayout({
 
   return (
     <>
-      <DashboardPageHeader
-        title={title}
-        description={description}
-        badges={<StableMemberRoleBadge role={role} />}
-        actions={
-          <ButtonLink
-            to="/stables/$stableId"
-            params={{ stableId: stable._id }}
-            variant="outline"
-          >
-            {t('stableSetup.openStable')}
-            <ArrowRightIcon />
-          </ButtonLink>
-        }
-      />
+      {!embedded && (
+        <DashboardPageHeader
+          title={title}
+          description={description}
+          badges={<StableMemberRoleBadge role={role} />}
+          actions={
+            <ButtonLink
+              to="/stables/$stableId"
+              params={{ stableId: stable._id }}
+              variant="outline"
+            >
+              {t('stableSetup.openStable')}
+              <ArrowRightIcon />
+            </ButtonLink>
+          }
+        />
+      )}
 
       <DashboardSectionCard
         title={t('stableSetup.gettingStarted')}

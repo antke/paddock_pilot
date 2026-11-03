@@ -6,9 +6,6 @@ export const Route = createFileRoute(
   '/stables/_layout/$stableId/horses/unclaimed',
 )({ component: Page })
 function Page() {
-  return (
-    <UnclaimedHorseForm
-      stableId={Route.useParams().stableId as Id<'stables'>}
-    />
-  )
+  const { stableId } = Route.useParams()
+  return <UnclaimedHorseForm stableId={stableId as Id<'stables'>} />
 }

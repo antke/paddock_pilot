@@ -1,15 +1,15 @@
 import { useT } from '#/i18n/LocaleProvider'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { HorseMedicationRecordsCard } from './HorseMedicationRecordsCard'
 import type { HorseDetailSectionProps } from './HorseDetail'
 import { HorseNutritionCard } from './HorseNutritionCard'
 import { HorseNutritionLogsCard } from './HorseNutritionLogsCard'
 import { HorseWeightRecordsCard } from './HorseWeightRecordsCard'
 import { HorseDetailSectionTabs } from './HorseDetailSectionTabs'
+import { HorseEditEntry } from './HorseEditEntry'
 import { DashboardSubsection } from '#/components/dashboard/DashboardSectionCard'
 
-type NutritionTab = 'nutrition' | 'weight' | 'medication'
+type NutritionTab = 'nutrition' | 'weight'
 
 type SectionActionRenderer = (
   onCreateActionChange: (action: ReactNode | null) => void,
@@ -20,16 +20,16 @@ type HorseNutritionSectionViewProps = HorseDetailSectionProps & {
   onTabChange?: (tab: NutritionTab) => void
   renderLogs?: SectionActionRenderer
   renderWeight?: SectionActionRenderer
-  renderMedication?: SectionActionRenderer
 }
 
 export function HorseNutritionSection({
   horse,
+  stableId,
+  canManageHorse = false,
   activeTab: controlledTab,
   onTabChange,
   renderLogs,
   renderWeight,
-  renderMedication,
 }: HorseNutritionSectionViewProps) {
   const t = useT()
 
@@ -43,11 +43,6 @@ export function HorseNutritionSection({
       id: 'weight',
       label: t('careRecords.weight'),
       title: t('careRecords.weight'),
-    },
-    {
-      id: 'medication',
-      label: t('careRecords.medication'),
-      title: t('careRecords.medication'),
     },
   ] as const
 
@@ -69,7 +64,21 @@ export function HorseNutritionSection({
     >
       {activeTab === 'nutrition' && (
         <>
-          <HorseNutritionCard horse={horse} showHeader={false} />
+          <HorseNutritionCard
+            horse={horse}
+            showHeader={false}
+            editAction={
+              canManageHorse ? (
+                <HorseEditEntry
+                  appearance="icon"
+                  horseId={horse._id}
+                  stableId={stableId}
+                  section="feeding"
+                  label={t('horseDetail.editFeedingPlan')}
+                />
+              ) : undefined
+            }
+          />
           <DashboardSubsection title={t('careRecords.nutritionHistory')}>
             {renderLogs ? (
               renderLogs(setHeaderAction)
@@ -88,16 +97,6 @@ export function HorseNutritionSection({
           renderWeight(setHeaderAction)
         ) : (
           <HorseWeightRecordsCard
-            horse={horse}
-            onCreateActionChange={setHeaderAction}
-          />
-        ))}
-
-      {activeTab === 'medication' &&
-        (renderMedication ? (
-          renderMedication(setHeaderAction)
-        ) : (
-          <HorseMedicationRecordsCard
             horse={horse}
             onCreateActionChange={setHeaderAction}
           />

@@ -1,7 +1,8 @@
-import { useId } from 'react'
+import { createContext, useContext, useId } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 
 import { cn } from '#/lib/utils'
+import { SectionEditSlot } from './SectionEditSlot'
 
 /** Open reference groups inside a single owning paper section. */
 export function DetailReference({
@@ -17,37 +18,83 @@ export function DetailReference({
   )
 }
 
+/** Stacked record groups read at a larger value size than compact cards. */
+const DetailReferenceStacked = createContext(false)
+
 export function DetailReferenceGroup({
   title,
   children,
+  edit,
+  layout = 'aside',
   as: Heading = 'h2',
   className,
   ...props
 }: Omit<ComponentProps<'section'>, 'title'> & {
   title: string
   children: ReactNode
+  /** The group's pencil, kept in the title row's top-right corner. */
+  edit?: ReactNode
+  /**
+   * `aside` puts the title in a narrow column beside the fields on wide
+   * screens (printable summaries). `stacked` keeps the title above the fields
+   * at every width so the fields use the full row and the action sits in the
+   * group's top-right corner.
+   */
+  layout?: 'aside' | 'stacked'
   as?: 'h2' | 'h3'
 }) {
   const headingId = useId()
+  const stacked = layout === 'stacked'
+  const heading = (
+    <Heading
+      id={headingId}
+      className={cn(
+        'min-w-0 text-foreground',
+        stacked
+          ? 'font-display text-xl font-semibold leading-tight tracking-[-0.01em]'
+          : 'font-sans text-lg font-semibold leading-snug',
+      )}
+    >
+      {title}
+    </Heading>
+  )
 
   return (
     <section
       data-slot="detail-reference-group"
       aria-labelledby={headingId}
       className={cn(
-        'grid min-w-0 gap-4 border-t border-border-subtle pt-6 first:border-t-0 first:pt-0 lg:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] lg:gap-8',
+        'grid min-w-0 gap-4 border-t border-border-subtle pt-6 first:border-t-0 first:pt-0',
+        stacked
+          ? 'gap-5'
+          : 'lg:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] lg:gap-8',
         className,
       )}
       {...props}
     >
-      <Heading
-        id={headingId}
-        className="font-sans text-lg font-semibold leading-snug text-foreground"
+      {edit ? (
+        // The control never adds height to the title row.
+        <div
+          className={cn(
+            'flex min-w-0 items-center justify-between gap-3',
+            !stacked && 'lg:justify-start',
+          )}
+        >
+          {heading}
+          <SectionEditSlot>{edit}</SectionEditSlot>
+        </div>
+      ) : (
+        heading
+      )}
+      <div
+        className={cn(
+          'grid min-w-0 content-start gap-6',
+          !stacked && 'max-w-3xl',
+        )}
       >
-        {title}
-      </Heading>
-      <div className="grid min-w-0 max-w-3xl content-start gap-6">
-        {children}
+        <DetailReferenceStacked.Provider value={stacked}>
+          {children}
+        </DetailReferenceStacked.Provider>
       </div>
     </section>
   )
@@ -56,11 +103,14 @@ export function DetailReferenceGroup({
 export function DetailReferenceList({
   children,
   mobileColumns = 1,
+  wideColumns = 2,
   title,
   as: Heading = 'h3',
 }: {
   children: ReactNode
   mobileColumns?: 1 | 2
+  /** Columns from the large breakpoint; 3 keeps one track across groups. */
+  wideColumns?: 2 | 3
   title?: string
   as?: 'h3' | 'h4'
 }) {
@@ -80,8 +130,9 @@ export function DetailReferenceList({
         data-slot="detail-reference-list"
         aria-labelledby={title ? headingId : undefined}
         className={cn(
-          'grid min-w-0 gap-x-6 gap-y-4 sm:grid-cols-2',
+          'grid min-w-0 gap-x-6 gap-y-5 sm:grid-cols-2',
           mobileColumns === 2 && 'grid-cols-2',
+          wideColumns === 3 && 'lg:grid-cols-3',
         )}
       >
         {children}
@@ -103,6 +154,7 @@ export function DetailReferenceField({
   fullWidth?: boolean
   multiline?: boolean
 }) {
+  const stacked = useContext(DetailReferenceStacked)
   const hasValue = value !== undefined && value !== null && value !== ''
   if (!hasValue && missingValue === undefined) return null
 
@@ -116,7 +168,8 @@ export function DetailReferenceField({
       <dt className="text-sm leading-5 text-muted-foreground">{label}</dt>
       <dd
         className={cn(
-          'min-w-0 wrap-anywhere text-base leading-6',
+          'min-w-0 wrap-anywhere',
+          stacked ? 'text-lg leading-snug' : 'text-base leading-6',
           hasValue ? 'font-medium text-foreground' : 'text-muted-foreground',
           multiline && 'max-w-prose whitespace-pre-wrap font-normal',
         )}

@@ -48,7 +48,7 @@ it('edits the selected contact, retains failed values, and restores focus after 
   expect(
     screen.getByRole('link', { name: '+48 123 456' }).getAttribute('href'),
   ).toBe('tel:+48123456')
-  fireEvent.click(screen.getByRole('button', { name: 'Edit contact' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Edit Dr Green' }))
   const form = screen.getByRole('form', { name: 'Edit contact' })
   const phone = within(form).getByLabelText<HTMLInputElement>(
     'Phone number (optional)',
@@ -66,7 +66,7 @@ it('edits the selected contact, retains failed values, and restores focus after 
   fireEvent.submit(form)
   expect(await screen.findByText('Contact updated.')).toBeTruthy()
   expect(document.activeElement).toBe(
-    screen.getByRole('button', { name: 'Edit contact' }),
+    screen.getByRole('button', { name: 'Edit Dr Green' }),
   )
 })
 it('requires an explicit confirmation before deleting and retains retry inside the dialog on failure', async () => {
@@ -97,7 +97,7 @@ it('requires an explicit confirmation before deleting and retains retry inside t
   expect(await screen.findByText('Contact deleted.')).toBeTruthy()
   expect(remove).toHaveBeenCalledTimes(2)
 })
-it('prevents duplicate saves and clears a new draft only after acknowledgement', async () => {
+it('adds from the title row, prevents duplicate saves and closes only after acknowledgement', async () => {
   let resolve!: () => void
   const save = vi.fn(
     () =>
@@ -108,14 +108,16 @@ it('prevents duplicate saves and clears a new draft only after acknowledgement',
   await mount(
     <PersonalContactsView providers={[]} save={save} remove={vi.fn()} />,
   )
-  const form = screen.getByRole('form', { name: 'Add a care contact' })
+  fireEvent.click(screen.getAllByRole('button', { name: 'Add contact' })[0])
+  const form = await screen.findByRole('form', { name: 'Add a care contact' })
   const name = within(form).getByLabelText<HTMLInputElement>('Provider name')
   fireEvent.change(name, { target: { value: 'New vet' } })
   fireEvent.submit(form)
   fireEvent.submit(form)
   expect(save).toHaveBeenCalledTimes(1)
   expect(name.value).toBe('New vet')
+  expect(screen.getByRole('dialog')).toBeTruthy()
   await act(async () => resolve())
-  expect(name.value).toBe('')
+  expect(screen.queryByRole('dialog')).toBeNull()
   expect(screen.getByRole('status').textContent).toBe('Contact saved.')
 })

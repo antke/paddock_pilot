@@ -2,7 +2,10 @@ import { MotionNotice } from '#/components/motion/MotionNotice'
 import { ActionFeedback } from '#/components/ui/action-feedback'
 import { useId, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
+import {
+  DashboardSectionCard,
+  DashboardSubsection,
+} from '#/components/dashboard/DashboardSectionCard'
 import { Button, ButtonLink } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Select } from '#/components/ui/select'
@@ -231,8 +234,7 @@ export function HorseManagementView({
           )}
         </dl>
         {access.canManageAccess && (
-          <>
-            <h3 className="text-lg font-semibold">{m.invited}</h3>
+          <DashboardSubsection title={m.invited}>
             {accessMessage && (
               <p role="status" className="text-sm">
                 {accessMessage}
@@ -306,7 +308,7 @@ export function HorseManagementView({
               kind="carer"
               invite={invite}
             />
-          </>
+          </DashboardSubsection>
         )}
         {access.isCustodian && (
           <InviteHorseAccessForm
@@ -319,8 +321,7 @@ export function HorseManagementView({
           data.invitations.some(
             (i) => i.status === 'pending' && i.expiresAt > Date.now(),
           ) && (
-            <div className="grid gap-3">
-              <h3 className="text-lg font-semibold">{c.pending}</h3>
+            <DashboardSubsection title={c.pending} gap="compact">
               {data.invitations
                 .filter(
                   (i) => i.status === 'pending' && i.expiresAt > Date.now(),
@@ -359,7 +360,7 @@ export function HorseManagementView({
                     </Button>
                   </div>
                 ))}
-            </div>
+            </DashboardSubsection>
           )}
         {access.isCustodian && !access.canManageAccess && accessMessage && (
           <p role="status">{accessMessage}</p>

@@ -22,6 +22,7 @@ import {
 } from '#/components/dashboard/DashboardItemCard'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { Button } from '#/components/ui/button'
+import { EditActionButton } from '#/components/ui/edit-action'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { RecordRemoveAction } from '#/components/list-layout/RecordRemoveAction'
 import { EditRecordDialog } from '#/components/list-layout/EditRecordDialog'
@@ -32,7 +33,7 @@ import {
   DropdownMenuItem,
 } from '#/components/ui/dropdown-menu'
 import { Input } from '#/components/ui/input'
-import { Field, FieldLabel } from '#/components/ui/field'
+import { Field, FieldDescription, FieldLabel } from '#/components/ui/field'
 import { careReminderDueDateSchema } from 'shared/reminders/careReminderSchema'
 import { CheckIcon, DotsThreeIcon } from '@phosphor-icons/react'
 import type { Doc } from 'convex/_generated/dataModel'
@@ -400,6 +401,12 @@ function ReminderRow({
   const showPriorityBadge = reminder.priority === 'high'
   const showStatusBadge = overdue || reminder.status !== 'pending'
   const Heading = `h${headingLevel}` as const
+  // Listed first in the row's overflow menu. Opens the next-date editor only; nothing is
+  // completed until it is saved.
+  const canScheduleNext =
+    item.canManage &&
+    reminder.status === 'pending' &&
+    !reminder.followUpReminderId
   const hasActions =
     item.canManage ||
     (reminder.status === 'pending' && (item.canComplete ?? item.canManage)) ||
@@ -410,8 +417,6 @@ function ReminderRow({
     'complete' | 'dismiss' | 'reopen' | 'edit' | null
   >(null)
   const [editor, setEditor] = useState<'edit' | 'next' | null>(null)
-  const [removeOpen, setRemoveOpen] = useState(false)
-  const actionsTrigger = useRef<HTMLButtonElement>(null)
   const [nextDueDate, setNextDueDate] = useState('')
   const [dateError, setDateError] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
@@ -510,68 +515,63 @@ function ReminderRow({
                     {t('reminders.reopen')}
                   </Button>
                 )}
+              {item.canManage && reminder.status === 'pending' && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        disabled={isUpdating}
+                        aria-label={t('reminders.actionsNamed', {
+                          name: reminder.title,
+                        })}
+                      />
+                    }
+                  >
+                    <DotsThreeIcon weight="bold" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {canScheduleNext && (
+                      <DropdownMenuItem
+                        disabled={confirmed}
+                        onClick={() => {
+                          setActionError(false)
+                          setEditor('next')
+                        }}
+                      >
+                        {t('reminders.completeAndSchedule')}
+                      </DropdownMenuItem>
+                    )}
+                    {reminder.status === 'pending' && (
+                      <DropdownMenuItem
+                        onClick={() =>
+                          void runStatusAction('dismiss', onDismiss)
+                        }
+                      >
+                        {t('reminders.dismiss')}
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
               {item.canManage && (
                 <>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <Button
-                          ref={actionsTrigger}
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          disabled={isUpdating}
-                          aria-label={t('reminders.actionsNamed', {
-                            name: reminder.title,
-                          })}
-                        />
-                      }
-                    >
-                      <DotsThreeIcon weight="bold" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {onEdit && (
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setActionError(false)
-                            setEditor('edit')
-                          }}
-                        >
-                          {t('reminders.edit')}
-                        </DropdownMenuItem>
-                      )}
-                      {reminder.status === 'pending' &&
-                        !reminder.followUpReminderId && (
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setActionError(false)
-                              setEditor('next')
-                            }}
-                          >
-                            {t('reminders.completeAndSchedule')}
-                          </DropdownMenuItem>
-                        )}
-                      {reminder.status === 'pending' && (
-                        <DropdownMenuItem
-                          onClick={() =>
-                            void runStatusAction('dismiss', onDismiss)
-                          }
-                        >
-                          {t('reminders.dismiss')}
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onClick={() => setRemoveOpen(true)}
-                      >
-                        {t('reminders.remove')}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {onEdit && (
+                    <EditActionButton
+                      label={t('reminders.editNamed', { name: reminder.title })}
+                      disabled={isUpdating}
+                      onClick={() => {
+                        setActionError(false)
+                        setEditor('edit')
+                      }}
+                    />
+                  )}
                   <RecordRemoveAction
-                    open={removeOpen}
-                    onOpenChange={setRemoveOpen}
-                    externalTrigger={actionsTrigger}
+                    triggerAriaLabel={t('reminders.removeRecordNamed', {
+                      name: reminder.title,
+                    })}
                     title={t('reminders.removeNamed', { name: reminder.title })}
                     description={t('reminders.removeHelp')}
                     confirmLabel={t('reminders.remove')}
@@ -740,10 +740,15 @@ function ReminderRow({
                 disabled={isUpdating}
                 aria-invalid={dateError}
                 aria-describedby={
-                  dateError ? `next-error-${reminder._id}` : undefined
+                  dateError
+                    ? `next-help-${reminder._id} next-error-${reminder._id}`
+                    : `next-help-${reminder._id}`
                 }
                 onChange={(event) => setNextDueDate(event.target.value)}
               />
+              <FieldDescription id={`next-help-${reminder._id}`}>
+                {t('reminders.completeAndScheduleHelp')}
+              </FieldDescription>
             </Field>
             {dateError && (
               <p

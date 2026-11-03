@@ -23,6 +23,7 @@ import { calculateHorseAge } from 'shared/horses/horseAge'
 import { getHorseBreedLabel } from 'shared/i18n/horseBreedLabels'
 import { formatPartialDateKey } from '#/lib/dateDisplay'
 import type { HorseDetailSectionProps } from './HorseDetail'
+import { HorseEditEntry } from './HorseEditEntry'
 
 function HorseIdentifierValue({
   value,
@@ -94,7 +95,11 @@ function HorseIdentifierValue({
   )
 }
 
-export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
+export function HorseProfileSection({
+  horse,
+  stableId,
+  canManageHorse = false,
+}: HorseDetailSectionProps) {
   const t = useT()
   const { locale } = useLocale()
 
@@ -107,37 +112,64 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
   const hasParentage = horse.sire || horse.dam
   const notRecorded = t('horseDetail.notRecorded')
   const allergies = horse.allergies ?? []
+  const birthDate = horse.dateOfBirth
+    ? formatPartialDateKey(horse.dateOfBirth, locale)
+    : undefined
 
   return (
     <DashboardSection aria-label={t('horseDetail.profileRegion')}>
       <DetailReference>
-        <DetailReferenceGroup title={t('horseDetail.horseDetails')}>
-          <DetailReferenceList mobileColumns={2}>
-            <DetailReferenceField
-              label={t('horseDetail.fullName')}
-              value={horse.name}
-              fullWidth
-            />
-            {horse.nickname && (
-              <DetailReferenceField
-                label={t('horseForm.nickname')}
-                value={horse.nickname}
-                fullWidth
+        <DetailReferenceGroup
+          layout="stacked"
+          title={t('horseDetail.horseDetails')}
+          edit={
+            canManageHorse && (
+              <HorseEditEntry
+                appearance="icon"
+                horseId={horse._id}
+                stableId={stableId}
+                section="profile"
+                label={t('horseDetail.editProfile')}
               />
+            )
+          }
+        >
+          <DetailReferenceList mobileColumns={2} wideColumns={3}>
+            {/* The hero already shows the name; the registered name only
+                adds information when a nickname is used day to day. */}
+            {horse.nickname && (
+              <>
+                <DetailReferenceField
+                  label={t('horseDetail.fullName')}
+                  value={horse.name}
+                />
+                <DetailReferenceField
+                  label={t('horseForm.nickname')}
+                  value={horse.nickname}
+                />
+              </>
             )}
             <DetailReferenceField
               label={t('horseDetail.age')}
-              value={age}
+              value={
+                age !== undefined && age !== null ? (
+                  <>
+                    {age}
+                    {birthDate && (
+                      <span className="block text-sm font-normal leading-5 text-muted-foreground">
+                        {t('horseDetail.bornOn', { date: birthDate })}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  birthDate
+                )
+              }
               missingValue={notRecorded}
             />
             <DetailReferenceField
-              label={t('horseDetail.birthDate')}
-              value={
-                horse.dateOfBirth
-                  ? formatPartialDateKey(horse.dateOfBirth, locale)
-                  : undefined
-              }
-              missingValue={notRecorded}
+              label={t('horseDetail.sex')}
+              value={horse.sex ? t(`horseForm.${horse.sex}`) : undefined}
             />
             <DetailReferenceField
               label={t('horseDetail.breed')}
@@ -146,10 +178,6 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
                   ? getHorseBreedLabel(horse.breed, locale)
                   : undefined
               }
-            />
-            <DetailReferenceField
-              label={t('horseDetail.sex')}
-              value={horse.sex ? t(`horseForm.${horse.sex}`) : undefined}
             />
             <DetailReferenceField
               label={t('horseDetail.color')}
@@ -162,11 +190,14 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
             <DetailReferenceField
               label={t('horseDetail.discipline')}
               value={horse.discipline}
-              fullWidth
             />
           </DetailReferenceList>
           {hasParentage && (
-            <DetailReferenceList title={t('horseDetail.parentage')}>
+            <DetailReferenceList
+              title={t('horseDetail.parentage')}
+              mobileColumns={2}
+              wideColumns={3}
+            >
               <DetailReferenceField
                 label={t('horseDetail.sire')}
                 value={horse.sire}
@@ -179,8 +210,22 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
           )}
         </DetailReferenceGroup>
 
-        <DetailReferenceGroup title={t('horseDetail.careInformation')}>
-          <DetailReferenceList>
+        <DetailReferenceGroup
+          layout="stacked"
+          title={t('horseDetail.careInformation')}
+          edit={
+            canManageHorse && (
+              <HorseEditEntry
+                appearance="icon"
+                horseId={horse._id}
+                stableId={stableId}
+                section="care"
+                label={t('horseDetail.editCareInformation')}
+              />
+            )
+          }
+        >
+          <DetailReferenceList mobileColumns={2} wideColumns={3}>
             <DetailReferenceField
               label={t('horseDetail.allergies')}
               value={
@@ -213,42 +258,67 @@ export function HorseProfileSection({ horse }: HorseDetailSectionProps) {
           </DetailReferenceList>
         </DetailReferenceGroup>
 
-        {hasRegistrationDetails && (
+        {(hasRegistrationDetails || canManageHorse) && (
           <DetailReferenceGroup
+            layout="stacked"
             title={t('horseDetail.identificationAndInsurance')}
+            edit={
+              canManageHorse && (
+                <HorseEditEntry
+                  appearance="icon"
+                  horseId={horse._id}
+                  stableId={stableId}
+                  section="identification"
+                  label={t('horseDetail.editIdentification')}
+                />
+              )
+            }
           >
-            <DetailReferenceList>
-              {horse.passportNumber && (
+            {hasRegistrationDetails ? (
+              <DetailReferenceList wideColumns={3}>
+                {horse.passportNumber && (
+                  <DetailReferenceField
+                    label={t('horseDetail.passport')}
+                    value={
+                      <HorseIdentifierValue
+                        value={horse.passportNumber}
+                        label={t('horseDetail.passport')}
+                      />
+                    }
+                  />
+                )}
+                {horse.microchipNumber && (
+                  <DetailReferenceField
+                    label={t('horseDetail.microchip')}
+                    value={
+                      <HorseIdentifierValue
+                        value={horse.microchipNumber}
+                        label={t('horseDetail.microchipNumber')}
+                      />
+                    }
+                  />
+                )}
+                <DetailReferenceField
+                  label={t('horseDetail.insurer')}
+                  value={horse.insuranceProvider}
+                />
+                <DetailReferenceField
+                  label={t('horseDetail.policy')}
+                  value={horse.insurancePolicyNumber}
+                />
+              </DetailReferenceList>
+            ) : (
+              <DetailReferenceList wideColumns={3}>
                 <DetailReferenceField
                   label={t('horseDetail.passport')}
-                  value={
-                    <HorseIdentifierValue
-                      value={horse.passportNumber}
-                      label={t('horseDetail.passport')}
-                    />
-                  }
+                  missingValue={notRecorded}
                 />
-              )}
-              {horse.microchipNumber && (
                 <DetailReferenceField
-                  label={t('horseDetail.microchip')}
-                  value={
-                    <HorseIdentifierValue
-                      value={horse.microchipNumber}
-                      label={t('horseDetail.microchipNumber')}
-                    />
-                  }
+                  label={t('horseDetail.insurer')}
+                  missingValue={notRecorded}
                 />
-              )}
-              <DetailReferenceField
-                label={t('horseDetail.insurer')}
-                value={horse.insuranceProvider}
-              />
-              <DetailReferenceField
-                label={t('horseDetail.policy')}
-                value={horse.insurancePolicyNumber}
-              />
-            </DetailReferenceList>
+              </DetailReferenceList>
+            )}
           </DetailReferenceGroup>
         )}
       </DetailReference>

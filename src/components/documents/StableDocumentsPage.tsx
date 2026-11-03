@@ -18,9 +18,14 @@ import { useDocumentActions } from './useDocumentActions'
 
 type StableDocumentsPageProps = {
   stableId: Id<'stables'>
+  /** Inside the stable view: the section card carries the title and Add. */
+  embedded?: boolean
 }
 
-export function StableDocumentsPage({ stableId }: StableDocumentsPageProps) {
+export function StableDocumentsPage({
+  stableId,
+  embedded = false,
+}: StableDocumentsPageProps) {
   const t = useT()
   const { locale } = useLocale()
 
@@ -41,38 +46,45 @@ export function StableDocumentsPage({ stableId }: StableDocumentsPageProps) {
     config: filterConfig,
   })
 
+  const addDocument = (
+    <DocumentUploadDialog
+      enableSharing
+      canAddDocument={data.canManageStableDocuments}
+      horseOptions={horses}
+      onAdd={documentActions.add}
+    />
+  )
+  const card = (
+    <DocumentsCard
+      title={embedded ? t('documents.documents') : undefined}
+      actions={embedded ? addDocument : undefined}
+      documents={filtering.items}
+      emptyMessage={getListFilterEmptyMessage({
+        filtering,
+        emptyMessage: t('documents.empty'),
+        filteredEmptyMessage: t('documents.filteredEmpty'),
+      })}
+      listToolbar={
+        <ListFilterControls
+          config={filterConfig}
+          filtering={filtering}
+          hideWhenEmpty
+          sticky
+        />
+      }
+      chrome="cards"
+      onRemove={documentActions.remove}
+    />
+  )
+  if (embedded) return card
+
   return (
     <DashboardPage>
       <DashboardPageHeader
         title={t('documents.documents')}
-        actions={
-          <DocumentUploadDialog
-            enableSharing
-            canAddDocument={data.canManageStableDocuments}
-            horseOptions={horses}
-            onAdd={documentActions.add}
-          />
-        }
+        actions={addDocument}
       />
-
-      <DocumentsCard
-        documents={filtering.items}
-        emptyMessage={getListFilterEmptyMessage({
-          filtering,
-          emptyMessage: t('documents.empty'),
-          filteredEmptyMessage: t('documents.filteredEmpty'),
-        })}
-        listToolbar={
-          <ListFilterControls
-            config={filterConfig}
-            filtering={filtering}
-            hideWhenEmpty
-            sticky
-          />
-        }
-        chrome="cards"
-        onRemove={documentActions.remove}
-      />
+      {card}
     </DashboardPage>
   )
 }

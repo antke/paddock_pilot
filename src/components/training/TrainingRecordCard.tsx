@@ -35,6 +35,7 @@ import type { TrainingValidationKey } from 'shared/training/trainingSchema'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { Field, FieldLabel } from '#/components/ui/field'
 import { Button } from '#/components/ui/button'
+import { EditActionButton } from '#/components/ui/edit-action'
 import { Select } from '#/components/ui/select'
 import { Input } from '#/components/ui/input'
 import { Textarea } from '#/components/ui/textarea'
@@ -69,66 +70,65 @@ export function TrainingRecordCard({
   const [saved, setSaved] = useState(false)
   const { horse, details, record, status } = entry
   const { today } = useLocalDateContext()
+  const startEditing = () => {
+    setEditing(true)
+    setSaved(false)
+  }
   const hasNotes = Boolean(
     details.focus || record?.outcome || details.nextFocus,
   )
   return (
     <DashboardSectionCard
-      headerContent={
-        <header className="grid min-w-0 gap-3">
-          <div className="flex min-w-0 items-center justify-between gap-4">
-            <h2 className="min-w-0 font-sans text-xl font-semibold leading-snug wrap-anywhere">
-              <Link
-                to="/horses/$horseId"
-                params={{ horseId: horse._id }}
-                className="app-control-focus rounded-control underline-offset-4 hover:underline"
-              >
-                {getHorseDisplayName(horse)}
-              </Link>
-            </h2>
-            {!editing && <TrainingStatusBadge status={status} />}
-          </div>
-          {(record || (!editing && showCompletion)) && (
-            <div className="flex min-w-0 items-center justify-between gap-4">
-              <div className="min-w-0">
-                {record && <CreatorByline name={record.createdByName} />}
-              </div>
-              {!editing && showCompletion && (
-                <TrainingCompletionControl entry={entry} labelled />
-              )}
-            </div>
-          )}
-        </header>
+      title={
+        <Link
+          to="/horses/$horseId"
+          params={{ horseId: horse._id }}
+          className="app-control-focus rounded-control underline-offset-4 hover:underline"
+        >
+          {getHorseDisplayName(horse)}
+        </Link>
       }
-      footer={
-        !editing && (record || horse.canRecord) ? (
-          <div className="flex w-full flex-wrap items-center justify-between gap-3 border-t border-border-subtle pt-4">
-            {record && (
-              <p className="text-xs text-muted-foreground">
-                {t('trainingViews.lastRecorded', {
-                  date: formatMediumTimestampDateTime(record.updatedAt, locale),
-                })}
-              </p>
+      badges={!editing && <TrainingStatusBadge status={status} />}
+      description={record && <CreatorByline name={record.createdByName} />}
+      actions={
+        !editing && (showCompletion || (!record && horse.canRecord)) ? (
+          <>
+            {showCompletion && (
+              <TrainingCompletionControl entry={entry} labelled />
             )}
-            {horse.canRecord && (
+            {!record && horse.canRecord && (
               <Button
                 ref={recordAction}
                 variant="outline"
-                onClick={() => {
-                  setEditing(true)
-                  setSaved(false)
-                }}
+                action="create"
+                onClick={startEditing}
               >
-                {record
-                  ? t('trainingViews.updateRecord')
-                  : t(
-                      entry.occurrence.startDate <= today
-                        ? 'trainingViews.recordCompleted'
-                        : 'trainingViews.record',
-                    )}
+                {t(
+                  entry.occurrence.startDate <= today
+                    ? 'trainingViews.recordCompleted'
+                    : 'trainingViews.record',
+                )}
               </Button>
             )}
-          </div>
+          </>
+        ) : undefined
+      }
+      edit={
+        !editing && record && horse.canRecord ? (
+          <EditActionButton
+            ref={recordAction}
+            label={t('trainingViews.editRecord')}
+            onClick={startEditing}
+          />
+        ) : undefined
+      }
+      footer={
+        !editing && record ? (
+          <p className="w-full border-t border-border-subtle pt-4 text-xs text-muted-foreground">
+            {t('trainingViews.lastRecorded', {
+              date: formatMediumTimestampDateTime(record.updatedAt, locale),
+            })}
+          </p>
         ) : undefined
       }
     >

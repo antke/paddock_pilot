@@ -17,9 +17,14 @@ import { DashboardCreateMenu } from './DashboardCreateMenu'
 
 afterEach(cleanup)
 
-async function openMenu(stableId?: string) {
+async function openMenu(
+  stableId?: string,
+  stables: Array<{ _id: string; name: string }> = [],
+) {
   const root = createRootRoute({
-    component: () => <DashboardCreateMenu stableId={stableId} />,
+    component: () => (
+      <DashboardCreateMenu stableId={stableId} stables={stables} />
+    ),
   })
   const router = createRouter({
     routeTree: root,
@@ -28,7 +33,7 @@ async function openMenu(stableId?: string) {
   await router.load()
   render(<RouterProvider router={router} />)
   const trigger = await screen.findByRole('button', {
-    name: 'Add event, training log or horse',
+    name: 'Add or go to',
   })
   fireEvent.click(trigger)
   await screen.findByRole('menu')
@@ -81,4 +86,44 @@ it('dismisses with Escape and returns keyboard focus to the add button', async (
   fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' })
   await waitFor(() => expect(screen.queryByRole('menu')).toBeNull())
   await waitFor(() => expect(document.activeElement).toBe(trigger))
+})
+
+it('offers Go to shortcuts for the personal view and the current stable', async () => {
+  await openMenu(undefined, [
+    { _id: 'north', name: 'North Yard' },
+    { _id: 'south', name: 'South Yard' },
+  ])
+  expect(
+    screen.getByRole('menuitem', { name: 'My horses' }).getAttribute('href'),
+  ).toBe('/horses')
+  expect(
+    screen.getByRole('menuitem', { name: 'North Yard' }).getAttribute('href'),
+  ).toBe('/stables/north')
+  expect(
+    screen
+      .getByRole('menuitem', { name: 'My care contacts' })
+      .getAttribute('href'),
+  ).toBe('/horses/contacts')
+  cleanup()
+
+  await openMenu('stable-1')
+  expect(
+    screen
+      .getByRole('menuitem', { name: 'Stable horses' })
+      .getAttribute('href'),
+  ).toBe('/stables/stable-1/horses')
+  expect(
+    screen.getByRole('menuitem', { name: 'Care' }).getAttribute('href'),
+  ).toBe('/stables/stable-1/reminders')
+})
+
+it('collapses many stables into one Stables shortcut', async () => {
+  await openMenu(
+    undefined,
+    ['a', 'b', 'c', 'd'].map((id) => ({ _id: id, name: 'Yard ' + id })),
+  )
+  expect(screen.queryByRole('menuitem', { name: 'Yard a' })).toBeNull()
+  expect(
+    screen.getByRole('menuitem', { name: 'Stables' }).getAttribute('href'),
+  ).toBe('/stables')
 })

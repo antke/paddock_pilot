@@ -6,8 +6,6 @@ import { useNavigate } from '@tanstack/react-router'
 import type { ComponentProps, ReactNode } from 'react'
 import { DeletedHorsesCard } from './DeletedHorsesCard'
 import { StableActivityLogCard } from './StableActivityLogCard'
-import { StableMembersSettingsCard } from './StableMembersSettingsCard'
-import { StableProvidersCard } from './StableProvidersCard'
 import { StableSettingsOverview } from './StableSettingsOverview'
 import type { StableSettingsData } from './stableSettingsTypes'
 
@@ -16,13 +14,28 @@ type StableSettingsPageProps = {
   initialTab?: StableSettingsTab
 }
 
-export type StableSettingsTab =
-  'overview' | 'members' | 'providers' | 'deleted-horses' | 'activity'
+export type StableSettingsTab = 'overview' | 'deleted-horses' | 'activity'
+
+/**
+ * Members and Providers moved to the stable's People and Contacts pages; old
+ * settings links with these tabs are redirected there.
+ */
+export const stableSettingsRelocatedTabs = {
+  members: 'people',
+  providers: 'contacts',
+} as const
+
+export type StableSettingsRelocatedTab =
+  keyof typeof stableSettingsRelocatedTabs
+
+export function isStableSettingsRelocatedTab(
+  value: unknown,
+): value is StableSettingsRelocatedTab {
+  return value === 'members' || value === 'providers'
+}
 
 const stableSettingsTabs = [
   { value: 'overview', label: 'stables.overview' },
-  { value: 'members', label: 'stables.members' },
-  { value: 'providers', label: 'stables.providers' },
   { value: 'deleted-horses', label: 'stables.deletedHorses' },
   { value: 'activity', label: 'stables.activityLog' },
 ] as const satisfies ReadonlyArray<{
@@ -94,20 +107,6 @@ export function StableSettingsPage({
     <StableSettingsLayout value={initialTab} onValueChange={onTabChange}>
       <TabsContent value="overview">
         <StableSettingsOverview stable={stable} owner={settings.owner} />
-      </TabsContent>
-
-      <TabsContent value="members">
-        <StableMembersSettingsCard
-          stableId={stable._id}
-          stableName={stable.name}
-          members={settings.members}
-          invitations={settings.invitations}
-          horses={settings.horses}
-        />
-      </TabsContent>
-
-      <TabsContent value="providers">
-        <StableProvidersCard stableId={stable._id} />
       </TabsContent>
 
       <TabsContent value="deleted-horses">

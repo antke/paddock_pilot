@@ -75,6 +75,7 @@ function ProfilePage() {
 
       <DashboardSectionCard
         title={t('profile.details')}
+        description={t('profile.detailsDescription')}
         contentGap="comfortable"
       >
         <AccountProfileForm
@@ -89,6 +90,7 @@ function ProfilePage() {
       </DashboardSectionCard>
       <DashboardSectionCard
         title={t('profile.notifications')}
+        description={t('profile.notificationsDescription')}
         contentGap="comfortable"
       >
         <Field orientation="horizontal">
@@ -111,9 +113,9 @@ function ProfilePage() {
       </DashboardSectionCard>
       <DashboardSectionCard
         title={t('language.label')}
+        description={t('language.description')}
         contentGap="comfortable"
       >
-        <p>{t('language.description')}</p>
         <div className="max-w-xs">
           <LanguageSelector />
         </div>

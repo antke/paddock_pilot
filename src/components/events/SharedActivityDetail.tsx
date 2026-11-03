@@ -7,7 +7,6 @@ import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { RoutePending } from '#/components/layout/RoutePending'
 import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
-import { BackLink } from '#/components/ui/back-action'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { formatEventDateTime } from './eventDisplay'
 
@@ -30,9 +29,6 @@ export function SharedActivityDetail({
       <DashboardPageHeader
         showWorkspace={false}
         title={event.title}
-        backAction={
-          <BackLink to={event.type === 'training' ? '/training' : '/events'} />
-        }
         description={formatEventDateTime(
           date ?? event.date,
           event.time,

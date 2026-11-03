@@ -163,12 +163,6 @@ export function getWorkspaceNavigation({
       path === base,
     ),
     item(
-      'stable-horses',
-      `${base}/horses`,
-      'navigationShell.stableHorses',
-      'horses',
-    ),
-    item(
       'stable',
       `${directory}?tab=yard`,
       'navigation.stable',
@@ -197,6 +191,12 @@ export function getWorkspaceNavigation({
       id: 'records',
       labelKey: 'navigationShell.stableRecords',
       items: [
+        item(
+          'stable-horses',
+          `${base}/horses`,
+          'navigationShell.stableHorses',
+          'horses',
+        ),
         item('care', `${base}/reminders`, 'navigation.care', 'care'),
         item(
           'contacts',

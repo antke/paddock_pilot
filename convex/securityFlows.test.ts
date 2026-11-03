@@ -646,8 +646,12 @@ describe('authenticated account and stable security flows', () => {
       asMember.mutation(api.stableInvitations.accept, { token }),
     ).resolves.toMatchObject({ status: 'accepted' })
 
+    // The gateway role is derived server-side and gates owner-only links.
     await expect(asMember.query(api.stables.list)).resolves.toMatchObject([
-      { _id: stableId },
+      { _id: stableId, viewerRole: 'member' },
+    ])
+    await expect(asOwner.query(api.stables.list)).resolves.toMatchObject([
+      { _id: stableId, viewerRole: 'owner' },
     ])
     await expect(
       asMember.query(api.onboarding.getNextIncompleteStable),
@@ -893,7 +897,8 @@ describe('authenticated account and stable security flows', () => {
       stableId: fixture.stableId,
     })
     // Once a participant is deleted, historical audit payloads must not reveal it.
-    expect(audit.filter(entry => entry.action.startsWith('event'))).toEqual([])
-
+    expect(audit.filter((entry) => entry.action.startsWith('event'))).toEqual(
+      [],
+    )
   })
 })

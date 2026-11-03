@@ -6,6 +6,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react'
 import {
   createMemoryHistory,
@@ -393,9 +394,11 @@ it('uses distinct real route components when navigating Home → Horses → Home
   ).toBeTruthy()
   expect(screen.queryByText('Upcoming appointments')).toBeNull()
   expect(screen.queryByText('Check care record')).toBeNull()
+  // Care contacts live in navigation; trash sits in the list's footer.
+  expect(screen.queryByRole('link', { name: 'My care contacts' })).toBeNull()
   expect(
-    screen.getByRole('link', { name: 'My care contacts' }).getAttribute('href'),
-  ).toBe('/horses/contacts')
+    screen.getByRole('link', { name: 'Deleted horses' }).getAttribute('href'),
+  ).toBe('/horses/deleted')
   fireEvent.click(screen.getByRole('link', { name: 'Home' }))
   await screen.findByRole('heading', { level: 1, name: 'Home' })
   expect(screen.getByText('Planned visit')).toBeTruthy()
@@ -429,13 +432,17 @@ it.each([false, true])(
     expect(screen.getByText('Next 7 days')).toBeTruthy()
     expect(screen.queryByRole('link', { name: 'Add training log' })).toBeNull()
     if (mobile) {
-      fireEvent.click(screen.getByRole('button', { name: 'Add a horse' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Add or go to' }))
       expect(
         (
           await screen.findByRole('menuitem', { name: 'Add a horse' })
         ).getAttribute('href'),
       ).toBe('/horses/create')
-      expect(screen.getAllByRole('menuitem')).toHaveLength(1)
+      expect(
+        within(screen.getByRole('group', { name: 'Add' })).getAllByRole(
+          'menuitem',
+        ),
+      ).toHaveLength(1)
     }
   },
 )
@@ -515,6 +522,7 @@ it('starts mobile training with its title and a single bottom recording action',
       'Plan sessions, record completed work, and review each horse’s training.',
     ),
   ).toBeNull()
+  // The phone bar replaces the title-row action on the daily Training page.
   expect(
     screen.queryByRole('link', { name: 'Add training session' }),
   ).toBeNull()
@@ -598,21 +606,22 @@ it('uses one mobile creation menu and keeps the page title available to screen r
   const heading = await screen.findByRole('heading', { level: 1, name: 'Home' })
   expect(heading.classList.contains('sr-only')).toBe(false)
   expect(screen.queryByText('9 October 2026')).toBeNull()
-  expect(
-    screen.getByRole('button', { name: 'Add event, training log or horse' }),
-  ).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Add or go to' })).toBeTruthy()
   expect(screen.queryByRole('link', { name: 'Add training log' })).toBeNull()
   expect(screen.queryByRole('link', { name: 'Add event' })).toBeNull()
   expect(screen.queryByRole('link', { name: 'Add a horse' })).toBeNull()
-  fireEvent.click(
-    screen.getByRole('button', { name: 'Add event, training log or horse' }),
-  )
+  expect(
+    screen.getByRole('link', { name: 'All horses' }).getAttribute('href'),
+  ).toBe('/horses')
+  fireEvent.click(screen.getByRole('button', { name: 'Add or go to' }))
   expect(
     (await screen.findByRole('menuitem', { name: 'Add a horse' })).getAttribute(
       'href',
     ),
   ).toBe('/horses/create')
-  expect(screen.getAllByRole('menuitem')).toHaveLength(3)
+  expect(
+    within(screen.getByRole('group', { name: 'Add' })).getAllByRole('menuitem'),
+  ).toHaveLength(3)
 })
 
 it('lets read-only horse viewers add their own horse without offering record creation', async () => {
@@ -631,13 +640,15 @@ it('lets read-only horse viewers add their own horse without offering record cre
   ]
   await open()
   await screen.findByRole('heading', { level: 1, name: 'Home' })
-  fireEvent.click(screen.getByRole('button', { name: 'Add a horse' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Add or go to' }))
   expect(
     (await screen.findByRole('menuitem', { name: 'Add a horse' })).getAttribute(
       'href',
     ),
   ).toBe('/horses/create')
-  expect(screen.getAllByRole('menuitem')).toHaveLength(1)
+  expect(
+    within(screen.getByRole('group', { name: 'Add' })).getAllByRole('menuitem'),
+  ).toHaveLength(1)
 })
 
 it('updates all dashboard sections together from stable toggles without blanking existing cards', async () => {

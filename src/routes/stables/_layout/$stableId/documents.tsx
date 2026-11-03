@@ -1,13 +1,13 @@
-import { StableDocumentsPage } from '#/components/documents/StableDocumentsPage'
-import { createFileRoute } from '@tanstack/react-router'
-import type { Id } from 'convex/_generated/dataModel'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
+/** Former standalone page: it now opens inside the stable view as a tab. */
 export const Route = createFileRoute('/stables/_layout/$stableId/documents')({
-  component: RouteComponent,
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: '/stables/$stableId/stable',
+      params,
+      search: { tab: 'documents' },
+      replace: true,
+    })
+  },
 })
-
-function RouteComponent() {
-  const { stableId } = Route.useParams()
-
-  return <StableDocumentsPage stableId={stableId as Id<'stables'>} />
-}

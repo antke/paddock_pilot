@@ -39,7 +39,7 @@ describe('actual members settings sample', () => {
     expect(screen.queryByRole('heading', { level: 1 })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Show 50 members' }))
     expect(
-      screen.getAllByRole('button', { name: 'Edit details' }),
+      screen.getAllByRole('button', { name: /^Edit details for / }),
     ).toHaveLength(49)
     for (const label of [
       'Accepted',
@@ -56,14 +56,18 @@ describe('actual members settings sample', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'Owner only, no invitations' }),
     )
-    expect(screen.queryByRole('button', { name: 'Edit details' })).toBeNull()
+    expect(
+      screen.queryByRole('button', { name: /^Edit details for / }),
+    ).toBeNull()
     expect(screen.getByText('No invitations yet.')).toBeTruthy()
   })
 
   it('moves focus into the row editor, preserves rejected edits, and returns focus after save and cancel', async () => {
     setup()
     outcome('reject')
-    const edit = row('Sample Rae').getByRole('button', { name: 'Edit details' })
+    const edit = row('Sample Rae').getByRole('button', {
+      name: /^Edit details for /,
+    })
     fireEvent.click(edit)
     const input = screen.getByLabelText<HTMLInputElement>('Phone')
     expect(document.activeElement).toBe(input)
@@ -78,7 +82,7 @@ describe('actual members settings sample', () => {
     )
     expect(
       screen
-        .getAllByRole('button', { name: 'Edit details' })
+        .getAllByRole('button', { name: /^Edit details for / })
         .every((button) => button.hasAttribute('disabled')),
     ).toBe(true)
     await screen.findByText(
@@ -86,9 +90,7 @@ describe('actual members settings sample', () => {
     )
     expect(input.value).toBe('+48 500 123 456')
     fireEvent.submit(input.closest('form')!)
-    await waitFor(() =>
-      expect(screen.queryByLabelText('Phone')).toBeNull(),
-    )
+    await waitFor(() => expect(screen.queryByLabelText('Phone')).toBeNull())
     await waitFor(() => expect(document.activeElement).toBe(edit))
     expect(screen.getByText('+48 500 123 456')).toBeTruthy()
     fireEvent.click(edit)

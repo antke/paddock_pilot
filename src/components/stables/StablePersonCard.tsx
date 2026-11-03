@@ -30,12 +30,26 @@ export function StablePersonCard({
       chrome="flat"
       density="compact"
       interactive={false}
-      actionBadges={<StableMemberRoleBadge role={role} />}
+      // With row actions the badge leads the action column; a read-only row
+      // keeps it beside the name so it never drops onto its own line.
+      actionBadges={actions ? <StableMemberRoleBadge role={role} /> : undefined}
       actions={actions}
       footer={footer}
     >
       <DashboardItemCardContent
-        title={name}
+        title={
+          actions ? (
+            name
+          ) : (
+            <>
+              {name}{' '}
+              <StableMemberRoleBadge
+                role={role}
+                className="ml-1 min-w-0 align-[0.1em]"
+              />
+            </>
+          )
+        }
         titleSize="sm"
         titleClassName="wrap-anywhere"
         metaClassName="[&>span]:min-w-0 [&>span]:max-w-full [&>span]:wrap-anywhere"

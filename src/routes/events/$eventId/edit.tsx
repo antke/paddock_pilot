@@ -10,12 +10,14 @@ export const Route = createFileRoute('/events/$eventId/edit')({
     horseId?: string
     participationId?: string
     stableId?: string
+    focus?: 'status'
   } => ({
     stableId: typeof s.stableId === 'string' ? s.stableId : undefined,
     date: typeof s.date === 'string' ? s.date : undefined,
     horseId: typeof s.horseId === 'string' ? s.horseId : undefined,
     participationId:
       typeof s.participationId === 'string' ? s.participationId : undefined,
+    focus: s.focus === 'status' ? 'status' : undefined,
   }),
   component: Page,
 })

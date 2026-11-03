@@ -18,11 +18,10 @@ import { EventTable } from '#/components/events/EventList'
 import { EventRow } from '#/components/events/EventRow'
 import { formatEventDate } from '#/components/events/eventDisplay'
 import { StableEventsCalendar } from '#/components/stables/StableEventsCalendar'
-import { MobileActionBar } from '#/components/layout/MobileActionBar'
+import { PagePrimaryAction } from '#/components/layout/PagePrimaryAction'
 import { useTaskOriginState } from '#/components/layout/mobileTaskNavigation'
 import { ButtonLink } from '#/components/ui/button'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
-import { useSmallScreen } from '#/lib/useSmallScreen'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { useAppointmentCopy } from './appointmentCopy'
 import { getUpcomingAppointmentOccurrences } from './appointmentData'
@@ -68,18 +67,7 @@ export function PersonalAppointmentsView({
   horses?: ReadonlyArray<CalendarHorse>
 }) {
   const c = useAppointmentCopy()
-  const small = useSmallScreen()
   const taskState = useTaskOriginState()
-  const addEvent = (
-    <ButtonLink
-      to="/events/create"
-      action="schedule"
-      size="control"
-      state={taskState}
-    >
-      {c.add}
-    </ButtonLink>
-  )
   const viewControl = (
     <CalendarViewControl
       value={view}
@@ -97,6 +85,13 @@ export function PersonalAppointmentsView({
         showWorkspace={false}
         title={c.title}
         description={c.intro}
+        actions={
+          <PagePrimaryAction>
+            <ButtonLink to="/events/create" action="schedule" state={taskState}>
+              {c.add}
+            </ButtonLink>
+          </PagePrimaryAction>
+        }
       />
       {filters}
       {notices}
@@ -106,13 +101,11 @@ export function PersonalAppointmentsView({
           events={events}
           storageKey="paddock:events:personal:month"
           viewControl={viewControl}
-          actions={addEvent}
         />
       ) : (
         <DashboardSectionCard>
           <div className="flex flex-wrap items-center justify-end gap-2">
             {viewControl}
-            {!small && addEvent}
           </div>
           <EventTable
             events={events}
@@ -122,7 +115,6 @@ export function PersonalAppointmentsView({
           />
         </DashboardSectionCard>
       )}
-      {small && <MobileActionBar>{addEvent}</MobileActionBar>}
     </DashboardPage>
   )
 }

@@ -97,6 +97,12 @@ function HorseRecordsSample({ data }: { data: DashboardLabData }) {
               onCreateActionChange={onCreateActionChange}
             />
           )}
+          renderMedication={(onCreateActionChange) => (
+            <MedicationRecordsSample
+              horse={horse}
+              onCreateActionChange={onCreateActionChange}
+            />
+          )}
         />
       ) : (
         <HorseNutritionSection
@@ -112,12 +118,6 @@ function HorseRecordsSample({ data }: { data: DashboardLabData }) {
           )}
           renderWeight={(onCreateActionChange) => (
             <WeightRecordsSample
-              horse={horse}
-              onCreateActionChange={onCreateActionChange}
-            />
-          )}
-          renderMedication={(onCreateActionChange) => (
-            <MedicationRecordsSample
               horse={horse}
               onCreateActionChange={onCreateActionChange}
             />

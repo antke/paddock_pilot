@@ -11,6 +11,7 @@ import {
   RouteQueryErrorAlert,
 } from '#/components/layout/RouteStatusAlert'
 import { StableMembersPage } from '#/components/stables/StableMembersPage'
+import { StableMembersManagement } from '#/components/stables/StableMembersSettingsCard'
 
 export const Route = createFileRoute('/stables/_layout/$stableId/members')({
   component: RouteComponent,
@@ -41,6 +42,11 @@ function RouteComponent() {
       access={access}
       people={people}
       myDetails={myDetails}
+      management={
+        access.role === 'owner' ? (
+          <StableMembersManagement stableId={stable._id} />
+        ) : undefined
+      }
     />
   )
 }

@@ -50,10 +50,7 @@ describe('reminder actions', () => {
         {...actions}
       />,
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Actions for Farrier' }))
-    fireEvent.click(
-      await screen.findByRole('menuitem', { name: 'Edit reminder' }),
-    )
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Farrier' }))
     const due = await screen.findByLabelText<HTMLInputElement>('Due date')
     fireEvent.change(due, { target: { value: '2026-10-08' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
@@ -258,4 +255,98 @@ it('shows the local care receipt only after acknowledgement, retains retry after
     ),
   )
   expect(document.querySelector('[data-slot="care-confirmation"]')).toBeNull()
+})
+
+describe('complete and schedule next', () => {
+  it('lists the next-date editor first in the row menu without completing anything', async () => {
+    const actions = callbacks()
+    render(
+      <CareRemindersCard
+        reminders={[{ reminder, canManage: true }]}
+        canAddReminder={false}
+        emptyMessage="Empty"
+        {...actions}
+      />,
+    )
+    expect(
+      screen.getByRole('button', { name: 'Complete Farrier' }),
+    ).toBeTruthy()
+    // Edit and Remove sit in the row footer; scheduling the next date is the
+    // first item of the overflow menu.
+    expect(screen.getByRole('button', { name: 'Edit Farrier' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Remove Farrier' })).toBeTruthy()
+    expect(
+      screen.queryByRole('button', { name: /and schedule next/ }),
+    ).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Actions for Farrier' }))
+    const menu = await screen.findByRole('menu')
+    expect(
+      within(menu)
+        .getAllByRole('menuitem')
+        .map((item) => item.textContent),
+    ).toEqual(['Complete and schedule next', 'Dismiss'])
+    fireEvent.click(
+      within(menu).getByRole('menuitem', {
+        name: 'Complete and schedule next',
+      }),
+    )
+    const dialog = await screen.findByRole('dialog', {
+      name: 'Complete and schedule next',
+    })
+    expect(within(dialog).getByLabelText('Next due date')).toBeTruthy()
+    expect(
+      within(dialog).getByText(
+        'The reminder is completed only when you save the next due date.',
+      ),
+    ).toBeTruthy()
+    expect(actions.onComplete).not.toHaveBeenCalled()
+    fireEvent.keyDown(dialog, { key: 'Escape' })
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(actions.onComplete).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    {
+      name: 'an existing follow-up',
+      item: {
+        reminder: {
+          ...reminder,
+          followUpReminderId: 'reminder-2' as Doc<'careReminders'>['_id'],
+        },
+        canManage: true,
+      },
+    },
+    {
+      name: 'a completion-only assignee',
+      item: { reminder, canManage: false, canComplete: true },
+    },
+    {
+      name: 'a completed reminder',
+      item: {
+        reminder: { ...reminder, status: 'completed' as const },
+        canManage: true,
+      },
+    },
+  ])('is not offered for $name', async ({ item }) => {
+    render(
+      <CareRemindersCard
+        reminders={[item]}
+        canAddReminder={false}
+        emptyMessage="Empty"
+        {...callbacks()}
+      />,
+    )
+    const trigger = screen.queryByRole('button', {
+      name: 'Actions for Farrier',
+    })
+    if (trigger) {
+      fireEvent.click(trigger)
+      const menu = await screen.findByRole('menu')
+      expect(
+        within(menu).queryByRole('menuitem', {
+          name: 'Complete and schedule next',
+        }),
+      ).toBeNull()
+    }
+  })
 })

@@ -1,31 +1,16 @@
 import { useWorkspace } from '#/components/layout/WorkspaceContext'
 import { EventIcon, TrainingIcon } from '#/components/icons/domain-icons'
 import { Link } from '@tanstack/react-router'
-import {
-  PencilSimpleIcon,
-  BellIcon,
-  FirstAidKitIcon,
-  GrainsIcon,
-  ScalesIcon,
-  PillIcon,
-  FilePlusIcon,
-} from '@phosphor-icons/react'
+import { PencilSimpleIcon } from '@phosphor-icons/react'
 import type { Ref } from 'react'
-import { DropdownMenuSeparator } from '#/components/ui/dropdown-menu'
 import {
   MobileActionMenu,
   MobileActionMenuItem,
+  MobileActionMenuSeparator,
 } from '#/components/layout/MobileActionMenu'
 import { useTaskOriginState } from '#/components/layout/mobileTaskNavigation'
 import { useT } from '#/i18n/LocaleProvider'
-
-export type HorseCreateAction =
-  'reminder' | 'health' | 'nutrition' | 'weight' | 'medication' | 'document'
-declare module '@tanstack/react-router' {
-  interface HistoryState {
-    horseCreateAction?: HorseCreateAction
-  }
-}
+import { useHorseRecordActions } from './horseRecordActions'
 
 export function HorseActionMenu({
   horseId,
@@ -45,50 +30,7 @@ export function HorseActionMenu({
   const taskState = useTaskOriginState()
   if (!canManageHorse && !canAddRecords) return null
 
-  const recordActions = [
-    {
-      id: 'reminder',
-      label: t('reminders.addCare'),
-      Icon: BellIcon,
-      to: '/horses/$horseId/care',
-      search: {},
-    },
-    {
-      id: 'health',
-      label: t('careRecords.addHealthIssue'),
-      Icon: FirstAidKitIcon,
-      to: '/horses/$horseId/care',
-      search: { careView: 'health' },
-    },
-    {
-      id: 'nutrition',
-      label: t('careRecords.addNutrition'),
-      Icon: GrainsIcon,
-      to: '/horses/$horseId/nutrition',
-      search: {},
-    },
-    {
-      id: 'weight',
-      label: t('careRecords.addWeight'),
-      Icon: ScalesIcon,
-      to: '/horses/$horseId/nutrition',
-      search: { nutritionView: 'weight' },
-    },
-    {
-      id: 'medication',
-      label: t('careRecords.addMedication'),
-      Icon: PillIcon,
-      to: '/horses/$horseId/nutrition',
-      search: { nutritionView: 'medication' },
-    },
-    {
-      id: 'document',
-      label: t('documents.add'),
-      Icon: FilePlusIcon,
-      to: '/horses/$horseId/documents',
-      search: {},
-    },
-  ] as const
+  const recordActions = useHorseRecordActions()
 
   return (
     <MobileActionMenu
@@ -152,12 +94,16 @@ export function HorseActionMenu({
         ))}
       {canManageHorse && (
         <>
-          <DropdownMenuSeparator />
+          <MobileActionMenuSeparator />
           <MobileActionMenuItem
             render={
               <Link
-                to="/horses/$horseId/edit"
-                params={{ horseId }}
+                to={
+                  workspace?.stableId
+                    ? '/stables/$stableId/horses/$horseId/edit'
+                    : '/horses/$horseId/edit'
+                }
+                params={{ horseId, stableId: workspace?.stableId ?? '' }}
                 state={taskState}
               />
             }

@@ -1,3 +1,4 @@
+import { TrainingAddSessionAction } from '#/components/training/TrainingAddSessionAction'
 import {
   ActivityCalendarFilter,
   useActivityCalendars,
@@ -33,6 +34,14 @@ function TrainingLog() {
         showWorkspace={false}
         title={t('trainingViews.log')}
         description={!small ? t('trainingViews.logHelp') : undefined}
+        actions={
+          <TrainingAddSessionAction
+            stableId={stableId}
+            canRecord={Boolean(
+              calendars.data?.horses.some((horse) => horse.canRecord),
+            )}
+          />
+        }
       />
       <ActivityCalendarFilter
         stables={calendars.stables}
@@ -47,6 +56,7 @@ function TrainingLog() {
         {...(calendars.data ?? { horses: [], events: [], records: [] })}
         mixedSources={calendars.mixedSources}
         initialHorseIds={horseIds}
+        pageOwnsAddAction
       />
     </DashboardPage>
   )

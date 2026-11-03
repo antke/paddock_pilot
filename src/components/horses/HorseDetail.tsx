@@ -1,7 +1,7 @@
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useOwnershipCopy } from '#/components/ownership/ownershipCopy'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
-import { ChartLineIcon } from '@phosphor-icons/react'
+import { PencilSimpleIcon } from '@phosphor-icons/react'
 import { getHorseBreedLabel } from 'shared/i18n/horseBreedLabels'
 import {
   DashboardNavigation,
@@ -33,6 +33,8 @@ import { HorseNutritionSection } from './HorseNutritionSection'
 import { HorseProfileSection } from './HorseProfileSection'
 import { HorseAvatar } from './HorseAvatar'
 import { HorseActionMenu } from './HorseActionMenu'
+import { HorseAddRecordMenu } from './HorseAddRecordMenu'
+import { useTaskOriginState } from '#/components/layout/mobileTaskNavigation'
 import { ButtonLink } from '#/components/ui/button'
 import { parseHorseCareSearch } from './horseCareSearch'
 import { parseHorseNutritionSearch } from './horseNutritionSearch'
@@ -60,6 +62,8 @@ export type HorseDetailSectionProps = {
   stableId?: string
   horse: HorseDetailHorse
   events: Array<Doc<'events'>>
+  /** Shows contextual entries into the shared horse editor. */
+  canManageHorse?: boolean
 }
 
 export function HorseDetail({
@@ -97,7 +101,7 @@ export function HorseDetail({
   }, [router])
   const recordCreateActions = useMemo(
     () => ({
-      hideTriggers: isSmallScreen,
+      ownsFloatingAction: isSmallScreen,
       requestedAction: locationState.horseCreateAction,
       consumeAction,
       returnFocus: () => actionTrigger.current,
@@ -120,6 +124,15 @@ export function HorseDetail({
     '/manage',
     '/analysis',
   ].some((path) => pathAfterHorse.startsWith(path))
+  const taskState = useTaskOriginState()
+  const avatar = (
+    <HorseAvatar
+      name={getHorseDisplayName(horse)}
+      profileImageUrl={horse.profileImageUrl}
+      size="lg"
+      className="size-16 sm:size-24"
+    />
+  )
   const heroDescription = formatMetaText([
     horse.ownerName
       ? t('horseDetail.owner', { name: horse.ownerName })
@@ -133,7 +146,24 @@ export function HorseDetail({
       <DashboardPage>
         <DashboardEntityHero
           className="print:hidden"
-          title={getHorseDisplayName(horse)}
+          backAction={pathAfterHorse.startsWith('/edit') ? null : undefined}
+          // The name returns to the horse's main profile section, like a home
+          // link within the record. Ownership and placement already appear in
+          // the description, so no workspace suffix is added.
+          title={
+            <Link
+              to={
+                stableId
+                  ? '/stables/$stableId/horses/$horseId/profile'
+                  : '/horses/$horseId/profile'
+              }
+              params={{ horseId: horse._id, stableId: stableId ?? '' }}
+              resetScroll={false}
+              className="app-control-focus rounded-control text-inherit no-underline hover:text-primary hover:no-underline"
+            >
+              {getHorseDisplayName(horse)}
+            </Link>
+          }
           description={heroDescription || undefined}
           actionsLayout="inline"
           actions={
@@ -155,25 +185,23 @@ export function HorseDetail({
                     {t('eventEditor.addEvent')}
                   </ButtonLink>
                 )}
-                {!isSmallScreen && (
-                  <ButtonLink
-                    to="/horses/$horseId/analysis"
-                    params={{ horseId: horse._id }}
-                    variant="outline"
-                    className="min-h-11 whitespace-nowrap"
-                  >
-                    <ChartLineIcon
-                      data-icon="inline-start"
-                      weight="bold"
-                      aria-hidden="true"
-                    />
-                    {t('navigation.analysis')}
-                  </ButtonLink>
+                {canAddRecords && !pathAfterHorse.startsWith('/edit') && (
+                  <HorseAddRecordMenu
+                    triggerRef={actionTrigger}
+                    horseId={horse._id}
+                    horseName={getHorseDisplayName(horse)}
+                    stableId={stableId}
+                  />
                 )}
                 {canManageHorse && !pathAfterHorse.startsWith('/edit') && (
                   <ButtonLink
-                    to="/horses/$horseId/edit"
-                    params={{ horseId: horse._id }}
+                    to={
+                      stableId
+                        ? '/stables/$stableId/horses/$horseId/edit'
+                        : '/horses/$horseId/edit'
+                    }
+                    params={{ horseId: horse._id, stableId: stableId ?? '' }}
+                    state={taskState}
                     variant="ghost"
                     action="edit"
                     className="min-h-11 whitespace-nowrap"
@@ -185,12 +213,33 @@ export function HorseDetail({
             ) : undefined
           }
           leading={
-            <HorseAvatar
-              name={getHorseDisplayName(horse)}
-              profileImageUrl={horse.profileImageUrl}
-              size="lg"
-              className="size-16 sm:size-24"
-            />
+            canManageHorse && !pathAfterHorse.startsWith('/edit') ? (
+              <Link
+                to={
+                  stableId
+                    ? '/stables/$stableId/horses/$horseId/edit'
+                    : '/horses/$horseId/edit'
+                }
+                params={{ horseId: horse._id, stableId: stableId ?? '' }}
+                search={{ section: 'photo' }}
+                state={taskState}
+                aria-label={t('horseDetail.changePhotoNamed', {
+                  name: getHorseDisplayName(horse),
+                })}
+                title={t('horseDetail.changePhoto')}
+                className="app-control-focus group/photo relative block rounded-row"
+              >
+                {avatar}
+                <span
+                  aria-hidden="true"
+                  className="absolute -right-1.5 -bottom-1.5 grid size-7 place-items-center rounded-full border border-border bg-surface-elevated text-muted-foreground shadow-sm transition-colors group-hover/photo:border-primary group-hover/photo:text-foreground print:hidden"
+                >
+                  <PencilSimpleIcon weight="bold" className="size-3.5" />
+                </span>
+              </Link>
+            ) : (
+              avatar
+            )
           }
         >
           <div className="min-w-0 border-t border-border-subtle pt-4">
@@ -223,31 +272,40 @@ export function HorseDetail({
               ))}
               {(
                 [
+                  { path: 'analysis', label: t('navigation.analysis') },
                   { path: 'manage', label: c.manage },
                   { path: 'timeline', label: t('horseDetail.timeline') },
                   { path: 'care-summary', label: t('horseDetail.summary') },
                 ] as const
-              ).map((item) => (
-                <DashboardNavigationLinkItem
-                  key={item.path}
-                  itemClassName="hidden lg:block"
-                  variant="section"
-                  active={pathAfterHorse.startsWith(`/${item.path}`)}
-                  render={
-                    <Link
-                      resetScroll={false}
-                      to={
-                        stableId && item.path !== 'manage'
-                          ? `/stables/$stableId/horses/$horseId/${item.path}`
-                          : `/horses/$horseId/${item.path}`
-                      }
-                      params={{ horseId: horse._id, stableId: stableId ?? '' }}
-                    />
-                  }
-                >
-                  {item.label}
-                </DashboardNavigationLinkItem>
-              ))}
+              )
+                // Phones reach Analysis through More only.
+                .filter((item) => !isSmallScreen || item.path !== 'analysis')
+                .map((item) => (
+                  <DashboardNavigationLinkItem
+                    key={item.path}
+                    itemClassName="hidden lg:block"
+                    variant="section"
+                    active={pathAfterHorse.startsWith(`/${item.path}`)}
+                    render={
+                      <Link
+                        resetScroll={false}
+                        to={
+                          stableId &&
+                          item.path !== 'manage' &&
+                          item.path !== 'analysis'
+                            ? `/stables/$stableId/horses/$horseId/${item.path}`
+                            : `/horses/$horseId/${item.path}`
+                        }
+                        params={{
+                          horseId: horse._id,
+                          stableId: stableId ?? '',
+                        }}
+                      />
+                    }
+                  >
+                    {item.label}
+                  </DashboardNavigationLinkItem>
+                ))}
               <DashboardNavigationMenuGroup
                 itemClassName="lg:hidden"
                 active={moreSectionActive}
@@ -255,21 +313,19 @@ export function HorseDetail({
                 contentWidth="sm"
                 variant="section"
               >
-                {isSmallScreen && (
-                  <DashboardNavigationMenuLink
-                    active={pathAfterHorse.startsWith('/analysis')}
-                    variant="section"
-                    render={
-                      <Link
-                        resetScroll={false}
-                        to="/horses/$horseId/analysis"
-                        params={{ horseId: horse._id }}
-                      />
-                    }
-                  >
-                    {t('navigation.analysis')}
-                  </DashboardNavigationMenuLink>
-                )}
+                <DashboardNavigationMenuLink
+                  active={pathAfterHorse.startsWith('/analysis')}
+                  variant="section"
+                  render={
+                    <Link
+                      resetScroll={false}
+                      to="/horses/$horseId/analysis"
+                      params={{ horseId: horse._id }}
+                    />
+                  }
+                >
+                  {t('navigation.analysis')}
+                </DashboardNavigationMenuLink>
                 <DashboardNavigationMenuLink
                   active={pathAfterHorse.startsWith('/manage')}
                   variant="section"
@@ -341,6 +397,7 @@ export function HorseDetail({
               stableId={stableId}
               horse={horse}
               events={events}
+              canManageHorse={canManageHorse}
             />
           )}
           {activeCategory === 'activity' && (
@@ -363,14 +420,15 @@ export function HorseDetail({
               stableId={stableId}
               horse={horse}
               events={events}
-              activeTab={careView === 'health' ? 'health' : 'reminders'}
+              canManageHorse={canManageHorse}
+              activeTab={careView ?? 'reminders'}
               onTabChange={(tab) => {
                 void navigate({
                   to: stableId
                     ? '/stables/$stableId/horses/$horseId/care'
                     : '/horses/$horseId/care',
                   params: { horseId: horse._id, stableId: stableId ?? '' },
-                  search: tab === 'health' ? { careView: 'health' } : {},
+                  search: tab === 'reminders' ? {} : { careView: tab },
                   replace: true,
                   resetScroll: false,
                 })
@@ -382,6 +440,7 @@ export function HorseDetail({
               stableId={stableId}
               horse={horse}
               events={events}
+              canManageHorse={canManageHorse}
               activeTab={nutritionView ?? 'nutrition'}
               onTabChange={(tab) => {
                 void navigate({
@@ -416,7 +475,7 @@ function getHorseDetailCategory(
   if (pathAfterHorse === '/training') return 'training'
   if (pathAfterHorse === '/activity') return 'activity'
   if (pathAfterHorse === '/care') return 'care'
-  if (pathAfterHorse === '/health') return 'nutrition'
+  if (pathAfterHorse === '/health') return 'care'
   if (pathAfterHorse === '/nutrition') return 'nutrition'
   if (pathAfterHorse === '/documents') return 'documents'
   if (pathAfterHorse.startsWith('/profile') || pathAfterHorse === '') {

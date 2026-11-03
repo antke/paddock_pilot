@@ -44,6 +44,10 @@ describe('actual horse record section samples', () => {
     expect(
       await screen.findByRole('tabpanel', { name: 'Health issues' }),
     ).toBeTruthy()
+    fireEvent.click(screen.getByRole('tab', { name: 'Medication' }))
+    expect(
+      await screen.findByRole('tabpanel', { name: 'Medication' }),
+    ).toBeTruthy()
     fireEvent.change(screen.getByLabelText('Sample section'), {
       target: { value: 'nutrition' },
     })
@@ -52,10 +56,7 @@ describe('actual horse record section samples', () => {
     ).toBeTruthy()
     fireEvent.click(screen.getByRole('tab', { name: 'Weight' }))
     expect(await screen.findByRole('tabpanel', { name: 'Weight' })).toBeTruthy()
-    fireEvent.click(screen.getByRole('tab', { name: 'Medication' }))
-    expect(
-      await screen.findByRole('tabpanel', { name: 'Medication' }),
-    ).toBeTruthy()
+    expect(screen.queryByRole('tab', { name: 'Medication' })).toBeNull()
     expect(useMutation).not.toHaveBeenCalled()
   })
 })

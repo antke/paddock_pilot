@@ -1,4 +1,5 @@
 import type { ComponentProps, ReactNode } from 'react'
+import { SectionEditSlot } from './SectionEditSlot'
 
 import { Card, CardContent, CardFooter, CardHeader } from '#/components/ui/card'
 import { Separator } from '#/components/ui/separator'
@@ -24,6 +25,7 @@ type DashboardSectionCardProps = Omit<
     DashboardSectionHeaderProps,
     | 'titleSupplement'
     | 'actions'
+    | 'edit'
     | 'actionsClassName'
     | 'as'
     | 'badges'
@@ -68,6 +70,8 @@ type DashboardSubsectionProps = Omit<
   > & {
     children: ReactNode
     contentClassName?: string
+    /** The subsection's pencil, kept at the end of its title row. */
+    edit?: ReactNode
     gap?: DashboardSubsectionGap
     headerClassName?: string
   }
@@ -99,6 +103,7 @@ const dashboardSubsectionGapClassNames = {
 export function DashboardSectionCard({
   actions,
   actionsClassName,
+  edit,
   as,
   badges,
   children,
@@ -132,6 +137,7 @@ export function DashboardSectionCard({
     title !== undefined ||
     description !== undefined ||
     actions !== undefined ||
+    edit !== undefined ||
     badges !== undefined
 
   return (
@@ -152,6 +158,7 @@ export function DashboardSectionCard({
               titleSupplement={titleSupplement}
               actions={actions}
               actionsClassName={actionsClassName}
+              edit={edit}
               as={as}
               badges={badges}
               description={description}
@@ -196,6 +203,7 @@ export function DashboardSectionDivider({
 
 export function DashboardSubsection({
   aside,
+  edit,
   as = 'h3',
   children,
   className,
@@ -225,7 +233,14 @@ export function DashboardSubsection({
       {...props}
     >
       <DashboardInlineHeader
-        aside={aside}
+        aside={
+          aside || edit ? (
+            <>
+              {aside}
+              {edit && <SectionEditSlot>{edit}</SectionEditSlot>}
+            </>
+          ) : undefined
+        }
         as={as}
         className={headerClassName}
         description={description}

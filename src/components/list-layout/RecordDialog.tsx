@@ -7,7 +7,7 @@ import { Button } from '#/components/ui/button'
 import { DialogContent, DialogTrigger } from '#/components/ui/dialog'
 import { cn } from '#/lib/utils'
 
-type RecordDialogDesktopTriggerProps = {
+type RecordDialogTitleTriggerProps = {
   triggerRef?: Ref<HTMLButtonElement>
   children: ReactNode
 }
@@ -17,15 +17,13 @@ type RecordDialogFloatingTriggerProps = {
   label: string
 }
 
-export function RecordDialogDesktopTrigger({
+/** The section's "Add …" button, on the same row as its title at every width. */
+export function RecordDialogTitleTrigger({
   triggerRef,
   children,
-}: RecordDialogDesktopTriggerProps) {
+}: RecordDialogTitleTriggerProps) {
   return (
-    <DashboardActions
-      data-slot="record-dialog-desktop-trigger"
-      className="hidden md:flex"
-    >
+    <DashboardActions data-slot="record-dialog-title-trigger">
       <DialogTrigger
         ref={triggerRef}
         render={<Button type="button" action="create" />}

@@ -1,7 +1,8 @@
 import { createContext, useContext } from 'react'
 
 type RecordCreateActions = {
-  hideTriggers: boolean
+  /** The page renders its own phone action menu; sections skip the shortcut registry. */
+  ownsFloatingAction: boolean
   requestedAction?: string
   consumeAction: () => void
   returnFocus: () => HTMLElement | null

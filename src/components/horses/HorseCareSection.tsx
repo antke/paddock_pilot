@@ -13,9 +13,11 @@ import type { ReactNode } from 'react'
 import { HorseCareRemindersCard } from '../reminders/HorseCareRemindersCard'
 import type { HorseDetailSectionProps } from './HorseDetail'
 import { HorseHealthIssuesCard } from './HorseHealthIssuesCard'
+import { HorseMedicationRecordsCard } from './HorseMedicationRecordsCard'
 import { HorseDetailSectionTabs } from './HorseDetailSectionTabs'
+import { HorseEditEntry } from './HorseEditEntry'
 
-type CareTab = 'reminders' | 'health'
+type CareTab = 'reminders' | 'health' | 'medication'
 
 type SectionActionRenderer = (
   onCreateActionChange: (action: ReactNode | null) => void,
@@ -26,14 +28,18 @@ type HorseCareSectionViewProps = HorseDetailSectionProps & {
   onTabChange?: (tab: CareTab) => void
   renderReminders?: SectionActionRenderer
   renderHealthIssues?: SectionActionRenderer
+  renderMedication?: SectionActionRenderer
 }
 
 export function HorseCareSection({
   horse,
+  stableId,
+  canManageHorse = false,
   activeTab: controlledTab,
   onTabChange,
   renderReminders,
   renderHealthIssues,
+  renderMedication,
 }: HorseCareSectionViewProps) {
   const t = useT()
 
@@ -50,6 +56,12 @@ export function HorseCareSection({
       title: t('careRecords.healthIssues'),
       description: t('careRecords.healthHelp'),
     },
+    {
+      id: 'medication',
+      label: t('careRecords.medication'),
+      title: t('careRecords.medication'),
+      description: t('careRecords.medicationHelp'),
+    },
   ] as const
 
   const [localTab, setLocalTab] = useState<CareTab>('reminders')
@@ -61,11 +73,25 @@ export function HorseCareSection({
   )
   return (
     <>
-      {(hasContacts || horse.emergencyNotes) && (
+      {(hasContacts || horse.emergencyNotes || canManageHorse) && (
         <DashboardSectionCard>
           <DetailReference>
-            {hasContacts && (
-              <DetailReferenceGroup title={t('careRecords.careContacts')}>
+            {(hasContacts || canManageHorse) && (
+              <DetailReferenceGroup
+                layout="stacked"
+                title={t('careRecords.careContacts')}
+                edit={
+                  canManageHorse && (
+                    <HorseEditEntry
+                      appearance="icon"
+                      horseId={horse._id}
+                      stableId={stableId}
+                      section="care"
+                      label={t('horseDetail.editCareContacts')}
+                    />
+                  )
+                }
+              >
                 <DetailReferenceList mobileColumns={2}>
                   <CareContact
                     label={t('careRecords.vet')}
@@ -81,8 +107,22 @@ export function HorseCareSection({
               </DetailReferenceGroup>
             )}
             {horse.emergencyNotes && (
-              <DetailReferenceGroup title={t('careRecords.emergencyNotes')}>
-                <p className="max-w-prose whitespace-pre-wrap text-base leading-6 wrap-anywhere">
+              <DetailReferenceGroup
+                layout="stacked"
+                title={t('careRecords.emergencyNotes')}
+                edit={
+                  canManageHorse && (
+                    <HorseEditEntry
+                      appearance="icon"
+                      horseId={horse._id}
+                      stableId={stableId}
+                      section="care"
+                      label={t('horseDetail.editEmergencyNotes')}
+                    />
+                  )
+                }
+              >
+                <p className="max-w-prose whitespace-pre-wrap text-lg leading-snug wrap-anywhere">
                   {horse.emergencyNotes}
                 </p>
               </DetailReferenceGroup>
@@ -115,6 +155,15 @@ export function HorseCareSection({
             renderHealthIssues(setHeaderAction)
           ) : (
             <HorseHealthIssuesCard
+              horse={horse}
+              onCreateActionChange={setHeaderAction}
+            />
+          ))}
+        {activeTab === 'medication' &&
+          (renderMedication ? (
+            renderMedication(setHeaderAction)
+          ) : (
+            <HorseMedicationRecordsCard
               horse={horse}
               onCreateActionChange={setHeaderAction}
             />

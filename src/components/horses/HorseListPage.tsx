@@ -1,3 +1,7 @@
+import type { ReactNode } from 'react'
+import { useNavigate } from '@tanstack/react-router'
+import { useTaskOriginState } from '#/components/layout/mobileTaskNavigation'
+import { FloatingCreateShortcut } from '#/components/layout/floatingActionsContext'
 import { useT } from '#/i18n/LocaleProvider'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
@@ -10,10 +14,18 @@ import type { HorseListHorse } from './HorseList'
 type HorseListPageProps = {
   horses: ReadonlyArray<HorseListHorse>
   stableId: string
+  /** Further permitted Add actions, shown after Add horse in the title row. */
+  extraActions?: ReactNode
 }
 
-export function HorseListPage({ horses, stableId }: HorseListPageProps) {
+export function HorseListPage({
+  horses,
+  stableId,
+  extraActions,
+}: HorseListPageProps) {
   const t = useT()
+  const navigate = useNavigate()
+  const taskState = useTaskOriginState()
 
   return (
     <DashboardPage>
@@ -21,13 +33,27 @@ export function HorseListPage({ horses, stableId }: HorseListPageProps) {
         title={t('horseList.horses')}
         description={t('horseList.stableCount', { count: horses.length })}
         actions={
-          <ButtonLink
-            to="/stables/$stableId/horses/create"
-            params={{ stableId }}
-            action="create"
-          >
-            {t('horseList.addHorse')}
-          </ButtonLink>
+          <>
+            <ButtonLink
+              to="/stables/$stableId/horses/create"
+              params={{ stableId }}
+              action="create"
+            >
+              {t('horseList.addHorse')}
+            </ButtonLink>
+            {extraActions}
+          </>
+        }
+      />
+
+      <FloatingCreateShortcut
+        label={t('horseList.addHorse')}
+        onSelect={() =>
+          void navigate({
+            to: '/stables/$stableId/horses/create',
+            params: { stableId },
+            state: taskState,
+          })
         }
       />
 

@@ -180,13 +180,18 @@ function StableSwitcher() {
         const routes = {
           overview: '/stables/$stableId',
           members: '/stables/$stableId/stable',
-          welcome: '/stables/$stableId/welcome',
+          welcome: '/stables/$stableId/stable',
           settings: '/stables/$stableId/settings',
         } as const
         void navigate({
           to: routes[destination],
           params: { stableId: activeStableId },
-          search: destination === 'members' ? { tab: 'people' } : {},
+          search:
+            destination === 'members'
+              ? { tab: 'people' as const }
+              : destination === 'welcome'
+                ? { tab: 'welcome' as const }
+                : {},
         })
       }}
     />

@@ -1,11 +1,4 @@
 import { MotionList } from '#/components/motion/MotionList'
-import { DotsThreeIcon } from '@phosphor-icons/react'
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from '#/components/ui/dropdown-menu'
 import type { RefObject } from 'react'
 import { useT } from '#/i18n/LocaleProvider'
 import { StableProviderForm } from '#/components/stables/StableProviderForm'
@@ -15,6 +8,7 @@ import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCar
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
 import { Button } from '#/components/ui/button'
+import { EditActionButton } from '#/components/ui/edit-action'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -178,7 +172,6 @@ function ProviderRow({
   const t = useT()
 
   const [isEditing, setIsEditing] = useState(false)
-  const [removeOpen, setRemoveOpen] = useState(false)
   const editTrigger = useRef<HTMLButtonElement>(null)
   const wasEditing = useRef(false)
   useEffect(() => {
@@ -204,37 +197,12 @@ function ProviderRow({
       actions={
         canManage ? (
           <>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    ref={editTrigger}
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label={t('stables.providerActions', {
-                      name: provider.name,
-                    })}
-                  />
-                }
-              >
-                <DotsThreeIcon aria-hidden="true" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                  {t('stables.editAction')}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => setRemoveOpen(true)}
-                >
-                  {t('stables.remove')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <EditActionButton
+              ref={editTrigger}
+              label={t('stables.editProvider', { name: provider.name })}
+              onClick={() => setIsEditing(true)}
+            />
             <StableProviderRemoveAction
-              open={removeOpen}
-              onOpenChange={setRemoveOpen}
-              externalTrigger={editTrigger}
               providerName={provider.name}
               isRemoving={false}
               onRemove={onRemove}
@@ -314,6 +282,7 @@ export function StableProviderRemoveAction({
               variant="ghost"
               size="sm"
               disabled={busy}
+              aria-label={t('stables.removeNamed', { name: providerName })}
             />
           }
         >

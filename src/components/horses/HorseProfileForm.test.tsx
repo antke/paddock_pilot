@@ -46,7 +46,10 @@ function setup(
   const view = render(<HorseProfileForm {...props} />)
   const name = screen.getByLabelText<HTMLInputElement>('Horse name')
   const form = name.closest('form')!
-  if (props.mode === 'create') fireEvent.click(screen.getByRole('button', { name: 'Optional horse details' }))
+  if (props.mode === 'create')
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Optional horse details' }),
+    )
   const imageInput = screen.getByLabelText('Profile picture')
   return { ...view, props, name, form, imageInput }
 }
@@ -194,7 +197,7 @@ describe('horse profile lifecycle', () => {
             : {}),
         },
       })
-      fireEvent.click(screen.getByRole('button', { name: /Profile & health/ }))
+      fireEvent.click(screen.getByRole('button', { name: /Care & records/ }))
       for (const name of ['Sex', 'Shoeing status']) {
         const group = within(screen.getByRole('group', { name }))
         if (savedChoices)
@@ -260,7 +263,6 @@ describe('horse profile lifecycle', () => {
     'clears a rejected breed immediately after explicitly adding it in %s mode',
     async (mode) => {
       const { props, form } = setup({ mode })
-      fireEvent.click(screen.getByRole('button', { name: /Profile & health/ }))
       const breed = screen.getByLabelText<HTMLInputElement>('Breed')
       const message =
         'Choose a breed from the list, add a new breed, or clear this field.'
@@ -298,7 +300,6 @@ describe('horse profile lifecycle', () => {
     'saves an explicitly added custom breed in %s mode',
     async (mode) => {
       const { props, form } = setup({ mode })
-      fireEvent.click(screen.getByRole('button', { name: /Profile & health/ }))
       fireEvent.click(screen.getByRole('button', { name: 'Add breed' }))
       fireEvent.change(screen.getByLabelText('New breed name'), {
         target: { value: '  Local mountain pony  ' },
@@ -333,7 +334,6 @@ describe('horse profile lifecycle', () => {
         save,
         initialValues: { ...initialValues, breed: 'Arabian' },
       })
-      fireEvent.click(screen.getByRole('button', { name: /Profile & health/ }))
       const breed = screen.getByLabelText<HTMLInputElement>('Breed')
       fireEvent.change(breed, { target: { value: 'Imaginary horse' } })
       if (blur) fireEvent.blur(breed)
@@ -366,7 +366,6 @@ describe('horse profile lifecycle', () => {
     fireEvent.submit(form)
     await waitFor(() => expect(save).toHaveBeenCalledTimes(1))
     expect(save.mock.calls[0][0].breed).toBe('Historic local breed')
-    fireEvent.click(screen.getByRole('button', { name: /Profile & health/ }))
     const breed = screen.getByLabelText<HTMLInputElement>('Breed')
     fireEvent.change(breed, { target: { value: 'A different unknown breed' } })
     fireEvent.submit(form)
@@ -458,7 +457,6 @@ describe('horse profile lifecycle', () => {
   it('retains an upload failure and allows removing the file before retrying without an upload', async () => {
     const uploadImage = vi.fn().mockRejectedValue(new Error('upload offline'))
     const { form, imageInput, name, props } = setup({ uploadImage })
-    fireEvent.click(screen.getByRole('button', { name: /Profile & health/ }))
     fireEvent.change(name, { target: { value: 'Maple revised' } })
     fireEvent.change(imageInput, { target: { files: files(photo()) } })
     fireEvent.submit(form)
@@ -528,7 +526,6 @@ describe('horse profile lifecycle', () => {
 
   it('rejects invalid details and dropped images, linking the photo error to its visible focus target', async () => {
     const { form, name, imageInput, props } = setup()
-    fireEvent.click(screen.getByRole('button', { name: /Profile & health/ }))
     fireEvent.change(name, { target: { value: '' } })
     fireEvent.submit(form)
     await waitFor(() => expect(name.getAttribute('aria-invalid')).toBe('true'))
@@ -650,7 +647,6 @@ it('saves a chosen calendar colour separately from the horse coat colour', async
   const { form, props } = setup({
     initialValues: { ...initialValues, color: 'Bay', calendarColourId: 'sage' },
   })
-  fireEvent.click(screen.getByRole('button', { name: /Profile & health/ }))
   fireEvent.click(screen.getByRole('button', { name: 'Sky' }))
   fireEvent.submit(form)
   await waitFor(() => expect(props.save).toHaveBeenCalledTimes(1))
@@ -664,7 +660,6 @@ it('validates custom colour drafts and saves the exact normalised colour', async
   const { form, props } = setup({
     initialValues: { ...initialValues, calendarColourId: 'sage' },
   })
-  fireEvent.click(screen.getByRole('button', { name: /Profile & health/ }))
   fireEvent.click(screen.getByRole('button', { name: 'Custom colour' }))
   const hex = screen.getByLabelText('Hex colour')
   fireEvent.change(hex, { target: { value: '#zz1234' } })
@@ -688,7 +683,6 @@ it('lets a preset replace a custom colour without retaining an invalid hex draft
   const { form, props } = setup({
     initialValues: { ...initialValues, calendarColourId: '#A23BC4' },
   })
-  fireEvent.click(screen.getByRole('button', { name: /Profile & health/ }))
   fireEvent.click(screen.getByRole('button', { name: 'Custom colour' }))
   fireEvent.change(screen.getByLabelText('Hex colour'), {
     target: { value: '#bad' },
