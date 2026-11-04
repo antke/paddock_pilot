@@ -77,7 +77,7 @@ export function TrainingCompletionControlView({
       disabled={pending}
       className={cn(
         'min-h-11 shrink-0 gap-2 disabled:cursor-wait',
-        labelled ? 'h-11 w-auto justify-end gap-3 p-0' : 'size-11 p-0',
+        labelled ? 'h-11 w-auto justify-end gap-3 px-3 py-0' : 'size-11 p-0',
         completed
           ? 'text-primary hover:bg-primary/10'
           : 'text-foreground hover:bg-surface-muted',
@@ -123,7 +123,9 @@ export function TrainingCompletionControlView({
       <span
         className={cn(
           'app-choice-feedback flex shrink-0 items-center justify-center rounded-control border-2',
-          labelled ? 'size-11' : 'size-6',
+          // The 44px button is the touch target; the box inside stays small so
+          // the hover highlight has room above and below it.
+          'size-6',
           completed
             ? 'border-primary bg-primary text-primary-foreground'
             : 'border-input bg-card',

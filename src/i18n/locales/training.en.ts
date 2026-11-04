@@ -22,7 +22,7 @@ export const training = {
   focus: 'Exercises / focus',
   outcome: 'What happened',
   nextFocus: 'Next focus',
-  rider: 'Rider: {{name}}',
+  rider: 'Led by {{name}}',
   noRider: 'Rider not specified',
   minutes: '{{count}} min',
   plannedMinutes: '{{count}} min planned',

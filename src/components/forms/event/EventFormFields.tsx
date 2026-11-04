@@ -1,4 +1,5 @@
-import { PeopleSelection } from './PeopleSelection'
+import { LeaderField } from './LeaderField'
+import { PeopleSelection, findPersonByName } from './PeopleSelection'
 import type { PersonOption } from './PeopleSelection'
 import { ALL_DAY_TIME, isAllDay } from 'shared/events/eventTime'
 import { Badge } from '#/components/ui/badge'
@@ -556,6 +557,33 @@ export function EventFormFields({
   const t = useT()
   const { locale } = useLocale()
 
+  // Only training sessions have a leader, and only a full editor sets one.
+  const hasLeader = Boolean(trainingMode) && !scheduleOnly
+  const leaderName = useWatch({ control, name: 'training.rider' })
+  const leader =
+    hasLeader && people
+      ? findPersonByName(people, leaderName, locale)
+      : undefined
+  const peopleRef = useRef(selectedPeople)
+  peopleRef.current = selectedPeople
+  const addedForLeader = useRef<string | undefined>(undefined)
+  const leaderId = leader?.id
+  // A member who leads is taking part, so their tick is kept for them. It is
+  // taken back only when it was added for the leader and the leader changes.
+  useEffect(() => {
+    let next = peopleRef.current
+    if (addedForLeader.current && addedForLeader.current !== leaderId) {
+      next = next.filter((id) => id !== addedForLeader.current)
+      addedForLeader.current = undefined
+    }
+    if (leaderId && !next.includes(leaderId)) {
+      next = [...next, leaderId]
+      addedForLeader.current = leaderId
+    }
+    if (next !== peopleRef.current)
+      setValue('peopleIds', next, { shouldDirty: true })
+  }, [leaderId, setValue])
+
   const {
     recurrenceFrequencyLabels,
     simpleRecurrencePresetLabels,
@@ -617,7 +645,8 @@ export function EventFormFields({
     errors.date ||
     errors.time ||
     errors.training?.activities ||
-    errors.training?.format,
+    errors.training?.format ||
+    errors.training?.rider,
   )
   const logisticsInvalid = Boolean(
     errors.location ||
@@ -923,19 +952,39 @@ export function EventFormFields({
   const participantFields = (
     <>
       {horseFields}
-      {people && (
-        <Controller
-          name="peopleIds"
-          control={control}
-          render={({ field }) => (
-            <PeopleSelection
-              people={people}
-              value={field.value ?? []}
-              onChange={field.onChange}
+      {(hasLeader || people) && (
+        <div data-slot="involved-people" className="grid gap-5">
+          {hasLeader && (
+            <LeaderField
+              control={control}
               disabled={disabled}
+              suggestions={
+                riderSuggestions ??
+                people?.map((person) => ({ name: person.name }))
+              }
             />
           )}
-        />
+          {people && (
+            <Controller
+              name="peopleIds"
+              control={control}
+              render={({ field }) => (
+                <PeopleSelection
+                  title={
+                    hasLeader
+                      ? t('eventForm.alsoTakingPart')
+                      : t('eventForm.takingPart')
+                  }
+                  people={people}
+                  value={field.value ?? []}
+                  onChange={field.onChange}
+                  lockedIds={leaderId ? [leaderId] : []}
+                  disabled={disabled}
+                />
+              )}
+            />
+          )}
+        </div>
       )}
     </>
   )
@@ -1065,7 +1114,6 @@ export function EventFormFields({
           errors.endDate ||
           errors.status ||
           errors.training?.durationMinutes ||
-          errors.training?.rider ||
           errors.training?.focus ||
           errors.training?.nextFocus,
         )}
@@ -1076,7 +1124,6 @@ export function EventFormFields({
             control={control}
             disabled={disabled}
             fields="optional"
-            riderSuggestions={riderSuggestions}
           />
         )}
         {endDateField}

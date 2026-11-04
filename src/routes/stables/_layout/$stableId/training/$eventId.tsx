@@ -36,6 +36,7 @@ import { useSmallScreen } from '#/lib/useSmallScreen'
 import { TrainingCompletionControl } from '#/components/training/TrainingCompletionControl'
 import { TrainingRecordCard } from '#/components/training/TrainingRecordCard'
 import { getTrainingEntries } from '#/components/training/trainingCalendarData'
+import { getSessionLeader } from '#/components/training/trainingSessions'
 import { isDateKey } from 'shared/training/trainingSchema'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
 
@@ -105,6 +106,7 @@ function OriginalDetail() {
     end: occurrenceDate,
     today,
   }).filter((entry) => entry.occurrence.startDate === occurrenceDate)
+  const sessionLeader = getSessionLeader(entries, data.event)
   const completionEntry =
     entries.length === 1 &&
     entries[0].horse.canRecord &&
@@ -124,6 +126,12 @@ function OriginalDetail() {
             <span className="block">
               {formatShortDateKey(occurrenceDate, locale)} ·{' '}
               {formatEventTime(data.event.time, locale)}
+              {sessionLeader && (
+                <>
+                  {' '}
+                  · {t('eventForm.rider')} {sessionLeader}
+                </>
+              )}
             </span>
           </>
         }
@@ -197,6 +205,7 @@ function OriginalDetail() {
           key={entry.key}
           entry={entry}
           showCompletion={entries.length > 1}
+          sessionLeader={sessionLeader}
         />
       ))}
       {data.event.recurrence && !data.event.training && (
@@ -258,6 +267,7 @@ function OriginalDetail() {
         <div className="mt-4 grid gap-4">
           <EventDetail
             stableId={stableId}
+            leader={sessionLeader ?? null}
             event={{
               ...data.event,
               date: entries[0]?.occurrence.startDate ?? data.event.date,

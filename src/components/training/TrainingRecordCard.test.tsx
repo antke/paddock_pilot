@@ -97,13 +97,34 @@ describe('focused training recording', () => {
       ['Type of work', 'Flatwork'],
       ['Duration', '30 min'],
       ['Session format', 'Regular session'],
-      ['Rider / handler', 'Alex'],
     ]) {
       expect(
         screen.getByText(label).closest('div')?.querySelector('dd')
           ?.textContent,
       ).toBe(value)
     }
+  })
+
+  it('leaves the session leader to the session and shows only a different one', () => {
+    const planned = entry(false)
+    const { unmount } = render(
+      <TrainingRecordCard entry={planned} sessionLeader="Alex" />,
+    )
+    expect(screen.queryByText('Led by')).toBeNull()
+    unmount()
+    render(
+      <TrainingRecordCard
+        sessionLeader="Alex"
+        entry={{
+          ...planned,
+          details: { ...planned.details, rider: 'Guest trainer' },
+        }}
+      />,
+    )
+    expect(
+      screen.getByText('Led by').closest('div')?.querySelector('dd')
+        ?.textContent,
+    ).toBe('Guest trainer')
   })
 
   it('does not offer edits when the saved record is outside the current role', () => {
@@ -147,9 +168,7 @@ describe('focused training recording', () => {
       screen.getByLabelText<HTMLSelectElement>('Status for this horse and date')
         .value,
     ).toBe('completed')
-    expect(
-      screen.queryByRole('textbox', { name: 'Rider / handler' }),
-    ).toBeNull()
+    expect(screen.queryByRole('textbox', { name: 'Led by' })).toBeNull()
     const outcome = screen.getByLabelText<HTMLTextAreaElement>(
       'What happened / what went well',
     )

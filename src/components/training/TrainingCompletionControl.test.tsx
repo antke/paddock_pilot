@@ -194,6 +194,13 @@ it('prevents duplicate submissions, keeps failure recoverable, and offers undo a
   )
 })
 
+it('keeps horizontal padding around the labelled control so its hover and focus do not touch the text', () => {
+  render(<TrainingCompletionControl entry={entry()} labelled />)
+  const classes = screen.getByRole('button').className.split(/\s+/)
+  expect(classes).toContain('px-3')
+  expect(classes).not.toContain('p-0')
+})
+
 it('hides completion for viewers and future sessions', () => {
   const current = entry()
   const view = render(

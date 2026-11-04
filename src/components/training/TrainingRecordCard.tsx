@@ -53,9 +53,12 @@ import type { TrainingEntry } from './trainingCalendarData'
 export function TrainingRecordCard({
   entry,
   showCompletion = true,
+  sessionLeader,
 }: {
   entry: TrainingEntry
   showCompletion?: boolean
+  /** Shown with the session, so the card repeats only a different leader. */
+  sessionLeader?: string
 }) {
   const t = useT()
   const { locale } = useLocale()
@@ -155,6 +158,10 @@ export function TrainingRecordCard({
               }
             />
             <DetailReferenceField
+              label={t('trainingViews.format')}
+              value={t(`training.formats.${details.format}`)}
+            />
+            <DetailReferenceField
               label={t('trainingViews.duration')}
               value={
                 details.durationMinutes !== undefined
@@ -163,27 +170,26 @@ export function TrainingRecordCard({
               }
               missingValue={t('horseDetail.notRecorded')}
             />
-            <DetailReferenceField
-              label={t('trainingViews.format')}
-              value={t(`training.formats.${details.format}`)}
-            />
+            {/* The session's leader shows with the session; only a different one belongs here. */}
             <DetailReferenceField
               label={t('eventForm.rider')}
-              value={details.rider}
+              value={
+                details.rider !== sessionLeader ? details.rider : undefined
+              }
             />
           </DetailReferenceList>
           {hasNotes && (
             <div className="border-t border-border-subtle pt-4">
               <DetailReferenceList>
                 <DetailReferenceField
-                  label={t('trainingViews.focus')}
-                  value={details.focus}
+                  label={t('trainingViews.outcome')}
+                  value={record?.outcome}
                   multiline
                   fullWidth
                 />
                 <DetailReferenceField
-                  label={t('trainingViews.outcome')}
-                  value={record?.outcome}
+                  label={t('trainingViews.focus')}
+                  value={details.focus}
                   multiline
                   fullWidth
                 />

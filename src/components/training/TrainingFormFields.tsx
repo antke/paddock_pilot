@@ -159,38 +159,41 @@ export function TrainingFormFields({
         fields === 'optional' ||
         fields === 'adjustments') && (
         <>
-          <Controller
-            control={control}
-            name="training.rider"
-            render={({ field, fieldState }) => (
-              <Field>
-                <FieldLabel htmlFor={`${id}-rider`}>
-                  {t('eventForm.rider')}
-                </FieldLabel>
-                <PersonNameField
-                  aria-label={t('eventForm.rider')}
-                  inputRef={field.ref}
-                  name={field.name}
-                  onBlur={field.onBlur}
-                  onValueChange={field.onChange}
-                  scope={{ stableId, horseIds: selectedHorseIds ?? horseIds }}
-                  suggestions={riderSuggestions}
-                  id={`${id}-rider`}
-                  aria-invalid={fieldState.invalid}
-                  aria-describedby={
-                    fieldState.invalid ? `${id}-rider-error` : undefined
-                  }
-                  value={field.value ?? ''}
-                  maxLength={100}
-                  disabled={disabled}
-                />
-                <FieldError
-                  id={`${id}-rider-error`}
-                  errors={[fieldState.error]}
-                />
-              </Field>
-            )}
-          />
+          {/* The event form places the leader beside the people list. */}
+          {fields !== 'optional' && (
+            <Controller
+              control={control}
+              name="training.rider"
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel htmlFor={`${id}-rider`}>
+                    {t('eventForm.rider')}
+                  </FieldLabel>
+                  <PersonNameField
+                    aria-label={t('eventForm.rider')}
+                    inputRef={field.ref}
+                    name={field.name}
+                    onBlur={field.onBlur}
+                    onValueChange={field.onChange}
+                    scope={{ stableId, horseIds: selectedHorseIds ?? horseIds }}
+                    suggestions={riderSuggestions}
+                    id={`${id}-rider`}
+                    aria-invalid={fieldState.invalid}
+                    aria-describedby={
+                      fieldState.invalid ? `${id}-rider-error` : undefined
+                    }
+                    value={field.value ?? ''}
+                    maxLength={100}
+                    disabled={disabled}
+                  />
+                  <FieldError
+                    id={`${id}-rider-error`}
+                    errors={[fieldState.error]}
+                  />
+                </Field>
+              )}
+            />
+          )}
           <Controller
             control={control}
             name="training.focus"

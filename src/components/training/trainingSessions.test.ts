@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest'
 import type { Doc, Id } from 'convex/_generated/dataModel'
 import { getTrainingEntries } from './trainingCalendarData'
-import { groupTrainingSessions } from './trainingSessions'
+import { getSessionLeader, groupTrainingSessions } from './trainingSessions'
 
 const horses = ['A', 'B', 'C'].map((name) => ({
   _id: name as Id<'horses'>,
@@ -70,4 +70,46 @@ it('keeps frozen participation separate from the current session', () => {
       (s) => s.entries.length,
     ),
   ).toEqual([3, 1])
+})
+
+const record = (horseId: string, rider?: string) =>
+  ({
+    _id: `record-${horseId}`,
+    _creationTime: 0,
+    eventId: event._id,
+    horseId,
+    date: event.date,
+    status: 'planned',
+    details: { activities: ['flatwork'], format: 'regular', rider },
+    recordedBy: 'owner',
+    createdAt: 0,
+    updatedAt: 0,
+  }) as Doc<'trainingRecords'>
+const entriesWith = (records: Doc<'trainingRecords'>[], eventRider?: string) =>
+  getTrainingEntries({
+    events: [{ ...event, training: { ...event.training!, rider: eventRider } }],
+    horses,
+    records,
+    ...window,
+  }).filter((entry) => entry.occurrence.startDate === event.date)
+
+it('reads the leader from the recorded sessions, so an edit made from a horse is shown', () => {
+  // The event still names the old leader; the edit updated the horse's record.
+  const entries = entriesWith(
+    ['A', 'B', 'C'].map((id) => record(id, 'Anna')),
+    'Old leader',
+  )
+  expect(getSessionLeader(entries, entries[0].occurrence.event)).toBe('Anna')
+})
+
+it('has no single leader when horses differ, and falls back to the event without entries', () => {
+  const mixed = entriesWith(
+    [record('A', 'Anna'), record('B', 'Piotr'), record('C', 'Anna')],
+    'Old leader',
+  )
+  expect(getSessionLeader(mixed, mixed[0].occurrence.event)).toBeUndefined()
+  const partial = entriesWith([record('A', 'Anna')], 'Old leader')
+  expect(getSessionLeader(partial)).toBeUndefined()
+  expect(getSessionLeader([], { training: { rider: 'Anna' } })).toBe('Anna')
+  expect(getSessionLeader([], undefined)).toBeUndefined()
 })

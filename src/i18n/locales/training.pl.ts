@@ -22,7 +22,7 @@ export const training = {
   focus: 'Ćwiczenia / cel',
   outcome: 'Przebieg treningu',
   nextFocus: 'Cel kolejnego treningu',
-  rider: 'Jeździec: {{name}}',
+  rider: 'Prowadzi: {{name}}',
   noRider: 'Nie podano jeźdźca',
   minutes: '{{count}} min',
   plannedMinutes: 'Planowany czas: {{count}} min',

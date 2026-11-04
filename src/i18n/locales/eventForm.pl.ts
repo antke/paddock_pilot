@@ -138,7 +138,16 @@ export const eventForm = {
   activitiesHelp: 'Wybierz wszystkie aktywności wykonywane podczas treningu.',
   sessionFormat: 'Forma treningu',
   duration: 'Czas trwania (minuty)',
-  rider: 'Jeździec / osoba prowadząca',
+  rider: 'Prowadzi',
+  leaderHelp:
+    'Kto prowadzi ten trening. Wybierz członka stajni lub wpisz imię gościa.',
+  leaderPlaceholder: 'Imię i nazwisko jeźdźca lub instruktora',
+  takingPart: 'Biorą udział',
+  alsoTakingPart: 'Biorą też udział',
+  takingPartHelp: 'Każda zaznaczona osoba zobaczy to w swoim kalendarzu.',
+  leaderIncluded: 'Prowadzi trening',
+  leaderIncludedReason:
+    'Dodana automatycznie, bo jest oznaczona jako osoba prowadząca trening.',
   focus: 'Ćwiczenia / cel',
   focusExample: 'Na przykład: przejścia, rytm, praca na drągach',
   nextFocus: 'Cel następnego treningu (opcjonalnie)',

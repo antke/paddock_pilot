@@ -135,7 +135,16 @@ export const eventForm = {
   activitiesHelp: 'Select all activities practised in this session.',
   sessionFormat: 'Session format',
   duration: 'Duration (minutes)',
-  rider: 'Rider / handler',
+  rider: 'Led by',
+  leaderHelp:
+    'Who is running this session. Pick a member or type a guest trainer.',
+  leaderPlaceholder: 'Name of the rider or instructor',
+  takingPart: 'Taking part',
+  alsoTakingPart: 'Also taking part',
+  takingPartHelp: 'Everyone ticked sees this in their calendar.',
+  leaderIncluded: 'Leads this session',
+  leaderIncludedReason:
+    'Included automatically because they are marked as leading this session.',
   focus: 'Exercises / focus',
   focusExample: 'For example: transitions, rhythm, pole work',
   nextFocus: 'Focus next time (optional)',

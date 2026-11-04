@@ -28,6 +28,7 @@ import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { TrainingCompletionControl } from '#/components/training/TrainingCompletionControl'
 import { TrainingRecordCard } from '#/components/training/TrainingRecordCard'
 import { getTrainingEntries } from '#/components/training/trainingCalendarData'
+import { getSessionLeader } from '#/components/training/trainingSessions'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
 
 export function PersonalEventEditor({
@@ -317,6 +318,9 @@ function HorseEventDetail({
         today,
       })
     : []
+  const sessionLeader = isTraining
+    ? getSessionLeader(entries, data.event)
+    : undefined
   return (
     <DashboardPage>
       <EventDetail
@@ -328,6 +332,7 @@ function HorseEventDetail({
             ? { date: selectedDate, horseId, participationId, stableId }
             : undefined
         }
+        leader={sessionLeader ?? null}
         headerActions={
           entries.length === 1 &&
           entries[0].horse.canRecord &&
@@ -365,6 +370,7 @@ function HorseEventDetail({
           key={entry.key}
           entry={entry}
           showCompletion={entries.length > 1}
+          sessionLeader={sessionLeader}
         />
       ))}
       {isTraining && (

@@ -42,6 +42,8 @@ type EventDetailProps = {
   showHeader?: boolean
   showHorses?: boolean
   headerActions?: ReactNode
+  /** The session's current leader; without it the event's own value is used. */
+  leader?: string | null
   editSearch?: {
     date?: string
     horseId?: string
@@ -60,6 +62,7 @@ export function EventDetail({
   showHeader = true,
   showHorses = true,
   headerActions,
+  leader: leaderOverride,
   editSearch,
 }: EventDetailProps) {
   const t = useT()
@@ -74,6 +77,38 @@ export function EventDetail({
     event.providerPhone ||
     event.totalCost !== undefined ||
     event.costPerHorse !== undefined,
+  )
+
+  const isTraining = event.type === 'training'
+  const leader =
+    leaderOverride === undefined ? event.training?.rider : leaderOverride
+  const statusField = (
+    <DetailSummaryField
+      label={t('eventViews.status')}
+      value={
+        event.type === 'training' ? (
+          t('eventViews.individualStatus')
+        ) : canManageEvent ? (
+          <span className="flex flex-wrap items-baseline gap-x-3">
+            {t(`calendar.${eventStatus}`)}
+            <ButtonLink
+              to="/events/$eventId/edit"
+              params={{ eventId: event._id }}
+              search={{ ...editSearch, focus: 'status' }}
+              state={taskState}
+              variant="link"
+              // Text height in the summary row; the pseudo-element
+              // keeps a 44px touch target without stretching it.
+              className="h-auto min-h-0 min-w-0 px-0 py-0 after:absolute after:-inset-x-1 after:-inset-y-3 after:content-[''] max-md:min-h-0 max-md:min-w-0 pointer-coarse:min-h-0 pointer-coarse:min-w-0"
+            >
+              {t('eventViews.changeStatus')}
+            </ButtonLink>
+          </span>
+        ) : (
+          t(`calendar.${eventStatus}`)
+        )
+      }
+    />
   )
 
   return (
@@ -152,48 +187,31 @@ export function EventDetail({
                 label={t('eventViews.time')}
                 value={formatEventTime(event.time, locale)}
               />
-              <DetailSummaryField
-                label={t('eventViews.type')}
-                value={formatEventType(event.type, locale)}
-              />
-              <DetailSummaryField
-                label={t('eventViews.status')}
-                value={
-                  event.type === 'training' ? (
-                    t('eventViews.individualStatus')
-                  ) : canManageEvent ? (
-                    <span className="flex flex-wrap items-baseline gap-x-3">
-                      {t(`calendar.${eventStatus}`)}
-                      <ButtonLink
-                        to="/events/$eventId/edit"
-                        params={{ eventId: event._id }}
-                        search={{ ...editSearch, focus: 'status' }}
-                        state={taskState}
-                        variant="link"
-                        // Text height in the summary row; the pseudo-element
-                        // keeps a 44px touch target without stretching it.
-                        className="h-auto min-h-0 min-w-0 px-0 py-0 after:absolute after:-inset-x-1 after:-inset-y-3 after:content-[''] max-md:min-h-0 max-md:min-w-0 pointer-coarse:min-h-0 pointer-coarse:min-w-0"
-                      >
-                        {t('eventViews.changeStatus')}
-                      </ButtonLink>
-                    </span>
-                  ) : (
-                    t(`calendar.${eventStatus}`)
-                  )
-                }
-              />
+              {/* Who is running a session matters more than its bookkeeping. */}
+              {isTraining && leader && (
+                <DetailSummaryField
+                  label={t('eventForm.rider')}
+                  value={leader}
+                />
+              )}
+              {!isTraining && statusField}
               {event.location && (
                 <DetailSummaryField
                   label={t('eventViews.location')}
                   value={event.location}
                 />
               )}
+              <DetailSummaryField
+                label={t('eventViews.type')}
+                value={formatEventType(event.type, locale)}
+              />
               {recurrenceSummary && (
                 <DetailSummaryField
                   label={t('eventViews.recurrence')}
                   value={recurrenceSummary}
                 />
               )}
+              {isTraining && statusField}
               {event.description && (
                 <DetailSummaryField
                   label={t('eventViews.description')}

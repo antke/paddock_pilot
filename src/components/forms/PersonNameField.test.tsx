@@ -66,7 +66,7 @@ function TrainingHarness({
       <TrainingFormFields
         control={form.control}
         disabled={false}
-        fields="optional"
+        fields="adjustments"
         horseIds={horseIds}
       />
       <button
@@ -80,7 +80,7 @@ function TrainingHarness({
   )
 }
 const rider = () =>
-  screen.getByRole<HTMLInputElement>('combobox', { name: 'Rider / handler' })
+  screen.getByRole<HTMLInputElement>('combobox', { name: 'Led by' })
 const open = () =>
   fireEvent.click(
     screen.getByRole('button', { name: 'Show people suggestions' }),

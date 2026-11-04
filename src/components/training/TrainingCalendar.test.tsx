@@ -523,7 +523,7 @@ describe('training calendar controls', () => {
     act(() => monthEntries[0].focus())
     const monthPreview = await screen.findByRole('dialog')
     expect(monthPreview.textContent).toContain('5 Jan 2026 at 10:00')
-    expect(monthPreview.textContent).toContain('Rider: Alex')
+    expect(monthPreview.textContent).toContain('Led by Alex')
     expect(monthPreview.textContent).toContain('Transitions and rhythm')
     fireEvent.keyDown(monthEntries[0], { key: 'Escape' })
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
@@ -568,7 +568,7 @@ describe('training calendar controls', () => {
       within(table).queryByRole('link', { name: /Atlas session/ }),
     ).toBeNull()
     const entry = within(table).getByRole('link', { name: /Juniper session/ })
-    expect(entry.textContent).toContain('Rider: Alex')
+    expect(entry.textContent).toContain('Led by Alex')
     expect(entry.textContent).toContain('10:00')
     expect(entry.textContent).not.toContain('Practise balance')
     expect(screen.queryByRole('dialog')).toBeNull()

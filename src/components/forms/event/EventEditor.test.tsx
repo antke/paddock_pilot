@@ -782,6 +782,84 @@ it('preselects the horse owner, allows removing them and keeps independent atten
   expect(vi.mocked(props.onSave).mock.calls[0][0].peopleIds).toEqual(['rider'])
 })
 
+describe('training leader', () => {
+  const trainingSetup = (overrides = {}) =>
+    setup({
+      mode: 'create',
+      feature: 'training',
+      initialValues: {
+        ...createEventEditorValues(),
+        type: 'training',
+        title: 'Lesson',
+        date: '2026-10-01',
+        time: '10:00',
+        horseIds: [horseId],
+        peopleIds: [],
+        training: { activities: ['flatwork'], format: 'lesson' },
+      },
+      people: [
+        { id: 'anna', name: 'Anna Kowalska' },
+        { id: 'piotr', name: 'Piotr' },
+      ],
+      ...overrides,
+    })
+  const person = (name: string) =>
+    screen.getByRole<HTMLInputElement>('checkbox', { name })
+  const leader = () =>
+    screen.getByRole<HTMLInputElement>('combobox', { name: 'Led by' })
+
+  it('ticks and locks a member named as leader, and releases them when the leader changes', () => {
+    trainingSetup()
+    fireEvent.click(person('Piotr'))
+    fireEvent.change(leader(), { target: { value: 'anna kowalska' } })
+    expect(person('Anna Kowalska').checked).toBe(true)
+    expect(person('Anna Kowalska').disabled).toBe(true)
+    expect(screen.getByText('Leads this session')).toBeTruthy()
+    // Ticks the user made themselves are never touched.
+    expect(person('Piotr').checked).toBe(true)
+
+    fireEvent.change(leader(), { target: { value: 'Guest trainer' } })
+    expect(person('Anna Kowalska').checked).toBe(false)
+    expect(person('Anna Kowalska').disabled).toBe(false)
+    expect(screen.queryByText('Leads this session')).toBeNull()
+    expect(person('Piotr').checked).toBe(true)
+  })
+
+  it('keeps a member the user ticked first when they stop leading', () => {
+    trainingSetup()
+    fireEvent.click(person('Anna Kowalska'))
+    fireEvent.change(leader(), { target: { value: 'Anna Kowalska' } })
+    expect(person('Anna Kowalska').disabled).toBe(true)
+    fireEvent.change(leader(), { target: { value: '' } })
+    expect(person('Anna Kowalska').checked).toBe(true)
+    expect(person('Anna Kowalska').disabled).toBe(false)
+  })
+
+  it('saves the leader as a name and their account as taking part', async () => {
+    const { form, props } = trainingSetup()
+    fireEvent.change(leader(), { target: { value: 'Anna Kowalska' } })
+    fireEvent.submit(form)
+    await waitFor(() => expect(props.onSave).toHaveBeenCalledOnce())
+    const saved = vi.mocked(props.onSave).mock.calls[0][0]
+    expect(saved.training?.rider).toBe('Anna Kowalska')
+    expect(saved.peopleIds).toEqual(['anna'])
+  })
+
+  it('treats a guest as a plain name and offers no leader on ordinary events', () => {
+    trainingSetup()
+    fireEvent.change(leader(), { target: { value: 'Guest trainer' } })
+    expect(person('Anna Kowalska').disabled).toBe(false)
+    expect(screen.getByText('Also taking part')).toBeTruthy()
+    cleanup()
+    setup({
+      mode: 'create',
+      people: [{ id: 'anna', name: 'Anna Kowalska' }],
+    })
+    expect(screen.queryByRole('combobox', { name: 'Led by' })).toBeNull()
+    expect(screen.getByText('Taking part')).toBeTruthy()
+  })
+})
+
 it('preselects an initial horse’s owner only when creating, and preserves an explicit empty attendance list when editing', () => {
   const options = {
     horses: [{ _id: horseId, name: 'Juniper', ownerId: 'anna' }],

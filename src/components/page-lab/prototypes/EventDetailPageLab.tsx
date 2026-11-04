@@ -46,6 +46,13 @@ export function EventDetailPageLab({ data }: EventDetailPageLabProps) {
             ...originalEvent,
             type: 'training' as const,
             title: 'Lunging · Groundwork · Other training',
+            training: {
+              activities: ['lunging', 'groundwork', 'other'] as Array<
+                'lunging' | 'groundwork' | 'other'
+              >,
+              format: 'lesson' as const,
+              rider: 'Anna Kowalska',
+            },
             recurrence: undefined,
           }
         : sample === 'minimal'
