@@ -13,6 +13,7 @@ import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { useRef } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { useEditSavedExit } from '#/components/layout/mobileTaskNavigation'
 import { EventCreationEditor as EventEditor } from '#/components/forms/event/EventCreationEditor'
 import {
   createEventEditorValues,
@@ -93,6 +94,7 @@ export function PersonalEventEditor({
   const add = useMutation(api.events.add)
   const update = useMutation(api.events.update)
   const navigate = useNavigate()
+  const exitEdit = useEditSavedExit()
   const savedSearch = useRef({ date, horseId, participationId })
   if (
     !mine ||
@@ -220,13 +222,17 @@ export function PersonalEventEditor({
           errorFormat: 'structured',
         })
       }}
-      onSaved={(id) =>
-        navigate({
+      onSaved={(id) => {
+        const detail = {
           to: '/events/$eventId',
           params: { eventId: id },
           search: { ...savedSearch.current, stableId: workspaceStableId },
-        })
-      }
+        } as const
+        // Edits return to the page that opened them; creates replace the form.
+        return eventId
+          ? exitEdit({ fallback: detail, updated: detail })
+          : navigate({ ...detail, replace: true })
+      }}
     />
   )
 }

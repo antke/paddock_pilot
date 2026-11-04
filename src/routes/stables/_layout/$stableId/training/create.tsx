@@ -101,6 +101,8 @@ function RouteComponent() {
         await nav({
           to: '/events/$eventId',
           params: { eventId },
+          // The new event takes the form's place, so Back skips the form.
+          replace: true,
         })
       }}
     />

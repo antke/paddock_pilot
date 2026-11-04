@@ -27,7 +27,7 @@ function RouteComponent() {
         })
       }
       onSaved={(stableId) =>
-        navigate({ to: '/onboarding', search: { stableId } })
+        navigate({ to: '/onboarding', search: { stableId }, replace: true })
       }
     />
   )

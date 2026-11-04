@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 import {
-  act,
   cleanup,
   fireEvent,
   render,
@@ -47,7 +46,7 @@ afterEach(() => {
 })
 
 it.each(['/horses/$horseId/edit', '/stables/$stableId/horses/$horseId/edit'])(
-  'does not reopen the completed %s form on Back or Forward',
+  'returns to the previous screen after saving %s',
   async (editPath) => {
     vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
     save.mockResolvedValue(undefined)
@@ -85,15 +84,10 @@ it.each(['/horses/$horseId/edit', '/stables/$stableId/horses/$horseId/edit'])(
       target: { value: 'Maple revised' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
-    await screen.findByRole('heading', { name: 'Saved horse profile' })
-    expect(save).toHaveBeenCalledTimes(1)
-
-    act(() => history.back())
+    // An edit pops the form, so the page that opened it is the previous entry.
     await screen.findByRole('heading', { name: 'Previous screen' })
-    act(() => history.forward())
-    await screen.findByRole('heading', { name: 'Saved horse profile' })
-    await waitFor(() => expect(router.state.status).toBe('idle'))
-    expect(history.length).toBe(2)
     expect(save).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(router.state.status).toBe('idle'))
+    expect(history.location.pathname).toBe('/previous')
   },
 )

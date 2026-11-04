@@ -1,5 +1,6 @@
 import type { StableFormSection } from '#/components/forms/stable/StableFormFields'
 import { useT } from '#/i18n/LocaleProvider'
+import { useEditSavedExit } from '#/components/layout/mobileTaskNavigation'
 import { StableProfileForm } from '#/components/stables/StableProfileForm'
 import {
   RouteEntityNotFoundAlert,
@@ -10,7 +11,7 @@ import { ButtonLink } from '#/components/ui/button'
 import { showAppSuccessToast } from '#/components/ui/sonner'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import type { ErrorComponentProps } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
 import type { Doc, Id } from 'convex/_generated/dataModel'
@@ -71,7 +72,7 @@ function EditStableForm({ stable }: EditStableFormProps) {
   const t = useT()
   const { section } = Route.useSearch()
 
-  const nav = useNavigate()
+  const exitEdit = useEditSavedExit()
   const updateStable = useMutation(api.stables.update)
 
   return (
@@ -92,14 +93,17 @@ function EditStableForm({ stable }: EditStableFormProps) {
           ),
         })
       }
+      // Return to the page that opened the editor, else its stable page.
       onSaved={(stableId) =>
-        section
-          ? nav({
-              to: '/stables/$stableId/stable',
-              params: { stableId },
-              search: { tab: 'yard' },
-            })
-          : nav({ to: '/stables/$stableId', params: { stableId } })
+        exitEdit({
+          fallback: section
+            ? {
+                to: '/stables/$stableId/stable',
+                params: { stableId },
+                search: { tab: 'yard' },
+              }
+            : { to: '/stables/$stableId', params: { stableId } },
+        })
       }
     />
   )

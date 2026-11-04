@@ -50,6 +50,8 @@ function RouteComponent() {
         navigate({
           to: '/stables/$stableId/horses/$horseId',
           params: { stableId, horseId },
+          // The new horse takes the form's place, so Back skips the form.
+          replace: true,
         })
       }
     />

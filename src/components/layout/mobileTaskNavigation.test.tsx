@@ -19,6 +19,7 @@ import {
 import { afterEach, expect, it, vi } from 'vitest'
 import {
   isLocalTaskOrigin,
+  useEditSavedExit,
   useMobileTaskReturn,
   useTaskOriginState,
 } from './mobileTaskNavigation'
@@ -54,6 +55,89 @@ it('accepts local browse origins and rejects external, malformed and negative po
     isLocalTaskOrigin({ href: '/events', index: 1, scrollY: Infinity }),
   ).toBe(false)
 })
+function EditSaveHarness() {
+  const exit = useEditSavedExit()
+  return (
+    <>
+      <button
+        onClick={() =>
+          void exit({
+            fallback: { to: '/events/$eventId', params: { eventId: 'e1' } },
+            updated: {
+              to: '/events/$eventId',
+              params: { eventId: 'e1' },
+              search: { date: '2026-11-05' },
+            },
+          })
+        }
+      >
+        Save
+      </button>
+      <Outlet />
+    </>
+  )
+}
+
+async function editRouter(entries: Array<unknown>) {
+  const root = createRootRoute({ component: EditSaveHarness })
+  const routes = [
+    createRoute({
+      getParentRoute: () => root,
+      path: '/events',
+      component: () => <h1>Calendar</h1>,
+    }),
+    createRoute({
+      getParentRoute: () => root,
+      path: '/events/$eventId',
+      validateSearch: (s: Record<string, unknown>) => ({
+        date: typeof s.date === 'string' ? s.date : undefined,
+      }),
+      component: () => <h1>Event detail</h1>,
+    }),
+    createRoute({
+      getParentRoute: () => root,
+      path: '/events/$eventId/edit',
+      component: () => <h1>Event form</h1>,
+    }),
+  ]
+  const history = createMemoryHistory({ initialEntries: entries as string[] })
+  const router = createRouter({ routeTree: root.addChildren(routes), history })
+  await router.load()
+  render(<RouterProvider router={router} />)
+  return { router, history }
+}
+
+it('pops an edit form back to the page that opened it, then refreshes its address', async () => {
+  vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+  const { router, history } = await editRouter([
+    '/events',
+    '/events/e1',
+    '/events/e1/edit',
+  ])
+  // Simulate the Edit link capturing where the form was opened from.
+  history.replace('/events/e1/edit', {
+    taskOrigin: { href: '/events/e1', index: 1, scrollY: 0 },
+    __TSR_index: 2,
+  })
+  await act(() => router.load())
+  fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
+  await screen.findByRole('heading', { name: 'Event detail' })
+  await waitFor(() =>
+    expect(router.state.location.search).toEqual({ date: '2026-11-05' }),
+  )
+  // The form and the stale detail entry are gone: Back reaches the calendar.
+  act(() => history.back())
+  await screen.findByRole('heading', { name: 'Calendar' })
+})
+
+it('replaces an edit form with its fallback when there is nothing to return to', async () => {
+  const { history } = await editRouter(['/events/e1/edit'])
+  fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
+  await screen.findByRole('heading', { name: 'Event detail' })
+  expect(history.location.pathname).toBe('/events/e1')
+  expect(history.length).toBe(1)
+})
+
 it('distinguishes stable browse routes and task routes without inventing a stable', () => {
   expect(mobileStableId('/stables/a/events')).toBe('a')
   for (const path of ['/stables', '/stables/create', '/horses/h/profile'])

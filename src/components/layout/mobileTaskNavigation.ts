@@ -1,4 +1,5 @@
 import { useRouter } from '@tanstack/react-router'
+import type { NavigateOptions } from '@tanstack/react-router'
 import { smallScreenQuery } from '#/lib/useSmallScreen'
 
 type TaskOrigin = { href: string; index: number; scrollY: number }
@@ -60,6 +61,58 @@ export function useMobileTaskReturn(fallback: string) {
       return router.navigate({ href: fallback, replace: true })
     }
     return false
+  }
+}
+
+/**
+ * Leaves an edit form after a successful save by popping it off history, so the
+ * page that opened it is the previous entry again and its own Back keeps working
+ * (a form must never be the next destination of Back). Creates do the opposite
+ * and replace the form with the new record's page; they need no helper.
+ *
+ * - `fallback`: where to go when there is nothing to return to (direct visit).
+ * - `updated`: the address the returned-to page should now have, when the save
+ *   changed what identifies it (an event moved to another date).
+ */
+export function useEditSavedExit() {
+  const router = useRouter({ warn: false })
+  return async ({
+    fallback,
+    updated,
+  }: {
+    fallback: NavigateOptions
+    updated?: NavigateOptions
+  }) => {
+    if (!router) return
+    const location = router.state.location
+    const origin = isLocalTaskOrigin(location.state.taskOrigin)
+      ? location.state.taskOrigin
+      : undefined
+    const index = location.state.__TSR_index ?? 0
+    const canPop = origin ? index === origin.index + 1 : index > 0
+    if (!canPop) {
+      if (origin) {
+        await router.navigate({ href: origin.href, replace: true })
+        window.scrollTo({ top: origin.scrollY })
+      } else {
+        await router.navigate({ ...fallback, replace: true })
+      }
+      return
+    }
+    await new Promise<void>((resolve) => {
+      const unsubscribe = router.subscribe('onResolved', () => {
+        unsubscribe()
+        resolve()
+      })
+      router.history.back()
+    })
+    if (origin) window.scrollTo({ top: origin.scrollY })
+    if (
+      updated &&
+      router.state.location.href !== router.buildLocation(updated).href
+    ) {
+      await router.navigate({ ...updated, replace: true })
+    }
   }
 }
 
