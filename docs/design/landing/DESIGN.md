@@ -7,19 +7,21 @@ colors:
   supporting-copy: '#4e5547'
   rule: '#c8caba'
   clay: '#aa563e'
+  wash: '#e7e8d8'
+  straw: '#d8be96'
   evergreen-hover: '#3f5842'
   reverse-copy: '#e1e3ce'
   selection: '#d8be96'
 typography:
   display:
     fontFamily: "'Fraunces Country', Georgia, serif"
-    fontSize: 'clamp(52px, 5.4vw, 88px)'
+    fontSize: 'clamp(46px, 4.7vw, 74px)'
     fontWeight: 500
     lineHeight: 1.06
     letterSpacing: '-0.03em'
   headline:
     fontFamily: "'Fraunces Country', Georgia, serif"
-    fontSize: 'clamp(43px, 4.5vw, 66px)'
+    fontSize: 'clamp(40px, 4.5vw, 66px)'
     fontWeight: 500
     lineHeight: 1.1
     letterSpacing: '-0.03em'
@@ -60,19 +62,19 @@ components:
 
 ## Scope and direction
 
-The signed-out `/` page uses warm paper, evergreen, a characterful serif and countryside photography. The revised composition opens with a full-width photographic hero, presents the product in a second full-viewport green section, and closes with a simple invitation. There are no sun marks or decorative ornaments.
+The signed-out `/` page uses warm paper, evergreen, a characterful serif and countryside photography. It sells one idea: get rid of the whiteboard and the group chat. A photographic band gives way to a paper sheet carrying the promise, an evergreen section tidies the yard's notes, and the page closes on evergreen with an invitation. There are no sun marks or decorative ornaments.
 
-This is a **public-landing-only** record of [PublicLandingPage.tsx](../../../src/components/landing/PublicLandingPage.tsx), [CountryLandingHero.tsx](../../../src/components/landing/CountryLandingHero.tsx) and [countryLanding.css](../../../src/components/landing/countryLanding.css). It does not change the root design system or authenticated application. The retained `open-yard` comparison route is outside the delivered composition described here.
+This is a **public-landing-only** record of [PublicLandingPage.tsx](../../../src/components/landing/PublicLandingPage.tsx), [publicLanding.css](../../../src/components/landing/publicLanding.css), the shared chrome in [CountryLandingHero.tsx](../../../src/components/landing/CountryLandingHero.tsx) and [countryLanding.css](../../../src/components/landing/countryLanding.css). Its copy lives in `publicLanding.en.ts` and `publicLanding.pl.ts`. It does not change the root design system or authenticated application. The retained `open-yard` comparison route is outside the delivered composition described here.
 
 ## Palette and typography
 
-The frontmatter records the implemented palette and desktop type roles. Paper is the page ground and reverse text; evergreen anchors headings, ordinary primary actions and the product section. Supporting copy and rules use muted green neutrals. Clay remains a focus and visit-toggle hover accent. The overlay header wordmark, including its desktop dot, uses paper.
+The frontmatter records the palette and desktop type roles. Paper is the page ground and reverse text; evergreen anchors headings, primary actions and two section fields. A straw tint, `color-mix(in srgb, #d8be96 42%, #f7f1e5)`, grounds the sharing section. Clay colours the headline's second line and focus outlines on paper. Supporting copy uses a muted green neutral.
 
-The hero reverses primary buttons to paper with evergreen text; their hover fill is `#e7e8d8` and focus outline is paper. The header's single “Sign in” action uses paper text, a quiet paper outline (`#f7f1e566`) and a translucent hover fill (`#f7f1e514`). Other primary buttons use evergreen with paper text and `#3f5842` on hover. The landing explicitly sets `color-scheme: light` and keeps its variables local.
+Sections change on a real change of field: photograph, evergreen, paper, straw, paper, evergreen. The wash `#e7e8d8` sits about 1.1:1 against paper, too close to separate sections, so it is reserved for the board switch and paper-button hover.
 
-Fraunces Country supplies display and section headings; the existing Manrope Variable supplies body copy, navigation and record details. The hero uses three block spans on desktop, with `clamp(52px, 5.4vw, 88px)` type at 1.06 line height. Tablet uses 64px. Below 700px, the spans flow inline with `clamp(43px, 11vw, 66px)` type at 1.08. Shared-care and closing headings use the same `clamp(43px, 4.5vw, 66px)` scale and 1.1 line height, becoming 43px on mobile.
+Primary buttons use evergreen with paper text and `#3f5842` on hover; on evergreen they reverse to paper with a wash hover. The header's “Sign in” action uses paper text and a quiet paper outline over the photograph. The landing explicitly sets `color-scheme: light` and keeps its variables local.
 
-Hero copy is 17px/1.8 with a 38ch measure, becoming 16px and 35ch on mobile. Shared-care and closing copy is 18px/1.8, becoming 16px on mobile. The product's care heading is 36px, becoming 29px; visit controls and dates are 15px, the visit title is 19px, and the note is 16px (15px on mobile). The “Example” truth label is 12px. Dates use tabular numerals.
+Fraunces Country supplies display and section headings; Manrope Variable supplies body copy, navigation and record details. The headline is two block spans at `clamp(46px, 4.7vw, 74px)`, 1.06 line height, each on one line above phone width; below 700px it flows at `clamp(38px, 10.5vw, 56px)`. Section headings are `clamp(40px, 4.5vw, 66px)`, 40px on mobile. Lead copy is 18px/1.75, 16px on mobile. Note numerals are tabular.
 
 ### Font provenance
 
@@ -80,41 +82,42 @@ The self-hosted Latin WOFF2 lives in [public/fonts/fraunces](../../../public/fon
 
 ## Layout and reading order
 
-One shared inner grid aligns the header, hero text, section containers and footer: `width: min(calc(100% - 2 * var(--country-gutter)), 1280px)`, with a gutter of `clamp(22px, 5vw, 96px)`. “Good care is / a shared effort.” and “Make yourself / at home.” occupy the same left column and share its left edge. Their desktop section grid uses `1.2fr 1fr` columns with a 10% gap (6% on tablet), stacking below 700px.
+One shared inner grid aligns the header, sections and footer: `width: min(calc(100% - 2 * var(--country-gutter)), 1280px)`, with a gutter of `clamp(22px, 5vw, 96px)`.
 
-1. **Immersive opening.** The hero is at least `100svh`, with a 720px desktop minimum and 700px mobile minimum. The photograph covers the entire section behind HTML text. A dark green horizontal gradient supports paper text; mobile uses a uniform dark overlay. The header sits absolutely over the hero with its own fading green background. The promise, short explanation and account action form a single vertical sequence. No product record appears in this opening.
-2. **Shared care and product.** The full-width evergreen section is also at least `100svh`, with vertically centered content and `clamp(64px, 7vw, 112px)` padding (58px on mobile). Its heading and supporting paragraph precede a paper product representation. A simple “Paddock Pilot / Horses / Juniper” bar introduces a horse profile and an interactive care record. The profile and record use `0.7fr 1.3fr` columns on desktop and stack on mobile, where the profile becomes a compact horizontal row.
-3. **Closing invitation.** The paper section uses the shared heading grid and 104px vertical padding (64px on mobile). The exact supporting copy is: **“Create your stable, add your horse and invite your friends.”** An account action follows. There is no testing or payment reassurance copy.
+1. **Opening.** A photographic band runs to `min(58svh, 560px)`. A paper sheet with 12px corners overlaps its lower 120px and sits on an evergreen field that runs unbroken into the board section. It carries the headline across its full width, then the intro and account action on one row, which stack below 900px. On phones the sheet runs full width with rounded top corners.
+2. **The board.** The same evergreen field continues. A heading and paragraph precede a paper board.
+3. **Keeps itself tidy.** Paper. The heading sits above four statements in two columns, one column on phones. Each opens with a stronger lead clause; there are no dividers.
+4. **Sharing.** Straw tint. The palomino photograph bleeds to the left edge beside the heading and three stacked points, and sits above them below 900px.
+5. **Questions.** Paper. A sticky heading sits beside question and answer pairs. These are the only rules on the page outside the board's title bar, between pairs only.
+6. **Closing invitation.** Evergreen, with the shared heading grid and a paper account action.
 
-The compact footer follows with copyright, “Plans”, “Sign in” and the language selector. On mobile, copyright sits above a wrapping row of links and language selection. Signup routes remain `/sign-up/$`, sign-in routes `/sign-in/$`, and “Plans” links to `/pricing`. The header contains only the wordmark and “Sign in”; its auth screen also offers account creation, while the hero keeps the direct signup action. The wordmark stays on one line, using 24px type on mobile.
+The compact footer follows with copyright, “Plans”, “Sign in” and the language selector. Signup routes remain `/sign-up/$`, sign-in routes `/sign-in/$`, and “Plans” links to `/pricing`. The header contains only the wordmark and “Sign in”.
 
 ## Components and interaction
 
-**Actions and navigation.** Primary actions have 4px corners, a 54px minimum height and an inline arrow. Hover changes fill and lifts the primary action by 2px, with 180ms ease-out transitions. The compact header action has a 44px minimum height and changes fill without movement. Text links have 44px minimum height and underline on hover. Keyboard focus uses a 2px outline with 5px offset. A keyboard-revealed “Skip to content” link targets the main landmark.
+**Actions and navigation.** Primary actions have 4px corners, a 54px minimum height and an inline arrow. Hover changes fill and lifts the action by 2px. The compact header action has a 44px minimum height. Text links have 44px minimum height. Keyboard focus uses a 2px outline with 5px offset. A keyboard-revealed “Skip to content” link targets the main landmark.
 
-**Language.** The footer uses the shared native language selector with an accessible label, native language names and saved guest preferences. Landing-scoped styles give it a transparent background, evergreen text and chevron, a muted green hover fill, and a 44px minimum height. Loading, save failure and retry behavior remain available.
+**Language.** The footer uses the shared native language selector. All landing copy, including the board's notes, exists in English and Polish.
 
-**Product representation.** One paper panel with 12px corners and a thin header divider contains the example, without shadows or nested cards. The horse profile shows only the portrait, without an age or breed caption. The care record remains readable HTML. Its figure heading “Juniper’s care” retains “Example” to identify fictional data; decorative eyebrows, audience labels and redundant “Provider” or “Notes” sublabels are absent.
+**The board.** One paper panel with 12px corners and a thin title-bar divider. Two native buttons switch “As it is” and “Tidy it up”, exposing selection through `aria-pressed`. “As it is” shows scattered, rotated paper notes; “Tidy it up” settles them into four columns (Calendar, Reminders, Horses, Contacts) with Phosphor icons and no dividers. Columns share the board's row tracks through subgrid, so items align across columns. Phones show one note per group, so the whole board fits on one screen. Switching never changes the board's height.
 
-**Care example.** Two native buttons in an accessible group switch “Planned” and “Completed”, exposing selection through `aria-pressed`; Completed is initial. The visit title and time remain visible. Planned shows “Sam Taylor, farrier.”; Completed shows “Trim completed. Next visit to be arranged.” and a completed icon. The note is a polite, atomic live region. Toggles have 44px minimum height, a 2px selected underline, and 160ms ease-out color/border transitions. This is local React state with no writes to real records.
+The board tidies itself once, six seconds after 80% of it comes into view, leaving time to read the notes. Scrolling away before then cancels it, using the switch hands control to the visitor, and reduced-motion preference leaves it to the switch. This is local React state with no writes to real records.
 
-**Motion.** There is no looping animation. Reduced-motion preference disables transitions and smooth scrolling; the hover translation becomes an immediate state change. No new inputs, dialogs, pricing cards or FAQ components are implemented.
+**Motion.** The notes settling is the page's one authored moment. There is no looping animation. Reduced-motion preference disables transitions.
 
 ## Photography and depth
 
-The full-width hero reuses the repository's `field-office-panorama` JPEGs from [public/landing-lab](../../../public/landing-lab), in 480px, 960px and 1600px variants. Responsive sources use `sizes="100vw"`, high fetch priority and asynchronous decoding. The alt text describes a chestnut horse looking over a stable gate in evening light. The image uses `object-fit: cover`, positioned at 65% horizontally on desktop and 68% on mobile. It has no arched frame; text is layered over it with a contrast overlay.
+The opening uses the repository's `field-office-panorama` JPEGs from [public/landing-lab](../../../public/landing-lab), in 480px, 960px and 1600px variants, with high fetch priority. The sharing section uses the generated `juniper-palomino` JPEGs, 480×384px and 960×768px, lazy-loaded. Both carry translated alt text and use `object-fit: cover`.
 
-The product profile uses generated `juniper-palomino` JPEGs in 480×384px and 960×768px variants, lazy-loaded with descriptive alt text. Its centered desktop crop is up to 300px wide and 240px high, with 4px corners. Mobile uses a centered 90px square. Both crops keep the ears and muzzle visible. The original generated PNG and the built-in generation prompt are saved in [assets/juniper-palomino.md](assets/juniper-palomino.md).
+External photographer credits, original acquisition source and license for the unchanged opening photograph are **not established by the inspected repository records**. The palomino portrait was generated using the built-in image-generation tool on 2026-09-17 at the user’s request; its provenance is recorded in [assets/juniper-palomino.md](assets/juniper-palomino.md). Supplied moodboard imagery remains reference material, not published artwork.
 
-External photographer credits, original acquisition source and license for the unchanged hero photograph are **not established by the inspected repository records**. Juniper’s replacement profile portrait was generated using the built-in image-generation tool on 2026-09-17 at the user’s request; its provenance is recorded separately. Supplied moodboard imagery remains reference material, not published artwork.
-
-Depth comes from the immersive photograph, green color field, paper product panel and thin rules. The landing defines no box shadows, suns, stamps, paper texture, rope borders or decorative icon grids.
+Depth comes from the photographs, colour fields and the paper board. Only the loose notes carry a small shadow. The landing defines no suns, stamps, paper texture, rope borders or decorative icon grids.
 
 ## Implementation guardrails
 
-- Keep styles and tokens scoped to the public landing; preserve the shared 1280px grid and aligned narrative headings.
-- Keep the photographic opening and full-viewport product section in that order, with readable product details and accessible visit controls.
-- Preserve the exact closing copy and “Example” truth label; do not restore removed ornaments, decorative labels or testing/payment copy.
+- Keep styles and tokens scoped to the public landing and preserve the shared 1280px grid.
+- Keep each section change a real change of field, and keep rules to the question rows and the board's title bar.
+- Keep the board's notes unlabelled but fictional: phone numbers stay in ranges reserved for fiction. Do not restore removed ornaments, decorative labels or testing/payment copy.
 - Preserve font attribution and its bundled license. Do not invent product capabilities, customer proof or asset provenance.
 
 This is a code-based design record, not an accessibility certification or a substitute for browser validation.

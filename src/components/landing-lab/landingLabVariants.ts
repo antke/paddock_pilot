@@ -10,7 +10,54 @@ type LandingLabVariantDefinition = {
   component: LazyExoticComponent<ComponentType<LandingLabVariantProps>>
 }
 
+// Round three: the live page first, then the five structures it was merged from,
+// all inside the country landing's world.
 export const currentLandingLabVariants = [
+  {
+    id: 'clean-board',
+    label: 'Clean Board',
+    thesis:
+      'The live landing page, built on one selling point: get rid of the whiteboard and the group chat. It tidies the notes, shows how they stay tidy, then answers sharing and sign-up questions.',
+    component: lazy(() => import('./variants/country/CleanBoard')),
+  },
+  {
+    id: 'yard-week',
+    label: 'Yard Week',
+    thesis:
+      'The live page, finished: the same photographic opening, clearer words, and a working week that shows the calendar, reminders, horse record and sharing.',
+    component: lazy(() => import('./variants/country/YardWeek')),
+  },
+  {
+    id: 'life-record',
+    label: 'Life Record',
+    thesis:
+      'One horse’s history, told as a timeline. When he moves yards, the record goes with him, which is the most distinctive thing the product does.',
+    component: lazy(() => import('./variants/country/LifeRecord')),
+  },
+  {
+    id: 'tack-room-board',
+    label: 'Tack Room Board',
+    thesis:
+      'Starts with the yard’s whiteboard, group chat and notebook, and tidies them into Paddock Pilot with one switch.',
+    component: lazy(() => import('./variants/country/TackRoomBoard')),
+  },
+  {
+    id: 'same-thursday',
+    label: 'Same Thursday',
+    thesis:
+      'One day, seen by the owner, a sharer and the yard. Shared plans and private records, shown in a single interaction.',
+    component: lazy(() => import('./variants/country/SameThursday')),
+  },
+  {
+    id: 'yard-questions',
+    label: 'Yard Questions',
+    thesis:
+      'Leads with the questions a yard asks every day, answers them straight away, then gives plain answers to what people ask before signing up.',
+    component: lazy(() => import('./variants/country/YardQuestions')),
+  },
+] as const satisfies ReadonlyArray<LandingLabVariantDefinition>
+
+export const previousLandingLabVariants = [
   {
     id: 'field-journal',
     label: 'Field Journal',
@@ -48,7 +95,7 @@ export const currentLandingLabVariants = [
   },
 ] as const satisfies ReadonlyArray<LandingLabVariantDefinition>
 
-export const archivedLandingLabVariants = [
+export const olderLandingLabVariants = [
   {
     id: 'gathered-yard',
     label: 'Gathered Yard',
@@ -86,7 +133,12 @@ export const archivedLandingLabVariants = [
   },
 ] as const satisfies ReadonlyArray<LandingLabVariantDefinition>
 
-// Keep both rounds available for existing review, capture, and preference URLs.
+// Earlier rounds stay reachable for existing review, capture and preference URLs.
+export const archivedLandingLabVariants = [
+  ...previousLandingLabVariants,
+  ...olderLandingLabVariants,
+] as const
+
 export const landingLabVariants = [
   ...currentLandingLabVariants,
   ...archivedLandingLabVariants,

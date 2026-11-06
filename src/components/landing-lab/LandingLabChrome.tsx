@@ -52,7 +52,7 @@ export function LandingLabChrome({
               </Link>
             </h1>
             <p className="mt-1 text-xs text-muted-foreground">
-              Review only · the live landing page is unchanged
+              Review only · changes here do not affect the live page
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">

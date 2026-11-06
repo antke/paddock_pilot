@@ -1,0 +1,569 @@
+/*
+ * Colour rhythm: photograph, evergreen, paper, straw, paper, evergreen.
+ * Paper and wash sit too close to separate sections, so each change of section
+ * is a real change of field. Rules are reserved for the question rows.
+ */
+.lp {
+  --lp-straw: #d8be96;
+  --lp-reverse-copy: #e1e3ce;
+  --lp-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --lp-straw-wash: color-mix(
+    in srgb,
+    var(--lp-straw) 42%,
+    var(--country-paper)
+  );
+  --lp-side: max(var(--country-gutter), calc((100vw - 1280px) / 2));
+}
+
+.lp .lp-h2 {
+  margin: 0;
+  font-family: var(--country-display);
+  font-size: clamp(40px, 4.5vw, 66px);
+  line-height: 1.08;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+.lp .lp-lede {
+  margin: 0;
+  max-width: 44ch;
+  font-size: 18px;
+  line-height: 1.75;
+  color: var(--country-copy);
+  text-wrap: pretty;
+}
+.lp .lp-on-ink {
+  background: var(--country-ink);
+  color: var(--country-paper);
+}
+.lp .lp-on-ink .lp-lede {
+  color: var(--lp-reverse-copy);
+}
+.lp .lp-on-ink ::selection {
+  background: var(--lp-straw);
+  color: var(--country-ink);
+}
+.lp .lp-on-ink :focus-visible {
+  outline-color: var(--country-paper);
+}
+.lp .lp-button-paper {
+  background: var(--country-paper);
+  color: var(--country-ink);
+}
+.lp .lp-button-paper:hover {
+  background: var(--country-wash);
+}
+.lp .lp-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.lp .lp-icon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+/* Hero: a paper sheet overlaps the photograph and sits on the evergreen field
+   that runs on into the board section. */
+.lp .lp-hero {
+  position: relative;
+  padding-top: min(58svh, 560px);
+  background: var(--country-ink);
+}
+.lp .lp-hero-photo {
+  position: absolute;
+  inset: 0 0 auto;
+  height: calc(min(58svh, 560px) + 120px);
+  overflow: hidden;
+}
+.lp .lp-hero-photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(#142619a6 0%, #14261900 32%);
+}
+.lp .lp-hero-panel-wrap {
+  position: relative;
+}
+.lp .lp-hero-panel {
+  display: grid;
+  gap: clamp(24px, 2.6vw, 36px);
+  padding: clamp(32px, 3.6vw, 52px) clamp(24px, 4.5vw, 64px);
+  background: var(--country-paper);
+  border-radius: 12px;
+}
+.lp .lp-hero h1 {
+  margin: 0;
+  font-family: var(--country-display);
+  font-size: clamp(46px, 4.7vw, 74px);
+  line-height: 1.06;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+.lp .lp-hero h1 span {
+  display: block;
+}
+.lp .lp-hero h1 span + span {
+  color: var(--country-clay);
+}
+.lp .lp-hero-intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px clamp(32px, 6vw, 96px);
+}
+.lp .lp-hero-intro .lp-lede {
+  max-width: 62ch;
+}
+.lp .lp-hero-intro .country-button {
+  flex: none;
+}
+
+/* Board: the paper sheet on the evergreen field, like the live product panel. */
+.lp .lp-board-section {
+  padding-block: clamp(72px, 8vw, 120px);
+}
+.lp .lp-board-intro {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 10%;
+  align-items: end;
+}
+.lp .lp-board-figure {
+  margin: clamp(40px, 5vw, 64px) 0 0;
+  background: var(--country-paper);
+  color: var(--country-ink);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.lp .lp-board-figure :focus-visible {
+  outline-color: var(--country-clay);
+}
+.lp .lp-board-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 24px;
+  padding: 16px clamp(20px, 3vw, 36px);
+  border-bottom: 1px solid var(--country-rule);
+}
+.lp .lp-board-title {
+  margin: 0;
+  font-family: var(--country-display);
+  /* Stays on one line, so both titles keep the board's height on any phone. */
+  font-size: clamp(18px, 5.6vw, 22px);
+  font-weight: 600;
+}
+.lp .lp-switch {
+  display: inline-flex;
+  padding: 4px;
+  gap: 4px;
+  border-radius: 6px;
+  background: var(--country-wash);
+}
+.lp .lp-switch button {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--country-copy);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 200ms ease-out,
+    color 200ms ease-out;
+}
+.lp .lp-switch button:hover {
+  color: var(--country-ink);
+}
+.lp .lp-switch button[aria-pressed='true'] {
+  background: var(--country-ink);
+  color: var(--country-paper);
+}
+
+/* Columns share the board's row tracks, so items line up across all four. */
+.lp .lp-board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px clamp(16px, 2vw, 28px);
+  padding: clamp(24px, 3vw, 40px) clamp(20px, 3vw, 36px);
+}
+.lp .lp-col {
+  display: grid;
+  grid-row: span 3;
+  grid-template-rows: subgrid;
+}
+.lp .lp-col ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+}
+.lp .lp-col-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    opacity 400ms ease-out 250ms,
+    transform 600ms var(--lp-ease) 250ms;
+}
+.lp [data-tidy='true'] .lp-col-title {
+  opacity: 1;
+  transform: none;
+}
+
+.lp .lp-note {
+  position: relative;
+  display: grid;
+  --lp-note-inset: 16px;
+  min-height: 80px;
+  padding: 12px var(--lp-note-inset) 14px;
+  border-radius: 4px;
+  background: #fffdf8;
+  box-shadow: 0 6px 14px -8px #263f3059;
+  /* The empty title row sits above; lift the pile into it. */
+  transform: translate(calc(var(--mx) * 100%), calc(var(--my) * 100% - 18px))
+    rotate(var(--mr));
+  transition:
+    transform 900ms var(--lp-ease),
+    background-color 500ms ease-out,
+    box-shadow 500ms ease-out;
+}
+.lp .lp-col:nth-child(2) .lp-note {
+  background: #f1e8d2;
+}
+.lp .lp-col:nth-child(4) .lp-note:first-child {
+  background: #ede3cf;
+}
+.lp [data-tidy='true'] .lp-note {
+  transform: none;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+.lp [data-tidy='true'] .lp-col:nth-child(n) .lp-note {
+  background: transparent;
+}
+.lp .lp-col:nth-child(1) .lp-note:nth-child(2),
+.lp .lp-col:nth-child(3) .lp-note:nth-child(1) {
+  transition-delay: 60ms;
+}
+.lp .lp-col:nth-child(2) .lp-note:nth-child(2),
+.lp .lp-col:nth-child(4) .lp-note:nth-child(1) {
+  transition-delay: 120ms;
+}
+.lp .lp-note > span {
+  grid-area: 1 / 1;
+  transition: opacity 360ms ease-out;
+}
+.lp .lp-note-scribble {
+  font-family: var(--country-display);
+  font-size: 21px;
+  line-height: 1.25;
+  font-weight: 450;
+  letter-spacing: -0.01em;
+  color: #2f3a33;
+}
+/* Bleeds through the note's inset so toggling never rewraps the scribble. */
+.lp .lp-note-tidy {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-inline: calc(-1 * var(--lp-note-inset));
+  opacity: 0;
+}
+.lp .lp-note-tidy .lp-icon {
+  margin-top: 1px;
+  color: var(--country-ink);
+}
+.lp .lp-note-tidy > span {
+  display: grid;
+  gap: 4px;
+}
+.lp .lp-note-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+.lp .lp-note-meta {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  color: var(--country-copy);
+}
+.lp [data-tidy='true'] .lp-note-scribble {
+  opacity: 0;
+}
+.lp [data-tidy='true'] .lp-note-tidy {
+  opacity: 1;
+  transition-delay: 280ms;
+}
+
+/* Keeps working: open on paper, emphasis instead of dividers. */
+.lp .lp-keeps {
+  padding-block: clamp(72px, 8vw, 120px);
+}
+.lp .lp-keeps-list {
+  list-style: none;
+  margin: clamp(36px, 4vw, 56px) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(28px, 3vw, 44px) clamp(40px, 7vw, 112px);
+}
+.lp .lp-keeps-list li {
+  font-family: var(--country-display);
+  font-size: clamp(23px, 2.1vw, 30px);
+  line-height: 1.3;
+  font-weight: 450;
+  letter-spacing: -0.012em;
+  color: var(--country-copy);
+  text-wrap: pretty;
+}
+.lp .lp-keeps-lead {
+  color: var(--country-ink);
+  font-weight: 550;
+}
+
+/* Sharing: a warm field, with the page's second photograph bleeding left. */
+.lp .lp-share {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  background: var(--lp-straw-wash);
+}
+.lp .lp-share-photo {
+  position: relative;
+  overflow: hidden;
+}
+.lp .lp-share-photo .lp-photo {
+  position: absolute;
+  inset: 0;
+}
+.lp .lp-share-body {
+  padding: clamp(72px, 8vw, 120px) var(--lp-side) clamp(72px, 8vw, 120px)
+    clamp(40px, 6vw, 96px);
+}
+.lp .lp-share-list {
+  display: grid;
+  gap: 28px;
+  margin-top: clamp(32px, 4vw, 48px);
+}
+.lp .lp-share-list h3 {
+  margin: 0;
+  font-family: var(--country-display);
+  font-size: 27px;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+}
+.lp .lp-share-list p {
+  margin: 8px 0 0;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--country-copy);
+  max-width: 46ch;
+}
+
+/* Questions: the one place rows need a rule, between pairs only. */
+.lp .lp-faq {
+  padding-block: clamp(72px, 8vw, 120px);
+}
+.lp .lp-faq-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+  gap: clamp(40px, 7vw, 112px);
+  align-items: start;
+}
+.lp .lp-faq-intro {
+  display: grid;
+  gap: 20px;
+  position: sticky;
+  top: 48px;
+}
+.lp .lp-faq-list {
+  margin: 0;
+}
+.lp .lp-faq-list > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: clamp(20px, 3vw, 48px);
+  padding-block: 28px;
+}
+.lp .lp-faq-list > div + div {
+  border-top: 1px solid var(--country-rule);
+}
+.lp .lp-faq-list > div:first-child {
+  padding-top: 8px;
+}
+.lp .lp-faq-list > div:last-child {
+  padding-bottom: 0;
+}
+.lp .lp-faq-list dt {
+  font-family: var(--country-display);
+  font-size: clamp(22px, 2vw, 28px);
+  line-height: 1.22;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+}
+.lp .lp-faq-list dd {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--country-copy);
+  text-wrap: pretty;
+}
+.lp .lp-inline-link {
+  color: var(--country-ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+}
+.lp .lp-inline-link:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Closing invitation */
+.lp .lp-close {
+  padding-block: clamp(72px, 9vw, 136px);
+}
+.lp .lp-close-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 10%;
+  align-items: end;
+}
+.lp .lp-close-grid .lp-lede {
+  margin-bottom: 28px;
+}
+
+@media (max-width: 999px) {
+  .lp .lp-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .lp .lp-col:nth-child(n + 3) {
+    margin-top: 16px;
+  }
+  .lp .lp-note {
+    transform: translate(calc(var(--mx) * 6%), calc(var(--my) * 8%))
+      rotate(var(--mr));
+  }
+}
+@media (max-width: 899px) {
+  .lp .lp-hero-intro {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .lp .lp-share {
+    grid-template-columns: 1fr;
+  }
+  .lp .lp-share-photo {
+    aspect-ratio: 16 / 9;
+  }
+  .lp .lp-share-body {
+    padding: 56px var(--country-gutter) 64px;
+  }
+  .lp .lp-faq-grid {
+    grid-template-columns: 1fr;
+  }
+  .lp .lp-faq-intro {
+    position: static;
+  }
+}
+@media (max-width: 699px) {
+  .lp .lp-h2 {
+    font-size: 40px;
+  }
+  .lp .lp-lede {
+    font-size: 16px;
+  }
+  .lp .lp-close-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .lp .lp-hero {
+    padding-top: 300px;
+  }
+  .lp .lp-hero-photo {
+    height: 340px;
+  }
+  .lp .lp-hero-panel {
+    gap: 22px;
+    margin-inline: calc(-1 * var(--country-gutter));
+    padding: 32px var(--country-gutter) 44px;
+    border-radius: 12px 12px 0 0;
+  }
+  .lp .lp-hero h1 {
+    font-size: clamp(38px, 10.5vw, 56px);
+  }
+  .lp .lp-board-intro {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .lp .lp-board-figure {
+    margin-top: 28px;
+  }
+
+  /* One note per group, so the whole board fits on one phone screen. */
+  .lp .lp-board {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding-block: 18px 16px;
+  }
+  .lp .lp-col,
+  .lp .lp-col ul {
+    display: block;
+  }
+  .lp .lp-col:nth-child(n + 3) {
+    margin-top: 0;
+  }
+  .lp .lp-col li:nth-child(n + 2) {
+    display: none;
+  }
+  .lp .lp-col-title {
+    margin-bottom: 4px;
+  }
+  .lp .lp-note {
+    --lp-note-inset: 14px;
+    min-height: 66px;
+    padding-block: 10px 12px;
+    transform: translate(calc(var(--mx) * 2.4%), -12px)
+      rotate(calc(var(--mr) * 0.6));
+  }
+  .lp .lp-note-scribble {
+    font-size: 18px;
+  }
+  .lp .lp-switch {
+    width: 100%;
+  }
+  .lp .lp-switch button {
+    flex: 1;
+  }
+  .lp .lp-keeps-list {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .lp .lp-share-photo {
+    aspect-ratio: 4 / 3;
+  }
+  .lp .lp-faq-list > div {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding-block: 24px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp .lp-note,
+  .lp .lp-note > span,
+  .lp .lp-col-title {
+    transition: none;
+  }
+}

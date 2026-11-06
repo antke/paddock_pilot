@@ -1,0 +1,168 @@
+/* Shared rules for the country-landing lab round. Scoped to .cty-page. */
+.cty-page {
+  --cty-ink: var(--country-ink);
+  --cty-paper: var(--country-paper);
+  --cty-copy: var(--country-copy);
+  --cty-rule: var(--country-rule);
+  --cty-clay: var(--country-clay);
+  --cty-wash: var(--country-wash);
+  --cty-reverse-copy: #e1e3ce;
+  --cty-reverse-rule: #f7f1e533;
+  --cty-straw: #d8be96;
+  --cty-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cty-page .cty-container {
+  width: min(calc(100% - 2 * var(--country-gutter)), 1280px);
+  margin-inline: auto;
+}
+
+.cty-page h2.cty-h2 {
+  font-family: var(--country-display);
+  font-size: clamp(40px, 4.5vw, 66px);
+  line-height: 1.08;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  margin: 0;
+  text-wrap: balance;
+}
+.cty-page .cty-h2-small {
+  font-family: var(--country-display);
+  font-size: clamp(32px, 3.2vw, 46px);
+  line-height: 1.12;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  margin: 0;
+  text-wrap: balance;
+}
+.cty-page .cty-lede {
+  font-size: 18px;
+  line-height: 1.75;
+  max-width: 44ch;
+  margin: 0;
+  color: var(--cty-copy);
+  text-wrap: pretty;
+}
+.cty-page .cty-on-ink .cty-lede,
+.cty-page .cty-on-ink.cty-lede {
+  color: var(--cty-reverse-copy);
+}
+.cty-page .cty-on-ink {
+  background: var(--cty-ink);
+  color: var(--cty-paper);
+}
+.cty-page .cty-on-ink ::selection {
+  background: #d8be96;
+  color: var(--cty-ink);
+}
+.cty-page .cty-on-ink :focus-visible {
+  outline-color: var(--cty-paper);
+}
+
+.cty-page .cty-button-paper {
+  background: var(--cty-paper);
+  color: var(--cty-ink);
+}
+.cty-page .cty-button-paper:hover {
+  background: var(--cty-wash);
+}
+
+.cty-page .cty-text-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 54px;
+  padding-inline: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  transition: text-decoration-color 180ms ease-out;
+}
+.cty-page .cty-text-action:hover {
+  text-decoration-color: currentColor;
+}
+
+.cty-page .cty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 28px;
+}
+
+.cty-page .cty-example {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--cty-copy);
+  white-space: nowrap;
+}
+.cty-page .cty-example::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cty-clay);
+}
+.cty-page .cty-on-ink .cty-example {
+  color: var(--cty-reverse-copy);
+}
+
+.cty-page .cty-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cty-page .cty-icon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.cty-page .cty-tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+.cty-page .cty-on-paper {
+  color: var(--cty-ink);
+}
+.cty-page .cty-on-paper .cty-example {
+  color: var(--cty-copy);
+}
+
+/* Closing invitation shared by several concepts. */
+.cty-page .cty-close {
+  padding-block: clamp(72px, 9vw, 136px);
+}
+.cty-page .cty-close-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 10%;
+  align-items: end;
+}
+.cty-page .cty-close-grid .cty-lede {
+  margin-bottom: 28px;
+}
+
+@media (max-width: 699px) {
+  .cty-page h2.cty-h2 {
+    font-size: 40px;
+  }
+  .cty-page .cty-h2-small {
+    font-size: 31px;
+  }
+  .cty-page .cty-lede {
+    font-size: 16px;
+  }
+  .cty-page .cty-close-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}

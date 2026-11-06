@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 
+import type * as RouterModule from '@tanstack/react-router'
 import type { ComponentProps } from 'react'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { forbiddenLandingClaims } from './landingLabContent'
@@ -12,6 +13,12 @@ import {
   isLandingLabVariantId,
   landingLabVariants,
 } from './landingLabVariants'
+import LifeRecord from './variants/country/LifeRecord'
+import SameThursday from './variants/country/SameThursday'
+import CleanBoard from './variants/country/CleanBoard'
+import TackRoomBoard from './variants/country/TackRoomBoard'
+import YardQuestions from './variants/country/YardQuestions'
+import YardWeek from './variants/country/YardWeek'
 import FieldJournal from './variants/FieldJournal'
 import OpenPaddock from './variants/OpenPaddock'
 import PineStatement from './variants/PineStatement'
@@ -45,6 +52,13 @@ vi.mock('#/components/ui/button', () => ({
   },
 }))
 
+vi.mock('@tanstack/react-router', async (importOriginal) => ({
+  ...(await importOriginal<typeof RouterModule>()),
+  Link: ({ to, ...props }: ComponentProps<'a'> & { to: string }) => (
+    <a href={to} {...props} />
+  ),
+}))
+
 vi.mock('#/i18n/LanguageSelector', () => ({
   LanguageSelector: () => <span>Language</span>,
 }))
@@ -52,6 +66,15 @@ vi.mock('#/i18n/LanguageSelector', () => ({
 afterEach(cleanup)
 
 const currentConcepts = [
+  ['Clean Board', CleanBoard],
+  ['Yard Week', YardWeek],
+  ['Life Record', LifeRecord],
+  ['Tack Room Board', TackRoomBoard],
+  ['Same Thursday', SameThursday],
+  ['Yard Questions', YardQuestions],
+] as const
+
+const previousConcepts = [
   ['Field Journal', FieldJournal],
   ['Yard Editorial', YardEditorial],
   ['Open Paddock', OpenPaddock],
@@ -68,21 +91,27 @@ const archivedConcepts = [
 ] as const
 
 describe('landing lab registry', () => {
-  it('contains exactly five current directions with the refinement first', () => {
+  it('contains the merged page first, then its five source directions', () => {
     expect(currentLandingLabVariants.map((variant) => variant.id)).toEqual([
-      'field-journal',
-      'yard-editorial',
-      'open-paddock',
-      'working-journal',
-      'pine-statement',
+      'clean-board',
+      'yard-week',
+      'life-record',
+      'tack-room-board',
+      'same-thursday',
+      'yard-questions',
     ])
     expect(currentLandingLabVariants.map((variant) => variant.label)).toEqual(
       currentConcepts.map(([label]) => label),
     )
   })
 
-  it('retains all five archived directions for backwards ID lookup', () => {
+  it('retains all ten earlier directions for backwards ID lookup', () => {
     expect(archivedLandingLabVariants.map((variant) => variant.id)).toEqual([
+      'field-journal',
+      'yard-editorial',
+      'open-paddock',
+      'working-journal',
+      'pine-statement',
       'gathered-yard',
       'stable-aisle',
       'paddock-map',
@@ -90,7 +119,7 @@ describe('landing lab registry', () => {
       'owner-member-gatefold',
     ])
     expect(archivedLandingLabVariants.map((variant) => variant.label)).toEqual(
-      archivedConcepts.map(([label]) => label),
+      [...previousConcepts, ...archivedConcepts].map(([label]) => label),
     )
     expect(landingLabVariants).toEqual([
       ...currentLandingLabVariants,
@@ -155,7 +184,88 @@ function expectFactualLandingStory(
   }
 }
 
-describe.each(currentConcepts)('%s', (_label, Concept) => {
+describe.each(currentConcepts)('%s', (label, Concept) => {
+  it('renders the country landing world with live account routes', () => {
+    const { container } = render(<Concept theme="light" />)
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
+    expect(container.querySelector('.country-page')).toBeTruthy()
+    expect(container.querySelector('main#country-main')).toBeTruthy()
+    expect(container.querySelector('footer')).toBeTruthy()
+    expect(
+      container.querySelectorAll('a[href="/sign-up/$"]').length,
+    ).toBeGreaterThanOrEqual(2)
+    expect(container.querySelector('a[href="/sign-in/$"]')).toBeTruthy()
+    expect(container.querySelector('a[href="/pricing"]')).toBeTruthy()
+
+    const copy = container.textContent?.toLowerCase() ?? ''
+    expect(copy).toContain('horse')
+    expect(copy).toMatch(/stable|yard/)
+    expect(copy).toMatch(/calendar|appointments|reminders/)
+    expect(copy).toContain('record')
+    // Clean Board's notes are unlabelled by review decision; every number in
+    // them is from a range reserved for fiction.
+    if (label !== 'Clean Board') {
+      expect(copy).toContain('example')
+    }
+    for (const forbiddenClaim of forbiddenLandingClaims.filter(
+      (claim) => claim !== 'juniper',
+    )) {
+      expect(copy).not.toContain(forbiddenClaim)
+    }
+  })
+})
+
+describe('country round interactions', () => {
+  it('Clean Board tidies the notes and keeps the chosen section order', () => {
+    const { container } = render(<CleanBoard />)
+    expect(
+      screen
+        .getAllByRole('heading', { level: 2 })
+        .map((heading) => heading.textContent),
+    ).toEqual([
+      'Every yard has a board like this.',
+      'Then it keeps itself tidy.',
+      'Share the work. Keep what’s yours.',
+      'Fair questions, plain answers.',
+      'Wipe the whiteboard clean.',
+    ])
+    const figure = container.querySelector('[data-tidy]')
+    expect(figure?.getAttribute('data-tidy')).toBe('false')
+    fireEvent.click(screen.getByRole('button', { name: 'Tidy it up' }))
+    expect(figure?.getAttribute('data-tidy')).toBe('true')
+  })
+
+  it('Yard Week switches the example day', () => {
+    render(<YardWeek />)
+    expect(screen.getByText('Farrier visit')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /^Friday 7/ }))
+    expect(screen.getByText('Hay delivery')).toBeTruthy()
+    expect(screen.queryByText('Farrier visit')).toBeNull()
+  })
+
+  it('Tack Room Board exposes only the active note wording', () => {
+    const { container } = render(<TackRoomBoard />)
+    const figure = container.querySelector('[data-tidy]')
+    expect(figure?.getAttribute('data-tidy')).toBe('false')
+    fireEvent.click(screen.getByRole('button', { name: 'Tidy it up' }))
+    expect(figure?.getAttribute('data-tidy')).toBe('true')
+    expect(
+      screen
+        .getByRole('button', { name: 'Tidy it up' })
+        .getAttribute('aria-pressed'),
+    ).toBe('true')
+  })
+
+  it('Same Thursday hides private records from the yard view', () => {
+    render(<SameThursday />)
+    expect(screen.queryByText(/Private to Juniper’s owner/)).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'The yard' }))
+    expect(screen.getByText(/Private to Juniper’s owner/)).toBeTruthy()
+    expect(screen.queryByText(/Slight heat in near fore/)).toBeNull()
+  })
+})
+
+describe.each(previousConcepts)('%s', (_label, Concept) => {
   it('renders a factual and accessible landing-page story with live account routes', () => {
     const { container } = render(<Concept theme="light" />)
     expectFactualLandingStory(container, true)

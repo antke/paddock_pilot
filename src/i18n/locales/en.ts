@@ -33,9 +33,11 @@ import { invitationFlow } from './invitationFlow.en'
 import { onboarding } from './onboarding.en'
 import { navigationShell } from './navigationShell.en'
 import { landingDirections } from './landingDirections.en'
+import { publicLanding } from './publicLanding.en'
 
 export const en = {
   landingDirections,
+  publicLanding,
   navigationShell,
   stableUpdates,
   horseComparison,

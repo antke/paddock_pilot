@@ -62,13 +62,9 @@ afterEach(() => {
 })
 
 describe('LandingLabChrome concept rounds', () => {
-  it('groups exactly five current and five archived options while preserving review controls', () => {
+  it('groups exactly six current and ten archived options while preserving review controls', () => {
     render(
-      <LandingLabChrome
-        variantId="field-journal"
-        theme="dark"
-        viewport="390"
-      />,
+      <LandingLabChrome variantId="yard-week" theme="dark" viewport="390" />,
     )
     const current = within(screen.getByRole('group', { name: 'Current round' }))
     const archive = within(
@@ -77,15 +73,21 @@ describe('LandingLabChrome concept rounds', () => {
     expect(
       current.getAllByRole('link').map((link) => link.textContent),
     ).toEqual([
+      'Clean Board',
+      'Yard Week',
+      'Life Record',
+      'Tack Room Board',
+      'Same Thursday',
+      'Yard Questions',
+    ])
+    expect(
+      archive.getAllByRole('link').map((link) => link.textContent),
+    ).toEqual([
       'Field Journal',
       'Yard Editorial',
       'Open Paddock',
       'Working Journal',
       'Pine Statement',
-    ])
-    expect(
-      archive.getAllByRole('link').map((link) => link.textContent),
-    ).toEqual([
       'Gathered Yard',
       'Stable Aisle',
       'Paddock Map',
@@ -94,7 +96,7 @@ describe('LandingLabChrome concept rounds', () => {
     ])
     expect(
       current
-        .getByRole('link', { name: 'Field Journal' })
+        .getByRole('link', { name: 'Yard Week' })
         .getAttribute('aria-current'),
     ).toBe('page')
     for (const link of [
@@ -110,7 +112,7 @@ describe('LandingLabChrome concept rounds', () => {
       screen
         .getByRole('link', { name: 'Choose this direction' })
         .getAttribute('href'),
-    ).toBe('/landing-lab?selected=field-journal')
+    ).toBe('/landing-lab?selected=yard-week')
   })
 })
 

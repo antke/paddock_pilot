@@ -51,7 +51,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
 afterEach(cleanup)
 
 describe('LandingLabGallery rounds', () => {
-  it('mounts exactly the five current previews by default and no archived iframes', () => {
+  it('mounts exactly the six current previews by default and no archived iframes', () => {
     const { container } = render(<LandingLabGallery />)
     const current = within(
       screen.getByRole('region', { name: 'Current round' }),
@@ -61,7 +61,7 @@ describe('LandingLabGallery rounds', () => {
         .getAllByRole('heading', { level: 2 })
         .map((heading) => heading.textContent),
     ).toEqual(currentLandingLabVariants.map((variant) => variant.label))
-    expect(container.querySelectorAll('iframe')).toHaveLength(5)
+    expect(container.querySelectorAll('iframe')).toHaveLength(6)
     for (const variant of currentLandingLabVariants) {
       const iframe = screen.getByTitle(`${variant.label} landing-page preview`)
       expect(iframe.getAttribute('src')).toBe(
@@ -76,7 +76,7 @@ describe('LandingLabGallery rounds', () => {
     }
     expect(
       screen
-        .getByRole('button', { name: 'Show archived round (5 concepts)' })
+        .getByRole('button', { name: 'Show earlier rounds (10 concepts)' })
         .getAttribute('aria-expanded'),
     ).toBe('false')
   })
@@ -84,9 +84,9 @@ describe('LandingLabGallery rounds', () => {
   it('mounts archived previews only after expansion and unmounts them on collapse', () => {
     const { container } = render(<LandingLabGallery />)
     fireEvent.click(
-      screen.getByRole('button', { name: 'Show archived round (5 concepts)' }),
+      screen.getByRole('button', { name: 'Show earlier rounds (10 concepts)' }),
     )
-    expect(container.querySelectorAll('iframe')).toHaveLength(10)
+    expect(container.querySelectorAll('iframe')).toHaveLength(16)
     const archived = within(
       screen.getByRole('region', { name: 'Archived concepts' }),
     )
@@ -103,9 +103,9 @@ describe('LandingLabGallery rounds', () => {
       ).toBe(`/landing-lab/${variant.id}?mode=capture&theme=light`)
     }
     fireEvent.click(
-      screen.getByRole('button', { name: 'Hide archived round (5 concepts)' }),
+      screen.getByRole('button', { name: 'Hide earlier rounds (10 concepts)' }),
     )
-    expect(container.querySelectorAll('iframe')).toHaveLength(5)
+    expect(container.querySelectorAll('iframe')).toHaveLength(6)
     expect(
       screen.queryByRole('region', { name: 'Archived concepts' }),
     ).toBeNull()
@@ -116,7 +116,7 @@ describe('LandingLabGallery rounds', () => {
     expect(screen.getByText('Review preference: Paddock Map')).toBeTruthy()
     expect(screen.getByTitle('Paddock Map landing-page preview')).toBeTruthy()
     fireEvent.click(
-      screen.getByRole('button', { name: 'Hide archived round (5 concepts)' }),
+      screen.getByRole('button', { name: 'Hide earlier rounds (10 concepts)' }),
     )
     expect(screen.queryByTitle('Paddock Map landing-page preview')).toBeNull()
     view.rerender(<LandingLabGallery selected="stable-aisle" />)
@@ -129,8 +129,8 @@ describe('LandingLabGallery rounds', () => {
   })
 
   it('keeps current preferences outside the archive and links to canonical review and selection URLs', () => {
-    render(<LandingLabGallery selected="field-journal" />)
-    expect(screen.getByText('Review preference: Field Journal')).toBeTruthy()
+    render(<LandingLabGallery selected="yard-week" />)
+    expect(screen.getByText('Review preference: Yard Week')).toBeTruthy()
     expect(screen.queryByTitle('Gathered Yard landing-page preview')).toBeNull()
     const current = within(
       screen.getByRole('region', { name: 'Current round' }),

@@ -11,8 +11,12 @@ const rawControlOwners = new Set([
   // Accessible person cards own their native checkbox and enclosing label.
   'components/forms/event/PeopleSelection.tsx',
   'components/horses/HorseCard.tsx',
-  // The public care example owns its scoped, accessible status controls.
+  // Public landing examples own their scoped, accessible switches.
   'components/landing/CountryLandingHero.tsx',
+  'components/landing/PublicLandingPage.tsx',
+  'components/landing-lab/variants/country/SameThursday.tsx',
+  'components/landing-lab/variants/country/TackRoomBoard.tsx',
+  'components/landing-lab/variants/country/YardWeek.tsx',
   'components/onboarding/OnboardingStepper.tsx',
   'components/timeline/ActivityTimeline.tsx',
 ])

@@ -326,6 +326,195 @@
         ],
         "createdAt": "2026-11-02T17:27:43.825Z",
         "reason": "agent triage: pre-existing phone bottom-bar label size (text-[0.75rem]) predating this work; not introduced by the navigation changes"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "*",
+        "files": [
+          "src/components/landing-lab/variants/country/countryLab.css"
+        ],
+        "createdAt": "2026-11-03T16:25:09.336Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "src/components/landing-lab/variants/country/countryLab.css"
+        ],
+        "createdAt": "2026-11-03T16:25:09.363Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "*",
+        "files": [
+          "src/components/landing-lab/variants/country/countryLab.css"
+        ],
+        "createdAt": "2026-11-03T16:25:09.390Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "*",
+        "files": [
+          "src/components/landing-lab/variants/country/yardWeek.css"
+        ],
+        "createdAt": "2026-11-03T16:25:09.418Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "src/components/landing-lab/variants/country/yardWeek.css"
+        ],
+        "createdAt": "2026-11-03T16:25:09.443Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "*",
+        "files": [
+          "src/components/landing-lab/variants/country/yardWeek.css"
+        ],
+        "createdAt": "2026-11-03T16:25:09.468Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "*",
+        "files": [
+          "src/components/landing-lab/variants/country/lifeRecord.css"
+        ],
+        "createdAt": "2026-11-03T16:25:09.493Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "src/components/landing-lab/variants/country/lifeRecord.css"
+        ],
+        "createdAt": "2026-11-03T16:25:09.517Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "*",
+        "files": [
+          "src/components/landing-lab/variants/country/lifeRecord.css"
+        ],
+        "createdAt": "2026-11-03T16:25:09.541Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "*",
+        "files": [
+          "src/components/landing-lab/variants/country/tackRoomBoard.css"
+        ],
+        "createdAt": "2026-11-03T16:25:09.568Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "src/components/landing-lab/variants/country/tackRoomBoard.css"
+        ],
+        "createdAt": "2026-11-03T16:25:09.594Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "*",
+        "files": [
+          "src/components/landing-lab/variants/country/tackRoomBoard.css"
+        ],
+        "createdAt": "2026-11-03T16:25:09.620Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "*",
+        "files": [
+          "src/components/landing-lab/variants/country/sameThursday.css"
+        ],
+        "createdAt": "2026-11-03T16:25:09.649Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "src/components/landing-lab/variants/country/sameThursday.css"
+        ],
+        "createdAt": "2026-11-03T16:25:09.678Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "*",
+        "files": [
+          "src/components/landing-lab/variants/country/sameThursday.css"
+        ],
+        "createdAt": "2026-11-03T16:25:09.706Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "*",
+        "files": [
+          "src/components/landing-lab/variants/country/yardQuestions.css"
+        ],
+        "createdAt": "2026-11-03T16:25:09.736Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "src/components/landing-lab/variants/country/yardQuestions.css"
+        ],
+        "createdAt": "2026-11-03T16:25:09.762Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "*",
+        "files": [
+          "src/components/landing-lab/variants/country/yardQuestions.css"
+        ],
+        "createdAt": "2026-11-03T16:25:09.788Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "*",
+        "files": [
+          "src/components/landing/publicLanding.css"
+        ],
+        "createdAt": "2026-11-06T12:00:00.000Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "src/components/landing/publicLanding.css"
+        ],
+        "createdAt": "2026-11-06T12:00:00.000Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "*",
+        "files": [
+          "src/components/landing/publicLanding.css"
+        ],
+        "createdAt": "2026-11-06T12:00:00.000Z",
+        "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
       }
     ]
   }

@@ -1,0 +1,196 @@
+/* Hero: evergreen field with stacked questions; portrait bleeds right. */
+.yq .yq-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  min-height: max(720px, 100svh);
+}
+.yq .yq-hero-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 30px;
+  padding: 150px clamp(32px, 5vw, 88px) 88px
+    max(var(--country-gutter), calc((100vw - 1280px) / 2));
+}
+.yq .yq-hero h1 {
+  margin: 0;
+  font-family: var(--country-display);
+  font-size: clamp(46px, 5vw, 80px);
+  line-height: 1.08;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+.yq .yq-hero h1 span {
+  display: block;
+}
+.yq .yq-hero h1 span:nth-child(2) {
+  color: var(--cty-straw);
+}
+.yq .yq-hero h1 span:nth-child(3) {
+  color: color-mix(in srgb, var(--cty-paper) 78%, var(--cty-ink));
+}
+.yq .yq-hero .cty-lede {
+  max-width: 38ch;
+}
+.yq .yq-hero-photo {
+  position: relative;
+  overflow: hidden;
+}
+.yq .yq-hero-photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(#14261980 0%, #14261900 24%);
+}
+.yq .country-header-overlay {
+  background: none;
+}
+
+/* Answers strip */
+.yq .yq-answers {
+  padding-block: clamp(48px, 6vw, 88px);
+  border-bottom: 1px solid var(--cty-rule);
+}
+.yq .yq-answers-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+}
+.yq .yq-answers-title {
+  margin: 0;
+  font-family: var(--country-display);
+  font-size: 27px;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+}
+.yq .yq-answers-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(24px, 4vw, 64px);
+  margin: 28px 0 0;
+}
+.yq .yq-answers-grid > div {
+  padding-top: 18px;
+  border-top: 1px solid var(--cty-ink);
+}
+.yq .yq-answers-grid dt {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cty-copy);
+}
+.yq .yq-answers-grid dd {
+  margin: 10px 0 0;
+  display: grid;
+  gap: 10px;
+}
+.yq .yq-answer {
+  font-family: var(--country-display);
+  font-size: clamp(25px, 2.3vw, 34px);
+  line-height: 1.18;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+}
+.yq .yq-source {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cty-clay);
+}
+
+/* Questions */
+.yq .yq-faq {
+  padding-block: clamp(72px, 9vw, 136px);
+}
+.yq .yq-faq-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+  gap: clamp(40px, 7vw, 112px);
+  align-items: start;
+}
+.yq .yq-faq-intro {
+  display: grid;
+  gap: 20px;
+  position: sticky;
+  top: 48px;
+}
+.yq .yq-faq-list {
+  margin: 0;
+}
+.yq .yq-faq-list > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: clamp(20px, 3vw, 48px);
+  padding-block: 28px;
+  border-top: 1px solid var(--cty-rule);
+}
+.yq .yq-faq-list > div:last-child {
+  border-bottom: 1px solid var(--cty-rule);
+}
+.yq .yq-faq-list dt {
+  font-family: var(--country-display);
+  font-size: clamp(22px, 2vw, 28px);
+  line-height: 1.22;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+}
+.yq .yq-faq-list dd {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--cty-copy);
+  text-wrap: pretty;
+}
+.yq .yq-inline-link {
+  color: var(--cty-ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+}
+.yq .yq-inline-link:hover {
+  text-decoration-thickness: 2px;
+}
+
+@media (max-width: 899px) {
+  .yq .yq-hero {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+  .yq .yq-hero-copy {
+    padding: 132px var(--country-gutter) 56px;
+  }
+  .yq .yq-hero-photo {
+    aspect-ratio: 4 / 3;
+    order: 2;
+  }
+  .yq .yq-hero-photo::after {
+    display: none;
+  }
+  .yq .yq-faq-grid {
+    grid-template-columns: 1fr;
+  }
+  .yq .yq-faq-intro {
+    position: static;
+  }
+}
+@media (max-width: 699px) {
+  .yq .yq-hero h1 {
+    font-size: clamp(40px, 10.5vw, 58px);
+  }
+  .yq .yq-answers-head {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .yq .yq-answers-grid,
+  .yq .yq-faq-list > div {
+    grid-template-columns: 1fr;
+  }
+  .yq .yq-answers-grid {
+    gap: 28px;
+  }
+  .yq .yq-faq-list > div {
+    gap: 10px;
+    padding-block: 24px;
+  }
+}

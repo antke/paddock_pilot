@@ -41,16 +41,16 @@ export function LandingLabGallery({
       <header className="border-b border-brand-surface-foreground/20 bg-brand-surface text-brand-surface-foreground">
         <div className="grid min-h-[28rem] w-full gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[1.25fr_0.75fr] lg:items-end lg:px-10 xl:px-12">
           <h1 className="max-w-6xl font-display text-6xl leading-[0.98] font-semibold tracking-[-0.025em] text-balance sm:text-7xl lg:text-8xl">
-            Five current directions. One factual product story.
+            One merged page, and the five it came from.
           </h1>
           <div className="max-w-xl lg:justify-self-end">
             <p className="text-base leading-7 text-brand-surface-muted-foreground sm:text-lg sm:leading-8">
-              Pine &amp; paper, explored through photography, editorial layouts
-              and bolder typography. Field Journal refines the current page; the
-              other four take it in new directions.
+              Clean Board is now the live landing page, built around one idea:
+              get rid of the whiteboard and the group chat. The five concepts it
+              came from stay below for comparison.
             </p>
             <p className="mt-5 text-sm font-semibold">
-              Review only. The live landing page is unchanged.
+              Review only. Changes here do not affect the live page.
             </p>
           </div>
         </div>
@@ -90,7 +90,8 @@ export function LandingLabGallery({
             onClick={() => setArchiveOpen((open) => !open)}
             className="min-h-11 px-0 underline"
           >
-            {archiveOpen ? 'Hide' : 'Show'} archived round (5 concepts)
+            {archiveOpen ? 'Hide' : 'Show'} earlier rounds (
+            {archivedLandingLabVariants.length} concepts)
           </Button>
         </div>
         <div id={archiveId}>

@@ -1,0 +1,308 @@
+.yw .yw-week {
+  padding-block: clamp(72px, 8vw, 128px);
+}
+.yw .yw-split {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 10%;
+  align-items: end;
+}
+
+/* Planner: one paper panel, no nested cards. */
+.yw .yw-planner {
+  margin: clamp(44px, 5vw, 64px) 0 0;
+  background: var(--cty-paper);
+  color: var(--cty-ink);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.yw .yw-planner :focus-visible {
+  outline-color: var(--cty-clay);
+}
+.yw .yw-planner-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 20px clamp(20px, 3vw, 36px);
+  border-bottom: 1px solid var(--cty-rule);
+}
+.yw .yw-planner-title {
+  margin: 0;
+  font-family: var(--country-display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.yw .yw-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-bottom: 1px solid var(--cty-rule);
+}
+.yw .yw-day {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-height: 92px;
+  padding: 14px 4px 12px;
+  border: 0;
+  border-right: 1px solid var(--cty-rule);
+  background: transparent;
+  color: var(--cty-copy);
+  cursor: pointer;
+  transition:
+    background-color 200ms ease-out,
+    color 200ms ease-out;
+}
+.yw .yw-day:last-child {
+  border-right: 0;
+}
+.yw .yw-day:hover {
+  background: color-mix(in srgb, var(--cty-wash) 60%, transparent);
+  color: var(--cty-ink);
+}
+.yw .yw-day[aria-pressed='true'] {
+  background: var(--cty-ink);
+  color: var(--cty-paper);
+}
+.yw .yw-day-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+.yw .yw-day-date {
+  font-family: var(--country-display);
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 500;
+}
+.yw .yw-day-dots {
+  display: flex;
+  gap: 4px;
+  min-height: 6px;
+}
+.yw .yw-day-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.55;
+}
+.yw .yw-planner-body {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  min-height: 300px;
+}
+.yw .yw-agenda {
+  padding: 28px clamp(20px, 3vw, 36px) 32px;
+}
+.yw .yw-agenda-day {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cty-copy);
+}
+.yw .yw-agenda ol,
+.yw .yw-reminders ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.yw .yw-entry {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 16px;
+  align-items: baseline;
+  padding-block: 16px;
+  border-top: 1px solid var(--cty-rule);
+  animation: yw-rise 420ms var(--cty-ease) both;
+}
+.yw .yw-entry:nth-child(2) {
+  animation-delay: 50ms;
+}
+.yw .yw-entry:nth-child(3) {
+  animation-delay: 100ms;
+}
+.yw .yw-entry-time {
+  font-size: 15px;
+  font-weight: 600;
+}
+.yw .yw-entry-main {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.yw .yw-entry-title {
+  font-size: 17px;
+  font-weight: 650;
+}
+.yw .yw-entry-meta {
+  font-size: 14px;
+  color: var(--cty-copy);
+}
+.yw .yw-entry-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cty-ink);
+}
+.yw .yw-reminders {
+  padding: 28px clamp(20px, 3vw, 36px) 32px;
+  border-left: 1px solid var(--cty-rule);
+  background: color-mix(in srgb, var(--cty-wash) 45%, var(--cty-paper));
+}
+.yw .yw-reminders-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cty-copy);
+}
+.yw .yw-reminders li {
+  display: grid;
+  gap: 3px;
+  padding-block: 14px;
+  border-top: 1px solid var(--cty-rule);
+}
+.yw .yw-reminder-title {
+  font-size: 16px;
+  font-weight: 650;
+}
+.yw .yw-reminder-meta {
+  font-size: 14px;
+  color: var(--cty-copy);
+}
+@keyframes yw-rise {
+  from {
+    opacity: 0.35;
+    transform: translateY(6px);
+  }
+}
+
+/* Record */
+.yw .yw-record {
+  padding-block: clamp(72px, 9vw, 136px);
+}
+.yw .yw-record-grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1fr;
+  gap: clamp(40px, 7vw, 112px);
+  align-items: center;
+}
+.yw .yw-record-photo {
+  aspect-ratio: 4 / 5;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.yw .yw-record-body .cty-lede {
+  margin-top: 24px;
+}
+.yw .yw-record-list {
+  margin: 36px 0 0;
+}
+.yw .yw-record-list div {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.8fr) 1.2fr;
+  gap: 20px;
+  padding-block: 15px;
+  border-top: 1px solid var(--cty-rule);
+}
+.yw .yw-record-list div:last-child {
+  border-bottom: 1px solid var(--cty-rule);
+}
+.yw .yw-record-list dt {
+  font-size: 15px;
+  font-weight: 650;
+}
+.yw .yw-record-list dd {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--cty-copy);
+}
+
+/* Sharing */
+.yw .yw-share {
+  padding-block: clamp(72px, 8vw, 120px);
+  background: var(--cty-wash);
+}
+.yw .yw-share-title {
+  max-width: 14ch;
+}
+.yw .yw-share-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(28px, 4vw, 64px);
+  margin-top: clamp(40px, 5vw, 64px);
+}
+.yw .yw-share-grid > div {
+  padding-top: 20px;
+  border-top: 1px solid var(--cty-ink);
+}
+.yw .yw-share-grid h3 {
+  margin: 0;
+  font-family: var(--country-display);
+  font-size: 27px;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+}
+.yw .yw-share-grid p {
+  margin: 12px 0 0;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--cty-copy);
+  max-width: 34ch;
+}
+
+@media (max-width: 999px) {
+  .yw .yw-planner-body {
+    grid-template-columns: 1fr;
+  }
+  .yw .yw-reminders {
+    border-left: 0;
+    border-top: 1px solid var(--cty-rule);
+  }
+}
+@media (max-width: 699px) {
+  .yw .yw-split,
+  .yw .yw-record-grid,
+  .yw .yw-share-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .yw .yw-share-grid {
+    gap: 32px;
+  }
+  .yw .yw-day {
+    min-height: 76px;
+    padding: 10px 0;
+  }
+  .yw .yw-day-name {
+    font-size: 12px;
+  }
+  .yw .yw-day-date {
+    font-size: 22px;
+  }
+  .yw .yw-entry {
+    grid-template-columns: 52px 1fr;
+    gap: 12px;
+  }
+  .yw .yw-entry-done {
+    grid-column: 2;
+  }
+  .yw .yw-record-photo {
+    aspect-ratio: 4 / 3;
+  }
+  .yw .yw-record-list div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .yw .yw-entry {
+    animation: none;
+  }
+}
