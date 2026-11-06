@@ -11,8 +11,17 @@ import { nitro } from 'nitro/vite'
 const shouldEnableDevtoolsEventBus =
   process.env.TANSTACK_DEVTOOLS_EVENT_BUS !== '0'
 
+// Console piping holds one never-ending SSE request open per page. Pages with
+// several same-origin iframes (the landing lab gallery) exhaust the browser's
+// six-connection limit and stall module loading, so it is opt-in.
+const shouldEnableDevtoolsConsolePipe =
+  process.env.TANSTACK_DEVTOOLS_CONSOLE_PIPE === '1'
+
 const appPlugins = [
-  devtools({ eventBusConfig: { enabled: shouldEnableDevtoolsEventBus } }),
+  devtools({
+    eventBusConfig: { enabled: shouldEnableDevtoolsEventBus },
+    consolePiping: { enabled: shouldEnableDevtoolsConsolePipe },
+  }),
   nitro({
     // Keep the server module graph together: splitting Clerk's provider across
     // circular SSR chunks can capture an undefined export during initialization.
