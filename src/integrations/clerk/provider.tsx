@@ -24,6 +24,8 @@ const polishLocalization = {
     action__openUserMenu: 'Otwórz menu konta',
     action__closeUserMenu: 'Zamknij menu konta',
   },
+  // Upstream leaves this undefined, so Clerk falls back to its English text.
+  formFieldInputPlaceholder__signUpPassword: 'Utwórz hasło',
 }
 
 const convexQueryClient = new ConvexQueryClient(CONVEX_URL)
@@ -47,6 +49,10 @@ export default function ConvexClerkProvider({
     <ClerkProvider
       publishableKey={PUBLISHABLE_KEY}
       appearance={clerkAppearance}
+      // Without these, SignInButton/SignUpButton (route prompts, invitations)
+      // send visitors to Clerk's hosted Account Portal instead of our pages.
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
       localization={locale === 'pl' ? polishLocalization : enUS}
     >
       <AccountDataProvider>{children}</AccountDataProvider>
