@@ -216,23 +216,19 @@ describe.each(currentConcepts)('%s', (label, Concept) => {
 })
 
 describe('country round interactions', () => {
-  it('Clean Board tidies the notes and keeps the chosen section order', () => {
-    const { container } = render(<CleanBoard />)
+  it('Clean Board keeps the chosen section order', () => {
+    render(<CleanBoard />)
     expect(
       screen
         .getAllByRole('heading', { level: 2 })
         .map((heading) => heading.textContent),
     ).toEqual([
       'Every yard has a board like this.',
-      'Then it keeps itself tidy.',
+      'Paddock Pilot tidies it up.',
       'Share the work. Keep what’s yours.',
       'Fair questions, plain answers.',
       'Wipe the whiteboard clean.',
     ])
-    const figure = container.querySelector('[data-tidy]')
-    expect(figure?.getAttribute('data-tidy')).toBe('false')
-    fireEvent.click(screen.getByRole('button', { name: 'Tidy it up' }))
-    expect(figure?.getAttribute('data-tidy')).toBe('true')
   })
 
   it('Yard Week switches the example day', () => {

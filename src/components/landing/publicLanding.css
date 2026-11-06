@@ -1,57 +1,107 @@
 /*
- * Colour rhythm: photograph, evergreen, paper, straw, paper, evergreen.
- * Paper and wash sit too close to separate sections, so each change of section
- * is a real change of field. Rules are reserved for the question rows.
+ * The yard's board is written by several people, so it uses two hands. Both are
+ * self-hosted with their Polish glyphs; see public/fonts for licences.
+ */
+@font-face {
+  font-family: 'Yard Hand A';
+  src: url('/fonts/sedgwick-ave/sedgwick-ave-latin-ext-400.woff2')
+    format('woff2');
+  font-display: swap;
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Yard Hand A';
+  src: url('/fonts/sedgwick-ave/sedgwick-ave-latin-400.woff2') format('woff2');
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Yard Hand B';
+  src: url('/fonts/mansalva/mansalva-latin-ext-400.woff2') format('woff2');
+  font-display: swap;
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Yard Hand B';
+  src: url('/fonts/mansalva/mansalva-latin-400.woff2') format('woff2');
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
+/*
+ * Colour rhythm: photograph sinking into evergreen, the white board on that
+ * evergreen wall, a dusk photograph, paper, evergreen. Marker colours stay on
+ * the board; straw lifts the evergreen.
  */
 .lp {
   --lp-straw: #d8be96;
-  --lp-reverse-copy: #e1e3ce;
-  --lp-ease: cubic-bezier(0.16, 1, 0.3, 1);
   --lp-straw-wash: color-mix(
     in srgb,
     var(--lp-straw) 42%,
     var(--country-paper)
   );
-  --lp-side: max(var(--country-gutter), calc((100vw - 1280px) / 2));
+  --lp-reverse-copy: #e1e3ce;
+  --lp-body: #414a3e;
+  --lp-board-white: #f6f6f1;
+  --lp-marker-blue: #23375f;
+  --lp-marker-red: #b5392c;
+  --lp-marker-black: #24272a;
+  --lp-marker-green: #1f6b47;
+  --lp-track: -0.024em;
+  --lp-lead: clamp(18px, 1.45vw, 21px);
+  --lp-h2: clamp(34px, 3.9vw, 58px);
 }
 
 .lp .lp-h2 {
   margin: 0;
   font-family: var(--country-display);
-  font-size: clamp(40px, 4.5vw, 66px);
+  font-size: var(--lp-h2);
   line-height: 1.08;
   font-weight: 500;
-  letter-spacing: -0.03em;
+  letter-spacing: var(--lp-track);
+  word-spacing: 0.03em;
   text-wrap: balance;
 }
 .lp .lp-lede {
   margin: 0;
-  max-width: 44ch;
-  font-size: 18px;
-  line-height: 1.75;
-  color: var(--country-copy);
+  max-width: 60ch;
+  font-size: var(--lp-lead);
+  line-height: 1.55;
+  font-weight: 450;
+  color: var(--lp-body);
   text-wrap: pretty;
 }
-.lp .lp-on-ink {
-  background: var(--country-ink);
-  color: var(--country-paper);
+.lp .country-button {
+  flex: none;
+  min-height: 58px;
+  padding: 17px 28px;
+  font-size: 16px;
 }
-.lp .lp-on-ink .lp-lede {
-  color: var(--lp-reverse-copy);
-}
-.lp .lp-on-ink ::selection {
-  background: var(--lp-straw);
-  color: var(--country-ink);
-}
-.lp .lp-on-ink :focus-visible {
-  outline-color: var(--country-paper);
-}
-.lp .lp-button-paper {
+.lp .country-button {
   background: var(--country-paper);
   color: var(--country-ink);
 }
-.lp .lp-button-paper:hover {
-  background: var(--country-wash);
+.lp .country-button:hover {
+  background: #fff;
+}
+.lp .lp-button-board {
+  background: var(--country-ink);
+  color: var(--country-paper);
+}
+.lp .lp-button-board:hover {
+  background: #3f5842;
 }
 .lp .lp-photo {
   display: block;
@@ -59,365 +109,372 @@
   height: 100%;
   object-fit: cover;
 }
-.lp .lp-icon {
-  width: 20px;
-  height: 20px;
-  flex: none;
+
+/* The header floats over the photograph with nothing ruled across the horse. */
+.lp .country-header-overlay {
+  background: none;
+}
+.lp .country-header-inner {
+  border-bottom: 0;
+}
+.lp .country-wordmark-dot {
+  display: inline;
+}
+.lp .country-account-link {
+  background: #14261973;
+}
+.lp .country-account-link:hover {
+  background: #142619a6;
 }
 
-/* Hero: a paper sheet overlaps the photograph and sits on the evergreen field
-   that runs on into the board section. */
+/* Opening: the photograph sinks into the evergreen with no card and no seam. */
 .lp .lp-hero {
   position: relative;
-  padding-top: min(58svh, 560px);
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: max(620px, 100svh);
+  padding-bottom: clamp(28px, 5svh, 64px);
   background: var(--country-ink);
+  color: var(--country-paper);
 }
 .lp .lp-hero-photo {
   position: absolute;
   inset: 0 0 auto;
-  height: calc(min(58svh, 560px) + 120px);
+  z-index: -1;
+  height: 84%;
   overflow: hidden;
+}
+.lp .lp-hero-photo .lp-photo {
+  object-position: 60% 20%;
+  filter: saturate(0.92);
 }
 .lp .lp-hero-photo::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(#142619a6 0%, #14261900 32%);
+  background:
+    linear-gradient(#142619d1 0%, #1426198c 15%, #14261900 34%),
+    linear-gradient(
+      to top,
+      var(--country-ink) 0%,
+      #263f30e6 14%,
+      #263f3080 30%,
+      #263f3000 52%
+    );
 }
-.lp .lp-hero-panel-wrap {
-  position: relative;
-}
-.lp .lp-hero-panel {
+.lp .lp-hero-copy {
   display: grid;
-  gap: clamp(24px, 2.6vw, 36px);
-  padding: clamp(32px, 3.6vw, 52px) clamp(24px, 4.5vw, 64px);
-  background: var(--country-paper);
-  border-radius: 12px;
+  gap: clamp(20px, 3svh, 32px);
 }
 .lp .lp-hero h1 {
   margin: 0;
   font-family: var(--country-display);
-  font-size: clamp(46px, 4.7vw, 74px);
-  line-height: 1.06;
+  font-size: clamp(46px, 5.5vw, 84px);
+  line-height: 1.03;
   font-weight: 500;
-  letter-spacing: -0.03em;
+  letter-spacing: var(--lp-track);
+  word-spacing: 0.03em;
 }
 .lp .lp-hero h1 span {
   display: block;
+  text-wrap: balance;
 }
 .lp .lp-hero h1 span + span {
-  color: var(--country-clay);
+  color: var(--lp-straw);
 }
 .lp .lp-hero-intro {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 24px clamp(32px, 6vw, 96px);
+  display: grid;
+  justify-items: start;
+  gap: clamp(18px, 2.6svh, 28px);
 }
 .lp .lp-hero-intro .lp-lede {
-  max-width: 62ch;
-}
-.lp .lp-hero-intro .country-button {
-  flex: none;
+  color: var(--lp-reverse-copy);
+  text-wrap: balance;
 }
 
-/* Board: the paper sheet on the evergreen field, like the live product panel. */
-.lp .lp-board-section {
-  padding-block: clamp(72px, 8vw, 120px);
-}
-.lp .lp-board-intro {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 10%;
-  align-items: end;
-}
-.lp .lp-board-figure {
-  margin: clamp(40px, 5vw, 64px) 0 0;
-  background: var(--country-paper);
-  color: var(--country-ink);
-  border-radius: 12px;
-  overflow: hidden;
-}
-.lp .lp-board-figure :focus-visible {
-  outline-color: var(--country-clay);
-}
-.lp .lp-board-bar {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px 24px;
-  padding: 16px clamp(20px, 3vw, 36px);
-  border-bottom: 1px solid var(--country-rule);
-}
-.lp .lp-board-title {
-  margin: 0;
-  font-family: var(--country-display);
-  /* Stays on one line, so both titles keep the board's height on any phone. */
-  font-size: clamp(18px, 5.6vw, 22px);
-  font-weight: 600;
-}
-.lp .lp-switch {
-  display: inline-flex;
-  padding: 4px;
-  gap: 4px;
-  border-radius: 6px;
-  background: var(--country-wash);
-}
-.lp .lp-switch button {
-  min-height: 44px;
-  padding: 0 18px;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--country-copy);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background-color 200ms ease-out,
-    color 200ms ease-out;
-}
-.lp .lp-switch button:hover {
-  color: var(--country-ink);
-}
-.lp .lp-switch button[aria-pressed='true'] {
+/* The board hangs on the evergreen wall; scrolling wipes it. */
+.lp .lp-wipe {
+  --lp-clean: 0;
+  --lp-stage-gap: clamp(16px, 2.6svh, 28px);
+  --lp-stage-pad: clamp(20px, 3.6svh, 40px);
+  /* The wide drawing is 2:1, so a short window narrows the board to fit. */
+  --lp-board-max: calc(
+    (
+        100svh - 2 * var(--lp-stage-pad) - var(--lp-stage-gap) - var(--lp-h2) *
+          1.08
+      ) *
+      2
+  );
+  /* Room to reach the hold, and for a flick to land in once it is reached. */
+  height: 270svh;
   background: var(--country-ink);
   color: var(--country-paper);
 }
-
-/* Columns share the board's row tracks, so items line up across all four. */
-.lp .lp-board {
+.lp .lp-wipe[data-board='tidy'] {
+  height: 100svh;
+}
+.lp .lp-wipe-stage {
+  position: sticky;
+  top: 0;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px clamp(16px, 2vw, 28px);
-  padding: clamp(24px, 3vw, 40px) clamp(20px, 3vw, 36px);
-}
-.lp .lp-col {
-  display: grid;
-  grid-row: span 3;
-  grid-template-rows: subgrid;
-}
-.lp .lp-col ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-row: span 2;
-  grid-template-rows: subgrid;
-}
-.lp .lp-col-title {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 700;
-  opacity: 0;
-  transform: translateY(-6px);
-  transition:
-    opacity 400ms ease-out 250ms,
-    transform 600ms var(--lp-ease) 250ms;
-}
-.lp [data-tidy='true'] .lp-col-title {
-  opacity: 1;
-  transform: none;
-}
-
-.lp .lp-note {
-  position: relative;
-  display: grid;
-  --lp-note-inset: 16px;
-  min-height: 80px;
-  padding: 12px var(--lp-note-inset) 14px;
-  border-radius: 4px;
-  background: #fffdf8;
-  box-shadow: 0 6px 14px -8px #263f3059;
-  /* The empty title row sits above; lift the pile into it. */
-  transform: translate(calc(var(--mx) * 100%), calc(var(--my) * 100% - 18px))
-    rotate(var(--mr));
-  transition:
-    transform 900ms var(--lp-ease),
-    background-color 500ms ease-out,
-    box-shadow 500ms ease-out;
-}
-.lp .lp-col:nth-child(2) .lp-note {
-  background: #f1e8d2;
-}
-.lp .lp-col:nth-child(4) .lp-note:first-child {
-  background: #ede3cf;
-}
-.lp [data-tidy='true'] .lp-note {
-  transform: none;
-  background: transparent;
-  box-shadow: none;
-  border-radius: 0;
-}
-.lp [data-tidy='true'] .lp-col:nth-child(n) .lp-note {
-  background: transparent;
-}
-.lp .lp-col:nth-child(1) .lp-note:nth-child(2),
-.lp .lp-col:nth-child(3) .lp-note:nth-child(1) {
-  transition-delay: 60ms;
-}
-.lp .lp-col:nth-child(2) .lp-note:nth-child(2),
-.lp .lp-col:nth-child(4) .lp-note:nth-child(1) {
-  transition-delay: 120ms;
-}
-.lp .lp-note > span {
-  grid-area: 1 / 1;
-  transition: opacity 360ms ease-out;
-}
-.lp .lp-note-scribble {
-  font-family: var(--country-display);
-  font-size: 21px;
-  line-height: 1.25;
-  font-weight: 450;
-  letter-spacing: -0.01em;
-  color: #2f3a33;
-}
-/* Bleeds through the note's inset so toggling never rewraps the scribble. */
-.lp .lp-note-tidy {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  margin-inline: calc(-1 * var(--lp-note-inset));
-  opacity: 0;
-}
-.lp .lp-note-tidy .lp-icon {
-  margin-top: 1px;
-  color: var(--country-ink);
-}
-.lp .lp-note-tidy > span {
-  display: grid;
-  gap: 4px;
-}
-.lp .lp-note-title {
-  font-size: 15px;
-  font-weight: 700;
-}
-.lp .lp-note-meta {
-  font-size: 14px;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.5;
-  color: var(--country-copy);
-}
-.lp [data-tidy='true'] .lp-note-scribble {
-  opacity: 0;
-}
-.lp [data-tidy='true'] .lp-note-tidy {
-  opacity: 1;
-  transition-delay: 280ms;
-}
-
-/* Keeps working: open on paper, emphasis instead of dividers. */
-.lp .lp-keeps {
-  padding-block: clamp(72px, 8vw, 120px);
-}
-.lp .lp-keeps-list {
-  list-style: none;
-  margin: clamp(36px, 4vw, 56px) 0 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(28px, 3vw, 44px) clamp(40px, 7vw, 112px);
-}
-.lp .lp-keeps-list li {
-  font-family: var(--country-display);
-  font-size: clamp(23px, 2.1vw, 30px);
-  line-height: 1.3;
-  font-weight: 450;
-  letter-spacing: -0.012em;
-  color: var(--country-copy);
-  text-wrap: pretty;
-}
-.lp .lp-keeps-lead {
-  color: var(--country-ink);
-  font-weight: 550;
-}
-
-/* Sharing: a warm field, with the page's second photograph bleeding left. */
-.lp .lp-share {
-  display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-  background: var(--lp-straw-wash);
-}
-.lp .lp-share-photo {
-  position: relative;
+  grid-template-rows: auto auto;
+  align-content: center;
+  gap: var(--lp-stage-gap);
+  height: 100svh;
+  padding-block: var(--lp-stage-pad);
   overflow: hidden;
 }
-.lp .lp-share-photo .lp-photo {
+/* One heading leaves before the other arrives, so they never overlap. */
+.lp .lp-wipe-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  max-width: var(--lp-board-max);
+  opacity: calc(1 - var(--lp-clean) * 2);
+}
+.lp .lp-wipe-button {
+  flex: none;
+  cursor: pointer;
+}
+.lp .lp-wipe:not([data-board='messy']) .lp-wipe-button {
+  visibility: hidden;
+}
+/* On a computer the eraser is the cursor. */
+@media (hover: hover) and (pointer: fine) {
+  .lp .lp-wipe[data-board='messy'] .lp-board {
+    cursor: none;
+  }
+}
+.lp .lp-board {
+  position: relative;
+  width: min(calc(100% - 2 * var(--country-gutter)), 1280px);
+  max-width: var(--lp-board-max);
+  aspect-ratio: 2 / 1;
+  min-height: 0;
+  margin-inline: auto;
+  color: var(--country-ink);
+  background: var(--lp-board-white);
+  border: 7px solid #c9cbc6;
+  border-radius: 3px;
+}
+.lp .lp-board-mess {
   position: absolute;
   inset: 0;
 }
-.lp .lp-share-body {
-  padding: clamp(72px, 8vw, 120px) var(--lp-side) clamp(72px, 8vw, 120px)
-    clamp(40px, 6vw, 96px);
+.lp .lp-board-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
-.lp .lp-share-list {
+.lp .lp-board-art-tall {
+  display: none;
+}
+.lp .lp-hand-a {
+  font-family: 'Yard Hand A', 'Comic Sans MS', cursive;
+  font-variant-ligatures: none;
+}
+.lp .lp-hand-b {
+  font-family: 'Yard Hand B', 'Comic Sans MS', cursive;
+  font-variant-ligatures: none;
+}
+.lp .lp-ink-blue {
+  fill: var(--lp-marker-blue);
+}
+.lp .lp-ink-red {
+  fill: var(--lp-marker-red);
+}
+.lp .lp-ink-black {
+  fill: var(--lp-marker-black);
+}
+.lp .lp-ink-green {
+  fill: var(--lp-marker-green);
+}
+.lp .lp-pen {
+  fill: none;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.lp .lp-pen-heavy {
+  stroke-width: 5;
+}
+.lp .lp-stroke-blue {
+  stroke: var(--lp-marker-blue);
+}
+.lp .lp-stroke-red {
+  stroke: var(--lp-marker-red);
+}
+.lp .lp-stroke-black {
+  stroke: var(--lp-marker-black);
+}
+.lp .lp-stroke-green {
+  stroke: var(--lp-marker-green);
+}
+.lp .lp-ghost {
+  opacity: 0.15;
+}
+/* Clears any trace left between the eraser's passes, or fades a rubbed board. */
+.lp .lp-writing {
+  opacity: calc(1 - var(--lp-clean) * 2);
+}
+.lp .lp-eraser-felt {
+  fill: var(--lp-straw);
+}
+.lp .lp-eraser-block {
+  fill: var(--country-ink);
+}
+/* Each pass of the eraser leaves the same notes behind it as clean entries. */
+.lp .lp-board-clean {
+  position: absolute;
+  inset: 0;
   display: grid;
-  gap: 28px;
-  margin-top: clamp(32px, 4vw, 48px);
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: clamp(12px, 2.2svh, 24px);
+  padding: clamp(14px, 3svh, 36px) clamp(20px, 4.6vw, 72px);
 }
-.lp .lp-share-list h3 {
+/* Takes the wall heading's place, directly above the board. */
+.lp .lp-tidy-title {
+  position: absolute;
+  bottom: calc(100% + 7px + var(--lp-stage-gap));
+  left: -7px;
+  right: -7px;
+  color: var(--country-paper);
+  opacity: calc(var(--lp-clean) * 2 - 1);
+  pointer-events: none;
+}
+.lp .lp-tidy {
+  list-style: none;
+  display: grid;
+  align-content: center;
+  min-height: 0;
   margin: 0;
-  font-family: var(--country-display);
-  font-size: 27px;
-  font-weight: 500;
-  letter-spacing: -0.015em;
+  padding: 0;
 }
-.lp .lp-share-list p {
-  margin: 8px 0 0;
-  font-size: 16px;
-  line-height: 1.7;
-  color: var(--country-copy);
+.lp .lp-tidy li {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 2px clamp(24px, 4vw, 64px);
+  align-items: baseline;
+  padding-block: clamp(9px, 1.7svh, 19px);
+  opacity: var(--lp-entry, 0);
+  transform: translateY(calc((1 - var(--lp-entry, 0)) * 8px));
+}
+.lp .lp-tidy li + li {
+  border-top: 1px solid #c9cbc6;
+}
+.lp .lp-tidy-entry-title {
+  font-family: var(--country-display);
+  font-size: clamp(21px, 2.3vw, 32px);
+  line-height: 1.16;
+  font-weight: 500;
+  letter-spacing: -0.016em;
+}
+.lp .lp-tidy-entry-detail {
+  font-size: var(--lp-lead);
+  line-height: 1.4;
+  font-weight: 450;
+  color: var(--lp-body);
+}
+.lp .lp-tidy-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px clamp(24px, 4vw, 64px);
+  opacity: calc(var(--lp-clean) * 2 - 1);
+  visibility: var(--lp-clean-view, visible);
+}
+.lp .lp-tidy-foot .lp-lede {
   max-width: 46ch;
+  text-wrap: balance;
 }
 
-/* Questions: the one place rows need a rule, between pairs only. */
+/* Sharing: the paddock beyond the yard, dissolving into the same evergreen. */
+.lp .lp-share {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: flex-end;
+  min-height: max(520px, 82svh);
+  padding-block: clamp(48px, 6vw, 88px);
+  background: var(--country-ink);
+  color: var(--country-paper);
+}
+.lp .lp-share-photo {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+}
+/* Only the soft distance of the opening photograph is shown, enlarged. */
+.lp .lp-share-photo .lp-photo {
+  width: 300%;
+  max-width: none;
+  object-position: 0 58%;
+  filter: saturate(0.92);
+}
+.lp .lp-share-photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    var(--country-ink) 0%,
+    #263f30e0 30%,
+    #263f3066 58%,
+    #263f3000 86%
+  );
+}
+.lp .lp-share-body {
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+  width: min(calc(100% - 2 * var(--country-gutter)), 1280px);
+  margin-inline: auto;
+}
+.lp .lp-share-body .lp-h2 {
+  font-size: clamp(32px, 5.4vw, 80px);
+}
+.lp .lp-share-body .lp-h2 span {
+  display: block;
+}
+.lp .lp-share-body .lp-lede {
+  color: var(--lp-reverse-copy);
+}
+
+/* Questions: three rows on one shared line, cost first. */
 .lp .lp-faq {
-  padding-block: clamp(72px, 8vw, 120px);
-}
-.lp .lp-faq-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
-  gap: clamp(40px, 7vw, 112px);
-  align-items: start;
-}
-.lp .lp-faq-intro {
-  display: grid;
-  gap: 20px;
-  position: sticky;
-  top: 48px;
+  padding-block: clamp(64px, 7vw, 104px) clamp(40px, 4.4vw, 64px);
 }
 .lp .lp-faq-list {
-  margin: 0;
+  margin: clamp(28px, 3vw, 44px) 0 0;
 }
 .lp .lp-faq-list > div {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-  gap: clamp(20px, 3vw, 48px);
-  padding-block: 28px;
-}
-.lp .lp-faq-list > div + div {
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 10px clamp(32px, 5vw, 80px);
+  align-items: baseline;
+  padding-block: clamp(22px, 2.4vw, 32px);
   border-top: 1px solid var(--country-rule);
-}
-.lp .lp-faq-list > div:first-child {
-  padding-top: 8px;
-}
-.lp .lp-faq-list > div:last-child {
-  padding-bottom: 0;
 }
 .lp .lp-faq-list dt {
   font-family: var(--country-display);
-  font-size: clamp(22px, 2vw, 28px);
-  line-height: 1.22;
+  font-size: clamp(23px, 2.2vw, 30px);
+  line-height: 1.2;
   font-weight: 500;
-  letter-spacing: -0.012em;
+  letter-spacing: -0.016em;
   text-wrap: balance;
 }
 .lp .lp-faq-list dd {
   margin: 0;
-  font-size: 16px;
-  line-height: 1.75;
-  color: var(--country-copy);
+  max-width: 60ch;
+  font-size: var(--lp-lead);
+  line-height: 1.55;
+  font-weight: 450;
+  color: var(--lp-body);
   text-wrap: pretty;
 }
 .lp .lp-inline-link {
@@ -431,139 +488,229 @@
   text-decoration-thickness: 2px;
 }
 
-/* Closing invitation */
+/* The close repeats the page's one idea at the opening's scale. */
 .lp .lp-close {
   padding-block: clamp(72px, 9vw, 136px);
+  background: var(--country-ink);
+  color: var(--country-paper);
 }
-.lp .lp-close-grid {
+/* The close repeats the promise at the largest scale on the page. */
+.lp .lp-close-title {
+  margin: 0;
+  font-family: var(--country-display);
+  font-size: clamp(46px, 7.6vw, 116px);
+  line-height: 1.02;
+  font-weight: 500;
+  letter-spacing: var(--lp-track);
+  word-spacing: 0.03em;
+  text-wrap: balance;
+}
+.lp .lp-close-action {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 10%;
-  align-items: end;
+  justify-items: start;
+  gap: 24px;
+  margin-top: clamp(28px, 3vw, 44px);
 }
-.lp .lp-close-grid .lp-lede {
-  margin-bottom: 28px;
+.lp .lp-close .lp-lede {
+  max-width: 48ch;
+  color: var(--lp-reverse-copy);
+  text-wrap: balance;
+}
+.lp .lp-close ::selection,
+.lp .lp-hero ::selection {
+  background: var(--lp-straw);
+  color: var(--country-ink);
+}
+.lp .lp-close :focus-visible,
+.lp .lp-hero :focus-visible {
+  outline-color: var(--country-paper);
 }
 
-@media (max-width: 999px) {
-  .lp .lp-board {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .lp .lp-col:nth-child(n + 3) {
-    margin-top: 16px;
-  }
-  .lp .lp-note {
-    transform: translate(calc(var(--mx) * 6%), calc(var(--my) * 8%))
-      rotate(var(--mr));
-  }
+.lp .country-footer-inner {
+  border-top: 0;
 }
-@media (max-width: 899px) {
-  .lp .lp-hero-intro {
-    flex-direction: column;
-    align-items: flex-start;
+.lp .country-footer p {
+  font-size: 14px;
+}
+.lp .country-footer .country-text-link {
+  display: inline-flex;
+  min-height: 44px;
+}
+
+/* A real step for upright tablets, not a stretched phone. */
+@media (min-width: 700px) and (max-aspect-ratio: 1 / 1) {
+  .lp {
+    --lp-lead: 21px;
   }
-  .lp .lp-share {
+  .lp .lp-h2 {
+    font-size: 6.2vw;
+  }
+  .lp .lp-hero h1 {
+    font-size: 9.4vw;
+  }
+  .lp .lp-share-body .lp-h2 {
+    font-size: 8vw;
+  }
+  .lp .lp-faq-list > div {
     grid-template-columns: 1fr;
   }
-  .lp .lp-share-photo {
-    aspect-ratio: 16 / 9;
+  .lp .lp-tidy-title {
+    font-size: 5.4vw;
   }
-  .lp .lp-share-body {
-    padding: 56px var(--country-gutter) 64px;
+  .lp .lp-tidy-entry-title {
+    font-size: 30px;
   }
-  .lp .lp-faq-grid {
-    grid-template-columns: 1fr;
-  }
-  .lp .lp-faq-intro {
-    position: static;
+  .lp .lp-close-title {
+    font-size: 11vw;
   }
 }
 @media (max-width: 699px) {
   .lp .lp-h2 {
-    font-size: 40px;
+    font-size: clamp(25px, 7.4vw, 33px);
   }
-  .lp .lp-lede {
-    font-size: 16px;
-  }
-  .lp .lp-close-grid {
-    grid-template-columns: 1fr;
-    gap: 24px;
+  .lp {
+    --lp-lead: 17px;
   }
   .lp .lp-hero {
-    padding-top: 300px;
+    min-height: max(600px, 100svh);
   }
   .lp .lp-hero-photo {
-    height: 340px;
+    height: 58%;
   }
-  .lp .lp-hero-panel {
-    gap: 22px;
-    margin-inline: calc(-1 * var(--country-gutter));
-    padding: 32px var(--country-gutter) 44px;
-    border-radius: 12px 12px 0 0;
+  .lp .lp-hero-photo .lp-photo {
+    object-position: 55% 30%;
   }
+  .lp .lp-hero-photo::after {
+    background:
+      linear-gradient(#142619d1 0, #1426198c 64px, #14261900 150px),
+      linear-gradient(
+        to top,
+        var(--country-ink) 0%,
+        #263f30b3 22%,
+        #263f3000 52%
+      );
+  }
+  /* Sized from the column, so the English quote always holds one line. */
   .lp .lp-hero h1 {
-    font-size: clamp(38px, 10.5vw, 56px);
+    font-size: calc((100vw - 2 * var(--country-gutter)) / 10.15);
+    line-height: 1.08;
   }
-  .lp .lp-board-intro {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  .lp .lp-board-figure {
-    margin-top: 28px;
-  }
-
-  /* One note per group, so the whole board fits on one phone screen. */
   .lp .lp-board {
-    grid-template-columns: 1fr;
-    gap: 14px;
-    padding-block: 18px 16px;
+    border-width: 5px;
   }
-  .lp .lp-col,
-  .lp .lp-col ul {
-    display: block;
-  }
-  .lp .lp-col:nth-child(n + 3) {
-    margin-top: 0;
-  }
-  .lp .lp-col li:nth-child(n + 2) {
-    display: none;
-  }
-  .lp .lp-col-title {
-    margin-bottom: 4px;
-  }
-  .lp .lp-note {
-    --lp-note-inset: 14px;
-    min-height: 66px;
-    padding-block: 10px 12px;
-    transform: translate(calc(var(--mx) * 2.4%), -12px)
-      rotate(calc(var(--mr) * 0.6));
-  }
-  .lp .lp-note-scribble {
-    font-size: 18px;
-  }
-  .lp .lp-switch {
-    width: 100%;
-  }
-  .lp .lp-switch button {
-    flex: 1;
-  }
-  .lp .lp-keeps-list {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-  .lp .lp-share-photo {
-    aspect-ratio: 4 / 3;
+  .lp .lp-wipe-button {
+    min-height: 44px;
+    padding: 10px 14px;
   }
   .lp .lp-faq-list > div {
     grid-template-columns: 1fr;
-    gap: 8px;
-    padding-block: 24px;
+  }
+  .lp .lp-share-body .lp-h2 {
+    font-size: clamp(29px, 8.2vw, 40px);
+  }
+  .lp .lp-board-clean {
+    padding: 12px 18px 14px;
+  }
+  .lp .lp-tidy-title {
+    bottom: calc(100% + 5px + var(--lp-stage-gap));
+    left: -5px;
+    right: -5px;
+  }
+  .lp .lp-tidy li {
+    grid-template-columns: 1fr;
+    padding-block: 8px;
+  }
+  .lp .lp-tidy-entry-title {
+    font-size: 20px;
+  }
+  .lp .lp-tidy-entry-detail {
+    font-size: 15px;
+  }
+  .lp .lp-tidy-foot {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .lp .lp-close-title {
+    font-size: 13vw;
   }
 }
+@media (max-width: 360px) {
+  .lp {
+    --lp-lead: 16px;
+  }
+}
+@media (max-width: 699px) and (max-height: 700px) {
+  .lp .lp-tidy-foot .lp-lede {
+    display: none;
+  }
+  .lp .lp-hero-photo {
+    height: 42%;
+  }
+}
+/* Upright screens get the board drawn for them, whatever their width. */
+@media (max-width: 699px), (max-aspect-ratio: 1 / 1) {
+  .lp .lp-wipe {
+    --lp-board-max: none;
+  }
+  .lp .lp-wipe-stage {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .lp .lp-board {
+    aspect-ratio: auto;
+  }
+  .lp .lp-board-art-wide {
+    display: none;
+  }
+  .lp .lp-board-art-tall {
+    display: block;
+  }
+}
+/* Nothing moves: the board shows full, then clean, and the page simply scrolls. */
 @media (prefers-reduced-motion: reduce) {
-  .lp .lp-note,
-  .lp .lp-note > span,
-  .lp .lp-col-title {
-    transition: none;
+  .lp .lp-wipe {
+    --lp-board-max: none;
+    height: auto;
+  }
+  .lp .lp-wipe-stage {
+    position: static;
+    height: auto;
+    overflow: visible;
+  }
+  .lp .lp-wipe-button {
+    display: none;
+  }
+  .lp .lp-board {
+    aspect-ratio: auto;
+  }
+  .lp .lp-board-mess {
+    position: relative;
+    inset: auto;
+    aspect-ratio: 2 / 1;
+  }
+  .lp .lp-wipe-head {
+    opacity: 1;
+  }
+  .lp .lp-board-clean {
+    position: relative;
+    inset: auto;
+    border-top: 1px dashed #c9cbc6;
+  }
+  .lp .lp-tidy-title {
+    position: static;
+    color: var(--country-ink);
+    opacity: 1;
+  }
+  .lp .lp-tidy li {
+    opacity: 1;
+    transform: none;
+  }
+  .lp .lp-tidy-foot {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+@media (prefers-reduced-motion: reduce) and (max-width: 699px) {
+  .lp .lp-board-mess {
+    aspect-ratio: 9 / 16;
   }
 }

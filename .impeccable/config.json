@@ -515,6 +515,18 @@
         ],
         "createdAt": "2026-11-06T12:00:00.000Z",
         "reason": "Agent judgment: public landing lab uses the scoped landing record docs/design/landing/DESIGN.md (Fraunces/Manrope ramp, paper/evergreen/straw palette, 4px/12px radii), not the app DESIGN.md"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "yard hand a",
+        "createdAt": "2026-11-06T16:37:52.991Z",
+        "reason": "Intentional: the public landing whiteboard's self-hosted handwriting face, recorded in docs/design/landing/DESIGN.md; chosen during the council run on 2026-11-06"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "yard hand b",
+        "createdAt": "2026-11-06T16:37:53.022Z",
+        "reason": "Intentional: the public landing whiteboard's second handwriting face, recorded in docs/design/landing/DESIGN.md; chosen during the council run on 2026-11-06"
       }
     ]
   }
