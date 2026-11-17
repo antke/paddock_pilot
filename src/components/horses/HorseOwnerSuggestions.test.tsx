@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { convexQuery } from '@convex-dev/react-query'
 import {
   createMemoryHistory,
   createRootRoute,
@@ -11,6 +10,7 @@ import {
 } from '@tanstack/react-router'
 import { afterEach, expect, it, vi } from 'vitest'
 import { api } from 'convex/_generated/api'
+import { getFunctionName } from 'convex/server'
 import type { Id } from 'convex/_generated/dataModel'
 import { Route as CreateHorseRoute } from '#/routes/stables/_layout/$stableId/horses/create'
 
@@ -24,6 +24,16 @@ const suggestions = vi.hoisted(() =>
   })),
 )
 vi.mock('convex/react', () => ({
+  useQuery: (query: Parameters<typeof getFunctionName>[0]) => {
+    switch (getFunctionName(query)) {
+      case 'stables:list':
+        return [{ _id: 'current-yard', name: 'Current yard' }]
+      case 'stableProviders:listForStable':
+        return { providers: [] }
+      default:
+        return []
+    }
+  },
   useMutation: () => vi.fn(),
   useConvex: () => ({}),
   useConvexAuth: () => ({ isAuthenticated: true }),
@@ -37,11 +47,6 @@ it('uses the shared people picker scoped to the current stable with the signed-i
   const client = new QueryClient({
     defaultOptions: { queries: { staleTime: Infinity, retry: false } },
   })
-  client.setQueryData(
-    convexQuery(api.stableProviders.listForStable, { stableId }).queryKey,
-    { providers: [] },
-  )
-  client.setQueryData(convexQuery(api.horses.list, { stableId }).queryKey, [])
   const root = createRootRoute()
   const stables = createRoute({ getParentRoute: () => root, path: 'stables' })
   const layout = createRoute({ getParentRoute: () => stables, id: '_layout' })

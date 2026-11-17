@@ -31,6 +31,8 @@ type FilteredDashboardItemListProps<
   getItemKey: (item: TItem) => Key
   renderItem: (item: TItem) => ReactNode
   stickyFilters?: boolean
+  /** View controls placed in the search and Filters row. */
+  toolbarEnd?: ReactNode
 }
 
 export function FilteredDashboardItemList<
@@ -49,6 +51,7 @@ export function FilteredDashboardItemList<
   renderItem,
   getItemKey,
   stickyFilters = false,
+  toolbarEnd,
   className,
   ...props
 }: FilteredDashboardItemListProps<TItem, TFacetId>) {
@@ -63,6 +66,7 @@ export function FilteredDashboardItemList<
         filtering={filtering}
         hideWhenEmpty={hideControlsWhenEmpty}
         sticky={stickyFilters}
+        toolbarEnd={toolbarEnd}
       />
 
       {listActions}

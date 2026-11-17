@@ -1,7 +1,7 @@
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useOwnershipCopy } from '#/components/ownership/ownershipCopy'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
-import { PencilSimpleIcon } from '@phosphor-icons/react'
+import { PencilSimpleIcon, UsersThreeIcon } from '@phosphor-icons/react'
 import { getHorseBreedLabel } from 'shared/i18n/horseBreedLabels'
 import {
   DashboardNavigation,
@@ -55,6 +55,8 @@ type HorseDetailProps = {
   category?: HorseDetailCategory
   canManageHorse: boolean
   canAddRecords?: boolean
+  /** Set for owners and carers inside a stable, whose full record lives on the personal page. */
+  sharedViewStableName?: string
   children?: ReactNode
 }
 
@@ -74,6 +76,7 @@ export function HorseDetail({
   trainingData,
   canManageHorse,
   canAddRecords = false,
+  sharedViewStableName,
   children,
 }: HorseDetailProps) {
   const c = useOwnershipCopy()
@@ -85,6 +88,11 @@ export function HorseDetail({
     id,
     label: t(`horseDetail.${id}`),
   }))
+  // Phones keep four sections in reach; the rest sit in More with no scrolling.
+  const phoneMoreCategories: ReadonlyArray<HorseDetailCategory> = [
+    'nutrition',
+    'documents',
+  ]
 
   const { pathname, state: locationState } = useLocation()
   const stableId = pathname.startsWith('/stables/')
@@ -117,14 +125,33 @@ export function HorseDetail({
       ? `/stables/${stableId}/horses/${horse._id}`
       : `/horses/${horse._id}`
   const pathAfterHorse = pathname.slice(horseBasePath.length)
+  // The same section on the personal page, which lists every record.
+  const allRecordsPath = [
+    `/horses/${horse._id}`,
+    pathAfterHorse === '/health' ? '/care' : pathAfterHorse,
+  ].join('')
   const activeCategory = category ?? getHorseDetailCategory(pathAfterHorse)
-  const moreSectionActive = [
-    '/timeline',
-    '/care-summary',
-    '/manage',
-    '/analysis',
-  ].some((path) => pathAfterHorse.startsWith(path))
+  const moreSectionActive =
+    ['/timeline', '/care-summary', '/manage', '/analysis'].some((path) =>
+      pathAfterHorse.startsWith(path),
+    ) ||
+    (isSmallScreen && phoneMoreCategories.some((id) => id === activeCategory))
   const taskState = useTaskOriginState()
+  // The rail names the section you are on, even when it lives in More.
+  const moreLabel =
+    [
+      { path: '/analysis', label: t('navigation.analysis') },
+      { path: '/manage', label: c.manage },
+      { path: '/timeline', label: t('horseDetail.timeline') },
+      { path: '/care-summary', label: t('horseDetail.summary') },
+    ].find((item) => pathAfterHorse.startsWith(item.path))?.label ??
+    (isSmallScreen
+      ? categoryItems.find(
+          (item) =>
+            item.id === activeCategory && phoneMoreCategories.includes(item.id),
+        )?.label
+      : undefined) ??
+    t('horseDetail.more')
   const avatar = (
     <HorseAvatar
       name={getHorseDisplayName(horse)}
@@ -165,9 +192,8 @@ export function HorseDetail({
             </Link>
           }
           description={heroDescription || undefined}
-          actionsLayout="inline"
           actions={
-            !isSmallScreen ? (
+            !pathAfterHorse.startsWith('/edit') ? (
               <>
                 {canManageHorse && (
                   <ButtonLink
@@ -178,14 +204,13 @@ export function HorseDetail({
                     }
                     params={{ stableId: stableId ?? '' }}
                     search={{ horseId: horse._id }}
-                    variant="outline"
                     action="schedule"
                     className="min-h-11 whitespace-nowrap"
                   >
                     {t('eventEditor.addEvent')}
                   </ButtonLink>
                 )}
-                {canAddRecords && !pathAfterHorse.startsWith('/edit') && (
+                {canAddRecords && !isSmallScreen && (
                   <HorseAddRecordMenu
                     triggerRef={actionTrigger}
                     horseId={horse._id}
@@ -193,7 +218,7 @@ export function HorseDetail({
                     stableId={stableId}
                   />
                 )}
-                {canManageHorse && !pathAfterHorse.startsWith('/edit') && (
+                {canManageHorse && (
                   <ButtonLink
                     to={
                       stableId
@@ -202,7 +227,7 @@ export function HorseDetail({
                     }
                     params={{ horseId: horse._id, stableId: stableId ?? '' }}
                     state={taskState}
-                    variant="ghost"
+                    variant="outline"
                     action="edit"
                     className="min-h-11 whitespace-nowrap"
                   >
@@ -242,7 +267,7 @@ export function HorseDetail({
             )
           }
         >
-          <div className="min-w-0 border-t border-border-subtle pt-4">
+          <div className="min-w-0 border-b border-border-subtle">
             <DashboardNavigation
               ariaLabel={t('horseDetail.sections', {
                 name: getHorseDisplayName(horse),
@@ -250,51 +275,22 @@ export function HorseDetail({
               inset={false}
               overflow="scroll"
             >
-              {categoryItems.map((item) => (
-                <DashboardNavigationLinkItem
-                  key={item.id}
-                  variant="section"
-                  render={
-                    <Link
-                      resetScroll={false}
-                      to={
-                        stableId
-                          ? `/stables/$stableId/horses/$horseId/${item.id}`
-                          : `/horses/$horseId/${item.id}`
-                      }
-                      params={{ horseId: horse._id, stableId: stableId ?? '' }}
-                    />
-                  }
-                  active={activeCategory === item.id}
-                >
-                  {item.label}
-                </DashboardNavigationLinkItem>
-              ))}
-              {(
-                [
-                  { path: 'analysis', label: t('navigation.analysis') },
-                  { path: 'manage', label: c.manage },
-                  { path: 'timeline', label: t('horseDetail.timeline') },
-                  { path: 'care-summary', label: t('horseDetail.summary') },
-                ] as const
-              )
-                // Phones reach Analysis through More only.
-                .filter((item) => !isSmallScreen || item.path !== 'analysis')
+              {categoryItems
+                .filter(
+                  (item) =>
+                    !isSmallScreen || !phoneMoreCategories.includes(item.id),
+                )
                 .map((item) => (
                   <DashboardNavigationLinkItem
-                    key={item.path}
-                    itemClassName="hidden lg:block"
+                    key={item.id}
                     variant="section"
-                    active={pathAfterHorse.startsWith(`/${item.path}`)}
                     render={
                       <Link
                         resetScroll={false}
                         to={
-                          stableId &&
-                          item.path !== 'manage' &&
-                          item.path !== 'analysis'
-                            ? `/stables/$stableId/horses/$horseId/${item.path}`
-                            : `/horses/$horseId/${item.path}`
+                          stableId
+                            ? `/stables/$stableId/horses/$horseId/${item.id}`
+                            : `/horses/$horseId/${item.id}`
                         }
                         params={{
                           horseId: horse._id,
@@ -302,17 +298,43 @@ export function HorseDetail({
                         }}
                       />
                     }
+                    active={activeCategory === item.id}
                   >
                     {item.label}
                   </DashboardNavigationLinkItem>
                 ))}
               <DashboardNavigationMenuGroup
-                itemClassName="lg:hidden"
                 active={moreSectionActive}
-                label={t('horseDetail.more')}
+                label={moreLabel}
                 contentWidth="sm"
                 variant="section"
               >
+                {isSmallScreen &&
+                  categoryItems
+                    .filter((item) => phoneMoreCategories.includes(item.id))
+                    .map((item) => (
+                      <DashboardNavigationMenuLink
+                        key={item.id}
+                        active={activeCategory === item.id}
+                        variant="section"
+                        render={
+                          <Link
+                            resetScroll={false}
+                            to={
+                              stableId
+                                ? `/stables/$stableId/horses/$horseId/${item.id}`
+                                : `/horses/$horseId/${item.id}`
+                            }
+                            params={{
+                              horseId: horse._id,
+                              stableId: stableId ?? '',
+                            }}
+                          />
+                        }
+                      >
+                        {item.label}
+                      </DashboardNavigationMenuLink>
+                    ))}
                 <DashboardNavigationMenuLink
                   active={pathAfterHorse.startsWith('/analysis')}
                   variant="section"
@@ -392,6 +414,33 @@ export function HorseDetail({
           data-slot="horse-section-content"
           className="grid min-w-0 gap-[var(--app-section-gap)]"
         >
+          {stableId &&
+            sharedViewStableName &&
+            !pathAfterHorse.startsWith('/edit') && (
+              <p
+                data-slot="horse-shared-view"
+                className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground print:hidden"
+              >
+                <span className="inline-flex min-w-0 items-center gap-1.5">
+                  <UsersThreeIcon
+                    aria-hidden="true"
+                    className="size-4 shrink-0"
+                  />
+                  <span className="[overflow-wrap:anywhere]">
+                    {t('horseDetail.sharedView', {
+                      name: sharedViewStableName,
+                    })}
+                  </span>
+                </span>
+                <Link
+                  to={allRecordsPath}
+                  // Text-height in the line; the overlay keeps a 44px tap target on touch screens.
+                  className="app-control-focus relative rounded-control font-semibold text-primary underline-offset-4 hover:underline pointer-coarse:after:absolute pointer-coarse:after:-inset-y-3 pointer-coarse:after:inset-x-0 pointer-coarse:after:content-['']"
+                >
+                  {t('horseDetail.viewAllRecords')}
+                </Link>
+              </p>
+            )}
           {activeCategory === 'profile' && (
             <HorseProfileSection
               stableId={stableId}

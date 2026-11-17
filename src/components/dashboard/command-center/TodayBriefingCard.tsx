@@ -1,5 +1,4 @@
 import { useLocale, useT } from '#/i18n/LocaleProvider'
-import { CaretDownIcon } from '@phosphor-icons/react'
 import { formatShortDateKey } from '#/lib/dateDisplay'
 import { dashboardUpcomingEvents } from './dashboardUpcomingEvents'
 import { useTaskOriginState } from '#/components/layout/mobileTaskNavigation'
@@ -13,6 +12,8 @@ import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
 import { EventLinkCard } from './EventLinkCard'
 import { ButtonLink } from '#/components/ui/button'
+import { DisclosureChevron } from '#/components/ui/disclosure-chevron'
+import { SeeAllLink } from './SeeAllLink'
 
 type TodayBriefingCardProps = {
   className?: string
@@ -49,36 +50,44 @@ export function TodayBriefingCard({
       titleStyle="display"
       headerLayout="inline"
       actions={
-        !compact &&
-        canCreate && (
-          <ButtonLink
-            to={
-              data.stable
-                ? '/stables/$stableId/events/create'
-                : '/events/create'
-            }
+        <>
+          <SeeAllLink
+            to={data.stable ? '/stables/$stableId/events' : '/events'}
             params={{ stableId: data.stable?._id ?? '' }}
-            state={taskState}
-            action="schedule"
-            size="sm"
-            className="min-h-11"
+            search={data.stable ? undefined : { view: 'calendar' }}
           >
-            {t('dashboard.addEvent')}
-          </ButtonLink>
-        )
+            {compact
+              ? t('dashboard.allEvents', { count: events.length })
+              : t('dashboard.fullCalendar')}
+          </SeeAllLink>
+          {canCreate && (
+            <ButtonLink
+              to={
+                data.stable
+                  ? '/stables/$stableId/events/create'
+                  : '/events/create'
+              }
+              params={{ stableId: data.stable?._id ?? '' }}
+              state={taskState}
+              action="schedule"
+              size="sm"
+              className="min-h-11"
+            >
+              {t('dashboard.addEvent')}
+            </ButtonLink>
+          )}
+        </>
       }
     >
-      {!compact && (
-        <DashboardInlineHeader
-          as="h3"
-          title={
-            <>
-              {t('dashboard.today')} ·{' '}
-              {formatShortDateKey(data.weekDays[0].key, locale)}
-            </>
-          }
-        />
-      )}
+      <DashboardInlineHeader
+        as="h3"
+        title={
+          <>
+            {t('dashboard.today')} ·{' '}
+            {formatShortDateKey(data.weekDays[0].key, locale)}
+          </>
+        }
+      />
       {events.length === 0 ? (
         <DashboardEmptyState chrome={recordChrome} spacing="flush">
           {t('dashboard.quietDay')}
@@ -100,17 +109,14 @@ export function TodayBriefingCard({
       {showWeek && (
         <details
           key={data.stable?._id ?? 'personal'}
-          className="group border-t border-border-subtle"
+          className="border-t border-border-subtle"
         >
           <summary className="app-control-focus flex min-h-12 cursor-pointer list-none flex-wrap items-center gap-2 py-3 [&::-webkit-details-marker]:hidden">
-            <CaretDownIcon
-              aria-hidden="true"
-              className="shrink-0 group-open:rotate-180"
-            />
             <span className="font-semibold">{t('dashboard.week')}</span>
             <span className="text-sm text-muted-foreground">
               {t('dashboard.eventCount', { count: upcoming.events.length })}
             </span>
+            <DisclosureChevron className="ml-auto" />
           </summary>
           <div className="grid gap-4 pb-2">
             <p className="text-sm text-muted-foreground">
@@ -149,17 +155,6 @@ export function TodayBriefingCard({
           </div>
         </details>
       )}
-      <ButtonLink
-        to={data.stable ? '/stables/$stableId/events' : '/events'}
-        params={{ stableId: data.stable?._id ?? '' }}
-        search={data.stable ? undefined : { view: 'calendar' }}
-        variant="link"
-        className="min-h-11 justify-self-start px-0"
-      >
-        {compact
-          ? t('dashboard.allEvents', { count: events.length })
-          : t('dashboard.fullCalendar')}
-      </ButtonLink>
     </DashboardSection>
   )
 }

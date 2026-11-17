@@ -63,6 +63,8 @@ export function StableBreadcrumbsView({
   const t = useT()
   const { locale } = useLocale()
   const items = createStableBreadcrumbItems(pathAfterStable, labels, locale)
+  // The overview's trail is only "Home › Overview", which the title and Back already say.
+  if (!pathAfterStable.replace(/\//g, '')) return null
 
   return (
     <Breadcrumb>

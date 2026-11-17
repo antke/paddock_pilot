@@ -273,10 +273,10 @@ function IssueRow({
       actionsPlacement="footer"
       actionsClassName="ml-auto"
       actionBadges={
-        showSeverityBadge || showStatusBadge ? (
+        showSeverityBadge || (showStatusBadge && !canManage) ? (
           <>
             {showSeverityBadge && <HealthIssueSeverityBadge severity="high" />}
-            {showStatusBadge && (
+            {showStatusBadge && !canManage && (
               <HealthIssueStatusBadge status={issue.status} />
             )}
           </>
@@ -285,6 +285,14 @@ function IssueRow({
       actions={
         canManage ? (
           <>
+            {/* Resolved takes Resolve's place and height. */}
+            {showStatusBadge && (
+              <HealthIssueStatusBadge
+                status={issue.status}
+                size="action"
+                reserveLabel={t('careRecords.resolve')}
+              />
+            )}
             {issue.status === 'active' && (
               <Button
                 type="button"

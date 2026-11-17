@@ -575,6 +575,13 @@ async function permanentlyDeleteHorseData(
       .query('eventsHorses')
       .withIndex('by_event_id', (q) => q.eq('eventId', eventId))
       .collect()
+    // Rider grants name this horse; they go with it.
+    for (const participant of await ctx.db
+      .query('activityParticipants')
+      .withIndex('by_event', (q) => q.eq('eventId', eventId))
+      .collect())
+      if (participant.horseId === horse._id)
+        await ctx.db.delete(participant._id)
 
     if (!event) {
       for (const association of rows.filter(
@@ -623,11 +630,21 @@ async function permanentlyDeleteHorseData(
     }
     for (const reminder of eventReminders) reminderIds.add(reminder._id)
     for (const row of rows) await ctx.db.delete(row._id)
-    for (const attendee of await ctx.db
-      .query('eventAttendees')
-      .withIndex('by_event', (q) => q.eq('eventId', event._id))
+    for (const table of [
+      'eventAttendees',
+      'activityParticipants',
+      'activityCalendarShares',
+    ] as const)
+      for (const row of await ctx.db
+        .query(table)
+        .withIndex('by_event', (q) => q.eq('eventId', event._id))
+        .collect())
+        await ctx.db.delete(row._id)
+    for (const share of await ctx.db
+      .query('recordShares')
+      .withIndex('by_record_horse', (q) => q.eq('recordId', event._id))
       .collect())
-      await ctx.db.delete(attendee._id)
+      await ctx.db.delete(share._id)
     await ctx.db.delete(event._id)
   }
 
@@ -640,6 +657,12 @@ async function permanentlyDeleteHorseData(
     ...[...documentIds].map((id) => ctx.db.delete(id)),
   ])
 
+  // Sharing rules point at records that no longer exist.
+  for (const share of await ctx.db
+    .query('recordShares')
+    .withIndex('by_horse', (q) => q.eq('horseId', horse._id))
+    .collect())
+    await ctx.db.delete(share._id)
   await ctx.db.delete(horse._id)
 
   if (horse.profileImageId) storageIds.add(horse.profileImageId)

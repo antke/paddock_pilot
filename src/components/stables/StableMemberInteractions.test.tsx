@@ -90,7 +90,9 @@ describe('member and invitation interaction ownership', () => {
       ).toBe(true)
       expect(
         rows[1 - first]
-          .getByRole('button', { name: 'Copy link' })
+          .getByRole('button', {
+            name: `Actions for ${['one', 'two'][1 - first]}@example.test`,
+          })
           .hasAttribute('disabled'),
       ).toBe(true)
       await act(async () => pending[1 - first].resolve(false))
@@ -116,10 +118,16 @@ describe('member and invitation interaction ownership', () => {
         onCopy={async () => {}}
       />,
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Revoke' }))
+    const openRevoke = async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Actions for one@example.test' }),
+      )
+      fireEvent.click(await screen.findByRole('menuitem', { name: 'Revoke' }))
+    }
+    await openRevoke()
     fireEvent.keyDown(await screen.findByRole('alertdialog'), { key: 'Escape' })
     await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
-    fireEvent.click(screen.getByRole('button', { name: 'Revoke' }))
+    await openRevoke()
     fireEvent.click(
       await screen.findByRole('button', {
         name: 'Revoke invitation',

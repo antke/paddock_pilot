@@ -33,14 +33,16 @@ export function AppDashboardView(props: Props) {
         data={data}
         setupNotice={props.setupNotice}
         updates={props.updates}
-      />
-      <PendingHorseInvitationList
-        key={data.stable._id}
-        invitations={invitations.filter(
-          ({ event }) => event?.stableId === data.stable._id,
-        )}
-        onApprove={onApprove}
-        onDecline={onDecline}
+        pending={
+          <PendingHorseInvitationList
+            key={data.stable._id}
+            invitations={invitations.filter(
+              ({ event }) => event?.stableId === data.stable._id,
+            )}
+            onApprove={onApprove}
+            onDecline={onDecline}
+          />
+        }
       />
     </DashboardPage>
   )

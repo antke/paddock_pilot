@@ -1,8 +1,6 @@
-import { XIcon } from '@phosphor-icons/react'
-import { RequiredFieldsHint } from './FormLayout'
 import { useT } from '#/i18n/LocaleProvider'
 import type { ComponentProps, FormEventHandler, ReactNode } from 'react'
-import { useRef, useState } from 'react'
+import { createContext, useContext, useRef, useState } from 'react'
 
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
@@ -21,11 +19,21 @@ import {
   AlertDialogTrigger,
 } from '#/components/ui/alert-dialog'
 import { Button } from '#/components/ui/button'
+import { cn } from '#/lib/utils'
 import { FormSubmitButtons } from './FormSubmitActions'
 import { useRouteFormClose } from '#/components/layout/mobileTaskNavigation'
 
+// The footer Close runs the same guarded exit as the header Back.
+const RouteFormExitContext = createContext<{
+  onExit?: () => void
+  disabled?: boolean
+}>({})
+
+// One hairline at the content width, like the form's section dividers, so the
+// footer never reads as a band; the card-coloured fill only hides fields
+// scrolling under the stuck actions. Phones float the actions instead.
 export const formStickyActionsClassName =
-  'sticky bottom-0 z-10 border-t border-border-subtle bg-card py-4 pb-[max(1rem,env(safe-area-inset-bottom))]'
+  'sticky bottom-0 z-10 bg-card pb-[max(1rem,env(safe-area-inset-bottom))] md:[&>*]:border-t md:[&>*]:border-border-subtle md:[&>*]:pt-4'
 
 type RouteFormCardProps = {
   formId: string
@@ -35,15 +43,20 @@ type RouteFormCardProps = {
   actions: ReactNode
   contentGap?: ComponentProps<typeof DashboardSectionCard>['contentGap']
   embedded?: boolean
-  sectionTitle?: ReactNode
   noValidate?: boolean
   stickyActions?: boolean
   onCancel?: () => void
   cancelDisabled?: boolean
 }
 
+// A quiet text action at the start of the footer, away from Close and submit. Its box starts at
+// the sections' edge, mirroring Close and submit, so its hover fill never runs past the cards.
+const resetClassName = 'text-muted-foreground hover:text-foreground sm:mr-auto'
+
 type RouteFormActionsProps = {
   isSubmitting: boolean
+  /** Discard changes is shown only for a dirty form; its space stays reserved. */
+  dirty?: boolean
   onReset: () => void
   submitLabel: string
   submittingLabel: string
@@ -96,7 +109,6 @@ export function RouteFormCard({
   actions,
   contentGap = 'default',
   embedded = false,
-  sectionTitle,
   stickyActions = false,
   onCancel,
   cancelDisabled = false,
@@ -113,14 +125,13 @@ export function RouteFormCard({
       <DashboardSectionCard
         data-slot="route-form-section-card"
         width="full"
-        title={embedded ? title : sectionTitle}
+        title={embedded ? title : undefined}
         size="panel"
         contentLayout="flexColumn"
         contentGap={contentGap}
         footer={<DashboardActions width="full">{actions}</DashboardActions>}
         footerClassName={stickyActions ? formStickyActionsClassName : undefined}
       >
-        <RequiredFieldsHint />
         {children}
       </DashboardSectionCard>
     </form>
@@ -128,21 +139,26 @@ export function RouteFormCard({
 
   if (embedded) return formCard
 
+  const exit = onCancel ?? closeForm
   return (
-    <DashboardPage>
+    // Capped so fields stay a readable width, centred with the title.
+    <DashboardPage width="narrow">
       <DashboardPageHeader
         title={title}
-        backAction={
-          <PageBack onClick={onCancel ?? closeForm} disabled={cancelDisabled} />
-        }
+        backAction={<PageBack onClick={exit} disabled={cancelDisabled} />}
       />
-      {formCard}
+      <RouteFormExitContext.Provider
+        value={{ onExit: exit, disabled: cancelDisabled }}
+      >
+        {formCard}
+      </RouteFormExitContext.Provider>
     </DashboardPage>
   )
 }
 
 export function RouteFormActions({
   isSubmitting,
+  dirty = true,
   onReset,
   resetLabel,
   disabled = false,
@@ -151,12 +167,16 @@ export function RouteFormActions({
   submittingLabel,
 }: RouteFormActionsProps) {
   const t = useT()
-  const effectiveResetLabel = resetLabel ?? t('common.reset')
+  const effectiveResetLabel = resetLabel ?? t('common.discardChanges')
   const [resetOpen, setResetOpen] = useState(false)
   const resetTrigger = useRef<HTMLButtonElement>(null)
   const ownerForm = useRef<HTMLFormElement | null>(null)
   const actionDisabled = disabled || isSubmitting
+  // Invisible rather than unmounted, so Close and submit never shift.
+  const resetHidden = !dirty
+  const resetButtonClassName = cn(resetClassName, resetHidden && 'invisible')
   const closeForm = useRouteFormClose()
+  const exit = useContext(RouteFormExitContext)
 
   return (
     <>
@@ -171,19 +191,14 @@ export function RouteFormActions({
                   if (element) ownerForm.current = element.closest('form')
                 }}
                 type="button"
-                variant="outline"
-                disabled={actionDisabled}
+                variant="ghost"
+                className={resetButtonClassName}
+                disabled={actionDisabled || resetHidden}
+                aria-hidden={resetHidden || undefined}
               />
             }
           >
-            <span
-              data-slot="form-action-icon"
-              className="hidden"
-              aria-hidden="true"
-            >
-              <XIcon className="size-5" />
-            </span>
-            <span data-slot="form-action-label">{effectiveResetLabel}</span>
+            {effectiveResetLabel}
           </AlertDialogTrigger>
           <AlertDialogContent
             finalFocus={() => {
@@ -222,22 +237,31 @@ export function RouteFormActions({
         </AlertDialog>
       )}
 
-      {/* Phones show Close in place of Reset in the floating actions. */}
+      {!resetConfirmation && (
+        <Button
+          type="button"
+          variant="ghost"
+          data-form-action="reset"
+          className={resetButtonClassName}
+          disabled={actionDisabled || resetHidden}
+          aria-hidden={resetHidden || undefined}
+          onClick={onReset}
+        >
+          {effectiveResetLabel}
+        </Button>
+      )}
+      {/* Close + submit at every width; floating phone actions hide Reset. */}
       <Button
         type="button"
         variant="outline"
         data-form-action="close"
-        className="hidden"
-        aria-label={t('common.close')}
-        onClick={closeForm}
+        disabled={exit.disabled}
+        onClick={exit.onExit ?? closeForm}
       >
-        <XIcon className="size-5" aria-hidden="true" />
+        {t('common.close')}
       </Button>
       <FormSubmitButtons
         isSubmitting={isSubmitting}
-        onCancel={resetConfirmation ? undefined : onReset}
-        cancelAction="reset"
-        cancelLabel={effectiveResetLabel}
         disabled={disabled}
         submitLabel={submitLabel}
         submittingLabel={submittingLabel}

@@ -17,8 +17,6 @@ export const onboarding = {
   stableBasicsHelp:
     'Give the stable a name and location. You can add the complete postal address later.',
   notFound: 'Onboarding could not be found',
-  ownerHelp:
-    'Build a useful starting point now, then let the stable records grow naturally.',
   memberHelp:
     'Learn the stable, add the details that matter here, and begin with your own horses.',
   sharedProfileHelp:
@@ -27,7 +25,7 @@ export const onboarding = {
     'Correct the stable name or location, then return to your current step.',
   operationsTitle: 'How does the stable run?',
   operationsHelp:
-    'Add the contact and operational details people are most likely to need.',
+    'Add the contacts and yard details people need most; you can finish them later in Stable settings.',
   cancel: 'Cancel',
   later: 'Do this later',
   introductionHelp:
@@ -36,8 +34,6 @@ export const onboarding = {
   memberTitle: 'Your details at this stable',
   memberHelpDetails:
     'These details belong to this membership and can differ at another stable.',
-  emergencyLater:
-    'An emergency contact is useful around the yard, but you can add or update it later from your stable profile.',
   horseReady: 'Your first horse is ready',
   addFirstHorse: 'Add your first horse',
   horseReadyHelp:
@@ -67,9 +63,8 @@ export const onboarding = {
     'Could not update the horse. Your entries are still here. Try again.',
   horseAddFailed:
     'Could not add the horse. Your entries are still here. Try again.',
-  horseLaterHelp:
-    'Start with the essentials. You can add care routines, health history, identification and documents from the horse’s profile whenever you’re ready.',
   horseName: 'Horse name',
+  horseNameExample: 'e.g. Maple',
   birthDate: 'Birth date',
   year: 'Year',
   month: 'Month',
@@ -77,6 +72,7 @@ export const onboarding = {
   birthDateHelp:
     'The year is required when using a birth date. Month and day are optional.',
   orAge: 'Or current age',
+  ageExample: 'e.g. 10',
   birthDatePriority: 'If both are entered, the birth date is used.',
   continueSaved: 'Continue without saving again',
   saveHorse: 'Save horse details',
@@ -87,9 +83,9 @@ export const onboarding = {
   stableCreateFailed:
     'Could not create the stable. Your entries are still here. Try again.',
   stableName: 'Stable name',
-  stableExample: 'Cedar Ridge Barn',
+  stableExample: 'e.g. Cedar Ridge Barn',
   location: 'Location',
-  locationExample: 'Hudson Valley, NY',
+  locationExample: 'e.g. Hudson Valley, NY',
   locationHelp: 'A town, region or address people will recognise.',
   saveStable: 'Save stable details',
   createContinue: 'Create stable and continue',
@@ -101,17 +97,12 @@ export const onboarding = {
   contactPhone: 'Contact phone',
   openingHours: 'Opening hours',
   yardRules: 'Yard rules',
-  operationsLaterHelp:
-    'Add what the team needs from day one. Opening hours, yard rules and additional contact details can all be completed later in Stable settings.',
-  yardManager: 'Yard manager',
+  yardManager: 'e.g. the yard manager',
   optional: 'Optional',
   emergencyPhone: 'Emergency phone',
-  hoursExample: '6:00 AM – 8:30 PM',
+  hoursExample: 'e.g. 06:00–20:30',
   yardRulesPlaceholder: 'Share anything members should know when they arrive.',
-  yardRulesHelp: 'Keep this short for now; it can grow with the stable.',
   saveContinue: 'Save and continue',
-  inviteLaterHelp:
-    'Your stable is ready to use. Invite someone now, or add people later from the stable’s People page.',
   ready: 'I’m ready',
   reviewTitle: 'Review your setup',
   aboutYou: 'About you',

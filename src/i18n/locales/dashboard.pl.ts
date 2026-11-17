@@ -1,7 +1,7 @@
 export const dashboard = {
   back: 'Wstecz',
   events: 'Wydarzenia',
-  fullCalendar: 'Otwórz pełny kalendarz',
+  fullCalendar: 'Wszystkie wydarzenia',
   noUpcomingEvents: 'Brak nadchodzących wydarzeń w ciągu najbliższych 7 dni.',
   eventCount_one: '{{count}} wydarzenie',
   eventCount_few: '{{count}} wydarzenia',
@@ -21,7 +21,7 @@ export const dashboard = {
   allHorses: 'Wszystkie konie',
   needsCare: 'Do sprawdzenia',
   today: 'Dzisiaj',
-  addActivity: 'Dodaj wydarzenie, zapis treningu lub konia',
+  addActivity: 'Dodaj wydarzenie, trening lub konia',
   quickMenu: 'Dodaj lub przejdź',
   quickAdd: 'Dodaj',
   quickGoTo: 'Przejdź do',
@@ -42,7 +42,7 @@ export const dashboard = {
   remindersHelp: 'Zaległe zadania i terminy opieki na najbliższe 14 dni.',
   attentionHelp:
     'Poważne problemy zdrowotne i przypomnienia na najbliższe 14 dni.',
-  viewReminders: 'Zobacz przypomnienia',
+  viewReminders: 'Wszystkie przypomnienia',
   healthHorses: 'Konie z poważnymi problemami zdrowotnymi',
   showFewer: 'Pokaż mniej koni',
   showAllHealth: 'Pokaż wszystkie konie z problemami zdrowotnymi ({{count}})',

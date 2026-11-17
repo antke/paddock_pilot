@@ -1,5 +1,6 @@
 import type { ComponentProps, ReactNode, Ref } from 'react'
 import { PlusIcon } from '@phosphor-icons/react'
+import { Menu as MenuPrimitive } from '@base-ui/react/menu'
 import { Button } from '#/components/ui/button'
 import {
   DropdownMenu,
@@ -28,8 +29,19 @@ export function MobileActionMenu({
 }) {
   useClaimFloatingSlot(claimSlot)
   return (
-    <div data-slot="mobile-action-menu" className="md:hidden print:hidden">
+    // While open the round button (now Close) rises above the scrim.
+    <div
+      data-slot="mobile-action-menu"
+      className="md:hidden print:hidden has-[[aria-expanded=true]]:z-60!"
+    >
       <DropdownMenu modal={false}>
+        <MenuPrimitive.Portal>
+          {/* Same scrim as dialogs and the menu sheet: dims the page so the menu reads on its own. */}
+          <MenuPrimitive.Backdrop
+            data-slot="mobile-action-menu-backdrop"
+            className="fixed inset-0 isolate z-50 bg-foreground/15 app-overlay-motion supports-backdrop-filter:backdrop-blur-xs motion-reduce:animate-none motion-reduce:transition-none md:hidden"
+          />
+        </MenuPrimitive.Portal>
         <DropdownMenuTrigger
           render={
             <Button
@@ -76,16 +88,27 @@ export function MobileActionMenuItem({
 /** A labelled section of the action menu, such as Add or Go to. */
 export function MobileActionMenuGroup({
   label,
+  nested = false,
   children,
 }: {
-  label: string
+  /** Omit for a group that a separator alone sets apart. */
+  label?: string
+  /** A sub-group inside a labelled group: its label is a quieter sub-heading. */
+  nested?: boolean
   children: ReactNode
 }) {
   return (
     <DropdownMenuGroup className="grid gap-0.5">
-      <DropdownMenuLabel className="px-3 pt-1 pb-1 text-xs font-semibold text-muted-foreground">
-        {label}
-      </DropdownMenuLabel>
+      {label && (
+        <DropdownMenuLabel
+          className={cn(
+            'px-3 pb-1 text-xs text-muted-foreground',
+            nested ? 'truncate pt-2 font-normal' : 'pt-1 font-semibold',
+          )}
+        >
+          {label}
+        </DropdownMenuLabel>
+      )}
       {children}
     </DropdownMenuGroup>
   )

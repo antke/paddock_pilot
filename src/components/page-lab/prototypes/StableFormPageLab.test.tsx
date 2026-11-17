@@ -46,10 +46,7 @@ describe('stable form sample validation and outcomes', () => {
       screen.getByRole('heading', { name: 'Edit stable', level: 1 }),
     ).toBeTruthy()
     expect(
-      screen.getByRole('heading', { name: 'Stable details', level: 2 }),
-    ).toBeTruthy()
-    expect(
-      screen.getByRole('heading', { name: 'Stable basics', level: 3 }),
+      screen.getByRole('heading', { name: 'Stable basics', level: 2 }),
     ).toBeTruthy()
     expect(
       screen.getByRole<HTMLButtonElement>('button', { name: 'Update stable' })
@@ -78,10 +75,10 @@ describe('stable form sample validation and outcomes', () => {
     expect(screen.queryByRole('heading', { name: 'Stable details' })).toBeNull()
     expect(nameInput().value).toBe('')
     fireEvent.change(nameInput(), { target: { value: 'Uncreated sample' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
     const reset = await screen.findByRole('alertdialog')
     fireEvent.click(
-      within(reset).getByRole('button', { name: 'Reset changes' }),
+      within(reset).getByRole('button', { name: 'Discard changes' }),
     )
     await waitFor(() => expect(nameInput().value).toBe(''))
   })

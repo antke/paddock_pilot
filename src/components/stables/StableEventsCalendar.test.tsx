@@ -137,7 +137,7 @@ it('opens frozen participations from both the desktop calendar and selected mobi
     '[data-calendar-view="mobile"]',
   ) as HTMLElement
   fireEvent.click(within(mobile).getByRole('button', { name: /^12 Aug 2026,/ }))
-  const mobileLink = within(mobile).getByRole('link', {
+  const mobileLink = within(agenda()).getByRole('link', {
     name: /Juniper history/,
   })
   for (const link of [monthLink, mobileLink]) {
@@ -242,36 +242,24 @@ describe('read-only month calendar', () => {
     expect(links[0].tabIndex).toBe(0)
   })
 
-  it('opens the real day agenda and returns Escape to its visible connected disclosure', async () => {
+  it('shows the selected day agenda under the grid and selects days in place', async () => {
     await setup()
-    const original = open()
-    expect(document.activeElement).toBe(agenda())
-    expect(within(agenda()).getAllByRole('link')).toHaveLength(6)
-    fireEvent.keyDown(agenda(), { key: 'Escape' })
-    expect(document.activeElement).toBe(original)
     expect(
-      screen.queryByRole('region', { name: 'Events on 12 Aug 2026' }),
-    ).toBeNull()
-  })
-
-  it('uses the persistent fallback when a selected day loses its disclosure but retains records', async () => {
-    const { update } = await setup()
-    const original = open()
-    update([event(0), event(1)])
-    expect(original.isConnected).toBe(false)
-    fireEvent.click(within(agenda()).getByRole('button', { name: 'Close' }))
-    expect(document.activeElement).toBe(fallback())
-  })
-
-  it('does not return focus to a connected disclosure that is no longer rendered', async () => {
-    await setup()
-    const original = open()
-    vi.spyOn(original, 'getClientRects').mockReturnValue(
-      [] as unknown as DOMRectList,
-    )
-    fireEvent.click(within(agenda()).getByRole('button', { name: 'Close' }))
-    expect(original.isConnected).toBe(true)
-    expect(document.activeElement).toBe(fallback())
+      screen.getByRole('region', { name: 'Events on 1 Aug 2026' }),
+    ).toBeTruthy()
+    const day = within(table()).getByRole('button', {
+      name: '12 Aug 2026, 6 events',
+    })
+    fireEvent.click(day)
+    expect(day.getAttribute('aria-pressed')).toBe('true')
+    expect(within(agenda()).getAllByRole('link')).toHaveLength(6)
+    fireEvent.click(within(table()).getByRole('cell', { name: '3 Aug 2026' }))
+    expect(
+      screen.getByRole('region', { name: 'Events on 3 Aug 2026' }),
+    ).toBeTruthy()
+    expect(day.getAttribute('aria-pressed')).toBe('false')
+    open()
+    expect(document.activeElement).toBe(agenda())
   })
 
   it('recovers only affected focus when reactive data removes an agenda or trigger', async () => {
@@ -294,8 +282,7 @@ describe('read-only month calendar', () => {
 
   it('recovers a hidden presentation on breakpoint changes without stealing unrelated focus', async () => {
     await setup()
-    open()
-    within(agenda()).getAllByRole('link')[0].focus()
+    within(table()).getAllByRole('link')[0].focus()
     resize(false)
     expect(document.activeElement).toBe(fallback())
     const mobile = document.querySelector('[data-calendar-view="mobile"]')!
@@ -353,7 +340,7 @@ it('offers a mobile month grid and shows only the selected date, including repea
   for (const row of within(month).getAllByRole('row').slice(1)) {
     expect(within(row).getAllByRole('cell')).toHaveLength(7)
   }
-  expect(within(mobile).getByText('No events on this date.')).toBeTruthy()
+  expect(screen.getByText('No events on this date.')).toBeTruthy()
   const day = within(month).getByRole('button', {
     name: '12 Aug 2026, 2 events',
   })
@@ -361,23 +348,29 @@ it('offers a mobile month grid and shows only the selected date, including repea
   fireEvent.click(day)
   expect(day.getAttribute('aria-pressed')).toBe('true')
   expect(document.activeElement).toBe(day)
-  expect(within(mobile).getAllByRole('link')).toHaveLength(2)
+  expect(within(agenda()).getAllByRole('link')).toHaveLength(2)
   expect(
-    within(mobile).getByRole('heading', { name: 'Events on 12 Aug 2026' }),
+    within(agenda()).getByRole('heading', { name: 'Events on 12 Aug 2026' }),
   ).toBeTruthy()
   fireEvent.click(
     within(month).getByRole('button', { name: '13 Aug 2026, 1 event' }),
   )
-  expect(within(mobile).getAllByRole('link')).toHaveLength(1)
-  expect(within(mobile).getByText('Ends today')).toBeTruthy()
+  const thirteenth = screen.getByRole('region', {
+    name: 'Events on 13 Aug 2026',
+  })
+  expect(within(thirteenth).getAllByRole('link')).toHaveLength(1)
+  expect(within(thirteenth).getByText('Ends today')).toBeTruthy()
   fireEvent.click(
     within(month).getByRole('button', { name: '19 Aug 2026, 1 event' }),
   )
+  const nineteenth = screen.getByRole('region', {
+    name: 'Events on 19 Aug 2026',
+  })
   expect(
-    within(mobile).getByRole('link', { name: /Weekly visit/ }),
+    within(nineteenth).getByRole('link', { name: /Weekly visit/ }),
   ).toBeTruthy()
   expect(
-    within(mobile).queryByRole('link', { name: /Three-day event/ }),
+    within(nineteenth).queryByRole('link', { name: /Three-day event/ }),
   ).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Next month' }))
   expect(
@@ -386,7 +379,7 @@ it('offers a mobile month grid and shows only the selected date, including repea
     }),
   ).toBeTruthy()
   expect(
-    within(mobile).getByRole('heading', { name: 'Events on 1 Sept 2026' }),
+    screen.getByRole('heading', { name: 'Events on 1 Sept 2026' }),
   ).toBeTruthy()
 })
 
@@ -414,10 +407,10 @@ it('switches the selected agenda, weekday labels, counts, and announcements with
   expect(
     screen
       .getByRole('button', {
-        name: 'Ukryj 5 dodatkowych wydarzeń w dniu 12 sie 2026',
+        name: 'Pokaż 5 dodatkowych wydarzeń w dniu 12 sie 2026',
       })
-      .getAttribute('aria-expanded'),
-  ).toBe('true')
+      .getAttribute('aria-controls'),
+  ).toBe(polishAgenda.id)
   fireEvent.click(screen.getByRole('button', { name: 'Następny miesiąc' }))
   expect(
     screen.queryByRole('region', { name: 'Wydarzenia w dniu 12 sie 2026' }),

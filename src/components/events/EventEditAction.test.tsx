@@ -18,7 +18,10 @@ import type { Doc } from 'convex/_generated/dataModel'
 import { EventDetail } from './EventDetail'
 import { EventEditAction } from './EventEditAction'
 
-vi.mock('convex/react', () => ({ useQuery: () => [] }))
+vi.mock('convex/react', () => ({
+  useQuery: () => [],
+  useMutation: () => vi.fn(),
+}))
 
 vi.mock('#/lib/useSmallScreen', () => ({ useSmallScreen: () => true }))
 beforeEach(() => {
@@ -40,7 +43,7 @@ async function mount(
     path: '/',
     component: () =>
       stable ? (
-        <EventEditAction eventId="session" stableId="yard" training mobile />
+        <EventEditAction eventId="session" stableId="yard" training />
       ) : (
         <EventDetail
           createdByName={createdByName}
@@ -77,7 +80,7 @@ async function mount(
 }
 
 it.each([false, true])(
-  'opens the editor directly from the mobile pencil and retains the return destination (stable: %s)',
+  'opens the editor directly from the title-row Edit and retains the return destination (stable: %s)',
   async (stable) => {
     const router = await mount(true, stable)
     const links = await screen.findAllByRole('link', {
@@ -89,7 +92,7 @@ it.each([false, true])(
       ? '/stables/yard/training/session/edit'
       : '/events/session/edit'
     expect(link.getAttribute('href')).toBe(destination)
-    expect(link.closest('[data-slot="mobile-floating-action"]')).toBeTruthy()
+    expect(link.closest('[data-slot="mobile-floating-action"]')).toBeNull()
     expect(screen.queryByRole('menu')).toBeNull()
     fireEvent.click(link)
     await screen.findByRole('heading', { name: 'Editing session' })
@@ -100,7 +103,7 @@ it.each([false, true])(
   },
 )
 
-it('does not offer a mobile edit action without management permission', async () => {
+it('does not offer an edit action without management permission', async () => {
   await mount(false)
   await screen.findByRole('heading', { name: 'Schooling' })
   expect(

@@ -67,19 +67,19 @@ it('keeps horse list density independent of filters and remembers it on return',
   await openList('horses')
   expect(
     screen
-      .getByRole('switch', { name: 'Detailed rows' })
-      .getAttribute('aria-checked'),
+      .getByRole('button', { name: 'Detailed' })
+      .getAttribute('aria-pressed'),
   ).toBe('true')
   const horse = screen.getByRole('link', { name: /Juniper/ })
-  for (const detail of ['Age', '9', 'Mare', '16.1hh', 'Front shoes']) {
+  for (const detail of ['Age:', '9 years', 'Mare', '16.1hh', 'Front shoes']) {
     expect(within(horse).getByText(detail)).toBeTruthy()
   }
   const destination = horse.getAttribute('href')
   fireEvent.change(screen.getByRole('searchbox'), {
     target: { value: 'Juniper' },
   })
-  fireEvent.click(screen.getByRole('switch', { name: 'Detailed rows' }))
-  for (const detail of ['Age', '9', 'Mare', '16.1hh', 'Front shoes']) {
+  fireEvent.click(screen.getByRole('button', { name: 'Compact' }))
+  for (const detail of ['Age:', '9 years', 'Mare', '16.1hh', 'Front shoes']) {
     expect(within(horse).queryByText(detail)).toBeNull()
   }
   expect(screen.getByRole<HTMLInputElement>('searchbox').value).toBe('Juniper')
@@ -91,8 +91,8 @@ it('keeps horse list density independent of filters and remembers it on return',
   await openList('horses')
   expect(
     screen
-      .getByRole('switch', { name: 'Detailed rows' })
-      .getAttribute('aria-checked'),
+      .getByRole('button', { name: 'Detailed' })
+      .getAttribute('aria-pressed'),
   ).toBe('false')
   expect(screen.getByRole<HTMLInputElement>('searchbox').value).toBe('Juniper')
 })

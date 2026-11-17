@@ -37,6 +37,7 @@ describe('dark mode study palettes', () => {
       }
       for (const [foreground, background] of [
         ['--primary-foreground', '--primary'],
+        ['--action-foreground', '--action'],
         ['--selection-foreground', '--selection'],
         ['--status-warning', '--status-warning-surface'],
         ['--status-info', '--status-info-surface'],
@@ -70,16 +71,16 @@ describe('dark mode study palettes', () => {
         surface: ['form'],
       }),
     ).toEqual({
-      palette: 'charcoal',
+      palette: 'ash',
       reference: 'candidate',
       surface: 'dashboard',
     })
     expect(
       parseDarkModeSearch({
-        palette: 'warm-ink',
+        palette: 'brass',
         reference: 'light',
         surface: 'controls',
       }),
-    ).toEqual({ palette: 'warm-ink', reference: 'light', surface: 'controls' })
+    ).toEqual({ palette: 'brass', reference: 'light', surface: 'controls' })
   })
 })

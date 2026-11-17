@@ -104,7 +104,7 @@ describe('pending horse invitation decisions', () => {
     action('Approve', 0).focus()
     fireEvent.click(action('Approve', 0))
     await waitFor(() =>
-      expect(document.activeElement).toBe(action('Decline', 1)),
+      expect(document.activeElement).toBe(action('Approve', 1)),
     )
     fireEvent.click(action('Decline', 1))
     await screen.findByText('No pending horse invitations.')
@@ -139,7 +139,7 @@ describe('pending horse invitation decisions', () => {
         />
       </>,
     )
-    expect(document.activeElement).toBe(action('Decline', 1))
+    expect(document.activeElement).toBe(action('Approve', 1))
     const elsewhere = screen.getByRole('button', { name: 'Another task' })
     elsewhere.focus()
     await act(async () => request.resolve())

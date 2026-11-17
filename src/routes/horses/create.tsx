@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { PersonalHorseForm } from '#/components/ownership/PersonalHorseForm'
+import { HorseCreateForm } from '#/components/horses/HorseCreateForm'
 
 export const Route = createFileRoute('/horses/create')({
-  component: PersonalHorseForm,
+  component: () => <HorseCreateForm />,
 })

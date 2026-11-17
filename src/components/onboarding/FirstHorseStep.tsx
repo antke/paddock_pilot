@@ -1,4 +1,5 @@
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
+import { OnboardingStepActions } from './OnboardingLayout'
 import { useT } from '#/i18n/LocaleProvider'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from 'convex/react'
@@ -25,7 +26,6 @@ import {
   composeHorseBirthDate,
   splitHorseBirthDate,
 } from 'shared/horses/horseAge'
-import { OnboardingLaterNote } from './OnboardingLayout'
 import { HorseNicknameField } from '#/components/forms/horse/HorseNicknameField'
 
 function createFirstHorseSchema(t: ReturnType<typeof useT>) {
@@ -203,9 +203,6 @@ export function FirstHorseStepView({
   return (
     <InlineForm noValidate onSubmit={form.handleSubmit(save.run)}>
       <OnboardingSaveError message={save.error} />
-      <OnboardingLaterNote>
-        {t('onboarding.horseLaterHelp')}
-      </OnboardingLaterNote>
 
       <FieldGrid>
         <Controller
@@ -219,7 +216,7 @@ export function FirstHorseStepView({
               <Input
                 {...field}
                 id={`${formId}-${field.name}`}
-                placeholder="Maple"
+                placeholder={t('onboarding.horseNameExample')}
                 autoComplete="off"
                 aria-invalid={fieldState.invalid}
                 aria-describedby={
@@ -260,7 +257,7 @@ export function FirstHorseStepView({
                 control={form.control}
                 name="birthYear"
                 label={t('onboarding.year')}
-                placeholder="2016"
+                placeholder="YYYY"
                 maxLength={4}
                 disabled={save.pending || save.acknowledged}
               />
@@ -270,7 +267,8 @@ export function FirstHorseStepView({
                 label={t('onboarding.month')}
                 placeholder="MM"
                 maxLength={2}
-                disabled={save.pending || save.acknowledged || !birthYear}
+                disabled={save.pending || save.acknowledged}
+                waiting={!birthYear}
               />
               <BirthPartField
                 control={form.control}
@@ -278,7 +276,8 @@ export function FirstHorseStepView({
                 label={t('onboarding.day')}
                 placeholder="DD"
                 maxLength={2}
-                disabled={save.pending || save.acknowledged || !birthMonth}
+                disabled={save.pending || save.acknowledged}
+                waiting={!birthMonth}
               />
             </div>
             <FieldDescription>{t('onboarding.birthDateHelp')}</FieldDescription>
@@ -303,7 +302,7 @@ export function FirstHorseStepView({
                 inputMode="numeric"
                 min={0}
                 max={100}
-                placeholder="10"
+                placeholder={t('onboarding.ageExample')}
                 aria-invalid={fieldState.invalid}
                 aria-describedby={
                   fieldState.invalid
@@ -326,20 +325,22 @@ export function FirstHorseStepView({
         />
       </div>
 
-      <FormSubmitActions
-        align="end"
-        isSubmitting={save.pending}
-        onCancel={onDeferred}
-        cancelLabel={cancelLabel ?? t('onboarding.later')}
-        submitLabel={
-          save.acknowledged
-            ? t('onboarding.continueSaved')
-            : horse
-              ? t('onboarding.saveHorse')
-              : t('onboarding.addHorseContinue')
-        }
-        submittingLabel={t('onboarding.saving')}
-      />
+      <OnboardingStepActions>
+        <FormSubmitActions
+          align="end"
+          isSubmitting={save.pending}
+          onCancel={onDeferred}
+          cancelLabel={cancelLabel ?? t('onboarding.later')}
+          submitLabel={
+            save.acknowledged
+              ? t('onboarding.continueSaved')
+              : horse
+                ? t('onboarding.saveHorse')
+                : t('onboarding.addHorseContinue')
+          }
+          submittingLabel={t('onboarding.saving')}
+        />
+      </OnboardingStepActions>
     </InlineForm>
   )
 }
@@ -351,6 +352,7 @@ function BirthPartField({
   placeholder,
   maxLength,
   disabled,
+  waiting = false,
 }: {
   control: ReturnType<typeof useForm<FirstHorseValues>>['control']
   name: 'birthYear' | 'birthMonth' | 'birthDay'
@@ -358,6 +360,8 @@ function BirthPartField({
   placeholder: string
   maxLength: number
   disabled: boolean
+  /** Locked until the previous part is entered; looks like an empty field, not an error. */
+  waiting?: boolean
 }) {
   const formId = useId()
   return (
@@ -379,7 +383,12 @@ function BirthPartField({
             aria-describedby={
               fieldState.invalid ? `${formId}-${field.name}-error` : undefined
             }
-            disabled={disabled}
+            disabled={disabled || waiting}
+            className={
+              waiting && !disabled
+                ? 'disabled:bg-surface-elevated disabled:opacity-100'
+                : undefined
+            }
           />
           {fieldState.invalid && (
             <FieldError

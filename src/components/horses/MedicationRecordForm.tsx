@@ -113,10 +113,7 @@ export function MedicationRecordForm({
       onSubmit={form.handleSubmit(submitMedicationRecord)}
     >
       {audience.control}
-      <FormGroup
-        title={t('careRecords.courseDetails')}
-        description={t('careRecords.courseHelp')}
-      >
+      <FormGroup title={t('careRecords.courseDetails')}>
         <Controller
           name="medicationName"
           control={form.control}
@@ -340,10 +337,7 @@ export function MedicationRecordForm({
         />
       </FormGroup>
 
-      <FormGroup
-        title={t('careRecords.clinicalContext')}
-        description={t('careRecords.clinicalHelp')}
-      >
+      <FormGroup title={t('careRecords.clinicalContext')}>
         <FieldGrid>
           <Controller
             name="prescribedBy"

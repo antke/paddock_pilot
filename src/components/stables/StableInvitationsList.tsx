@@ -16,9 +16,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '#/components/ui/alert-dialog'
 import { Button } from '#/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '#/components/ui/dropdown-menu'
+import { RecordRemoveMenuItem } from '#/components/list-layout/RecordRemoveAction'
 import { ActionFeedback } from '#/components/ui/action-feedback'
 import { useTransientConfirmation } from '#/lib/useTransientConfirmation'
 import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
@@ -33,9 +39,11 @@ import {
   getInvitationUrl,
 } from 'shared/stableInvitations/invitationState'
 import {
-  StableInvitationDeliveryStatusBadge,
-  StableInvitationStatusBadge,
-} from './StableInvitationBadges'
+  CopyIcon,
+  DotsThreeIcon,
+  PaperPlaneTiltIcon,
+} from '@phosphor-icons/react'
+import { StableInvitationStatusBadge } from './StableInvitationBadges'
 
 type StableInvitationsListProps = {
   invitations: Array<Doc<'stableInvitations'>>
@@ -147,6 +155,8 @@ function StableInvitationRow({
     'resend' | 'revoke' | 'copy'
   >()
   const pendingRef = useRef(false)
+  // The "…" button or the lone Revoke button; only one renders.
+  const revokeOpener = useRef<HTMLButtonElement>(null)
   const copyConfirmation = useTransientConfirmation(invitation.token)
   const resendConfirmation = useTransientConfirmation(invitation._id)
   const [isRevokeOpen, setIsRevokeOpen] = useState(false)
@@ -192,6 +202,7 @@ function StableInvitationRow({
   })
   const canResend = status === 'pending' || status === 'expired'
   const canCopy = status === 'pending'
+  const canRevoke = invitation.status === 'pending'
   const isPending = pendingAction !== undefined
 
   return (
@@ -200,117 +211,143 @@ function StableInvitationRow({
       chrome="flat"
       density="compact"
       interactive={false}
-      actionBadges={
-        <>
-          <StableInvitationStatusBadge status={status} />
-          {invitation.deliveryStatus && (
-            <StableInvitationDeliveryStatusBadge
-              status={invitation.deliveryStatus}
-            />
-          )}
-        </>
-      }
+      // One status pill in the action row at button height; delivery reads as plain meta, in the danger colour only when it failed.
       actions={
-        canResend || canCopy ? (
-          <>
-            {canCopy && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                disabled={isPending}
-                aria-busy={pendingAction === 'copy' || undefined}
-                onClick={() => void runAction('copy')}
-              >
-                <ActionFeedback
-                  label={t('invitationFlow.copy')}
-                  pendingLabel={t('common.copying')}
-                  confirmedLabel={t('common.copied')}
-                  pending={pendingAction === 'copy'}
-                  confirmed={copyConfirmation.confirmed}
-                  failed={failedAction === 'copy'}
-                  failedLabel={t('invitationFlow.copy')}
-                />
-              </Button>
-            )}
-            {canResend && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                disabled={isPending}
-                aria-busy={isPending || undefined}
-                onClick={() => void runAction('resend')}
-              >
-                <ActionFeedback
-                  pending={pendingAction === 'resend'}
-                  confirmed={resendConfirmation.confirmed}
-                  confirmedLabel={t('invitationFlow.queuedShort')}
-                  failed={failedAction === 'resend'}
-                  failedLabel={t('invitationFlow.resend')}
-                  label={t('invitationFlow.resend')}
-                  pendingLabel={t('invitationFlow.resending')}
-                />
-              </Button>
-            )}
-            {invitation.status === 'pending' && (
-              <AlertDialog
-                open={isRevokeOpen}
-                onOpenChange={(open) => {
-                  if (!pendingRef.current) setIsRevokeOpen(open)
-                }}
-              >
-                <AlertDialogTrigger
-                  render={
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      disabled={isPending}
-                      aria-busy={isPending || undefined}
-                    />
-                  }
+        <>
+          <StableInvitationStatusBadge status={status} size="action" />
+          {(canResend || canCopy) && (
+            <>
+              {canResend && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  // The wider queued/resending states reserve space on the outer side, so the group stays tight.
+                  className="[&_[data-slot=action-feedback]>span]:justify-start sm:[&_[data-slot=action-feedback]>span]:justify-end"
+                  disabled={isPending}
+                  aria-busy={isPending || undefined}
+                  onClick={() => void runAction('resend')}
                 >
-                  {t('invitationFlow.revoke')}
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      {t('invitationFlow.revokeConfirm', {
-                        email: invitation.email,
-                      })}
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {t('invitationFlow.revokeHelp')}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  {actionError && (
-                    <Alert variant="destructive">
-                      <AlertDescription>{actionError}</AlertDescription>
-                    </Alert>
-                  )}
-                  <AlertDialogFooter>
-                    <AlertDialogCancel disabled={isPending}>
-                      {t('invitationFlow.keep')}
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      variant="destructive"
+                  <ActionFeedback
+                    icon={<PaperPlaneTiltIcon aria-hidden="true" />}
+                    pending={pendingAction === 'resend'}
+                    confirmed={resendConfirmation.confirmed}
+                    confirmedLabel={t('invitationFlow.queuedShort')}
+                    failed={failedAction === 'resend'}
+                    failedLabel={t('invitationFlow.resend')}
+                    label={t('invitationFlow.resend')}
+                    pendingLabel={t('invitationFlow.resending')}
+                  />
+                </Button>
+              )}
+              {canCopy && canRevoke ? (
+                // Copy link and Revoke share one "…" menu, so Resend stays the row's only visible action.
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        ref={revokeOpener}
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        disabled={isPending && pendingAction !== 'copy'}
+                        aria-label={t('reminders.actionsNamed', {
+                          name: invitation.email,
+                        })}
+                      />
+                    }
+                  >
+                    <DotsThreeIcon weight="bold" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      // Stays open so the item can show Copying… and Copied.
+                      closeOnClick={false}
                       disabled={isPending}
-                      aria-busy={isPending || undefined}
-                      onClick={() => void runAction('revoke')}
+                      aria-busy={pendingAction === 'copy' || undefined}
+                      onClick={() => void runAction('copy')}
                     >
                       <ActionFeedback
-                        pending={pendingAction === 'revoke'}
-                        label={t('invitationFlow.revokeInvitation')}
-                        pendingLabel={t('invitationFlow.revoking')}
+                        icon={<CopyIcon aria-hidden="true" />}
+                        label={t('invitationFlow.copy')}
+                        pendingLabel={t('common.copying')}
+                        confirmedLabel={t('common.copied')}
+                        pending={pendingAction === 'copy'}
+                        confirmed={copyConfirmation.confirmed}
+                        failed={failedAction === 'copy'}
+                        failedLabel={t('invitationFlow.copy')}
                       />
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-          </>
-        ) : undefined
+                    </DropdownMenuItem>
+                    <RecordRemoveMenuItem
+                      label={t('invitationFlow.revoke')}
+                      disabled={isPending}
+                      onOpen={() => setIsRevokeOpen(true)}
+                    />
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                canRevoke && (
+                  // Without Copy link a lone Revoke stays visible: a menu never holds Remove alone.
+                  <Button
+                    ref={revokeOpener}
+                    type="button"
+                    action="delete"
+                    variant="ghost"
+                    size="sm"
+                    disabled={isPending}
+                    aria-busy={isPending || undefined}
+                    onClick={() => setIsRevokeOpen(true)}
+                  >
+                    {t('invitationFlow.revoke')}
+                  </Button>
+                )
+              )}
+              {canRevoke && (
+                <AlertDialog
+                  open={isRevokeOpen}
+                  onOpenChange={(open) => {
+                    if (!pendingRef.current) setIsRevokeOpen(open)
+                  }}
+                >
+                  <AlertDialogContent finalFocus={revokeOpener}>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        {t('invitationFlow.revokeConfirm', {
+                          email: invitation.email,
+                        })}
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {t('invitationFlow.revokeHelp')}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    {actionError && (
+                      <Alert variant="destructive">
+                        <AlertDescription>{actionError}</AlertDescription>
+                      </Alert>
+                    )}
+                    <AlertDialogFooter>
+                      <AlertDialogCancel disabled={isPending}>
+                        {t('invitationFlow.keep')}
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        variant="destructive"
+                        disabled={isPending}
+                        aria-busy={isPending || undefined}
+                        onClick={() => void runAction('revoke')}
+                      >
+                        <ActionFeedback
+                          pending={pendingAction === 'revoke'}
+                          label={t('invitationFlow.revokeInvitation')}
+                          pendingLabel={t('invitationFlow.revoking')}
+                        />
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </>
+          )}
+        </>
       }
       footer={
         invitation.deliveryError || (actionError && !isRevokeOpen) ? (
@@ -336,30 +373,41 @@ function StableInvitationRow({
         title={invitation.email}
         titleSize="sm"
         titleClassName="line-clamp-none wrap-anywhere"
-        meta={
-          <>
-            <span>
-              {t(
-                status === 'expired'
-                  ? 'invitationFlow.expiredOn'
-                  : 'invitationFlow.expiresOn',
-                {
-                  date: formatMediumTimestampDate(invitation.expiresAt, locale),
-                },
-              )}
-            </span>
-            {invitation.lastSentAt && (
-              <span>
-                {t('invitationFlow.lastSent', {
-                  date: formatMediumTimestampDate(
-                    invitation.lastSentAt,
-                    locale,
-                  ),
-                })}
-              </span>
+        // An array, not a fragment, so DashboardMetaList can separate the items.
+        meta={[
+          <span key="expires">
+            {t(
+              status === 'expired'
+                ? 'invitationFlow.expiredOn'
+                : 'invitationFlow.expiresOn',
+              { date: formatMediumTimestampDate(invitation.expiresAt, locale) },
             )}
-          </>
-        }
+          </span>,
+          invitation.lastSentAt && (
+            <span key="sent">
+              {t('invitationFlow.lastSent', {
+                date: formatMediumTimestampDate(invitation.lastSentAt, locale),
+              })}
+            </span>
+          ),
+          // "Last sent" already says a sent email went out.
+          invitation.deliveryStatus &&
+            !(
+              invitation.deliveryStatus === 'sent' && invitation.lastSentAt
+            ) && (
+              <span
+                key="delivery"
+                className={
+                  invitation.deliveryStatus === 'failed'
+                    ? 'font-semibold text-destructive'
+                    : undefined
+                }
+              >
+                {t(`invitationFlow.delivery.${invitation.deliveryStatus}`)}
+              </span>
+            ),
+        ]}
+        metaSeparator="dot"
       />
     </DashboardItemRecordCard>
   )

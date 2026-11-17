@@ -1,7 +1,8 @@
 export const horseValidation = {
   calendarColourInvalid:
     'Wybierz kolor z palety lub wpisz sześciocyfrowy kod, np. #347653.',
-  nicknameRequired: 'Wpisz przezwisko lub wyłącz „Używaj przezwiska”.',
+  nicknameRequired:
+    'Wpisz przezwisko lub wyłącz „Pokazuj przezwisko zamiast imienia”.',
   nameMin: 'Podaj imię konia.',
   nameMax: 'Imię konia nie może przekraczać 100 znaków.',
   ageMin: 'Wiek nie może być ujemny.',

@@ -1,4 +1,5 @@
 import { MotionList } from '#/components/motion/MotionList'
+import { ContactLink } from '#/components/ui/contact-link'
 import { MotionNotice } from '#/components/motion/MotionNotice'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useOwnershipCopy } from '#/components/ownership/ownershipCopy'
@@ -211,7 +212,9 @@ export function StableMembersSettingsCardView({
                 meta={
                   <>
                     <span>{member.user?.email ?? t('stables.noEmail')}</span>
-                    {membership?.phone && <span>{membership.phone}</span>}
+                    {membership?.phone && (
+                      <ContactLink kind="phone" value={membership.phone} />
+                    )}
                     {membership?.emergencyContact && (
                       <span>
                         {t('stables.emergencyContactValue', {

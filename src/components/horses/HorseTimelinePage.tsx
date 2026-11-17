@@ -106,6 +106,7 @@ export function HorseTimelineView({ timeline }: { timeline: HorseTimeline }) {
       contentGap="comfortable"
       actions={
         <ChoiceButtonGroup
+          layout="segmented"
           aria-label={t('horseHistory.viewMode')}
           value={mode}
           options={[

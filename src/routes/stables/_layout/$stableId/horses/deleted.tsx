@@ -26,9 +26,12 @@ function RouteComponent() {
 
   return (
     <DashboardPage>
-      <DashboardPageHeader title={t('horseDeletion.deletedHorses')} />
+      <DashboardPageHeader
+        title={t('horseDeletion.deletedHorses')}
+        description={t('stableSetup.deletedHorsesHelp')}
+      />
 
-      <DeletedHorsesCard horses={deletedHorses} />
+      <DeletedHorsesCard horses={deletedHorses} surface="canvas" />
     </DashboardPage>
   )
 }

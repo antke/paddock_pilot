@@ -12,8 +12,7 @@ export const horseList = {
   addHelp: 'Dodaj konia, aby rozpocząć tworzenie listy koni w tej stajni.',
   noMatches: 'Żaden koń nie pasuje do tych filtrów.',
   search: 'Szukaj koni',
-  searchHelp:
-    'Szukaj według imienia, właściciela, rasy, dyscypliny lub identyfikatora',
+  searchHelp: 'Szukaj koni',
   sex: 'Płeć',
   allSexes: 'Wszystkie płcie',
   shoeing: 'Podkucie',

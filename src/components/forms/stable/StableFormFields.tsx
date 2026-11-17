@@ -1,13 +1,6 @@
 import { useT } from '#/i18n/LocaleProvider'
-import { FormHelpTooltip } from '#/components/forms/FormHelpTooltip'
 import { FormGroup } from '#/components/forms/FormLayout'
-import {
-  Field,
-  FieldError,
-  FieldGrid,
-  FieldLabel,
-  FieldLabelRow,
-} from '#/components/ui/field'
+import { Field, FieldError, FieldGrid, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { PersonNameField } from '#/components/forms/PersonNameField'
 import { Textarea } from '#/components/ui/textarea'
@@ -61,11 +54,7 @@ export function StableFormFields({
   return (
     <div className="grid gap-8">
       {(show('name') || show('location')) && (
-        <FormGroup
-          headingLevel={headingLevel}
-          title={t('stables.basics')}
-          description={t('stables.basicsHelp')}
-        >
+        <FormGroup headingLevel={headingLevel} title={t('stables.basics')}>
           <FieldGrid>
             {show('name') && (
               <Controller
@@ -150,7 +139,6 @@ export function StableFormFields({
         <FormGroup
           headingLevel={headingLevel}
           title={t('stables.postalAddress')}
-          description={t('stables.addressHelp')}
         >
           <FieldGrid>
             {show('addressLine1') && (
@@ -302,25 +290,16 @@ export function StableFormFields({
       )}
 
       {show('description') && (
-        <FormGroup
-          headingLevel={headingLevel}
-          title={t('stables.profile')}
-          description={t('stables.profileHelp')}
-        >
+        <FormGroup headingLevel={headingLevel} title={t('stables.profile')}>
           {show('description') && (
             <Controller
               name="description"
               control={control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabelRow>
-                    <FieldLabel htmlFor={field.name}>
-                      {t('stables.description')}
-                    </FieldLabel>
-                    <FormHelpTooltip label={t('stables.descriptionAbout')}>
-                      {t('stables.descriptionHelp')}
-                    </FormHelpTooltip>
-                  </FieldLabelRow>
+                  <FieldLabel htmlFor={field.name}>
+                    {t('stables.description')}
+                  </FieldLabel>
 
                   <Textarea
                     {...field}
@@ -355,11 +334,7 @@ export function StableFormFields({
         show('emergencyPhone') ||
         show('openingHours') ||
         show('yardRules')) && (
-        <FormGroup
-          headingLevel={headingLevel}
-          title={t('stables.operations')}
-          description={t('stables.operationsHelp')}
-        >
+        <FormGroup headingLevel={headingLevel} title={t('stables.operations')}>
           <FieldGrid>
             {show('contactName') && (
               <Controller

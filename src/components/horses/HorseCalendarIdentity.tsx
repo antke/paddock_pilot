@@ -12,6 +12,7 @@ import type {
 import { useT } from '#/i18n/LocaleProvider'
 import { useSessionState } from '#/lib/useSessionState'
 import { cn } from '#/lib/utils'
+import { DisclosureChevron } from '#/components/ui/disclosure-chevron'
 
 export function HorseColourDot({
   horse,
@@ -28,7 +29,8 @@ export function HorseColourDot({
       aria-hidden="true"
       data-horse-colour={id}
       className={cn(
-        'inline-block size-2 shrink-0 rounded-full bg-muted-foreground',
+        // Dark mode: a card-coloured 1px halo lifts the dot off tinted cells; outline leaves the custom-colour inset shadow intact.
+        'inline-block size-2 shrink-0 rounded-full bg-muted-foreground dark:outline dark:outline-card',
         className,
       )}
       style={
@@ -69,9 +71,8 @@ export function CalendarHorseMarkers({
           +{unique.length - limit}
         </span>
       )}
-      {general && (
-        <span className="size-2 shrink-0 rounded-xs border border-muted-foreground" />
-      )}
+      {/* One neutral muted dot marks events without a horse. */}
+      {general && <HorseColourDot />}
     </span>
   )
 }
@@ -114,9 +115,10 @@ export function HorseColourLegend({
       onToggle={(event) => setOpen(event.currentTarget.open)}
       className="text-sm"
     >
-      <summary className="app-control-focus w-fit cursor-pointer rounded-control py-3 font-medium">
+      <summary className="app-control-focus flex min-h-11 w-fit cursor-pointer list-none items-center gap-1.5 rounded-control py-3 font-medium [&::-webkit-details-marker]:hidden">
         {t('calendar.horseColours')}
         {unique.length ? ` · ${unique.length}` : ''}
+        <DisclosureChevron />
       </summary>
       <div className="grid gap-2 pb-2">
         <HorseCalendarNames horses={unique} />

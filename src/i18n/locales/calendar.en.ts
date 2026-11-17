@@ -16,7 +16,7 @@ export const calendar = {
   horseColours: 'Horse colours',
   horseColoursHelp:
     'Dots identify horses, not completed sessions. Select a day for names and details. +N means additional horses.',
-  generalEvent: 'Stable / other event',
+  generalEvent: 'No horse',
   colourInUse: 'In use',
   colourField: 'Calendar colour',
   colourFieldHelp:
@@ -48,8 +48,6 @@ export const calendar = {
   chooseDay: 'Choose a day in {{month}}',
   selectDay_one: '{{date}}, {{count}} event',
   selectDay_other: '{{date}}, {{count}} events',
-  hideAgenda: 'Hide day agenda',
-  close: 'Close',
   endsToday: 'Ends today',
   continues: 'Continues',
   monthRegion: '{{month}} calendar',
@@ -75,8 +73,6 @@ export const calendar = {
   monthCount_other: '{{count}} events this month',
   showMore_one: 'Show {{count}} additional event on {{date}}',
   showMore_other: 'Show {{count}} additional events on {{date}}',
-  hideMore_one: 'Hide {{count}} additional event on {{date}}',
-  hideMore_other: 'Hide {{count}} additional events on {{date}}',
   horses_one: '{{count}} horse',
   horses_other: '{{count}} horses',
 } as const

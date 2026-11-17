@@ -96,6 +96,16 @@ export function formatShortDateKey(dateKey: string, locale: Locale = 'en') {
   return formatters[locale].shortDateKeyFormatter.format(dateKeyToDate(dateKey))
 }
 
+/** The short date's parts in locale order, so the day number can be marked on its own. */
+export function formatShortDateKeyParts(
+  dateKey: string,
+  locale: Locale = 'en',
+) {
+  return formatters[locale].shortDateKeyFormatter.formatToParts(
+    dateKeyToDate(dateKey),
+  )
+}
+
 export function formatShortDate(date: Date, locale: Locale = 'en') {
   return formatters[locale].shortDateKeyFormatter.format(date)
 }

@@ -13,7 +13,8 @@ export const stableMemberRoleLabels = {
 } satisfies Record<Doc<'stableMembers'>['role'], string>
 
 const stableMemberRoleVariant = {
-  owner: 'default',
+  // Roles are access facts: neutral, never an action colour.
+  owner: 'secondary',
   member: 'secondary',
   guest: 'neutral',
 } satisfies Record<

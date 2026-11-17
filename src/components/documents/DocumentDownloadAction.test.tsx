@@ -181,11 +181,9 @@ describe('DocumentDownloadAction', () => {
 
     expect(button.disabled).toBe(true)
     expect(button.title).toBe('')
-    expect(button.querySelector('[aria-hidden="false"]')?.textContent).toBe(
-      'Download',
-    )
+    expect(button.getAttribute('data-size')).toBe('sm')
     expect(screen.queryByRole('status')).toBeNull()
-    expect(button.className).toContain('border-primary')
+    expect(button.getAttribute('data-variant')).toBe('ghost')
     expect(button.parentElement?.getAttribute('aria-label')).toBe(
       'Download unavailable: No file is attached',
     )

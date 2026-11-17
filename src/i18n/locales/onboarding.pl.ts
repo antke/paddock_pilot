@@ -17,8 +17,6 @@ export const onboarding = {
   stableBasicsHelp:
     'Podaj nazwę i lokalizację stajni. Pełny adres możesz dodać później.',
   notFound: 'Nie znaleziono konfiguracji',
-  ownerHelp:
-    'Dodaj najważniejsze informacje na początek. Dokumentację stajni możesz uzupełniać z czasem.',
   memberHelp: 'Poznaj stajnię, uzupełnij potrzebne dane i dodaj swoje konie.',
   sharedProfileHelp:
     'Profil konta jest wspólny dla wszystkich stajni, do których należysz.',
@@ -26,7 +24,7 @@ export const onboarding = {
     'Popraw nazwę lub lokalizację stajni, a następnie wróć do bieżącego kroku.',
   operationsTitle: 'Jak działa stajnia?',
   operationsHelp:
-    'Dodaj dane kontaktowe i najważniejsze informacje o funkcjonowaniu stajni.',
+    'Dodaj kontakty i najważniejsze informacje o stajni; resztę uzupełnisz później w ustawieniach stajni.',
   cancel: 'Anuluj',
   later: 'Uzupełnij później',
   introductionHelp: 'Te informacje pomogą Ci poznać stajnię.',
@@ -34,8 +32,6 @@ export const onboarding = {
   memberTitle: 'Twoje dane w tej stajni',
   memberHelpDetails:
     'Te dane dotyczą tylko tej stajni. W innej stajni mogą być inne.',
-  emergencyLater:
-    'Kontakt alarmowy przydaje się w stajni. Możesz go dodać lub zmienić później w swoim profilu w stajni.',
   horseReady: 'Twój pierwszy koń jest już dodany',
   addFirstHorse: 'Dodaj pierwszego konia',
   horseReadyHelp: 'Do Twojego konta w tej stajni jest już przypisany koń.',
@@ -64,9 +60,8 @@ export const onboarding = {
     'Nie udało się zaktualizować danych konia. Wpisane dane pozostały w formularzu. Spróbuj ponownie.',
   horseAddFailed:
     'Nie udało się dodać konia. Wpisane dane pozostały w formularzu. Spróbuj ponownie.',
-  horseLaterHelp:
-    'Zacznij od podstaw. Plan opieki, historię zdrowia, dane identyfikacyjne i dokumenty możesz dodać później w profilu konia.',
   horseName: 'Imię konia',
+  horseNameExample: 'np. Iskra',
   birthDate: 'Data urodzenia',
   year: 'Rok',
   month: 'Miesiąc',
@@ -74,6 +69,7 @@ export const onboarding = {
   birthDateHelp:
     'Jeśli podajesz datę urodzenia, rok jest wymagany. Miesiąc i dzień są opcjonalne.',
   orAge: 'Lub aktualny wiek',
+  ageExample: 'np. 10',
   birthDatePriority:
     'Jeśli podasz oba, wiek zostanie obliczony z daty urodzenia.',
   continueSaved: 'Kontynuuj bez ponownego zapisu',
@@ -85,9 +81,9 @@ export const onboarding = {
   stableCreateFailed:
     'Nie udało się utworzyć stajni. Wpisane dane pozostały w formularzu. Spróbuj ponownie.',
   stableName: 'Nazwa stajni',
-  stableExample: 'Stajnia Pod Dębami',
+  stableExample: 'np. Stajnia Pod Dębami',
   location: 'Lokalizacja',
-  locationExample: 'Mazowsze, okolice Warszawy',
+  locationExample: 'np. Mazowsze, okolice Warszawy',
   locationHelp: 'Miejscowość, region lub rozpoznawalny adres.',
   saveStable: 'Zapisz dane stajni',
   createContinue: 'Utwórz stajnię i kontynuuj',
@@ -99,18 +95,12 @@ export const onboarding = {
   contactPhone: 'Telefon kontaktowy',
   openingHours: 'Godziny otwarcia',
   yardRules: 'Regulamin stajni',
-  operationsLaterHelp:
-    'Dodaj informacje potrzebne zespołowi na początek. Godziny otwarcia, regulamin i dodatkowe dane kontaktowe możesz uzupełnić później w ustawieniach stajni.',
-  yardManager: 'Osoba zarządzająca stajnią',
+  yardManager: 'np. osoba zarządzająca stajnią',
   optional: 'Opcjonalne',
   emergencyPhone: 'Telefon alarmowy',
-  hoursExample: '6:00–20:30',
+  hoursExample: 'np. 06:00–20:30',
   yardRulesPlaceholder: 'Opisz, co warto wiedzieć przed przyjazdem do stajni.',
-  yardRulesHelp:
-    'Na początek wystarczy krótki opis. Możesz go rozbudować później.',
   saveContinue: 'Zapisz i kontynuuj',
-  inviteLaterHelp:
-    'Stajnia jest gotowa. Zaproś kogoś teraz lub później na stronie Osoby w stajni.',
   ready: 'Zaczynamy',
   reviewTitle: 'Sprawdź konfigurację',
   aboutYou: 'O Tobie',

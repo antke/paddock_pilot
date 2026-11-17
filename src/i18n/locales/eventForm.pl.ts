@@ -27,7 +27,6 @@ export const eventForm = {
   repeating: 'Wydarzenie cykliczne',
   noRepeat: 'Nie powtarza się',
   trainingHelp: 'Opisz trening i ustal jego termin.',
-  eventHelp: 'Nadaj wydarzeniu nazwę i ustal jego termin.',
   essentialsHelp:
     'Zacznij od szczegółów wydarzenia i wyboru koni. Pozostałe sekcje są opcjonalne.',
   sessionDetails: 'Szczegóły treningu',
@@ -50,8 +49,8 @@ export const eventForm = {
   endDateHelp:
     'Pozostaw puste dla wydarzenia jednodniowego. Data zakończenia obejmuje cały wskazany dzień.',
   time: 'Godzina',
-  timeHelp: 'Podaj godzinę według czasu lokalnego stajni.',
-  personalTimeHelp: 'Podaj godzinę według czasu lokalnego miejsca wizyty.',
+  timeHelp: 'Czas lokalny stajni.',
+  personalTimeHelp: 'Czas lokalny miejsca wizyty.',
   trainingHorsesHelp: 'Wybierz konie biorące udział w tym treningu.',
   eventHorsesHelp: 'Wybierz wszystkie konie, których dotyczy wydarzenie.',
   horses: 'Konie',
@@ -59,8 +58,6 @@ export const eventForm = {
     'W tej stajni nie ma dostępnych koni. Dodaj konia przed utworzeniem wydarzenia.',
   noPersonalHorses:
     'Nie masz koni, dla których możesz planować wizyty. Dodaj swojego konia lub poproś jego właściciela o dostęp do edycji opieki.',
-  trainingLogisticsHelp: 'W razie potrzeby dodaj miejsce, trenera i koszty.',
-  eventLogisticsHelp: 'W razie potrzeby dodaj miejsce, specjalistę i koszty.',
   placeTrainer: 'Miejsce i trener',
   placeProvider: 'Miejsce i specjalista',
   location: 'Miejsce',
@@ -71,10 +68,9 @@ export const eventForm = {
   providerPhone: 'Telefon specjalisty',
   providerPhoneExample: 'Telefon kontaktowy specjalisty',
   totalCost: 'Łączny koszt',
-  totalCostExample: 'Opcjonalny łączny koszt wizyty',
+  totalCostExample: '0,00',
   costPerHorse: 'Koszt na konia',
-  costPerHorseExample: 'Opcjonalna kwota na konia',
-  repeatHelp: 'Ustaw cykliczne powtarzanie wydarzenia.',
+  costPerHorseExample: '0,00',
   repeatSchedule: 'Harmonogram powtarzania',
   recurring: 'Wydarzenie cykliczne',
   recurringHelp: 'Powtarzaj wydarzenie zgodnie z harmonogramem.',
@@ -83,14 +79,8 @@ export const eventForm = {
     'Zacznij od typowego harmonogramu, a następnie w razie potrzeby wybierz dni tygodnia.',
   choosePattern: 'Wybierz sposób powtarzania',
   repeat: 'Powtarzanie',
-  presetAbout: 'O prostych schematach powtarzania',
-  presetTooltip:
-    'Zacznij od typowego harmonogramu. W trybie zaawansowanym ustawisz własne odstępy, reguły miesięczne i warunki zakończenia.',
   repeatPattern: 'Schemat powtarzania',
   daysOfWeek: 'Dni tygodnia',
-  weekdaysAbout: 'O dniach powtarzania w tygodniu',
-  weekdaysHelp:
-    'Wybierz jeden lub więcej dni, w których powtarza się wydarzenie.',
   customHelp:
     'Najpierw ustal sposób powtarzania, a następnie jego zakończenie.',
   customSchedule: 'Ustaw własny harmonogram',
@@ -120,7 +110,6 @@ export const eventForm = {
   afterOccurrences: 'Po określonej liczbie wystąpień',
   occurrences: 'Liczba wystąpień',
   scheduleSummary: 'Podsumowanie harmonogramu',
-  notesHelp: 'Zapisz notatki do przygotowania i podsumowanie po zakończeniu.',
   notesOutcome: 'Notatki i wynik',
   description: 'Opis',
   sessionNotes: 'Notatki dotyczące treningu',
@@ -135,16 +124,14 @@ export const eventForm = {
   noProviders:
     'Nie znaleziono pasujących specjalistów. Wpisz dane nowego specjalisty.',
   workType: 'Rodzaj pracy',
-  activitiesHelp: 'Wybierz wszystkie aktywności wykonywane podczas treningu.',
   sessionFormat: 'Forma treningu',
   duration: 'Czas trwania (minuty)',
   rider: 'Prowadzi',
-  leaderHelp:
-    'Kto prowadzi ten trening. Wybierz członka stajni lub wpisz imię gościa.',
   leaderPlaceholder: 'Imię i nazwisko jeźdźca lub instruktora',
   takingPart: 'Biorą udział',
   alsoTakingPart: 'Biorą też udział',
-  takingPartHelp: 'Każda zaznaczona osoba zobaczy to w swoim kalendarzu.',
+  takingPartHelp:
+    'Każda zaznaczona osoba zobaczy to w swoim kalendarzu, bez dostępu do prywatnych wpisów konia.',
   leaderIncluded: 'Prowadzi trening',
   leaderIncludedReason:
     'Dodana automatycznie, bo jest oznaczona jako osoba prowadząca trening.',

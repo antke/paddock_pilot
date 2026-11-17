@@ -1,3 +1,4 @@
+import { createContext, useContext } from 'react'
 import type { ComponentProps, ReactNode, Ref } from 'react'
 import { useAppMotion } from '#/components/motion/appMotion'
 
@@ -17,16 +18,26 @@ type RecordDialogFloatingTriggerProps = {
   label: string
 }
 
+/** Add Weight Rule: a section-owned Add is outlined; the page's own Add stays filled. */
+export const SectionAddContext = createContext(false)
+
 /** The section's "Add …" button, on the same row as its title at every width. */
 export function RecordDialogTitleTrigger({
   triggerRef,
   children,
 }: RecordDialogTitleTriggerProps) {
+  const inSection = useContext(SectionAddContext)
   return (
     <DashboardActions data-slot="record-dialog-title-trigger">
       <DialogTrigger
         ref={triggerRef}
-        render={<Button type="button" action="create" />}
+        render={
+          <Button
+            type="button"
+            action="create"
+            variant={inSection ? 'outline' : 'default'}
+          />
+        }
       >
         {children}
       </DialogTrigger>

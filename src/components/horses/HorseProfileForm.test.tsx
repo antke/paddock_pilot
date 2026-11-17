@@ -53,6 +53,11 @@ function setup(
   const imageInput = screen.getByLabelText('Profile picture')
   return { ...view, props, name, form, imageInput }
 }
+/** Optional fields stay mounted in collapsed sections; open one to use them. */
+function openSection(name: RegExp) {
+  const toggle = screen.getByRole('button', { name })
+  if (toggle.getAttribute('aria-expanded') === 'false') fireEvent.click(toggle)
+}
 afterEach(() => {
   cleanup()
   vi.useRealTimers()
@@ -67,7 +72,9 @@ describe('horse nickname preference', () => {
       fireEvent.change(screen.getByLabelText('Nickname'), {
         target: { value: '  Mappy  ' },
       })
-      fireEvent.click(screen.getByRole('checkbox', { name: 'Use nickname' }))
+      fireEvent.click(
+        screen.getByRole('checkbox', { name: 'Show nickname instead of name' }),
+      )
       fireEvent.submit(form)
       await waitFor(() => expect(props.save).toHaveBeenCalledTimes(1))
       expect(vi.mocked(props.save).mock.calls[0][0]).toMatchObject({
@@ -86,7 +93,9 @@ describe('horse nickname preference', () => {
     expect(screen.getByLabelText<HTMLInputElement>('Nickname').value).toBe(
       'Mappy',
     )
-    const checkbox = screen.getByRole('checkbox', { name: 'Use nickname' })
+    const checkbox = screen.getByRole('checkbox', {
+      name: 'Show nickname instead of name',
+    })
     expect(checkbox.getAttribute('aria-checked')).toBe('true')
     fireEvent.click(checkbox)
     fireEvent.submit(form)
@@ -100,16 +109,20 @@ describe('horse nickname preference', () => {
 
   it('blocks a blank enabled nickname and allows recovery without losing the full name', async () => {
     const { form, name, props } = setup()
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Use nickname' }))
+    fireEvent.click(
+      screen.getByRole('checkbox', { name: 'Show nickname instead of name' }),
+    )
     fireEvent.submit(form)
     const error = await screen.findByText(
-      'Enter a nickname or turn off “Use nickname”.',
+      'Enter a nickname or turn off “Show nickname instead of name”.',
     )
     const nickname = screen.getByLabelText<HTMLInputElement>('Nickname')
     expect(nickname.getAttribute('aria-describedby')).toContain(error.id)
     expect(props.save).not.toHaveBeenCalled()
     expect(name.value).toBe('Maple')
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Use nickname' }))
+    fireEvent.click(
+      screen.getByRole('checkbox', { name: 'Show nickname instead of name' }),
+    )
     fireEvent.submit(form)
     await waitFor(() => expect(props.save).toHaveBeenCalledTimes(1))
   })
@@ -134,15 +147,15 @@ describe('linked birth date and age fields', () => {
     setup()
     expect(value('Year')).toBe('2016')
     change('Year', '2020')
-    expect(value('Or current age')).toBe('6')
+    expect(value('Current age')).toBe('6')
     change('Month', '10')
-    expect(value('Or current age')).toBe('5')
+    expect(value('Current age')).toBe('5')
     change('Month', '9')
-    expect(value('Or current age')).toBe('6')
+    expect(value('Current age')).toBe('6')
     change('Day', '28')
-    expect(value('Or current age')).toBe('5')
+    expect(value('Current age')).toBe('5')
     change('Day', '27')
-    expect(value('Or current age')).toBe('6')
+    expect(value('Current age')).toBe('6')
     fireEvent.blur(screen.getByLabelText('Month'))
     expect(value('Month')).toBe('09')
   })
@@ -152,8 +165,8 @@ describe('linked birth date and age fields', () => {
     const { form, props } = setup({
       initialValues: { ...initialValues, dateOfBirth: '2017-10-12' },
     })
-    expect(value('Or current age')).toBe('8')
-    change('Or current age', '12')
+    expect(value('Current age')).toBe('8')
+    change('Current age', '12')
     expect(value('Year')).toBe('2013')
     expect(value('Month')).toBe('10')
     expect(value('Day')).toBe('12')
@@ -169,18 +182,18 @@ describe('linked birth date and age fields', () => {
     setToday()
     setup()
     change('Year', '20')
-    expect(value('Or current age')).toBe('')
+    expect(value('Current age')).toBe('')
     change('Year', '2020')
     change('Month', '13')
-    expect(value('Or current age')).toBe('')
+    expect(value('Current age')).toBe('')
     change('Month', '')
-    expect(value('Or current age')).toBe('6')
+    expect(value('Current age')).toBe('6')
     change('Year', '')
-    expect(value('Or current age')).toBe('')
-    change('Or current age', '0')
+    expect(value('Current age')).toBe('')
+    change('Current age', '0')
     expect(value('Year')).toBe('2026')
     expect(value('Month')).toBe('')
-    change('Or current age', '')
+    change('Current age', '')
     expect(value('Year')).toBe('')
   })
 })
@@ -197,7 +210,7 @@ describe('horse profile lifecycle', () => {
             : {}),
         },
       })
-      fireEvent.click(screen.getByRole('button', { name: /Care & records/ }))
+      openSection(/^Care & health/)
       for (const name of ['Sex', 'Shoeing status']) {
         const group = within(screen.getByRole('group', { name }))
         if (savedChoices)
@@ -263,6 +276,7 @@ describe('horse profile lifecycle', () => {
     'clears a rejected breed immediately after explicitly adding it in %s mode',
     async (mode) => {
       const { props, form } = setup({ mode })
+      openSection(/^Breed & appearance/)
       const breed = screen.getByLabelText<HTMLInputElement>('Breed')
       const message =
         'Choose a breed from the list, add a new breed, or clear this field.'
@@ -300,6 +314,7 @@ describe('horse profile lifecycle', () => {
     'saves an explicitly added custom breed in %s mode',
     async (mode) => {
       const { props, form } = setup({ mode })
+      openSection(/^Breed & appearance/)
       fireEvent.click(screen.getByRole('button', { name: 'Add breed' }))
       fireEvent.change(screen.getByLabelText('New breed name'), {
         target: { value: '  Local mountain pony  ' },
@@ -531,16 +546,11 @@ describe('horse profile lifecycle', () => {
     await waitFor(() => expect(name.getAttribute('aria-invalid')).toBe('true'))
     expect(props.save).not.toHaveBeenCalled()
     fireEvent.change(name, { target: { value: 'Maple' } })
-    fireEvent.drop(
-      screen.getByRole('button', { name: /Drop an image here or browse/ }),
-      {
-        dataTransfer: {
-          files: files(
-            new File(['notes'], 'notes.txt', { type: 'text/plain' }),
-          ),
-        },
+    fireEvent.drop(screen.getByRole('button', { name: /Add photo/ }), {
+      dataTransfer: {
+        files: files(new File(['notes'], 'notes.txt', { type: 'text/plain' })),
       },
-    )
+    })
     fireEvent.submit(form)
     const error = await screen.findByText('Choose an image file.')
     const replace = screen.getByRole('button', { name: 'Replace notes.txt' })
@@ -566,16 +576,18 @@ describe('horse profile lifecycle', () => {
     const { name, imageInput, props } = setup()
     fireEvent.change(name, { target: { value: 'Maple revised' } })
     fireEvent.change(imageInput, { target: { files: files(photo()) } })
-    fireEvent.click(screen.getByRole('button', { name: 'Reset form' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
     expect(
       await screen.findByRole('alertdialog', { name: 'Discard your changes?' }),
     ).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Keep editing' }))
     expect(name.value).toBe('Maple revised')
     expect(screen.getByText('maple.png')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Reset form' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Discard changes' }),
+      within(await screen.findByRole('alertdialog')).getByRole('button', {
+        name: 'Discard changes',
+      }),
     )
     await waitFor(() => expect(name.value).toBe('Maple'))
     expect(screen.queryByText('maple.png')).toBeNull()
@@ -647,6 +659,7 @@ it('saves a chosen calendar colour separately from the horse coat colour', async
   const { form, props } = setup({
     initialValues: { ...initialValues, color: 'Bay', calendarColourId: 'sage' },
   })
+  openSection(/^Breed & appearance/)
   fireEvent.click(screen.getByRole('button', { name: 'Sky' }))
   fireEvent.submit(form)
   await waitFor(() => expect(props.save).toHaveBeenCalledTimes(1))
@@ -660,6 +673,7 @@ it('validates custom colour drafts and saves the exact normalised colour', async
   const { form, props } = setup({
     initialValues: { ...initialValues, calendarColourId: 'sage' },
   })
+  openSection(/^Breed & appearance/)
   fireEvent.click(screen.getByRole('button', { name: 'Custom colour' }))
   const hex = screen.getByLabelText('Hex colour')
   fireEvent.change(hex, { target: { value: '#zz1234' } })
@@ -683,6 +697,7 @@ it('lets a preset replace a custom colour without retaining an invalid hex draft
   const { form, props } = setup({
     initialValues: { ...initialValues, calendarColourId: '#A23BC4' },
   })
+  openSection(/^Breed & appearance/)
   fireEvent.click(screen.getByRole('button', { name: 'Custom colour' }))
   fireEvent.change(screen.getByLabelText('Hex colour'), {
     target: { value: '#bad' },

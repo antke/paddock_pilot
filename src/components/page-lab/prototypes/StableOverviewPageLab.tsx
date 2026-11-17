@@ -116,13 +116,13 @@ function SampleOverview({ data }: { data: DashboardLabData }) {
             lastName: 'Turner',
             email: 'mae@example.com',
           }}
-          editAction={
+          editAction={(_section, label) => (
             <EditActionLink
               to="/page-lab/$page"
               params={{ page: 'stable-form' }}
-              label="Edit stable"
+              label={label}
             />
-          }
+          )}
           onArchive={async () => {
             setPending(true)
             setMessage(

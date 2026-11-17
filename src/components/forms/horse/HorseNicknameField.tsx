@@ -3,7 +3,6 @@ import type { Ref } from 'react'
 import type { FieldError as FormFieldError } from 'react-hook-form'
 import { Checkbox } from '#/components/ui/checkbox'
 import { Field, FieldError, FieldLabel } from '#/components/ui/field'
-import { FieldHelpLabel } from '#/components/forms/FormHelpTooltip'
 import { Input } from '#/components/ui/input'
 import { useT } from '#/i18n/LocaleProvider'
 
@@ -30,47 +29,39 @@ export function HorseNicknameField({
   const id = useId()
   return (
     <Field data-invalid={Boolean(error)}>
-      <FieldHelpLabel
-        htmlFor={id}
-        id={`${id}-label`}
-        required={checked}
-        label={t('horseForm.nickname')}
-        help={t('horseForm.nicknameHelp')}
-        helpId={`${id}-help`}
+      <FieldLabel htmlFor={id} id={`${id}-label`} required={checked}>
+        {t('horseForm.nickname')}
+      </FieldLabel>
+      <Input
+        aria-required={checked || undefined}
+        id={id}
+        name="nickname"
+        ref={inputRef}
+        value={value ?? ''}
+        onChange={(event) => onValueChange(event.target.value)}
+        onBlur={onBlur}
+        disabled={disabled}
+        maxLength={100}
+        autoComplete="off"
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${id}-error` : undefined}
       />
-      <div className="flex items-center gap-4">
-        <Input
-          aria-required={checked || undefined}
-          id={id}
-          name="nickname"
-          ref={inputRef}
-          value={value ?? ''}
-          onChange={(event) => onValueChange(event.target.value)}
-          onBlur={onBlur}
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id={`${id}-use`}
+          name="useNickname"
+          checked={checked ?? false}
+          onCheckedChange={onCheckedChange}
           disabled={disabled}
-          maxLength={100}
-          autoComplete="off"
-          aria-invalid={Boolean(error)}
-          aria-describedby={`${id}-help${error ? ` ${id}-error` : ''}`}
-          className="min-w-0 flex-1"
         />
-        <div className="flex shrink-0 items-center gap-2">
-          <Checkbox
-            id={`${id}-use`}
-            name="useNickname"
-            aria-describedby={`${id}-help`}
-            checked={checked ?? false}
-            onCheckedChange={onCheckedChange}
-            disabled={disabled}
-          />
-          <FieldLabel
-            id={`${id}-use-label`}
-            htmlFor={`${id}-use`}
-            className="cursor-pointer text-sm"
-          >
-            {t('horseForm.useNickname')}
-          </FieldLabel>
-        </div>
+        <FieldLabel
+          id={`${id}-use-label`}
+          htmlFor={`${id}-use`}
+          interactive
+          className="font-normal"
+        >
+          {t('horseForm.useNickname')}
+        </FieldLabel>
       </div>
       {error && <FieldError id={`${id}-error`} errors={[error]} />}
     </Field>

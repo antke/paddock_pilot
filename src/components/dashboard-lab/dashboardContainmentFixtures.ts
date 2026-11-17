@@ -1,4 +1,5 @@
 import type { Id } from 'convex/_generated/dataModel'
+import { horseCalendarColourIds } from 'shared/horses/horseCalendarColours'
 import { createDashboardLabFixtureData } from './dashboardLabFixtures'
 import type { DashboardLabData } from './dashboardLabTypes'
 
@@ -10,6 +11,8 @@ export function createDashboardContainmentFixture(): DashboardLabData {
     ...base.horses[index % base.horses.length],
     _id: `lab-containment-horse-${index}` as Id<'horses'>,
     name,
+    // Each busy-yard horse keeps its own colour instead of the spread base one.
+    calendarColourId: horseCalendarColourIds[index],
   }))
   const attentionHorses = horses.map((horse, index) => ({
     ...base.attentionHorses[0],

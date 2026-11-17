@@ -164,8 +164,11 @@ function HorseDeletionState({
   )
 
   return (
+    // A quiet footer after the form, not a peer of the horse record.
     <DashboardSectionCard
       ref={section}
+      surface="flat"
+      size="compact"
       role="group"
       aria-label={t('horseDeletion.region', {
         name: getHorseDisplayName(horse),
@@ -186,7 +189,7 @@ function HorseDeletionState({
             })}
           </p>
         ))}
-      <DashboardActions align="end">
+      <DashboardActions align="start">
         {acknowledged && !open ? (
           (failure === 'continue' || isPending) && (
             <Button

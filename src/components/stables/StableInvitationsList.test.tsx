@@ -70,23 +70,28 @@ it('confirms a copied invitation only after success and clears feedback for a fr
   const view = render(
     <StableInvitationsListView invitations={[invitation]} {...props} />,
   )
-  const button = screen.getByRole('button', { name: 'Copy link' })
-  fireEvent.click(button)
-  fireEvent.click(button)
+  // Copy link lives in the row's "…" menu, which stays open to show its feedback.
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Actions for rider@example.test' }),
+  )
+  const item = await screen.findByRole('menuitem', { name: 'Copy link' })
+  fireEvent.click(item)
+  fireEvent.click(item)
   expect(copy).toHaveBeenCalledExactlyOnceWith('first')
   expect(
-    screen.getByRole<HTMLButtonElement>('button', { name: 'Copying…' })
-      .disabled,
-  ).toBe(true)
-  expect(screen.queryByRole('button', { name: 'Copied' })).toBeNull()
+    screen
+      .getByRole('menuitem', { name: 'Copying…' })
+      .getAttribute('aria-disabled'),
+  ).toBe('true')
+  expect(screen.queryByRole('menuitem', { name: 'Copied' })).toBeNull()
   await act(async () => resolve())
-  expect(screen.getByRole('button', { name: 'Copied' })).toBeTruthy()
+  expect(screen.getByRole('menuitem', { name: 'Copied' })).toBeTruthy()
   view.rerender(
     <StableInvitationsListView
       invitations={[{ ...invitation, token: 'fresh' }]}
       {...props}
     />,
   )
-  expect(screen.getByRole('button', { name: 'Copy link' })).toBeTruthy()
-  expect(screen.queryByRole('button', { name: 'Copied' })).toBeNull()
+  expect(screen.getByRole('menuitem', { name: 'Copy link' })).toBeTruthy()
+  expect(screen.queryByRole('menuitem', { name: 'Copied' })).toBeNull()
 })

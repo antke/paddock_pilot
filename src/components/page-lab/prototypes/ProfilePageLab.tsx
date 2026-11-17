@@ -81,9 +81,9 @@ function LocalProfile() {
         profile={profile}
         ProfileForm={SampleOnboardingProfile}
       />
-      <DashboardPage>
+      <DashboardPage width="narrow">
         <DashboardPageHeader title="Your profile" />
-        <DashboardSectionCard title="Profile details" contentGap="comfortable">
+        <DashboardSectionCard contentGap="comfortable" data-mobile-flat-section="true">
           <AccountProfileFormView
             initialValues={profile}
             submitLabel="Save profile"

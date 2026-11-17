@@ -92,9 +92,8 @@ describe('reminder actions', () => {
       />,
     )
     expect(
-      screen.getByText('Responsible person').closest('div')?.querySelector('dd')
-        ?.textContent,
-    ).toBe('Alex')
+      screen.getByText('Responsible person:').parentElement?.textContent,
+    ).toBe('Responsible person: Alex')
     expect(screen.getByText(/Completed by Alex/)).toBeTruthy()
     expect(
       screen.queryByRole('button', { name: 'Actions for Farrier' }),
@@ -166,11 +165,9 @@ describe('reminder actions', () => {
       ['Responsible person', 'Alex'],
     ]) {
       expect(
-        within(row as HTMLElement)
-          .getByText(label)
-          .closest('div')
-          ?.querySelector('dd')?.textContent,
-      ).toBe(value)
+        within(row as HTMLElement).getByText(`${label}:`).parentElement
+          ?.textContent,
+      ).toBe(`${label}: ${value}`)
     }
     expect(row.querySelector('time')?.getAttribute('datetime')).toBe(
       reminder.dueDate,
@@ -195,11 +192,8 @@ describe('reminder actions', () => {
       .getByRole('heading', { name: 'Farrier' })
       .closest('[data-slot="dashboard-item-card"]')!
     expect(
-      within(row as HTMLElement)
-        .getByText('Horse')
-        .closest('div')
-        ?.querySelector('dd')?.textContent,
-    ).toBe('Milo')
+      within(row as HTMLElement).getByText('Horse:').parentElement?.textContent,
+    ).toBe('Horse: Milo')
     expect(within(row as HTMLElement).getByText('Unassigned')).toBeTruthy()
     expect(within(row as HTMLElement).queryByRole('button')).toBeNull()
     expect(row.querySelector('[data-slot="action-group"]')).toBeNull()
@@ -271,10 +265,10 @@ describe('complete and schedule next', () => {
     expect(
       screen.getByRole('button', { name: 'Complete Farrier' }),
     ).toBeTruthy()
-    // Edit and Remove sit in the row footer; scheduling the next date is the
-    // first item of the overflow menu.
+    // Edit sits in the row footer; scheduling the next date is the first item of
+    // the overflow menu and Remove its last.
     expect(screen.getByRole('button', { name: 'Edit Farrier' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Remove Farrier' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Remove Farrier' })).toBeNull()
     expect(
       screen.queryByRole('button', { name: /and schedule next/ }),
     ).toBeNull()
@@ -284,7 +278,10 @@ describe('complete and schedule next', () => {
       within(menu)
         .getAllByRole('menuitem')
         .map((item) => item.textContent),
-    ).toEqual(['Complete and schedule next', 'Dismiss'])
+    ).toEqual(['Complete and schedule next', 'Dismiss', 'Remove'])
+    expect(
+      within(menu).getByRole('menuitem', { name: 'Remove Farrier' }),
+    ).toBeTruthy()
     fireEvent.click(
       within(menu).getByRole('menuitem', {
         name: 'Complete and schedule next',
@@ -303,6 +300,57 @@ describe('complete and schedule next', () => {
     fireEvent.keyDown(dialog, { key: 'Escape' })
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(actions.onComplete).not.toHaveBeenCalled()
+  })
+
+  it('removes from the row menu through the shared confirmation and returns focus to the menu button', async () => {
+    const actions = callbacks()
+    render(
+      <CareRemindersCard
+        reminders={[{ reminder, canManage: true }]}
+        canAddReminder={false}
+        emptyMessage="Empty"
+        {...actions}
+      />,
+    )
+    const trigger = screen.getByRole('button', { name: 'Actions for Farrier' })
+    fireEvent.click(trigger)
+    fireEvent.click(
+      await screen.findByRole('menuitem', { name: 'Remove Farrier' }),
+    )
+    let dialog = await screen.findByRole('alertdialog', {
+      name: 'Remove “Farrier”?',
+    })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Keep record' }))
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
+    await waitFor(() => expect(document.activeElement).toBe(trigger))
+    expect(actions.onRemove).not.toHaveBeenCalled()
+
+    fireEvent.click(trigger)
+    fireEvent.click(
+      await screen.findByRole('menuitem', { name: 'Remove Farrier' }),
+    )
+    dialog = await screen.findByRole('alertdialog')
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: 'Remove reminder' }),
+    )
+    await waitFor(() => expect(actions.onRemove).toHaveBeenCalledOnce())
+  })
+
+  it('keeps Remove visible after the pencil on a closed reminder', () => {
+    render(
+      <CareRemindersCard
+        reminders={[
+          { reminder: { ...reminder, status: 'completed' }, canManage: true },
+        ]}
+        canAddReminder={false}
+        emptyMessage="Empty"
+        {...callbacks()}
+      />,
+    )
+    expect(
+      screen.queryByRole('button', { name: 'Actions for Farrier' }),
+    ).toBeNull()
+    expect(screen.getByRole('button', { name: 'Remove Farrier' })).toBeTruthy()
   })
 
   it.each([

@@ -33,6 +33,7 @@ export function HorseDetailSectionTabs<TTabId extends string>({
       items={items}
       onSelect={onSelect}
       actions={actions}
+      surface="canvas"
     >
       {children}
     </DashboardTabbedCard>

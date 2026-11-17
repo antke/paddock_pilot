@@ -1,3 +1,4 @@
+import { notifyUsers } from './libs/eventNotices'
 import { compareEventTimes } from '../shared/events/eventTime'
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
@@ -25,7 +26,10 @@ async function canInvite(ctx: Ctx, horseId: Id<'horses'>) {
   return access.canEditPersonalRecords || access.isCustodian
 }
 
-async function currentSession(ctx: Ctx, row: Doc<'activityParticipants'>) {
+export async function currentSession(
+  ctx: Ctx,
+  row: Doc<'activityParticipants'>,
+) {
   const [event, horse, participation] = await Promise.all([
     ctx.db.get(row.eventId),
     ctx.db.get(row.horseId),
@@ -33,6 +37,7 @@ async function currentSession(ctx: Ctx, row: Doc<'activityParticipants'>) {
   ])
   if (
     !event ||
+    event.status === 'cancelled' ||
     event.type !== row.type ||
     !horse ||
     horse.deletedAt !== undefined ||
@@ -41,7 +46,10 @@ async function currentSession(ctx: Ctx, row: Doc<'activityParticipants'>) {
     participation.participationEndsAt ||
     (participation.status !== undefined &&
       participation.status !== 'confirmed') ||
-    !event.horseIds.includes(horse._id)
+    !event.horseIds.includes(horse._id) ||
+    // A withdrawn horse that is re-added does not revive older grants.
+    (participation.approvedAt ?? 0) > row.createdAt ||
+    !(await canInviterStillInvite(ctx, row))
   )
     return null
   if (
@@ -203,6 +211,17 @@ export const revoke = mutation({
     )
       throw new ConvexError('You cannot remove this participant')
     await ctx.db.patch(id, { status: 'revoked', updatedAt: Date.now() })
+    if (row.userId === user._id && row.status === 'accepted')
+      await notifyUsers(
+        ctx,
+        [row.invitedBy],
+        {
+          kind: 'activity_participant_left',
+          eventId: row.eventId,
+          detail: accountDisplayName(user, user.email),
+        },
+        [user._id],
+      )
   },
 })
 
@@ -314,8 +333,12 @@ export async function listMyParticipations(ctx: QueryCtx) {
         row.role === 'rider' &&
         row.type === 'training' &&
         Boolean(current) &&
-        (!report || report.recordedBy === user._id),
-      reported: Boolean(report),
+        (!report ||
+          report.recordedBy === user._id ||
+          report.status === 'planned'),
+      reported: Boolean(report) && report?.status !== 'planned',
+      // Accepted, but the horse, date or event no longer matches the invitation.
+      sessionChanged: row.status === 'accepted' && !current,
       resultStatus: report?.status,
       plannedTraining: current?.event.training
         ? {
@@ -371,7 +394,11 @@ export const reportRide = mutation({
           'Another ride has a report on this date. Contact the horse owner',
         )
     }
-    if (existing && existing.recordedBy !== user._id)
+    if (
+      existing &&
+      existing.recordedBy !== user._id &&
+      existing.status !== 'planned'
+    )
       throw new ConvexError(
         'This ride already has a report. Ask the horse owner to update it',
       )

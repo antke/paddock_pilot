@@ -27,7 +27,7 @@ The central authorization helpers are in `convex/libs/horsePermissions.ts`. All 
 
 `horseTransitions.advance` commits pages of up to 50 records with its cursor. The scheduler continues each phase; the cron resumes interrupted jobs. Completion is idempotent. The former stable's history endpoint returns no horse snapshots. Owners/carers continue using canonical records. Documents download through authenticated, no-store application/Convex endpoints, with current audience checks; old canonical or snapshot links do not bypass revoked access.
 
-Shared scheduling and private horse records have separate permissions. Stable administrators can manage shared participants; whole-event changes require authority over every participant and occurrence. Ordinary members see only shared schedule/status. No stable role may read or overwrite private service notes, outcomes or clinical records. Personal multi-horse events require edit access to every participating horse. Dashboards, comparisons, reminders and email delivery recheck horse access.
+Shared scheduling and private horse records have separate permissions. Stable administrators can manage shared participants. The event organizer (creator, plus the stable owner for stable events) manages the shared schedule and that event's per-horse service notes; other whole-event changes require authority over every participant and occurrence. Ordinary members see only shared schedule/status. No stable role may read or overwrite outcomes or clinical records outside an event it organizes. Personal multi-horse events require edit access to every participating horse. Dashboards, comparisons, reminders and email delivery recheck horse access.
 
 ## Ownership UI follow-up (2026-10-07)
 

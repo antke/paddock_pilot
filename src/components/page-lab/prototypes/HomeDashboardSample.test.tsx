@@ -60,7 +60,7 @@ it('offers actual combined home with local failure/retry through the existing da
     target: { value: 'home' },
   })
   expect(
-    screen.getByRole('heading', { level: 1, name: 'Cedar Ridge Barn' }),
+    screen.getByRole('heading', { level: 1, name: 'Home' }),
   ).toBeTruthy()
   fireEvent.change(screen.getByLabelText('Next sample invitation result'), {
     target: { value: 'failure' },
@@ -130,9 +130,6 @@ it('switches local stable data during a pending response without retaining the p
     }).disabled,
   ).toBe(true)
   fireEvent.click(screen.getByRole('button', { name: 'Change fixture stable' }))
-  expect(
-    screen.getByRole('heading', { level: 1, name: 'North Pasture Annex' }),
-  ).toBeTruthy()
   const region = screen.getByRole('region', { name: 'Horse invitations' })
   expect(within(region).getAllByRole('listitem')).toHaveLength(1)
   expect(

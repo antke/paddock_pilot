@@ -1,6 +1,7 @@
-import { ArrowRightIcon, CaretDownIcon } from '@phosphor-icons/react'
+import { CaretDownIcon } from '@phosphor-icons/react'
 import { Link } from '@tanstack/react-router'
-import { Button, ButtonLink } from '#/components/ui/button'
+import { Button } from '#/components/ui/button'
+import { SeeAllLink } from '#/components/dashboard/command-center/SeeAllLink'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,12 +26,7 @@ export function HorseListShortcut({
   const label = t('dashboard.allHorses')
 
   if (stables.length === 0) {
-    return (
-      <ButtonLink to="/horses" variant="ghost" size="sm" className="min-h-11">
-        {label}
-        <ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
-      </ButtonLink>
-    )
+    return <SeeAllLink to="/horses">{label}</SeeAllLink>
   }
 
   return (
@@ -39,7 +35,7 @@ export function HorseListShortcut({
         render={
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             size="sm"
             className="min-h-11"
           />
@@ -70,28 +66,5 @@ export function HorseListShortcut({
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
-  )
-}
-
-/** Stable roster shortcut: the stable's own horse list, with its size. */
-export function StableHorseListShortcut({
-  stableId,
-  count,
-}: {
-  stableId: string
-  count: number
-}) {
-  const t = useT()
-  return (
-    <ButtonLink
-      to="/stables/$stableId/horses"
-      params={{ stableId }}
-      variant="ghost"
-      size="sm"
-      className="min-h-11"
-    >
-      {t('dashboard.allHorses')} ({count})
-      <ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
-    </ButtonLink>
   )
 }

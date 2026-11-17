@@ -19,7 +19,7 @@ describe('OnboardingStepper', () => {
     )
 
     const currentStep = container.querySelector('[data-status="current"]')
-    expect(currentStep?.textContent).toBe('02Stable')
+    expect(currentStep?.textContent).toBe('2Stable')
     expect(container.textContent).not.toContain('Current step')
   })
 

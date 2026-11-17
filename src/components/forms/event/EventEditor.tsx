@@ -37,7 +37,10 @@ import { hasDraftChanges } from '#/components/forms/hasDraftChanges'
 import { EventFormFields } from './EventFormFields'
 import type { EventFormInput, EventFormSchema } from './eventFormSchema'
 import { getEventEditorDefaults } from './eventEditorValues'
-import { useMobileTaskReturn } from '#/components/layout/mobileTaskNavigation'
+import {
+  useMobileTaskReturn,
+  useRouteFormClose,
+} from '#/components/layout/mobileTaskNavigation'
 
 type Props = {
   eventId?: Id<'events'>
@@ -105,6 +108,7 @@ export function EventEditor({
     (key) => t(`trainingValidation.${key}`),
     { allowEmptyHorses: mode === 'edit' },
   )
+  const closeForm = useRouteFormClose()
   const formId = useId()
   const requestId = useRef(createRequestId())
   const initialPeople =
@@ -299,9 +303,7 @@ export function EventEditor({
       title={t(
         isTraining
           ? mode === 'create'
-            ? recording
-              ? 'trainingViews.recordCompleted'
-              : 'eventEditor.addTraining'
+            ? 'eventEditor.addTraining'
             : 'eventEditor.editTraining'
           : mode === 'create'
             ? 'eventEditor.addEvent'
@@ -310,7 +312,8 @@ export function EventEditor({
       stickyActions
       cancelDisabled={pending}
       onCancel={() => {
-        if (!pending) returnFromTask(true)
+        // The task return only handles phones; desktop leaves like other forms.
+        if (!pending && !returnFromTask(true)) closeForm()
       }}
       onSubmit={(event) => {
         if (pending || save.completed) {
@@ -355,6 +358,7 @@ export function EventEditor({
         ) : (
           <RouteFormActions
             isSubmitting={pending}
+            dirty={hasChanges}
             disabled={invalidSharing || Boolean(recording && invitationCount)}
             onReset={() => {
               if (pending) return
@@ -372,16 +376,13 @@ export function EventEditor({
                         : 'eventEditor.resetEvent',
                     ),
                     description: t('eventEditor.resetHelp'),
-                    confirmLabel: t('eventEditor.reset'),
                   }
                 : undefined
             }
             submitLabel={t(
               isTraining
                 ? mode === 'create'
-                  ? recording
-                    ? 'trainingViews.saveRecord'
-                    : 'eventEditor.createTraining'
+                  ? 'eventEditor.createTraining'
                   : 'eventEditor.updateTraining'
                 : mode === 'create'
                   ? 'eventEditor.createEvent'

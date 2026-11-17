@@ -310,6 +310,7 @@ function SampleDocuments({ data }: { data: DashboardLabData }) {
           />
         }
         chrome="cards"
+        surface={scope === 'stable' ? 'canvas' : 'panel'}
         onRemove={removeDocument}
       />
     </DashboardPage>

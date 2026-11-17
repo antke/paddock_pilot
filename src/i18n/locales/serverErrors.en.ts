@@ -20,4 +20,7 @@ export const serverErrors = {
   trainingPermission:
     'Only the horse owner or stable admin can record its training',
   trainingOccurrence: 'Choose a scheduled occurrence of this session',
+  eventDeleteBlocked:
+    'Another owner’s horse takes part in this event or has recorded history in it. Cancel it instead.',
+  eventClosed: 'This event has already happened or was cancelled',
 } as const

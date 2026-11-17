@@ -1,4 +1,5 @@
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
+import { formatShortDateKey, getTodayDateKey } from '#/lib/dateDisplay'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DetailTextBlock } from '#/components/dashboard/DetailBlocks'
@@ -44,11 +45,13 @@ export type EventHorseDetailRow = EventHorseDetails['rows'][number]
 type EventHorseServiceDetailsCardProps = {
   eventId: string
   trainingDisclosure?: boolean
+  occurrenceDate?: string
 }
 
 export function EventHorseServiceDetailsCard({
   eventId,
   trainingDisclosure = false,
+  occurrenceDate,
 }: EventHorseServiceDetailsCardProps) {
   const t = useT()
 
@@ -59,18 +62,43 @@ export function EventHorseServiceDetailsCard({
   )
   const updateDetails = useMutation(api.eventHorseDetails.update)
   const withdrawHorse = useMutation(api.events.withdrawHorseFromEvent)
+  const setOccurrenceSkip = useMutation(api.events.setOccurrenceSkip)
+  const { locale } = useLocale()
   if (!data.event) return null
+  const event = data.event
+  const dateSkip =
+    occurrenceDate && event.recurrence && !trainingDisclosure
+      ? {
+          label: formatShortDateKey(occurrenceDate, locale),
+          skipped: (horseId: string) =>
+            Boolean(
+              event.occurrenceSkips?.some(
+                (skip) =>
+                  skip.date === occurrenceDate && skip.horseId === horseId,
+              ),
+            ),
+          toggle: (horseId: Id<'horses'>, skipped: boolean) =>
+            setOccurrenceSkip({
+              eventId: event._id,
+              date: occurrenceDate,
+              horseId,
+              skipped,
+              today: getTodayDateKey(),
+            }),
+        }
+      : undefined
 
   return (
     <EventHorseServiceDetailsView
       rows={data.rows}
       trainingDisclosure={trainingDisclosure}
+      dateSkip={dateSkip}
       onSave={async (rowId, values) => {
         await updateDetails({ id: rowId, ...values })
         showAppSuccessToast({ title: t('eventViews.serviceSaved') })
       }}
       onWithdraw={async (rowId) => {
-        await withdrawHorse({ eventHorseId: rowId })
+        await withdrawHorse({ eventHorseId: rowId, today: getTodayDateKey() })
         showAppSuccessToast({ title: t('eventViews.horseWithdrawn') })
       }}
     />
@@ -86,6 +114,13 @@ type EventHorseServiceDetailsViewProps = {
   onWithdraw: (rowId: Id<'eventsHorses'>) => Promise<void>
   withdrawalDescription?: string
   trainingDisclosure?: boolean
+  dateSkip?: DateSkip
+}
+
+type DateSkip = {
+  label: string
+  skipped: (horseId: string) => boolean
+  toggle: (horseId: Id<'horses'>, skipped: boolean) => Promise<unknown>
 }
 
 /** Shared UI; mutation owners must reject failures and resolve only after saving. */
@@ -95,6 +130,7 @@ export function EventHorseServiceDetailsView({
   onWithdraw,
   withdrawalDescription,
   trainingDisclosure = false,
+  dateSkip,
 }: EventHorseServiceDetailsViewProps) {
   const t = useT()
   const content =
@@ -109,6 +145,7 @@ export function EventHorseServiceDetailsView({
             key={row.eventHorse._id}
             row={row}
             training={trainingDisclosure}
+            dateSkip={dateSkip}
             onSubmit={(values) => onSave(row.eventHorse._id, values)}
             onWithdraw={() => onWithdraw(row.eventHorse._id)}
             withdrawalDescription={
@@ -152,7 +189,9 @@ function EventHorseServiceRow({
   onWithdraw,
   withdrawalDescription,
   training = false,
+  dateSkip,
 }: {
+  dateSkip?: DateSkip
   row: EventHorseDetailRow
   onSubmit: (values: EventHorseDetailsFormSchema) => Promise<void>
   onWithdraw: () => Promise<void>
@@ -194,6 +233,9 @@ function EventHorseServiceRow({
 
   const { eventHorse, horse, canManage, canWithdraw } = row
   const horseName = getHorseDisplayName(horse) ?? t('eventViews.unknownHorse')
+  const showStatus = Boolean(
+    eventHorse.status && eventHorse.status !== 'confirmed',
+  )
   const hasDetails = Boolean(
     eventHorse.requestedServiceNotes ||
     eventHorse.completionNotes ||
@@ -215,8 +257,38 @@ function EventHorseServiceRow({
       density="compact"
       interactive={false}
       actions={
-        !isEditing && (canManage || canWithdraw) ? (
+        !isEditing && (canManage || canWithdraw || showStatus) ? (
           <>
+            {canWithdraw && dateSkip && (
+              // Same size as Withdraw beside it.
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  void dateSkip.toggle(horse._id, !dateSkip.skipped(horse._id))
+                }
+              >
+                {t(
+                  dateSkip.skipped(horse._id)
+                    ? 'eventViews.joinDate'
+                    : 'eventViews.skipDate',
+                  { date: dateSkip.label },
+                )}
+              </Button>
+            )}
+            {/* The status takes Withdraw's place and height, so the row keeps its shape. */}
+            {showStatus && (
+              <EventHorseStatusBadge
+                status={eventHorse.status}
+                size="action"
+                reserveLabel={
+                  eventHorse.status === 'withdrawn'
+                    ? t('eventViews.withdraw')
+                    : undefined
+                }
+              />
+            )}
             {canManage &&
               (hasDetails ? (
                 <EditActionButton
@@ -354,11 +426,6 @@ function EventHorseServiceRow({
     >
       <HorseCardContent
         horse={horse ?? { name: t('eventViews.unknownHorse') }}
-        badges={
-          eventHorse.status && eventHorse.status !== 'confirmed' ? (
-            <EventHorseStatusBadge status={eventHorse.status} />
-          ) : undefined
-        }
         meta={
           eventHorse.costShare !== undefined
             ? t('eventViews.cost', {

@@ -5,9 +5,15 @@ import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
 import { useSmallScreen } from '#/lib/useSmallScreen'
 import { useT } from '#/i18n/LocaleProvider'
 
-/** Shared calendar navigation, following the training log's responsive layout. */
+/**
+ * Shared calendar toolbar, one anatomy at every width: ‹ title › Today on the
+ * left; view, Filters and actions on the right. Phones wrap a view control to
+ * a second row with Filters at the right edge; Filters alone stays on the date
+ * row and wraps only when it does not fit.
+ */
 export function CalendarToolbar({
   label,
+  headingAs: Heading = 'h2',
   previousLabel,
   nextLabel,
   onPrevious,
@@ -18,6 +24,7 @@ export function CalendarToolbar({
   mobileFilters,
 }: {
   label: string
+  headingAs?: 'h2' | 'h3'
   previousLabel: string
   nextLabel: string
   onPrevious: () => void
@@ -29,31 +36,39 @@ export function CalendarToolbar({
 }) {
   const small = useSmallScreen()
   const t = useT()
-  return small ? (
-    <div className="grid gap-3">
+  // Phones carry page actions in their bottom bar, not the toolbar.
+  const toolbarActions = small ? undefined : actions
+  const trailing = (mobileFilters || toolbarActions) && (
+    <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+      {mobileFilters}
+      {toolbarActions}
+    </div>
+  )
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
       <div
         role="group"
         aria-label={t('trainingViews.navigation')}
-        className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem_auto] items-center gap-1"
+        className="flex min-w-0 items-center gap-0.5"
       >
         <Button
           variant="ghost"
-          size="icon-lg"
+          size={small ? 'icon-lg' : 'icon'}
           onClick={onPrevious}
           aria-label={previousLabel}
         >
           <CaretLeftIcon aria-hidden="true" />
         </Button>
-        <h2
-          className="min-w-0 text-center font-display text-lg font-semibold leading-tight"
+        <Heading
+          className="min-w-0 px-1 text-center font-display text-lg leading-tight font-semibold md:text-xl"
           aria-live="polite"
           aria-atomic="true"
         >
           {label}
-        </h2>
+        </Heading>
         <Button
           variant="ghost"
-          size="icon-lg"
+          size={small ? 'icon-lg' : 'icon'}
           onClick={onNext}
           aria-label={nextLabel}
         >
@@ -62,52 +77,24 @@ export function CalendarToolbar({
         <Button
           variant="ghost"
           size="control"
-          className="min-h-11 px-2"
+          className={small ? 'min-h-11 px-2' : 'px-2.5'}
           onClick={onToday}
         >
           {t('calendar.today')}
         </Button>
       </div>
-      {(viewControl || mobileFilters) && (
-        <div className="flex flex-wrap items-center justify-between gap-2">
+      {(viewControl || trailing) && (
+        <div
+          className={
+            small
+              ? 'flex w-full flex-wrap items-center gap-2'
+              : 'ml-auto flex flex-wrap items-center justify-end gap-2'
+          }
+        >
           {viewControl}
-          {mobileFilters}
+          {trailing}
         </div>
       )}
-    </div>
-  ) : (
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <div
-        role="group"
-        aria-label={t('trainingViews.navigation')}
-        className="grid max-w-full grid-cols-3 items-center gap-2 [&>button]:px-2 [&>button]:whitespace-nowrap sm:[&>button]:px-3"
-      >
-        <Button
-          variant="outline"
-          size="control"
-          onClick={onPrevious}
-          aria-label={previousLabel}
-        >
-          <CaretLeftIcon aria-hidden="true" className="hidden sm:block" />
-          {t('calendar.previous')}
-        </Button>
-        <Button variant="outline" size="control" onClick={onToday}>
-          {t('calendar.today')}
-        </Button>
-        <Button
-          variant="outline"
-          size="control"
-          onClick={onNext}
-          aria-label={nextLabel}
-        >
-          {t('calendar.next')}
-          <CaretRightIcon aria-hidden="true" className="hidden sm:block" />
-        </Button>
-      </div>
-      <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-        {viewControl}
-        {actions}
-      </div>
     </div>
   )
 }
@@ -127,11 +114,11 @@ export function CalendarViewControl<T extends string>({
   return (
     <ChoiceButtonGroup
       aria-label={label}
-      layout={small ? 'segmented' : 'compact'}
+      layout="segmented"
       className={
         small
           ? '[&>button]:min-h-11 [&>button]:px-3 [&>button]:text-sm'
-          : 'grid w-auto grid-cols-2 [&>button]:h-(--control-height) [&>button]:px-3 [&>button]:text-sm [&>button]:pointer-coarse:min-h-11'
+          : '[&>button]:h-(--control-height) [&>button]:px-3 [&>button]:text-sm [&>button]:pointer-coarse:min-h-11'
       }
       value={value}
       options={options}

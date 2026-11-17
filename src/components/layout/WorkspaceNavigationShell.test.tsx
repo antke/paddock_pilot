@@ -74,7 +74,6 @@ async function setup(
           pathname={pathname}
           currentTab={new URLSearchParams(searchStr).get('tab') ?? undefined}
           stables={stables}
-          canManageStable
           accountActions={<button>Account and preferences</button>}
           renderDrawerAccount={(closeDrawer) => (
             <DrawerAccountView
@@ -128,7 +127,7 @@ function navigationHrefs(container: HTMLElement) {
     .map((link) => link.getAttribute('href'))
 }
 
-it('keeps Home global and marks the local stable overview', async () => {
+it('keeps Home global and marks the stable row as its overview', async () => {
   await setup('/stables/stable-a')
   const sidebar = await screen.findByRole('complementary', { name: 'Menu' })
   const nav = navigation(sidebar)
@@ -137,7 +136,7 @@ it('keeps Home global and marks the local stable overview', async () => {
   expect(home.getAttribute('aria-current')).toBeNull()
   expect(
     within(nav)
-      .getByRole('link', { name: 'Stable overview' })
+      .getByRole('link', { name: 'Oak Farm' })
       .getAttribute('aria-current'),
   ).toBe('page')
   expect(nav.querySelectorAll('[aria-current="page"]')).toHaveLength(1)
@@ -146,11 +145,11 @@ it('keeps Home global and marks the local stable overview', async () => {
       .getAllByRole('link')
       .slice(0, 4)
       .map((link) => link.textContent),
-  ).toEqual(['Home', 'Events', 'Training log', 'Horses'])
+  ).toEqual(['Home', 'Events', 'Training', 'Horses'])
 })
 
 it.each(['/events', '/stables/stable-a/events'])(
-  'uses fixed daily links and a stable-only local switch at %s',
+  'uses one menu, without a stable picker, at %s',
   async (href) => {
     window.localStorage.setItem(savedStableKey, 'stable-b')
     await setup(href)
@@ -166,11 +165,12 @@ it.each(['/events', '/stables/stable-a/events'])(
     expect(
       within(sidebar).queryByRole('button', { name: /Current workspace:/ }),
     ).toBeNull()
+    expect(sidebarHrefs).toEqual(
+      expect.arrayContaining(['/stables/stable-a', '/stables/stable-b']),
+    )
     expect(
-      within(sidebar).queryAllByRole('button', {
-        name: 'Current stable: Oak Farm',
-      }),
-    ).toHaveLength(href.startsWith('/stables/') ? 1 : 0)
+      within(sidebar).queryAllByRole('button', { name: /Current stable:/ }),
+    ).toHaveLength(0)
     fireEvent.click(headerMenu())
     const drawer = await screen.findByRole('dialog', { name: 'Paddock Pilot' })
     expect(navigationHrefs(drawer)).toEqual(sidebarHrefs)
@@ -180,36 +180,77 @@ it.each(['/events', '/stables/stable-a/events'])(
   },
 )
 
-it('persists collapse across remounts and expands from the drawer with restored focus', async () => {
-  await setup('/events')
-  fireEvent.click(
-    await screen.findByRole('button', { name: 'Collapse sidebar' }),
-  )
-  await waitFor(() => expect(screen.queryByRole('complementary')).toBeNull())
-  expect(window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY)).toBe('true')
-  expect(document.activeElement).toBe(headerMenu())
-
-  cleanup()
-  await setup('/events')
-  await waitFor(() => expect(screen.queryByRole('complementary')).toBeNull())
-  fireEvent.click(headerMenu())
-  const drawer = await screen.findByRole('dialog', { name: 'Paddock Pilot' })
-  fireEvent.click(
-    within(drawer).getByRole('button', { name: 'Expand sidebar' }),
-  )
-  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+it("discloses a stable's pages from its own toggle without following its link", async () => {
+  const router = await setup('/stables/stable-a/reminders')
   const sidebar = await screen.findByRole('complementary', { name: 'Menu' })
-  expect(window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY)).toBe('false')
+  const current = within(sidebar).getByRole('button', {
+    name: 'Oak Farm pages',
+  })
+  const other = within(sidebar).getByRole('button', {
+    name: 'North Annex pages',
+  })
+  expect(current.getAttribute('aria-expanded')).toBe('true')
+  expect(other.getAttribute('aria-expanded')).toBe('false')
   expect(
     within(navigation(sidebar))
+      .getByRole('link', { name: 'Care' })
+      .getAttribute('aria-current'),
+  ).toBe('page')
+
+  fireEvent.click(other)
+  expect(other.getAttribute('aria-expanded')).toBe('true')
+  expect(router.state.location.pathname).toBe('/stables/stable-a/reminders')
+  expect(navigationHrefs(sidebar)).toContain('/stables/stable-b/horses')
+
+  fireEvent.click(current)
+  expect(current.getAttribute('aria-expanded')).toBe('false')
+  expect(navigationHrefs(sidebar)).not.toContain('/stables/stable-a/horses')
+})
+
+it('opens the current stable on its Events page too', async () => {
+  await setup('/stables/stable-a/events')
+  const sidebar = await screen.findByRole('complementary', { name: 'Menu' })
+  expect(
+    within(sidebar)
+      .getByRole('button', { name: 'Oak Farm pages' })
+      .getAttribute('aria-expanded'),
+  ).toBe('true')
+})
+
+it('collapses to a persisted icon rail and never hides the sidebar', async () => {
+  await setup('/events')
+  const toggle = await screen.findByRole('button', { name: 'Collapse sidebar' })
+  toggle.focus()
+  fireEvent.click(toggle)
+  const rail = screen.getByRole('complementary', { name: 'Menu' })
+  // The same toggle stays mounted and focused, renamed for its new action.
+  expect(toggle.getAttribute('aria-label')).toBe('Expand sidebar')
+  expect(document.activeElement).toBe(toggle)
+  expect(window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY)).toBe('true')
+  expect(navigationHrefs(rail)).toEqual([
+    '/',
+    '/events',
+    '/training',
+    '/horses',
+    '/horses/contacts',
+  ])
+  expect(
+    within(navigation(rail))
       .getByRole('link', { name: 'Events' })
       .getAttribute('aria-current'),
   ).toBe('page')
+
+  cleanup()
+  await setup('/events')
+  const remounted = await screen.findByRole('complementary', { name: 'Menu' })
   await waitFor(() =>
-    expect(document.activeElement).toBe(
-      within(sidebar).getByRole('button', { name: 'Collapse sidebar' }),
-    ),
+    expect(navigationHrefs(remounted)).not.toContain('/stables'),
   )
+  fireEvent.click(
+    within(remounted).getByRole('button', { name: 'Expand sidebar' }),
+  )
+  expect(window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY)).toBe('false')
+  expect(navigationHrefs(remounted)).toContain('/stables')
 })
 
 it('uses one labelled mobile opener and restores focus from the full-screen menu', async () => {
@@ -302,35 +343,30 @@ it('opens global Home and closes the drawer despite a saved stable preference', 
   expect(window.localStorage.getItem(savedStableKey)).toBe('stable-a')
 })
 
-it.each([
-  ['Contacts', 'contacts'],
-  ['Stable', 'yard'],
-  ['Stable people', 'people'],
-])(
-  'preserves the %s tab destination and closes the drawer after navigation',
-  async (name, tab) => {
-    setViewport(390)
-    const router = await setup('/stables/stable-a')
-    fireEvent.click(
-      await screen.findByRole('button', { name: 'Open navigation menu' }),
-    )
-    const drawer = await screen.findByRole('dialog', { name: 'Paddock Pilot' })
-    const link = within(navigation(drawer)).getByRole('link', {
-      name,
-    })
-    const expected = `/stables/stable-a/stable?tab=${tab}`
-    expect(link.getAttribute('href')).toBe(expected)
-    fireEvent.click(link)
-    await waitFor(() => expect(router.state.location.href).toBe(expected))
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
-    const sidebar = await screen.findByRole('complementary', { name: 'Menu' })
-    const nav = navigation(sidebar)
-    expect(
-      within(nav).getByRole('link', { name }).getAttribute('aria-current'),
-    ).toBe('page')
-    expect(nav.querySelectorAll('[aria-current="page"]')).toHaveLength(1)
-  },
-)
+it('opens the stable directory from one entry and closes the drawer', async () => {
+  setViewport(390)
+  const router = await setup('/stables/stable-a')
+  fireEvent.click(
+    await screen.findByRole('button', { name: 'Open navigation menu' }),
+  )
+  const drawer = await screen.findByRole('dialog', { name: 'Paddock Pilot' })
+  const link = within(navigation(drawer)).getByRole('link', {
+    name: 'Yard and contacts',
+  })
+  const expected = '/stables/stable-a/stable'
+  expect(link.getAttribute('href')).toBe(expected)
+  fireEvent.click(link)
+  await waitFor(() => expect(router.state.location.pathname).toBe(expected))
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+  const sidebar = await screen.findByRole('complementary', { name: 'Menu' })
+  const nav = navigation(sidebar)
+  expect(
+    within(nav)
+      .getByRole('link', { name: 'Yard and contacts' })
+      .getAttribute('aria-current'),
+  ).toBe('page')
+  expect(nav.querySelectorAll('[aria-current="page"]')).toHaveLength(1)
+})
 
 it('exposes account destinations directly and closes the drawer when following a profile link', async () => {
   setViewport(390)

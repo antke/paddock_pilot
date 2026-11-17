@@ -347,13 +347,21 @@ function MedicationRecordRow({
       actionsPlacement="footer"
       actionsClassName="ml-auto"
       actionBadges={
-        record.status === 'completed' ? (
+        record.status === 'completed' && !canManage ? (
           <MedicationRecordStatusBadge status={record.status} />
         ) : undefined
       }
       actions={
         canManage ? (
           <>
+            {/* Completed takes Complete's place and height. */}
+            {record.status === 'completed' && (
+              <MedicationRecordStatusBadge
+                status={record.status}
+                size="action"
+                reserveLabel={t('careRecords.complete')}
+              />
+            )}
             {record.status === 'active' && (
               <Button
                 type="button"

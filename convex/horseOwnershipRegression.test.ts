@@ -79,9 +79,22 @@ it('returns each training horse and record once after departure and rejoining', 
     horseId: f.horseId,
     stableId: f.stableId,
   })
-  await expect(f.admin.query(api.training.listForEvent, { eventId })).rejects.toThrow()
-  await f.owner.mutation(api.events.update, { ...input, id: eventId })
-  await f.owner.mutation(api.recordSharing.set, { horseId: f.horseId, recordId: eventId, enabled: true })
+  // The stable owner still organizes the session but sees none of the departed horse.
+  const organizerView = await f.admin.query(api.training.listForEvent, {
+    eventId,
+  })
+  expect(organizerView.horses).toEqual([])
+  expect(organizerView.records).toEqual([])
+  // The organizer re-adds the returning horse; its owner cannot rewrite the stable event.
+  await expect(
+    f.owner.mutation(api.events.update, { ...input, id: eventId }),
+  ).rejects.toThrow('Not authorized')
+  await f.admin.mutation(api.events.update, { ...input, id: eventId })
+  await f.owner.mutation(api.recordSharing.set, {
+    horseId: f.horseId,
+    recordId: eventId,
+    enabled: true,
+  })
 
   for (const context of [
     {},

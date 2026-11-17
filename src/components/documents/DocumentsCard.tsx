@@ -8,7 +8,7 @@ import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import { DashboardItemMediaCard } from '#/components/dashboard/DashboardItemCard'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
-import { ButtonAnchor } from '#/components/ui/button'
+import { Button } from '#/components/ui/button'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { RecordRemoveAction } from '#/components/list-layout/RecordRemoveAction'
 import type { Doc, Id } from 'convex/_generated/dataModel'
@@ -47,6 +47,8 @@ type DocumentsCardProps = {
   emptyMessage: ReactNode
   listToolbar?: ReactNode
   chrome?: DashboardChrome
+  /** `canvas` when the list is the whole page, open on the page canvas. */
+  surface?: 'canvas' | 'panel'
   onRemove: (id: Id<'stableDocuments'>) => Promise<void>
 }
 
@@ -113,10 +115,13 @@ export function DocumentsCard({
   emptyMessage,
   listToolbar,
   chrome = 'soft',
+  surface = 'panel',
   onRemove,
 }: DocumentsCardProps) {
   const t = useT()
   const section = useRef<HTMLElement>(null)
+  // Reserve the Remove slot once any row has it, so actions form columns.
+  const reserveRemove = documents.some((item) => item.canManage)
   const documentList = (
     <>
       <p className="sr-only" role="status" aria-live="polite" aria-atomic>
@@ -136,6 +141,7 @@ export function DocumentsCard({
           <DocumentRow
             item={item}
             headingLevel={title ? 3 : 2}
+            reserveRemove={reserveRemove}
             onRemove={onRemove}
             removalFocusTarget={() => section.current}
           />
@@ -177,6 +183,7 @@ export function DocumentsCard({
       title={title}
       description={description}
       actions={actions}
+      surface={surface}
       contentGap="comfortable"
     >
       {listToolbar}
@@ -186,14 +193,36 @@ export function DocumentsCard({
   )
 }
 
+/** Invisible stand-in that keeps an absent action's width in the row. */
+function ReservedRemoveSlot() {
+  const t = useT()
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      action="delete"
+      disabled
+      tabIndex={-1}
+      aria-hidden="true"
+      // Phones stack actions under the text, so there is no column to keep aligned.
+      className="invisible max-sm:hidden"
+    >
+      {t('careRecords.remove')}
+    </Button>
+  )
+}
+
 function DocumentRow({
   item,
   headingLevel,
+  reserveRemove,
   onRemove,
   removalFocusTarget,
 }: {
   item: DocumentListItem
   headingLevel: 2 | 3
+  reserveRemove: boolean
   removalFocusTarget: () => HTMLElement | null
   onRemove: (id: Id<'stableDocuments'>) => Promise<void>
 }) {
@@ -213,26 +242,59 @@ function DocumentRow({
           fileState={item.fileState}
         />
       }
-      title={<RowHeading>{document.fileName}</RowHeading>}
-      titleClassName="line-clamp-none break-words [overflow-wrap:anywhere]"
-      meta={
+      // Phones: the labelled actions sit as one unbroken group under the text, not beside it.
+      className="[&_[data-dashboard-item-actions]]:flex-nowrap max-sm:[&_[data-dashboard-item-actions]]:col-start-2 max-sm:[&_[data-dashboard-item-actions]]:col-span-1 max-sm:[&_[data-dashboard-item-actions]]:-ms-3.5"
+      // The file-state pill follows the title inline instead of floating mid-row.
+      title={
         <>
-          <span>{t(`documents.types.${document.type}`)}</span>
-          <span>{getDocumentFormatLabel(document, locale)}</span>
-          {document.size !== undefined && (
-            <span>{formatFileSize(document.size, locale)}</span>
+          <RowHeading className="inline">
+            {item.fileUrl ? (
+              <a
+                href={item.fileUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={t('documents.openNamed', {
+                  name: document.fileName,
+                })}
+                className="app-control-focus rounded-control text-foreground underline-offset-4 hover:underline"
+              >
+                {document.fileName}
+              </a>
+            ) : (
+              document.fileName
+            )}
+          </RowHeading>
+          {item.fileState !== 'available' && (
+            <>
+              {' '}
+              <DocumentFileStateBadge
+                fileState={item.fileState}
+                className="ml-1 align-[0.125em]"
+              />
+            </>
           )}
-          {item.horseName && <span>{item.horseName}</span>}
-          {item.eventTitle && (
-            <span>{t('documents.linkedTo', { name: item.eventTitle })}</span>
-          )}
-          <span>
-            {t('documents.addedAt', {
-              date: formatMediumTimestampDate(document.createdAt, locale),
-            })}
-          </span>
         </>
       }
+      titleClassName="line-clamp-none break-words [overflow-wrap:anywhere]"
+      // An array, not a fragment, so DashboardMetaList can separate the items.
+      meta={[
+        <span key="type">{t(`documents.types.${document.type}`)}</span>,
+        <span key="format">{getDocumentFormatLabel(document, locale)}</span>,
+        document.size !== undefined && (
+          <span key="size">{formatFileSize(document.size, locale)}</span>
+        ),
+        item.horseName && <span key="horse">{item.horseName}</span>,
+        item.eventTitle && (
+          <span key="event">
+            {t('documents.linkedTo', { name: item.eventTitle })}
+          </span>
+        ),
+        <span key="added">
+          {t('documents.addedAt', {
+            date: formatMediumTimestampDate(document.createdAt, locale),
+          })}
+        </span>,
+      ]}
       metaSeparator="dot"
       summary={
         <>
@@ -245,32 +307,14 @@ function DocumentRow({
           )}
         </>
       }
-      badges={
-        item.fileState !== 'available' ? (
-          <DocumentFileStateBadge fileState={item.fileState} />
-        ) : undefined
-      }
-      badgesClassName="ml-auto shrink-0"
       actions={
         <>
-          {item.fileUrl && (
-            <ButtonAnchor
-              href={item.fileUrl}
-              target="_blank"
-              rel="noreferrer"
-              variant="ghost"
-              size="sm"
-              aria-label={t('documents.openNamed', { name: document.fileName })}
-            >
-              {t('documents.open')}
-            </ButtonAnchor>
-          )}
           <DocumentDownloadAction
             fileName={document.fileName}
             fileUrl={item.fileUrl}
             fileState={item.fileState}
           />
-          {item.canManage && (
+          {item.canManage ? (
             <RecordRemoveAction
               title={t('documents.removeNamed', { name: document.fileName })}
               description={getRemoveDescription(item, locale)}
@@ -278,6 +322,8 @@ function DocumentRow({
               onConfirm={() => onRemove(document._id)}
               removalFocusTarget={removalFocusTarget}
             />
+          ) : (
+            reserveRemove && <ReservedRemoveSlot />
           )}
         </>
       }

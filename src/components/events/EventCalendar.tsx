@@ -205,12 +205,13 @@ export function CalendarEventChip({
 
 export function CalendarEventChipTitle({
   className,
+  wrap,
   ...props
-}: ComponentProps<'span'>) {
+}: ComponentProps<'span'> & { wrap?: boolean }) {
   return (
     <span
       data-slot="calendar-event-chip-title"
-      className={calendarEventChipTitleClassName(className)}
+      className={calendarEventChipTitleClassName(className, wrap)}
       {...props}
     />
   )

@@ -10,7 +10,7 @@ export const careLabels = {
   },
   profileField: {
     Sex: 'Sex',
-    Color: 'Color',
+    Color: 'Colour',
     'Date of birth': 'Date of birth',
     'Passport number': 'Passport number',
     'Microchip number': 'Microchip number',

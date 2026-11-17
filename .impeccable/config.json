@@ -527,6 +527,24 @@
         "value": "yard hand b",
         "createdAt": "2026-11-06T16:37:53.022Z",
         "reason": "Intentional: the public landing whiteboard's second handwriting face, recorded in docs/design/landing/DESIGN.md; chosen during the council run on 2026-11-06"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "999px",
+        "createdAt": "2026-11-07T11:07:37.850Z",
+        "files": [
+          "src/styles.css"
+        ],
+        "reason": "Existing floating route-form pills on phones (DESIGN.md Mobile Form Rule: two labelled pills); predates the 2026-11-07 hill-climb."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#505b50",
+        "createdAt": "2026-11-07T11:41:34.017Z",
+        "files": [
+          "src/styles.css"
+        ],
+        "reason": "Existing isolated horse-colour-preview.dark border; the preview is deliberately theme-independent."
       }
     ]
   }

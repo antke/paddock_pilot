@@ -1,4 +1,5 @@
-import { ActionFeedback } from '#/components/ui/action-feedback'
+import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
+import { ContactLink } from '#/components/ui/contact-link'
 import { MotionList } from '#/components/motion/MotionList'
 import { useEffect, useId, useRef, useState } from 'react'
 import type { RefObject } from 'react'
@@ -12,7 +13,6 @@ import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCar
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { RoutePending } from '#/components/layout/RoutePending'
 import { RecordRemoveAction } from '#/components/list-layout/RecordRemoveAction'
-import { Button } from '#/components/ui/button'
 import { EditActionButton } from '#/components/ui/edit-action'
 import { Input } from '#/components/ui/input'
 import { Select } from '#/components/ui/select'
@@ -76,6 +76,7 @@ export function PersonalContactsView({
         ref={directory}
         tabIndex={-1}
         aria-label={c.providers}
+        surface="canvas"
       >
         {notice && <p role="status">{notice}</p>}
         <MotionList
@@ -142,12 +143,7 @@ function ContactRow({
                 {t(`stables.providerTypes.${provider.type}`)}
               </p>
               {provider.phone && (
-                <a
-                  className="inline-flex min-h-11 items-center break-all underline underline-offset-4"
-                  href={`tel:${provider.phone.replace(/[^+\d]/g, '')}`}
-                >
-                  {provider.phone}
-                </a>
+                <ContactLink kind="phone" value={provider.phone} />
               )}
             </div>
             <div className="flex flex-wrap gap-2">
@@ -292,29 +288,13 @@ function ContactEditor({
         </p>
       )}
       {notice && <p role="status">{notice}</p>}
-      <div className="flex flex-wrap gap-3">
-        <Button
-          type="submit"
-          disabled={pending}
-          aria-busy={pending || undefined}
-        >
-          <ActionFeedback
-            pending={pending}
-            pendingLabel={r.saving}
-            label={provider ? r.saveChanges : c.saveContact}
-          />
-        </Button>
-        {onCancel && (
-          <Button
-            type="button"
-            variant="ghost"
-            disabled={pending}
-            onClick={onCancel}
-          >
-            {r.cancel}
-          </Button>
-        )}
-      </div>
+      <FormSubmitActions
+        isSubmitting={pending}
+        onCancel={onCancel}
+        cancelLabel={r.cancel}
+        submitLabel={provider ? r.saveChanges : c.saveContact}
+        submittingLabel={r.saving}
+      />
     </form>
   )
 }

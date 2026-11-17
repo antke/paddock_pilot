@@ -58,8 +58,7 @@ export function StableDirectoryHeader({
         ariaLabel={t('navigation.stable')}
         overflow="scroll"
         inset={false}
-        className="w-full border-b border-border-subtle pb-2 max-md:hidden"
-        listClassName="p-1"
+        className="w-full border-b border-border-subtle max-md:hidden"
       >
         {stableDirectoryTabs.map((tab) => (
           <DashboardNavigationLinkItem

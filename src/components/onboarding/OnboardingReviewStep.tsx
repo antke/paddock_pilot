@@ -1,4 +1,5 @@
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
+import { OnboardingStepActions } from './OnboardingLayout'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { formatMediumDateKey, formatMonthYearDateKey } from '#/lib/dateDisplay'
 import type { Locale } from 'shared/i18n/locale'
@@ -184,11 +185,13 @@ export function OnboardingReviewStep({
         )}
       </div>
 
-      <DashboardActions align="end">
-        <Button type="button" onClick={onComplete}>
-          {t('onboarding.openStable', { name: stable.name })}
-        </Button>
-      </DashboardActions>
+      <OnboardingStepActions>
+        <DashboardActions align="end">
+          <Button type="button" onClick={onComplete}>
+            {t('onboarding.openStable', { name: stable.name })}
+          </Button>
+        </DashboardActions>
+      </OnboardingStepActions>
     </div>
   )
 }

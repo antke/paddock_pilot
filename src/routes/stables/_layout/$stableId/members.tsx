@@ -11,6 +11,7 @@ import {
   RouteQueryErrorAlert,
 } from '#/components/layout/RouteStatusAlert'
 import { StableMembersPage } from '#/components/stables/StableMembersPage'
+import { LeaveStableButton } from '#/components/stables/LeaveStableButton'
 import { StableMembersManagement } from '#/components/stables/StableMembersSettingsCard'
 
 export const Route = createFileRoute('/stables/_layout/$stableId/members')({
@@ -45,6 +46,11 @@ function RouteComponent() {
       management={
         access.role === 'owner' ? (
           <StableMembersManagement stableId={stable._id} />
+        ) : undefined
+      }
+      leaveAction={
+        access.role === 'member' ? (
+          <LeaveStableButton stableId={stable._id} stableName={stable.name} />
         ) : undefined
       }
     />

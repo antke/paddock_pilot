@@ -148,9 +148,11 @@ describe('EventEditor production composition', () => {
       window.dispatchEvent(untouched)
       expect(untouched.defaultPrevented).toBe(false)
       fireEvent.change(title, { target: { value: 'Temporary title' } })
-      fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
       fireEvent.click(
-        await screen.findByRole('button', { name: 'Reset changes' }),
+        within(await screen.findByRole('alertdialog')).getByRole('button', {
+          name: 'Discard changes',
+        }),
       )
       await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
       fireEvent.submit(form)
@@ -226,9 +228,11 @@ describe('EventEditor production composition', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Trainer lesson' }))
     fireEvent.click(screen.getByRole('button', { name: 'Flatwork' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Reset changes' }),
+      within(await screen.findByRole('alertdialog')).getByRole('button', {
+        name: 'Discard changes',
+      }),
     )
     await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
     expect(
@@ -263,9 +267,11 @@ describe('EventEditor production composition', () => {
       screen.getByRole('button', { name: 'Workshop / clinic', pressed: true }),
     ).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Regular session' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Reset changes' }),
+      within(await screen.findByRole('alertdialog')).getByRole('button', {
+        name: 'Discard changes',
+      }),
     )
     await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
     expect(
@@ -307,13 +313,13 @@ describe('EventEditor production composition', () => {
     const untouched = new Event('beforeunload', { cancelable: true })
     window.dispatchEvent(untouched)
     expect(untouched.defaultPrevented).toBe(false)
-    fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
-    expect(screen.queryByRole('alertdialog')).toBeNull()
+    // A pristine form has nothing to discard, so the action stays hidden.
+    expect(screen.queryByRole('button', { name: 'Discard changes' })).toBeNull()
     fireEvent.change(title, { target: { value: 'Changed session' } })
     const edited = new Event('beforeunload', { cancelable: true })
     window.dispatchEvent(edited)
     expect(edited.defaultPrevented).toBe(true)
-    fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
     expect(await screen.findByRole('alertdialog')).toBeTruthy()
   })
 
@@ -375,7 +381,7 @@ describe('EventEditor production composition', () => {
       },
     })
     expect(
-      screen.getByRole('heading', { name: 'Add training log' }),
+      screen.getByRole('heading', { name: 'Add training session' }),
     ).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /Additional details/ }))
     const duration = screen.getByLabelText('Duration (minutes)')
@@ -444,8 +450,9 @@ describe('EventEditor production composition', () => {
       await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1))
       expect(title.disabled).toBe(true)
       expect(
-        screen.getByRole<HTMLButtonElement>('button', { name: 'Reset' })
-          .disabled,
+        screen.getByRole<HTMLButtonElement>('button', {
+          name: 'Discard changes',
+        }).disabled,
       ).toBe(true)
       expect(props.onAcknowledged).not.toHaveBeenCalled()
       await act(async () => request.reject(new Error('offline')))
@@ -473,7 +480,7 @@ describe('EventEditor production composition', () => {
     fireEvent.submit(form)
     await screen.findByText(/Event saved, but its page could not be opened/)
     expect(title.disabled).toBe(true)
-    expect(screen.queryByRole('button', { name: 'Reset' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Discard changes' })).toBeNull()
     expect(props.onSave).toHaveBeenCalledTimes(1)
     fireEvent.click(screen.getByRole('button', { name: 'Open event' }))
     fireEvent.submit(form)
@@ -506,13 +513,15 @@ describe('EventEditor production composition', () => {
   it('confirms dirty reset, can cancel it, and restores the opened values without saving', async () => {
     const { title, props } = setup()
     fireEvent.change(title, { target: { value: 'Unsaved visit' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
     await screen.findByRole('alertdialog')
     fireEvent.click(screen.getByRole('button', { name: 'Keep editing' }))
     expect(title.value).toBe('Unsaved visit')
-    fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Reset changes' }),
+      within(await screen.findByRole('alertdialog')).getByRole('button', {
+        name: 'Discard changes',
+      }),
     )
     await waitFor(() => expect(title.value).toBe('Summer farrier visit'))
     expect(props.onSave).not.toHaveBeenCalled()
@@ -625,7 +634,7 @@ it('offers training in event creation and exposes its required activity fields',
   setup({ mode: 'create', initialValues: createEventEditorValues() })
   fireEvent.click(screen.getByRole('button', { name: 'Training' }))
   expect(
-    await screen.findByText('Select all activities practised in this session.'),
+    await screen.findByRole('group', { name: 'Type of work' }),
   ).toBeTruthy()
 })
 
@@ -783,8 +792,11 @@ it('preselects the horse owner, allows removing them and keeps independent atten
 })
 
 describe('training leader', () => {
-  const trainingSetup = (overrides = {}) =>
-    setup({
+  // Everyone else taking part sits in a collapsed optional section.
+  const openPeople = () =>
+    fireEvent.click(screen.getByRole('button', { name: /Also taking part/ }))
+  const trainingSetup = (overrides = {}) => {
+    const view = setup({
       mode: 'create',
       feature: 'training',
       initialValues: {
@@ -803,6 +815,9 @@ describe('training leader', () => {
       ],
       ...overrides,
     })
+    openPeople()
+    return view
+  }
   const person = (name: string) =>
     screen.getByRole<HTMLInputElement>('checkbox', { name })
   const leader = () =>
@@ -817,6 +832,13 @@ describe('training leader', () => {
     expect(screen.getByText('Leads this session')).toBeTruthy()
     // Ticks the user made themselves are never touched.
     expect(person('Piotr').checked).toBe(true)
+    openPeople()
+    expect(
+      screen.getByRole('button', {
+        name: /Also taking part.*Anna Kowalska, Piotr/,
+      }),
+    ).toBeTruthy()
+    openPeople()
 
     fireEvent.change(leader(), { target: { value: 'Guest trainer' } })
     expect(person('Anna Kowalska').checked).toBe(false)
@@ -849,7 +871,7 @@ describe('training leader', () => {
     trainingSetup()
     fireEvent.change(leader(), { target: { value: 'Guest trainer' } })
     expect(person('Anna Kowalska').disabled).toBe(false)
-    expect(screen.getByText('Also taking part')).toBeTruthy()
+    expect(screen.getByRole('group', { name: 'Also taking part' })).toBeTruthy()
     cleanup()
     setup({
       mode: 'create',

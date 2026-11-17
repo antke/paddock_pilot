@@ -103,65 +103,64 @@ export function HorseCalendarColourField({
           {custom ? ` · ${field.value}` : ''}
         </span>
       </div>
-      {/* Swatches beside their live preview on wider screens keeps the
-          field short; it stacks on phones. */}
-      <div className="grid min-w-0 items-start gap-4 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
-        <div className="grid min-w-0 gap-3">
-          <div
-            role="group"
-            aria-labelledby={`${id}-label`}
-            aria-describedby={`${id}-help`}
-            className="grid w-full max-w-72 grid-cols-[repeat(auto-fit,minmax(2.75rem,1fr))] gap-1"
-          >
-            {horseCalendarColourIds.map((option, index) => {
-              const selected = field.value === option
-              const inUse = horses.filter(
-                (horse) => getHorseCalendarColour(horse) === option,
-              )
-              return (
-                <Button
-                  key={option}
-                  ref={index === 0 ? field.ref : undefined}
-                  type="button"
-                  disabled={disabled}
-                  aria-label={t(`calendar.colours.${option}`)}
-                  aria-pressed={selected}
-                  title={`${t(`calendar.colours.${option}`)}${inUse.length ? ` · ${t('calendar.colourUsed', { names: inUse.map(getHorseDisplayName).join(', ') })}` : ''}`}
-                  onBlur={field.onBlur}
-                  onClick={() => {
-                    field.onChange(option)
-                    setCustomOpen(false)
-                  }}
-                  variant="ghost"
-                  size="icon-lg"
-                  className="app-control-focus relative mx-auto size-11 cursor-pointer rounded-full p-0 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <span
-                    aria-hidden="true"
-                    className="size-8 shrink-0 rounded-full"
-                    style={{ backgroundColor: horseCalendarColourCss(option) }}
+      <div className="grid min-w-0 gap-3">
+        <div
+          role="group"
+          aria-labelledby={`${id}-label`}
+          aria-describedby={`${id}-help`}
+          className="grid w-full max-w-72 grid-cols-[repeat(auto-fit,minmax(2.75rem,1fr))] gap-1"
+        >
+          {horseCalendarColourIds.map((option, index) => {
+            const selected = field.value === option
+            const inUse = horses.filter(
+              (horse) => getHorseCalendarColour(horse) === option,
+            )
+            return (
+              <Button
+                key={option}
+                ref={index === 0 ? field.ref : undefined}
+                type="button"
+                disabled={disabled}
+                aria-label={t(`calendar.colours.${option}`)}
+                aria-pressed={selected}
+                title={`${t(`calendar.colours.${option}`)}${inUse.length ? ` · ${t('calendar.colourUsed', { names: inUse.map(getHorseDisplayName).join(', ') })}` : ''}`}
+                onBlur={field.onBlur}
+                onClick={() => {
+                  field.onChange(option)
+                  setCustomOpen(false)
+                }}
+                variant="ghost"
+                size="icon-lg"
+                className="app-control-focus relative mx-auto size-11 cursor-pointer rounded-full p-0 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <span
+                  aria-hidden="true"
+                  className="size-8 shrink-0 rounded-full"
+                  style={{ backgroundColor: horseCalendarColourCss(option) }}
+                />
+                {selected && (
+                  <motion.span
+                    layoutId={spatial ? `${id}-selection` : undefined}
+                    initial={false}
+                    transition={journalMotion.spring}
+                    className="absolute inset-0 rounded-full border-2 border-foreground"
                   />
-                  {selected && (
-                    <motion.span
-                      layoutId={spatial ? `${id}-selection` : undefined}
-                      initial={false}
-                      transition={journalMotion.spring}
-                      className="absolute inset-0 rounded-full border-2 border-foreground"
+                )}
+                {selected && (
+                  <span className="absolute flex size-5 items-center justify-center rounded-full bg-background text-foreground">
+                    <CheckIcon
+                      weight="bold"
+                      className="size-3.5"
+                      aria-hidden="true"
                     />
-                  )}
-                  {selected && (
-                    <span className="absolute flex size-5 items-center justify-center rounded-full bg-background text-foreground">
-                      <CheckIcon
-                        weight="bold"
-                        className="size-3.5"
-                        aria-hidden="true"
-                      />
-                    </span>
-                  )}
-                </Button>
-              )
-            })}
-          </div>
+                  </span>
+                )}
+              </Button>
+            )
+          })}
+        </div>
+        {/* Custom colour and the light/dark preview share one quiet row. */}
+        <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
           <Dialog open={customOpen} onOpenChange={setCustomOpen}>
             <DialogTrigger
               disabled={disabled}
@@ -244,8 +243,8 @@ export function HorseCalendarColourField({
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          <ColourPreview colour={colour} horseName={horseName} />
         </div>
-        <ColourPreview colour={colour} horseName={horseName} />
       </div>
       {fieldState.error && <FieldError errors={[fieldState.error]} />}
       {used.length > 0 && (
@@ -268,32 +267,28 @@ function ColourPreview({
 }) {
   const t = useT()
   return (
-    <div className="grid gap-2">
+    <div
+      role="group"
+      aria-label={t('calendar.colourPreview')}
+      className="flex min-w-0 flex-wrap items-center gap-2"
+    >
       <span className="text-sm text-muted-foreground">
         {t('calendar.colourPreview')}
       </span>
-      <div
-        className="grid grid-cols-2 gap-2"
-        aria-label={t('calendar.colourPreview')}
-      >
-        {(['light', 'dark'] as const).map((theme) => (
-          <div
-            key={theme}
-            className={`${theme === 'dark' ? 'dark' : 'light'} horse-colour-preview min-w-0 rounded-control border px-3 py-2.5`}
-          >
-            <div className="mb-2 text-xs opacity-75">
-              {t(`calendar.${theme}Preview`)}
-            </div>
-            <div className="flex min-w-0 items-center gap-2 text-sm font-medium">
-              <HorseColourDot
-                colour={colour}
-                className="size-2.5 motion-safe:transition-colors"
-              />
-              <span className="truncate">{horseName}</span>
-            </div>
-          </div>
-        ))}
-      </div>
+      {(['light', 'dark'] as const).map((theme) => (
+        <span
+          key={theme}
+          title={t(`calendar.${theme}Preview`)}
+          className={`${theme === 'dark' ? 'dark' : 'light'} horse-colour-preview inline-flex min-w-0 max-w-40 items-center gap-1.5 rounded-full border px-2.5 py-1 text-sm font-medium`}
+        >
+          <HorseColourDot
+            colour={colour}
+            className="size-2.5 motion-safe:transition-colors"
+          />
+          <span className="sr-only">{t(`calendar.${theme}Preview`)}: </span>
+          <span className="truncate">{horseName}</span>
+        </span>
+      ))}
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
+import { OnboardingStepActions } from './OnboardingLayout'
 import { useT } from '#/i18n/LocaleProvider'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from 'convex/react'
@@ -9,20 +10,13 @@ import type { Doc } from 'convex/_generated/dataModel'
 
 import { InlineForm } from '#/components/forms/FormLayout'
 import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGrid,
-  FieldLabel,
-} from '#/components/ui/field'
+import { Field, FieldError, FieldGrid, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { PersonNameField } from '#/components/forms/PersonNameField'
 import { Textarea } from '#/components/ui/textarea'
 import { api } from 'convex/_generated/api'
 import { createStableSchemas } from 'shared/stables/stableSchema'
 import type { StableOperationsFormSchema } from 'shared/stables/stableSchema'
-import { OnboardingLaterNote } from './OnboardingLayout'
 
 type StableOperationsStepProps = {
   stable: Doc<'stables'>
@@ -83,9 +77,6 @@ export function StableOperationsStepView({
   return (
     <InlineForm onSubmit={form.handleSubmit(save.run)}>
       <OnboardingSaveError message={save.error} />
-      <OnboardingLaterNote>
-        {t('onboarding.operationsLaterHelp')}
-      </OnboardingLaterNote>
 
       <FieldGrid>
         <Controller
@@ -141,7 +132,6 @@ export function StableOperationsStepView({
                     : undefined
                 }
                 type="tel"
-                placeholder={t('onboarding.optional')}
                 disabled={save.pending || save.acknowledged}
               />
               {fieldState.invalid && (
@@ -174,7 +164,6 @@ export function StableOperationsStepView({
                     : undefined
                 }
                 type="tel"
-                placeholder={t('onboarding.optional')}
                 disabled={save.pending || save.acknowledged}
               />
               {fieldState.invalid && (
@@ -236,7 +225,6 @@ export function StableOperationsStepView({
               minHeight="default"
               disabled={save.pending || save.acknowledged}
             />
-            <FieldDescription>{t('onboarding.yardRulesHelp')}</FieldDescription>
             {fieldState.invalid && (
               <FieldError
                 id={`${formId}-${field.name}-error`}
@@ -247,18 +235,20 @@ export function StableOperationsStepView({
         )}
       />
 
-      <FormSubmitActions
-        align="end"
-        isSubmitting={save.pending}
-        onCancel={onDeferred}
-        cancelLabel={cancelLabel ?? t('onboarding.later')}
-        submitLabel={
-          save.acknowledged
-            ? t('onboarding.continueSaved')
-            : t('onboarding.saveContinue')
-        }
-        submittingLabel={t('onboarding.saving')}
-      />
+      <OnboardingStepActions>
+        <FormSubmitActions
+          align="end"
+          isSubmitting={save.pending}
+          onCancel={onDeferred}
+          cancelLabel={cancelLabel ?? t('onboarding.later')}
+          submitLabel={
+            save.acknowledged
+              ? t('onboarding.continueSaved')
+              : t('onboarding.saveContinue')
+          }
+          submittingLabel={t('onboarding.saving')}
+        />
+      </OnboardingStepActions>
     </InlineForm>
   )
 }

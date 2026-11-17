@@ -6,7 +6,7 @@ import {
   ClockCounterClockwiseIcon,
 } from '@phosphor-icons/react'
 import { useId, useState } from 'react'
-import type { ComponentProps, CSSProperties } from 'react'
+import type { ComponentProps } from 'react'
 
 import { cn } from '#/lib/utils'
 
@@ -41,10 +41,7 @@ export function OnboardingStepper({
     <nav
       aria-label={t('onboarding.progress')}
       data-slot="onboarding-stepper"
-      className={cn(
-        'overflow-hidden rounded-panel border border-border',
-        className,
-      )}
+      className={className}
       {...props}
     >
       {current && (
@@ -52,39 +49,33 @@ export function OnboardingStepper({
           type="button"
           aria-expanded={expanded}
           aria-controls={listId}
-          className="app-control-focus flex min-h-14 w-full items-center gap-3 bg-card px-4 py-3 text-left sm:hidden"
+          className="app-control-focus flex min-h-11 w-full items-center gap-2 rounded-control text-left sm:hidden"
           onClick={() => setExpandedStep(expanded ? undefined : current.id)}
         >
           <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
             {currentIndex + 1} / {steps.length}
           </span>
-          <span className="min-w-0 flex-1 text-sm font-semibold">
-            {current.label}
-          </span>
+          <span className="min-w-0 text-sm font-semibold">{current.label}</span>
           <CaretDownIcon
             aria-hidden="true"
             className={cn('size-4 shrink-0', expanded && 'rotate-180')}
           />
         </button>
       )}
+      {/* Unboxed: the marker and label weight carry the state; captions stay for screen readers. */}
       <ol
         id={listId}
         className={cn(
-          'bg-card sm:grid sm:grid-cols-[repeat(var(--step-count),minmax(0,1fr))]',
+          'gap-x-5 gap-y-1 sm:flex sm:flex-wrap',
           current && !expanded ? 'hidden' : 'grid',
         )}
-        style={{ '--step-count': steps.length } as CSSProperties}
       >
         {steps.map((step, index) => (
           <li
             key={step.id}
             aria-current={step.status === 'current' ? 'step' : undefined}
             data-status={step.status}
-            className={cn(
-              'relative flex min-w-0 border-b border-border-subtle last:border-b-0 sm:border-r sm:border-b-0 sm:last:border-r-0',
-              step.status === 'current' && 'bg-primary/8',
-              step.status === 'completed' && 'bg-success/6',
-            )}
+            className="min-w-0"
           >
             <button
               type="button"
@@ -92,26 +83,26 @@ export function OnboardingStepper({
                 !onStepSelect ||
                 (step.status !== 'completed' && step.status !== 'deferred')
               }
-              className="app-choice-feedback app-control-focus flex min-h-16 w-full min-w-0 items-center gap-3 border border-transparent px-4 py-3 text-left outline-none ring-inset enabled:hover:bg-surface-muted disabled:pointer-events-none"
+              className="app-choice-feedback app-control-focus -mx-1.5 flex min-h-11 min-w-0 items-center gap-2 rounded-control px-1.5 text-left outline-none enabled:hover:bg-surface-muted disabled:pointer-events-none"
               onClick={() => {
                 setExpandedStep(undefined)
                 onStepSelect?.(step)
               }}
             >
               <StepMarker index={index} status={step.status} />
-              <span className="grid min-w-0 gap-0.5 text-left">
-                <span
-                  className={cn(
-                    'break-words text-sm font-semibold',
-                    step.status === 'upcoming'
-                      ? 'text-muted-foreground'
-                      : 'text-foreground',
-                  )}
-                >
-                  {step.label}
-                </span>
-                <StepStatusLabel status={step.status} />
+              <span
+                className={cn(
+                  'break-words text-sm',
+                  step.status === 'current'
+                    ? 'font-semibold text-foreground'
+                    : step.status === 'completed'
+                      ? 'text-foreground'
+                      : 'text-muted-foreground',
+                )}
+              >
+                {step.label}
               </span>
+              <StepStatusLabel status={step.status} />
             </button>
           </li>
         ))}
@@ -132,23 +123,22 @@ function StepMarker({
       aria-hidden="true"
       data-slot="onboarding-step-marker"
       className={cn(
-        'grid size-8 shrink-0 place-items-center rounded-full border font-sans text-xs font-semibold tabular-nums',
+        'grid size-6 shrink-0 place-items-center rounded-full border font-sans text-xs leading-none font-semibold tabular-nums',
         status === 'current' &&
           'border-primary bg-primary text-primary-foreground',
         status === 'completed' &&
-          'border-success/30 bg-success/15 text-success',
-        status === 'deferred' &&
-          'border-border bg-surface-muted text-muted-foreground',
-        status === 'upcoming' && 'border-border bg-card text-muted-foreground',
+          'border-transparent bg-success/15 text-success',
+        status === 'deferred' && 'border-transparent text-muted-foreground',
+        status === 'upcoming' && 'border-border text-muted-foreground',
       )}
     >
       <StateFeedback value={status}>
         {status === 'completed' ? (
-          <CheckIcon className="size-4" weight="bold" />
+          <CheckIcon className="size-3.5" weight="bold" />
         ) : status === 'deferred' ? (
           <ClockCounterClockwiseIcon className="size-4" />
         ) : (
-          String(index + 1).padStart(2, '0')
+          index + 1
         )}
       </StateFeedback>
     </span>
@@ -166,5 +156,5 @@ function StepStatusLabel({ status }: { status: OnboardingStepStatus }) {
     upcoming: t('onboarding.upcoming'),
   } satisfies Record<Exclude<OnboardingStepStatus, 'current'>, string>
 
-  return <span className="text-xs text-muted-foreground">{labels[status]}</span>
+  return <span className="sr-only">{labels[status]}</span>
 }

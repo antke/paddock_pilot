@@ -12,7 +12,7 @@ import type { MedicationRecordStatus } from 'shared/horses/medicationRecordSchem
 
 type CareBadgeProps = Omit<
   ComponentProps<typeof Badge>,
-  'children' | 'size' | 'variant'
+  'children' | 'variant'
 >
 
 const healthIssueStatusVariant = {
@@ -37,7 +37,7 @@ const medicationRecordStatusVariant = {
 >
 
 const healthIssueKindVariant = {
-  active: 'info',
+  active: 'destructive',
   resolved: 'secondary',
 } satisfies Record<
   HealthIssueStatus,
@@ -45,7 +45,7 @@ const healthIssueKindVariant = {
 >
 
 const medicationKindVariant = {
-  active: 'default',
+  active: 'warning',
   completed: 'secondary',
 } satisfies Record<
   MedicationRecordStatus,

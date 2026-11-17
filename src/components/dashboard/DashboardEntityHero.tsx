@@ -4,12 +4,7 @@ import { useWorkspace } from '#/components/layout/WorkspaceContext'
 import type { ReactNode } from 'react'
 
 import { cn } from '#/lib/utils'
-import type { DashboardChrome } from './dashboardChrome'
-import { DashboardBadgeList } from './DashboardBadgeList'
-import { DashboardHeaderRail } from './DashboardHeaderRail'
 import {
-  DashboardHeroActions,
-  DashboardHeroContent,
   DashboardHeroSection,
   DashboardHeroText,
   DashboardHeroTitle,
@@ -17,125 +12,80 @@ import {
 
 type DashboardEntityHeroProps = {
   actions?: ReactNode
-  actionsLayout?: 'stack' | 'inline'
-  badges?: ReactNode
-  /** A quiet row above the title, such as a phone Back action. */
-  before?: ReactNode
+  /** Secondary content below the identity row, such as section navigation. */
   children?: ReactNode
-  chrome?: DashboardChrome
   className?: string
+  /** One meta line under the title. */
   description?: ReactNode
+  /** Photo or date block beside the title. */
   leading?: ReactNode
-  media?: ReactNode
   title: ReactNode
-  compactOnMobile?: boolean
   /** Defaults to the route's `PageBack`; pass `null` to suppress it. */
   backAction?: ReactNode
 }
 
+/**
+ * The one detail header: Back, identity (leading block, title, meta line),
+ * then the entity's actions — a left-aligned row under the identity on phones,
+ * right-aligned beside it from `md` — then any secondary content.
+ */
 export function DashboardEntityHero({
   actions,
-  actionsLayout = 'stack',
-  badges,
-  before,
   children,
-  chrome = 'flat',
   className,
   description,
   leading,
-  media,
   title,
-  compactOnMobile = false,
   backAction,
 }: DashboardEntityHeroProps) {
   const workspace = useWorkspace()
+  // The title stands alone; Personal or the stable's name leads the meta line.
+  const workspaceLabel =
+    workspace && typeof title === 'string' && title !== workspace.label
+      ? workspace.label
+      : undefined
   return (
-    <DashboardHeroSection
-      chrome={chrome}
-      className={cn(
-        'grid gap-6',
-        compactOnMobile && 'gap-3 sm:gap-6',
-        className,
-      )}
-    >
-      <PageBackSlot className="-mb-3">
+    <DashboardHeroSection className={cn('grid gap-5', className)}>
+      <PageBackSlot className="-mb-2">
         {backAction === undefined ? <PageBack /> : backAction}
       </PageBackSlot>
-      {before && <div className="-mb-3 min-w-0">{before}</div>}
-      <div
-        className={cn(
-          'grid gap-6',
-          media && 'lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-stretch',
-        )}
-      >
-        <DashboardHeroContent
-          className={
-            compactOnMobile
-              ? actionsLayout === 'inline'
-                ? 'grid-cols-1 items-center gap-3 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_auto]'
-                : 'grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:gap-6'
-              : undefined
-          }
+      <div className="mx-auto grid w-full max-w-[var(--page-column,none)] min-w-0 gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-x-8">
+        <div
+          className={cn(
+            'grid min-w-0 gap-4',
+            leading && 'grid-cols-[auto_minmax(0,1fr)] items-center',
+          )}
         >
-          <div
-            className={cn(
-              'grid min-w-0 gap-4',
-              leading && 'grid-cols-[auto_minmax(0,1fr)] items-center',
+          {leading}
+          <DashboardHeroText className="gap-1.5">
+            <DashboardHeroTitle>{title}</DashboardHeroTitle>
+            {(description || workspaceLabel) && (
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-6 text-muted-foreground">
+                {workspaceLabel && (
+                  <span className="flex items-center gap-x-2">
+                    {workspaceLabel}
+                    {description && <span aria-hidden="true">·</span>}
+                  </span>
+                )}
+                {description}
+              </div>
             )}
+          </DashboardHeroText>
+        </div>
+        {actions && (
+          <div
+            data-slot="entity-hero-actions"
+            className="flex min-w-0 flex-wrap items-center gap-2 md:justify-end"
           >
-            {leading}
-            <DashboardHeroText>
-              <DashboardHeroTitle>
-                {workspace &&
-                typeof title === 'string' &&
-                title !== workspace.label
-                  ? `${title} · ${workspace.label}`
-                  : title}
-              </DashboardHeroTitle>
-              {description && (
-                <p
-                  className={cn(
-                    'max-w-3xl text-sm font-medium leading-6 text-muted-foreground md:text-base',
-                    compactOnMobile && 'hidden sm:block',
-                  )}
-                >
-                  {description}
-                </p>
-              )}
-            </DashboardHeroText>
+            {actions}
           </div>
-
-          <DashboardHeaderRail
-            className={
-              actionsLayout === 'inline'
-                ? 'w-full lg:w-auto lg:self-center'
-                : undefined
-            }
-            top={
-              badges ? (
-                <DashboardBadgeList align="end">{badges}</DashboardBadgeList>
-              ) : undefined
-            }
-            bottom={
-              actions ? (
-                <DashboardHeroActions
-                  className={
-                    actionsLayout === 'inline'
-                      ? 'flex w-full flex-wrap items-center gap-2 lg:w-auto'
-                      : undefined
-                  }
-                >
-                  {actions}
-                </DashboardHeroActions>
-              ) : undefined
-            }
-          />
-        </DashboardHeroContent>
-
-        {media}
+        )}
       </div>
-
-      {children}
+      {children && (
+        <div className="mx-auto w-full max-w-[var(--page-column,none)] min-w-0">
+          {children}
+        </div>
+      )}
     </DashboardHeroSection>
   )
 }

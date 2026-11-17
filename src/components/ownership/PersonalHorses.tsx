@@ -15,6 +15,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
+import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { Button, ButtonLink } from '#/components/ui/button'
 import { HorseAvatar } from '#/components/horses/HorseAvatar'
 import { RoutePending } from '#/components/layout/RoutePending'
@@ -40,18 +41,15 @@ export function PersonalHorses() {
           </ButtonLink>
         }
       />
-      <div className="grid gap-3">
+      <DashboardSectionCard surface="canvas">
         <PersonalHorseList horses={horses} />
         {/* Same quiet footer as the stable horse list. Care contacts live in navigation. */}
-        <DashboardActions
-          align="end"
-          className="border-t border-border-subtle pt-3"
-        >
+        <DashboardActions>
           <ButtonLink to="/horses/deleted" variant="subtle">
             {c.trash}
           </ButtonLink>
         </DashboardActions>
-      </div>
+      </DashboardSectionCard>
     </DashboardPage>
   )
 }
@@ -79,19 +77,17 @@ export function PersonalHorseList({
           {c.emptyHelp}
         </DashboardEmptyState>
       }
-      className={cn(
-        compact ? 'grid gap-3 sm:grid-cols-2' : 'divide-y divide-border-subtle',
-      )}
+      className={cn(compact && 'grid gap-3 sm:grid-cols-2')}
       renderItem={(horse) => (
         <Link
           key={horse._id}
           to="/horses/$horseId"
           params={{ horseId: horse._id }}
           className={cn(
-            'flex min-w-0 items-center gap-4 rounded-row px-3 py-4 transition-colors hover:bg-surface focus-visible:outline-2 focus-visible:outline-primary',
+            'flex min-w-0 items-center gap-4 focus-visible:outline-2 focus-visible:outline-primary',
             compact
-              ? 'app-row min-h-20 px-4 py-3 active:bg-surface-muted'
-              : 'min-h-24',
+              ? 'app-row min-h-20 px-4 py-3 transition-colors hover:bg-surface active:bg-surface-muted'
+              : 'app-record app-record-hover min-h-24',
           )}
         >
           <HorseAvatar
@@ -175,7 +171,7 @@ export function PersonalHorseTrash() {
           renderItem={(horse) => (
             <div
               key={horse._id}
-              className="flex flex-wrap items-center justify-between gap-3 border-b py-4"
+              className="app-record flex flex-wrap items-center justify-between gap-3"
             >
               <div>
                 <h2 className="font-display text-xl">

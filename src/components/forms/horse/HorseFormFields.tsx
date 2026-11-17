@@ -66,6 +66,8 @@ type Props = {
   focusSection?: HorseEditSection
   /** The saved photo, previewed in the photo field until it is replaced. */
   currentProfileImageUrl?: string | null
+  /** A field that leads the details, such as the stable a new horse joins. */
+  leadingField?: ReactNode
 }
 
 type HorseSexChoice = NonNullable<HorseFormSchema['sex']> | 'unspecified'
@@ -88,6 +90,7 @@ export function HorseFormFields({
   onAddBreed,
   focusSection,
   currentProfileImageUrl,
+  leadingField,
 }: Props) {
   const [showOptional, setShowOptional] = useState(false)
   const openSection = focusSection
@@ -179,6 +182,11 @@ export function HorseFormFields({
   const ownerName = useWatch({ control, name: 'ownerName' })
   const dateOfBirth = useWatch({ control, name: 'dateOfBirth' })
   const statedAge = useWatch({ control, name: 'age' })
+  const breed = useWatch({ control, name: 'breed' })
+  const color = useWatch({ control, name: 'color' })
+  const height = useWatch({ control, name: 'height' })
+  const discipline = useWatch({ control, name: 'discipline' })
+  const insuranceProvider = useWatch({ control, name: 'insuranceProvider' })
   const passportNumber = useWatch({ control, name: 'passportNumber' })
   const microchipNumber = useWatch({ control, name: 'microchipNumber' })
   const vetName = useWatch({ control, name: 'vetName' })
@@ -210,10 +218,16 @@ export function HorseFormFields({
       ? t('horseForm.years', { count: calculatedAge })
       : undefined,
   ])
-  const careSummary =
+  const appearanceSummary =
+    formatMetaText([breed, color, height, discipline]) || undefined
+  const identificationSummary =
     formatMetaText([
       passportNumber ? t('horseForm.passportAdded') : undefined,
       microchipNumber ? t('horseForm.microchipAdded') : undefined,
+      insuranceProvider,
+    ]) || undefined
+  const careSummary =
+    formatMetaText([
       vetName,
       farrierName,
       shoeingStatus && shoeingStatus !== 'unspecified'
@@ -237,20 +251,24 @@ export function HorseFormFields({
     errors.dateOfBirth ||
     errors.age ||
     errors.sex ||
+    errors.profileImage,
+  )
+  const appearanceInvalid = Boolean(
     errors.breed ||
     errors.color ||
     errors.height ||
     errors.discipline ||
     errors.sire ||
     errors.dam ||
-    errors.profileImage ||
     errors.calendarColourId,
   )
-  const careInvalid = Boolean(
+  const identificationInvalid = Boolean(
     errors.passportNumber ||
     errors.microchipNumber ||
     errors.insuranceProvider ||
-    errors.insurancePolicyNumber ||
+    errors.insurancePolicyNumber,
+  )
+  const careInvalid = Boolean(
     errors.vetName ||
     errors.vetPhone ||
     errors.farrierName ||
@@ -283,13 +301,14 @@ export function HorseFormFields({
         data-horse-edit-section="details"
         defaultOpen
         collapsible={false}
-        description={t('horseForm.detailsHelp')}
         invalid={detailsInvalid}
         summary={detailsSummary}
         title={t('horseForm.details')}
+        titleHidden
         validationAttempt={submitCount}
       >
         <FieldGroup gap="compact">
+          {leadingField}
           <FieldGrid>
             <Controller
               name="name"
@@ -377,40 +396,87 @@ export function HorseFormFields({
                   </Field>
                 )}
               />
-              <Controller
-                name="sex"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>{t('horseForm.sex')}</FieldLabel>
-
-                    <ChoiceButtonGroup
-                      aria-label={t('horseForm.sex')}
-                      value={field.value ?? 'unspecified'}
-                      options={sexOptions}
-                      disabled={disabled}
-                      aria-invalid={fieldState.invalid}
-                      aria-describedby={
-                        fieldState.invalid ? `${field.name}-error` : undefined
-                      }
-                      onValueChange={field.onChange}
-                    />
-
-                    {fieldState.invalid && (
-                      <FieldError
-                        id={`${field.name}-error`}
-                        errors={[fieldState.error]}
-                      />
-                    )}
-                  </Field>
-                )}
-              />
             </FieldGrid>
+          )}
+          {!essentialsOnly && (
+            // Its own row, so the four chips get the full width instead of sharing it with Owner.
+            <Controller
+              name="sex"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>{t('horseForm.sex')}</FieldLabel>
+
+                  <ChoiceButtonGroup
+                    aria-label={t('horseForm.sex')}
+                    value={field.value ?? 'unspecified'}
+                    options={sexOptions}
+                    disabled={disabled}
+                    aria-invalid={fieldState.invalid}
+                    aria-describedby={
+                      fieldState.invalid ? `${field.name}-error` : undefined
+                    }
+                    onValueChange={field.onChange}
+                  />
+
+                  {fieldState.invalid && (
+                    <FieldError
+                      id={`${field.name}-error`}
+                      errors={[fieldState.error]}
+                    />
+                  )}
+                </Field>
+              )}
+            />
           )}
 
           <BirthDateOrAgeFields control={control} disabled={disabled} />
           {!essentialsOnly && (
-            <>
+            <Controller
+              name="profileImage"
+              control={control}
+              render={({
+                field: { name, onBlur, onChange, ref, value },
+                fieldState,
+              }) => (
+                <FileUploadField
+                  id={`${profileImageId}-${name}`}
+                  name={name}
+                  label={t('horseForm.picture')}
+                  uploadDescription={t('horseForm.pictureHelp')}
+                  accept="image/*"
+                  kind="image"
+                  variant="avatar"
+                  width="full"
+                  disabled={disabled}
+                  autoComplete="off"
+                  files={value ?? null}
+                  currentImageUrl={currentProfileImageUrl}
+                  controlRef={(element) => {
+                    photoControl.current = element
+                    ref(element)
+                  }}
+                  errors={fieldState.invalid ? [fieldState.error] : undefined}
+                  onBlur={onBlur}
+                  onFilesChange={onChange}
+                />
+              )}
+            />
+          )}
+        </FieldGroup>
+      </FormSection>
+
+      {!essentialsOnly ? (
+        <>
+          <FormSection
+            data-horse-edit-section="appearance"
+            invalid={appearanceInvalid}
+            summary={appearanceSummary}
+            optionalLabel={t('horseForm.optional')}
+            title={t('horseForm.appearance')}
+            validationAttempt={submitCount}
+          >
+            <FieldGroup gap="compact">
               <FieldGrid>
                 <Controller
                   name="breed"
@@ -606,56 +672,21 @@ export function HorseFormFields({
                   )}
                 />
               </FieldGrid>
-              <Controller
-                name="profileImage"
-                control={control}
-                render={({
-                  field: { name, onBlur, onChange, ref, value },
-                  fieldState,
-                }) => (
-                  <FileUploadField
-                    id={`${profileImageId}-${name}`}
-                    name={name}
-                    label={t('horseForm.picture')}
-                    helpLabel={t('horseForm.pictureLabel')}
-                    help={t('horseForm.pictureHelp')}
-                    accept="image/*"
-                    kind="image"
-                    width="full"
-                    disabled={disabled}
-                    autoComplete="off"
-                    files={value ?? null}
-                    currentImageUrl={currentProfileImageUrl}
-                    controlRef={(element) => {
-                      photoControl.current = element
-                      ref(element)
-                    }}
-                    errors={fieldState.invalid ? [fieldState.error] : undefined}
-                    onBlur={onBlur}
-                    onFilesChange={onChange}
-                  />
-                )}
-              />
               <HorseCalendarColourField
                 control={control}
                 horses={colourRoster}
                 disabled={disabled}
               />
-            </>
-          )}
-        </FieldGroup>
-      </FormSection>
+            </FieldGroup>
+          </FormSection>
 
-      {!essentialsOnly ? (
-        <>
           <FormSection
-            data-horse-edit-section="care"
-            defaultOpen={openSection === 'care'}
-            description={t('horseForm.careHelp')}
-            invalid={careInvalid}
-            summary={careSummary}
+            data-horse-edit-section="identification"
+            defaultOpen={openSection === 'identification'}
+            invalid={identificationInvalid}
+            summary={identificationSummary}
             optionalLabel={t('horseForm.optional')}
-            title={t('horseForm.care')}
+            title={t('horseForm.identificationInsurance')}
             validationAttempt={submitCount}
           >
             <FieldGroup gap="compact">
@@ -805,7 +836,19 @@ export function HorseFormFields({
                   />
                 </FieldGrid>
               </CareRecordRow>
+            </FieldGroup>
+          </FormSection>
 
+          <FormSection
+            data-horse-edit-section="care"
+            defaultOpen={openSection === 'care'}
+            invalid={careInvalid}
+            summary={careSummary}
+            optionalLabel={t('horseForm.optional')}
+            title={t('horseForm.care')}
+            validationAttempt={submitCount}
+          >
+            <FieldGroup gap="compact">
               <CareRecordRow
                 label={t('horseForm.veterinary')}
                 help={contactHelp}
@@ -1109,7 +1152,6 @@ export function HorseFormFields({
           <FormSection
             data-horse-edit-section="nutrition"
             defaultOpen={openSection === 'nutrition'}
-            description={t('horseForm.nutritionHelp')}
             invalid={nutritionInvalid}
             summary={nutritionSummary}
             optionalLabel={t('horseForm.optional')}
@@ -1249,28 +1291,36 @@ function BirthDateOrAgeFields({
     ageField.onChange(age !== undefined && age >= 0 && age <= 100 ? age : '')
   }
   const dateDescription = `${dateField.name}-description${dateState.invalid ? ` ${dateField.name}-error` : ''}`
-
+  // Both inputs stay mounted and linked; the choice only picks which one shows.
+  const [mode, setMode] = useState<'date' | 'age'>(() =>
+    !dateField.value && ageField.value !== '' ? 'age' : 'date',
+  )
+  // Bring a validation error into view when only the hidden input has one.
+  useEffect(() => {
+    if (dateState.invalid && !ageState.invalid) setMode('date')
+    else if (ageState.invalid && !dateState.invalid) setMode('age')
+  }, [dateState.invalid, ageState.invalid])
+  // Label, then the switch on its own line, then the inputs; the help text stays on the inputs for screen readers.
   return (
     <FieldSet>
-      <FieldLegend variant="label" className="flex items-center gap-1 pl-2">
-        <span>
+      <div>
+        <FieldLegend variant="label" required>
           {t('horseForm.birthOrAge')}
-          <span
-            aria-hidden="true"
-            data-slot="required-mark"
-            data-required
-            className="ml-1 text-destructive"
-          />
-        </span>
-        <FormHelpTooltip
-          inline
-          label={t('common.aboutField', { label: t('horseForm.birthOrAge') })}
-        >
-          {t('horseForm.birthHelp')} {t('horseForm.ageHelp')}
-        </FormHelpTooltip>
-      </FieldLegend>
-      <FieldGrid breakpoint="lg" template="trailing-sm">
-        <Field data-invalid={dateState.invalid}>
+        </FieldLegend>
+        <ChoiceButtonGroup
+          layout="segmented"
+          aria-label={t('horseForm.birthOrAge')}
+          value={mode}
+          options={[
+            { value: 'date', label: t('horseForm.birthDateChoice') },
+            { value: 'age', label: t('horseForm.ageChoice') },
+          ]}
+          disabled={disabled}
+          onValueChange={setMode}
+        />
+      </div>
+      <FieldGrid>
+        <Field data-invalid={dateState.invalid} hidden={mode !== 'date'}>
           <div className="grid grid-cols-[minmax(5rem,1fr)_minmax(4rem,0.7fr)_minmax(4rem,0.7fr)] gap-2">
             {(['year', 'month', 'day'] as const).map((part) => (
               <BirthDatePartInput
@@ -1286,14 +1336,17 @@ function BirthDateOrAgeFields({
                 value={birthDate[part]}
                 placeholder={{ year: '2016', month: 'MM', day: 'DD' }[part]}
                 maxLength={part === 'year' ? 4 : 2}
-                disabled={
-                  disabled ||
+                disabled={disabled}
+                waiting={
                   (part === 'month' && !birthDate.year) ||
                   (part === 'day' && !birthDate.month)
                 }
                 invalid={dateState.invalid}
                 describedBy={dateDescription}
-                inputRef={part === 'year' ? dateField.ref : undefined}
+                // Error focus goes to whichever input is showing.
+                inputRef={
+                  part === 'year' && mode === 'date' ? dateField.ref : undefined
+                }
                 onBlur={() => {
                   if (birthDate.year.length === 4) {
                     dateField.onChange(composeHorseBirthDate(birthDate) ?? '')
@@ -1314,7 +1367,7 @@ function BirthDateOrAgeFields({
             />
           )}
         </Field>
-        <Field data-invalid={ageState.invalid}>
+        <Field data-invalid={ageState.invalid} hidden={mode !== 'age'}>
           <FieldLabel htmlFor={ageField.name}>
             {t('horseForm.currentAge')}
           </FieldLabel>
@@ -1324,7 +1377,14 @@ function BirthDateOrAgeFields({
             autoComplete="off"
             data-1p-ignore
             data-lpignore="true"
-            ref={ageField.ref}
+            ref={
+              mode === 'age'
+                ? (element: HTMLInputElement | null) => {
+                    ageField.ref(element)
+                    dateField.ref(element)
+                  }
+                : ageField.ref
+            }
             value={ageField.value}
             type="number"
             inputMode="numeric"
@@ -1373,8 +1433,11 @@ function BirthDatePartInput({
   onChange,
   placeholder,
   value,
+  waiting,
 }: {
   disabled: boolean
+  /** Locked until the previous part is entered; looks like an empty field, not an error. */
+  waiting: boolean
   id: string
   inputRef?: Ref<HTMLInputElement>
   describedBy?: string
@@ -1401,7 +1464,12 @@ function BirthDatePartInput({
         inputMode="numeric"
         maxLength={maxLength}
         placeholder={placeholder}
-        disabled={disabled}
+        disabled={disabled || waiting}
+        className={
+          waiting && !disabled
+            ? 'disabled:bg-surface-elevated disabled:opacity-100'
+            : undefined
+        }
         aria-invalid={invalid}
         aria-describedby={describedBy}
         onBlur={onBlur}

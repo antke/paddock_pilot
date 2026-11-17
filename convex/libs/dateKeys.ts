@@ -21,3 +21,13 @@ export const timestampToDateKey = (
   const localTimestamp = timestamp - timezoneOffsetMinutes * 60 * 1000
   return new Date(localTimestamp).toISOString().slice(0, 10)
 }
+
+/** Without a trusted client date, use yesterday in UTC so no time zone sees an open event as past. */
+export const earliestTodayDateKey = (clientDateKey?: string) =>
+  clientDateKey && dateKeyPattern.test(clientDateKey)
+    ? clientDateKey
+    : addDaysToDateKey(utcTodayDateKey(), -1)
+
+/** Invitations stay answerable for a week after the event so late approvals can still record it. */
+export const invitationCutoffDateKey = (clientDateKey?: string) =>
+  addDaysToDateKey(earliestTodayDateKey(clientDateKey), -7)

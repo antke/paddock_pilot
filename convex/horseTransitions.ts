@@ -1,3 +1,5 @@
+import { leaveSharedPersonalEvents } from './libs/horseEventHistory'
+import { utcTodayDateKey } from './libs/dateKeys'
 import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import { ConvexError, v } from 'convex/values'
 import { paginationOptsValidator } from 'convex/server'
@@ -51,7 +53,7 @@ export async function departurePreview(
       event.stableId === horse.stableId &&
       event.status !== 'completed' &&
       event.status !== 'cancelled' &&
-      (event.recurrence || event.date >= today),
+      (event.recurrence || (event.endDate ?? event.date) >= today),
     ),
   )
   const visibleEvents = events.map((event) => ({
@@ -289,11 +291,12 @@ export const advance = internalMutation({
         })
         const future =
           event.status !== 'completed' &&
-          (event.date >= today || Boolean(event.recurrence))
+          ((event.endDate ?? event.date) >= today || Boolean(event.recurrence))
         await ctx.db.patch(row._id, {
           history,
           participationEndsAt: today,
-          ...(future && !event.recurrence
+          // Only an appointment that has not started yet is withdrawn outright.
+          ...(future && !event.recurrence && event.date >= today
             ? {
                 status: 'withdrawn' as const,
                 withdrawnAt: transition.startedAt,
@@ -388,6 +391,7 @@ export const advance = internalMutation({
       })
       if (targetOwnerId) {
         await revokeHorseAccess(ctx, horse._id, transition.invitationId)
+        await leaveSharedPersonalEvents(ctx, horse._id, utcTodayDateKey())
         if (transition.invitationId)
           await ctx.db.patch(transition.invitationId, {
             status: 'accepted',

@@ -60,7 +60,7 @@ function DocumentPreviewFrame({
     <DashboardInlinePanel
       padding="none"
       className={cn(
-        'grid size-20 shrink-0 place-items-center sm:size-28',
+        'grid size-10 shrink-0 place-items-center sm:size-12',
         muted && 'text-muted-foreground',
         overflow === 'hidden' && 'overflow-hidden',
         className,
@@ -89,7 +89,7 @@ function DocumentPreviewImage({
 function DocumentPreviewIcon({ failed = false }: { failed?: boolean }) {
   const Icon = failed ? FileXIcon : FileTextIcon
 
-  return <Icon className="size-10" weight="duotone" aria-hidden={true} />
+  return <Icon className="size-6" weight="duotone" aria-hidden={true} />
 }
 
 function isImageDocument(document: Doc<'stableDocuments'>) {

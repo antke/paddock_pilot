@@ -65,10 +65,7 @@ function entry() {
     today: event.date,
   })[0]
 }
-async function mount(
-  variant: 'record' | 'week' | 'month' | 'summary',
-  current = entry(),
-) {
+async function mount(variant: 'record' | 'week' | 'month', current = entry()) {
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
   const root = createRootRoute()
   const index = createRoute({
@@ -91,7 +88,7 @@ async function mount(
   return router
 }
 
-it.each(['record', 'week', 'summary'] as const)(
+it.each(['record', 'week'] as const)(
   'completes from the %s card without opening the session',
   async (variant) => {
     mocks.save.mockResolvedValue(undefined)
@@ -128,7 +125,7 @@ it('offers completion from the keyboard-accessible preview', async () => {
   await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(1))
 })
 
-it.each(['record', 'week', 'summary'] as const)(
+it.each(['record', 'week'] as const)(
   'uses the completion control as the sole completed indicator in a writable %s entry',
   async (variant) => {
     await mount(variant, { ...entry(), status: 'completed' })
@@ -197,7 +194,9 @@ it('prevents duplicate submissions, keeps failure recoverable, and offers undo a
 it('keeps horizontal padding around the labelled control so its hover and focus do not touch the text', () => {
   render(<TrainingCompletionControl entry={entry()} labelled />)
   const classes = screen.getByRole('button').className.split(/\s+/)
-  expect(classes).toContain('px-3')
+  expect(classes).toContain('ps-3')
+  // The end inset aligns the box with icon checks in the same column.
+  expect(classes).toContain('pe-[9px]')
   expect(classes).not.toContain('p-0')
 })
 

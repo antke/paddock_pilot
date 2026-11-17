@@ -22,6 +22,13 @@ const dashboardMetaListGapClassNames = {
   roomy: 'gap-x-3 gap-y-1',
 } satisfies Record<DashboardMetaListGap, string>
 
+// Separated lists fold the separator's own spacing into one wider gap (gap · gap).
+const separatedGapClassNames = {
+  compact: '[--meta-gap:1rem] gap-y-1',
+  default: '[--meta-gap:1.25rem] gap-y-2',
+  roomy: '[--meta-gap:1.75rem] gap-y-1',
+} satisfies Record<DashboardMetaListGap, string>
+
 const dashboardMetaListSizeClassNames = {
   micro: 'text-xs font-medium leading-4',
   xs: 'text-xs',
@@ -41,16 +48,24 @@ function renderSeparatedMeta(
   const visibleItems = Children.toArray(children).filter(
     (child) => typeof child !== 'string' || child.trim().length > 0,
   )
-  return visibleItems.map((child, index) => (
-    <Fragment key={index}>
-      {index > 0 && (
-        <span aria-hidden="true" className="text-muted-foreground/45">
+  // Each separator hangs in the gap before its item. One that would start a line falls
+  // outside the list's left edge, where `overflow-x: clip` hides it, so wrapped lines
+  // never begin or end with a separator.
+  return visibleItems.map((child, index) =>
+    index === 0 ? (
+      <Fragment key={index}>{child}</Fragment>
+    ) : (
+      <span key={index} className="relative min-w-0 max-w-full">
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute top-0 right-[calc(100%+var(--meta-gap)/2)] translate-x-1/2 text-muted-foreground/45"
+        >
           {separatorCharacters[separator]}
         </span>
-      )}
-      {child}
-    </Fragment>
-  ))
+        {child}
+      </span>
+    ),
+  )
 }
 
 export function DashboardMetaList({
@@ -66,7 +81,9 @@ export function DashboardMetaList({
       data-slot="dashboard-meta-list"
       className={cn(
         dashboardMetaListClassName,
-        dashboardMetaListGapClassNames[gap],
+        separator === 'none'
+          ? dashboardMetaListGapClassNames[gap]
+          : [separatedGapClassNames[gap], 'gap-x-(--meta-gap) overflow-x-clip'],
         dashboardMetaListSizeClassNames[size],
         className,
       )}

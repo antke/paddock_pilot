@@ -118,12 +118,12 @@ describe('actual horse activity sample', () => {
     }))
     await openSample()
     expect(screen.queryByRole('link', { name: 'Add event' })).toBeNull()
-    fireEvent.click(screen.getByRole('tab', { name: 'Calendar' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Calendar' }))
     expect(screen.queryByRole('link', { name: 'Add event' })).toBeNull()
   })
   it('shows all activity in calendar mode and preserves search when returning to the log', async () => {
     await openSample()
-    fireEvent.click(screen.getByRole('tab', { name: 'Calendar' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Calendar' }))
     expect(screen.getByRole('table', { name: /event calendar/ })).toBeTruthy()
     expect(
       screen
@@ -142,7 +142,7 @@ describe('actual horse activity sample', () => {
     expect(
       screen.getAllByText('Sample legacy event without status').length,
     ).toBeGreaterThan(0)
-    fireEvent.click(screen.getByRole('tab', { name: 'Log' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Log' }))
     expect(
       screen
         .getByRole('searchbox', { name: 'Search activity' })
@@ -163,7 +163,9 @@ describe('actual horse activity sample', () => {
     fireEvent.click(history)
     expect(history.getAttribute('aria-pressed')).toBe('true')
     expect(document.activeElement).toBe(history)
-    expect(screen.getByRole('tabpanel', { name: 'Log' })).toBeTruthy()
+    expect(
+      screen.getByRole('button', { name: 'Log' }).getAttribute('aria-pressed'),
+    ).toBe('true')
     expect(screen.getByText('Sample completed visit today')).toBeTruthy()
     expect(screen.getByText('Sample cancelled future lesson')).toBeTruthy()
     expect(screen.getByText('Sample earlier appointment')).toBeTruthy()

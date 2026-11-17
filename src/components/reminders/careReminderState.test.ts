@@ -66,6 +66,12 @@ describe('care reminder due presentation', () => {
     ).toBe('Due today')
     expect(
       getCareReminderDueLabel(
+        { dueDate: '2026-08-19', status: 'pending' },
+        today,
+      ),
+    ).toMatch(/^Overdue · /)
+    expect(
+      getCareReminderDueLabel(
         { dueDate: '2026-08-22', status: 'pending' },
         today,
       ),

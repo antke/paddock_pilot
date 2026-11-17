@@ -228,15 +228,14 @@ export const pl = {
       'Profil jest wspólny dla wszystkich stajni, które prowadzisz lub do których należysz.',
     preferredName: 'Jak się do Ciebie zwracać',
     phone: 'Numer telefonu',
-    optional: 'Opcjonalnie',
-    imageLabel: 'Zdjęcie profilowe (opcjonalne)',
+    imageLabel: 'Zdjęcie profilowe',
     imageUpload: 'Dodaj zdjęcie profilowe',
     imageDescription:
       'Zdjęcie ułatwi innym osobom w stajni rozpoznanie Cię. Wybierz plik graficzny o rozmiarze do 5 MB.',
-    imageHelp: 'Wybierz zdjęcie o rozmiarze do 5 MB.',
     nameRequired: 'Wpisz, jak inni mają się do Ciebie zwracać.',
     imageRequired: 'Wybierz plik graficzny.',
     imageTooLarge: 'Wybierz zdjęcie o rozmiarze nie większym niż 5 MB.',
+    imageHint: 'JPG, PNG lub WEBP, do 5 MB',
   },
   upload: {
     selected: 'Wybrano · jeszcze nie zapisano',
@@ -251,6 +250,8 @@ export const pl = {
     dropFile: 'Przeciągnij tu plik lub wybierz go z urządzenia',
     imageTypes: 'JPG, PNG lub WEBP',
     replaceImage: 'Zmień zdjęcie',
+    addPhoto: 'Dodaj zdjęcie',
+    changePhoto: 'Zmień zdjęcie',
     currentImage:
       'Obecne zdjęcie. Wybierz lub przeciągnij nowe, aby je zastąpić.',
     chooseFile: 'Wybierz plik z urządzenia',
@@ -304,7 +305,7 @@ export const pl = {
     horses: 'Konie',
     care: 'Opieka',
     events: 'Wydarzenia',
-    training: 'Dziennik treningów',
+    training: 'Treningi',
     documents: 'Dokumenty',
     analysis: 'Analizy',
     signIn: 'Zaloguj się',
@@ -346,7 +347,6 @@ export const pl = {
     signInDescription:
       'Twój profil jest wspólny dla wszystkich stajni, które prowadzisz lub do których należysz.',
     title: 'Twój profil',
-    details: 'Dane profilu',
     detailsDescription:
       'Tak widzą Cię i kontaktują się z Tobą inni członkowie Twoich stajni.',
     save: 'Zapisz profil',
@@ -357,7 +357,6 @@ export const pl = {
   },
   common: {
     aboutField: 'Pomoc: {{label}}',
-    requiredFields: 'Pola oznaczone * są wymagane.',
     unsavedTitle: 'Wyjść bez zapisywania?',
     unsavedHelp:
       'Zmiany nie zostały zapisane. Zostań, aby je dokończyć, lub wyjdź i je odrzuć.',
@@ -365,6 +364,7 @@ export const pl = {
     close: 'Zamknij',
     keepEditing: 'Kontynuuj edycję',
     reset: 'Wyczyść',
+    discardChanges: 'Odrzuć zmiany',
     errorToast: 'Coś poszło nie tak.',
     validationToast: 'Sprawdź formularz',
     tryAgain: 'Spróbuj ponownie.',

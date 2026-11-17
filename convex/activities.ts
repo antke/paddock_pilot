@@ -8,7 +8,7 @@ import { createEventOccurrences } from '../shared/events/eventOccurrences'
 import { ConvexError, v } from 'convex/values'
 import { query } from './_generated/server'
 import type { Doc, Id } from './_generated/dataModel'
-import type { QueryCtx } from './_generated/server'
+import type { MutationCtx, QueryCtx } from './_generated/server'
 import { listPersonalEvents } from './events'
 import { listHorseTraining, listStableTraining } from './training'
 import { listMyParticipations } from './activityParticipants'
@@ -17,6 +17,7 @@ import { getCurrentUser } from './libs/stablePermissions'
 import {
   sharedEventsForStable,
   eventParticipantAccess,
+  isEventOrganizer,
 } from './libs/eventPermissions'
 import { visibleHorse } from './libs/recordCapabilities'
 import { isActiveHorse } from './libs/horseState'
@@ -140,6 +141,8 @@ export async function listActivities(
         )
       )
         continue
+      // A session that changed away keeps only a ride the person already recorded.
+      if (row.sessionChanged && !row.report) continue
       const original = await ctx.db.get(row.eventId)
       const horse = await ctx.db.get(row.horseId)
       if (!original || !horse) continue
@@ -238,31 +241,32 @@ export const view = query({
 /** Route accepted participants to their narrow session view, never the full horse detail API. */
 export const detailAccess = query({
   args: { eventId: v.id('events') },
-  handler: async (ctx, { eventId }) => {
-    const event = await ctx.db.get(eventId)
-    if (!event) return 'missing' as const
-    const { user, participants } = await eventParticipantAccess(ctx, event)
-    if (
-      participants.length ||
-      (!event.horseIds.length &&
-        event.createdBy === user._id &&
-        !event.stableId)
-    )
-      return 'horse' as const
-    if (
-      (await listMyParticipations(ctx)).some(
-        (row) => row.eventId === eventId && row.status === 'accepted',
-      )
-    )
-      return 'participant' as const
-    const shares = await ctx.db
-      .query('activityCalendarShares')
-      .withIndex('by_event', (q) => q.eq('eventId', eventId))
-      .collect()
-    for (const share of shares)
-      if (await projectActivityShare(ctx, share, user._id))
-        return 'shared' as const
-    if (await attendanceDetail(ctx, eventId, user._id)) return 'shared' as const
-    return 'missing' as const
-  },
+  handler: (ctx, { eventId }) => eventDetailAccess(ctx, eventId),
 })
+
+/** Which detail view, if any, the signed-in user may open for an event. */
+export async function eventDetailAccess(
+  ctx: QueryCtx | MutationCtx,
+  eventId: Id<'events'>,
+) {
+  const event = await ctx.db.get(eventId)
+  if (!event) return 'missing' as const
+  const { user, participants } = await eventParticipantAccess(ctx, event)
+  if (participants.length || (await isEventOrganizer(ctx, event, user._id)))
+    return 'horse' as const
+  if (
+    (await listMyParticipations(ctx)).some(
+      (row) => row.eventId === eventId && row.status === 'accepted',
+    )
+  )
+    return 'participant' as const
+  const shares = await ctx.db
+    .query('activityCalendarShares')
+    .withIndex('by_event', (q) => q.eq('eventId', eventId))
+    .collect()
+  for (const share of shares)
+    if (await projectActivityShare(ctx, share, user._id))
+      return 'shared' as const
+  if (await attendanceDetail(ctx, eventId, user._id)) return 'shared' as const
+  return 'missing' as const
+}

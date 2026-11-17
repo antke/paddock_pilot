@@ -1,5 +1,4 @@
 import { cn } from '#/lib/utils'
-import { dashboardMobileRecordClassName } from '#/components/dashboard/dashboardChrome'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { formatEventDateRange } from '#/components/events/eventDisplay'
 import { EventRow } from '#/components/events/EventRow'
@@ -45,7 +44,7 @@ export function EventLinkCard({
       density={density}
       chrome={chrome}
       accent={accent}
-      className={cn(dashboardMobileRecordClassName, className)}
+      className={cn(className)}
       variant={showDate ? 'agenda' : 'contextual'}
     />
   )

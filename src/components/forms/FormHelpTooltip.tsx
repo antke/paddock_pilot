@@ -1,3 +1,4 @@
+import { QuestionMarkIcon } from '@phosphor-icons/react'
 import { Button } from '#/components/ui/button'
 import {
   Tooltip,
@@ -43,15 +44,23 @@ export function FormHelpTooltip({
         closeOnClick={false}
         onClick={() => setOpen(true)}
         render={
+          // A 44px hit area around a 24px outlined circle; the negative margin
+          // keeps the layout footprint at the circle's size.
           <Button
             type="button"
             variant="subtle"
-            size="icon-xs"
+            size="icon-lg"
+            className="-m-2.5 max-w-none rounded-full hover:bg-transparent active:bg-transparent focus-visible:border-transparent focus-visible:outline-offset-[-10px] dark:hover:bg-transparent"
             aria-label={label}
           />
         }
       >
-        ?
+        <span
+          aria-hidden="true"
+          className="grid size-6 place-items-center rounded-full border border-border text-muted-foreground transition-colors group-hover/button:border-primary/50 group-hover/button:bg-primary/8 group-hover/button:text-foreground group-active/button:bg-primary/15 group-data-popup-open/button:border-primary/50 group-data-popup-open/button:bg-primary/10 group-data-popup-open/button:text-foreground"
+        >
+          <QuestionMarkIcon weight="bold" className="size-3.5" />
+        </span>
       </TooltipTrigger>
       <TooltipContent>{children}</TooltipContent>
     </Tooltip>
@@ -59,7 +68,7 @@ export function FormHelpTooltip({
 }
 
 /**
- * A field label with its explanation behind a `?` button, so secondary help
+ * A field label with its explanation behind a help button, so secondary help
  * costs no vertical space. The text stays in the DOM (visually hidden) under
  * `helpId`, so the control can keep it in `aria-describedby`.
  */

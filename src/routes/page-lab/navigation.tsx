@@ -30,8 +30,8 @@ function NavigationFixture() {
             name: i
               ? `Sample yard ${i + 1}`
               : 'Oak Farm — rehabilitation and training yard',
+            canManage: true,
           }))}
-          canManageStable
           accountActions={<span>Jamie · Sample account</span>}
           compactAccountActions={<span>Sample</span>}
           renderDrawerAccount={(closeDrawer) => (

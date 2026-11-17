@@ -20,6 +20,8 @@ export const horseDetail = {
   editCareInformation: 'Edytuj informacje o opiece',
   editEmergencyNotes: 'Edytuj informacje na nagły wypadek',
   sections: 'Sekcje profilu konia {{name}}',
+  sharedView: 'Widoczne wpisy udostępnione stajni {{name}}',
+  viewAllRecords: 'Pokaż wszystkie wpisy',
   more: 'Więcej',
   timeline: 'Historia',
   summary: 'Podsumowanie opieki',

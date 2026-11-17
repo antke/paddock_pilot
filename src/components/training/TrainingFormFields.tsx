@@ -8,15 +8,14 @@ import type {
   EventFormInput,
   EventFormSchema,
 } from '../forms/event/eventFormSchema'
-import {
-  Field,
-  FieldLabel,
-  FieldError,
-  FieldDescription,
-} from '#/components/ui/field'
+import { Field, FieldLabel, FieldError } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Textarea } from '#/components/ui/textarea'
-import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group'
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+  ToggleGroupItemMark,
+} from '#/components/ui/toggle-group'
 import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
 import {
   trainingActivities,
@@ -58,7 +57,9 @@ export function TrainingFormFields({
                 variant="outline"
                 aria-label={t('eventForm.workType')}
                 aria-invalid={fieldState.invalid}
-                aria-describedby={`${id}-activities-help${fieldState.invalid ? ` ${id}-activities-error` : ''}`}
+                aria-describedby={
+                  fieldState.invalid ? `${id}-activities-error` : undefined
+                }
                 value={field.value ?? []}
                 onValueChange={field.onChange}
                 onBlur={field.onBlur}
@@ -72,14 +73,13 @@ export function TrainingFormFields({
                     value={activity}
                     className="gap-2 px-4"
                   >
-                    <TrainingActivityDot activity={activity} />
+                    <ToggleGroupItemMark>
+                      <TrainingActivityDot activity={activity} />
+                    </ToggleGroupItemMark>
                     {t(`training.activities.${activity}`)}
                   </ToggleGroupItem>
                 ))}
               </ToggleGroup>
-              <FieldDescription id={`${id}-activities-help`}>
-                {t('eventForm.activitiesHelp')}
-              </FieldDescription>
               <FieldError
                 id={`${id}-activities-error`}
                 errors={[fieldState.error]}

@@ -54,6 +54,7 @@ import type * as libs_email_templates from "../libs/email/templates.js";
 import type * as libs_email_types from "../libs/email/types.js";
 import type * as libs_entitlements from "../libs/entitlements.js";
 import type * as libs_eventAttendees from "../libs/eventAttendees.js";
+import type * as libs_eventNotices from "../libs/eventNotices.js";
 import type * as libs_eventPermissions from "../libs/eventPermissions.js";
 import type * as libs_horseAnalysisDemo from "../libs/horseAnalysisDemo.js";
 import type * as libs_horseCareData from "../libs/horseCareData.js";
@@ -144,6 +145,7 @@ declare const fullApi: ApiFromModules<{
   "libs/email/types": typeof libs_email_types;
   "libs/entitlements": typeof libs_entitlements;
   "libs/eventAttendees": typeof libs_eventAttendees;
+  "libs/eventNotices": typeof libs_eventNotices;
   "libs/eventPermissions": typeof libs_eventPermissions;
   "libs/horseAnalysisDemo": typeof libs_horseAnalysisDemo;
   "libs/horseCareData": typeof libs_horseCareData;

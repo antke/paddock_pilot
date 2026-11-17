@@ -35,20 +35,16 @@ export const stables = {
     'Your stable was updated, but the stable page could not open. Try opening it again; your changes will not be saved twice.',
   create: 'Create stable',
   edit: 'Edit stable',
-  details: 'Stable details',
   sampleSaved:
     'Sample stable save acknowledged locally. No live record changed.',
   saved: 'Stable saved.',
   opening: 'Opening…',
   continueSetup: 'Continue to setup',
   open: 'Open stable',
-  discard: 'Discard changes',
-  reset: 'Reset',
   discardTitle: 'Discard your changes?',
   discardHelp: 'The form will return to the last saved stable details.',
-  resetTitle: 'Reset stable changes?',
+  resetTitle: 'Discard stable changes?',
   resetHelp: 'Clear your unsaved stable details and start again.',
-  resetChanges: 'Reset changes',
   update: 'Update stable',
   creating: 'Creating…',
   saving: 'Saving…',
@@ -70,13 +66,9 @@ export const stables = {
   start: 'Get started',
   settings: 'Stable settings',
   basics: 'Stable basics',
-  basicsHelp:
-    'Stable name and location are required. All other details are optional.',
   name: 'Stable name',
   nameExample: 'Cedar Ridge Barn',
   locationPlaceholder: 'Town, area, or familiar yard location',
-  addressHelp:
-    'Use the complete address for documents, visits, and directions.',
   addressLine1: 'Address line 1',
   addressLine1Placeholder: 'Yard name or street address',
   addressLine2: 'Address line 2',
@@ -84,14 +76,8 @@ export const stables = {
   postcode: 'Postcode',
   country: 'Country',
   profile: 'Stable profile',
-  profileHelp: 'Add optional context that helps members recognise the yard.',
-  descriptionAbout: 'About stable description',
-  descriptionHelp:
-    'Description is optional. Use it for notes that help identify the stable.',
   descriptionPlaceholder: 'Share something about the stable',
   operations: 'Operations',
-  operationsHelp:
-    'Keep the everyday and emergency contact details in one place.',
   contactName: 'Contact name',
   yardManager: 'Yard manager',
   emergencyPlaceholder: 'Emergency stable contact',
@@ -113,8 +99,6 @@ export const stables = {
   noMembers: 'No members are listed for this stable.',
   yourYardProfile: 'Your yard profile',
   yourRole: 'Your role',
-  profileCurrentHelp:
-    'Keep the details the owner may need around the yard up to date.',
   ownerHelp: 'You manage this stable and its membership.',
   editDetails: 'Edit details',
   yardDisplayName: 'Yard display name',
@@ -163,7 +147,7 @@ export const stables = {
   providerName: 'Provider name',
   contactNumber: 'Contact number',
   email: 'Email',
-  optionalEmail: 'Optional email',
+  optionalEmail: 'name@example.com',
   notes: 'Notes',
   providerNotesPlaceholder:
     'Specialisms, preferred booking details, or reminders',
@@ -239,4 +223,10 @@ export const stables = {
   signIn: 'Sign in to view this stable',
   signInHelp:
     'Stable records, horses, care reminders, events, documents, and settings are available after signing in.',
+  leaveStable: 'Leave stable',
+  leaveStableNamed: 'Leave {{name}}?',
+  leaveStableHelp:
+    'Your horses placed here move to your personal care, and you lose access to this stable’s calendar and shared records. The stable owner is notified.',
+  stayInStable: 'Stay',
+  leaveStableFailed: 'Could not leave the stable. Please try again.',
 } as const

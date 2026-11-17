@@ -226,7 +226,7 @@ export function StableSwitcherView({
             aria-label={t('navigation.activeStableName', {
               name: activeStable?.name ?? t('navigation.selectStable'),
             })}
-            className="min-h-11 min-w-11 max-w-44 px-2 sm:px-3"
+            className="min-h-10 min-w-10 max-w-44 px-2 sm:px-3"
           />
         }
       >

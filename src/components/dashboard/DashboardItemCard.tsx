@@ -160,7 +160,7 @@ export const dashboardItemActionColumnClassName =
   'grid gap-4 sm:min-w-max sm:self-stretch sm:justify-items-end sm:justify-self-end'
 
 export const dashboardItemActionButtonsClassName =
-  'flex w-fit max-w-full min-w-0 flex-row flex-wrap justify-end self-start [&>*]:shrink-0'
+  'flex w-fit max-w-full min-w-0 flex-row flex-wrap justify-end self-start max-sm:justify-start max-sm:gap-1 [&>*]:shrink-0 max-sm:[&_[data-slot=button]]:!px-2'
 
 export const dashboardItemDescriptionClassName =
   'whitespace-pre-wrap text-sm leading-6 text-muted-foreground'
@@ -592,15 +592,10 @@ export function DashboardItemMediaCard({
       })}
       {...props}
     >
-      <div className="flex min-h-28 items-stretch gap-4">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-2 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:gap-x-4">
         {media}
 
-        <div
-          className={cn(
-            'grid min-w-0 flex-1 grid-rows-[auto_1fr_auto] gap-1',
-            contentClassName,
-          )}
-        >
+        <div className={cn('grid min-w-0 gap-1', contentClassName)}>
           <DashboardItemCardContent
             className="items-start"
             title={title}
@@ -615,18 +610,21 @@ export function DashboardItemMediaCard({
 
           {summary !== undefined && (
             <div
-              className={cn(dashboardItemSummaryClassName, summaryClassName)}
+              className={cn(
+                dashboardItemSummaryClassName,
+                'min-h-0 empty:hidden',
+                summaryClassName,
+              )}
             >
               {summary}
             </div>
           )}
-
-          {actions && (
-            <DashboardItemActions placement="end">
-              {actions}
-            </DashboardItemActions>
-          )}
         </div>
+        {actions && (
+          <DashboardItemActions className="col-span-2 sm:col-span-1 sm:justify-self-end sm:self-center">
+            {actions}
+          </DashboardItemActions>
+        )}
       </div>
     </div>
   )
@@ -715,7 +713,7 @@ export function dashboardItemCardClassName({
           'hover:border-primary/30 hover:bg-card hover:text-foreground',
       ),
     selected &&
-      'border-selection bg-selection-surface text-selection ring-1 ring-selection/25 hover:bg-selection-surface',
+      'border-selection bg-selection-surface text-selection ring-2 ring-selection hover:bg-selection-surface',
     className,
   )
 }

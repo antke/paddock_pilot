@@ -49,11 +49,10 @@ export const eventEditor = {
   openTraining: 'Otwórz trening',
   openingTraining: 'Otwieranie treningu…',
   openingEvent: 'Otwieranie wydarzenia…',
-  resetEvent: 'Zresetować zmiany wydarzenia?',
-  resetTraining: 'Zresetować zmiany treningu?',
+  resetEvent: 'Odrzucić zmiany wydarzenia?',
+  resetTraining: 'Odrzucić zmiany treningu?',
   resetHelp:
     'Niezapisane dane zostaną zastąpione wartościami z chwili otwarcia formularza.',
-  reset: 'Zresetuj zmiany',
   createEvent: 'Utwórz wydarzenie',
   updateEvent: 'Zaktualizuj wydarzenie',
   createTraining: 'Utwórz trening',

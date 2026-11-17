@@ -58,14 +58,39 @@ export function DashboardPageHeader({
   titleSize = 'default',
 }: DashboardPageHeaderProps) {
   const workspace = useWorkspace()
+  // The title stands alone; inside a stable its name leads the meta line.
+  const workspaceLabel =
+    showWorkspace &&
+    workspace?.stableId &&
+    typeof title === 'string' &&
+    title !== workspace.label
+      ? workspace.label
+      : undefined
   const contentLayoutClassName = {
     center: 'flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-center',
-    // Page actions stay on the title row at every width.
+    // Actions sit beside the title when both fit and drop to their own row
+    // when they don't, so a button label never breaks across lines.
     default:
-      'grid grid-cols-[minmax(50%,1fr)_auto] items-start gap-x-4 gap-y-2 md:items-stretch',
+      'flex flex-wrap items-start justify-between gap-x-4 gap-y-3 md:items-stretch',
     inline: 'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4',
     wide: 'grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-stretch',
   } satisfies Record<DashboardPageHeaderContentLayout, string>
+  const descriptionNode = (description || workspaceLabel) && (
+    <p
+      className={cn(
+        'text-muted-foreground',
+        descriptionWidth === 'default' && 'max-w-3xl',
+        descriptionWidth === 'narrow' && 'max-w-2xl',
+        descriptionSize === 'sm' && 'text-sm leading-6',
+        descriptionSize === 'base' && 'text-base leading-6',
+        descriptionClassName,
+      )}
+    >
+      {workspaceLabel}
+      {workspaceLabel && description && <span aria-hidden="true"> · </span>}
+      {description}
+    </p>
+  )
 
   return (
     <header
@@ -76,7 +101,11 @@ export function DashboardPageHeader({
         {backAction === undefined ? <PageBack /> : backAction}
       </PageBackSlot>
       <div
-        className={cn(contentLayoutClassName[contentLayout], contentClassName)}
+        className={cn(
+          'mx-auto w-full max-w-[var(--page-column,none)]',
+          contentLayoutClassName[contentLayout],
+          contentClassName,
+        )}
       >
         <div
           className={cn(
@@ -94,32 +123,15 @@ export function DashboardPageHeader({
               scale={titleSize === 'default' ? 'page' : 'section'}
               className={titleClassName}
             >
-              {showWorkspace &&
-              workspace?.stableId &&
-              typeof title === 'string' &&
-              title !== workspace.label
-                ? `${title} · ${workspace.label}`
-                : title}
+              {title}
             </DashboardDisplayHeading>
 
-            {description && (
-              <p
-                className={cn(
-                  'text-muted-foreground',
-                  descriptionWidth === 'default' && 'max-w-3xl',
-                  descriptionWidth === 'narrow' && 'max-w-2xl',
-                  descriptionSize === 'sm' && 'text-sm font-semibold leading-6',
-                  descriptionSize === 'base' && 'text-base leading-6',
-                  descriptionClassName,
-                )}
-              >
-                {description}
-              </p>
-            )}
+            {contentLayout !== 'default' && descriptionNode}
           </div>
         </div>
 
         <DashboardHeaderRail
+          className="max-md:justify-items-start md:ml-auto"
           top={
             badges ? (
               <DashboardBadgeList
@@ -135,13 +147,20 @@ export function DashboardPageHeader({
             actions ? (
               <DashboardActions
                 align="end"
-                className={cn('max-w-full justify-end', actionsClassName)}
+                className={cn(
+                  'max-w-full justify-end max-md:justify-start',
+                  actionsClassName,
+                )}
               >
                 {actions}
               </DashboardActions>
             ) : undefined
           }
         />
+        {/* Its own line: the description's max width would otherwise let it share the title row. */}
+        {contentLayout === 'default' && descriptionNode && (
+          <div className="basis-full">{descriptionNode}</div>
+        )}
       </div>
     </header>
   )

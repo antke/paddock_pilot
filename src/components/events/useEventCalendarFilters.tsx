@@ -1,3 +1,4 @@
+import { DashboardCountBadge } from '#/components/dashboard/DashboardBadges'
 import { useId, useMemo, useRef, useState } from 'react'
 import { CheckIcon, FunnelSimpleIcon, XIcon } from '@phosphor-icons/react'
 import type { CalendarHorse } from 'shared/horses/horseCalendarColours'
@@ -107,31 +108,26 @@ export function useEventCalendarFilters({
       variant="outline"
       size="control"
       className={small ? 'min-h-11 px-2' : undefined}
+      aria-label={t('listControls.filtersWithCount', { count })}
       aria-expanded={open}
       aria-controls={`${id}-filters`}
       onClick={() => setOpen((value) => !value)}
     >
       <FunnelSimpleIcon aria-hidden="true" />
-      <span className="whitespace-nowrap">
-        {t('listControls.filtersWithCount', { count })}
-      </span>
+      <span className="whitespace-nowrap">{t('listControls.filters')}</span>
+      {count > 0 && <DashboardCountBadge count={count} />}
     </Button>
   )
   const content = (
     <>
-      {(!small || count > 0) && (
+      {count > 0 && (
         <div className="flex flex-wrap items-center gap-3">
-          {!small && control}
-          {count > 0 && (
-            <>
-              <span className="min-w-0 flex-1 text-sm [overflow-wrap:anywhere]">
-                {summary}
-              </span>
-              <Button variant="ghost" size="control" onClick={clear}>
-                {t('listControls.clear')}
-              </Button>
-            </>
-          )}
+          <span className="min-w-0 flex-1 text-sm [overflow-wrap:anywhere]">
+            {summary}
+          </span>
+          <Button variant="ghost" size="control" onClick={clear}>
+            {t('listControls.clear')}
+          </Button>
         </div>
       )}
       <MotionDisclosure

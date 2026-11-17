@@ -34,7 +34,7 @@ const en = {
   deleting: 'Deleting horse…',
   deleteTitle: (name: string) => `Delete ${name}?`,
   deleteHelp: (name: string, date: string) =>
-    `${name} will leave the current stable and move to Deleted horses. You can restore the horse for 14 days, until ${date}. After that, the horse and its records are permanently removed. The former stable loses access to this horse’s records.`,
+    `${name} will leave the current stable and move to Deleted horses. You can restore the horse for 14 days, until ${date}. After that, the horse and its records are permanently removed. The former stable loses access to this horse’s records. Carers lose access and upcoming appointments are withdrawn; restoring brings the horse back to your personal care without them.`,
   deleteFailed: 'The horse could not be deleted. Please try again.',
   deleted:
     'Horse moved to Deleted horses. Open that page to restore it during the next 14 days.',
@@ -89,7 +89,7 @@ const pl: typeof en = {
   deleting: 'Usuwanie konia…',
   deleteTitle: (name) => `Usunąć konia ${name}?`,
   deleteHelp: (name, date) =>
-    `${name} opuści obecną stajnię i trafi do sekcji Usunięte konie. Możesz go przywrócić przez 14 dni, do ${date}. Po tym terminie koń i jego wpisy zostaną trwale usunięte. Poprzednia stajnia straci dostęp do wpisów tego konia.`,
+    `${name} opuści obecną stajnię i trafi do sekcji Usunięte konie. Możesz go przywrócić przez 14 dni, do ${date}. Po tym terminie koń i jego wpisy zostaną trwale usunięte. Poprzednia stajnia straci dostęp do wpisów tego konia. Opiekunowie stracą dostęp, a nadchodzące wizyty zostaną wycofane; po przywróceniu koń wróci pod Twoją prywatną opiekę bez nich.`,
   deleteFailed: 'Nie udało się usunąć konia. Spróbuj ponownie.',
   deleted:
     'Koń trafił do sekcji Usunięte konie. Otwórz ją, aby przywrócić go w ciągu 14 dni.',

@@ -1,7 +1,6 @@
 import { useCalendarDensity } from '#/components/events/useCalendarDensity'
 import { useId, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
@@ -21,6 +20,7 @@ import {
   CalendarWeekdayRow,
 } from '#/components/events/EventCalendar'
 import { calendarCompactEventChipClassName } from '#/components/events/EventCalendarChrome'
+import { CalendarToolbar } from '#/components/events/CalendarToolbar'
 import { CalendarItemPreview } from '#/components/events/CalendarItemPreview'
 import { CalendarItemTypeDot } from '#/components/events/CalendarItemTypeDot'
 import { Button } from '#/components/ui/button'
@@ -108,45 +108,24 @@ export function HorseTimelineCalendar({
   }
 
   return (
-    <DashboardSectionCard
-      surface="flat"
-      as="h3"
-      title={monthLabel}
-      description={t('horseHistory.monthRecords', { count: monthCount })}
-      contentGap="comfortable"
-      actions={
-        <>
-          <Button
-            variant="outline"
-            size="sm"
-            aria-label={t('horseHistory.previousMonth')}
-            onClick={() => selectMonth(addMonths(visibleMonth, -1))}
-          >
-            <CaretLeftIcon aria-hidden="true" />
-            {t('calendar.previous')}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              selectMonth(startOfMonth(dateKeyToDate(today)))
-              setSelectedDate(today)
-            }}
-          >
-            {t('calendar.today')}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            aria-label={t('horseHistory.nextMonth')}
-            onClick={() => selectMonth(addMonths(visibleMonth, 1))}
-          >
-            {t('calendar.next')}
-            <CaretRightIcon aria-hidden="true" />
-          </Button>
-        </>
-      }
-    >
+    <DashboardSectionCard surface="flat" contentGap="comfortable">
+      <div className="grid gap-1">
+        <CalendarToolbar
+          label={monthLabel}
+          headingAs="h3"
+          previousLabel={t('horseHistory.previousMonth')}
+          nextLabel={t('horseHistory.nextMonth')}
+          onPrevious={() => selectMonth(addMonths(visibleMonth, -1))}
+          onNext={() => selectMonth(addMonths(visibleMonth, 1))}
+          onToday={() => {
+            selectMonth(startOfMonth(dateKeyToDate(today)))
+            setSelectedDate(today)
+          }}
+        />
+        <p className="text-sm text-muted-foreground">
+          {t('horseHistory.monthRecords', { count: monthCount })}
+        </p>
+      </div>
       <p className="sr-only" aria-live="polite" aria-atomic="true">
         {monthLabel}, {t('horseHistory.monthRecords', { count: monthCount })}
         {selectedDate &&
@@ -162,7 +141,11 @@ export function HorseTimelineCalendar({
       >
         <CalendarWeekdayRow role="row">
           {getWeekdayLabels(locale).map((day) => (
-            <CalendarWeekdayCell role="columnheader" key={day}>
+            <CalendarWeekdayCell
+              role="columnheader"
+              key={day}
+              className="px-0 text-center md:px-2.5 md:text-left"
+            >
               {day}
             </CalendarWeekdayCell>
           ))}

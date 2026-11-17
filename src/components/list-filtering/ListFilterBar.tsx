@@ -1,7 +1,7 @@
 import { MotionDisclosure } from '#/components/motion/MotionDisclosure'
 import { useT } from '#/i18n/LocaleProvider'
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
-import type { ChangeEvent } from 'react'
+import type { ChangeEvent, ReactNode } from 'react'
 import { FunnelSimpleIcon } from '@phosphor-icons/react'
 
 import { DashboardCountBadge } from '#/components/dashboard/DashboardBadges'
@@ -18,9 +18,8 @@ import { ListFilterChips } from './ListFilterChips'
 import type { ListFilterChip } from './ListFilterChips'
 import { ListFilterPanel } from './ListFilterPanel'
 
-const listFilterBarClassName = 'rounded-row bg-surface p-3 sm:p-4'
-const listFilterHeaderClassName =
-  'grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3'
+// Search grows; Filters and any view toggle wrap to a new line before search gets cramped.
+const listFilterHeaderClassName = 'flex flex-wrap items-end gap-3'
 
 type ListFilterBarProps<TFacetId extends string = string> = {
   config: ListFilterUiConfig<TFacetId>
@@ -33,6 +32,8 @@ type ListFilterBarProps<TFacetId extends string = string> = {
   className?: string
   sticky?: boolean
   onFocusWithinChange?: (focused: boolean) => void
+  /** View controls that share the search row, such as a segmented view toggle. */
+  toolbarEnd?: ReactNode
 }
 
 export function ListFilterBar<TFacetId extends string = string>({
@@ -46,6 +47,7 @@ export function ListFilterBar<TFacetId extends string = string>({
   className,
   sticky = false,
   onFocusWithinChange,
+  toolbarEnd,
 }: ListFilterBarProps<TFacetId>) {
   const t = useT()
 
@@ -106,16 +108,15 @@ export function ListFilterBar<TFacetId extends string = string>({
         }
       }}
       className={cn(
-        listFilterBarClassName,
         sticky &&
-          'lg:sticky lg:top-[var(--app-header-scroll-clearance,1rem)] lg:z-30',
+          'bg-[var(--app-list-sticky-surface,var(--card))] py-1 lg:sticky lg:top-[var(--app-header-scroll-clearance,1rem)] lg:z-30',
         className,
       )}
     >
       <div className="grid">
         <div className={listFilterHeaderClassName}>
-          <Field className="min-w-0">
-            <FieldLabel htmlFor={searchId}>
+          <Field className="min-w-0 flex-[1_1_12rem]">
+            <FieldLabel htmlFor={searchId} className="sr-only">
               {config.searchLabel ?? t('listControls.search')}
             </FieldLabel>
             <Input
@@ -142,14 +143,13 @@ export function ListFilterBar<TFacetId extends string = string>({
               onClick={() => setIsPanelOpen((current) => !current)}
             >
               <FunnelSimpleIcon aria-hidden={true} weight="bold" />
-              <span className="hidden sm:inline">
-                {t('listControls.filters')}
-              </span>
+              {t('listControls.filters')}
               {activeFacetCount > 0 && (
                 <DashboardCountBadge count={activeFacetCount} />
               )}
             </Button>
           )}
+          {toolbarEnd}
         </div>
 
         <ListFilterChips

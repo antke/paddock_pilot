@@ -60,7 +60,7 @@ export const documents = {
   filteredEmpty: 'No documents match these filters.',
   empty: 'No documents have been added yet.',
   search: 'Search documents',
-  searchPlaceholder: 'Search file name, notes, type, or linked records',
+  searchPlaceholder: 'Search documents',
   scope: 'Scope',
   allDocuments: 'All documents',
   stableWide: 'Stable-wide',

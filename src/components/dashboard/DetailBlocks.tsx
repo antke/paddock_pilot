@@ -217,7 +217,7 @@ export function DetailPanel({
     >
       <Heading
         className={cn(
-          'font-sans text-lg font-semibold leading-snug text-foreground',
+          'font-display text-2xl font-semibold leading-tight tracking-[-0.015em] text-foreground',
           variant === 'emphasis' && 'text-xl',
         )}
       >
@@ -275,8 +275,7 @@ export function DetailField({
         className={cn(
           'text-xs text-muted-foreground',
           variant === 'emphasis' && 'text-base font-bold text-foreground/80',
-          variant === 'readable' &&
-            'text-sm font-semibold leading-5 text-primary',
+          variant === 'readable' && 'text-sm',
           variant === 'summary' && 'text-sm',
           labelClassName,
         )}
@@ -287,9 +286,8 @@ export function DetailField({
         className={cn(
           'text-sm font-medium leading-6',
           variant === 'emphasis' && 'text-lg font-semibold leading-7',
-          variant === 'readable' &&
-            'text-base font-semibold leading-6 text-foreground',
-          variant === 'summary' && 'font-normal',
+          variant === 'readable' && 'text-base font-normal text-foreground',
+          variant === 'summary' && 'text-base font-normal',
           multiline && 'whitespace-pre-line',
           valueClassName,
         )}
@@ -355,7 +353,6 @@ export function DetailSummaryField({
   return (
     <DetailDisplayField
       className={className}
-      divided
       multiline={multiline}
       valueWeight="normal"
       variant="summary"
@@ -371,7 +368,7 @@ export function DetailSummaryGrid({
   return (
     <div
       className={cn(
-        'grid items-start gap-x-6 gap-y-3 text-sm sm:grid-cols-2',
+        'grid grid-cols-2 items-start gap-x-6 gap-y-5 text-sm',
         className,
       )}
       {...props}

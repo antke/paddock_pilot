@@ -1,9 +1,9 @@
 import { Link } from '@tanstack/react-router'
+import { SeeAllLink } from './SeeAllLink'
 import { HorseAvatar } from '#/components/horses/HorseAvatar'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT } from '#/i18n/LocaleProvider'
 import { ButtonLink } from '#/components/ui/button'
-import { StableHorseListShortcut } from '#/components/dashboard/HorseListShortcut'
 import { HorseCard, HorseCardLink } from '#/components/horses/HorseCard'
 import { NoHorsesPrompt } from '#/components/horses/NoHorsesPrompt'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
@@ -48,16 +48,17 @@ export function HorseRosterCard({
       actions={
         <>
           {data.horses.length > 0 && (
-            <StableHorseListShortcut
-              stableId={data.stable._id}
-              count={data.horses.length}
-            />
+            <SeeAllLink
+              to="/stables/$stableId/horses"
+              params={{ stableId: data.stable._id }}
+            >
+              {t('dashboard.allHorses')} ({data.horses.length})
+            </SeeAllLink>
           )}
-          {!compact && data.horses.length > 0 && (
+          {data.horses.length > 0 && (
             <ButtonLink
               to="/stables/$stableId/horses/create"
               params={{ stableId: data.stable._id }}
-              variant="outline"
               action="create"
               size="sm"
               className="min-h-11"
@@ -70,7 +71,7 @@ export function HorseRosterCard({
     >
       {data.horses.length > 0 ? (
         compact ? (
-          <ul className="min-w-0 divide-y divide-border-subtle">
+          <ul className="grid min-w-0 gap-1">
             {horses.map((horse) => (
               <li key={horse._id}>
                 <CompactHorseRosterItem data={data} horse={horse} />
@@ -124,7 +125,7 @@ function HorseRosterItem({
   return (
     <HorseCardLink
       horse={horse}
-      className={compact ? dashboardMobileRecordClassName : undefined}
+      className={cn(compact && dashboardMobileRecordClassName)}
       listDensity={compact ? 'compact' : undefined}
       stableId={data.stable._id}
       horseId={horse._id}

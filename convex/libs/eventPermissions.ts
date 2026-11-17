@@ -1,6 +1,7 @@
 import type { SharingRule } from '../../shared/sharing/rules'
 import { horseEvent } from './horseEventHistory'
 import { hasSharedSchedule } from './recordSharing'
+import { calendarMember } from './activitySharing'
 import { ConvexError } from 'convex/values'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
@@ -86,10 +87,43 @@ export async function eventParticipantAccess(ctx: Ctx, event: Doc<'events'>) {
   return { user, rows, participants }
 }
 
+/**
+ * The organizer runs the shared schedule and per-horse event notes: the creator
+ * while still in the event's stable (or, for a personal event, still managing one
+ * of its horses), and the stable owner for stable events.
+ */
+export async function isEventOrganizer(
+  ctx: Ctx,
+  event: Doc<'events'>,
+  userId: Id<'users'>,
+) {
+  if (event.stableId) {
+    const role = await calendarMember(ctx, event.stableId, userId)
+    return role === 'owner' || (role !== null && event.createdBy === userId)
+  }
+  if (event.createdBy !== userId) return false
+  if (!event.horseIds.length) return true
+  for (const id of event.horseIds) {
+    const horse = await ctx.db.get(id)
+    if (horse && (await getHorseAccess(ctx, horse, userId)).canEditPersonalRecords)
+      return true
+  }
+  return false
+}
+
 export async function eventReadAccess(ctx: Ctx, event: Doc<'events'>) {
   const { user, participants } = await eventParticipantAccess(ctx, event)
+  if (await isEventOrganizer(ctx, event, user._id))
+    return {
+      userId: user._id,
+      role: 'owner' as const,
+      full: true,
+      stableMember: Boolean(event.stableId),
+      organizer: true,
+    }
   if (participants.length)
     return {
+      organizer: false,
       userId: user._id,
       role: participants.every((p) => p.edit)
         ? ('owner' as const)
@@ -98,13 +132,6 @@ export async function eventReadAccess(ctx: Ctx, event: Doc<'events'>) {
         participants.some((p) => p.horse._id === id && p.readDetails),
       ),
       stableMember: participants.some((p) => p.stableMember),
-    }
-  if (!event.horseIds.length && event.createdBy === user._id && !event.stableId)
-    return {
-      userId: user._id,
-      role: 'owner' as const,
-      full: true,
-      stableMember: false,
     }
   throw new ConvexError('Not authorized to view this event')
 }
@@ -167,19 +194,19 @@ export async function visibleEvent(
   return {
     ...(access.full ? event : schedulingEvent(event)),
     audienceRules,
-    horseIds: event.horseIds.filter((id) =>
-      participants.some((p) => p.horse._id === id),
-    ),
+    horseIds: access.organizer
+      ? event.horseIds
+      : event.horseIds.filter((id) =>
+          participants.some((p) => p.horse._id === id),
+        ),
   }
 }
 
 export async function canEditEvent(ctx: Ctx, event: Doc<'events'>) {
   const { user, participants } = await eventParticipantAccess(ctx, event)
-  if (!event.horseIds.length)
-    return (
-      participants.some((p) => p.personal && p.edit) ||
-      (!participants.length && event.createdBy === user._id && !event.stableId)
-    )
+  if (await isEventOrganizer(ctx, event, user._id)) return true
+  // Owners of invited, declined or departed horses never inherit the event.
+  if (!event.horseIds.length) return false
   // A participant may manage their own sharing/result, never the whole group.
   for (const id of event.horseIds) {
     const participant = participants.find((p) => p.horse._id === id && p.edit)

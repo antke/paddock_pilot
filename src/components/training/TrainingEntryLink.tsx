@@ -2,7 +2,6 @@ import { HorseColourDot } from '#/components/horses/HorseCalendarIdentity'
 import { calendarCompactEventChipClassName } from '#/components/events/EventCalendarChrome'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { cn } from '#/lib/utils'
-import { dashboardMobileRecordClassName } from '#/components/dashboard/dashboardChrome'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { CalendarEventChipLink } from '#/components/events/EventCalendar'
 import {
@@ -13,11 +12,7 @@ import { TrainingEntryPreview } from './TrainingEntryPreview'
 import { TrainingCompletionControl } from './TrainingCompletionControl'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import { formatShortDateKey } from '#/lib/dateDisplay'
-import {
-  TrainingActivityDot,
-  TrainingActivityTag,
-  TrainingStatusBadge,
-} from './TrainingBadges'
+import { TrainingActivityTag, TrainingStatusBadge } from './TrainingBadges'
 import { formatTrainingTimeRange } from './trainingCalendarData'
 import type { TrainingEntry } from './trainingCalendarData'
 
@@ -32,7 +27,7 @@ export function TrainingEntryLink({
   stableId?: string
   sessionNavigation?: boolean
   showHorseName?: boolean
-  variant?: 'record' | 'month' | 'week' | 'summary'
+  variant?: 'record' | 'month' | 'week'
 }) {
   const t = useT()
   const { locale } = useLocale()
@@ -97,36 +92,13 @@ export function TrainingEntryLink({
             className={cn(
               variant === 'month'
                 ? calendarCompactEventChipClassName()
-                : variant === 'summary'
-                  ? cn(
-                      'app-record min-h-16 min-w-0 border-0 bg-transparent px-0 py-3 text-sm leading-5 [overflow-wrap:anywhere]',
-                      dashboardMobileRecordClassName,
-                    )
-                  : 'min-w-0 content-start gap-2 p-2 text-sm leading-5 [overflow-wrap:anywhere]',
+                : 'min-w-0 content-start px-2 py-1.5 text-sm leading-5 [overflow-wrap:anywhere]',
+              // List rows stay open on their section; only calendar grids box entries.
+              variant === 'record' &&
+                'border-transparent bg-transparent hover:border-transparent',
             )}
           >
-            {variant === 'summary' ? (
-              <span className="grid min-w-0 gap-1">
-                <span
-                  className={cn(
-                    'flex min-w-0 items-start justify-between gap-3',
-                    canComplete && 'min-h-8 pr-11',
-                  )}
-                >
-                  <span className="min-w-0 font-semibold">
-                    {getHorseDisplayName(horse)}
-                  </span>
-                  {showStatus && <TrainingStatusBadge status={status} />}
-                </span>
-                <span className="text-muted-foreground">
-                  {details.activities
-                    .map((activity) => t(`training.activities.${activity}`))
-                    .join(' · ') || occurrence.event.title}
-                  {timing ? ` · ${timing}` : ''}
-                </span>
-                <span className="sr-only">{occurrence.event.title}</span>
-              </span>
-            ) : variant === 'month' ? (
+            {variant === 'month' ? (
               <>
                 <HorseColourDot horse={horse} />
                 <span
@@ -137,80 +109,49 @@ export function TrainingEntryLink({
                 </span>
                 <TrainingStatusBadge status={status} iconOnly />
               </>
-            ) : variant === 'week' ? (
-              <span className="grid min-w-0 gap-2">
+            ) : (
+              // One flat item: time and status, then the horse-coloured title.
+              <span className="grid min-w-0 gap-0.5">
                 <span
                   className={cn(
-                    'flex min-h-8 min-w-0 items-center gap-1',
-                    canComplete && 'pr-10',
+                    'flex min-h-8 min-w-0 flex-wrap items-center gap-x-2 text-xs leading-5 text-muted-foreground',
+                    canComplete && 'pr-11',
                   )}
                 >
-                  <TrainingActivityDot activity={details.activities[0]} />
-                  <span className="min-w-0 truncate text-xs text-muted-foreground">
-                    {details.activities
-                      .map((activity) => t(`training.activities.${activity}`))
-                      .join(' · ')}
-                  </span>
-                </span>
-                <span
-                  data-slot="training-entry-title"
-                  className="line-clamp-2 min-h-10 text-sm font-bold leading-5 text-foreground"
-                >
-                  <HorseColourDot horse={horse} className="mr-1.5" />
-                  {title}
-                </span>
-                <span className="grid min-w-0 gap-1 text-xs leading-5 text-muted-foreground">
                   <span
                     data-slot="training-entry-timing"
                     className="whitespace-nowrap tabular-nums"
                   >
                     {timing}
                   </span>
-                  {details.rider && (
-                    <span
-                      data-slot="training-entry-rider"
-                      className="line-clamp-2"
-                    >
-                      {t('training.rider', { name: details.rider })}
-                    </span>
+                  {showStatus && (
+                    <TrainingStatusBadge status={status} iconOnly />
                   )}
-                  {showStatus && <TrainingStatusBadge status={status} />}
-                </span>
-              </span>
-            ) : (
-              <span className="grid min-w-0 gap-2">
-                <span
-                  className={cn(
-                    'flex min-w-0 flex-wrap items-start justify-between gap-2',
-                    canComplete && 'min-h-8 pr-10',
-                  )}
-                >
-                  <span className="flex min-w-0 flex-wrap gap-1.5">
-                    {details.activities.map((activity) => (
-                      <TrainingActivityTag key={activity} activity={activity} />
-                    ))}
-                  </span>
-                  {showStatus && <TrainingStatusBadge status={status} />}
-                </span>
-                <span
-                  data-slot="training-entry-title"
-                  className="text-sm font-bold leading-5 text-foreground"
-                >
-                  <HorseColourDot horse={horse} className="mr-1.5" />
-                  {title}
-                </span>
-                <span className="grid gap-0.5 text-xs leading-5 text-muted-foreground">
-                  {details.rider && (
+                  {variant === 'record' && details.rider && (
                     <span data-slot="training-entry-rider">
                       {t('training.rider', { name: details.rider })}
                     </span>
                   )}
-                  <span
-                    data-slot="training-entry-timing"
-                    className="tabular-nums"
-                  >
-                    {timing}
-                  </span>
+                </span>
+                <span
+                  data-slot="training-entry-title"
+                  className={cn(
+                    'text-sm font-medium leading-5 text-foreground',
+                    // Narrow week columns get a third line so titles end on a word.
+                    variant === 'week' ? 'line-clamp-3' : 'line-clamp-2',
+                  )}
+                >
+                  <HorseColourDot horse={horse} className="mr-1.5" />
+                  {/* Only the horse is bold, so a column of entries does not read as one solid block. */}
+                  {showHorseName && (
+                    <>
+                      <span className="font-semibold">
+                        {getHorseDisplayName(horse)}
+                      </span>
+                      {' · '}
+                    </>
+                  )}
+                  {occurrence.event.title}
                 </span>
               </span>
             )}

@@ -26,8 +26,8 @@ type WorkspaceNavigationLabelKey =
   | 'navigation.settings'
   | 'navigation.manageStables'
   | 'navigation.stables'
-  | 'navigationShell.stableOverview'
-  | 'navigationShell.stableHorses'
+  | 'navigationShell.allStables'
+  | 'navigationShell.stableDirectory'
   | 'dashboard.contacts'
   | 'navigationShell.personalContacts'
 
@@ -35,27 +35,31 @@ export type WorkspaceNavigationItem = {
   id: string
   href: string
   labelKey: WorkspaceNavigationLabelKey
+  /** A stable's own name, shown instead of the translated label. */
+  label?: string
   icon: WorkspaceNavigationIcon
   active: boolean
+  /** A stable's own pages, disclosed under its row. */
+  children?: Array<WorkspaceNavigationItem>
+  /** The stable the route is in, whose pages start disclosed. */
+  current?: boolean
 }
 
 export type WorkspaceNavigationGroup = {
-  id: 'primary' | 'records' | 'management'
+  id: 'primary' | 'management'
   labelKey?:
-    | 'navigationShell.dailyWork'
-    | 'navigationShell.stableRecords'
-    | 'navigationShell.personalRecords'
     | 'navigationShell.stableManagement'
     | 'navigationShell.workspace'
+    | 'navigation.stables'
   items: Array<WorkspaceNavigationItem>
 }
 
 export type WorkspaceNavigationOptions = {
   pathname: string
-  /** The stable whose access information is being supplied, if available. */
-  stableId?: string
-  canManageStable?: boolean
-  currentTab?: string
+  /** Every stable is listed by name, so each one is one tap from anywhere. */
+  stables?: ReadonlyArray<{ _id: string; name: string; canManage?: boolean }>
+  /** Set by a personal training page, whose URL sits under /events. */
+  section?: 'training'
 }
 
 function normalizedPath(pathname: string) {
@@ -76,13 +80,11 @@ export function stableIdFromPath(pathname: string): string | undefined {
 
 export function getWorkspaceNavigation({
   pathname,
-  stableId,
-  canManageStable = false,
-  currentTab,
+  stables = [],
+  section,
 }: WorkspaceNavigationOptions): Array<WorkspaceNavigationGroup> {
   const path = normalizedPath(pathname)
   const routeStableId = stableIdFromPath(path)
-  const base = routeStableId ? `/stables/${routeStableId}` : ''
   const home = '/'
   const horses = '/horses'
   const contacts = '/horses/contacts'
@@ -93,138 +95,108 @@ export function getWorkspaceNavigation({
     icon: WorkspaceNavigationIcon,
     active = isWithin(path, href),
   ): WorkspaceNavigationItem => ({ id, href, labelKey, icon, active })
-  const primary: WorkspaceNavigationGroup = {
-    id: 'primary',
-    labelKey: 'navigationShell.dailyWork',
-    items: [
-      item('home', home, 'navigation.home', 'home', path === home),
-      item(
-        'events',
-        '/events',
-        'navigation.events',
-        'events',
-        isWithin(path, '/events') ||
-          Boolean(base && isWithin(path, `${base}/events`)),
-      ),
-      item(
-        'training',
-        '/training',
-        'navigation.training',
-        'training',
-        isWithin(path, '/training') ||
-          Boolean(base && isWithin(path, `${base}/training`)),
-      ),
-      item(
-        'horses',
-        horses,
-        'navigation.horses',
-        'horses',
-        isWithin(path, horses) && !isWithin(path, contacts),
-      ),
-    ],
-  }
-
-  if (!routeStableId) {
-    return [
-      primary,
-      {
-        id: 'records',
-        labelKey: 'navigationShell.personalRecords',
-        items: [
-          item(
-            'contacts',
-            '/horses/contacts',
-            'navigationShell.personalContacts',
-            'contacts',
-          ),
-        ],
-      },
-      {
-        id: 'management',
-        items: [
-          item('manage-stables', '/stables', 'navigation.stables', 'stable'),
-        ],
-      },
-    ]
-  }
-
-  const directory = `${base}/stable`
-  // The directory route validates unknown tabs back to its Contacts default.
-  const tab = ['yard', 'people'].includes(currentTab ?? '')
-    ? currentTab
-    : 'contacts'
-  const directoryActive = path === directory
-  const management: Array<WorkspaceNavigationItem> = [
-    item(
-      'stable-overview',
-      base,
-      'navigationShell.stableOverview',
-      'home',
-      path === base,
-    ),
-    item(
-      'stable',
-      `${directory}?tab=yard`,
-      'navigation.stable',
-      'stable',
-      (directoryActive && tab === 'yard') || path === `${base}/edit`,
-    ),
-    item(
-      'people',
-      `${directory}?tab=people`,
-      'navigation.people',
-      'people',
-      (directoryActive && tab === 'people') ||
-        isWithin(path, `${base}/members`),
-    ),
-    item('welcome', `${base}/welcome`, 'navigation.gettingStarted', 'welcome'),
-  ]
-  if (canManageStable && (!stableId || stableId === routeStableId)) {
-    management.push(
-      item('settings', `${base}/settings`, 'navigation.settings', 'settings'),
+  const inStable = (page: string) =>
+    Boolean(
+      routeStableId && isWithin(path, `/stables/${routeStableId}/${page}`),
     )
+  const stableItem = (stable: {
+    _id: string
+    name?: string
+    canManage?: boolean
+  }): WorkspaceNavigationItem => {
+    const base = `/stables/${stable._id}`
+    const directory = `${base}/stable`
+    // Contacts, People, Yard, Documents and Getting started are tabs of one page.
+    const directoryActive =
+      path === directory ||
+      path === `${base}/edit` ||
+      ['members', 'documents', 'welcome'].some((page) =>
+        isWithin(path, `${base}/${page}`),
+      )
+    const children = [
+      item('stable-horses', `${base}/horses`, 'navigation.horses', 'horses'),
+      item('care', `${base}/reminders`, 'navigation.care', 'care'),
+      item(
+        'stable',
+        directory,
+        'navigationShell.stableDirectory',
+        'people',
+        directoryActive,
+      ),
+      item('analysis', `${base}/analysis`, 'navigation.analysis', 'analysis'),
+    ]
+    if (stable.canManage)
+      children.push(
+        item('settings', `${base}/settings`, 'navigation.settings', 'settings'),
+      )
+    return {
+      ...item(
+        `stable-${stable._id}`,
+        base,
+        'navigation.stable',
+        'stable',
+        path === base,
+      ),
+      label: stable.name,
+      children,
+      current: stable._id === routeStableId,
+    }
   }
+  const listed =
+    routeStableId && !stables.some((stable) => stable._id === routeStableId)
+      ? // The current stable stays reachable while the list loads.
+        [...stables, { _id: routeStableId }]
+      : stables
 
   return [
-    primary,
     {
-      id: 'records',
-      labelKey: 'navigationShell.stableRecords',
+      // Daily pages and personal contacts read as one uncaptioned list.
+      id: 'primary',
       items: [
+        item('home', home, 'navigation.home', 'home', path === home),
         item(
-          'stable-horses',
-          `${base}/horses`,
-          'navigationShell.stableHorses',
+          'events',
+          '/events',
+          'navigation.events',
+          'events',
+          (isWithin(path, '/events') || inStable('events')) &&
+            section !== 'training',
+        ),
+        item(
+          'training',
+          '/training',
+          'navigation.training',
+          'training',
+          isWithin(path, '/training') ||
+            inStable('training') ||
+            section === 'training',
+        ),
+        item(
           'horses',
-        ),
-        item('care', `${base}/reminders`, 'navigation.care', 'care'),
-        item(
-          'contacts',
-          `${directory}?tab=contacts`,
-          'dashboard.contacts',
-          'contacts',
-          directoryActive && tab === 'contacts',
+          horses,
+          'navigation.horses',
+          'horses',
+          isWithin(path, horses) && !isWithin(path, contacts),
         ),
         item(
-          'documents',
-          `${base}/documents`,
-          'navigation.documents',
-          'documents',
+          'contacts',
+          contacts,
+          'navigationShell.personalContacts',
+          'contacts',
         ),
-        item('analysis', `${base}/analysis`, 'navigation.analysis', 'analysis'),
       ],
     },
     {
       id: 'management',
-      labelKey: 'navigationShell.stableManagement',
+      labelKey: 'navigation.stables',
       items: [
-        ...management,
+        ...listed.map(stableItem),
         item(
           'manage-stables',
           '/stables',
-          'navigation.stables',
+          'navigationShell.allStables',
           'stable',
-          false,
+          isWithin(path, '/stables') && !routeStableId,
         ),
       ],
     },

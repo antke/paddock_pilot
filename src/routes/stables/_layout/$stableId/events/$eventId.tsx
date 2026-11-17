@@ -59,7 +59,7 @@ function OriginalDetail() {
     )
 
   return (
-    <DashboardPage>
+    <DashboardPage width="narrow">
       <EventDetail
         stableId={stableId}
         event={data.event}

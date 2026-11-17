@@ -59,8 +59,7 @@ export const documents = {
   filteredEmpty: 'Żaden dokument nie pasuje do tych filtrów.',
   empty: 'Nie dodano jeszcze dokumentów.',
   search: 'Szukaj dokumentów',
-  searchPlaceholder:
-    'Szukaj po nazwie pliku, notatkach, typie lub powiązanych wpisach',
+  searchPlaceholder: 'Szukaj dokumentów',
   scope: 'Zakres',
   allDocuments: 'Wszystkie dokumenty',
   stableWide: 'Cała stajnia',

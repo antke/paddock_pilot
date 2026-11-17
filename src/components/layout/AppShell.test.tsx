@@ -234,7 +234,7 @@ describe('application shell access', () => {
       'Horses',
       'Care',
       'Events',
-      'Training log',
+      'Training',
       'Stable',
     ])
       expect(within(nav).getByRole('link', { name })).toBeTruthy()

@@ -9,7 +9,7 @@ import { cn } from '#/lib/utils'
 
 const CHIP_ROW_TRANSITION_MS = 180 // Keep in sync with app-height-collapse duration.
 const listFilterChipClassName =
-  'max-w-full min-w-0 max-md:py-0 max-md:pr-0 pointer-coarse:py-0 pointer-coarse:pr-0 animate-in duration-200 fade-in-0 slide-in-from-top-1 zoom-in-95 motion-reduce:animate-none'
+  'max-w-full min-w-0 animate-in duration-200 fade-in-0 slide-in-from-top-1 zoom-in-95 motion-reduce:animate-none'
 const listFilterChipLabelClassName =
   'min-w-0 max-w-[45%] shrink-0 truncate font-semibold text-muted-foreground'
 const listFilterChipValueClassName = 'min-w-0 max-w-48 truncate font-medium'
@@ -144,6 +144,8 @@ export function ListFilterChips<TFacetId extends string = string>({
             type="button"
             variant="subtle"
             size="xs"
+            // Chip-height on phones too; the overlay keeps the 44px touch target.
+            className="max-md:min-h-7 pointer-coarse:min-h-7 after:absolute after:-inset-y-2 after:inset-x-0 after:content-['']"
             disabled={!isFiltering}
             onClick={() => {
               if (isFiltering) onReset()

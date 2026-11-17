@@ -224,15 +224,14 @@ export const en = {
     shared: 'Shared across every stable you own or join.',
     preferredName: 'Preferred name',
     phone: 'Phone number',
-    optional: 'Optional',
-    imageLabel: 'Profile image (optional)',
+    imageLabel: 'Profile image',
     imageUpload: 'Add a profile image',
     imageDescription:
       'A photo helps other stable members recognise you. Image files only, up to 5 MB.',
-    imageHelp: 'Choose an image up to 5 MB.',
     nameRequired: 'Add the name people should use.',
     imageRequired: 'Choose an image file.',
     imageTooLarge: 'Choose an image no larger than 5 MB.',
+    imageHint: 'JPG, PNG or WEBP, up to 5 MB',
   },
   upload: {
     selected: 'Selected · not saved yet',
@@ -247,6 +246,8 @@ export const en = {
     dropFile: 'Drop a file here or browse',
     imageTypes: 'JPG, PNG or WEBP',
     replaceImage: 'Replace photo',
+    addPhoto: 'Add photo',
+    changePhoto: 'Change photo',
     currentImage: 'Current photo. Choose or drop a new image to replace it.',
     chooseFile: 'Choose a file from your device',
     image: 'Image',
@@ -298,7 +299,7 @@ export const en = {
     horses: 'Horses',
     care: 'Care',
     events: 'Events',
-    training: 'Training log',
+    training: 'Training',
     documents: 'Documents',
     analysis: 'Analysis',
     signIn: 'Sign in',
@@ -338,7 +339,6 @@ export const en = {
     signInDescription:
       'Your profile follows you across the stables you own and join.',
     title: 'Your profile',
-    details: 'Profile details',
     detailsDescription:
       'How other members of your stables see and contact you.',
     save: 'Save profile',
@@ -349,7 +349,6 @@ export const en = {
   },
   common: {
     aboutField: 'About {{label}}',
-    requiredFields: 'Fields marked * are required.',
     unsavedTitle: 'Leave without saving?',
     unsavedHelp:
       'Your changes have not been saved. Stay here to finish or leave and discard them.',
@@ -357,6 +356,7 @@ export const en = {
     close: 'Close',
     keepEditing: 'Keep editing',
     reset: 'Reset',
+    discardChanges: 'Discard changes',
     errorToast: 'Oops! Something went wrong.',
     validationToast: 'Check the form',
     tryAgain: 'Please try again.',

@@ -39,21 +39,25 @@ describe('focused horse editor entry', () => {
 
   it('keeps optional sections collapsed for the general editor', () => {
     renderEditor()
-    for (const name of ['Care', 'Nutrition'])
+    for (const name of ['Breed', 'Identification', 'Care', 'Nutrition'])
       expect(sectionToggle(name).getAttribute('aria-expanded')).toBe('false')
-    // Profile & health was folded into Horse details and Care & records.
+    // Profile & health was folded into Horse details and the optional sections.
     expect(screen.queryByRole('button', { name: /^Profile/ })).toBeNull()
   })
 
   it.each([
-    { section: 'identification', expanded: 'Care', focused: 'Passport number' },
+    {
+      section: 'identification',
+      expanded: 'Identification',
+      focused: 'Passport number',
+    },
     { section: 'care', expanded: 'Care', focused: 'Vet name' },
     { section: 'feeding', expanded: 'Nutrition', focused: 'Feeding routine' },
   ] as const)(
     'opens $expanded and focuses $focused for $section',
     async ({ section, expanded, focused }) => {
       renderEditor(section)
-      for (const name of ['Care', 'Nutrition'])
+      for (const name of ['Identification', 'Care', 'Nutrition'])
         expect(sectionToggle(name).getAttribute('aria-expanded')).toBe(
           String(name === expanded),
         )

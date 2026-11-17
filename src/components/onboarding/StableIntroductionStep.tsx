@@ -1,4 +1,5 @@
 import { StableIcon } from '#/components/icons/domain-icons'
+import { OnboardingStepActions } from './OnboardingLayout'
 import { useT } from '#/i18n/LocaleProvider'
 
 import type { Doc } from 'convex/_generated/dataModel'
@@ -56,11 +57,13 @@ export function StableIntroductionStep({
         />
       )}
 
-      <DashboardActions align="end">
-        <Button type="button" onClick={onContinue}>
-          {t('onboarding.continue')}
-        </Button>
-      </DashboardActions>
+      <OnboardingStepActions>
+        <DashboardActions align="end">
+          <Button type="button" onClick={onContinue}>
+            {t('onboarding.continue')}
+          </Button>
+        </DashboardActions>
+      </OnboardingStepActions>
     </div>
   )
 }

@@ -10,6 +10,7 @@ import {
 } from './DashboardItemCard'
 import { DashboardSectionCard } from './DashboardSectionCard'
 import { DashboardEmptyState } from './DashboardEmptyState'
+import { CheckIcon } from '@phosphor-icons/react'
 import { Button } from '#/components/ui/button'
 import { ActionFeedback } from '#/components/ui/action-feedback'
 import { formatEventDateTime } from '#/components/events/eventDisplay'
@@ -190,8 +191,10 @@ export function PendingHorseInvitationList({
                   <DashboardItemRecordCard
                     chrome="flat"
                     interactive={false}
-                    actionsPlacement="footer"
-                    actionsClassName="ml-auto"
+                    // Compact row decisions: beside the text on wider screens, side by side under it on phones.
+                    actionColumnClassName="sm:self-center"
+                    // Main decision first so the boxed Approve starts flush with the title on phones.
+                    actionsClassName="gap-2 max-sm:gap-2"
                     footer={
                       state?.failed ? (
                         <p
@@ -212,6 +215,33 @@ export function PendingHorseInvitationList({
                         <Button
                           type="button"
                           variant="outline"
+                          size="sm"
+                          disabled={Boolean(state?.pending)}
+                          aria-busy={state?.pending === 'approve' || undefined}
+                          aria-label={t(
+                            state?.pending === 'approve'
+                              ? 'events.approvingInvitation'
+                              : 'events.approveInvitation',
+                            target,
+                          )}
+                          aria-describedby={state?.failed ? errorId : undefined}
+                          onClick={() => void decide(item, 'approve')}
+                        >
+                          <ActionFeedback
+                            pending={state?.pending === 'approve'}
+                            failed={state?.failed === 'approve'}
+                            failedLabel={t('events.approve')}
+                            label={t('events.approve')}
+                            icon={<CheckIcon weight="bold" aria-hidden />}
+                            pendingLabel={t('events.approving')}
+                          />
+                        </Button>
+                        {/* Neutral outline: a clear second choice beside Approve, without its stronger edge or tick. */}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="border-border-subtle dark:border-border-subtle"
                           disabled={Boolean(state?.pending)}
                           aria-busy={state?.pending === 'decline' || undefined}
                           aria-label={t(
@@ -231,27 +261,6 @@ export function PendingHorseInvitationList({
                             pendingLabel={t('events.declining')}
                           />
                         </Button>
-                        <Button
-                          type="button"
-                          disabled={Boolean(state?.pending)}
-                          aria-busy={state?.pending === 'approve' || undefined}
-                          aria-label={t(
-                            state?.pending === 'approve'
-                              ? 'events.approvingInvitation'
-                              : 'events.approveInvitation',
-                            target,
-                          )}
-                          aria-describedby={state?.failed ? errorId : undefined}
-                          onClick={() => void decide(item, 'approve')}
-                        >
-                          <ActionFeedback
-                            pending={state?.pending === 'approve'}
-                            failed={state?.failed === 'approve'}
-                            failedLabel={t('events.approve')}
-                            label={t('events.approve')}
-                            pendingLabel={t('events.approving')}
-                          />
-                        </Button>
                       </>
                     }
                   >
@@ -269,6 +278,7 @@ export function PendingHorseInvitationList({
                         )
                       }
                       titleSize="dense"
+                      className="gap-1"
                       meta={
                         event && (
                           <span>

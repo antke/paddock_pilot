@@ -3,8 +3,7 @@ import { FilteredDashboardItemList } from '#/components/list-filtering/FilteredD
 import { useListFiltering } from '#/components/list-filtering/useListFiltering'
 import { HorseCard, HorseCardLink } from './HorseCard'
 import type { HorseListDensity } from './HorseCard'
-import { Switch } from '#/components/ui/switch'
-import { cn } from '#/lib/utils'
+import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
 import { createHorseListFilterConfig } from './horseListFilters'
 import { NoHorsesPrompt } from './NoHorsesPrompt'
 import type { api } from 'convex/_generated/api'
@@ -25,12 +24,14 @@ export type HorseListHorse = Omit<
   'canRead'
 > & { canRead?: boolean }
 
-function HorseListDetails({ horse }: { horse: HorseListHorse }) {
-  const t = useT()
+/** Detailed-row facts; HorseCard merges them into its one muted fact line. */
+function horseListDetails(horse: HorseListHorse, t: ReturnType<typeof useT>) {
+  const age = calculateHorseAge(horse.dateOfBirth) ?? horse.age
   const fields = [
     {
       label: t('horseDetail.age'),
-      value: calculateHorseAge(horse.dateOfBirth) ?? horse.age,
+      value:
+        typeof age === 'number' ? t('horseForm.years', { count: age }) : age,
     },
     {
       label: t('horseDetail.sex'),
@@ -45,16 +46,13 @@ function HorseListDetails({ horse }: { horse: HorseListHorse }) {
     },
   ].filter(({ value }) => value !== undefined && value !== '')
 
-  return (
-    <dl className="grid min-w-0 grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4 lg:grid-cols-2">
-      {fields.map(({ label, value }) => (
-        <div key={label} className="min-w-0 space-y-1 wrap-anywhere">
-          <dt className="text-sm leading-5 text-muted-foreground">{label}</dt>
-          <dd className="text-base leading-6 text-foreground">{value}</dd>
-        </div>
-      ))}
-    </dl>
-  )
+  // Labels stay for screen readers.
+  return fields.map(({ label, value }) => (
+    <span key={label}>
+      <span className="sr-only">{label}: </span>
+      {value}
+    </span>
+  ))
 }
 
 function getMatchedIdentifier(
@@ -119,39 +117,18 @@ export function HorseList({ horses, stableId }: Props) {
       filtering={filtering}
       getItemKey={(item) => item._id}
       gap="loose"
-      listActions={
+      toolbarEnd={
         horses.length > 0 && (
-          <div
-            role="group"
+          <ChoiceButtonGroup
+            layout="segmented"
             aria-label={t('horseList.rowDisplay')}
-            className="flex min-h-11 items-center justify-end gap-3 text-sm"
-          >
-            <span
-              className={cn(
-                density === 'compact'
-                  ? 'font-semibold text-foreground'
-                  : 'text-muted-foreground',
-              )}
-            >
-              {t('horseList.compact')}
-            </span>
-            <Switch
-              aria-label={t('horseList.detailedRows')}
-              checked={density === 'detailed'}
-              onCheckedChange={(checked) =>
-                changeDensity(checked ? 'detailed' : 'compact')
-              }
-            />
-            <span
-              className={cn(
-                density === 'detailed'
-                  ? 'font-semibold text-foreground'
-                  : 'text-muted-foreground',
-              )}
-            >
-              {t('horseList.detailed')}
-            </span>
-          </div>
+            value={density}
+            options={[
+              { value: 'compact', label: t('horseList.compact') },
+              { value: 'detailed', label: t('horseList.detailed') },
+            ]}
+            onValueChange={changeDensity}
+          />
         )
       }
       emptyMessage={t('horseList.none')}
@@ -187,9 +164,7 @@ export function HorseList({ horses, stableId }: Props) {
             horseId={horse._id}
             listDensity={density}
             details={
-              density === 'detailed' ? (
-                <HorseListDetails horse={horse} />
-              ) : undefined
+              density === 'detailed' ? horseListDetails(horse, t) : undefined
             }
             meta={[
               horse.discipline ? (

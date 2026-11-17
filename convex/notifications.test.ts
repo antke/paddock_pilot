@@ -269,7 +269,7 @@ it('surfaces event decisions across workspaces and removes an accepted invitatio
     horseIds: [f.horseId, otherHorse],
     title: 'Vet visit',
     type: 'vet',
-    date: '2026-10-25',
+    date: '2099-10-25',
     time: '10:00',
   })
   const decision = (await f.owner.query(api.notifications.list, {})).find(

@@ -15,7 +15,7 @@ const en = {
   homeIntro: 'Appointments and care for your horses.',
   viewHorses: 'View all horses',
   intro: 'Your horses and their history, wherever they live.',
-  add: 'Add a horse',
+  add: 'Add horse',
   shared: 'Shared with me',
   owned: 'My horse',
   personal: 'Personal care',

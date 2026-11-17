@@ -1,3 +1,4 @@
+import { ArrowRightIcon } from '@phosphor-icons/react'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { useState } from 'react'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
@@ -17,6 +18,8 @@ import {
 import { Button, ButtonLink } from '#/components/ui/button'
 import { ScrollableList } from '#/components/ui/scrollable-list'
 import { getDashboardAttention } from './dashboardAttention'
+import { SeeAllLink } from './SeeAllLink'
+import { cn } from '#/lib/utils'
 
 type PriorityQueueCardProps = {
   className?: string
@@ -36,7 +39,6 @@ export function PriorityQueueCard({
   onViewReminders,
 }: PriorityQueueCardProps) {
   const t = useT()
-  const { locale } = useLocale()
 
   const [expandedStableId, setExpandedStableId] = useState<string>()
   const contextId = data.stable?._id ?? 'personal'
@@ -50,11 +52,17 @@ export function PriorityQueueCard({
     0,
     attention.reminderCount - reminders.length,
   )
+  // One or two health rows: hug the content; the rows' own inset already pads the bottom.
+  const shortHealth =
+    section === 'health' &&
+    attention.healthHorses.length > 0 &&
+    attention.healthHorses.length <= 2 &&
+    attention.missingHealthIssueCount === 0
 
   return (
     <DashboardSection
       chrome={chrome}
-      className={className}
+      className={cn(shortHealth && 'gap-1 pb-2 md:pb-2', className)}
       gap="compact"
       padding={chrome === 'cards' ? 'roomy' : 'default'}
       title={
@@ -66,7 +74,10 @@ export function PriorityQueueCard({
       }
       description={
         section === 'health'
-          ? t('dashboard.yardIssues', { count: attention.healthIssueCount })
+          ? // One horse's row already states the count; the yard total only adds information across horses.
+            attention.healthHorses.length > 1
+            ? t('dashboard.yardIssues', { count: attention.healthIssueCount })
+            : undefined
           : section === 'reminders'
             ? t('dashboard.remindersHelp')
             : t('dashboard.attentionHelp')
@@ -77,23 +88,21 @@ export function PriorityQueueCard({
       actions={
         section === 'health' || !data.stable ? undefined : onViewReminders ? (
           <Button
-            variant="link"
+            variant="outline"
             size="sm"
             className="min-h-11"
             onClick={onViewReminders}
           >
             {t('dashboard.viewReminders')}
+            <ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
           </Button>
         ) : (
-          <ButtonLink
+          <SeeAllLink
             to="/stables/$stableId/reminders"
             params={{ stableId: data.stable?._id ?? '' }}
-            variant="link"
-            size="sm"
-            className="min-h-11"
           >
             {t('dashboard.viewReminders')}
-          </ButtonLink>
+          </SeeAllLink>
         )
       }
     >
@@ -127,6 +136,7 @@ export function PriorityQueueCard({
               >
                 <DashboardItemCardContent
                   title={horse.horseName}
+                  titleClassName="text-destructive"
                   meta={t('dashboard.issues', { count: horse.highIssueCount })}
                   density="compact"
                 />
@@ -180,51 +190,7 @@ export function PriorityQueueCard({
             )}
             <DashboardItemList gap="compact">
               {reminders.map((reminder) => (
-                <DashboardItemLinkCard
-                  key={reminder.id}
-                  to={
-                    reminder.horseId && reminder.canReadHorse !== false
-                      ? '/horses/$horseId/care'
-                      : reminder.stableId
-                        ? '/stables/$stableId/reminders'
-                        : '/horses'
-                  }
-                  params={{
-                    horseId: reminder.horseId ?? '',
-                    stableId: reminder.stableId ?? '',
-                  }}
-                  search={{ reminderId: reminder.id }}
-                  accent={reminder.overdue ? 'danger' : 'warning'}
-                  density="compact"
-                  chrome="flat"
-                >
-                  <DashboardItemCardContent
-                    title={reminder.title}
-                    meta={
-                      <>
-                        <span>
-                          {t(
-                            reminder.overdue
-                              ? 'dashboard.overdueDate'
-                              : 'dashboard.dueDate',
-                            {
-                              date: formatShortDateKey(
-                                reminder.dueDate,
-                                locale,
-                              ),
-                            },
-                          )}
-                        </span>
-                        <span>{reminder.horseName}</span>
-                        <span>
-                          {t(`careLabels.category.${reminder.category}`)}
-                        </span>
-                      </>
-                    }
-                    metaSeparator="dot"
-                    density="compact"
-                  />
-                </DashboardItemLinkCard>
+                <CareReminderLink key={reminder.id} reminder={reminder} />
               ))}
             </DashboardItemList>
           </div>
@@ -252,4 +218,56 @@ export function CareRemindersSummaryCard(
   props: Omit<PriorityQueueCardProps, 'section'>,
 ) {
   return <PriorityQueueCard {...props} section="reminders" />
+}
+
+/** One due-care preview row: title, then due date, horse and category. */
+export function CareReminderLink({
+  reminder,
+}: {
+  reminder: ReturnType<typeof getDashboardAttention>['reminders'][number]
+}) {
+  const t = useT()
+  const { locale } = useLocale()
+  return (
+    <DashboardItemLinkCard
+      to={
+        reminder.horseId && reminder.canReadHorse !== false
+          ? '/horses/$horseId/care'
+          : reminder.stableId
+            ? '/stables/$stableId/reminders'
+            : '/horses'
+      }
+      params={{
+        horseId: reminder.horseId ?? '',
+        stableId: reminder.stableId ?? '',
+      }}
+      search={{ reminderId: reminder.id }}
+      accent={reminder.overdue ? 'danger' : 'warning'}
+      density="compact"
+      chrome="flat"
+    >
+      <DashboardItemCardContent
+        titleClassName={reminder.overdue ? 'text-destructive' : undefined}
+        title={reminder.title}
+        meta={
+          <>
+            <span>
+              {t(
+                reminder.overdue
+                  ? 'dashboard.overdueDate'
+                  : 'dashboard.dueDate',
+                {
+                  date: formatShortDateKey(reminder.dueDate, locale),
+                },
+              )}
+            </span>
+            <span>{reminder.horseName}</span>
+            <span>{t(`careLabels.category.${reminder.category}`)}</span>
+          </>
+        }
+        metaSeparator="dot"
+        density="compact"
+      />
+    </DashboardItemLinkCard>
+  )
 }

@@ -43,7 +43,14 @@ export const enqueueEmail = async (
   ) {
     await ctx.db.insert('notifications', {
       userId: recipient._id,
-      kind: template.kind,
+      kind:
+        template.kind === 'event_participation_update'
+          ? `event_participation_${template.status}`
+          : template.kind,
+      detail:
+        template.kind === 'event_participation_update'
+          ? template.horseName
+          : undefined,
       eventId: 'eventId' in template ? template.eventId : undefined,
       stableId: 'stableId' in template ? template.stableId : undefined,
       stableName: 'stableName' in template ? template.stableName : undefined,

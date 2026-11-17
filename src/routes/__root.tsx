@@ -30,6 +30,14 @@ import {
 import ConvexProviderWithClerk from '../integrations/clerk/provider'
 
 import appCss from '../styles.css?url'
+import {
+  darkModePreviewCss,
+  darkStudyIds,
+} from '#/components/dark-mode-lab/darkModePalettes'
+
+// Dev-only: `?darkStudy=<id>` previews a dark-mode lab palette app-wide until `?darkStudy=off`.
+// shortcut: remove with the lab studies once a dark palette is adopted into styles.css.
+const DARK_STUDY_INIT_SCRIPT = `(function(){try{var ids=${JSON.stringify(darkStudyIds)};var p=new URLSearchParams(location.search).get('darkStudy');if(p==='off')localStorage.removeItem('darkStudy');else if(ids.indexOf(p)>=0)localStorage.setItem('darkStudy',p);var s=localStorage.getItem('darkStudy');if(ids.indexOf(s)>=0)document.documentElement.setAttribute('data-dark-study',s);}catch(e){}})();`
 
 const THEME_INIT_SCRIPT = `(function(){try{var stored=window.localStorage.getItem('theme');var mode=(stored==='light'||stored==='dark'||stored==='auto')?stored:'light';var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var resolved=mode==='auto'?(prefersDark?'dark':'light'):mode;var root=document.documentElement;root.classList.remove('light','dark');root.classList.add(resolved);if(mode==='auto'){root.removeAttribute('data-theme')}else{root.setAttribute('data-theme',mode)}root.style.colorScheme=resolved;}catch(e){}})();`
 
@@ -161,6 +169,14 @@ function LocalizedRootDocument({ children }: { children: React.ReactNode }) {
     <html lang={locale} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        {import.meta.env.DEV ? (
+          <>
+            <script
+              dangerouslySetInnerHTML={{ __html: DARK_STUDY_INIT_SCRIPT }}
+            />
+            <style>{darkModePreviewCss}</style>
+          </>
+        ) : null}
         <HeadContent />
       </head>
 

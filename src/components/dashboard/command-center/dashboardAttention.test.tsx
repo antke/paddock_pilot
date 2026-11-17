@@ -95,7 +95,7 @@ describe('dashboard attention access and counts', () => {
     const health = await screen.findByRole('heading', { name: 'Health issues' })
     const today = screen.getByRole('heading', { name: 'Events', level: 2 })
     expect(
-      today.compareDocumentPosition(health) & Node.DOCUMENT_POSITION_FOLLOWING,
+      health.compareDocumentPosition(today) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
     expect(screen.getByText('No events scheduled today.')).toBeTruthy()
     expect(
@@ -103,7 +103,7 @@ describe('dashboard attention access and counts', () => {
     ).toBeTruthy()
     expect(
       screen
-        .getByRole('link', { name: 'Add training log' })
+        .getByRole('link', { name: 'Add training session' })
         .getAttribute('href'),
     ).toBe(`/stables/${data.stable._id}/training/create?intent=record`)
     expect(screen.queryByText(/enjoy a slower day/)).toBeNull()
@@ -113,7 +113,8 @@ describe('dashboard attention access and counts', () => {
     })
     const link = links[0]
     expect(link.getAttribute('href')).toContain(`reminderId=${reminder.id}`)
-    expect(screen.getByRole('link', { name: 'Contacts' })).toBeTruthy()
+    // Contacts live in the sidebar's Yard and contacts page, not the dashboard header.
+    expect(screen.queryByRole('link', { name: 'Contacts' })).toBeNull()
   })
   it('opens high-severity horse care even when absent from the roster and exposes the complete named queue', async () => {
     const data = attentionData()
@@ -243,9 +244,7 @@ describe('separate dashboard attention sections', () => {
     expect(
       within(health).getByRole('link', { name: /Health horse 7/ }),
     ).toBeTruthy()
-    fireEvent.click(
-      within(care).getByRole('button', { name: 'View reminders' }),
-    )
+    fireEvent.click(within(care).getByRole('button', { name: 'All reminders' }))
     expect(openReminders).toHaveBeenCalledOnce()
   })
 

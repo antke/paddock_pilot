@@ -37,16 +37,14 @@ it('preserves edit headings, dirty gating and discard-to-opened-record behavior'
     screen.getByRole('heading', { name: 'Edit stable', level: 1 }),
   ).toBeTruthy()
   expect(
-    screen.getByRole('heading', { name: 'Stable details', level: 2 }),
+    screen.getByRole('heading', { name: 'Stable basics', level: 2 }),
   ).toBeTruthy()
   expect(
     screen.getByRole<HTMLButtonElement>('button', { name: 'Update stable' })
       .disabled,
   ).toBe(true)
-  expect(
-    screen.getByRole<HTMLButtonElement>('button', { name: 'Discard changes' })
-      .disabled,
-  ).toBe(true)
+  // A pristine form keeps Discard changes' space but hides the action.
+  expect(screen.queryByRole('button', { name: 'Discard changes' })).toBeNull()
   const name = screen.getByLabelText<HTMLInputElement>('Stable name', {
     exact: true,
   })

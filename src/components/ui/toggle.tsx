@@ -10,9 +10,9 @@ const toggleVariants = cva(
     variants: {
       variant: {
         default:
-          'bg-transparent text-muted-foreground hover:bg-surface-muted data-pressed:border-selection data-pressed:bg-selection-surface data-pressed:text-selection',
+          'bg-transparent text-muted-foreground hover:bg-surface-muted data-pressed:border-selection data-pressed:bg-selection data-pressed:text-selection-foreground data-pressed:hover:bg-selection data-pressed:hover:text-selection-foreground',
         outline:
-          'border-border-subtle bg-surface-elevated text-muted-foreground hover:border-selection/50 hover:bg-card data-pressed:border-selection data-pressed:bg-selection-surface data-pressed:text-selection data-pressed:hover:bg-selection-surface',
+          'border-border-subtle bg-surface-elevated text-muted-foreground hover:border-selection/50 hover:bg-card data-pressed:border-selection data-pressed:bg-selection data-pressed:text-selection-foreground data-pressed:hover:bg-selection data-pressed:hover:text-selection-foreground',
       },
       size: {
         default:

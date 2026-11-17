@@ -31,6 +31,7 @@ export type EventOccurrenceSource = {
   date: string
   endDate?: string
   recurrence?: EventRecurrence
+  occurrenceSkips?: Array<{ date: string; horseId?: string }>
 }
 
 export type EventOccurrence<TEvent extends EventOccurrenceSource> = {
@@ -80,6 +81,14 @@ function createSingleOccurrence<TEvent extends EventOccurrenceSource>(
       ...event,
       horseIds: event.horseIds?.filter((id) => horseIds.includes(id)),
     }
+  }
+  const skips = event.occurrenceSkips?.filter((skip) => skip.date === startDate)
+  if (skips?.length) {
+    if (skips.some((skip) => !skip.horseId)) return []
+    const skipped = new Set(skips.map((skip) => skip.horseId))
+    const remaining = event.horseIds?.filter((id) => !skipped.has(id))
+    if (event.horseIds?.length && !remaining?.length) return []
+    event = { ...event, horseIds: remaining }
   }
   const durationDays = getEventDurationDays(event)
   const endDate = addDaysKey(startDate, durationDays - 1)

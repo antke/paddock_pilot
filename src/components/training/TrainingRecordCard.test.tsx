@@ -75,7 +75,7 @@ describe('focused training recording', () => {
   it('saves a cleared inherited duration without restoring its previous value', async () => {
     save.mockResolvedValue(undefined)
     render(<TrainingRecordCard entry={entry()} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Add training log' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Add training record' }))
     const duration =
       screen.getByLabelText<HTMLInputElement>('Duration (minutes)')
     fireEvent.change(duration, { target: { value: '' } })
@@ -163,7 +163,7 @@ describe('focused training recording', () => {
       .mockRejectedValueOnce(new Error('offline'))
       .mockResolvedValueOnce(undefined)
     render(<TrainingRecordCard entry={entry()} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Add training log' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Add training record' }))
     expect(
       screen.getByLabelText<HTMLSelectElement>('Status for this horse and date')
         .value,
@@ -178,9 +178,8 @@ describe('focused training recording', () => {
     )
     await screen.findByText('Could not save training. Please try again.')
     expect(outcome.value).toBe('Calm transitions')
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Save training record' }),
-    )
+    // The house submit turns into Try again after a failed save, as on every form.
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
     await screen.findByText('Training record saved.')
     expect(save).toHaveBeenLastCalledWith(
       expect.objectContaining({
@@ -203,7 +202,7 @@ describe('focused training recording', () => {
 
   it('protects edited outcomes on cancellation and navigation', async () => {
     render(<TrainingRecordCard entry={entry()} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Add training log' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Add training record' }))
     const untouched = new Event('beforeunload', { cancelable: true })
     window.dispatchEvent(untouched)
     expect(untouched.defaultPrevented).toBe(false)
@@ -230,7 +229,7 @@ describe('focused training recording', () => {
   it('does not offer recording when the horse is read-only', () => {
     render(<TrainingRecordCard entry={entry(false)} />)
     expect(
-      screen.queryByRole('button', { name: 'Add training log' }),
+      screen.queryByRole('button', { name: 'Add training record' }),
     ).toBeNull()
     expect(
       screen.getByText(

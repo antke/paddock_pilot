@@ -3,6 +3,7 @@ import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
 import { ArchiveBoxIcon } from '@phosphor-icons/react'
 import { useRef, useState } from 'react'
 
+import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import {
   AlertDialog,
@@ -52,10 +53,15 @@ export function StableArchiveCard({
   }
 
   return (
+    // A quiet footer after the stable's content, not a peer of the main record.
     <DashboardSectionCard
+      surface="flat"
+      size="compact"
       title={t('stables.archive')}
       description={t('stables.archiveHelp')}
-      actions={
+      contentGap="compact"
+    >
+      <DashboardActions align="start">
         <AlertDialog
           open={open}
           onOpenChange={(nextOpen) => {
@@ -105,8 +111,7 @@ export function StableArchiveCard({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      }
-      contentGap="compact"
-    />
+      </DashboardActions>
+    </DashboardSectionCard>
   )
 }

@@ -73,6 +73,26 @@ describe('design-system conformance', () => {
     expect(violations).toEqual([])
   })
 
+  it('builds submit-and-cancel rows with FormSubmitActions', () => {
+    // A submit button followed straight away by another button is a hand-built
+    // footer: it drifts from the house order (Cancel, then submit) and alignment.
+    const handBuiltPair =
+      /type="submit"[\s\S]{0,600}?<\/Button>\s*(?:\{[^{}]*&&\s*\(?\s*)?<Button\b/
+    const owners = new Set([
+      'components/forms/FormSubmitActions.tsx',
+      // Verify beside Resend code is two actions, not a submit with Cancel.
+      'components/invitations/InvitationEmailRecovery.tsx',
+    ])
+    const violations = files
+      .map(sourcePath)
+      .filter((path) => !owners.has(path) && !/(^|\/)[a-z-]*-?lab\b/.test(path))
+      .filter((path) =>
+        handBuiltPair.test(readFileSync(resolve(sourceRoot, path), 'utf8')),
+      )
+
+    expect(violations).toEqual([])
+  })
+
   it('keeps low-level surface primitives behind their canonical owners', () => {
     const violations = files.flatMap((file) => {
       const path = sourcePath(file)

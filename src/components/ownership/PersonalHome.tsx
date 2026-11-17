@@ -162,17 +162,14 @@ export function PersonalHome() {
                       dashboard.stableIds.includes(stable._id),
                     )}
                   />
-                  {!small && (
-                    <ButtonLink
-                      to="/horses/create"
-                      action="create"
-                      variant="outline"
-                      size="sm"
-                      className="min-h-11"
-                    >
-                      {c.add}
-                    </ButtonLink>
-                  )}
+                  <ButtonLink
+                    to="/horses/create"
+                    action="create"
+                    size="sm"
+                    className="min-h-11"
+                  >
+                    {c.add}
+                  </ButtonLink>
                 </>
               )
             }

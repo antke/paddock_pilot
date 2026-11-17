@@ -62,19 +62,12 @@ const serverSnapshot = () => null
 /** One account-scoped viewing preference, shared by every mounted selector and tab.
  * Creation audiences remain drafts; only a successful save adds them to this preference.
  */
-export function useCalendarSelection(
-  initialStableId?: string,
-  legacyStorageKey?: string,
-) {
+export function useCalendarSelection(legacyStorageKey?: string) {
   const account = useContext(CalendarSelectionAccount)
   const key = calendarSelectionKey(account)
   const snapshot = useCallback(() => read(key), [key])
   const raw = useSyncExternalStore(subscribe, snapshot, serverSnapshot)
-  const selected = useMemo(
-    () =>
-      decode(raw) ?? (initialStableId ? ['mine', initialStableId] : ['mine']),
-    [raw, initialStableId],
-  )
+  const selected = useMemo(() => decode(raw) ?? ['mine'], [raw])
   useEffect(() => {
     if (decode(read(key))) return
     let previous: string[] | undefined
@@ -84,11 +77,8 @@ export function useCalendarSelection(
     } catch {
       /* Storage is optional. */
     }
-    write(
-      key,
-      previous ?? (initialStableId ? ['mine', initialStableId] : ['mine']),
-    )
-  }, [key, initialStableId, legacyStorageKey])
+    write(key, previous ?? ['mine'])
+  }, [key, legacyStorageKey])
   const setSelected = useCallback((next: string[]) => write(key, next), [key])
   const includeSavedStables = useCallback(
     (stableIds: string[]) => {

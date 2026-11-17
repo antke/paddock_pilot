@@ -185,6 +185,7 @@ function SampleDeletedHorses({
       </DashboardSection>
       <DeletedHorsesView
         key={revision}
+        surface="canvas"
         horses={horses.map((horse) => ({
           ...horse,
           canPermanentlyDelete:

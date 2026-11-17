@@ -1,3 +1,4 @@
+import { notifyUsers } from './eventNotices'
 import { defaultTrainingDetails } from '../../shared/training/trainingSchema'
 import { ConvexError } from 'convex/values'
 import type { Doc, Id } from '../_generated/dataModel'
@@ -88,10 +89,15 @@ export async function saveAttendees(
   }
   for (const row of previous)
     if (!peopleIds.includes(row.userId)) await ctx.db.delete(row._id)
-  for (const userId of peopleIds)
-    if (!previous.some((p) => p.userId === userId))
-      await ctx.db.insert('eventAttendees', { eventId, userId })
+  const added = peopleIds.filter(
+    (userId) => !previous.some((p) => p.userId === userId),
+  )
+  for (const userId of added)
+    await ctx.db.insert('eventAttendees', { eventId, userId })
   await ctx.db.patch(eventId, { peopleIds })
+  await notifyUsers(ctx, added, { kind: 'event_attendance_added', eventId }, [
+    actor,
+  ])
 }
 
 export async function attendanceDetail(
@@ -106,6 +112,8 @@ export async function attendanceDetail(
     .first()
   const event = row ? await ctx.db.get(eventId) : null
   if (!event || !event.peopleIds?.includes(userId)) return null
+  if (event.stableId && !(await calendarMember(ctx, event.stableId, userId)))
+    return null
   const horses: Array<
     Pick<Doc<'horses'>, '_id' | '_creationTime' | 'name'> & {
       canRecord: boolean
@@ -133,6 +141,7 @@ export async function attendanceDetail(
     location: event.location,
     status: event.status,
     recurrence: event.recurrence,
+    occurrenceSkips: event.occurrenceSkips,
     horseIds: horses.map((h) => h._id),
   }
   const records: Array<Doc<'trainingRecords'> & { canEdit: boolean }> = (

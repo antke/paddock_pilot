@@ -1,3 +1,5 @@
+import { EventLifecycleActions } from '#/components/events/EventLifecycleActions'
+import { EventHorseServiceDetailsCard } from '#/components/events/EventHorseServiceDetailsCard'
 import { AttendingPeople } from '#/components/events/AttendingPeople'
 import { formatEventTime } from '#/components/events/eventDisplay'
 import { useQuery } from 'convex/react'
@@ -33,7 +35,7 @@ import { Field, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { EventEditAction } from '#/components/events/EventEditAction'
 import { useSmallScreen } from '#/lib/useSmallScreen'
-import { TrainingCompletionControl } from '#/components/training/TrainingCompletionControl'
+import { TrainingDetailCompletion } from '#/components/training/TrainingCompletionControl'
 import { TrainingRecordCard } from '#/components/training/TrainingRecordCard'
 import { getTrainingEntries } from '#/components/training/trainingCalendarData'
 import { getSessionLeader } from '#/components/training/trainingSessions'
@@ -107,23 +109,17 @@ function OriginalDetail() {
     today,
   }).filter((entry) => entry.occurrence.startDate === occurrenceDate)
   const sessionLeader = getSessionLeader(entries, data.event)
-  const completionEntry =
-    entries.length === 1 &&
-    entries[0].horse.canRecord &&
-    occurrenceDate <= today
-      ? entries[0]
-      : undefined
   const editSearch = {
     date: occurrenceDate,
     horseId: entries.length === 1 ? entries[0].horse._id : undefined,
   }
   return (
-    <DashboardPage>
+    <DashboardPage width="narrow">
       <DashboardPageHeader
         title={data.event.title}
         description={
           <>
-            <span className="block">
+            <span>
               {formatShortDateKey(occurrenceDate, locale)} ·{' '}
               {formatEventTime(data.event.time, locale)}
               {sessionLeader && (
@@ -146,6 +142,13 @@ function OriginalDetail() {
                   search={editSearch}
                 />
               )}
+              <EventLifecycleActions
+                eventId={eventId as Id<'events'>}
+                title={data.event.title}
+                cancelled={data.event.status === 'cancelled'}
+                training
+                stableId={stableId}
+              />
             </>
           ) : undefined
         }
@@ -154,18 +157,24 @@ function OriginalDetail() {
         <div className="min-w-0">
           <CreatorByline name={data.createdByName} />
         </div>
-        {completionEntry && (
-          <TrainingCompletionControl entry={completionEntry} labelled />
-        )}
+        <TrainingDetailCompletion entries={entries} stableId={stableId} />
       </div>
       {permissions?.canManageEvent && smallScreen && (
-        <EventEditAction
-          search={editSearch}
-          eventId={eventId}
-          stableId={stableId}
-          training
-          mobile
-        />
+        <div className="flex gap-2">
+          <EventEditAction
+            search={editSearch}
+            eventId={eventId}
+            stableId={stableId}
+            training
+          />
+          <EventLifecycleActions
+            eventId={eventId as Id<'events'>}
+            title={data.event.title}
+            cancelled={data.event.status === 'cancelled'}
+            training
+            stableId={stableId}
+          />
+        </div>
       )}
       {data.event.recurrence && (
         <Field className="max-w-xs">
@@ -191,14 +200,6 @@ function OriginalDetail() {
       {entries.length === 0 && (
         <p role="status">{t('trainingViews.noSession')}</p>
       )}
-      {entries.map((entry) => (
-        <RecordAudienceLabel
-          key={entry.key}
-          horseId={entry.horse._id}
-          recordId={entry.occurrence.eventId}
-          date={entry.occurrence.startDate}
-        />
-      ))}
       <TrainingCompletionSummary entries={entries} />
       {entries.map((entry) => (
         <TrainingRecordCard
@@ -206,6 +207,13 @@ function OriginalDetail() {
           entry={entry}
           showCompletion={entries.length > 1}
           sessionLeader={sessionLeader}
+          audience={
+            <RecordAudienceLabel
+              horseId={entry.horse._id}
+              recordId={entry.occurrence.eventId}
+              date={entry.occurrence.startDate}
+            />
+          }
         />
       ))}
       {data.event.recurrence && !data.event.training && (
@@ -214,8 +222,13 @@ function OriginalDetail() {
         </p>
       )}
       <EventParticipation eventId={eventId as Id<'events'>} />
+      {/* Same per-horse notes and Withdraw as the personal session page. */}
+      <EventHorseServiceDetailsCard eventId={eventId} trainingDisclosure />
       <ActivitySharing eventId={eventId as Id<'events'>} />
-      <AttendingPeople eventId={eventId as Id<'events'>} />
+      <AttendingPeople
+        eventId={eventId as Id<'events'>}
+        title={data.event.title}
+      />
       <ActivityPeople eventId={eventId as Id<'events'>} date={occurrenceDate} />
       <MyActivityInvitations eventId={eventId} />
       {data.pendingEventHorses.length > 0 && (

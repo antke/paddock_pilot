@@ -23,7 +23,10 @@ export function parseHorseEditSearch(
 export const horseEditFormSection = {
   photo: 'details',
   profile: 'details',
-  identification: 'care',
+  identification: 'identification',
   care: 'care',
   feeding: 'nutrition',
-} as const satisfies Record<HorseEditSection, 'details' | 'care' | 'nutrition'>
+} as const satisfies Record<
+  HorseEditSection,
+  'details' | 'identification' | 'care' | 'nutrition'
+>

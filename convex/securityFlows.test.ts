@@ -774,7 +774,7 @@ describe('authenticated account and stable security flows', () => {
     const eventId = await asCreator.mutation(api.events.add, {
       stableId: fixture.stableId,
       horseIds: [fixture.creatorHorseId, fixture.invitedHorseId],
-      date: '2026-09-10',
+      date: '2099-09-10',
       time: '10:00',
       type: 'vet',
       title: 'Shared vet visit',
@@ -796,7 +796,7 @@ describe('authenticated account and stable security flows', () => {
         id: eventId,
         stableId: fixture.stableId,
         horseIds: [fixture.invitedHorseId],
-        date: '2026-09-10',
+        date: '2099-09-10',
         time: '11:00',
         type: 'vet',
         title: 'Unauthorized edit',

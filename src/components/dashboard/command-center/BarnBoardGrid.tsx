@@ -1,7 +1,4 @@
-import {
-  DashboardLayoutGrid,
-  DashboardLayoutStack,
-} from '#/components/dashboard/DashboardLayoutGrid'
+import { DashboardLayoutStack } from '#/components/dashboard/DashboardLayoutGrid'
 
 import { ActiveStableHeader } from './ActiveStableHeader'
 import { HorseRosterCard } from './HorseRosterCard'
@@ -18,12 +15,14 @@ type BarnBoardGridProps = {
   data: DashboardCommandData
   setupNotice?: ReactNode
   updates?: ReactNode
+  pending?: ReactNode
 }
 
 export function BarnBoardGrid({
   data,
   setupNotice,
   updates,
+  pending,
 }: BarnBoardGridProps) {
   const small = useSmallScreen()
   if (small)
@@ -32,31 +31,36 @@ export function BarnBoardGrid({
         data={data}
         setupNotice={setupNotice}
         updates={updates}
+        pending={pending}
       />
     )
   return (
-    <DashboardLayoutStack gap="loose">
+    <DashboardLayoutStack>
       <ActiveStableHeader data={data} />
 
-      <DashboardLayoutGrid variant="commandCenter">
-        <DashboardLayoutStack className="xl:order-1">
-          <MobileHealthSummary data={data} />
-          <TodayTrainingCard data={data} />
-          <TodayBriefingCard data={data} />
+      {/* Two independent stacks, so each card keeps its own height and gaps stay equal. */}
+      <div className="grid items-start gap-[var(--app-section-gap)] xl:grid-cols-2">
+        <DashboardLayoutStack className="hidden xl:grid">
+          <HealthIssuesCard data={data} visibleItemLimit={3} />
+          <CareRemindersSummaryCard data={data} visibleItemLimit={3} />
           <HorseRosterCard data={data} />
+        </DashboardLayoutStack>
+        <DashboardLayoutStack>
+          <MobileHealthSummary data={data} />
           <CareRemindersSummaryCard
             className="xl:hidden"
             data={data}
             visibleItemLimit={3}
           />
+          {/* Pending decisions follow urgent care but take one column, not a full-width band. */}
+          {pending}
+          <TodayBriefingCard data={data} />
+          <TodayTrainingCard data={data} />
+          <HorseRosterCard className="xl:hidden" data={data} />
           {setupNotice}
           {updates}
         </DashboardLayoutStack>
-        <DashboardLayoutStack className="hidden xl:order-2 xl:grid">
-          <HealthIssuesCard data={data} visibleItemLimit={3} />
-          <CareRemindersSummaryCard data={data} visibleItemLimit={3} />
-        </DashboardLayoutStack>
-      </DashboardLayoutGrid>
+      </div>
     </DashboardLayoutStack>
   )
 }

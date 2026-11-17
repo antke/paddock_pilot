@@ -1,4 +1,3 @@
-import { EventIcon, TrainingIcon } from '#/components/icons/domain-icons'
 import { Button as ButtonPrimitive } from '@base-ui/react/button'
 import { PencilSimpleIcon, PlusIcon, TrashIcon } from '@phosphor-icons/react'
 import { cva } from 'class-variance-authority'
@@ -19,8 +18,8 @@ const buttonActionIcons = {
   create: PlusIcon,
   delete: TrashIcon,
   edit: PencilSimpleIcon,
-  record: TrainingIcon,
-  schedule: EventIcon,
+  record: PlusIcon,
+  schedule: PlusIcon,
 } satisfies Record<ButtonAction, typeof PlusIcon>
 
 function ButtonActionIcon({ action }: { action?: ButtonAction }) {
@@ -37,9 +36,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          'border-primary bg-primary !text-primary-foreground !no-underline hover:bg-primary/92 active:bg-primary/80 hover:!no-underline aria-expanded:bg-primary/90 aria-expanded:!text-primary-foreground',
+          'border-action bg-action !text-action-foreground !no-underline hover:bg-action/92 active:bg-action/80 hover:!no-underline aria-expanded:bg-action/90 aria-expanded:!text-primary-foreground',
         solid:
-          'border-primary bg-primary !text-primary-foreground !no-underline hover:bg-primary/92 active:bg-primary/80 hover:!no-underline aria-expanded:bg-primary/90 aria-expanded:!text-primary-foreground',
+          'border-action bg-action !text-action-foreground !no-underline hover:bg-action/92 active:bg-action/80 hover:!no-underline aria-expanded:bg-action/90 aria-expanded:!text-primary-foreground',
         outline:
           'border-border bg-surface-elevated text-foreground !no-underline hover:border-primary hover:bg-primary/8 active:bg-primary/15 hover:text-foreground hover:!no-underline aria-expanded:border-primary aria-expanded:bg-primary/10 aria-expanded:text-foreground dark:border-input dark:bg-surface-elevated dark:hover:bg-primary/15',
         secondary:
@@ -57,8 +56,8 @@ const buttonVariants = cva(
           'min-h-10 gap-2 px-4 py-2 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3 max-md:min-h-11 pointer-coarse:min-h-11 max-md:min-w-11 pointer-coarse:min-w-11',
         control:
           'h-(--control-height) min-w-(--control-height) gap-2 px-3 has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5 max-md:min-h-11 pointer-coarse:min-h-11 max-md:min-w-11 pointer-coarse:min-w-11',
-        xs: "min-h-7 gap-1 rounded-sm px-2 py-1 text-xs has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 max-md:min-h-11 pointer-coarse:min-h-11 max-md:min-w-11 pointer-coarse:min-w-11 [&_svg:not([class*='size-'])]:size-3",
-        sm: "min-h-8 gap-1.5 rounded-md px-3 py-1.5 text-xs has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 max-md:min-h-11 pointer-coarse:min-h-11 max-md:min-w-11 pointer-coarse:min-w-11 [&_svg:not([class*='size-'])]:size-3.5",
+        xs: "min-h-7 gap-1 rounded-sm px-2 py-0.5 text-xs has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 max-md:min-h-11 pointer-coarse:min-h-11 max-md:min-w-11 pointer-coarse:min-w-11 [&_svg:not([class*='size-'])]:size-3",
+        sm: "min-h-8 gap-1.5 rounded-md px-3 py-1 text-xs has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 max-md:min-h-11 pointer-coarse:min-h-11 max-md:min-w-11 pointer-coarse:min-w-11 [&_svg:not([class*='size-'])]:size-3.5",
         lg: 'min-h-11 gap-2 px-5 py-2 has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4 max-md:min-w-11 pointer-coarse:min-w-11',
         icon: 'size-10 max-md:size-11 pointer-coarse:size-11',
         'icon-xs':
@@ -66,7 +65,7 @@ const buttonVariants = cva(
         'icon-sm': 'size-8 rounded-md max-md:size-11 pointer-coarse:size-11',
         'icon-lg': 'size-11',
         'chip-icon':
-          "-mr-1 size-5 rounded-full border-0 max-md:mr-0 max-md:size-11 pointer-coarse:mr-0 pointer-coarse:size-11 focus-visible:outline-offset-[-3px] [&_svg:not([class*='size-'])]:size-3",
+          "-mr-1 size-5 rounded-full border-0 after:absolute after:-inset-3 after:content-[''] focus-visible:outline-offset-[-3px] [&_svg:not([class*='size-'])]:size-3",
         fab: "size-14 rounded-full [&_svg:not([class*='size-'])]:size-6",
       },
     },
@@ -92,7 +91,15 @@ function Button({
       data-slot="button"
       data-size={size}
       data-variant={variant}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(
+        buttonVariants({ variant, size }),
+        // Resting removals stay quiet ink with a red trash, so a list is not a
+        // column of alarms; interaction turns the whole control destructive.
+        action === 'delete' &&
+          variant !== 'destructive' &&
+          'text-muted-foreground [&_svg]:text-destructive hover:bg-destructive/10 hover:text-destructive focus-visible:bg-destructive/10 focus-visible:text-destructive active:bg-destructive/15 aria-expanded:bg-destructive/10 aria-expanded:text-destructive dark:hover:bg-destructive/15',
+        className,
+      )}
       {...props}
     >
       <ButtonActionIcon action={action} />

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, onTestFinished, vi } from 'vitest'
 import { convexTest } from 'convex-test'
 import { api } from './_generated/api'
 import schema from './schema'
@@ -277,7 +277,12 @@ describe('training records', () => {
       stableId: f.stableId,
     })
     expect(data.records).toHaveLength(3)
-    expect(data.events[0].horseIds).not.toContain(f.horseId)
+    // The live series continues without the horse; its past sessions stay as history.
+    const withHorse = data.events.filter((event) =>
+      event.horseIds.includes(f.horseId),
+    )
+    expect(withHorse).toHaveLength(1)
+    expect(withHorse[0].recurrence?.end).toMatchObject({ type: 'on_date' })
   })
 
   it('allows correcting legacy schedules without inventing completion', async () => {
@@ -352,6 +357,12 @@ describe('training records', () => {
 })
 
 it('does not let an organizer move another owner’s training record', async () => {
+  // Invitations close a week after the session; approve it the next day.
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2026-01-06T12:00:00Z'))
+  onTestFinished(() => {
+    vi.useRealTimers()
+  })
   const f = await setup()
   const input = {
     stableId: f.stableId,
@@ -426,14 +437,20 @@ it('rejects whole-series changes that would overwrite an unshared participant', 
   const before = await f.t.run((ctx) =>
     ctx.db.query('trainingRecords').collect(),
   )
-  await f.asMember.mutation(api.recordSharing.set, { horseId: f.horseId, recordId: eventId, enabled: false })
-  await expect(f.asAdmin.mutation(api.events.update, {
-    ...input,
-    id: eventId,
-    date: '2026-01-06',
-    training: { ...details, activities: ['jumping'] },
-    totalCost: 200,
-  })).rejects.toThrow()
+  await f.asMember.mutation(api.recordSharing.set, {
+    horseId: f.horseId,
+    recordId: eventId,
+    enabled: false,
+  })
+  await expect(
+    f.asAdmin.mutation(api.events.update, {
+      ...input,
+      id: eventId,
+      date: '2026-01-06',
+      training: { ...details, activities: ['jumping'] },
+      totalCost: 200,
+    }),
+  ).rejects.toThrow()
   expect(
     await f.t.run((ctx) => ctx.db.query('trainingRecords').collect()),
   ).toEqual(before)

@@ -73,6 +73,7 @@ export function StableDocumentsPage({
         />
       }
       chrome="cards"
+      surface={embedded ? 'panel' : 'canvas'}
       onRemove={documentActions.remove}
     />
   )

@@ -126,10 +126,7 @@ export function NutritionLogForm({
       onSubmit={form.handleSubmit(submitNutritionLog)}
     >
       {audience.control}
-      <FormGroup
-        title={t('careRecords.change')}
-        description={t('careRecords.changeHelp')}
-      >
+      <FormGroup title={t('careRecords.change')}>
         <FieldGrid breakpoint="sm" template="trailing-md">
           <Controller
             name="summary"

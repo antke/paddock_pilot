@@ -5,6 +5,7 @@ import {
   getCareReminderListQueryArgs,
 } from './careReminderListFilters'
 import { Link } from '@tanstack/react-router'
+import { Trans } from 'react-i18next'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
 import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
@@ -252,13 +253,19 @@ export function StableRemindersPageView(
       <DashboardPageHeader
         title={t('reminders.careReminders')}
         description={
-          <Link to="/profile" className="underline underline-offset-4">
-            {t('reminders.emailSettings')}
-          </Link>
+          <Trans
+            t={t}
+            i18nKey="reminders.emailSettings"
+            components={{
+              profile: (
+                <Link to="/profile" className="underline underline-offset-4" />
+              ),
+            }}
+          />
         }
         actions={createAction}
       />
-      <DashboardSectionCard contentGap="loose">
+      <DashboardSectionCard surface="canvas" contentGap="loose">
         <CareRemindersCard
           enableSharing
           {...props}

@@ -190,19 +190,23 @@ function SampleHorseForm({
             }}
           />
           {mode === 'edit' && horse && (
-            <HorseDeletionActionsView
-              horse={horse}
-              disabled={saving}
-              onPendingChange={setDeleting}
-              onAcknowledged={() => setRemoved(true)}
-              onDelete={async () => {
-                await stage('delete')
-              }}
-              onDeleted={async () => {
-                await stage('return')
-                setReturned(true)
-              }}
-            />
+            // Same 56rem cap as the route form above, so both edges align.
+            // Phones drop the form card, so a rule marks where the form ends.
+            <div className="w-full max-w-4xl max-md:mt-2 max-md:border-t max-md:border-border-subtle max-md:pt-8">
+              <HorseDeletionActionsView
+                horse={horse}
+                disabled={saving}
+                onPendingChange={setDeleting}
+                onAcknowledged={() => setRemoved(true)}
+                onDelete={async () => {
+                  await stage('delete')
+                }}
+                onDeleted={async () => {
+                  await stage('return')
+                  setReturned(true)
+                }}
+              />
+            </div>
           )}
         </>
       )}

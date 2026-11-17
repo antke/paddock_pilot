@@ -1,5 +1,4 @@
 import { useT } from '#/i18n/LocaleProvider'
-import { SparkleIcon } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
@@ -10,8 +9,7 @@ import {
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
-import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
-import { Badge } from '#/components/ui/badge'
+import { FormOptionalTag } from '#/components/forms/FormLayout'
 import { BackButton } from '#/components/ui/back-action'
 import { OnboardingStepper } from './OnboardingStepper'
 import type { OnboardingStep } from './OnboardingStepper'
@@ -65,10 +63,11 @@ export function OnboardingLayout({
   const busy = pending || childPending
   const blocked = busy || Boolean(transitionError)
   return (
+    // Capped and centred like route forms.
     <DashboardPage
-      width="narrow"
       ref={progressRef}
       data-slot="onboarding-layout"
+      width="narrow"
       className="scroll-mt-20"
     >
       <DashboardPageHeader
@@ -88,52 +87,57 @@ export function OnboardingLayout({
         onStepSelect={blocked ? undefined : onStepSelect}
       />
 
-      <DashboardSectionCard
-        ref={sectionRef}
-        tabIndex={-1}
-        role="region"
-        aria-label={
-          typeof title === 'string' ? title : t('onboarding.currentStep')
-        }
-        title={title}
-        description={description}
-        badges={
-          optional ? (
-            <Badge variant="secondary">{t('onboarding.optional')}</Badge>
-          ) : null
-        }
-        contentGap="comfortable"
-      >
-        {busy && (
-          <p role="status" className="text-sm text-muted-foreground">
-            {pending
-              ? t('onboarding.continuing')
-              : t('onboarding.savingStatus')}
-          </p>
-        )}
-        <OnboardingTransitionError
-          message={transitionError}
-          onRetry={onRetry}
-          pending={pending}
-        />
-        <OnboardingPendingContext.Provider value={setChildPending}>
-          <fieldset disabled={blocked} aria-busy={busy} className="min-w-0">
-            {children}
-          </fieldset>
-        </OnboardingPendingContext.Provider>
-      </DashboardSectionCard>
+      {/* Phones reuse the route-form treatment: no card, floating action pills. */}
+      <div data-mobile-route-form="true" className="min-w-0">
+        <DashboardSectionCard
+          data-slot="route-form-section-card"
+          // The shared phone rules clear the card and its content inset; the title follows.
+          headerClassName="max-md:px-0"
+          ref={sectionRef}
+          tabIndex={-1}
+          role="region"
+          aria-label={
+            typeof title === 'string' ? title : t('onboarding.currentStep')
+          }
+          title={title}
+          description={description}
+          // Same quiet tag as optional form sections, beside the title.
+          headingClassName={
+            optional
+              ? 'flex flex-wrap items-baseline gap-x-2 gap-y-1'
+              : undefined
+          }
+          titleSupplement={
+            optional ? (
+              <FormOptionalTag>{t('onboarding.optional')}</FormOptionalTag>
+            ) : undefined
+          }
+          contentGap="comfortable"
+        >
+          {busy && (
+            <p role="status" className="text-sm text-muted-foreground">
+              {pending
+                ? t('onboarding.continuing')
+                : t('onboarding.savingStatus')}
+            </p>
+          )}
+          <OnboardingTransitionError
+            message={transitionError}
+            onRetry={onRetry}
+            pending={pending}
+          />
+          <OnboardingPendingContext.Provider value={setChildPending}>
+            <fieldset disabled={blocked} aria-busy={busy} className="min-w-0">
+              {children}
+            </fieldset>
+          </OnboardingPendingContext.Provider>
+        </DashboardSectionCard>
+      </div>
     </DashboardPage>
   )
 }
 
-export function OnboardingLaterNote({ children }: { children: ReactNode }) {
-  const t = useT()
-
-  return (
-    <Alert role="note">
-      <SparkleIcon aria-hidden="true" />
-      <AlertTitle>{t('onboarding.laterTitle')}</AlertTitle>
-      <AlertDescription>{children}</AlertDescription>
-    </Alert>
-  )
+/** A step's action row; on phones it floats as the route-form pills. */
+export function OnboardingStepActions({ children }: { children: ReactNode }) {
+  return <div data-slot="card-footer">{children}</div>
 }

@@ -37,7 +37,9 @@ export function HorseAvatar({
     <div
       data-slot="horse-avatar"
       className={cn(
-        'app-row shrink-0 overflow-hidden',
+        'shrink-0 overflow-hidden rounded-row',
+        // One borderless photoless tile: pale stone separates from card and canvas in both themes; muted ink stays above 4.5:1.
+        hasUsableImage ? 'bg-surface-muted' : 'bg-selection-surface',
         sizeClassName[size],
         className,
       )}

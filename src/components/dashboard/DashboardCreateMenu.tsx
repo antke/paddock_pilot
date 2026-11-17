@@ -7,6 +7,7 @@ import {
   HorseIcon,
   ListBulletsIcon,
   PhoneIcon,
+  StackIcon,
 } from '@phosphor-icons/react'
 import {
   MobileActionMenu,
@@ -24,15 +25,19 @@ const directStableLimit = 3
 const itemIconClassName = 'size-5 shrink-0'
 
 /**
- * The phone quick menu: creation first, then the places people reach for most
- * often from Home, so stable records are one tap away from the personal view.
+ * The phone quick menu: the places people reach for most often from Home,
+ * then creation. The menu opens upward, so Add, the most used group, sits
+ * nearest the thumb; stable records stay one tap away from the personal view.
  */
 export function DashboardCreateMenu({
   stableId,
+  stableName,
   stables = [],
   canCreateActivity = true,
 }: {
   stableId?: string
+  /** Sub-heads the stable's shortcuts inside Go to, so its rows can stay short. */
+  stableName?: string
   /** The viewer's stables, offered by name in Go to from the personal view. */
   stables?: ReadonlyArray<{ _id: string; name: string }>
   canCreateActivity?: boolean
@@ -43,6 +48,96 @@ export function DashboardCreateMenu({
 
   return (
     <MobileActionMenu label={t('dashboard.quickMenu')}>
+      <MobileActionMenuGroup label={t('dashboard.quickGoTo')}>
+        {stableId ? (
+          <>
+            {/* The personal list is not a stable page, so it leads, above the stable's own shortcuts. */}
+            <MobileActionMenuItem render={<Link to="/horses" />}>
+              <StackIcon aria-hidden="true" className={itemIconClassName} />
+              {c.title}
+            </MobileActionMenuItem>
+            <MobileActionMenuGroup label={stableName} nested>
+              <MobileActionMenuItem
+                render={
+                  <Link to="/stables/$stableId/horses" params={{ stableId }} />
+                }
+              >
+                <ListBulletsIcon
+                  aria-hidden="true"
+                  className={itemIconClassName}
+                />
+                {t('navigationShell.stableHorses')}
+              </MobileActionMenuItem>
+              <MobileActionMenuItem
+                render={
+                  <Link
+                    to="/stables/$stableId/reminders"
+                    params={{ stableId }}
+                  />
+                }
+              >
+                <FirstAidKitIcon
+                  aria-hidden="true"
+                  className={itemIconClassName}
+                />
+                {t('dashboard.reminders')}
+              </MobileActionMenuItem>
+              <MobileActionMenuItem
+                render={
+                  <Link
+                    to="/stables/$stableId/stable"
+                    params={{ stableId }}
+                    search={{ tab: 'contacts' }}
+                  />
+                }
+              >
+                <AddressBookIcon
+                  aria-hidden="true"
+                  className={itemIconClassName}
+                />
+                {t('dashboard.contacts')}
+              </MobileActionMenuItem>
+            </MobileActionMenuGroup>
+          </>
+        ) : (
+          <>
+            <MobileActionMenuItem render={<Link to="/horses" />}>
+              <ListBulletsIcon
+                aria-hidden="true"
+                className={itemIconClassName}
+              />
+              {c.title}
+            </MobileActionMenuItem>
+            {stables.length <= directStableLimit ? (
+              stables.map((stable) => (
+                <MobileActionMenuItem
+                  key={stable._id}
+                  render={
+                    <Link
+                      to="/stables/$stableId"
+                      params={{ stableId: stable._id }}
+                    />
+                  }
+                >
+                  <BarnIcon aria-hidden="true" className={itemIconClassName} />
+                  <span className="min-w-0 truncate">{stable.name}</span>
+                </MobileActionMenuItem>
+              ))
+            ) : (
+              <MobileActionMenuItem render={<Link to="/stables" />}>
+                <BarnIcon aria-hidden="true" className={itemIconClassName} />
+                {t('navigation.stables')}
+              </MobileActionMenuItem>
+            )}
+            <MobileActionMenuItem render={<Link to="/horses/contacts" />}>
+              <PhoneIcon aria-hidden="true" className={itemIconClassName} />
+              {c.providers}
+            </MobileActionMenuItem>
+          </>
+        )}
+      </MobileActionMenuGroup>
+      <MobileActionMenuSeparator />
+
       <MobileActionMenuGroup label={t('dashboard.quickAdd')}>
         {canCreateActivity && (
           <>
@@ -98,91 +193,6 @@ export function DashboardCreateMenu({
           <HorseIcon aria-hidden="true" className={itemIconClassName} />
           {t('dashboard.addHorse')}
         </MobileActionMenuItem>
-      </MobileActionMenuGroup>
-
-      <MobileActionMenuSeparator />
-
-      <MobileActionMenuGroup label={t('dashboard.quickGoTo')}>
-        {stableId ? (
-          <>
-            <MobileActionMenuItem
-              render={
-                <Link to="/stables/$stableId/horses" params={{ stableId }} />
-              }
-            >
-              <ListBulletsIcon
-                aria-hidden="true"
-                className={itemIconClassName}
-              />
-              {t('navigationShell.stableHorses')}
-            </MobileActionMenuItem>
-            <MobileActionMenuItem
-              render={
-                <Link to="/stables/$stableId/reminders" params={{ stableId }} />
-              }
-            >
-              <FirstAidKitIcon
-                aria-hidden="true"
-                className={itemIconClassName}
-              />
-              {t('navigation.care')}
-            </MobileActionMenuItem>
-            <MobileActionMenuItem
-              render={
-                <Link
-                  to="/stables/$stableId/stable"
-                  params={{ stableId }}
-                  search={{ tab: 'contacts' }}
-                />
-              }
-            >
-              <AddressBookIcon
-                aria-hidden="true"
-                className={itemIconClassName}
-              />
-              {t('dashboard.contacts')}
-            </MobileActionMenuItem>
-            <MobileActionMenuItem render={<Link to="/horses" />}>
-              <HorseIcon aria-hidden="true" className={itemIconClassName} />
-              {c.title}
-            </MobileActionMenuItem>
-          </>
-        ) : (
-          <>
-            <MobileActionMenuItem render={<Link to="/horses" />}>
-              <ListBulletsIcon
-                aria-hidden="true"
-                className={itemIconClassName}
-              />
-              {c.title}
-            </MobileActionMenuItem>
-            {stables.length <= directStableLimit ? (
-              stables.map((stable) => (
-                <MobileActionMenuItem
-                  key={stable._id}
-                  render={
-                    <Link
-                      to="/stables/$stableId"
-                      params={{ stableId: stable._id }}
-                    />
-                  }
-                >
-                  <BarnIcon aria-hidden="true" className={itemIconClassName} />
-                  <span className="min-w-0 truncate">{stable.name}</span>
-                </MobileActionMenuItem>
-              ))
-            ) : (
-              <MobileActionMenuItem render={<Link to="/stables" />}>
-                <BarnIcon aria-hidden="true" className={itemIconClassName} />
-                {t('navigation.stables')}
-              </MobileActionMenuItem>
-            )}
-            <MobileActionMenuItem render={<Link to="/horses/contacts" />}>
-              <PhoneIcon aria-hidden="true" className={itemIconClassName} />
-              {c.providers}
-            </MobileActionMenuItem>
-          </>
-        )}
       </MobileActionMenuGroup>
     </MobileActionMenu>
   )

@@ -14,11 +14,14 @@ import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { TrainingFormFields } from '#/components/training/TrainingFormFields'
 import { FormSection, FormStepHeader } from '#/components/forms/FormLayout'
 import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
-import { FormHelpTooltip } from '#/components/forms/FormHelpTooltip'
 import { HorseSelectionCard } from '#/components/horses/HorseCard'
 import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
 import { formatShortDate, formatShortDateKey } from '#/lib/dateDisplay'
-import { formatConjunctionList, formatMetaText } from '#/lib/textDisplay'
+import {
+  formatCommaList,
+  formatConjunctionList,
+  formatMetaText,
+} from '#/lib/textDisplay'
 import {
   Field,
   FieldDescription,
@@ -37,7 +40,11 @@ import { ButtonLink } from '#/components/ui/button'
 import { RadioGroup, RadioGroupItem } from '#/components/ui/radio-group'
 import { Switch } from '#/components/ui/switch'
 import { Textarea } from '#/components/ui/textarea'
-import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group'
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+  ToggleGroupItemMark,
+} from '#/components/ui/toggle-group'
 import { TextLabel } from '#/components/ui/text-label'
 import type { Id } from 'convex/_generated/dataModel'
 import { useEffect, useRef, useState } from 'react'
@@ -896,7 +903,12 @@ export function EventFormFields({
               )}
             </FieldGroup>
           ) : null}
-          <FieldGrid breakpoint="sm" gap="compact">
+          {/* Rows keep their band inside the column at every width, like an input: content is padded inside it. */}
+          <FieldGrid
+            breakpoint="sm"
+            gap="compact"
+            className="items-stretch gap-x-3 gap-y-1"
+          >
             {horses.map((horse) => {
               const horseId = horse._id
               const checked = field.value.includes(horseId)
@@ -949,6 +961,45 @@ export function EventFormFields({
       )}
     />
   )
+  const peopleField = people && (
+    <Controller
+      name="peopleIds"
+      control={control}
+      render={({ field }) => (
+        <PeopleSelection
+          title={
+            hasLeader
+              ? t('eventForm.alsoTakingPart')
+              : t('eventForm.takingPart')
+          }
+          legendHidden={hasLeader}
+          people={people}
+          value={field.value ?? []}
+          onChange={field.onChange}
+          lockedIds={leaderId ? [leaderId] : []}
+          disabled={disabled}
+        />
+      )}
+    />
+  )
+  const tickedNames = (people ?? [])
+    .filter((person) => selectedPeople.includes(person.id))
+    .map((person) => person.name)
+  // Sessions keep Led by up front; everyone else taking part is an optional, collapsed section.
+  const peopleSection = hasLeader && peopleField && (
+    <FormSection
+      title={t('eventForm.alsoTakingPart')}
+      optionalLabel={t('eventForm.optional')}
+      summary={formatCommaList([
+        ...tickedNames.slice(0, 3),
+        tickedNames.length > 3 && `+${tickedNames.length - 3}`,
+      ])}
+      invalid={Boolean(errors.peopleIds)}
+      validationAttempt={submitCount}
+    >
+      {peopleField}
+    </FormSection>
+  )
   const participantFields = (
     <>
       {horseFields}
@@ -964,26 +1015,7 @@ export function EventFormFields({
               }
             />
           )}
-          {people && (
-            <Controller
-              name="peopleIds"
-              control={control}
-              render={({ field }) => (
-                <PeopleSelection
-                  title={
-                    hasLeader
-                      ? t('eventForm.alsoTakingPart')
-                      : t('eventForm.takingPart')
-                  }
-                  people={people}
-                  value={field.value ?? []}
-                  onChange={field.onChange}
-                  lockedIds={leaderId ? [leaderId] : []}
-                  disabled={disabled}
-                />
-              )}
-            />
-          )}
+          {!hasLeader && peopleField}
         </div>
       )}
     </>
@@ -1029,17 +1061,12 @@ export function EventFormFields({
   )
   return (
     <>
-      {!trainingMode && (
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          {t('eventForm.essentialsHelp')}
-        </p>
-      )}
       <FormSection
         defaultOpen
         collapsible={false}
-        description={trainingMode ? undefined : t('eventForm.eventHelp')}
         invalid={essentialsInvalid || horsesInvalid}
         summary={essentialsSummary}
+        titleHidden
         title={
           trainingMode
             ? t('eventForm.sessionDetails')
@@ -1105,6 +1132,8 @@ export function EventFormFields({
         {dateFields}
         {participantFields}
       </FormSection>
+
+      {peopleSection}
 
       <FormSection
         title={t('eventForm.additionalDetails')}
@@ -1180,11 +1209,6 @@ export function EventFormFields({
       </FormSection>
 
       <FormSection
-        description={
-          trainingMode
-            ? t('eventForm.trainingLogisticsHelp')
-            : t('eventForm.eventLogisticsHelp')
-        }
         invalid={logisticsInvalid}
         optionalLabel={t('eventForm.optional')}
         summary={logisticsSummary}
@@ -1394,7 +1418,6 @@ export function EventFormFields({
       </FormSection>
 
       <FormSection
-        description={t('eventForm.repeatHelp')}
         invalid={recurrenceInvalid}
         optionalLabel={t('eventForm.optional')}
         summary={recurrenceSummary}
@@ -1476,14 +1499,7 @@ export function EventFormFields({
                     />
 
                     <Field>
-                      <FieldLabelRow>
-                        <FieldLabel required>
-                          {t('eventForm.repeat')}
-                        </FieldLabel>
-                        <FormHelpTooltip label={t('eventForm.presetAbout')}>
-                          {t('eventForm.presetTooltip')}
-                        </FormHelpTooltip>
-                      </FieldLabelRow>
+                      <FieldLabel required>{t('eventForm.repeat')}</FieldLabel>
 
                       <ToggleGroup
                         aria-label={t('eventForm.repeatPattern')}
@@ -1526,16 +1542,9 @@ export function EventFormFields({
                             data-invalid={fieldState.invalid}
                             className="border-t border-border-subtle pt-4"
                           >
-                            <FieldLabelRow>
-                              <FieldLabel required>
-                                {t('eventForm.daysOfWeek')}
-                              </FieldLabel>
-                              <FormHelpTooltip
-                                label={t('eventForm.weekdaysAbout')}
-                              >
-                                {t('eventForm.weekdaysHelp')}
-                              </FormHelpTooltip>
-                            </FieldLabelRow>
+                            <FieldLabel required>
+                              {t('eventForm.daysOfWeek')}
+                            </FieldLabel>
 
                             <ToggleGroup
                               aria-label={t('eventForm.daysOfWeek')}
@@ -1560,6 +1569,7 @@ export function EventFormFields({
                                   value={String(day)}
                                   aria-label={dayOfWeekLabels[day]}
                                 >
+                                  <ToggleGroupItemMark />
                                   {shortDayLabels[day]}
                                 </ToggleGroupItem>
                               ))}
@@ -1794,6 +1804,7 @@ export function EventFormFields({
                                       key={frequency}
                                       value={frequency}
                                     >
+                                      <ToggleGroupItemMark />
                                       {recurrenceFrequencyLabels[frequency]}
                                     </ToggleGroupItem>
                                   ))}
@@ -1921,6 +1932,7 @@ export function EventFormFields({
                                           value={String(day)}
                                           aria-label={dayOfWeekLabels[day]}
                                         >
+                                          <ToggleGroupItemMark />
                                           {shortDayLabels[day]}
                                         </ToggleGroupItem>
                                       ))}
@@ -2283,6 +2295,7 @@ export function EventFormFields({
                                                   key={ordinal}
                                                   value={String(ordinal)}
                                                 >
+                                                  <ToggleGroupItemMark />
                                                   {ordinalLabels[ordinal]}
                                                 </ToggleGroupItem>
                                               ),
@@ -2347,6 +2360,7 @@ export function EventFormFields({
                                                     dayOfWeekLabels[day]
                                                   }
                                                 >
+                                                  <ToggleGroupItemMark />
                                                   {shortDayLabels[day]}
                                                 </ToggleGroupItem>
                                               ),
@@ -2573,7 +2587,6 @@ export function EventFormFields({
 
       {!scheduleOnly && (
         <FormSection
-          description={t('eventForm.notesHelp')}
           invalid={notesInvalid}
           optionalLabel={t('eventForm.optional')}
           summary={notesSummary}

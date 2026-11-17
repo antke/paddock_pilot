@@ -1,3 +1,4 @@
+import { DashboardCountBadge } from '#/components/dashboard/DashboardBadges'
 import { MotionDisclosure } from '#/components/motion/MotionDisclosure'
 import { useChangeMotion } from '#/components/motion/useChangeMotion'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
@@ -29,6 +30,7 @@ import {
   dateKeyToDate,
   formatDateKey,
   formatShortDateKey,
+  formatShortDateKeyParts,
   formatShortWeekdayDate,
   formatMonthYearDate,
 } from '#/lib/dateDisplay'
@@ -43,6 +45,7 @@ import type { TrainingHorse } from './trainingCalendarData'
 import { TrainingSessionLink } from './TrainingSessionLink'
 import { groupTrainingSessions } from './trainingSessions'
 import { TrainingMonthCalendar } from './TrainingMonthCalendar'
+import { calendarDayNumberClassName } from '#/components/events/EventCalendarChrome'
 import { useSessionState } from '#/lib/useSessionState'
 import { useSmallScreen } from '#/lib/useSmallScreen'
 import { MobileActionBar } from '#/components/layout/MobileActionBar'
@@ -247,22 +250,23 @@ export function TrainingCalendar({
       variant="outline"
       size="control"
       className={small ? 'min-h-11 px-2' : undefined}
+      aria-label={t('listControls.filtersWithCount', {
+        count: activeFilterCount,
+      })}
       aria-expanded={filtersOpen}
       aria-controls={`${id}-filters`}
       onClick={() => setFiltersOpen((open) => !open)}
     >
       <FunnelSimpleIcon aria-hidden="true" />
-      <span className="whitespace-nowrap">
-        {t('listControls.filtersWithCount', { count: activeFilterCount })}
-      </span>
+      <span className="whitespace-nowrap">{t('listControls.filters')}</span>
+      {activeFilterCount > 0 && (
+        <DashboardCountBadge count={activeFilterCount} />
+      )}
     </Button>
   )
 
   return (
-    <DashboardSectionCard
-      title={small ? undefined : label}
-      contentGap="default"
-    >
+    <DashboardSectionCard contentGap="default">
       <CalendarToolbar
         label={label}
         previousLabel={t(
@@ -346,9 +350,8 @@ export function TrainingCalendar({
                 )}
               </MobileActionBar>
             ))}
-      {(!small || activeFilterCount > 0) && (
+      {activeFilterCount > 0 && (
         <div className="flex flex-wrap items-center gap-3">
-          {!small && filterControl}
           {activeFilterCount > 0 && (
             <>
               <span className="min-w-0 flex-1 text-sm [overflow-wrap:anywhere]">
@@ -637,14 +640,29 @@ export function TrainingCalendar({
                             <th
                               scope="col"
                               key={day}
-                              className="p-3 text-left"
+                              className="border-l border-border-subtle px-2 py-2 text-left font-medium text-muted-foreground first:border-l-0"
                               aria-current={day === today ? 'date' : undefined}
                             >
                               {formatShortWeekdayDate(
                                 dateKeyToDate(day),
                                 locale,
                               )}{' '}
-                              {formatShortDateKey(day, locale)}
+                              {/* Today is the same filled circle on the day number as in Events. */}
+                              {formatShortDateKeyParts(day, locale).map(
+                                (part, index) =>
+                                  part.type === 'day' && day === today ? (
+                                    <span
+                                      key={index}
+                                      className={calendarDayNumberClassName({
+                                        isToday: true,
+                                      })}
+                                    >
+                                      {part.value}
+                                    </span>
+                                  ) : (
+                                    part.value
+                                  ),
+                              )}
                             </th>
                           ))}
                         </tr>
@@ -654,9 +672,9 @@ export function TrainingCalendar({
                           {period.days.map((day) => (
                             <td
                               key={day}
-                              className="border-l border-border-subtle p-2 align-top"
+                              className="border-l border-border-subtle px-1 py-2 align-top first:border-l-0"
                             >
-                              <div className="grid gap-2">
+                              <div className="grid gap-1">
                                 {dayEntries(day).map((session) => (
                                   <TrainingSessionLink
                                     key={session.key}

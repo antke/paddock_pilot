@@ -229,13 +229,14 @@ it('keeps a rescheduled rider report visible and edits it without duplicating or
   await f.rider.mutation(api.activityParticipants.reportRide, { id, details })
   const original = (await f.rider.query(api.activityParticipants.mine, {}))[0]
     .report!
+  // Moving the date without changing the result keeps the rider as author.
   await f.owner.mutation(api.training.saveRecord, {
     eventId: f.eventId,
     horseId: f.horseId,
     date: '2026-01-05',
     newDate: '2026-01-06',
     status: 'completed',
-    details,
+    details: original.details,
   })
   const calendar = await f.rider.query(api.activities.view, {
     personal: true,

@@ -48,7 +48,7 @@ describe('FormsPageLab', () => {
       ),
     )
     expect(title.disabled).toBe(true)
-    expect(screen.queryByRole('button', { name: 'Reset' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Discard changes' })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Restart sample' }))
     expect(
       screen.getByLabelText<HTMLInputElement>('Title', { exact: true }).value,

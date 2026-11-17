@@ -21,6 +21,7 @@ import {
 } from './libs/horsePermissions'
 import { userFacingError } from './libs/userFacingError'
 import { ConvexError, v } from 'convex/values'
+import { isEqual } from 'lodash'
 import { query, mutation } from './_generated/server'
 import type { MutationCtx, QueryCtx } from './_generated/server'
 import type { Doc, Id } from './_generated/dataModel'
@@ -277,7 +278,11 @@ async function saveTrainingRecord(
   const latestToday = new Date(Date.now() + 14 * 60 * 60 * 1000)
     .toISOString()
     .slice(0, 10)
-  if (!existing && args.status === 'completed' && nextDate > latestToday)
+  if (
+    args.status === 'completed' &&
+    existing?.status !== 'completed' &&
+    nextDate > latestToday
+  )
     throw userFacingError('futureTraining', args.errorFormat)
   const parsed = trainingRecordSchema.safeParse({
     ...(args.details ??
@@ -304,7 +309,14 @@ async function saveTrainingRecord(
     status,
     details,
     outcome,
-    recordedBy: existing?.recordedBy ?? user._id,
+    // Whoever changes the result becomes its author, so a rider cannot overwrite owner corrections.
+    recordedBy:
+      existing &&
+      existing.status === status &&
+      existing.outcome === outcome &&
+      isEqual(existing.details, details)
+        ? existing.recordedBy
+        : user._id,
     updatedAt: now,
   }
   if (existing) await ctx.db.patch(existing._id, values)

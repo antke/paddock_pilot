@@ -4,7 +4,9 @@ import type { WorkspaceNavigationOptions } from './workspaceNavigation'
 import { localeInstances } from '#/i18n/resources'
 
 function items(options: WorkspaceNavigationOptions) {
-  return getWorkspaceNavigation(options).flatMap((group) => group.items)
+  return getWorkspaceNavigation(options)
+    .flatMap((group) => group.items)
+    .flatMap((item) => [item, ...(item.children ?? [])])
 }
 
 function activeIds(options: WorkspaceNavigationOptions) {
@@ -27,16 +29,13 @@ describe('workspace navigation scope', () => {
     '/stables-extra/stable-a',
   ])('keeps %s personal despite a saved stable preference', (pathname) => {
     expect(stableIdFromPath(pathname)).toBeUndefined()
-    const navigation = getWorkspaceNavigation({
-      pathname,
-      stableId: 'saved-stable',
-      canManageStable: true,
-    })
+    const navigation = getWorkspaceNavigation({ pathname })
     expect(navigation[0].items.map((item) => item.href)).toEqual([
       '/',
       '/events',
       '/training',
       '/horses',
+      '/horses/contacts',
     ])
     expect(
       navigation.flatMap((group) => group.items.map((item) => item.href)),
@@ -50,11 +49,10 @@ describe('workspace navigation scope', () => {
     ])
   })
 
-  it('derives stable links from the route and rejects stale management access', () => {
+  it('derives stable links from the route and keeps management per stable', () => {
     const navigation = getWorkspaceNavigation({
       pathname: '/stables/current-stable/events',
-      stableId: 'saved-stable',
-      canManageStable: true,
+      stables: [{ _id: 'saved-stable', name: 'Saved', canManage: true }],
     })
     expect(stableIdFromPath('/stables/current-stable/events')).toBe(
       'current-stable',
@@ -64,16 +62,16 @@ describe('workspace navigation scope', () => {
       '/events',
       '/training',
       '/horses',
+      '/horses/contacts',
     ])
-    expect(
-      navigation
-        .flatMap((group) => group.items)
-        .some((item) => item.id === 'settings'),
-    ).toBe(false)
+    const current = navigation
+      .flatMap((group) => group.items)
+      .find((item) => item.id === 'stable-current-stable')
+    expect(current?.children?.map((item) => item.id)).not.toContain('settings')
   })
 
   it.each(['/stables/stable-a', '/stables/stable-a/'])(
-    'keeps Home global and exposes a local stable overview for %s',
+    'keeps Home global and selects the stable row as its overview for %s',
     (pathname) => {
       const home = items({ pathname }).find((item) => item.id === 'home')
       expect(home).toMatchObject({
@@ -81,54 +79,71 @@ describe('workspace navigation scope', () => {
         labelKey: 'navigation.home',
         active: false,
       })
-      expect(activeIds({ pathname })).toEqual(['stable-overview'])
+      expect(activeIds({ pathname })).toEqual(['stable-stable-a'])
     },
   )
 
-  it('keeps daily work ordered consistently in each workspace', () => {
+  it('keeps one menu shape inside and outside a stable', () => {
     for (const pathname of ['/', '/stables/stable-a']) {
       expect(
         getWorkspaceNavigation({ pathname })[0].items.map((item) => item.id),
-      ).toEqual(['home', 'events', 'training', 'horses'])
+      ).toEqual(['home', 'events', 'training', 'horses', 'contacts'])
     }
-    expect(
-      getWorkspaceNavigation({ pathname: '/stables/stable-a' }).map(
-        (group) => ({
-          id: group.id,
-          items: group.items.map((item) => item.id),
-        }),
-      ),
-    ).toEqual([
-      { id: 'primary', items: ['home', 'events', 'training', 'horses'] },
+    const stables = [
+      { _id: 'stable-a', name: 'Oak Farm' },
+      { _id: 'stable-b', name: 'North Annex' },
+    ]
+    const shape = (pathname: string) =>
+      getWorkspaceNavigation({ pathname, stables }).map((group) => ({
+        id: group.id,
+        items: group.items.map((item) => item.id),
+      }))
+    expect(shape('/stables/stable-a')).toEqual(shape('/'))
+    expect(shape('/')).toEqual([
       {
-        id: 'records',
-        items: ['stable-horses', 'care', 'contacts', 'documents', 'analysis'],
+        id: 'primary',
+        items: ['home', 'events', 'training', 'horses', 'contacts'],
       },
       {
         id: 'management',
-        items: [
-          'stable-overview',
-          'stable',
-          'people',
-          'welcome',
-          'manage-stables',
-        ],
+        items: ['stable-stable-a', 'stable-stable-b', 'manage-stables'],
       },
+    ])
+    const oak = getWorkspaceNavigation({ pathname: '/', stables })[1].items[0]
+    expect(oak).toMatchObject({ href: '/stables/stable-a', label: 'Oak Farm' })
+    expect(oak.children?.map((item) => item.id)).toEqual([
+      'stable-horses',
+      'care',
+      'stable',
+      'analysis',
     ])
   })
 
-  it('shows Settings only for the current stable owner', () => {
+  it('lists every stable, not only the first three', () => {
+    const stables = Array.from({ length: 5 }, (_, i) => ({
+      _id: 'stable-' + i,
+      name: 'Yard ' + i,
+    }))
+    const management = getWorkspaceNavigation({ pathname: '/', stables })[1]
+    expect(management.items).toHaveLength(6)
+  })
+
+  it('shows Settings only under stables the user manages', () => {
     const pathname = '/stables/stable-a/settings'
     expect(items({ pathname }).some((item) => item.id === 'settings')).toBe(
       false,
     )
     expect(
-      items({ pathname, canManageStable: false }).some(
-        (item) => item.id === 'settings',
-      ),
+      items({
+        pathname,
+        stables: [{ _id: 'stable-a', name: 'Oak Farm', canManage: false }],
+      }).some((item) => item.id === 'settings'),
     ).toBe(false)
     expect(
-      items({ pathname, stableId: 'stable-a', canManageStable: true }),
+      items({
+        pathname,
+        stables: [{ _id: 'stable-a', name: 'Oak Farm', canManage: true }],
+      }),
     ).toContainEqual({
       id: 'settings',
       href: '/stables/stable-a/settings',
@@ -153,14 +168,21 @@ describe('workspace navigation selection', () => {
     ['/stables/stable-a/training/session-a/edit', 'training'],
     ['/stables/stable-a/horses/horse-a/care', 'stable-horses'],
     ['/stables/stable-a/reminders', 'care'],
-    ['/stables/stable-a/documents', 'documents'],
+    ['/stables/stable-a/documents', 'stable'],
     ['/stables/stable-a/analysis', 'analysis'],
-    ['/stables/stable-a/welcome', 'welcome'],
-    ['/stables/stable-a/members', 'people'],
+    ['/stables/stable-a/welcome', 'stable'],
+    ['/stables/stable-a/members', 'stable'],
     ['/stables/stable-a/edit', 'stable'],
   ])('selects one matching destination for %s', (pathname, id) => {
     expect(activeIds({ pathname })).toEqual([id])
   })
+
+  it.each(['/events/session-a', '/events/session-a/edit', '/events/create'])(
+    'selects Training, not Events, when a personal training page on %s claims it',
+    (pathname) => {
+      expect(activeIds({ pathname, section: 'training' })).toEqual(['training'])
+    },
+  )
 
   it.each([
     '/events-extra',
@@ -175,53 +197,61 @@ describe('workspace navigation selection', () => {
     expect(activeIds({ pathname })).toEqual([])
   })
 
-  it.each([
-    [undefined, 'contacts'],
-    ['contacts', 'contacts'],
-    ['people', 'people'],
-    ['yard', 'stable'],
-    ['unknown', 'contacts'],
-  ])(
-    'selects the directory tab %s without selecting its siblings',
-    (currentTab, id) => {
-      expect(
-        activeIds({ pathname: '/stables/stable-a/stable', currentTab }),
-      ).toEqual([id])
-    },
-  )
-
-  it('uses explicit tab destinations and ignores directory tabs elsewhere', () => {
-    const navigation = items({
-      pathname: '/stables/stable-a/events',
-      currentTab: 'yard',
+  it('keeps one entry for the stable directory and its tabs', () => {
+    const navigation = items({ pathname: '/stables/stable-a/events' })
+    expect(navigation.find((item) => item.id === 'stable')).toMatchObject({
+      href: '/stables/stable-a/stable',
+      active: false,
     })
-    expect(
-      navigation
-        .filter((item) => ['contacts', 'people', 'stable'].includes(item.id))
-        .map(({ href, active }) => ({ href, active })),
-    ).toEqual([
-      { href: '/stables/stable-a/stable?tab=contacts', active: false },
-      { href: '/stables/stable-a/stable?tab=yard', active: false },
-      { href: '/stables/stable-a/stable?tab=people', active: false },
-    ])
     expect(
       navigation.filter((item) => item.active).map((item) => item.id),
     ).toEqual(['events'])
+    expect(activeIds({ pathname: '/stables/stable-a/stable' })).toEqual([
+      'stable',
+    ])
   })
 
   it('resolves every navigation label in English and Polish', () => {
     for (const pathname of ['/', '/stables/stable-a']) {
-      const navigation = getWorkspaceNavigation({
-        pathname,
-        canManageStable: true,
-      })
-      const keys = navigation.flatMap((group) => [
-        ...(group.labelKey ? [group.labelKey] : []),
-        ...group.items.map((item) => item.labelKey),
-      ])
+      const stables = [{ _id: 'stable-a', name: 'Oak Farm', canManage: true }]
+      const keys = [
+        ...getWorkspaceNavigation({ pathname, stables }).flatMap((group) =>
+          group.labelKey ? [group.labelKey] : [],
+        ),
+        ...items({ pathname, stables }).map((item) => item.labelKey),
+      ]
       for (const locale of Object.values(localeInstances)) {
         for (const key of keys) expect(locale.exists(key)).toBe(true)
       }
     }
+  })
+
+  it.each([
+    { pathname: '/', stables: [] },
+    { pathname: '/', stables: [{ _id: 'stable-a', name: 'Oak Farm' }] },
+    { pathname: '/stables/stable-a', stables: [] },
+  ])('captions the stable links as Stables on $pathname', (options) => {
+    const management = getWorkspaceNavigation(options).find(
+      (group) => group.id === 'management',
+    )
+    expect(management?.labelKey).toBe('navigation.stables')
+    expect(management?.items.at(-1)).toMatchObject({
+      href: '/stables',
+      labelKey: 'navigationShell.allStables',
+    })
+  })
+
+  it('names the stable row and keeps the current stable listed while loading', () => {
+    expect(
+      items({
+        pathname: '/stables/stable-a/horses',
+        stables: [{ _id: 'stable-a', name: 'Oak Farm' }],
+      }).find((item) => item.id === 'stable-stable-a')?.label,
+    ).toBe('Oak Farm')
+    expect(
+      items({ pathname: '/stables/stable-a/horses' }).find(
+        (item) => item.id === 'stable-stable-a',
+      ),
+    ).toMatchObject({ labelKey: 'navigation.stable', label: undefined })
   })
 })

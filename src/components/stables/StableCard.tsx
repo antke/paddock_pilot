@@ -1,4 +1,4 @@
-import { ArrowRightIcon, CaretDownIcon } from '@phosphor-icons/react'
+import { ArrowRightIcon, DotsThreeIcon } from '@phosphor-icons/react'
 import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import type { StableRole } from 'shared/stables/stableAccess'
@@ -6,9 +6,8 @@ import type { StableRole } from 'shared/stables/stableAccess'
 import {
   DashboardItemCardContent,
   DashboardItemLinkCard,
-  DashboardItemRecordCard,
-  DashboardItemRecordContent,
 } from '#/components/dashboard/DashboardItemCard'
+import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { Button, ButtonLink } from '#/components/ui/button'
 import {
   DropdownMenu,
@@ -69,28 +68,34 @@ export function StableCardLink({
 }
 
 /**
- * A Stables-list gateway row. The whole row opens the overview; Horses and
- * Care sit above it as separate links, and less frequent destinations live in
- * More. No control is nested inside another interactive element.
+ * A Stables-list tile. The whole tile opens the overview through the stretched
+ * name link; Horses, Care and More sit above it in the tile's foot, so no
+ * control is nested inside another and none drifts away from the name.
  */
 export function StableGatewayCard({
   location,
-  meta,
   name,
   stableId,
   viewerRole,
-}: StableCardLinkProps & { viewerRole?: StableRole }) {
+}: Omit<StableCardLinkProps, 'meta'> & { viewerRole?: StableRole }) {
   const t = useT()
   const moreDestinations = getStableGatewayMoreDestinations(viewerRole)
 
   return (
-    <DashboardItemRecordCard
-      chrome="flat"
-      density="compact"
+    <DashboardSectionCard
       className="relative"
-      actionColumnClassName="relative z-10 sm:self-center"
-      actionsClassName="justify-start sm:justify-end"
-      actions={
+      title={
+        <Link
+          to="/stables/$stableId"
+          params={{ stableId }}
+          className="app-control-focus rounded-control [overflow-wrap:anywhere] after:absolute after:inset-0 after:rounded-panel after:transition-colors after:content-[''] hover:after:bg-primary/5"
+        >
+          {name}
+        </Link>
+      }
+      description={location}
+      footerClassName="relative z-10 flex flex-wrap gap-2"
+      footer={
         <>
           {stableGatewayDirectDestinations.map((destination) => (
             <ButtonLink
@@ -98,8 +103,9 @@ export function StableGatewayCard({
               to={destination.to}
               params={{ stableId }}
               search={destination.search}
-              variant="ghost"
+              variant="outline"
               size="sm"
+              className="min-h-11"
               aria-label={`${t(destination.labelKey)}, ${name}`}
             >
               {t(destination.labelKey)}
@@ -110,16 +116,16 @@ export function StableGatewayCard({
               render={
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
+                  className="min-h-11 min-w-11"
                   aria-label={t('stables.destinations.moreLabel', { name })}
                 />
               }
             >
-              {t('stables.destinations.more')}
-              <CaretDownIcon data-icon="inline-end" aria-hidden="true" />
+              <DotsThreeIcon weight="bold" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="start" className="w-56">
               {moreDestinations.map((destination) => (
                 <DropdownMenuLinkItem
                   key={destination.id}
@@ -138,28 +144,6 @@ export function StableGatewayCard({
           </DropdownMenu>
         </>
       }
-    >
-      <DashboardItemRecordContent
-        headingLevel={2}
-        titleTone="open"
-        // The name link stretches over the row; the destination links sit
-        // above it, so no control is nested inside another.
-        title={
-          <Link
-            to="/stables/$stableId"
-            params={{ stableId }}
-            className="app-control-focus inline-flex items-center gap-1.5 rounded-control text-foreground after:absolute after:inset-0 after:rounded-row after:content-['']"
-          >
-            <span className="[overflow-wrap:anywhere]">{name}</span>
-            <ArrowRightIcon
-              aria-hidden="true"
-              className="size-4 shrink-0 text-muted-foreground"
-            />
-          </Link>
-        }
-        meta={metaItems(location, meta)}
-        metaSeparator="dot"
-      />
-    </DashboardItemRecordCard>
+    />
   )
 }

@@ -1,12 +1,5 @@
 import { useT } from '#/i18n/LocaleProvider'
 import type { ComponentProps } from 'react'
-import {
-  ArrowRightIcon,
-  CheckIcon,
-  WarningCircleIcon,
-  XIcon,
-} from '@phosphor-icons/react'
-import { Spinner } from '#/components/ui/spinner'
 
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { Button } from '#/components/ui/button'
@@ -30,8 +23,6 @@ type FormSubmitButtonsProps = {
   submittingLabel: string
   onCancel?: () => void
   cancelLabel?: string
-  /** Marks a Cancel button that only resets fields, so phones can replace it. */
-  cancelAction?: 'cancel' | 'reset'
   disabled?: boolean
 }
 
@@ -83,7 +74,6 @@ export function FormSubmitButtons({
   submittingLabel,
   onCancel,
   cancelLabel,
-  cancelAction = 'cancel',
   disabled = false,
 }: FormSubmitButtonsProps) {
   const t = useT()
@@ -95,20 +85,10 @@ export function FormSubmitButtons({
         <Button
           type="button"
           variant="outline"
-          data-form-action={cancelAction}
           disabled={actionDisabled}
           onClick={onCancel}
         >
-          <span
-            data-slot="form-action-icon"
-            className="hidden"
-            aria-hidden="true"
-          >
-            <XIcon className="size-5" />
-          </span>
-          <span data-slot="form-action-label">
-            {cancelLabel ?? t('common.cancel')}
-          </span>
+          {cancelLabel ?? t('common.cancel')}
         </Button>
       )}
 
@@ -118,23 +98,9 @@ export function FormSubmitButtons({
         disabled={actionDisabled}
         aria-busy={isSubmitting || undefined}
       >
-        <span
-          data-slot="form-action-icon"
-          className="hidden"
-          aria-hidden="true"
-        >
-          {isSubmitting ? (
-            <Spinner className="size-6" />
-          ) : failed ? (
-            <WarningCircleIcon className="size-6" />
-          ) : (
-            <CheckIcon className="size-6" weight="bold" />
-          )}
-        </span>
         <ActionFeedback
           failed={failed}
           failedLabel={t('common.retry')}
-          icon={<ArrowRightIcon aria-hidden="true" />}
           confirmed={confirmed}
           confirmedLabel={confirmedLabel}
           label={submitLabel}

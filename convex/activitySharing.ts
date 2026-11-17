@@ -3,6 +3,7 @@ import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { getCurrentUser } from './libs/stablePermissions'
 import {
+  calendarMember,
   projectActivityShare,
   writeActivityCalendars,
 } from './libs/activitySharing'
@@ -69,6 +70,22 @@ export const choices = query({
           ).every(Boolean)
         : false,
     }
+  },
+})
+
+export const removeFromStable = mutation({
+  args: { eventId: v.id('events'), stableId: v.id('stables') },
+  handler: async (ctx, { eventId, stableId }) => {
+    const user = await getCurrentUser(ctx)
+    if ((await calendarMember(ctx, stableId, user._id)) !== 'owner')
+      throw new ConvexError(
+        'Only the stable owner can remove shared activities',
+      )
+    for (const share of await ctx.db
+      .query('activityCalendarShares')
+      .withIndex('by_event', (q) => q.eq('eventId', eventId))
+      .collect())
+      if (share.stableId === stableId) await ctx.db.delete(share._id)
   },
 })
 

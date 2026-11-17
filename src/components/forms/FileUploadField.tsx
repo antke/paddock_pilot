@@ -27,6 +27,7 @@ import {
   FieldLabel,
   FieldLabelRow,
 } from '#/components/ui/field'
+import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { cn } from '#/lib/utils'
 import { FormHelpTooltip } from './FormHelpTooltip'
@@ -49,6 +50,10 @@ type FileUploadFieldProps = Omit<
   uploadDescription?: ReactNode
   uploadLabel?: ReactNode
   width?: 'default' | 'full'
+  /** `avatar`: the round photo itself is the upload target, with no drop-zone box. */
+  variant?: 'dropzone' | 'avatar'
+  /** Shown in the avatar variant until a file is chosen, e.g. initials. */
+  avatar?: ReactNode
 }
 
 export function FileUploadField({
@@ -66,6 +71,8 @@ export function FileUploadField({
   uploadDescription,
   uploadLabel,
   width = 'default',
+  variant = 'dropzone',
+  avatar,
   className,
   ...props
 }: FileUploadFieldProps) {
@@ -165,6 +172,20 @@ export function FileUploadField({
     }
   }
 
+  const dropHandlers = {
+    onDragEnter: (event: DragEvent<HTMLElement>) => {
+      event.preventDefault()
+      if (!props.disabled) setDragging(true)
+    },
+    onDragOver: (event: DragEvent<HTMLElement>) => event.preventDefault(),
+    onDragLeave: (event: DragEvent<HTMLElement>) => {
+      if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+        setDragging(false)
+      }
+    },
+    onDrop: handleDrop,
+  }
+
   const showCurrentImage = kind === 'image' && Boolean(currentImageUrl)
 
   const typeLabel = selectedFile
@@ -196,7 +217,109 @@ export function FileUploadField({
         )}
       </FieldLabelRow>
 
-      {selectedFile ? (
+      {variant === 'avatar' ? (
+        <div
+          ref={selectionMotion}
+          data-slot="file-upload-avatar"
+          data-dragging={dragging}
+          className={cn(
+            'group/drop flex w-full min-w-0 items-center gap-2 rounded-control',
+            width === 'default' && 'max-w-xl',
+            className,
+          )}
+          {...dropHandlers}
+        >
+          <button
+            ref={setControlRef}
+            type="button"
+            className="group/avatar-upload flex min-h-11 min-w-0 items-center gap-4 rounded-control app-control-focus text-left outline-none disabled:cursor-not-allowed disabled:opacity-60"
+            aria-label={
+              selectedFile
+                ? t('upload.replace', { name: selectedFile.name })
+                : undefined
+            }
+            aria-invalid={invalid}
+            aria-describedby={
+              [descriptionIds, selectedFile && !invalid && selectionId]
+                .filter(Boolean)
+                .join(' ') || undefined
+            }
+            aria-required={required || undefined}
+            disabled={props.disabled}
+            onClick={openFilePicker}
+          >
+            <span
+              className={cn(
+                'grid size-16 shrink-0 place-items-center overflow-hidden rounded-full border border-primary/20 bg-primary/10 text-primary transition-shadow motion-reduce:transition-none',
+                'group-hover/avatar-upload:ring-2 group-hover/avatar-upload:ring-primary/30 group-data-[dragging=true]/drop:ring-2 group-data-[dragging=true]/drop:ring-primary',
+                invalid && 'ring-2 ring-destructive/50',
+              )}
+            >
+              {previewUrl ? (
+                <img
+                  src={previewUrl}
+                  alt=""
+                  className="size-full object-cover"
+                />
+              ) : (
+                (avatar ??
+                (showCurrentImage ? (
+                  <img
+                    src={currentImageUrl!}
+                    alt=""
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  <ImageSquareIcon
+                    className="size-7"
+                    weight="duotone"
+                    aria-hidden={true}
+                  />
+                )))
+              )}
+            </span>
+            <span className="grid min-w-0 gap-0.5">
+              <span className="text-sm font-semibold text-primary underline-offset-4 group-hover/avatar-upload:underline">
+                {dragging
+                  ? t('upload.releaseToSelect')
+                  : selectedFile || showCurrentImage
+                    ? t('upload.changePhoto')
+                    : (uploadLabel ?? t('upload.addPhoto'))}
+              </span>
+              <span className="text-xs leading-relaxed text-muted-foreground wrap-anywhere">
+                {selectedFile ? (
+                  <>
+                    <span>{selectedFile.name}</span> ·{' '}
+                    {formatFileSize(selectedFile.size, locale)}
+                  </>
+                ) : (
+                  (uploadDescription ?? t('upload.imageTypes'))
+                )}
+              </span>
+              {selectedFile && !invalid && (
+                <span
+                  id={selectionId}
+                  className="text-xs leading-relaxed text-muted-foreground"
+                >
+                  {t('upload.selected')}
+                </span>
+              )}
+            </span>
+          </button>
+          {selectedFile && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={t('upload.remove', { name: selectedFile.name })}
+              disabled={props.disabled}
+              onClick={clearSelection}
+            >
+              <XIcon weight="bold" aria-hidden={true} />
+            </Button>
+          )}
+        </div>
+      ) : selectedFile ? (
         <Attachment
           ref={selectionMotion}
           state={invalid ? 'error' : 'ready'}
@@ -274,17 +397,7 @@ export function FileUploadField({
           aria-required={required || undefined}
           disabled={props.disabled}
           onClick={openFilePicker}
-          onDragEnter={(event) => {
-            event.preventDefault()
-            if (!props.disabled) setDragging(true)
-          }}
-          onDragOver={(event) => event.preventDefault()}
-          onDragLeave={(event) => {
-            if (!event.currentTarget.contains(event.relatedTarget as Node)) {
-              setDragging(false)
-            }
-          }}
-          onDrop={handleDrop}
+          {...dropHandlers}
         >
           <span className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-control border border-border-subtle bg-card text-primary transition-transform motion-safe:group-data-[dragging=true]/dropzone:scale-105 motion-reduce:transition-none">
             {showCurrentImage ? (

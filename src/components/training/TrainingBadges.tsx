@@ -2,7 +2,7 @@ import { useT } from '#/i18n/LocaleProvider'
 import {
   CheckCircleIcon,
   ClockIcon,
-  QuestionIcon,
+  HourglassMediumIcon,
   ProhibitIcon,
 } from '@phosphor-icons/react'
 import type {
@@ -73,10 +73,12 @@ export function TrainingStatusBadge({
       : status === 'planned'
         ? ClockIcon
         : status === 'unconfirmed'
-          ? QuestionIcon
+          ? HourglassMediumIcon
           : ProhibitIcon
+  const label = t(`training.status.${status}`)
   return (
     <span
+      title={iconOnly ? label : undefined}
       className={cn(
         'inline-flex min-w-0 items-start gap-1.5 text-xs font-medium leading-5',
         status === 'completed' && 'text-primary',
@@ -85,11 +87,9 @@ export function TrainingStatusBadge({
       <Icon
         aria-hidden="true"
         weight={status === 'completed' ? 'fill' : 'regular'}
-        className="size-5 shrink-0"
+        className={cn('shrink-0', iconOnly ? 'size-4 self-center' : 'size-5')}
       />
-      <span className={iconOnly ? 'sr-only' : undefined}>
-        {t(`training.status.${status}`)}
-      </span>
+      <span className={iconOnly ? 'sr-only' : undefined}>{label}</span>
     </span>
   )
 }

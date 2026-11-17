@@ -93,7 +93,7 @@ export function TrainingMonthCalendar({
             <CalendarWeekdayCell
               role="columnheader"
               key={weekday}
-              className="px-0 py-2"
+              className="calendar-weekday-label px-0 text-center"
             >
               {weekday}
             </CalendarWeekdayCell>

@@ -1,3 +1,4 @@
+import { notifyUsers } from './libs/eventNotices'
 import { departurePreview, startDeparture } from './horseTransitions'
 import { ConvexError, v } from 'convex/values'
 import { stableMemberDetailsInputSchema } from '../shared/stables/stableMemberSchema'
@@ -219,35 +220,17 @@ export const remove = mutation({
       throw new ConvexError('Stable owner cannot be removed')
     }
     const member = await ctx.db.get(membership.userId)
-
-    const horses = await ctx.db
-      .query('horses')
-      .withIndex('by_owner_id', (q) => q.eq('ownerId', membership.userId))
-      .collect()
-    for (const horse of horses)
-      if (horse.stableId === membership.stableId && horse.currentPlacementId) {
-        const preview = await departurePreview(ctx, horse)
-        await startDeparture(ctx, horse, {
-          actorUserId: userId,
-          carryReminderIds: preview.reminders.map((r) => r._id),
-        })
-      }
-    await removeStableOnboarding(ctx, membership.stableId, membership.userId)
-    await ctx.db.delete(args.id)
+    await endMembership(ctx, membership, userId)
     await recordStableAudit(ctx, {
       stableId: membership.stableId,
       actorUserId: userId,
       action: 'member.removed',
       entityType: 'stableMember',
       entityId: membership._id,
-      summary: `Removed member ${membership.userId}`,
+      summary: 'Removed member ' + membership.userId,
       details: {
         kind: 'member_removed',
-        memberName:
-          membership.displayNameOverride ||
-          member?.preferredName ||
-          [member?.firstName, member?.lastName].filter(Boolean).join(' ') ||
-          undefined,
+        memberName: memberDisplayName(membership, member),
         reassignedHorseCount: 0,
       },
     })
@@ -256,6 +239,88 @@ export const remove = mutation({
     }
   },
 })
+
+/** A member leaves on their own; their horses placed here move to personal care. */
+export const leave = mutation({
+  args: { stableId: v.id('stables') },
+  handler: async (ctx, { stableId }) => {
+    const user = await getCurrentUser(ctx)
+    const stable = await ctx.db.get(stableId)
+    const membership = await ctx.db
+      .query('stableMembers')
+      .withIndex('by_stable_id_user_id', (q) =>
+        q.eq('stableId', stableId).eq('userId', user._id),
+      )
+      .unique()
+    if (!stable || !membership || membership.role !== 'member')
+      throw new ConvexError('You are not a member of this stable')
+    if (stable.ownerId === user._id)
+      throw new ConvexError('Stable owner cannot leave the stable')
+    await endMembership(ctx, membership, user._id)
+    await recordStableAudit(ctx, {
+      stableId,
+      actorUserId: user._id,
+      action: 'member.left',
+      entityType: 'stableMember',
+      entityId: membership._id,
+      summary: 'Member left',
+    })
+    await notifyUsers(
+      ctx,
+      [stable.ownerId],
+      {
+        kind: 'stable_member_left',
+        stableId,
+        detail: memberDisplayName(membership, user),
+      },
+      [user._id],
+    )
+  },
+})
+
+const memberDisplayName = (
+  membership: Doc<'stableMembers'>,
+  member: Doc<'users'> | null,
+) =>
+  membership.displayNameOverride ||
+  member?.preferredName ||
+  [member?.firstName, member?.lastName].filter(Boolean).join(' ') ||
+  undefined
+
+/** Shared by removal and leaving: horses depart, tasks are unassigned, access ends. */
+async function endMembership(
+  ctx: MutationCtx,
+  membership: Doc<'stableMembers'>,
+  actorUserId: Id<'users'>,
+) {
+  const horses = await ctx.db
+    .query('horses')
+    .withIndex('by_owner_id', (q) => q.eq('ownerId', membership.userId))
+    .collect()
+  for (const horse of horses)
+    if (horse.stableId === membership.stableId && horse.currentPlacementId) {
+      const preview = await departurePreview(ctx, horse)
+      await startDeparture(ctx, horse, {
+        actorUserId,
+        carryReminderIds: preview.reminders.map((r) => r._id),
+      })
+    }
+  // Stable tasks assigned to them go back to the shared list.
+  for (const reminder of await ctx.db
+    .query('careReminders')
+    .withIndex('by_stable_id_status_due_date', (q) =>
+      q.eq('stableId', membership.stableId).eq('status', 'pending'),
+    )
+    .collect())
+    if (reminder.assignedTo === membership.userId)
+      await ctx.db.patch(reminder._id, {
+        assignedTo: undefined,
+        updatedAt: Date.now(),
+      })
+  await removeStableOnboarding(ctx, membership.stableId, membership.userId)
+  await ctx.db.delete(membership._id)
+  return horses.filter((horse) => horse.stableId === membership.stableId)
+}
 
 export const removeWithHorseReassignment = mutation({
   args: {
@@ -276,23 +341,7 @@ export const removeWithHorseReassignment = mutation({
       throw new ConvexError('Stable owner cannot be removed')
     }
     const member = await ctx.db.get(membership.userId)
-
-    const horses = await ctx.db
-      .query('horses')
-      .withIndex('by_owner_id', (q) => q.eq('ownerId', membership.userId))
-      .filter((q) => q.eq(q.field('stableId'), membership.stableId))
-      .collect()
-
-    for (const horse of horses)
-      if (horse.currentPlacementId) {
-        const preview = await departurePreview(ctx, horse)
-        await startDeparture(ctx, horse, {
-          actorUserId: userId,
-          carryReminderIds: preview.reminders.map((r) => r._id),
-        })
-      }
-    await removeStableOnboarding(ctx, membership.stableId, membership.userId)
-    await ctx.db.delete(membership._id)
+    const horses = await endMembership(ctx, membership, userId)
     await recordStableAudit(ctx, {
       stableId: membership.stableId,
       actorUserId: userId,
@@ -305,11 +354,7 @@ export const removeWithHorseReassignment = mutation({
           : `Removed member ${membership.userId}`,
       details: {
         kind: 'member_removed',
-        memberName:
-          membership.displayNameOverride ||
-          member?.preferredName ||
-          [member?.firstName, member?.lastName].filter(Boolean).join(' ') ||
-          undefined,
+        memberName: memberDisplayName(membership, member),
         reassignedHorseCount: 0,
       },
     })

@@ -91,6 +91,8 @@ export function EventRow({
       search={{
         horseId: event.contextHorseId,
         participationId: event.contextParticipationId,
+        // A series row is one date; its detail can act on that date alone.
+        date: event.recurrence ? event.date : undefined,
       }}
       accent={accent}
       chrome={chrome}
@@ -184,7 +186,11 @@ function EventRowContent({
             <DashboardBadgeList
               align="end"
               gap="compact"
-              className="shrink-0 justify-self-end"
+              // Compact titles use a 20px line; the 24px badge overhangs it so badged rows stay level with the rest.
+              className={cn(
+                'shrink-0 justify-self-end',
+                density === 'compact' && '-my-0.5',
+              )}
             >
               {statusBadge}
               {supplementalBadges}
@@ -235,8 +241,9 @@ function getLeading(
     return (
       <span
         data-slot="event-time-badge"
+        // The same outlined tile as the date badge, so times read as one column.
         className={cn(
-          'app-row grid shrink-0 place-items-center rounded-control px-1 py-1 text-center leading-tight font-semibold text-primary [overflow-wrap:anywhere]',
+          'app-row grid shrink-0 place-items-center rounded-control px-1 py-1 text-center leading-tight font-semibold tabular-nums text-primary [overflow-wrap:anywhere]',
           density === 'compact' ? 'size-12 text-xs' : 'size-16 text-sm',
         )}
       >

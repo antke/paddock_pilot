@@ -2,8 +2,8 @@ export const trainingViews = {
   complete: 'Ukończono',
   markComplete: 'Oznacz jako ukończony',
   markIncomplete: 'Oznacz jako nieukończony',
-  markCompleteFor: 'Oznacz jako ukończony: {{horse}} · {{title}}',
-  markIncompleteFor: 'Oznacz jako nieukończony: {{horse}} · {{title}}',
+  markCompleteFor: 'Oznacz jako ukończony: {{name}}',
+  markIncompleteFor: 'Oznacz jako nieukończony: {{name}}',
   markedComplete: 'Trening oznaczony jako ukończony.',
   markedIncomplete: 'Trening oznaczony jako nieukończony.',
   recordCompleted: 'Dodaj trening',
@@ -22,7 +22,7 @@ export const trainingViews = {
 
   audit: '{{horse}}: {{status}} · {{date}}',
   editRecord: 'Edytuj zapis treningu',
-  record: 'Dodaj trening',
+  record: 'Dodaj zapis treningu',
   focus: 'Ćwiczenia / cel',
   outcome: 'Przebieg treningu',
   nextFocus: 'Cel kolejnego treningu',
@@ -97,7 +97,7 @@ export const trainingViews = {
   sessionCreated: 'Trening utworzony',
   ready: 'Gotowe: {{title}}.',
   updated: 'Zaktualizowano: {{title}}.',
-  log: 'Dziennik treningów',
+  log: 'Treningi',
   logHelp:
     'Planuj treningi, zapisuj wykonaną pracę i przeglądaj treningi każdego konia.',
   sessionProgress: 'Ukończono dla {{count}} z {{total}} koni',

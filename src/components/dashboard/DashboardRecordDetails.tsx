@@ -1,6 +1,13 @@
 import { useT } from '#/i18n/LocaleProvider'
 import type { ComponentProps, ReactNode } from 'react'
 import { cn } from '#/lib/utils'
+import { DisclosureChevron } from '#/components/ui/disclosure-chevron'
+
+/** Shared by the native summary and a row's own button trigger (reminder rows on phones). */
+export const dashboardRecordDetailsTriggerClassName =
+  'app-disclosure-trigger flex w-fit cursor-pointer list-none items-center gap-1.5 [&::-webkit-details-marker]:hidden rounded-control py-2 text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring pointer-coarse:min-h-11'
+export const dashboardRecordDetailsContentClassName =
+  'max-w-prose whitespace-pre-wrap pb-2 text-sm leading-6 text-foreground'
 
 /** Optional record notes; essential status and actions stay outside the disclosure. */
 export function DashboardRecordDetails({
@@ -17,16 +24,15 @@ export function DashboardRecordDetails({
       className={cn('group/details', className)}
       {...props}
     >
-      <summary className="app-disclosure-trigger w-fit cursor-pointer rounded-control py-2 text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring pointer-coarse:min-h-11">
+      <summary className={dashboardRecordDetailsTriggerClassName}>
         {t('reminders.details')}
         <span className="sr-only">
           {t('reminders.forPrefix')}
           {recordTitle}
         </span>
+        <DisclosureChevron />
       </summary>
-      <div className="max-w-prose whitespace-pre-wrap pb-2 text-sm leading-6 text-foreground">
-        {children}
-      </div>
+      <div className={dashboardRecordDetailsContentClassName}>{children}</div>
     </details>
   )
 }

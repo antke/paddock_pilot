@@ -3,12 +3,7 @@ import { Controller, useWatch } from 'react-hook-form'
 import type { Control } from 'react-hook-form'
 import type { PersonNameSuggestion } from '#/components/forms/PersonNameAutocomplete'
 import { PersonNameField } from '#/components/forms/PersonNameField'
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldLabel,
-} from '#/components/ui/field'
+import { Field, FieldError, FieldLabel } from '#/components/ui/field'
 import { useT } from '#/i18n/LocaleProvider'
 import type { EventFormInput, EventFormSchema } from './eventFormSchema'
 
@@ -52,15 +47,12 @@ export function LeaderField({
             placeholder={t('eventForm.leaderPlaceholder')}
             aria-invalid={fieldState.invalid}
             aria-describedby={
-              fieldState.invalid ? `${id}-leader-error` : `${id}-leader-help`
+              fieldState.invalid ? `${id}-leader-error` : undefined
             }
             value={field.value ?? ''}
             maxLength={100}
             disabled={disabled}
           />
-          <FieldDescription id={`${id}-leader-help`}>
-            {t('eventForm.leaderHelp')}
-          </FieldDescription>
           <FieldError id={`${id}-leader-error`} errors={[fieldState.error]} />
         </Field>
       )}

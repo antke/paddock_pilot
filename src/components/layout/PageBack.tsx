@@ -37,7 +37,8 @@ function RoutedPageBack({ onClick, disabled, target }: PageBackProps) {
   const rule = target ?? pageBackRuleFor(routeId)
 
   if (onClick) {
-    if (rule === 'none') return null
+    // Lab specimens of route forms keep the guarded Back production shows.
+    if (rule === 'none' && routeId !== '/page-lab/$page') return null
     return (
       <BackButton data-slot="page-back" onClick={onClick} disabled={disabled} />
     )

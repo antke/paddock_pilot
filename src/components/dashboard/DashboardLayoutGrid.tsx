@@ -14,6 +14,7 @@ type DashboardLayoutGridVariant =
   | 'splitWide'
   | 'thirds'
   | 'thirdsCompact'
+  | 'tiles'
 
 type DashboardLayoutStackGap = 'compact' | 'comfortable' | 'loose'
 
@@ -44,6 +45,9 @@ const dashboardLayoutGridVariantClassNames = {
   splitWide:
     'grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(22rem,0.8fr)]',
   thirds: 'grid items-start gap-4 xl:grid-cols-3',
+  /** Equal entity tiles (Stables list): rows share the tallest tile's height. */
+  tiles:
+    'grid items-stretch gap-[var(--app-section-gap)] md:grid-cols-2 xl:grid-cols-3',
   thirdsCompact: 'grid gap-3 lg:grid-cols-3',
 } satisfies Record<DashboardLayoutGridVariant, string>
 

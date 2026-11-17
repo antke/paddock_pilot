@@ -317,6 +317,42 @@ export const deleteUser = internalMutation({
       .withIndex('by_user_id', (q) => q.eq('userId', user._id))
       .collect()
     for (const carer of carerRows) await ctx.db.delete(carer._id)
+    // Attendance and ride invitations name the person; they end with the account.
+    for (const attendance of await ctx.db
+      .query('eventAttendees')
+      .withIndex('by_user', (q) => q.eq('userId', user._id))
+      .collect()) {
+      const event = await ctx.db.get(attendance.eventId)
+      if (event)
+        await ctx.db.patch(event._id, {
+          peopleIds: event.peopleIds?.filter((id) => id !== user._id),
+        })
+      await ctx.db.delete(attendance._id)
+    }
+    const rides = [
+      ...(await ctx.db
+        .query('activityParticipants')
+        .withIndex('by_user', (q) => q.eq('userId', user._id))
+        .collect()),
+      ...(
+        await Promise.all(
+          [user.email, ...(user.verifiedEmails ?? [])].map((email) =>
+            ctx.db
+              .query('activityParticipants')
+              .withIndex('by_email', (q) =>
+                q.eq('email', email.trim().toLowerCase()),
+              )
+              .collect(),
+          ),
+        )
+      ).flat(),
+    ]
+    for (const ride of new Map(rides.map((r) => [r._id, r])).values())
+      await ctx.db.patch(ride._id, {
+        email: 'deleted-' + ride._id + '@deleted.invalid',
+        status: ride.status === 'invited' ? 'revoked' : ride.status,
+        updatedAt: now,
+      })
     for (const notification of await ctx.db
       .query('notifications')
       .withIndex('by_user', (q) => q.eq('userId', user._id))

@@ -136,10 +136,15 @@ it.each([true, false])(
   'keeps mobile Analysis accessible under More while respecting management permission (%s)',
   async (canManageHorse) => {
     const { horse } = await renderHeader({ mobile: true, canManageHorse })
-    expect(screen.queryByRole('link', { name: 'Add event' })).toBeNull()
-    expect(screen.queryByRole('link', { name: 'Edit horse' })).toBeNull()
+    expect(Boolean(screen.queryByRole('link', { name: 'Add event' }))).toBe(
+      canManageHorse,
+    )
+    expect(Boolean(screen.queryByRole('link', { name: 'Edit horse' }))).toBe(
+      canManageHorse,
+    )
     expect(screen.queryByRole('link', { name: 'Analysis' })).toBeNull()
-    const more = screen.getByRole('button', { name: 'More' })
+    // The rail names the active section, even inside More.
+    const more = screen.getByRole('button', { name: 'Analysis' })
     fireEvent.click(more)
     const analysis = await screen.findByRole('link', { name: 'Analysis' })
     expect(analysis.getAttribute('href')).toBe(`/horses/${horse._id}/analysis`)
@@ -168,11 +173,20 @@ it.each([true, false])(
   },
 )
 
-it('keeps Analysis directly available in the desktop header', async () => {
+it('labels More on the desktop rail when no hidden section is active', async () => {
+  await renderHeader({
+    mobile: false,
+    canManageHorse: true,
+    section: 'profile',
+  })
+  expect(screen.getByRole('button', { name: 'More' })).toBeTruthy()
+})
+
+it('keeps Analysis in More on the desktop section rail', async () => {
   const { horse } = await renderHeader({ mobile: false, canManageHorse: true })
-  expect(
-    screen.getByRole('link', { name: 'Analysis' }).getAttribute('href'),
-  ).toBe(`/horses/${horse._id}/analysis`)
+  fireEvent.click(screen.getByRole('button', { name: 'Analysis' }))
+  const analysis = await screen.findByRole('link', { name: 'Analysis' })
+  expect(analysis.getAttribute('href')).toBe(`/horses/${horse._id}/analysis`)
   expect(screen.getByRole('link', { name: 'Add event' })).toBeTruthy()
   expect(screen.getByRole('link', { name: 'Edit horse' })).toBeTruthy()
 })
@@ -234,7 +248,9 @@ it.each([
     expect(within(menu).getAllByRole('menuitem')).toHaveLength(
       (permissions.canManageHorse ? 2 : 0) + (permissions.canRecord ? 7 : 0),
     )
-    const record = screen.queryByRole('menuitem', { name: 'Add training log' })
+    const record = screen.queryByRole('menuitem', {
+      name: 'Add training session',
+    })
     if (permissions.canRecord) {
       expect(record?.getAttribute('href')).toBe(
         `/events/create?horseId=${horse._id}&training=true&intent=record`,
@@ -272,7 +288,7 @@ it.each(['profile', 'activity', 'training', 'care', 'nutrition', 'documents'])(
     const menu = await screen.findByRole('menu')
     expect(within(menu).getAllByRole('menuitem')).toHaveLength(9)
     expect(
-      within(menu).getByRole('menuitem', { name: 'Add training log' }),
+      within(menu).getByRole('menuitem', { name: 'Add training session' }),
     ).toBeTruthy()
     expect(
       within(menu).getByRole('menuitem', { name: 'Edit horse' }),

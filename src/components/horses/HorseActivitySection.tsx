@@ -16,9 +16,9 @@ import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import { useSmallScreen } from '#/lib/useSmallScreen'
 import type { HorseDetailSectionProps } from './HorseDetail'
 import { createHorseActivityListFilterConfig } from './horseDetailListFilters'
-import { HorseDetailSectionTabs } from './HorseDetailSectionTabs'
 import { StableEventsCalendar } from '#/components/stables/StableEventsCalendar'
-import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
+import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
+import { CalendarViewControl } from '#/components/events/CalendarToolbar'
 import {
   compareActivityDates,
   groupHorseActivityEvents,
@@ -40,18 +40,6 @@ function HorseActivity({ stableId, horse, events }: HorseDetailSectionProps) {
   const { locale } = useLocale()
   const small = useSmallScreen()
 
-  const activityTabs = [
-    {
-      id: 'log',
-      label: t('horseHistory.log'),
-      title: t('horseHistory.log'),
-    },
-    {
-      id: 'calendar',
-      label: t('horseHistory.calendar'),
-      title: t('horseHistory.calendar'),
-    },
-  ] as const
   const [mode, setMode] = useState<'log' | 'calendar'>('log')
   const [activeTab, setActiveTab] = useState<ActivityTab>('upcoming')
   const [historyExpanded, setHistoryExpanded] = useState(false)
@@ -84,33 +72,58 @@ function HorseActivity({ stableId, horse, events }: HorseDetailSectionProps) {
       ? expandedVisibleItemLimit
       : compactVisibleItemLimit
 
-  return (
-    <HorseDetailSectionTabs
-      activeId={mode}
-      items={activityTabs}
-      onSelect={setMode}
-      actions={
-        !small && (
-          <ButtonLink
-            to="/events/create"
-            search={{ horseId: horse._id }}
-            action="schedule"
-          >
-            {t('horseHistory.addEvent')}
-          </ButtonLink>
-        )
-      }
+  // Log/Calendar is a view choice, so it is segmented and sits where Events puts its view control.
+  const viewControl = (
+    <CalendarViewControl
+      value={mode}
+      options={[
+        { value: 'log', label: t('horseHistory.log') },
+        { value: 'calendar', label: t('horseHistory.calendar') },
+      ]}
+      label={t('horseDetail.views')}
+      onValueChange={setMode}
+    />
+  )
+  const addEvent = !small && (
+    <ButtonLink
+      to="/events/create"
+      search={{ horseId: horse._id }}
+      action="schedule"
+      variant="outline"
     >
+      {t('horseHistory.addEvent')}
+    </ButtonLink>
+  )
+
+  return (
+    <DashboardSectionCard surface="canvas" contentGap="loose">
       {mode === 'log' && (
-        <ChoiceButtonGroup
-          aria-label={t('horseHistory.activityPeriod')}
-          value={activeTab}
-          options={[
-            { value: 'upcoming', label: t('horseHistory.upcoming') },
-            { value: 'history', label: t('horseHistory.history') },
-          ]}
-          onValueChange={setActiveTab}
-        />
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          {/* A time filter, not a view: quiet text toggle so it never twins the segmented Log/Calendar. */}
+          <div
+            role="group"
+            aria-label={t('horseHistory.activityPeriod')}
+            className="-ml-2 flex items-center"
+          >
+            {(['upcoming', 'history'] as const).map((value) => (
+              <Button
+                key={value}
+                type="button"
+                variant="subtle"
+                size="sm"
+                aria-pressed={activeTab === value}
+                onClick={() => setActiveTab(value)}
+                className="px-2 text-sm font-medium decoration-2 underline-offset-[6px] hover:bg-transparent aria-pressed:font-semibold aria-pressed:text-foreground aria-pressed:underline"
+              >
+                {t(`horseHistory.${value}`)}
+              </Button>
+            ))}
+          </div>
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            {viewControl}
+            {addEvent}
+          </div>
+        </div>
       )}
       <ListFilterLayout
         controls={
@@ -153,6 +166,8 @@ function HorseActivity({ stableId, horse, events }: HorseDetailSectionProps) {
               horses={[horse]}
               events={visibleEvents}
               surface="flat"
+              viewControl={viewControl}
+              actions={addEvent || undefined}
             />
           </>
         ) : visibleEvents.length === 0 ? (
@@ -203,6 +218,6 @@ function HorseActivity({ stableId, horse, events }: HorseDetailSectionProps) {
           </ScrollableList>
         )}
       </ListFilterLayout>
-    </HorseDetailSectionTabs>
+    </DashboardSectionCard>
   )
 }

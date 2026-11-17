@@ -18,6 +18,8 @@ import {
 import { HorseFormPageLab } from '#/components/page-lab/prototypes/HorseFormPageLab'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import { Badge } from '#/components/ui/badge'
+import { Progress } from '#/components/ui/progress'
+import { Switch } from '#/components/ui/switch'
 import { Button } from '#/components/ui/button'
 import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
 import { Input } from '#/components/ui/input'
@@ -30,7 +32,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '#/components/ui/dialog'
-import { darkModePalettes, darkModePreviewCss } from './darkModePalettes'
+import {
+  darkModePalettes,
+  darkModePreviewCss,
+  darkTextScale,
+} from './darkModePalettes'
+import { paletteContrast } from '#/components/page-lab/prototypes/paletteWorkshopPalettes'
+import type { PaletteTokens } from '#/components/page-lab/prototypes/paletteWorkshopPalettes'
 import type { DarkModeSearch } from './darkModePalettes'
 
 export function DarkModeLab({
@@ -91,8 +99,9 @@ export function DarkModeLab({
         <AppSkipLink />
         <WorkspaceNavigationView
           pathname={`/stables/${data.stable._id}`}
-          stables={[{ _id: data.stable._id, name: data.stable.name }]}
-          canManageStable
+          stables={[
+            { _id: data.stable._id, name: data.stable.name, canManage: true },
+          ]}
           compactAccountActions={
             <span className="text-sm text-muted-foreground">Preview</span>
           }
@@ -109,9 +118,11 @@ export function DarkModeLab({
               title="Dark mode studies"
               description={
                 <span className="hidden sm:inline">
-                  Three directions, the same Paddock Pilot. Compare them with
-                  the current themes, then explore the dashboard, calendar and
-                  forms.
+                  One readable base, eight highlight combinations for what is
+                  selected or focused. Controls &amp; dialogs shows the text
+                  scale. Try one across the app with{' '}
+                  <span className="whitespace-nowrap">?darkStudy=chestnut</span>
+                  .
                 </span>
               }
               backAction={
@@ -132,18 +143,16 @@ export function DarkModeLab({
                         aria-hidden="true"
                         className="inline-flex overflow-hidden rounded-sm border border-input"
                       >
-                        {['--background', '--card', '--primary'].map(
-                          (token) => (
-                            <span
-                              key={token}
-                              className="size-4"
-                              style={{
-                                backgroundColor:
-                                  item.tokens[token as `--${string}`],
-                              }}
-                            />
-                          ),
-                        )}
+                        {['--card', '--selection', '--action'].map((token) => (
+                          <span
+                            key={token}
+                            className="size-4"
+                            style={{
+                              backgroundColor:
+                                item.tokens[token as `--${string}`],
+                            }}
+                          />
+                        ))}
                       </span>
                       {item.name}
                     </span>
@@ -160,7 +169,7 @@ export function DarkModeLab({
                 {search.reference === 'light'
                   ? 'Your current bright theme, unchanged. Switch back to the candidate to compare the same screen.'
                   : search.reference === 'current'
-                    ? 'Your current dark theme is Charcoal & pine: charcoal surfaces, paper-coloured text and pine green actions.'
+                    ? 'Your current dark theme: Ivory & emerald.'
                     : palette.description}
               </p>
               <div className="grid grid-cols-2 items-end gap-4 sm:flex sm:flex-wrap">
@@ -228,11 +237,100 @@ export function DarkModeLab({
               )}
               {search.surface === 'form' && <HorseFormPageLab data={data} />}
               {search.surface === 'controls' && <ControlSamples />}
+              {search.surface === 'controls' && <GreenSurfaceSamples />}
+              {search.surface === 'controls' &&
+                search.reference === 'candidate' && (
+                  <TextScaleSamples tokens={palette.tokens} />
+                )}
             </div>
           </div>
         </PageLayout>
       </AppShell>
     </LandingLabThemeBoundary>
+  )
+}
+
+const textScaleSurfaces = [
+  ['Canvas', '--background'],
+  ['Panel', '--card'],
+  ['Raised', '--popover'],
+  ['Selected row', '--selection-surface'],
+] as const
+
+function TextScaleSamples({ tokens }: { tokens: PaletteTokens }) {
+  return (
+    <DashboardLayoutGrid variant="equal" className="mt-6">
+      <DashboardSection title="Text lightness scale" size="panel">
+        <p className="text-sm text-muted-foreground">
+          Contrast against each surface. Body text needs 4.5:1.
+        </p>
+        <ul className="grid gap-4">
+          {darkTextScale.map((level) => (
+            <li key={level.name} className="grid gap-1">
+              <span className="font-semibold" style={{ color: level.color }}>
+                {level.name} · {level.use}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {level.color} ·{' '}
+                {textScaleSurfaces
+                  .map(([name, token]) => {
+                    const ratio = paletteContrast(level.color, tokens[token])
+                    return (
+                      name +
+                      ' ' +
+                      (ratio ? ratio.toFixed(1) : '?') +
+                      ':1' +
+                      (ratio && ratio < 4.5 ? ' (below 4.5)' : '')
+                    )
+                  })
+                  .join(' · ')}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </DashboardSection>
+      <DashboardSection title="Accent in place" size="panel">
+        <p className="text-sm text-muted-foreground">
+          The accent marks what is chosen or focused. Green still means act.
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button>Save</Button>
+          <Button
+            variant="outline"
+            className="outline-2 outline-offset-2 outline-ring"
+          >
+            Keyboard focus
+          </Button>
+        </div>
+        <div className="rounded-row bg-sidebar-accent px-3 py-2 text-sm">
+          Selected nav row · Overview
+        </div>
+      </DashboardSection>
+    </DashboardLayoutGrid>
+  )
+}
+
+function GreenSurfaceSamples() {
+  return (
+    <DashboardLayoutGrid variant="equal" className="mt-6">
+      <DashboardSection title="Yard update" size="panel" tone="brandQuiet">
+        <p className="text-sm text-brand-surface-muted-foreground">
+          Farrier visit moved to Thursday, 9:00. Juniper and Atlas are booked.
+        </p>
+      </DashboardSection>
+      <DashboardSection title="Green surfaces" size="panel">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="grid size-14 place-items-center rounded-control bg-calendar-today font-semibold">
+            13
+          </span>
+          <Button variant="outline" aria-expanded="true">
+            Hovered outline
+          </Button>
+          <Switch defaultChecked aria-label="Sample reminder emails" />
+        </div>
+        <Progress value={64} label="Sample care plan progress" />
+      </DashboardSection>
+    </DashboardLayoutGrid>
   )
 }
 

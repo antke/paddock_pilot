@@ -1,5 +1,8 @@
+import { useClaimNavigationSection } from '#/components/layout/navigationSection'
 import { AttendingPeople } from './AttendingPeople'
-import { useQuery } from 'convex/react'
+import { useMutation, useQuery } from 'convex/react'
+import { useNavigate } from '@tanstack/react-router'
+import { ConfirmActionButton } from '#/components/ui/confirm-action'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
@@ -19,13 +22,18 @@ export function SharedActivityDetail({
   date?: string
 }) {
   const data = useQuery(api.activitySharing.detail, { eventId })
+  useClaimNavigationSection(data?.event.training ? 'training' : undefined)
+  const removeFromStable = useMutation(api.activitySharing.removeFromStable)
+  const navigate = useNavigate()
   const { locale } = useLocale()
   const t = useT()
   if (data === undefined) return <RoutePending />
   if (!data) return <RouteEntityNotFoundAlert entity="event" />
   const { event, horses, records } = data
+  const removableStableId =
+    'removableStableId' in data ? data.removableStableId : undefined
   return (
-    <DashboardPage>
+    <DashboardPage width="narrow">
       <DashboardPageHeader
         showWorkspace={false}
         title={event.title}
@@ -35,8 +43,23 @@ export function SharedActivityDetail({
           undefined,
           locale,
         )}
+        actions={
+          removableStableId ? (
+            <ConfirmActionButton
+              label={t('eventViews.removeShare')}
+              title={t('eventViews.removeShareNamed', { title: event.title })}
+              description={t('eventViews.removeShareHelp')}
+              cancelLabel={t('eventViews.keepEvent')}
+              failedLabel={t('eventViews.lifecycleFailed')}
+              onConfirm={async () => {
+                await removeFromStable({ eventId, stableId: removableStableId })
+                await navigate({ to: '/events' })
+              }}
+            />
+          ) : undefined
+        }
       />
-      <AttendingPeople eventId={eventId} />
+      <AttendingPeople eventId={eventId} title={event.title} />
       <DashboardSectionCard>
         <p>{horses.map((horse) => horse.name).join(' · ')}</p>
         {event.location && <p>{event.location}</p>}

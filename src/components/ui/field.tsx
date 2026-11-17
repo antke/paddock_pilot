@@ -12,7 +12,6 @@ function FieldSet({ className, ...props }: React.ComponentProps<'fieldset'>) {
       data-slot="field-set"
       className={cn(
         'min-w-0 flex flex-col gap-4 has-[>[data-slot=checkbox-group]]:gap-3 has-[>[data-slot=radio-group]]:gap-3',
-        '[&>[data-slot=field-legend]]:pl-2',
         className,
       )}
       {...props}
@@ -46,7 +45,8 @@ function FieldLegend({
           aria-hidden="true"
           data-slot="required-mark"
           data-required
-          className="ml-1 text-destructive"
+          // A thin space at most: the mark belongs to the label word.
+          className="ms-0.5 text-muted-foreground"
         />
       )}
     </legend>
@@ -188,8 +188,7 @@ const fieldVariants = cva(
   {
     variants: {
       orientation: {
-        vertical:
-          'flex-col *:w-full [&>.sr-only]:w-auto [&>[data-slot=field-label]]:pl-2',
+        vertical: 'flex-col *:w-full [&>.sr-only]:w-auto',
         horizontal:
           'flex-row items-center has-[>[data-slot=field-content]]:items-start *:data-[slot=field-label]:flex-auto has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px',
         responsive:
@@ -267,7 +266,8 @@ function FieldLabel({
         aria-hidden="true"
         data-slot="required-mark"
         data-required={required || undefined}
-        className="text-destructive"
+        // Cancels most of the label's 8px gap, so the mark sits a thin space after the text.
+        className="-ms-1.5 text-muted-foreground"
       />
     </Label>
   )
@@ -331,7 +331,7 @@ function FieldLabelRow({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="field-label-row"
-      className={cn('flex items-center gap-1 pl-2', className)}
+      className={cn('flex items-center gap-1', className)}
       {...props}
     />
   )

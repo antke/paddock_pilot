@@ -35,20 +35,16 @@ export const stables = {
     'Dane stajni zostały zaktualizowane, ale nie udało się otworzyć jej strony. Spróbuj ponownie — zmiany nie zostaną zapisane drugi raz.',
   create: 'Utwórz stajnię',
   edit: 'Edytuj stajnię',
-  details: 'Dane stajni',
   sampleSaved:
     'Zapis przykładowej stajni potwierdzono lokalnie. Nie zmieniono rzeczywistych danych.',
   saved: 'Stajnia zapisana.',
   opening: 'Otwieranie…',
   continueSetup: 'Przejdź do konfiguracji',
   open: 'Otwórz stajnię',
-  discard: 'Odrzuć zmiany',
-  reset: 'Wyczyść',
   discardTitle: 'Odrzucić zmiany?',
   discardHelp: 'Formularz wróci do ostatnio zapisanych danych stajni.',
-  resetTitle: 'Wyczyścić dane stajni?',
+  resetTitle: 'Odrzucić wpisane dane stajni?',
   resetHelp: 'Usuń niezapisane dane stajni z formularza i zacznij od nowa.',
-  resetChanges: 'Wyczyść zmiany',
   update: 'Zaktualizuj stajnię',
   creating: 'Tworzenie…',
   saving: 'Zapisywanie…',
@@ -70,13 +66,9 @@ export const stables = {
   start: 'Zacznij',
   settings: 'Ustawienia stajni',
   basics: 'Podstawowe dane stajni',
-  basicsHelp:
-    'Nazwa i lokalizacja stajni są wymagane. Pozostałe dane są opcjonalne.',
   name: 'Nazwa stajni',
   nameExample: 'Stajnia Pod Dębami',
   locationPlaceholder: 'Miejscowość, okolica lub znana lokalizacja stajni',
-  addressHelp:
-    'Pełny adres przyda się w dokumentach, przy umawianiu wizyt i planowaniu dojazdu.',
   addressLine1: 'Adres — wiersz 1',
   addressLine1Placeholder: 'Nazwa stajni lub ulica i numer',
   addressLine2: 'Adres — wiersz 2',
@@ -84,14 +76,8 @@ export const stables = {
   postcode: 'Kod pocztowy',
   country: 'Kraj',
   profile: 'Profil stajni',
-  profileHelp: 'Dodaj informacje, które pomogą innym rozpoznać stajnię.',
-  descriptionAbout: 'Informacje o opisie stajni',
-  descriptionHelp:
-    'Opis jest opcjonalny. Dodaj informacje ułatwiające rozpoznanie stajni.',
   descriptionPlaceholder: 'Napisz coś o stajni',
   operations: 'Organizacja',
-  operationsHelp:
-    'Zbierz w jednym miejscu kontakty do codziennych spraw i nagłych wypadków.',
   contactName: 'Osoba kontaktowa',
   yardManager: 'Osoba zarządzająca stajnią',
   emergencyPlaceholder: 'Kontakt do stajni w nagłym wypadku',
@@ -114,8 +100,6 @@ export const stables = {
   noMembers: 'Nie ma jeszcze osób na liście tej stajni.',
   yourYardProfile: 'Twój profil w stajni',
   yourRole: 'Twoja rola',
-  profileCurrentHelp:
-    'Aktualizuj dane, których właściciel może potrzebować w stajni.',
   ownerHelp: 'Zarządzasz stajnią i dostępem do niej.',
   editDetails: 'Edytuj dane',
   yardDisplayName: 'Nazwa wyświetlana w stajni',
@@ -164,7 +148,7 @@ export const stables = {
   providerName: 'Imię i nazwisko lub nazwa specjalisty',
   contactNumber: 'Numer kontaktowy',
   email: 'E-mail',
-  optionalEmail: 'E-mail (opcjonalnie)',
+  optionalEmail: 'nazwa@example.com',
   notes: 'Notatki',
   providerNotesPlaceholder:
     'Specjalizacje, sposób umawiania wizyt lub przypomnienia',
@@ -184,7 +168,8 @@ export const stables = {
   editYardDetails: 'Edytuj informacje o stajni',
   yardContacts: 'Kontakty stajni',
   editYardContacts: 'Edytuj kontakty stajni',
-  yardContactsHelp: 'Do kogo dzwonić w stajni na co dzień i w nagłych przypadkach.',
+  yardContactsHelp:
+    'Do kogo dzwonić w stajni na co dzień i w nagłych przypadkach.',
   editYourYardProfile: 'Edytuj swój profil w stajni',
   removeProviderHelp:
     'Kontakt zostanie usunięty ze wspólnej listy specjalistów. Tej operacji nie można cofnąć.',
@@ -247,4 +232,10 @@ export const stables = {
   signIn: 'Zaloguj się, aby zobaczyć stajnię',
   signInHelp:
     'Dokumentacja stajni, konie, przypomnienia o opiece, wydarzenia, dokumenty i ustawienia są dostępne po zalogowaniu.',
+  leaveStable: 'Opuść stajnię',
+  leaveStableNamed: 'Opuścić {{name}}?',
+  leaveStableHelp:
+    'Twoje konie z tej stajni przejdą pod Twoją prywatną opiekę, a Ty stracisz dostęp do kalendarza i udostępnionych wpisów stajni. Właściciel stajni dostanie powiadomienie.',
+  stayInStable: 'Zostań',
+  leaveStableFailed: 'Nie udało się opuścić stajni. Spróbuj ponownie.',
 } as const

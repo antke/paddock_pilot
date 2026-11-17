@@ -69,7 +69,9 @@ function HorseIdentifierValue({
               variant="subtle"
               size="icon-sm"
               data-confirmed={confirmation.confirmed || undefined}
-              className="data-[confirmed=true]:text-primary"
+              // Negative block margin keeps the 44px target out of the line box, so the value
+              // line matches its sibling fields.
+              className="-my-3 data-[confirmed=true]:text-primary"
               aria-label={t('horseDetail.copy', { label: label.toLowerCase() })}
               aria-busy={isCopying || undefined}
               disabled={isCopying}
@@ -119,8 +121,11 @@ export function HorseProfileSection({
   return (
     <DashboardSection aria-label={t('horseDetail.profileRegion')}>
       <DetailReference>
+        {/* The panel opens with ungrouped facts, so their group title is the
+            panel title; later groups take the nested heading. */}
         <DetailReferenceGroup
           layout="stacked"
+          titleStyle="panel"
           title={t('horseDetail.horseDetails')}
           edit={
             canManageHorse && (

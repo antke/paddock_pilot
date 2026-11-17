@@ -61,7 +61,9 @@ it.each([
     expect(
       screen.getByRole('menuitem', { name: 'Add event' }).getAttribute('href'),
     ).toBe(eventHref)
-    const training = screen.getByRole('menuitem', { name: 'Add training log' })
+    const training = screen.getByRole('menuitem', {
+      name: 'Add training session',
+    })
     expect(training.getAttribute('href')).toBe(trainingHref)
     fireEvent.click(training)
     await waitFor(() => expect(router.state.location.href).toBe(trainingHref))
@@ -72,7 +74,7 @@ it.each([
     })
     await waitFor(() => expect(screen.queryByRole('menu')).toBeNull())
     fireEvent.click(trigger)
-    const horse = await screen.findByRole('menuitem', { name: 'Add a horse' })
+    const horse = await screen.findByRole('menuitem', { name: 'Add horse' })
     expect(horse.getAttribute('href')).toBe(horseHref)
     fireEvent.click(horse)
     await waitFor(() => expect(router.state.location.href).toBe(horseHref))
@@ -108,12 +110,12 @@ it('offers Go to shortcuts for the personal view and the current stable', async 
 
   await openMenu('stable-1')
   expect(
-    screen
-      .getByRole('menuitem', { name: 'Stable horses' })
-      .getAttribute('href'),
+    screen.getByRole('menuitem', { name: 'Stable horses' }).getAttribute('href'),
   ).toBe('/stables/stable-1/horses')
   expect(
-    screen.getByRole('menuitem', { name: 'Care' }).getAttribute('href'),
+    screen
+      .getByRole('menuitem', { name: 'Care reminders' })
+      .getAttribute('href'),
   ).toBe('/stables/stable-1/reminders')
 })
 

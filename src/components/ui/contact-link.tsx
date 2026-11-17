@@ -31,7 +31,8 @@ export function ContactLink({
     <a
       href={href}
       className={cn(
-        'inline-flex max-w-full items-center break-all max-md:min-h-11 pointer-coarse:min-h-11 rounded-sm text-primary underline underline-offset-4 hover:no-underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring',
+        // The 44px touch target is an overlay, so the link keeps its neighbours' line box and baseline.
+        'relative inline-flex max-w-full items-center break-all after:absolute after:inset-x-0 after:top-1/2 after:h-full after:-translate-y-1/2 max-md:after:h-11 pointer-coarse:after:h-11 rounded-sm text-primary underline underline-offset-4 hover:no-underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring',
         className,
       )}
       {...props}

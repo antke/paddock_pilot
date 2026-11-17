@@ -26,7 +26,6 @@ export const eventForm = {
   repeating: 'Repeating event',
   noRepeat: 'Does not repeat',
   trainingHelp: 'Describe the training and set its timing.',
-  eventHelp: 'Name the event and set its timing.',
   essentialsHelp:
     'Start with event details and horses. Everything else is optional.',
   sessionDetails: 'Session details',
@@ -49,9 +48,8 @@ export const eventForm = {
   endDateHelp:
     'Leave blank for a one-day event. An end date includes that full day.',
   time: 'Time',
-  timeHelp: 'Enter the yard-local time used by your stable.',
-  personalTimeHelp:
-    'Enter the local time where this appointment will take place.',
+  timeHelp: 'Yard local time.',
+  personalTimeHelp: 'Local time where the appointment takes place.',
   trainingHorsesHelp: 'Choose the horses taking part in this session.',
   eventHorsesHelp: 'Choose every horse this event applies to.',
   horses: 'Horses',
@@ -59,9 +57,6 @@ export const eventForm = {
     'No horses are available in this stable. Add a horse before creating an event.',
   noPersonalHorses:
     'No horses are available for you to schedule. Add your horse, or ask its owner for care-editing access.',
-  trainingLogisticsHelp: 'Add a location, trainer, and costs when relevant.',
-  eventLogisticsHelp:
-    'Add a location, service provider, and costs when relevant.',
   placeTrainer: 'Place & trainer',
   placeProvider: 'Place & provider',
   location: 'Location',
@@ -72,10 +67,9 @@ export const eventForm = {
   providerPhone: 'Provider phone',
   providerPhoneExample: 'Provider contact number',
   totalCost: 'Total cost',
-  totalCostExample: 'Optional shared visit total',
+  totalCostExample: '0.00',
   costPerHorse: 'Cost per horse',
-  costPerHorseExample: 'Optional split amount',
-  repeatHelp: 'Turn a one-off event into a repeating schedule.',
+  costPerHorseExample: '0.00',
   repeatSchedule: 'Repeat schedule',
   recurring: 'Recurring event',
   recurringHelp: 'Repeat this event on a schedule.',
@@ -83,13 +77,8 @@ export const eventForm = {
   presetHelp: 'Start with a common schedule, then choose weekdays when needed.',
   choosePattern: 'Choose a repeat pattern',
   repeat: 'Repeat',
-  presetAbout: 'About simple recurrence presets',
-  presetTooltip:
-    'Start with a common schedule. Use advanced for custom intervals, monthly patterns, or end conditions.',
   repeatPattern: 'Repeat pattern',
   daysOfWeek: 'Days of week',
-  weekdaysAbout: 'About weekly recurrence days',
-  weekdaysHelp: 'Choose one or more days this event repeats.',
   customHelp: 'Define the repeat pattern first, then decide when it ends.',
   customSchedule: 'Build a custom schedule',
   pattern: 'Pattern',
@@ -118,7 +107,6 @@ export const eventForm = {
   afterOccurrences: 'After occurrences',
   occurrences: 'Occurrences',
   scheduleSummary: 'Schedule summary',
-  notesHelp: 'Keep preparation notes and record the outcome.',
   notesOutcome: 'Notes & outcome',
   description: 'Description',
   sessionNotes: 'Notes for this session',
@@ -132,16 +120,14 @@ export const eventForm = {
   noPhone: 'No phone saved',
   noProviders: 'No saved providers match. Keep typing to use a new provider.',
   workType: 'Type of work',
-  activitiesHelp: 'Select all activities practised in this session.',
   sessionFormat: 'Session format',
   duration: 'Duration (minutes)',
   rider: 'Led by',
-  leaderHelp:
-    'Who is running this session. Pick a member or type a guest trainer.',
   leaderPlaceholder: 'Name of the rider or instructor',
   takingPart: 'Taking part',
   alsoTakingPart: 'Also taking part',
-  takingPartHelp: 'Everyone ticked sees this in their calendar.',
+  takingPartHelp:
+    'Everyone ticked sees this in their calendar, but not private horse records.',
   leaderIncluded: 'Leads this session',
   leaderIncludedReason:
     'Included automatically because they are marked as leading this session.',

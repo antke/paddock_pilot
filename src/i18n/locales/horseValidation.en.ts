@@ -1,7 +1,8 @@
 export const horseValidation = {
   calendarColourInvalid:
     'Choose a preset or enter a six-digit hex colour, such as #347653.',
-  nicknameRequired: 'Enter a nickname or turn off “Use nickname”.',
+  nicknameRequired:
+    'Enter a nickname or turn off “Show nickname instead of name”.',
   nameMin: 'Name must have minimum 1 character.',
   nameMax: 'Name cannot be longer than 100 characters.',
   ageMin: 'Age cannot be negative.',

@@ -553,9 +553,17 @@ export const update = mutation({
     })
     if (args.horseId !== reminder.horseId || args.eventId !== reminder.eventId)
       throw new ConvexError('Create a new task to change its horse or event')
+    // A task carried out of a stable keeps its origin as provenance only; it is
+    // checked against the horse's current (personal) care, not the old yard.
+    const scopeStableId =
+      horse &&
+      reminder.sourcePlacementId &&
+      reminder.sourcePlacementId !== horse.currentPlacementId
+        ? undefined
+        : reminder.stableId
     const nextRows = await assertLinkedRowsBelongToStable(
       ctx,
-      reminder.stableId,
+      scopeStableId,
       args.horseId,
       args.eventId,
     )
@@ -571,7 +579,7 @@ export const update = mutation({
       throw new ConvexError('Not authorized to manage this reminder')
     }
 
-    await assertAssignee(ctx, reminder.stableId, args.assignedTo, args.horseId)
+    await assertAssignee(ctx, scopeStableId, args.assignedTo, args.horseId)
     await ctx.db.patch(args.id, {
       assignedTo: args.assignedTo,
       horseId: args.horseId,

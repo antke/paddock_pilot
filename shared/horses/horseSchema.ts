@@ -9,7 +9,8 @@ const defaultMessages = {
     'Choose a preset or enter a six-digit hex colour, such as #347653.',
   nameMin: 'Name must have minimum 1 character.',
   nameMax: 'Name cannot be longer than 100 characters.',
-  nicknameRequired: 'Enter a nickname or turn off “Use nickname”.',
+  nicknameRequired:
+    'Enter a nickname or turn off “Show nickname instead of name”.',
   ageMin: 'Age cannot be negative.',
   ageMax: "That's probably not true.",
   breedMax: 'Breed name cannot be longer than 100 characters',

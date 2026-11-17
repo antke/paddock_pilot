@@ -41,6 +41,13 @@ const en = {
     'The invitation appears in their Events and Training pages when they sign in with this email.',
   noCalendars: 'Select a calendar to see activities.',
   future: 'You can record this ride on or after its scheduled day.',
+  leave: 'Leave',
+  leaveTitle: 'Leave this activity?',
+  leaveHelp:
+    'You will no longer see this session or be able to record the ride. Rides you already recorded stay with the horse.',
+  stay: 'Stay',
+  sessionChanged:
+    'This session changed or was cancelled, so it can no longer be recorded. Contact the horse owner.',
 } as const
 const pl: Record<keyof typeof en, string> = {
   calendars: 'Pokaż kalendarze',
@@ -83,6 +90,13 @@ const pl: Record<keyof typeof en, string> = {
     'Zaproszenie pojawi się na stronach Wydarzenia i Treningi po zalogowaniu na ten adres e-mail.',
   noCalendars: 'Wybierz kalendarz, aby zobaczyć aktywności.',
   future: 'Przejazd możesz zapisać w zaplanowanym dniu lub później.',
+  leave: 'Zrezygnuj',
+  leaveTitle: 'Zrezygnować z tej aktywności?',
+  leaveHelp:
+    'Nie zobaczysz już tego terminu i nie zapiszesz przejazdu. Zapisane przejazdy zostają w historii konia.',
+  stay: 'Zostań',
+  sessionChanged:
+    'Ten termin zmienił się lub został odwołany, więc nie można go już zapisać. Skontaktuj się z właścicielem konia.',
 }
 export function useActivityCopy() {
   return useLocale().locale === 'pl' ? pl : en

@@ -1,3 +1,5 @@
+import { leaveSharedPersonalEvents } from './libs/horseEventHistory'
+import { utcTodayDateKey } from './libs/dateKeys'
 import { accountDisplayName } from '../shared/users/displayName'
 import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import { horseIdentitySchema } from '../shared/horses/horseSchema'
@@ -454,6 +456,8 @@ export const respond = mutation({
         custodianStableId: undefined,
       })
       await revokeHorseAccess(ctx, horse._id, invitation._id)
+      if (invitation.kind === 'transfer')
+        await leaveSharedPersonalEvents(ctx, horse._id, utcTodayDateKey())
       const reminders = await ctx.db
         .query('careReminders')
         .withIndex('by_horse_id_due_date', (q) => q.eq('horseId', horse._id))

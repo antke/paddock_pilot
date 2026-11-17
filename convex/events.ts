@@ -5,6 +5,7 @@ import {
 } from './libs/eventAttendees'
 import { compareEventTimes } from '../shared/events/eventTime'
 import {
+  calendarMember,
   projectActivityShare,
   writeActivityCalendars,
 } from './libs/activitySharing'
@@ -25,6 +26,7 @@ import {
   visibleEvent,
   sharedEventsForStable,
   eventParticipantAccess,
+  isEventOrganizer,
   schedulingEvent,
 } from './libs/eventPermissions'
 import {
@@ -43,6 +45,20 @@ import { translateEventChange } from '../shared/i18n/eventChanges'
 import { ConvexError, v } from 'convex/values'
 import { isEqual, omit } from 'lodash'
 import { isDateKey } from '../shared/training/trainingSchema'
+import {
+  addDaysToDateKey,
+  earliestTodayDateKey,
+  invitationCutoffDateKey,
+  resolveTodayDateKey,
+} from './libs/dateKeys'
+import { isEventOpen } from '../shared/events/eventOpen'
+import { createEventOccurrences } from '../shared/events/eventOccurrences'
+import {
+  eventFollowers,
+  eventHorseKeepers,
+  horseKeepers,
+  notifyUsers,
+} from './libs/eventNotices'
 import {
   eventInputSchema,
   createEventSchemas,
@@ -192,6 +208,24 @@ const sendEventInvitationEmails = async (
   )
 }
 
+/** Owners and editor carers hear when someone outside that circle acts on their horse. */
+async function notifyHorseKeepers(
+  ctx: MutationCtx,
+  horse: Doc<'horses'>,
+  actorUserId: Id<'users'>,
+  kind: string,
+  eventId: Id<'events'>,
+) {
+  const keepers = await horseKeepers(ctx, horse._id)
+  if (keepers.includes(actorUserId)) return
+  await notifyUsers(
+    ctx,
+    keepers,
+    { kind, eventId, detail: getHorseDisplayName(horse) },
+    [actorUserId],
+  )
+}
+
 const formatUserName = (user: Doc<'users'>, locale?: Locale) =>
   user.preferredName ||
   [user.firstName, user.lastName].filter(Boolean).join(' ') ||
@@ -210,6 +244,10 @@ const notifyEventOrganizerOfParticipation = async (
 
   const organizer = await ctx.db.get(input.event.createdBy)
   if (!organizer || organizer.deletedAt !== undefined) return
+  const stillInvolved = input.event.stableId
+    ? await calendarMember(ctx, input.event.stableId, organizer._id)
+    : (await getHorseAccess(ctx, input.horse, organizer._id)).canRead
+  if (!stillInvolved) return
 
   await enqueueEmail(ctx, {
     recipient: organizer.email,
@@ -288,6 +326,13 @@ const notifyEventParticipantsOfChanges = async (
           ]
         : [],
     ),
+  )
+  // Followers without a horse here hear about changes in-app; owners got email + in-app.
+  await notifyUsers(
+    ctx,
+    await eventFollowers(ctx, input.event),
+    { kind: 'event_details_changed', eventId: input.event._id },
+    [input.actorUserId, ...ownerIds],
   )
 }
 
@@ -398,7 +443,9 @@ export const getPermissions = query({
     const event = await ctx.db.get(args.id)
     if (!event) return null
 
-    const access = await eventReadAccess(ctx, event)
+    // No access reads as "not found", like a missing event, instead of crashing the page.
+    const access = await eventReadAccess(ctx, event).catch(() => null)
+    if (!access) return null
 
     return {
       canManageEvent: await canEditEvent(ctx, event),
@@ -422,7 +469,7 @@ export const getWithHorses = query({
     const event = await ctx.db.get(eventId)
     if (!event) return null
     const scopedEvent = args.stableId
-      ? (await sharedEventsForStable(ctx, args.stableId)).find(
+      ? (await sharedEventsForStable(ctx, args.stableId).catch(() => [])).find(
           (item) => item._id === event._id,
         )
       : undefined
@@ -525,6 +572,13 @@ export const getWithHorses = query({
       }
     }
     const readable = new Set<string>()
+    // The organizer coordinates every current participant, including their event notes.
+    if (eventAccess.organizer)
+      for (const row of eventHorses)
+        if (!row.participationEndsAt) {
+          participantIds.add(row.horseId)
+          readable.add(row.horseId)
+        }
     const visibleHorses = await Promise.all(
       associatedHorses
         .filter(isHorse)
@@ -787,6 +841,15 @@ export const add = mutation({
       ),
     ])
 
+    for (const horse of confirmedHorses)
+      await notifyHorseKeepers(
+        ctx,
+        horse,
+        user._id,
+        'event_horse_booked',
+        eventId,
+      )
+
     if (
       eventInput.type === 'training' &&
       eventInput.training &&
@@ -875,6 +938,31 @@ export const update = mutation({
         .query('trainingRecords')
         .withIndex('by_event_id', (q) => q.eq('eventId', event._id))
         .collect()
+      // A schedule carrying someone else's results or riders' dates stays put;
+      // the editor's own records may still be corrected.
+      if (
+        records.length &&
+        (event.date !== eventInput.date ||
+          event.endDate !== eventInput.endDate ||
+          !isEqual(event.recurrence, eventInput.recurrence))
+      ) {
+        let othersHistory = (
+          await ctx.db
+            .query('activityParticipants')
+            .withIndex('by_event', (q) => q.eq('eventId', event._id))
+            .collect()
+        ).some((row) => row.status === 'accepted')
+        for (const record of records) {
+          if (othersHistory) break
+          const horse = await ctx.db.get(record.horseId)
+          othersHistory =
+            !horse ||
+            !(await recordCapabilities(ctx, horse, record, user._id))
+              .editContent
+        }
+        if (othersHistory)
+          throw userFacingError('trainingScheduleLocked', args.errorFormat)
+      }
       const selectedRecord = args.trainingRecordId
         ? records.find((record) => record._id === args.trainingRecordId)
         : undefined
@@ -1034,11 +1122,24 @@ export const update = mutation({
       horsesChanged,
     )
     const now = Date.now()
+    // Editors who were never shown an invitation must not cancel it by saving.
+    const seesInvitations =
+      event.createdBy === user._id ||
+      Boolean(
+        event.stableId &&
+        (await ctx.db.get(event.stableId))?.ownerId === user._id,
+      )
 
     await Promise.all(
       existingEventHorses
         .filter((eventHorse) => !nextHorseIds.has(eventHorse.horseId))
         .map(async (eventHorse) => {
+          if (
+            eventHorse.status === 'declined' ||
+            eventHorse.status === 'withdrawn' ||
+            (eventHorse.status === 'invited' && !seesInvitations)
+          )
+            return
           const horse = await ctx.db.get(eventHorse.horseId)
           if (!horse) return
           if (
@@ -1050,14 +1151,21 @@ export const update = mutation({
           if (horse.transitionId)
             throw new ConvexError('Horse departure is being processed')
 
+          if (eventHorse.status !== 'invited')
+            await notifyHorseKeepers(
+              ctx,
+              horse,
+              user._id,
+              'event_horse_removed',
+              id,
+            )
           // Keep participation notes, costs and provenance when a horse is removed.
-          if (eventHorse.status !== 'withdrawn')
-            await ctx.db.patch(eventHorse._id, {
-              status: 'withdrawn',
-              withdrawnBy: user._id,
-              withdrawnAt: now,
-              updatedAt: now,
-            })
+          await ctx.db.patch(eventHorse._id, {
+            status: 'withdrawn',
+            withdrawnBy: user._id,
+            withdrawnAt: now,
+            updatedAt: now,
+          })
         }),
     )
 
@@ -1114,8 +1222,16 @@ export const update = mutation({
           .canAddRecords
 
         if (!isConfirmed) invitedHorses.push(horse)
-        else
+        else {
           await initializeRecordSharing(ctx, horse, id, Boolean(args.stableId))
+          await notifyHorseKeepers(
+            ctx,
+            horse,
+            user._id,
+            'event_horse_booked',
+            id,
+          )
+        }
 
         if (existingEventHorse) {
           await ctx.db.patch(existingEventHorse._id, {
@@ -1187,12 +1303,15 @@ export const update = mutation({
       training: args.trainingRecordId ? event.training : eventInput.training,
     })
     await syncConfirmedHorseIds(ctx, id)
+    const cancelling =
+      eventInput.status === 'cancelled' && event.status !== 'cancelled'
+    if (cancelling) await closeOpenInvitations(ctx, id, user._id)
     await sendEventInvitationEmails(
       ctx,
       args.stableId,
       id,
       eventInput.title,
-      invitedHorses,
+      cancelling ? [] : invitedHorses,
     )
     await notifyEventParticipantsOfChanges(ctx, {
       event,
@@ -1228,7 +1347,7 @@ export const update = mutation({
 })
 
 export const approveHorseInvitation = mutation({
-  args: { eventHorseId: v.id('eventsHorses') },
+  args: { eventHorseId: v.id('eventsHorses'), today: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx)
     const eventHorse = await ctx.db.get(args.eventHorseId)
@@ -1244,6 +1363,8 @@ export const approveHorseInvitation = mutation({
     if (event.stableId !== undefined && horse.stableId !== event.stableId) {
       throw new ConvexError('Horse does not belong to the event stable')
     }
+    if (!isEventOpen(event, invitationCutoffDateKey(args.today)))
+      throw userFacingError('eventClosed', 'structured')
     const access = await getHorseAccess(ctx, horse, user._id)
 
     if (
@@ -1260,7 +1381,12 @@ export const approveHorseInvitation = mutation({
       )
     }
 
-    await initializeRecordSharing(ctx, horse, event._id)
+    await initializeRecordSharing(
+      ctx,
+      horse,
+      event._id,
+      Boolean(event.stableId),
+    )
     const now = Date.now()
     await ctx.db.patch(args.eventHorseId, {
       status: 'confirmed',
@@ -1276,6 +1402,13 @@ export const approveHorseInvitation = mutation({
       actor: user,
       status: 'approved',
     })
+    await notifyHorseKeepers(
+      ctx,
+      horse,
+      user._id,
+      'event_horse_approved_for_you',
+      event._id,
+    )
     await recordStableAudit(ctx, {
       stableId: event.stableId,
       actorUserId: user._id,
@@ -1332,6 +1465,13 @@ export const declineHorseInvitation = mutation({
       actor: user,
       status: 'declined',
     })
+    await notifyHorseKeepers(
+      ctx,
+      horse,
+      user._id,
+      'event_horse_declined_for_you',
+      event._id,
+    )
     await recordStableAudit(ctx, {
       stableId: event.stableId,
       actorUserId: user._id,
@@ -1344,7 +1484,7 @@ export const declineHorseInvitation = mutation({
 })
 
 export const withdrawHorseFromEvent = mutation({
-  args: { eventHorseId: v.id('eventsHorses') },
+  args: { eventHorseId: v.id('eventsHorses'), today: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx)
     const eventHorse = await ctx.db.get(args.eventHorseId)
@@ -1379,13 +1519,41 @@ export const withdrawHorseFromEvent = mutation({
       )
     }
 
+    // Withdrawal applies from today on; sessions that already happened stay in history.
+    const today = resolveTodayDateKey(args.today)
+    if (event.date < today && !event.recurrence)
+      throw new ConvexError('This event has already started')
+    if (event.status === 'completed')
+      throw new ConvexError('This event is already completed')
     const now = Date.now()
-    await ctx.db.patch(eventHorse._id, {
-      status: 'withdrawn',
-      withdrawnBy: user._id,
-      withdrawnAt: now,
-      updatedAt: now,
-    })
+    await ctx.db.patch(
+      eventHorse._id,
+      event.date < today
+        ? {
+            // Same shape a stable departure uses: confirmed history up to yesterday.
+            history: {
+              title: event.title,
+              type: event.type,
+              date: event.date,
+              time: event.time,
+              endDate: event.endDate,
+              recurrence: event.recurrence,
+              training: event.training,
+              status: event.status,
+              providerName: event.providerName,
+            },
+            participationEndsAt: addDaysToDateKey(today, -1),
+            withdrawnBy: user._id,
+            withdrawnAt: now,
+            updatedAt: now,
+          }
+        : {
+            status: 'withdrawn',
+            withdrawnBy: user._id,
+            withdrawnAt: now,
+            updatedAt: now,
+          },
+    )
     await syncConfirmedHorseIds(ctx, eventHorse.eventId)
     await notifyEventOrganizerOfParticipation(ctx, {
       event,
@@ -1393,6 +1561,13 @@ export const withdrawHorseFromEvent = mutation({
       actor: user,
       status: 'withdrawn',
     })
+    await notifyHorseKeepers(
+      ctx,
+      horse,
+      user._id,
+      'event_horse_removed',
+      event._id,
+    )
     await recordStableAudit(ctx, {
       stableId: event.stableId,
       actorUserId: user._id,
@@ -1401,6 +1576,424 @@ export const withdrawHorseFromEvent = mutation({
       entityId: eventHorse._id,
       summary: `${getHorseDisplayName(horse)} · ${event.title}`,
     })
+  },
+})
+
+/** Cancelling closes open invitations; confirmed history and reports stay. */
+async function closeOpenInvitations(
+  ctx: MutationCtx,
+  eventId: Id<'events'>,
+  userId: Id<'users'>,
+) {
+  const now = Date.now()
+  for (const row of await ctx.db
+    .query('eventsHorses')
+    .withIndex('by_event_id', (q) => q.eq('eventId', eventId))
+    .collect())
+    if (row.status === 'invited' && !row.participationEndsAt)
+      await ctx.db.patch(row._id, {
+        status: 'withdrawn',
+        withdrawnBy: userId,
+        withdrawnAt: now,
+        updatedAt: now,
+      })
+  for (const row of await ctx.db
+    .query('activityParticipants')
+    .withIndex('by_event', (q) => q.eq('eventId', eventId))
+    .collect())
+    if (row.status === 'invited')
+      await ctx.db.patch(row._id, { status: 'revoked', updatedAt: now })
+}
+
+/** Works for training too, whose status the edit form never changes. */
+export const setCancelled = mutation({
+  args: { id: v.id('events'), cancelled: v.boolean() },
+  handler: async (ctx, { id, cancelled }) => {
+    const user = await getCurrentUser(ctx)
+    const event = await ctx.db.get(id)
+    if (!event) throw new ConvexError('Event not found')
+    if (!(await canEditEvent(ctx, event)))
+      throw new ConvexError('Not authorized to update this event')
+    if ((event.status === 'cancelled') === cancelled) return
+    const recipients = [
+      ...(await eventHorseKeepers(ctx, event)),
+      ...(await eventFollowers(ctx, event)),
+    ]
+    await ctx.db.patch(id, { status: cancelled ? 'cancelled' : 'planned' })
+    if (cancelled) await closeOpenInvitations(ctx, id, user._id)
+    await notifyUsers(
+      ctx,
+      recipients,
+      {
+        kind: cancelled ? 'event_cancelled' : 'event_restored',
+        eventId: id,
+      },
+      [user._id],
+    )
+    await recordStableAudit(ctx, {
+      stableId: event.stableId,
+      actorUserId: user._id,
+      action: cancelled ? 'event.cancelled' : 'event.restored',
+      entityType: 'event',
+      entityId: id,
+      summary: event.title,
+    })
+  },
+})
+
+/**
+ * Ticks an ordinary event off from its page, with the same notices and audit as
+ * changing its status in the form. Training completes per horse instead, and a
+ * cancelled event is restored first.
+ */
+export const setCompleted = mutation({
+  args: { id: v.id('events'), completed: v.boolean() },
+  handler: async (ctx, { id, completed }) => {
+    const user = await getCurrentUser(ctx)
+    const event = await ctx.db.get(id)
+    if (!event) throw new ConvexError('Event not found')
+    if (!(await canEditEvent(ctx, event)))
+      throw new ConvexError('Not authorized to update this event')
+    if (event.type === 'training' || event.status === 'cancelled')
+      throw new ConvexError('This event cannot be completed here')
+    if ((event.status === 'completed') === completed) return
+    await ctx.db.patch(id, { status: completed ? 'completed' : 'planned' })
+    const horses = (
+      await Promise.all(event.horseIds.map((horseId) => ctx.db.get(horseId)))
+    ).filter(isHorse)
+    const changes: Array<EventChangeCode> = ['status']
+    await notifyEventParticipantsOfChanges(ctx, {
+      event,
+      actorUserId: user._id,
+      changes,
+      horses,
+      nextTitle: event.title,
+    })
+    if (event.stableId)
+      await recordStableAudit(ctx, {
+        stableId: event.stableId,
+        actorUserId: user._id,
+        action: 'event.updated',
+        entityType: 'event',
+        entityId: id,
+        summary: translateEventChange('status', 'en'),
+        details: { kind: 'event_changes', changes },
+      })
+  },
+})
+
+/** Only an event nobody else depends on can disappear; anything else is cancelled. */
+export const remove = mutation({
+  args: { id: v.id('events') },
+  handler: async (ctx, { id }) => {
+    const user = await getCurrentUser(ctx)
+    const event = await ctx.db.get(id)
+    if (!event) throw new ConvexError('Event not found')
+    if (!(await canEditEvent(ctx, event)))
+      throw new ConvexError('Not authorized to update this event')
+    const rows = await ctx.db
+      .query('eventsHorses')
+      .withIndex('by_event_id', (q) => q.eq('eventId', id))
+      .collect()
+    const records = await ctx.db
+      .query('trainingRecords')
+      .withIndex('by_event_id', (q) => q.eq('eventId', id))
+      .collect()
+    for (const row of rows) {
+      const horse = await ctx.db.get(row.horseId)
+      const othersHorse =
+        horse &&
+        isConfirmedEventHorse(row) &&
+        !(await getHorseAccess(ctx, horse, user._id)).canEditPersonalRecords
+      if (row.participationEndsAt || row.history || othersHorse)
+        throw userFacingError('eventDeleteBlocked', 'structured')
+    }
+    // A session's records go with it when they are the deleter's to edit; another
+    // owner's recorded history keeps the session, which is cancelled instead.
+    for (const record of records) {
+      const horse = await ctx.db.get(record.horseId)
+      if (
+        horse &&
+        !(await getHorseAccess(ctx, horse, user._id)).canEditPersonalRecords
+      )
+        throw userFacingError('eventDeleteBlocked', 'structured')
+    }
+    const recipients = [
+      ...(await eventHorseKeepers(ctx, event)),
+      ...(await eventFollowers(ctx, event)),
+    ]
+    for (const row of rows) await ctx.db.delete(row._id)
+    for (const record of records) await ctx.db.delete(record._id)
+    for (const table of [
+      'eventAttendees',
+      'activityParticipants',
+      'activityCalendarShares',
+    ] as const)
+      for (const row of await ctx.db
+        .query(table)
+        .withIndex('by_event', (q) => q.eq('eventId', id))
+        .collect())
+        await ctx.db.delete(row._id)
+    for (const share of await ctx.db
+      .query('recordShares')
+      .withIndex('by_record_horse', (q) => q.eq('recordId', id))
+      .collect())
+      await ctx.db.delete(share._id)
+    // Reminders are the owner's own tasks; they only lose the link.
+    for (const reminder of await ctx.db
+      .query('careReminders')
+      .withIndex('by_event_id', (q) => q.eq('eventId', id))
+      .collect())
+      await ctx.db.patch(reminder._id, { eventId: undefined })
+    await ctx.db.delete(id)
+    await notifyUsers(
+      ctx,
+      recipients,
+      { kind: 'event_deleted', eventId: id, title: event.title },
+      [user._id],
+    )
+    await recordStableAudit(ctx, {
+      stableId: event.stableId,
+      actorUserId: user._id,
+      action: 'event.deleted',
+      entityType: 'event',
+      entityId: id,
+      summary: event.title,
+    })
+  },
+})
+
+/**
+ * The horse side may undo its own decline or withdrawal while the event is open.
+ * A removal by the organizer, or a from-today withdrawal of a series, is not undone here.
+ */
+async function rejoinableHorse(
+  ctx: QueryCtx | MutationCtx,
+  row: Doc<'eventsHorses'>,
+  event: Doc<'events'>,
+  rows: Array<Doc<'eventsHorses'>>,
+  userId: Id<'users'>,
+  today?: string,
+) {
+  if (row.participationEndsAt) return null
+  if (row.status !== 'declined' && row.status !== 'withdrawn') return null
+  if (!isEventOpen(event, earliestTodayDateKey(today))) return null
+  if (
+    rows.some(
+      (other) =>
+        other._id !== row._id &&
+        other.horseId === row.horseId &&
+        !other.participationEndsAt &&
+        (other.status === undefined ||
+          other.status === 'confirmed' ||
+          other.status === 'invited'),
+    )
+  )
+    return null
+  const horse = await ctx.db.get(row.horseId)
+  if (!isActiveHorse(horse) || horse.transitionId) return null
+  if (event.stableId && horse.stableId !== event.stableId) return null
+  if (!(await getHorseAccess(ctx, horse, userId)).canEditPersonalRecords)
+    return null
+  if (
+    row.status === 'withdrawn' &&
+    (!row.withdrawnBy ||
+      !(await getHorseAccess(ctx, horse, row.withdrawnBy))
+        .canEditPersonalRecords)
+  )
+    return null
+  return horse
+}
+
+export const rejoinHorse = mutation({
+  args: { eventHorseId: v.id('eventsHorses'), today: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx)
+    const row = await ctx.db.get(args.eventHorseId)
+    const event = row ? await ctx.db.get(row.eventId) : null
+    if (!row || !event) throw new ConvexError('Event not found')
+    const rows = await ctx.db
+      .query('eventsHorses')
+      .withIndex('by_event_id', (q) => q.eq('eventId', event._id))
+      .collect()
+    const horse = await rejoinableHorse(
+      ctx,
+      row,
+      event,
+      rows,
+      user._id,
+      args.today,
+    )
+    if (!horse) throw new ConvexError('This horse cannot rejoin the event')
+    const now = Date.now()
+    await initializeRecordSharing(
+      ctx,
+      horse,
+      event._id,
+      Boolean(event.stableId),
+    )
+    await ctx.db.patch(row._id, {
+      status: 'confirmed',
+      sourcePlacementId: event.stableId
+        ? (await ctx.db.get(horse._id))?.currentPlacementId
+        : row.sourcePlacementId,
+      approvedBy: user._id,
+      approvedAt: now,
+      declinedAt: undefined,
+      withdrawnBy: undefined,
+      withdrawnAt: undefined,
+      updatedAt: now,
+    })
+    await syncConfirmedHorseIds(ctx, event._id)
+    await notifyUsers(
+      ctx,
+      [event.createdBy],
+      {
+        kind: 'event_horse_rejoined',
+        eventId: event._id,
+        detail: getHorseDisplayName(horse),
+      },
+      [user._id],
+    )
+    await recordStableAudit(ctx, {
+      stableId: event.stableId,
+      actorUserId: user._id,
+      action: 'event_horse.rejoined',
+      entityType: 'eventHorse',
+      entityId: row._id,
+      summary: getHorseDisplayName(horse) + ' · ' + event.title,
+    })
+  },
+})
+
+/** An attendee removes themselves; horse and other grants are untouched. */
+export const leaveAttendance = mutation({
+  args: { eventId: v.id('events') },
+  handler: async (ctx, { eventId }) => {
+    const user = await getCurrentUser(ctx)
+    const event = await ctx.db.get(eventId)
+    if (!event || !event.peopleIds?.includes(user._id))
+      throw new ConvexError('You are not attending this event')
+    for (const row of await ctx.db
+      .query('eventAttendees')
+      .withIndex('by_event', (q) => q.eq('eventId', eventId))
+      .collect())
+      if (row.userId === user._id) await ctx.db.delete(row._id)
+    await ctx.db.patch(eventId, {
+      peopleIds: event.peopleIds.filter((id) => id !== user._id),
+    })
+    await notifyUsers(
+      ctx,
+      [event.createdBy],
+      {
+        kind: 'event_attendee_left',
+        eventId,
+        detail: formatUserName(user, 'en'),
+      },
+      [user._id],
+    )
+  },
+})
+
+/** Cancel one date of a series (organizer) or sit one date out (horse side). */
+export const setOccurrenceSkip = mutation({
+  args: {
+    eventId: v.id('events'),
+    date: v.string(),
+    horseId: v.optional(v.id('horses')),
+    skipped: v.boolean(),
+    today: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx)
+    const event = await ctx.db.get(args.eventId)
+    if (!event) throw new ConvexError('Event not found')
+    if (
+      !event.recurrence ||
+      !createEventOccurrences({
+        events: [{ ...event, occurrenceSkips: undefined }],
+        windowStart: args.date,
+        windowEnd: args.date,
+      }).some((occurrence) => occurrence.startDate === args.date)
+    )
+      throw userFacingError('trainingOccurrence', 'structured')
+    if (args.skipped && args.date < earliestTodayDateKey(args.today))
+      throw userFacingError('eventClosed', 'structured')
+    let horseName: string | undefined
+    if (args.horseId) {
+      // Training already records a skipped session per horse and date.
+      if (event.type === 'training')
+        throw new ConvexError('Mark the session as skipped instead')
+      const horse = await ctx.db.get(args.horseId)
+      const row = (
+        await ctx.db
+          .query('eventsHorses')
+          .withIndex('by_horse_id_event_id', (q) =>
+            q.eq('horseId', args.horseId!).eq('eventId', event._id),
+          )
+          .collect()
+      ).find((r) => !r.participationEndsAt && isConfirmedEventHorse(r))
+      const access = horse ? await getHorseAccess(ctx, horse, user._id) : null
+      if (
+        !horse ||
+        !row ||
+        horse.transitionId ||
+        !(
+          access?.canEditPersonalRecords ||
+          (access?.isAdmin &&
+            horse.currentPlacementId === row.sourcePlacementId)
+        )
+      )
+        throw new ConvexError('Only the horse owner can skip this date')
+      horseName = getHorseDisplayName(horse)
+    } else {
+      if (!(await canEditEvent(ctx, event)))
+        throw new ConvexError('Not authorized to update this event')
+      if (
+        args.skipped &&
+        (
+          await ctx.db
+            .query('trainingRecords')
+            .withIndex('by_event_id', (q) => q.eq('eventId', event._id))
+            .collect()
+        ).some((record) => (record.scheduledDate ?? record.date) === args.date)
+      )
+        throw userFacingError('eventDeleteBlocked', 'structured')
+    }
+    const others = (event.occurrenceSkips ?? []).filter(
+      (skip) => !(skip.date === args.date && skip.horseId === args.horseId),
+    )
+    await ctx.db.patch(event._id, {
+      occurrenceSkips: args.skipped
+        ? [
+            ...others,
+            args.horseId
+              ? { date: args.date, horseId: args.horseId }
+              : { date: args.date },
+          ]
+        : others,
+    })
+    await notifyUsers(
+      ctx,
+      args.horseId
+        ? [event.createdBy]
+        : [
+            ...(await eventHorseKeepers(ctx, event)),
+            ...(await eventFollowers(ctx, event)),
+          ],
+      {
+        kind: args.horseId
+          ? args.skipped
+            ? 'event_horse_skipped_date'
+            : 'event_horse_rejoined_date'
+          : args.skipped
+            ? 'event_date_cancelled'
+            : 'event_date_restored',
+        eventId: event._id,
+        detail: horseName ? horseName + ' · ' + args.date : args.date,
+      },
+      [user._id],
+    )
   },
 })
 
@@ -1425,7 +2018,11 @@ export const listPendingHorseInvitations = query({
       .collect()
     const rosters = await Promise.all(
       stables
-        .filter((s) => s.archivedAt === undefined && s._id === args.stableId)
+        .filter(
+          (s) =>
+            s.archivedAt === undefined &&
+            (!args.stableId || s._id === args.stableId),
+        )
         .map((s) =>
           ctx.db
             .query('horses')
@@ -1472,7 +2069,8 @@ export const listPendingHorseInvitations = query({
         !horse ||
         horse.transitionId ||
         horse.stableId !== event.stableId ||
-        horse.currentPlacementId !== row.sourcePlacementId
+        horse.currentPlacementId !== row.sourcePlacementId ||
+        !isEventOpen(event, invitationCutoffDateKey())
       )
         return []
       return [
@@ -1609,10 +2207,18 @@ export const participationSummary = query({
     const result = []
     for (const row of rows) {
       const horse = await ctx.db.get(row.horseId)
+      // A from-today withdrawal ends the row but is still a withdrawal to show.
+      const endedByWithdrawal =
+        row.participationEndsAt &&
+        row.withdrawnAt &&
+        !rows.some(
+          (other) =>
+            other.horseId === row.horseId && !other.participationEndsAt,
+        )
       if (
         !horse ||
         horse.deletedAt !== undefined ||
-        row.participationEndsAt ||
+        (row.participationEndsAt && !endedByWithdrawal) ||
         horse.transitionId
       )
         continue
@@ -1628,7 +2234,10 @@ export const participationSummary = query({
       result.push({
         id: row._id,
         name: getHorseDisplayName(horse),
-        status: row.status ?? 'confirmed',
+        status: endedByWithdrawal ? 'withdrawn' : (row.status ?? 'confirmed'),
+        canRejoin: Boolean(
+          await rejoinableHorse(ctx, row, event, rows, user._id),
+        ),
       })
     }
     return result
@@ -1644,7 +2253,8 @@ export const attendingPeople = query({
     const { user, participants } = await eventParticipantAccess(ctx, event)
     let allowed =
       participants.length > 0 ||
-      Boolean(await attendanceDetail(ctx, eventId, user._id))
+      Boolean(await attendanceDetail(ctx, eventId, user._id)) ||
+      (await isEventOrganizer(ctx, event, user._id))
     if (!allowed) {
       const shares = await ctx.db
         .query('activityCalendarShares')
@@ -1666,6 +2276,7 @@ export const attendingPeople = query({
           name:
             person.preferredName ||
             [person.firstName, person.lastName].filter(Boolean).join(' '),
+          isMe: id === user._id,
         })
     }
     return people

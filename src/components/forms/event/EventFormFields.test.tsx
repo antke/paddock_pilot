@@ -150,9 +150,7 @@ describe('EventFormFields', () => {
   it('gives personal appointments local-time guidance and a path to add a missing horse', () => {
     render(<Harness empty eventContext="personal" />)
     expect(
-      screen.getByText(
-        'Enter the local time where this appointment will take place.',
-      ),
+      screen.getByText('Local time where the appointment takes place.'),
     ).toBeTruthy()
     expect(
       screen.getByRole('group', { name: 'Horses' }).closest('[hidden]'),

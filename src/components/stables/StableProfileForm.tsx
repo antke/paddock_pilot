@@ -93,9 +93,6 @@ export function StableProfileForm({
               ? t('stables.editYardContacts')
               : t('stables.edit')
       }
-      sectionTitle={
-        mode === 'edit' && !section ? t('stables.details') : undefined
-      }
       stickyActions
       onSubmit={(event) => {
         if (submission.acknowledged) {
@@ -136,27 +133,23 @@ export function StableProfileForm({
           ) : (
             <RouteFormActions
               isSubmitting={submission.pending}
+              dirty={form.formState.isDirty}
               disabled={mode === 'edit' && !form.formState.isDirty}
               onReset={() => {
                 if (submission.pending || submission.acknowledged) return
                 form.reset()
                 submission.clearError()
               }}
-              resetLabel={
-                mode === 'edit' ? t('stables.discard') : t('stables.reset')
-              }
               resetConfirmation={
                 mode === 'edit'
                   ? {
                       title: t('stables.discardTitle'),
                       description: t('stables.discardHelp'),
-                      confirmLabel: t('stables.discard'),
                     }
                   : form.formState.isDirty
                     ? {
                         title: t('stables.resetTitle'),
                         description: t('stables.resetHelp'),
-                        confirmLabel: t('stables.resetChanges'),
                       }
                     : undefined
               }
@@ -175,7 +168,7 @@ export function StableProfileForm({
       <StableFormFields
         section={section}
         stableId={stableId}
-        headingLevel={mode === 'create' ? 2 : 3}
+        headingLevel={2}
         control={form.control}
         disabled={submission.pending || submission.acknowledged}
       />

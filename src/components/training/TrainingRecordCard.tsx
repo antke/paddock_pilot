@@ -1,3 +1,5 @@
+import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
+import type { ReactNode } from 'react'
 import { CreatorByline } from '#/components/events/CreatorByline'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { getUserFacingErrorCode } from 'shared/i18n/errors'
@@ -54,11 +56,14 @@ export function TrainingRecordCard({
   entry,
   showCompletion = true,
   sessionLeader,
+  audience,
 }: {
   entry: TrainingEntry
   showCompletion?: boolean
   /** Shown with the session, so the card repeats only a different leader. */
   sessionLeader?: string
+  /** Who can see this horse's record (`RecordAudienceLabel`), in the footer. */
+  audience?: ReactNode
 }) {
   const t = useT()
   const { locale } = useLocale()
@@ -72,7 +77,6 @@ export function TrainingRecordCard({
   }, [editing])
   const [saved, setSaved] = useState(false)
   const { horse, details, record, status } = entry
-  const { today } = useLocalDateContext()
   const startEditing = () => {
     setEditing(true)
     setSaved(false)
@@ -91,11 +95,11 @@ export function TrainingRecordCard({
           {getHorseDisplayName(horse)}
         </Link>
       }
-      badges={!editing && <TrainingStatusBadge status={status} />}
-      description={record && <CreatorByline name={record.createdByName} />}
+      // One header row: the status (or the check that shows it) beside the pencil.
       actions={
-        !editing && (showCompletion || (!record && horse.canRecord)) ? (
+        !editing ? (
           <>
+            {!showCompletion && <TrainingStatusBadge status={status} />}
             {showCompletion && (
               <TrainingCompletionControl entry={entry} labelled />
             )}
@@ -106,11 +110,7 @@ export function TrainingRecordCard({
                 action="create"
                 onClick={startEditing}
               >
-                {t(
-                  entry.occurrence.startDate <= today
-                    ? 'trainingViews.recordCompleted'
-                    : 'trainingViews.record',
-                )}
+                {t('trainingViews.record')}
               </Button>
             )}
           </>
@@ -125,13 +125,26 @@ export function TrainingRecordCard({
           />
         ) : undefined
       }
+      // Who recorded it, when, and who can see it share one footer under a hairline.
       footer={
-        !editing && record ? (
-          <p className="w-full border-t border-border-subtle pt-4 text-xs text-muted-foreground">
-            {t('trainingViews.lastRecorded', {
-              date: formatMediumTimestampDateTime(record.updatedAt, locale),
-            })}
-          </p>
+        !editing && (record || audience) ? (
+          <div className="flex w-full flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-border-subtle pt-4 text-sm text-muted-foreground">
+            {record && (
+              <div className="flex flex-wrap items-center gap-x-2">
+                <CreatorByline name={record.createdByName} />
+                <span aria-hidden="true">·</span>
+                <span>
+                  {t('trainingViews.lastRecorded', {
+                    date: formatMediumTimestampDateTime(
+                      record.updatedAt,
+                      locale,
+                    ),
+                  })}
+                </span>
+              </div>
+            )}
+            {audience}
+          </div>
         ) : undefined
       }
     >
@@ -444,18 +457,17 @@ function TrainingRecordEditor({
               : undefined
         }
       />
-      <div className={`${formStickyActionsClassName} flex flex-wrap gap-2`}>
-        <Button type="submit" disabled={pending}>
-          {pending ? t('trainingViews.saving') : t('trainingViews.saveRecord')}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={pending}
-          onClick={() => (isDirty() ? setDiscardOpen(true) : onCancel())}
-        >
-          {t('trainingViews.cancel')}
-        </Button>
+      {/* The route-form footer: one hairline above the row, which stays in view. */}
+      <div className={formStickyActionsClassName}>
+        <FormSubmitActions
+          width="full"
+          failed={error === 'save'}
+          isSubmitting={pending}
+          onCancel={() => (isDirty() ? setDiscardOpen(true) : onCancel())}
+          cancelLabel={t('trainingViews.cancel')}
+          submitLabel={t('trainingViews.saveRecord')}
+          submittingLabel={t('trainingViews.saving')}
+        />
       </div>
       <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
         <AlertDialogContent>

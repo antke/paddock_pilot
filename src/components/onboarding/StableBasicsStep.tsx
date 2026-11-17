@@ -1,4 +1,5 @@
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
+import { OnboardingStepActions } from './OnboardingLayout'
 import { useT } from '#/i18n/LocaleProvider'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from 'convex/react'
@@ -153,20 +154,22 @@ export function StableBasicsStepView({
         />
       </FieldGrid>
 
-      <FormSubmitActions
-        align="end"
-        isSubmitting={save.pending}
-        submitLabel={
-          save.acknowledged
-            ? t('onboarding.continueSaved')
-            : stable
-              ? t('onboarding.saveStable')
-              : t('onboarding.createContinue')
-        }
-        submittingLabel={
-          stable ? t('onboarding.saving') : t('onboarding.creating')
-        }
-      />
+      <OnboardingStepActions>
+        <FormSubmitActions
+          align="end"
+          isSubmitting={save.pending}
+          submitLabel={
+            save.acknowledged
+              ? t('onboarding.continueSaved')
+              : stable
+                ? t('onboarding.saveStable')
+                : t('onboarding.createContinue')
+          }
+          submittingLabel={
+            stable ? t('onboarding.saving') : t('onboarding.creating')
+          }
+        />
+      </OnboardingStepActions>
     </InlineForm>
   )
 }

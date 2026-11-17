@@ -53,7 +53,7 @@ export const horseHistory = {
   recommended: 'Zalecane',
   avoid: 'Unikać',
   search: 'Szukaj w historii opieki',
-  searchPlaceholder: 'Szukaj wpisów, specjalistów lub notatek',
+  searchPlaceholder: 'Szukaj wpisów',
   recordType: 'Typ wpisu',
   allTypes: 'Wszystkie typy wpisów',
   events: 'Wydarzenia',

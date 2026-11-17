@@ -1,10 +1,10 @@
+import { useClaimNavigationSection } from '#/components/layout/navigationSection'
 import { SharedActivityDetail } from '#/components/events/SharedActivityDetail'
 import { ActivitySharing } from '#/components/events/ActivitySharing'
 import {
   ActivityPeople,
   MyActivityInvitations,
 } from '#/components/events/ActivityPeople'
-import { TrainingSessionCompletionControl } from '#/components/training/TrainingSessionCompletionControl'
 import { EventParticipation } from '#/components/events/EventParticipation'
 import { RecordAudienceLabel } from '#/components/sharing/RecordAudienceLabel'
 import { TrainingCompletionSummary } from '#/components/training/TrainingCompletionSummary'
@@ -25,7 +25,10 @@ import { useT } from '#/i18n/LocaleProvider'
 import { RoutePending } from '#/components/layout/RoutePending'
 import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
-import { TrainingCompletionControl } from '#/components/training/TrainingCompletionControl'
+import {
+  recordableSessionEntries,
+  TrainingDetailCompletion,
+} from '#/components/training/TrainingCompletionControl'
 import { TrainingRecordCard } from '#/components/training/TrainingRecordCard'
 import { getTrainingEntries } from '#/components/training/trainingCalendarData'
 import { getSessionLeader } from '#/components/training/trainingSessions'
@@ -55,6 +58,9 @@ export function PersonalEventEditor({
   const data = useQuery(
     api.events.getWithHorses,
     eventId ? { id: eventId } : 'skip',
+  )
+  useClaimNavigationSection(
+    training || data?.event.type === 'training' ? 'training' : undefined,
   )
   const permissions = useQuery(
     api.events.getPermissions,
@@ -259,7 +265,7 @@ export function PersonalEventDetail(props: {
     return <SharedActivityDetail eventId={props.eventId} date={props.date} />
   if (access === 'participant')
     return (
-      <DashboardPage>
+      <DashboardPage width="narrow">
         <MyActivityInvitations eventId={props.eventId} />
       </DashboardPage>
     )
@@ -293,6 +299,9 @@ function HorseEventDetail({
     participationId: participationId as Id<'eventsHorses'> | undefined,
   })
   const permissions = useQuery(api.events.getPermissions, { id: eventId })
+  useClaimNavigationSection(
+    data?.event.type === 'training' ? 'training' : undefined,
+  )
   const training = useQuery(
     api.training.listForEvent,
     data?.event.type === 'training'
@@ -322,7 +331,7 @@ function HorseEventDetail({
     ? getSessionLeader(entries, data.event)
     : undefined
   return (
-    <DashboardPage>
+    <DashboardPage width="narrow">
       <EventDetail
         stableId={stableId}
         event={data.event}
@@ -333,11 +342,9 @@ function HorseEventDetail({
             : undefined
         }
         leader={sessionLeader ?? null}
-        headerActions={
-          entries.length === 1 &&
-          entries[0].horse.canRecord &&
-          entries[0].occurrence.startDate <= today ? (
-            <TrainingCompletionControl entry={entries[0]} labelled />
+        completion={
+          recordableSessionEntries(entries, today).length ? (
+            <TrainingDetailCompletion entries={entries} stableId={stableId} />
           ) : undefined
         }
         horses={data.horses}
@@ -347,6 +354,7 @@ function HorseEventDetail({
         }
         showHorses={!isTraining}
         showServiceDetails={!isTraining}
+        occurrenceDate={!isTraining && data.event.recurrence ? date : undefined}
       />
       <EventParticipation eventId={eventId} />
       <ActivitySharing eventId={eventId} />
@@ -355,22 +363,20 @@ function HorseEventDetail({
       {isTraining && entries.length === 0 && (
         <p role="status">{t('trainingViews.noSession')}</p>
       )}
-      {entries.map((entry) => (
-        <RecordAudienceLabel
-          key={entry.key}
-          horseId={entry.horse._id}
-          recordId={entry.occurrence.eventId}
-          date={entry.occurrence.startDate}
-        />
-      ))}
       <TrainingCompletionSummary entries={entries} />
-      <TrainingSessionCompletionControl entries={entries} stableId={stableId} />
       {entries.map((entry) => (
         <TrainingRecordCard
           key={entry.key}
           entry={entry}
           showCompletion={entries.length > 1}
           sessionLeader={sessionLeader}
+          audience={
+            <RecordAudienceLabel
+              horseId={entry.horse._id}
+              recordId={entry.occurrence.eventId}
+              date={entry.occurrence.startDate}
+            />
+          }
         />
       ))}
       {isTraining && (

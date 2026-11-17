@@ -16,7 +16,7 @@ export const calendar = {
   horseColours: 'Kolory koni',
   horseColoursHelp:
     'Kropki oznaczają konie, nie ukończone treningi. Wybierz dzień, aby zobaczyć nazwy i szczegóły. +N oznacza dodatkowe konie.',
-  generalEvent: 'Wydarzenie stajni / inne',
+  generalEvent: 'Bez konia',
   colourInUse: 'W użyciu',
   colourField: 'Kolor w kalendarzu',
   colourFieldHelp:
@@ -50,8 +50,6 @@ export const calendar = {
   selectDay_few: '{{date}}, {{count}} wydarzenia',
   selectDay_many: '{{date}}, {{count}} wydarzeń',
   selectDay_other: '{{date}}, {{count}} wydarzenia',
-  hideAgenda: 'Ukryj plan dnia',
-  close: 'Zamknij',
   endsToday: 'Kończy się dziś',
   continues: 'Trwa',
   monthRegion: 'Kalendarz: {{month}}',
@@ -81,10 +79,6 @@ export const calendar = {
   showMore_few: 'Pokaż {{count}} dodatkowe wydarzenia w dniu {{date}}',
   showMore_many: 'Pokaż {{count}} dodatkowych wydarzeń w dniu {{date}}',
   showMore_other: 'Pokaż {{count}} dodatkowego wydarzenia w dniu {{date}}',
-  hideMore_one: 'Ukryj {{count}} dodatkowe wydarzenie w dniu {{date}}',
-  hideMore_few: 'Ukryj {{count}} dodatkowe wydarzenia w dniu {{date}}',
-  hideMore_many: 'Ukryj {{count}} dodatkowych wydarzeń w dniu {{date}}',
-  hideMore_other: 'Ukryj {{count}} dodatkowego wydarzenia w dniu {{date}}',
   horses_one: '{{count}} koń',
   horses_few: '{{count}} konie',
   horses_many: '{{count}} koni',

@@ -13,13 +13,7 @@ import { FileUploadField } from '#/components/forms/FileUploadField'
 import { FormSection, InlineForm } from '#/components/forms/FormLayout'
 import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
 import { UserAvatar } from '#/components/users/UserAvatar'
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGrid,
-  FieldLabel,
-} from '#/components/ui/field'
+import { Field, FieldError, FieldGrid, FieldLabel } from '#/components/ui/field'
 import { BackButton } from '#/components/ui/back-action'
 import { Input } from '#/components/ui/input'
 import { showAppErrorToast } from '#/components/ui/sonner'
@@ -164,9 +158,26 @@ export function AccountProfileFormView({
           kind="image"
           accept="image/*"
           label={t('profileForm.imageLabel')}
-          uploadLabel={t('profileForm.imageUpload')}
-          uploadDescription={t('profileForm.imageDescription')}
-          help={t('profileForm.imageHelp')}
+          {...(onboarding
+            ? {
+                uploadLabel: t('profileForm.imageUpload'),
+                uploadDescription: t('profileForm.imageDescription'),
+              }
+            : {
+                // The avatar is the upload target; no separate drop zone.
+                variant: 'avatar' as const,
+                currentImageUrl: initialValues.profileImageUrl,
+                uploadDescription: t('profileForm.imageHint'),
+                avatar: (
+                  <UserAvatar
+                    name={
+                      form.watch('preferredName') || initialValues.displayName
+                    }
+                    photoUrl={initialValues.profileImageUrl}
+                    className="size-full border-0 text-lg"
+                  />
+                ),
+              })}
           errors={fieldState.error ? [fieldState.error] : undefined}
           files={field.value ?? null}
           onFilesChange={(files) => field.onChange(files ?? undefined)}
@@ -181,7 +192,6 @@ export function AccountProfileFormView({
   return (
     <InlineForm
       data-slot="account-profile-form"
-      showRequiredHint={!onboarding}
       onSubmit={form.handleSubmit(onSubmit)}
     >
       {onBack && (
@@ -195,20 +205,7 @@ export function AccountProfileFormView({
         </BackButton>
       )}
 
-      {!onboarding && (
-        <div className="grid gap-4 border-b border-border-subtle pb-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
-          <UserAvatar
-            name={form.watch('preferredName') || initialValues.displayName}
-            photoUrl={initialValues.profileImageUrl}
-          />
-          <div className="grid gap-1">
-            <p className="font-semibold">
-              {form.watch('preferredName') || initialValues.displayName}
-            </p>
-            <FieldDescription>{t('profileForm.shared')}</FieldDescription>
-          </div>
-        </div>
-      )}
+      {!onboarding && imageField}
 
       <FieldGrid>
         <Controller
@@ -255,7 +252,6 @@ export function AccountProfileFormView({
                 id={`${formId}-${field.name}`}
                 type="tel"
                 autoComplete="tel"
-                placeholder={t('profileForm.optional')}
                 aria-invalid={fieldState.invalid}
                 aria-describedby={
                   fieldState.invalid
@@ -269,24 +265,27 @@ export function AccountProfileFormView({
         />
       </FieldGrid>
 
-      {onboarding ? (
+      {onboarding && (
         <FormSection
           title={t('profileForm.imageLabel')}
+          optionalLabel={t('onboarding.optional')}
           invalid={!!form.formState.errors.profileImage}
           validationAttempt={form.formState.submitCount}
         >
           {imageField}
         </FormSection>
-      ) : (
-        imageField
       )}
 
       <FormSubmissionError message={error ? t(error) : undefined} />
       <div
+        // Inside onboarding, phones float this row as the route-form pills.
+        // On Profile it stays in flow (the tab bar owns the phone bottom), under
+        // the route-form footer hairline.
+        data-slot={onboarding ? 'card-footer' : undefined}
         className={
           onboarding
             ? 'flex items-center justify-end gap-3 border-t border-border-subtle pt-5'
-            : undefined
+            : 'border-t border-border-subtle pt-4'
         }
       >
         <FormSubmitActions

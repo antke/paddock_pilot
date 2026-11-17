@@ -12,7 +12,7 @@ export const horseList = {
   addHelp: 'Add a horse to start building this stable roster.',
   noMatches: 'No horses match these filters.',
   search: 'Search horses',
-  searchHelp: 'Search name, owner, breed, discipline, or ID',
+  searchHelp: 'Search horses',
   sex: 'Sex',
   allSexes: 'All sexes',
   shoeing: 'Shoeing',

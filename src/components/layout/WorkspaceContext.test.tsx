@@ -23,7 +23,7 @@ vi.mock('#/components/ui/button', () => ({
 }))
 afterEach(cleanup)
 
-it('keeps the workspace in the visible heading independently of navigation', () => {
+it('names the stable under a title that stands alone, independently of navigation', () => {
   const { rerender } = render(
     <WorkspaceContext.Provider value={{ label: 'Personal' }}>
       <DashboardPageHeader title="Events" />
@@ -37,12 +37,9 @@ it('keeps the workspace in the visible heading independently of navigation', () 
       <DashboardPageHeader title="Events" />
     </WorkspaceContext.Provider>,
   )
-  expect(
-    screen.getByRole('heading', { name: 'Events · Oak Farm' }),
-  ).toBeTruthy()
-  expect(
-    screen.queryByRole('heading', { name: 'Events · Personal' }),
-  ).toBeNull()
+  expect(screen.getByRole('heading', { name: 'Events' })).toBeTruthy()
+  expect(screen.getByText('Oak Farm')).toBeTruthy()
+  expect(screen.queryByText('Personal')).toBeNull()
 })
 
 function FormAudience() {

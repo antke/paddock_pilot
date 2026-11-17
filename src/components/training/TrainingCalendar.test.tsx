@@ -22,6 +22,10 @@ import { LanguageSelector } from '#/i18n/LanguageSelector'
 
 vi.mock('convex/react', () => ({ useMutation: () => vi.fn() }))
 
+// Entry titles split the bold horse name from the title, so match the whole text.
+const fullText = (text: string) => (_: string, element: Element | null) =>
+  element?.textContent === text
+
 const originalScrollIntoView = Object.getOwnPropertyDescriptor(
   HTMLElement.prototype,
   'scrollIntoView',
@@ -203,13 +207,12 @@ describe('mobile training controls', () => {
     'keeps only the bottom recording action for $props',
     async ({ props, href }) => {
       await openMobileTraining(props)
-      const actions = screen.getAllByRole('link', { name: 'Add training log' })
+      const actions = screen.getAllByRole('link', {
+        name: 'Add training session',
+      })
       expect(actions).toHaveLength(1)
       expect(actions[0].getAttribute('href')).toBe(href)
       expect(actions[0].closest('[data-slot="mobile-action-bar"]')).toBeTruthy()
-      expect(
-        screen.queryByRole('link', { name: 'Add training session' }),
-      ).toBeNull()
       fireEvent.click(screen.getByRole('button', { name: 'Next week' }))
       expect(
         screen.getByRole('heading', { name: '12 Jan – 18 Jan' }),
@@ -221,7 +224,7 @@ describe('mobile training controls', () => {
       expect(
         within(
           screen.getByRole('region', { name: 'Training agenda' }),
-        ).getByText('Atlas · Flatwork school', {
+        ).getByText(fullText('Atlas · Flatwork school'), {
           selector: '[data-slot="training-entry-title"]',
         }),
       ).toBeTruthy()
@@ -260,7 +263,7 @@ describe('mobile training controls', () => {
     expect(document.activeElement).toBe(filter)
     fireEvent.click(screen.getByRole('button', { name: 'Clear all' }))
     expect(
-      within(results).getByText('Atlas · Flatwork school', {
+      within(results).getByText(fullText('Atlas · Flatwork school'), {
         selector: '[data-slot="training-entry-title"]',
       }),
     ).toBeTruthy()
@@ -269,7 +272,6 @@ describe('mobile training controls', () => {
 
   it('keeps the agenda available without a creation action for viewers', async () => {
     await openMobileTraining({ canRecord: false })
-    expect(screen.queryByRole('link', { name: 'Add training log' })).toBeNull()
     expect(
       screen.queryByRole('link', { name: 'Add training session' }),
     ).toBeNull()
@@ -563,12 +565,17 @@ describe('training calendar controls', () => {
     ).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Week' }))
     table = screen.getByRole('table')
-    expect(within(table).getByText('Juniper · Juniper session')).toBeTruthy()
+    expect(
+      within(table).getByText(fullText('Juniper · Juniper session'), {
+        selector: '[data-slot="training-entry-title"]',
+      }),
+    ).toBeTruthy()
     expect(
       within(table).queryByRole('link', { name: /Atlas session/ }),
     ).toBeNull()
     const entry = within(table).getByRole('link', { name: /Juniper session/ })
-    expect(entry.textContent).toContain('Led by Alex')
+    // The week card leads with the session; the rider is in its preview.
+    expect(entry.textContent).not.toContain('Led by Alex')
     expect(entry.textContent).toContain('10:00')
     expect(entry.textContent).not.toContain('Practise balance')
     expect(screen.queryByRole('dialog')).toBeNull()

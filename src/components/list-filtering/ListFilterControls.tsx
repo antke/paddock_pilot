@@ -23,6 +23,7 @@ type ListFilterControlsProps<TFacetId extends string = string> = {
   className?: string
   hideWhenEmpty?: boolean
   sticky?: boolean
+  toolbarEnd?: ReactNode
 }
 
 export function ListFilterControls<TFacetId extends string = string>({
@@ -31,6 +32,7 @@ export function ListFilterControls<TFacetId extends string = string>({
   className,
   hideWhenEmpty = false,
   sticky = false,
+  toolbarEnd,
 }: ListFilterControlsProps<TFacetId>) {
   const [hasFocusWithin, setHasFocusWithin] = useState(false)
   if (
@@ -54,6 +56,7 @@ export function ListFilterControls<TFacetId extends string = string>({
       className={className}
       sticky={sticky}
       onFocusWithinChange={setHasFocusWithin}
+      toolbarEnd={toolbarEnd}
     />
   )
 }

@@ -7,7 +7,7 @@ import type { ComponentProps } from 'react'
 
 type StableInvitationBadgeProps = Omit<
   ComponentProps<typeof Badge>,
-  'children' | 'size' | 'variant'
+  'children' | 'variant'
 >
 
 type StableInvitationStatus = Doc<'stableInvitations'>['status']
@@ -25,7 +25,7 @@ export const stableInvitationStatusLabels = {
 } satisfies Record<StableInvitationStatus, string>
 
 const stableInvitationStatusVariant = {
-  pending: 'info',
+  pending: 'neutral',
   accepted_pending_subscription: 'warning',
   accepted: 'success',
   declined: 'neutral',
@@ -57,16 +57,6 @@ export const stableInvitationDeliveryStatusLabels = {
   skipped: 'Not sent in this environment',
 } satisfies Record<StableInvitationDeliveryStatus, string>
 
-const stableInvitationDeliveryStatusVariant = {
-  queued: 'info',
-  sent: 'success',
-  failed: 'destructive',
-  skipped: 'neutral',
-} satisfies Record<
-  StableInvitationDeliveryStatus,
-  NonNullable<ComponentProps<typeof Badge>['variant']>
->
-
 export function StableInvitationStatusBadge({
   status,
   ...props
@@ -77,20 +67,6 @@ export function StableInvitationStatusBadge({
   return (
     <Badge variant={stableInvitationStatusVariant[status]} {...props}>
       {t(`invitationFlow.status.${status}`)}
-    </Badge>
-  )
-}
-
-export function StableInvitationDeliveryStatusBadge({
-  status,
-  ...props
-}: StableInvitationBadgeProps & {
-  status: StableInvitationDeliveryStatus
-}) {
-  const t = useT()
-  return (
-    <Badge variant={stableInvitationDeliveryStatusVariant[status]} {...props}>
-      {t(`invitationFlow.delivery.${status}`)}
     </Badge>
   )
 }

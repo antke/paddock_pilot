@@ -173,3 +173,27 @@ it('hides calendar selection without stable memberships and shows it when a stab
   expect(container.childElementCount).toBe(0)
   expect(props.onChange).not.toHaveBeenCalled()
 })
+
+it('shows only the current stable inside it until a checkbox changes, without saving', () => {
+  state.stables = [
+    { _id: 'stable', name: 'Stable' },
+    { _id: 'other', name: 'Other' },
+  ]
+  const key = 'paddock:calendar-selection:anonymous'
+  localStorage.setItem(key, JSON.stringify(['mine', 'other']))
+  const { result } = renderHook(() => useActivityCalendars(false, 'stable'))
+  expect(result.current.selected).toEqual(['mine', 'stable'])
+  expect(state.args).toMatchObject({ stableIds: ['stable'] })
+  expect(JSON.parse(localStorage.getItem(key) ?? '')).toEqual(['mine', 'other'])
+
+  act(() => result.current.setSelected(['mine', 'stable', 'other']))
+  expect(result.current.selected).toEqual(['mine', 'stable', 'other'])
+  expect(JSON.parse(localStorage.getItem(key) ?? '')).toEqual([
+    'mine',
+    'stable',
+    'other',
+  ])
+
+  const personal = renderHook(() => useActivityCalendars(false))
+  expect(personal.result.current.selected).toEqual(['mine', 'stable', 'other'])
+})

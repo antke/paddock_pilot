@@ -3,6 +3,7 @@ import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
 import { cn } from '#/lib/utils'
 
 export function calendarShellClassName(className?: string) {
+  // A framed grid: day columns and weeks both stay ruled so dates are easy to track.
   return cn('app-panel-strong overflow-hidden text-xs', className)
 }
 
@@ -14,13 +15,15 @@ export function calendarWeekdayRowClassName(className?: string) {
 }
 
 export function calendarWeekdayCellClassName(className?: string) {
+  // Weekday labels start at the day cell's inset, in line with the day numbers below.
   return cn(
-    'border-r border-border-subtle p-2 text-center font-semibold text-muted-foreground last:border-r-0',
+    'border-r border-border-subtle px-1.5 py-2 text-left font-medium text-muted-foreground last:border-r-0',
     className,
   )
 }
 
 export function calendarGridClassName(className?: string) {
+  // The frame closes the last week, so its own bottom rule would double up.
   return cn(
     'grid grid-cols-7 [&>[role=row]:last-child>[role=cell]]:border-b-0',
     className,
@@ -29,7 +32,6 @@ export function calendarGridClassName(className?: string) {
 
 export function calendarDayCellClassName({
   isSelected = false,
-  isToday = false,
   muted = false,
   className,
 }: {
@@ -40,17 +42,16 @@ export function calendarDayCellClassName({
 } = {}) {
   return cn(
     'h-[var(--calendar-row-height,120px)] min-w-0 border-r border-b border-border-subtle last:border-r-0 pointer-coarse:min-h-40',
+    // Out-of-month cells recede on a muted fill; the filled circle marks today.
     muted ? 'bg-surface-muted' : 'bg-surface-elevated p-1.5',
-    isToday && 'bg-calendar-today',
-    isSelected && !isToday && 'bg-selection-surface',
-    isSelected && 'ring-1 ring-inset ring-selection/35',
+    isSelected && 'bg-selection-surface ring-1 ring-inset ring-selection/35',
     className,
   )
 }
 
 export function calendarMoreEventsButtonClassName(className?: string) {
   return cn(
-    'app-control-focus h-8 min-w-0 w-full justify-start truncate rounded-control border-0 bg-surface-muted px-2 py-1 text-left text-xs font-semibold text-muted-foreground hover:bg-card hover:text-foreground focus-visible:outline-none',
+    'app-control-focus h-7 min-w-0 w-full justify-start truncate rounded-control border-0 bg-transparent px-2 py-0 text-left text-xs font-medium text-muted-foreground hover:bg-surface-muted hover:text-foreground focus-visible:outline-none',
     className,
   )
 }
@@ -62,7 +63,11 @@ export function calendarDayNumberClassName({
   isToday?: boolean
   className?: string
 } = {}) {
-  return cn('font-medium', isToday && 'font-bold text-primary', className)
+  return cn(
+    'inline-grid size-6 place-items-center rounded-full font-medium tabular-nums lining-nums md:text-sm',
+    isToday && 'bg-primary font-semibold text-primary-foreground',
+    className,
+  )
 }
 
 export function calendarDayHeaderClassName(className?: string) {
@@ -75,24 +80,36 @@ export function calendarDayEventListClassName(className?: string) {
 
 export function calendarEventChipClassName(className?: string) {
   return cn(
-    'app-row group/event grid gap-0.5 border-border-subtle bg-card px-2 py-1.5 text-left text-xs text-foreground hover:border-border hover:bg-surface-muted focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+    // Entries are small cards so neighbouring events in a day stay distinct.
+    'app-row group/event grid gap-0.5 rounded-control border-border-subtle bg-card px-2 py-1.5 text-left text-xs text-foreground hover:border-border hover:bg-surface-muted focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
     className,
   )
 }
 
-export function calendarEventChipTitleClassName(className?: string) {
-  return cn('min-w-0 truncate font-semibold leading-tight', className)
+export function calendarEventChipTitleClassName(
+  className?: string,
+  wrap = false,
+) {
+  return cn(
+    'min-w-0 font-medium leading-tight',
+    wrap ? 'line-clamp-2 wrap-break-word' : 'truncate',
+    className,
+  )
 }
 
 /** Month cells reserve room for two single-line entries and an overflow action. */
 export function calendarCompactEventChipClassName(className?: string) {
   return calendarEventChipClassName(
     cn(
-      'flex h-7 min-w-0 w-full items-center gap-1.5 px-2 py-0 pointer-coarse:h-11',
+      'flex h-7 min-w-0 w-full items-center gap-1.5 px-2 py-0 md:text-sm pointer-coarse:h-11 [&>[data-slot=horse-markers]:empty]:hidden',
       className,
     ),
   )
 }
+
+/** Every month entry may use two title lines; markers stay on the first line. */
+export const calendarWrappedEventChipClassName =
+  'h-auto min-h-7 items-start py-0.5 leading-tight pointer-coarse:h-auto pointer-coarse:min-h-11 pointer-coarse:items-center [&>[data-slot=horse-markers]]:h-[1.25em]'
 
 export function calendarEventChipMetaClassName(className?: string) {
   return cn('truncate text-muted-foreground', className)

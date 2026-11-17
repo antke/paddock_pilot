@@ -12,10 +12,15 @@ const dashboardPageGapClassNames = {
   compact: 'grid gap-4',
 } satisfies Record<DashboardPageGap, string>
 
+// Narrow pages centre their content and title in a column; page and entity headers
+// still span the page so Back stays top left (both read --page-column).
+const centredColumnClassName =
+  'w-full *:mx-auto *:w-full *:max-w-(--page-column) [&>[data-slot=dashboard-page-header]]:max-w-none [&>[data-slot=dashboard-hero-section]]:max-w-none'
+
 const dashboardPageWidthClassNames = {
   full: '',
-  narrow: 'mx-auto w-full max-w-4xl',
-  compact: 'mx-auto w-full max-w-xl',
+  narrow: cn('[--page-column:var(--container-4xl)]', centredColumnClassName),
+  compact: cn('[--page-column:var(--container-xl)]', centredColumnClassName),
 } satisfies Record<DashboardPageWidth, string>
 
 const dashboardPageVerticalAlignClassNames = {

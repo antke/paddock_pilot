@@ -10,6 +10,7 @@ import { Field, FieldGrid, FieldLabel } from '#/components/ui/field'
 import { Select } from '#/components/ui/select'
 import { useDevAuthBypassEnabled } from '#/lib/devAuthBypass'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
+import { WorkspaceContext } from '#/components/layout/WorkspaceContext'
 import { createHorseInvitationSamples } from './HorseInvitationsPageLab'
 
 export function HomeDashboardSample({ data }: { data: DashboardLabData }) {
@@ -22,7 +23,12 @@ export function HomeDashboardSample({ data }: { data: DashboardLabData }) {
       </DashboardEmptyState>
     )
   }
-  return <HomeSampleControls key={data.stable._id} data={data} />
+  // The real home route is personal scope; without it the header falls back to the stable name.
+  return (
+    <WorkspaceContext.Provider value={{ label: 'Personal' }}>
+      <HomeSampleControls key={data.stable._id} data={data} />
+    </WorkspaceContext.Provider>
+  )
 }
 
 function HomeSampleControls({ data }: { data: DashboardLabData }) {

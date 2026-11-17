@@ -8,6 +8,7 @@ import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import type { FunctionReturnType } from 'convex/server'
 import { Button } from '#/components/ui/button'
+import { ConfirmActionButton } from '#/components/ui/confirm-action'
 import { Input } from '#/components/ui/input'
 import { Select } from '#/components/ui/select'
 import { Textarea } from '#/components/ui/textarea'
@@ -207,6 +208,7 @@ function ActivityInvitation({ row }: { row: Participation }) {
   const id = useId()
   const respond = useMutation(api.activityParticipants.respond)
   const report = useMutation(api.activityParticipants.reportRide)
+  const leave = useMutation(api.activityParticipants.revoke)
   const [editing, setEditing] = useState(false)
   const [activities, setActivities] = useState<TrainingActivity[]>(
     row.report?.details.activities ?? row.plannedTraining?.activities ?? [],
@@ -271,25 +273,43 @@ function ActivityInvitation({ row }: { row: Participation }) {
       ) : (
         <>
           {row.report && (
-            <p role="status">
+            // Status lines keep the height of the Accept/Decline row they replace.
+            <p
+              role="status"
+              className="flex min-h-10 items-center text-sm max-md:min-h-11"
+            >
               {c.saved}
               {row.report.outcome ? ` · ${row.report.outcome}` : ''}
             </p>
           )}
           {row.reported && !row.report && (
-            <p className="text-sm">{c.reported}</p>
+            <p className="flex min-h-10 items-center text-sm max-md:min-h-11">
+              {c.reported}
+            </p>
           )}
           {row.canReport && row.date > today && (
             <p className="text-sm text-muted-foreground">{c.future}</p>
           )}
-          {row.canReport && row.date <= today && !editing && (
-            <Button
-              variant="outline"
-              className="justify-self-start"
-              onClick={() => setEditing(true)}
-            >
-              {c.report}
-            </Button>
+          {row.sessionChanged && (
+            <p className="text-sm text-muted-foreground">{c.sessionChanged}</p>
+          )}
+          {row.status === 'accepted' && !editing && (
+            // Report and Leave share one row and one height.
+            <div className="flex flex-wrap gap-2">
+              {row.canReport && row.date <= today && (
+                <Button variant="outline" onClick={() => setEditing(true)}>
+                  {c.report}
+                </Button>
+              )}
+              <ConfirmActionButton
+                label={c.leave}
+                title={c.leaveTitle}
+                description={c.leaveHelp}
+                cancelLabel={c.stay}
+                failedLabel={c.failed}
+                onConfirm={() => leave({ id: row.id })}
+              />
+            </div>
           )}
           {editing && row.canReport && (
             <form

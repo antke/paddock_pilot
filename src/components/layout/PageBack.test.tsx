@@ -59,6 +59,17 @@ describe('page hierarchy', () => {
     }
     expect(pageBackRuleFor('/page-lab/$page')).toBe('none')
   })
+
+  it('returns from a stable overview and its pages to the previous page', () => {
+    expect(pageBackRuleFor('/stables/_layout/$stableId/')).toEqual({
+      to: '/stables',
+      preferHistory: true,
+    })
+    expect(pageBackRuleFor('/stables/_layout/$stableId/reminders')).toEqual({
+      to: '/stables/$stableId',
+      preferHistory: true,
+    })
+  })
 })
 
 describe('PageBack in page headers', () => {
@@ -80,9 +91,7 @@ describe('PageBack in page headers', () => {
   it('returns to the previous in-app page when the rule prefers history', async () => {
     const { router } = await renderAt('/', () => <PageBack />)
     await act(() => router.navigate({ to: '/horses/create' }))
-    await act(() =>
-      router.navigate({ to: '/horses/create', replace: true }),
-    )
+    await act(() => router.navigate({ to: '/horses/create', replace: true }))
     fireEvent.click(await screen.findByRole('link', { name: 'Back' }))
     expect(await screen.findByText('Home page')).toBeTruthy()
   })

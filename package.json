@@ -12,7 +12,7 @@
   "scripts": {
     "dev": "vite dev --port 9090",
     "build": "vite build",
-    "build:vercel": "convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --cmd 'pnpm build:smoke'",
+    "build:vercel": "if [ \"$VERCEL_ENV\" = production ]; then convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --cmd 'pnpm build:smoke'; else : \"${VITE_CONVEX_URL:?Set VITE_CONVEX_URL for Preview in Vercel}\" && pnpm build:smoke; fi",
     "build:smoke": "NITRO_PRESET=vercel vite build && pnpm test:smoke",
     "preview": "vite preview",
     "email:preview": "node scripts/preview-emails.mjs",

@@ -1,7 +1,9 @@
-import { createContext, useContext, useId } from 'react'
+import { useId } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 
 import { cn } from '#/lib/utils'
+import { DashboardDisplayHeading } from './DashboardDisplayHeading'
+import { dashboardNestedHeadingClassName } from './DashboardInlineHeader'
 import { SectionEditSlot } from './SectionEditSlot'
 
 /** Open reference groups inside a single owning paper section. */
@@ -18,14 +20,12 @@ export function DetailReference({
   )
 }
 
-/** Stacked record groups read at a larger value size than compact cards. */
-const DetailReferenceStacked = createContext(false)
-
 export function DetailReferenceGroup({
   title,
   children,
   edit,
   layout = 'aside',
+  titleStyle = 'nested',
   as: Heading = 'h2',
   className,
   ...props
@@ -41,33 +41,42 @@ export function DetailReferenceGroup({
    * group's top-right corner.
    */
   layout?: 'aside' | 'stacked'
+  /**
+   * `panel`: the panel's first group, whose title is the serif panel title
+   * (like a `DashboardSectionCard` title); later groups stay `nested`.
+   */
+  titleStyle?: 'nested' | 'panel'
   as?: 'h2' | 'h3'
 }) {
   const headingId = useId()
   const stacked = layout === 'stacked'
-  const heading = (
-    <Heading
-      id={headingId}
-      className={cn(
-        'min-w-0 text-foreground',
-        stacked
-          ? 'font-display text-xl font-semibold leading-tight tracking-[-0.01em]'
-          : 'font-sans text-lg font-semibold leading-snug',
-      )}
-    >
-      {title}
-    </Heading>
-  )
+  const heading =
+    titleStyle === 'panel' ? (
+      <DashboardDisplayHeading as={Heading} id={headingId} scale="panel">
+        {title}
+      </DashboardDisplayHeading>
+    ) : (
+      // Groups sit inside one panel, so they take the nested heading, not the
+      // serif panel title.
+      <Heading
+        id={headingId}
+        className={cn(
+          dashboardNestedHeadingClassName,
+          'text-lg leading-snug text-foreground',
+        )}
+      >
+        {title}
+      </Heading>
+    )
 
   return (
     <section
       data-slot="detail-reference-group"
       aria-labelledby={headingId}
       className={cn(
+        // A hairline between groups keeps long profiles easy to follow.
         'grid min-w-0 gap-4 border-t border-border-subtle pt-6 first:border-t-0 first:pt-0',
-        stacked
-          ? 'gap-5'
-          : 'lg:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] lg:gap-8',
+        !stacked && 'lg:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] lg:gap-8',
         className,
       )}
       {...props}
@@ -92,9 +101,7 @@ export function DetailReferenceGroup({
           !stacked && 'max-w-3xl',
         )}
       >
-        <DetailReferenceStacked.Provider value={stacked}>
-          {children}
-        </DetailReferenceStacked.Provider>
+        {children}
       </div>
     </section>
   )
@@ -154,7 +161,6 @@ export function DetailReferenceField({
   fullWidth?: boolean
   multiline?: boolean
 }) {
-  const stacked = useContext(DetailReferenceStacked)
   const hasValue = value !== undefined && value !== null && value !== ''
   if (!hasValue && missingValue === undefined) return null
 
@@ -169,7 +175,7 @@ export function DetailReferenceField({
       <dd
         className={cn(
           'min-w-0 wrap-anywhere',
-          stacked ? 'text-lg leading-snug' : 'text-base leading-6',
+          'text-base leading-6',
           hasValue ? 'font-medium text-foreground' : 'text-muted-foreground',
           multiline && 'max-w-prose whitespace-pre-wrap font-normal',
         )}

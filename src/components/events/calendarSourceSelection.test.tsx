@@ -80,12 +80,12 @@ it('receives another tab’s changes and safely replaces malformed preferences',
 it('carries the current page preference into the shared selection once', () => {
   const legacy = 'paddock:activity-calendars:events:mine'
   sessionStorage.setItem(legacy, JSON.stringify(['mine', 'stable-old']))
-  const events = renderHook(() => useCalendarSelection(undefined, legacy), {
+  const events = renderHook(() => useCalendarSelection(legacy), {
     wrapper: account('owner'),
   })
   expect(events.result.current.selected).toEqual(['mine', 'stable-old'])
   act(() => events.result.current.setSelected(['mine', 'stable-new']))
-  const training = renderHook(() => useCalendarSelection(undefined, legacy), {
+  const training = renderHook(() => useCalendarSelection(legacy), {
     wrapper: account('owner'),
   })
   expect(training.result.current.selected).toEqual(['mine', 'stable-new'])

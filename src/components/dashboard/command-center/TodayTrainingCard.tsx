@@ -6,6 +6,7 @@ import { ButtonLink } from '#/components/ui/button'
 import { TrainingSessionLink } from '#/components/training/TrainingSessionLink'
 import { groupTrainingSessions } from '#/components/training/trainingSessions'
 import type { DashboardActivityData } from './dashboardTypes'
+import { SeeAllLink } from './SeeAllLink'
 import { useTaskOriginState } from '#/components/layout/mobileTaskNavigation'
 
 export function TodayTrainingCard({
@@ -30,9 +31,15 @@ export function TodayTrainingCard({
       titleStyle="display"
       headerLayout="inline"
       actions={
-        !compact &&
-        canCreate && (
-          <>
+        <>
+          <SeeAllLink
+            to={data.stable ? '/stables/$stableId/training' : '/training'}
+            params={{ stableId: data.stable?._id ?? '' }}
+          >
+            {t('dashboard.viewTraining')}
+            {compact && sessions.length > 2 ? ` (${sessions.length})` : ''}
+          </SeeAllLink>
+          {canCreate && (
             <ButtonLink
               to={
                 data.stable
@@ -51,8 +58,8 @@ export function TodayTrainingCard({
             >
               {t('trainingViews.recordCompleted')}
             </ButtonLink>
-          </>
-        )
+          )}
+        </>
       }
     >
       {sessions.length === 0 ? (
@@ -60,30 +67,17 @@ export function TodayTrainingCard({
           {t('dashboard.noTraining')}
         </DashboardEmptyState>
       ) : (
-        <div
-          className={
-            compact ? 'grid gap-3' : 'grid gap-5 sm:grid-cols-2 xl:grid-cols-3'
-          }
-        >
+        // Flat rows at every width; phones only show fewer of them.
+        <div className="-mx-2 grid gap-1">
           {(compact ? sessions.slice(0, 2) : sessions).map((session) => (
             <TrainingSessionLink
               key={session.key}
               session={session}
               stableId={data.stable?._id}
-              variant={compact ? 'summary' : 'record'}
             />
           ))}
         </div>
       )}
-      <ButtonLink
-        to={data.stable ? '/stables/$stableId/training' : '/training'}
-        params={{ stableId: data.stable?._id ?? '' }}
-        variant="link"
-        className="min-h-11 justify-self-start px-0"
-      >
-        {t('dashboard.viewTraining')}
-        {compact && sessions.length > 2 ? ` (${sessions.length})` : ''}
-      </ButtonLink>
     </DashboardSection>
   )
 }

@@ -49,7 +49,7 @@ describe('account profile acknowledgement', () => {
         ?.textContent,
     ).toContain('Add the name')
     fireEvent.change(names[0], { target: { value: 'Rider' } })
-    const input = screen.getAllByLabelText('Profile image (optional)')[0]
+    const input = screen.getAllByLabelText('Profile image')[0]
     fireEvent.change(input, {
       target: {
         files: files(new File(['no'], 'record.txt', { type: 'text/plain' })),
@@ -86,7 +86,7 @@ describe('account profile acknowledgement', () => {
     )
     const name = screen.getByLabelText<HTMLInputElement>('Preferred name')
     fireEvent.change(name, { target: { value: 'New rider' } })
-    fireEvent.change(screen.getByLabelText('Profile image (optional)'), {
+    fireEvent.change(screen.getByLabelText('Profile image'), {
       target: { files: files(image()) },
     })
     fireEvent.submit(name.closest('form')!)
@@ -123,7 +123,7 @@ describe('account profile acknowledgement', () => {
       />,
     )
     const name = screen.getByLabelText('Preferred name')
-    fireEvent.change(screen.getByLabelText('Profile image (optional)'), {
+    fireEvent.change(screen.getByLabelText('Profile image'), {
       target: { files: files(image()) },
     })
     fireEvent.submit(name.closest('form')!)

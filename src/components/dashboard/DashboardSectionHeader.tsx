@@ -5,6 +5,7 @@ import { DashboardActions } from './DashboardActions'
 import { DashboardBadgeList } from './DashboardBadgeList'
 import { DashboardDisplayHeading } from './DashboardDisplayHeading'
 import { DashboardHeaderRail } from './DashboardHeaderRail'
+import { dashboardNestedHeadingClassName } from './DashboardInlineHeader'
 import { SectionEditSlot } from './SectionEditSlot'
 
 type DashboardSectionHeaderSize = 'compact' | 'panel' | 'section' | 'page'
@@ -58,13 +59,29 @@ export function DashboardSectionHeader({
 }: DashboardSectionHeaderProps) {
   const Heading = as ?? (size === 'page' ? 'h1' : 'h2')
   const usesDisplayTitle = size !== 'compact' || titleStyle === 'display'
+  const descriptionNode = description && (
+    <p
+      className={cn(
+        'leading-6 text-muted-foreground',
+        layout !== 'inline' && 'col-span-full',
+        descriptionWidth === 'default' && 'max-w-3xl',
+        descriptionWidth === 'narrow' && 'max-w-2xl',
+        descriptionSize === 'default' && 'text-sm',
+        descriptionSize === 'sm' && 'text-sm',
+        descriptionClassName,
+      )}
+    >
+      {description}
+    </p>
+  )
 
   return (
     <header
       data-slot="dashboard-section-header"
       className={cn(
         layout === 'inline'
-          ? 'flex flex-wrap items-center justify-between gap-x-6 gap-y-2'
+          ? // Actions align to the title line, never to title + description.
+            'flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2'
           : // Actions stay on the title row at every width.
             'grid grid-cols-[minmax(50%,1fr)_auto] items-start gap-x-4 gap-y-2 sm:items-stretch',
         className,
@@ -91,7 +108,8 @@ export function DashboardSectionHeader({
         ) : (
           <Heading
             className={cn(
-              'min-w-0 text-lg font-semibold leading-tight tracking-normal',
+              dashboardNestedHeadingClassName,
+              'text-lg leading-snug text-foreground',
               titleClassName,
             )}
           >
@@ -100,24 +118,11 @@ export function DashboardSectionHeader({
         )}
 
         {titleSupplement}
-        {description && (
-          <p
-            className={cn(
-              'leading-6 text-muted-foreground',
-              descriptionWidth === 'default' && 'max-w-3xl',
-              descriptionWidth === 'narrow' && 'max-w-2xl',
-              descriptionSize === 'default' && 'text-sm',
-              descriptionSize === 'sm' && 'text-sm',
-              descriptionClassName,
-            )}
-          >
-            {description}
-          </p>
-        )}
+        {layout === 'inline' && descriptionNode}
       </div>
 
       <DashboardHeaderRail
-        className={layout === 'inline' ? 'max-w-full self-center' : undefined}
+        className={layout === 'inline' ? 'max-w-full' : undefined}
         top={
           badges ? (
             <DashboardBadgeList
@@ -145,6 +150,7 @@ export function DashboardSectionHeader({
           ) : undefined
         }
       />
+      {layout !== 'inline' && descriptionNode}
     </header>
   )
 }

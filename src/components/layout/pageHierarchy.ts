@@ -32,7 +32,9 @@ export type PageBackTarget = { to: AppRouteTo; preferHistory?: boolean }
 export type PageBackRule = false | 'none' | PageBackTarget
 
 const toHorses = { to: '/horses' } as const
-const toStable = { to: '/stables/$stableId' } as const
+// A stable's pages and its overview all return to the previous page, so Back
+// never bounces between the overview and a page opened from it.
+const toStable = { to: '/stables/$stableId', preferHistory: true } as const
 const toStableHorses = { to: '/stables/$stableId/horses' } as const
 
 export const pageBackRules = {
@@ -89,7 +91,7 @@ export const pageBackRules = {
   '/stables/_layout/$stableId/stable': toStable,
   '/stables/_layout/$stableId/training': 'none',
   '/stables/_layout/$stableId/welcome': 'none',
-  '/stables/_layout/$stableId/': { to: '/stables' },
+  '/stables/_layout/$stableId/': { to: '/stables', preferHistory: true },
   '/stables/_layout/$stableId/events/$eventId': {
     to: '/stables/$stableId/events',
     preferHistory: true,
@@ -115,9 +117,9 @@ export const pageBackRules = {
     to: '/stables/$stableId/training',
     preferHistory: true,
   },
-  '/stables/_layout/$stableId/events/': false,
+  '/stables/_layout/$stableId/events/': toStable,
   '/stables/_layout/$stableId/horses/': toStable,
-  '/stables/_layout/$stableId/training/': false,
+  '/stables/_layout/$stableId/training/': toStable,
   '/stables/_layout/$stableId/events/$eventId/edit': {
     to: '/stables/$stableId/events/$eventId',
     preferHistory: true,

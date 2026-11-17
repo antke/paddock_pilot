@@ -21,4 +21,7 @@ export const serverErrors = {
   trainingPermission:
     'Trening konia może zapisać tylko jego właściciel lub administrator stajni.',
   trainingOccurrence: 'Wybierz datę z harmonogramu tego treningu.',
+  eventDeleteBlocked:
+    'Bierze w nim udział koń innego właściciela albo ma w nim zapisaną historię. Zamiast usuwać, odwołaj je.',
+  eventClosed: 'To wydarzenie już się odbyło lub zostało odwołane.',
 } as const

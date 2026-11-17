@@ -24,6 +24,8 @@ import {
 } from '#/components/forms/RouteFormCard'
 import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
 import { Button } from '#/components/ui/button'
+import { Select } from '#/components/ui/select'
+import { Field, FieldDescription, FieldLabel } from '#/components/ui/field'
 import { UnsavedChangesGuard } from '#/components/forms/UnsavedChangesGuard'
 
 type HorseProfileFormProps = {
@@ -48,6 +50,12 @@ type HorseProfileFormProps = {
   sampleNotice?: ReactNode
   focusSection?: HorseEditSection
   currentProfileImageUrl?: string | null
+  /** Create only: the stable the horse joins, shown so the destination is never implicit. */
+  stableChoice?: {
+    stables: ReadonlyArray<{ _id: string; name: string }>
+    value?: string
+    onChange: (stableId: string | undefined) => void
+  }
 }
 
 /** Shared route and specimen lifecycle; photo, save and navigation acknowledge separately. */
@@ -70,6 +78,7 @@ export function HorseProfileForm({
   ownerSuggestionScope,
   focusSection,
   currentProfileImageUrl,
+  stableChoice,
 }: HorseProfileFormProps) {
   const t = useT()
   const { locale } = useLocale()
@@ -230,6 +239,11 @@ export function HorseProfileForm({
           ) : (
             <RouteFormActions
               isSubmitting={isPending}
+              // isDirty can stay true after a mount-time sync; require an edited field.
+              dirty={
+                form.formState.isDirty &&
+                Object.keys(form.formState.dirtyFields).length > 0
+              }
               disabled={disabled}
               onReset={() => {
                 if (pending.current || disabled) return
@@ -237,7 +251,6 @@ export function HorseProfileForm({
                 uploaded.current = undefined
                 setError(undefined)
               }}
-              resetLabel={t('horseForm.reset')}
               resetConfirmation={
                 form.formState.isDirty
                   ? {
@@ -246,7 +259,6 @@ export function HorseProfileForm({
                         mode === 'create'
                           ? t('horseForm.clearNew')
                           : t('horseForm.restoreEdit'),
-                      confirmLabel: t('horseForm.discardAction'),
                     }
                   : undefined
               }
@@ -286,6 +298,36 @@ export function HorseProfileForm({
         additionalBreeds={additionalBreeds}
         onAddBreed={(breed) => setAddedBreeds((current) => [...current, breed])}
         disabled={isPending || disabled || Boolean(savedId)}
+        leadingField={
+          stableChoice && (
+            <Field>
+              <FieldLabel htmlFor={`${formId}-stable`}>
+                {t('horseForm.stable')}
+              </FieldLabel>
+              <Select
+                id={`${formId}-stable`}
+                value={stableChoice.value ?? ''}
+                disabled={isPending || disabled || Boolean(savedId)}
+                onChange={(event) => {
+                  // Saved contacts belong to one directory; a new stable has its own.
+                  form.setValue('vetProviderId', undefined)
+                  form.setValue('farrierProviderId', undefined)
+                  stableChoice.onChange(event.target.value || undefined)
+                }}
+              >
+                <option value="">{t('horseForm.noStable')}</option>
+                {stableChoice.stables.map((stable) => (
+                  <option key={stable._id} value={stable._id}>
+                    {stable.name}
+                  </option>
+                ))}
+              </Select>
+              {stableChoice.value && (
+                <FieldDescription>{t('horseForm.stableHelp')}</FieldDescription>
+              )}
+            </Field>
+          )
+        }
       />
     </RouteFormCard>
   )

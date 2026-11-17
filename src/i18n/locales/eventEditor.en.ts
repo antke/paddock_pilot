@@ -48,11 +48,10 @@ export const eventEditor = {
   openTraining: 'Open training session',
   openingTraining: 'Opening session…',
   openingEvent: 'Opening event…',
-  resetEvent: 'Reset event changes?',
-  resetTraining: 'Reset training session changes?',
+  resetEvent: 'Discard event changes?',
+  resetTraining: 'Discard training session changes?',
   resetHelp:
     'Your unsaved entries will be replaced with the values from when you opened this form.',
-  reset: 'Reset changes',
   createEvent: 'Create event',
   updateEvent: 'Update event',
   createTraining: 'Create training session',

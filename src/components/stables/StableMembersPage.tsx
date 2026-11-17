@@ -1,11 +1,12 @@
 import { accountDisplayName } from 'shared/users/displayName'
+import { ContactLink } from '#/components/ui/contact-link'
 import { useT } from '#/i18n/LocaleProvider'
 import { useEffect, useRef, useState } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 import type { FunctionReturnType } from 'convex/server'
 
 import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
-import { DashboardLayoutGrid } from '#/components/dashboard/DashboardLayoutGrid'
+import { DashboardLayoutStack } from '#/components/dashboard/DashboardLayoutGrid'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import {
@@ -31,6 +32,8 @@ type StableMembersPageProps = {
   embedded?: boolean
   /** Owner-only membership controls; only supplied when the viewer owns the stable. */
   management?: ReactNode
+  /** Member-only exit; supplied by the route so previews need no backend. */
+  leaveAction?: ReactNode
   renderDetailsForm?: (
     props: ComponentProps<typeof StableMemberDetailsForm>,
   ) => ReactNode
@@ -43,6 +46,7 @@ export function StableMembersPage({
   myDetails,
   embedded = false,
   management,
+  leaveAction,
   renderDetailsForm = (props) => <StableMemberDetailsForm {...props} />,
 }: StableMembersPageProps) {
   const t = useT()
@@ -72,7 +76,7 @@ export function StableMembersPage({
       {access.role === 'owner' && management ? (
         management
       ) : (
-        <DashboardLayoutGrid variant="sidebar">
+        <DashboardLayoutStack>
           <DashboardSectionCard
             title={t('stables.directory')}
             contentGap="compact"
@@ -102,11 +106,8 @@ export function StableMembersPage({
             title={
               myDetails ? t('stables.yourYardProfile') : t('stables.yourRole')
             }
-            description={
-              myDetails
-                ? t('stables.profileCurrentHelp')
-                : t('stables.ownerHelp')
-            }
+            description={myDetails ? undefined : t('stables.ownerHelp')}
+            footer={!isEditingDetails ? leaveAction : undefined}
             edit={
               myDetails && !isEditingDetails ? (
                 <EditActionButton
@@ -136,7 +137,13 @@ export function StableMembersPage({
                   />
                   <DetailSummaryField
                     label={t('stables.phone')}
-                    value={myDetails.phone || t('stables.notAdded')}
+                    value={
+                      myDetails.phone ? (
+                        <ContactLink kind="phone" value={myDetails.phone} />
+                      ) : (
+                        t('stables.notAdded')
+                      )
+                    }
                   />
                   <DetailSummaryField
                     label={t('stables.emergencyContact')}
@@ -146,7 +153,7 @@ export function StableMembersPage({
               )
             ) : null}
           </DashboardSectionCard>
-        </DashboardLayoutGrid>
+        </DashboardLayoutStack>
       )}
     </>
   )

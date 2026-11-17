@@ -16,7 +16,7 @@ import { api } from 'convex/_generated/api'
 import { AccountProfileForm } from './AccountProfileForm'
 import { FirstHorseStep } from './FirstHorseStep'
 import { InviteTeamStep } from './InviteTeamStep'
-import { OnboardingLaterNote, OnboardingLayout } from './OnboardingLayout'
+import { OnboardingLayout } from './OnboardingLayout'
 import { OnboardingReviewStep } from './OnboardingReviewStep'
 import type { OnboardingStep } from './OnboardingStepper'
 import {
@@ -375,8 +375,7 @@ export function StableOnboardingView({
       role === 'owner'
         ? t('onboarding.setUpStable', { name: stable.name })
         : t('onboarding.welcomeStable', { name: stable.name }),
-    pageDescription:
-      role === 'owner' ? t('onboarding.ownerHelp') : t('onboarding.memberHelp'),
+    pageDescription: role === 'owner' ? undefined : t('onboarding.memberHelp'),
     steps,
     onStepSelect: selectReviewStep,
     onBack: reviewStep
@@ -479,10 +478,6 @@ export function StableOnboardingView({
         description={t('onboarding.memberHelpDetails')}
       >
         <div className="grid gap-5">
-          <OnboardingLaterNote>
-            {t('onboarding.emergencyLater')}
-          </OnboardingLaterNote>
-
           <PendingMember
             Form={Member}
             member={member}

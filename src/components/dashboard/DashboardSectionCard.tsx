@@ -36,7 +36,8 @@ type DashboardSectionCardProps = Omit<
     | 'headingClassName'
     | 'titleClassName'
   > & {
-    surface?: 'flat' | 'panel'
+    /** `canvas`: the page's single list, open on the page canvas without a card. */
+    surface?: 'canvas' | 'flat' | 'panel'
     children?: ReactNode
     contentClassName?: string
     contentGap?: DashboardSectionCardContentGap
@@ -144,8 +145,9 @@ export function DashboardSectionCard({
     <Card
       data-slot="dashboard-section-card"
       className={cn(
-        surface === 'flat' &&
+        surface !== 'panel' &&
           'rounded-none border-0 bg-transparent py-0 shadow-none [&>[data-slot=card-header]]:px-0 [&>[data-slot=card-content]]:px-0 [&>[data-slot=card-footer]]:px-0',
+        surface === 'canvas' && 'app-canvas-list',
         width === 'full' && 'w-full',
         className,
       )}
@@ -217,7 +219,8 @@ export function DashboardSubsection({
   title,
   titleClassName,
   titleSize = 'lg',
-  titleWeight,
+  // Groups inside a panel share the nested heading: sans 18px semibold, ink.
+  titleWeight = 'semibold',
   ...props
 }: DashboardSubsectionProps) {
   const content = contentClassName ? (
@@ -248,7 +251,7 @@ export function DashboardSubsection({
         descriptionSize={descriptionSize}
         headingClassName={headingClassName}
         title={title}
-        titleClassName={titleClassName}
+        titleClassName={cn('text-foreground', titleClassName)}
         titleSize={titleSize}
         titleWeight={titleWeight}
       />

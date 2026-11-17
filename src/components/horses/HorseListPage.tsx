@@ -3,10 +3,9 @@ import { useNavigate } from '@tanstack/react-router'
 import { useTaskOriginState } from '#/components/layout/mobileTaskNavigation'
 import { FloatingCreateShortcut } from '#/components/layout/floatingActionsContext'
 import { useT } from '#/i18n/LocaleProvider'
-import { DashboardSection } from '#/components/dashboard/DashboardSection'
+import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
-import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { ButtonLink } from '#/components/ui/button'
 import { HorseList } from './HorseList'
 import type { HorseListHorse } from './HorseList'
@@ -34,6 +33,16 @@ export function HorseListPage({
         description={t('horseList.stableCount', { count: horses.length })}
         actions={
           <>
+            {/* Quiet text link before Add, like a dashboard's See all link. */}
+            <ButtonLink
+              to="/stables/$stableId/horses/deleted"
+              params={{ stableId }}
+              variant="ghost"
+              size="sm"
+              className="min-h-10 border-0 px-0 hover:bg-transparent hover:text-primary active:bg-transparent dark:hover:bg-transparent"
+            >
+              {t('horseList.deleted')}
+            </ButtonLink>
             <ButtonLink
               to="/stables/$stableId/horses/create"
               params={{ stableId }}
@@ -57,22 +66,13 @@ export function HorseListPage({
         }
       />
 
-      <DashboardSection aria-label={t('horseList.list')}>
-        <HorseList horses={horses} stableId={stableId} />
-      </DashboardSection>
-
-      <DashboardActions
-        align="end"
-        className="border-t border-border-subtle pt-3"
+      <DashboardSectionCard
+        surface="canvas"
+        role="region"
+        aria-label={t('horseList.list')}
       >
-        <ButtonLink
-          to="/stables/$stableId/horses/deleted"
-          params={{ stableId }}
-          variant="subtle"
-        >
-          {t('horseList.deleted')}
-        </ButtonLink>
-      </DashboardActions>
+        <HorseList horses={horses} stableId={stableId} />
+      </DashboardSectionCard>
     </DashboardPage>
   )
 }

@@ -43,6 +43,11 @@ function RouteComponent() {
       events={events}
       canManageHorse={permissions?.canManageHorse ?? false}
       canAddRecords={permissions?.canAddRecords ?? false}
+      sharedViewStableName={
+        permissions?.isOwner || permissions?.carerRole
+          ? permissions.stable?.name
+          : undefined
+      }
     >
       <Outlet />
     </HorseDetail>

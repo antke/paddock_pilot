@@ -373,12 +373,12 @@ it('uses distinct real route components when navigating Home → Horses → Home
   expect(screen.getByRole('heading', { name: 'Horse 11' })).toBeTruthy()
   expect(screen.queryByRole('link', { name: 'View all horses' })).toBeNull()
   expect(
-    screen.getByRole('link', { name: 'Add training log' }).getAttribute('href'),
+    screen
+      .getByRole('link', { name: 'Add training session' })
+      .getAttribute('href'),
   ).toContain('training=true')
   expect(
-    screen
-      .getByRole('link', { name: 'View training log' })
-      .getAttribute('href'),
+    screen.getByRole('link', { name: 'All training' }).getAttribute('href'),
   ).toBe('/training')
   expect(
     screen
@@ -426,16 +426,18 @@ it.each([false, true])(
     await open()
     await screen.findByRole('heading', { level: 1, name: 'Home' })
     expect(
-      screen.getByRole('link', { name: 'Add a horse' }).getAttribute('href'),
+      screen.getByRole('link', { name: 'Add horse' }).getAttribute('href'),
     ).toBe('/horses/create')
     expect(screen.queryByText('Care centre')).toBeNull()
     expect(screen.getByText('Next 7 days')).toBeTruthy()
-    expect(screen.queryByRole('link', { name: 'Add training log' })).toBeNull()
+    expect(
+      screen.queryByRole('link', { name: 'Add training session' }),
+    ).toBeNull()
     if (mobile) {
       fireEvent.click(screen.getByRole('button', { name: 'Add or go to' }))
       expect(
         (
-          await screen.findByRole('menuitem', { name: 'Add a horse' })
+          await screen.findByRole('menuitem', { name: 'Add horse' })
         ).getAttribute('href'),
       ).toBe('/horses/create')
       expect(
@@ -491,15 +493,16 @@ it('hides creation actions for a workspace containing only read-only shared hors
   ]
   await open()
   await screen.findByRole('heading', { level: 1, name: 'Home' })
-  expect(screen.queryByRole('link', { name: 'Add training log' })).toBeNull()
+  expect(
+    screen.queryByRole('link', { name: 'Add training session' }),
+  ).toBeNull()
   expect(screen.queryByRole('link', { name: 'Add event' })).toBeNull()
   expect(screen.getByRole('heading', { name: 'Shared horse' })).toBeTruthy()
 })
 
 it('opens the combined training route with one creation action beside the calendar controls', async () => {
   await open('/training')
-  await screen.findByRole('heading', { level: 1, name: 'Training log' })
-  expect(screen.queryByRole('link', { name: 'Add training log' })).toBeNull()
+  await screen.findByRole('heading', { level: 1, name: 'Training' })
   expect(
     screen.getAllByRole('link', { name: 'Add training session' }),
   ).toHaveLength(1)
@@ -516,26 +519,23 @@ it('starts mobile training with its title and a single bottom recording action',
     removeEventListener: vi.fn(),
   }))
   await open('/training')
-  await screen.findByRole('heading', { level: 1, name: 'Training log' })
+  await screen.findByRole('heading', { level: 1, name: 'Training' })
   expect(
     screen.queryByText(
       'Plan sessions, record completed work, and review each horse’s training.',
     ),
   ).toBeNull()
   // The phone bar replaces the title-row action on the daily Training page.
-  expect(
-    screen.queryByRole('link', { name: 'Add training session' }),
-  ).toBeNull()
-  const actions = screen.getAllByRole('link', { name: 'Add training log' })
+  const actions = screen.getAllByRole('link', { name: 'Add training session' })
   expect(actions).toHaveLength(1)
   expect(actions[0].closest('[data-slot="mobile-action-bar"]')).toBeTruthy()
 })
 it('offers first-horse creation on a directly opened empty training log', async () => {
   state.queries['horses:listMine'] = []
   await open('/training')
-  await screen.findByRole('heading', { level: 1, name: 'Training log' })
+  await screen.findByRole('heading', { level: 1, name: 'Training' })
   expect(
-    screen.getByRole('link', { name: 'Add a horse' }).getAttribute('href'),
+    screen.getByRole('link', { name: 'Add horse' }).getAttribute('href'),
   ).toBe('/horses/create')
   expect(
     screen.queryByRole('link', { name: 'Add training session' }),
@@ -550,8 +550,7 @@ it('keeps training visible but removes recording controls for a viewer', async (
     },
   ]
   await open('/training')
-  await screen.findByRole('heading', { level: 1, name: 'Training log' })
-  expect(screen.queryByRole('link', { name: 'Add training log' })).toBeNull()
+  await screen.findByRole('heading', { level: 1, name: 'Training' })
   expect(
     screen.queryByRole('link', { name: 'Add training session' }),
   ).toBeNull()
@@ -607,15 +606,18 @@ it('uses one mobile creation menu and keeps the page title available to screen r
   expect(heading.classList.contains('sr-only')).toBe(false)
   expect(screen.queryByText('9 October 2026')).toBeNull()
   expect(screen.getByRole('button', { name: 'Add or go to' })).toBeTruthy()
-  expect(screen.queryByRole('link', { name: 'Add training log' })).toBeNull()
-  expect(screen.queryByRole('link', { name: 'Add event' })).toBeNull()
-  expect(screen.queryByRole('link', { name: 'Add a horse' })).toBeNull()
+  // Each section keeps its title-row Add; the menu repeats them for the thumb.
+  expect(
+    screen.getByRole('link', { name: 'Add training session' }),
+  ).toBeTruthy()
+  expect(screen.getByRole('link', { name: 'Add event' })).toBeTruthy()
+  expect(screen.getByRole('link', { name: 'Add horse' })).toBeTruthy()
   expect(
     screen.getByRole('link', { name: 'All horses' }).getAttribute('href'),
   ).toBe('/horses')
   fireEvent.click(screen.getByRole('button', { name: 'Add or go to' }))
   expect(
-    (await screen.findByRole('menuitem', { name: 'Add a horse' })).getAttribute(
+    (await screen.findByRole('menuitem', { name: 'Add horse' })).getAttribute(
       'href',
     ),
   ).toBe('/horses/create')
@@ -642,7 +644,7 @@ it('lets read-only horse viewers add their own horse without offering record cre
   await screen.findByRole('heading', { level: 1, name: 'Home' })
   fireEvent.click(screen.getByRole('button', { name: 'Add or go to' }))
   expect(
-    (await screen.findByRole('menuitem', { name: 'Add a horse' })).getAttribute(
+    (await screen.findByRole('menuitem', { name: 'Add horse' })).getAttribute(
       'href',
     ),
   ).toBe('/horses/create')

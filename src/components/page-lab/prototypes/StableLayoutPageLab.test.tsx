@@ -165,7 +165,6 @@ it('groups all stable destinations in one navigation and keeps section links add
 it('keeps special list/create paths as their actual terminal pages', async () => {
   await show()
   for (const [path, label] of [
-    ['', 'Overview'],
     ['/horses/create', 'Add horse'],
     ['/horses/deleted', 'Deleted horses'],
     ['/settings', 'Settings'],
@@ -175,6 +174,13 @@ it('keeps special list/create paths as their actual terminal pages', async () =>
     })
     await waitFor(() => expect(current().textContent).toBe(label))
   }
+  // The overview's trail would only restate its title, so it has none.
+  fireEvent.change(screen.getByLabelText('Sample page'), {
+    target: { value: '' },
+  })
+  await waitFor(() =>
+    expect(screen.queryByRole('navigation', { name: 'breadcrumb' })).toBeNull(),
+  )
 })
 it('does not mount the isolated router outside development sample access', () => {
   access.enabled = false

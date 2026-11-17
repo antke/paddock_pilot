@@ -6,6 +6,7 @@ import { Select } from '#/components/ui/select'
 import { useDevAuthBypassEnabled } from '#/lib/devAuthBypass'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardLayoutStack } from '#/components/dashboard/DashboardLayoutGrid'
+import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { EventDetail } from '#/components/events/EventDetail'
 import type { DashboardLabData } from '#/components/dashboard-lab/dashboardLabTypes'
 import {
@@ -158,28 +159,31 @@ export function EventDetailPageLab({ data }: EventDetailPageLabProps) {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <EventDetail
-        stableId={data.stable._id}
-        event={event}
-        createdByName={fixtureMode ? 'Alexandra Nowak-Kowalska' : undefined}
-        headerActions={
-          fixtureMode && trainingEntry ? (
-            <TrainingCompletionControlView
-              entry={{
-                ...trainingEntry,
-                status: completed ? 'completed' : 'planned',
-              }}
-              labelled
-              setStatus={async () => {
-                setCompleted((value) => !value)
-              }}
-            />
-          ) : undefined
-        }
-        horses={horses}
-        canManageEvent={!fixtureMode || sample !== 'minimal'}
-        showServiceDetails={false}
-      />
+      {/* Same narrow column as the event and training detail routes. */}
+      <DashboardPage width="narrow">
+        <EventDetail
+          stableId={data.stable._id}
+          event={event}
+          createdByName={fixtureMode ? 'Alexandra Nowak-Kowalska' : undefined}
+          completion={
+            fixtureMode && trainingEntry ? (
+              <TrainingCompletionControlView
+                entry={{
+                  ...trainingEntry,
+                  status: completed ? 'completed' : 'planned',
+                }}
+                labelled
+                setStatus={async () => {
+                  setCompleted((value) => !value)
+                }}
+              />
+            ) : undefined
+          }
+          horses={horses}
+          canManageEvent={!fixtureMode || sample !== 'minimal'}
+          showServiceDetails={false}
+        />
+      </DashboardPage>
     </DashboardLayoutStack>
   )
 }

@@ -125,3 +125,65 @@ export async function horseEvent(
       : {}),
   }
 }
+
+/**
+ * After a transfer, the horse leaves personal events it shared with the previous
+ * owner's other horses: from today on, keeping the sessions that already happened.
+ * Single-horse appointments are the horse's own history and go with it.
+ */
+export async function leaveSharedPersonalEvents(
+  ctx: MutationCtx,
+  horseId: Id<'horses'>,
+  today: string,
+) {
+  const now = Date.now()
+  for (const row of await ctx.db
+    .query('eventsHorses')
+    .withIndex('by_horse_id', (q) => q.eq('horseId', horseId))
+    .collect()) {
+    if (
+      row.participationEndsAt ||
+      (row.status !== undefined && row.status !== 'confirmed')
+    )
+      continue
+    const event = await ctx.db.get(row.eventId)
+    if (
+      !event ||
+      event.stableId ||
+      !event.horseIds.some((id) => id !== horseId)
+    )
+      continue
+    const started = event.date < today
+    if (!started || !event.recurrence) {
+      if (started) continue // a past one-off stays as shared history
+      await ctx.db.patch(row._id, {
+        status: 'withdrawn',
+        withdrawnAt: now,
+        updatedAt: now,
+      })
+    } else {
+      const yesterday = new Date(Date.parse(today + 'T00:00:00Z') - 86400000)
+        .toISOString()
+        .slice(0, 10)
+      await ctx.db.patch(row._id, {
+        history: {
+          title: event.title,
+          type: event.type,
+          date: event.date,
+          time: event.time,
+          endDate: event.endDate,
+          recurrence: event.recurrence,
+          training: event.training,
+          status: event.status,
+          providerName: event.providerName,
+        },
+        participationEndsAt: yesterday,
+        withdrawnAt: now,
+        updatedAt: now,
+      })
+    }
+    await ctx.db.patch(event._id, {
+      horseIds: event.horseIds.filter((id) => id !== horseId),
+    })
+  }
+}

@@ -3,7 +3,8 @@ import { Badge } from '#/components/ui/badge'
 import { attentionLevelBadgeVariant } from '#/components/dashboard/semanticBadgeVariants'
 import { CheckIcon, ClockIcon, WarningIcon, XIcon } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
-import type { ComponentProps } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
+import { cn } from '#/lib/utils'
 import type {
   CareReminderPriority,
   CareReminderStatus,
@@ -63,5 +64,34 @@ export function CareReminderStatusBadge({
       <StatusIcon aria-hidden="true" className="size-3" weight="bold" />
       {getCareReminderStateLabel({ status, overdue }, locale)}
     </Badge>
+  )
+}
+
+/** Due line that carries the overdue state itself, so rows need no separate Overdue badge. */
+export function CareReminderDueText({
+  dueDate,
+  overdue,
+  className,
+  children,
+}: {
+  dueDate: string
+  overdue: boolean
+  className?: string
+  children: ReactNode
+}) {
+  return (
+    <time
+      dateTime={dueDate}
+      className={cn(
+        overdue &&
+          'inline-flex items-center gap-1 font-semibold text-destructive',
+        className,
+      )}
+    >
+      {overdue && (
+        <WarningIcon aria-hidden="true" className="size-3.5" weight="bold" />
+      )}
+      {children}
+    </time>
   )
 }

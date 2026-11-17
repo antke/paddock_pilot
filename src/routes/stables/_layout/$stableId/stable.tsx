@@ -18,6 +18,7 @@ import {
 } from '#/components/layout/RouteStatusAlert'
 import { StableProvidersCard } from '#/components/stables/StableProvidersCard'
 import { StableMembersPage } from '#/components/stables/StableMembersPage'
+import { LeaveStableButton } from '#/components/stables/LeaveStableButton'
 import { StableMembersManagement } from '#/components/stables/StableMembersSettingsCard'
 import {
   StableDirectoryHeader,
@@ -88,6 +89,7 @@ function StableDirectory() {
               <DetailDisplayField
                 label={t('stables.location')}
                 value={stable.location}
+                span="sm2"
               />
               {(
                 [
@@ -186,6 +188,11 @@ function People({
       management={
         access.role === 'owner' ? (
           <StableMembersManagement stableId={stable._id} />
+        ) : undefined
+      }
+      leaveAction={
+        access.role === 'member' ? (
+          <LeaveStableButton stableId={stable._id} stableName={stable.name} />
         ) : undefined
       }
       embedded

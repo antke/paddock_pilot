@@ -67,7 +67,7 @@ describe('Route form reset interruption', () => {
         )
       }
       render(<Sample />)
-      fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
       fireEvent.click(
         await screen.findByRole('button', { name: 'Confirm discard' }),
       )
@@ -120,7 +120,7 @@ describe('Route form reset interruption', () => {
         )
       }
       render(<Sample />)
-      fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
       fireEvent.click(
         await screen.findByRole('button', { name: 'Confirm discard' }),
       )
@@ -150,7 +150,7 @@ describe('Route form reset interruption', () => {
         />
       )
       const { rerender } = render(view(false))
-      fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
       await screen.findByRole('alertdialog')
       rerender(view(true))
       const confirm = screen.getByRole('button', { name: 'Confirm discard' })

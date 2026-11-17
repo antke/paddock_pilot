@@ -90,6 +90,10 @@ type DashboardNavigationMenuButtonProps = ComponentProps<
 
 export const dashboardNavigationListClassName = 'flex-wrap justify-start gap-1'
 
+/** Section navigation inside a page; matches the line tabs. */
+const sectionNavigationClassName =
+  'h-11 shrink-0 rounded-b-none border-0 border-b-2 border-transparent bg-transparent px-3 text-base font-semibold whitespace-nowrap leading-tight text-muted-foreground hover:bg-transparent hover:text-foreground aria-expanded:bg-transparent data-active:border-selection data-active:bg-transparent data-active:text-foreground'
+
 const dashboardNavigationMenuContentWidthClassNames = {
   auto: '',
   sm: 'w-52',
@@ -178,7 +182,7 @@ export function DashboardNavigation({
         className={cn(
           dashboardNavigationListClassName,
           overflow === 'scroll' &&
-            'max-w-full flex-nowrap justify-start overflow-x-auto overscroll-x-contain pb-3 [scrollbar-width:thin]',
+            'max-w-full flex-nowrap justify-start overflow-x-auto overscroll-x-contain [scrollbar-width:none]',
           alignAlways && 'justify-end',
           alignResponsive && 'lg:justify-end',
           listClassName,
@@ -214,7 +218,7 @@ export function DashboardSectionTabs<TTabId extends string>({
             aria-pressed={activeId === item.id}
             aria-controls={contentId}
             id={controlIdPrefix ? `${controlIdPrefix}-${item.id}` : undefined}
-            className="h-11 shrink-0 px-3.5 py-2.5 text-base font-semibold whitespace-nowrap leading-tight sm:px-5"
+            className={sectionNavigationClassName}
             onClick={() => onSelect(item.id)}
           >
             {item.label}
@@ -238,8 +242,7 @@ export function DashboardNavigationLinkItem({
         data-active={active || undefined}
         aria-current={active ? 'page' : undefined}
         className={cn(
-          variant === 'section' &&
-            'h-10 shrink-0 px-3.5 text-base font-semibold whitespace-nowrap leading-tight',
+          variant === 'section' && sectionNavigationClassName,
           className,
         )}
         {...props}
@@ -263,8 +266,7 @@ export function DashboardNavigationMenuGroup({
       <NavigationMenuTrigger
         data-active={active || undefined}
         className={cn(
-          variant === 'section' &&
-            'h-10 shrink-0 px-3.5 text-base font-semibold whitespace-nowrap leading-tight',
+          variant === 'section' && sectionNavigationClassName,
           triggerClassName,
         )}
       >

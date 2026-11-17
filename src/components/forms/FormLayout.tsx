@@ -1,6 +1,6 @@
 import { MotionDisclosure } from '#/components/motion/MotionDisclosure'
-import { useT } from '#/i18n/LocaleProvider'
-import { CaretDownIcon } from '@phosphor-icons/react'
+import { CheckIcon } from '@phosphor-icons/react'
+import { DisclosureChevron } from '#/components/ui/disclosure-chevron'
 import { useEffect, useId, useRef, useState } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 
@@ -14,7 +14,6 @@ type InlineFormGap = 'standard' | 'compact' | 'tight'
 type InlineFormLayout = 'stack' | 'invite'
 
 type InlineFormProps = ComponentProps<'form'> & {
-  showRequiredHint?: boolean
   gap?: InlineFormGap
   layout?: InlineFormLayout
 }
@@ -46,6 +45,8 @@ type FormSectionProps = Omit<
   optionalLabel?: ReactNode
   summary?: ReactNode
   title: ReactNode
+  /** Keeps the heading for assistive tech only, when it restates the page title. */
+  titleHidden?: boolean
   validationAttempt?: number
 }
 
@@ -61,7 +62,6 @@ export function InlineForm({
   className,
   gap = 'standard',
   layout = 'stack',
-  showRequiredHint = true,
   ...props
 }: InlineFormProps) {
   return (
@@ -76,7 +76,6 @@ export function InlineForm({
       )}
       {...props}
     >
-      {showRequiredHint && <RequiredFieldsHint />}
       {children}
     </form>
   )
@@ -157,6 +156,23 @@ export function FormStepHeader({
   )
 }
 
+/** The quiet Optional text beside a title; never a filled pill. */
+export function FormOptionalTag({
+  className,
+  ...props
+}: ComponentProps<'span'>) {
+  return (
+    <span
+      data-slot="form-optional-tag"
+      className={cn(
+        'font-sans text-sm font-normal tracking-normal text-muted-foreground',
+        className,
+      )}
+      {...props}
+    />
+  )
+}
+
 export function FormSection({
   children,
   className,
@@ -168,6 +184,7 @@ export function FormSection({
   optionalLabel,
   summary,
   title,
+  titleHidden = false,
   validationAttempt = 0,
   ...props
 }: FormSectionProps) {
@@ -231,6 +248,7 @@ export function FormSection({
       data-slot="form-section"
       data-open={open || undefined}
       className={cn(
+        // Each section is its own card, so open fields read as one group.
         'app-row min-w-0 bg-card transition-colors',
         open && 'border-primary/25',
         invalid && 'border-destructive/45',
@@ -240,12 +258,17 @@ export function FormSection({
     >
       <Header
         type={collapsible ? 'button' : undefined}
-        className={cn(
-          'flex min-w-0 w-full items-center gap-3 rounded-t-[calc(var(--radius-row)-1px)] px-4 py-4 text-left sm:px-5',
-          !open && 'rounded-b-[calc(var(--radius-row)-1px)]',
-          collapsible &&
-            'app-choice-feedback app-control-focus cursor-pointer hover:bg-primary/5 focus-visible:outline-none',
-        )}
+        className={
+          // Layout utilities such as w-full would override sr-only's 1px box.
+          titleHidden && !collapsible
+            ? 'sr-only'
+            : cn(
+                'flex min-w-0 w-full items-center gap-3 rounded-t-[calc(var(--radius-row)-1px)] px-4 py-4 text-left sm:px-5',
+                !open && 'rounded-b-[calc(var(--radius-row)-1px)]',
+                collapsible &&
+                  'app-choice-feedback app-control-focus cursor-pointer hover:bg-primary/5 focus-visible:outline-none',
+              )
+        }
         aria-controls={collapsible ? contentId : undefined}
         aria-expanded={collapsible ? open : undefined}
         onClick={collapsible ? () => setOpen((current) => !current) : undefined}
@@ -263,8 +286,10 @@ export function FormSection({
           </span>
         )}
 
-        <span className="grid min-w-0 flex-1 gap-1">
-          <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        {/* One line in every state: a closed section's summary trails its title instead of
+            adding a second line, so opening a section never resizes its header. */}
+        <span className="flex min-w-0 flex-1 items-baseline gap-x-3">
+          <span className="flex max-w-full shrink-0 flex-wrap items-baseline gap-x-2 gap-y-1">
             <span
               role={collapsible ? undefined : 'heading'}
               aria-level={collapsible ? undefined : 3}
@@ -276,32 +301,32 @@ export function FormSection({
               {title}
             </span>{' '}
             {optionalLabel && (
-              <span className="text-sm font-normal text-muted-foreground">
-                {optionalLabel}
-              </span>
+              <FormOptionalTag>{optionalLabel}</FormOptionalTag>
             )}
           </span>{' '}
-          {(!open && summary ? summary : description) && (
-            <span className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
-              {!open && summary ? summary : description}
+          {/* Open sections let their fields speak; closed ones say what is inside. */}
+          {!open && (summary || description) && (
+            <span className="min-w-0 flex-1 basis-16 truncate text-sm text-muted-foreground">
+              {summary || description}
             </span>
           )}
         </span>
 
-        {collapsible && (
-          <CaretDownIcon
-            className={cn(
-              'size-4 shrink-0 text-muted-foreground transition-transform duration-200 motion-reduce:transition-none',
-              open && 'rotate-180',
-            )}
-            aria-hidden="true"
-          />
-        )}
+        {collapsible && <DisclosureChevron open={open} />}
       </Header>
 
       {/* Normal block flow avoids WebKit intrinsic sizing bugs in nested grid disclosures. */}
       <MotionDisclosure id={contentId} open={open}>
-        <div className="grid min-w-0 grid-cols-1 gap-5 rounded-b-[calc(var(--radius-row)-1px)] border-t border-border-subtle bg-card px-4 py-5 sm:px-5 sm:py-6">
+        <div
+          className={cn(
+            'grid min-w-0 grid-cols-1 gap-5 rounded-b-[calc(var(--radius-row)-1px)] bg-card px-4 py-5 sm:px-5 sm:py-6',
+            // A visually hidden heading leaves no header row to rule off, and this fill then
+            // reaches the section's top corners: round them too, or it paints over the border.
+            titleHidden && !collapsible
+              ? 'rounded-t-[calc(var(--radius-row)-1px)]'
+              : 'border-t border-border-subtle',
+          )}
+        >
           {children}
         </div>
       </MotionDisclosure>
@@ -346,14 +371,25 @@ export function SelectableCardLabel({
   )
 }
 
-export function RequiredFieldsHint() {
-  const t = useT()
+/** Visible tick for multi-select tiles and rows, so selection never relies on fill alone. */
+export function SelectionCheckMark({
+  checked,
+  className,
+}: {
+  checked: boolean
+  className?: string
+}) {
   return (
-    <p
-      data-slot="required-fields-hint"
-      className="col-span-full text-sm text-muted-foreground"
+    <span
+      aria-hidden="true"
+      data-slot="selection-check-mark"
+      data-checked={checked || undefined}
+      className={cn(
+        'grid size-5 shrink-0 place-items-center rounded-control border border-input/80 bg-surface-elevated text-transparent transition-colors data-checked:border-selection data-checked:bg-selection data-checked:text-selection-foreground',
+        className,
+      )}
     >
-      {t('common.requiredFields')}
-    </p>
+      <CheckIcon weight="bold" className="size-3" />
+    </span>
   )
 }

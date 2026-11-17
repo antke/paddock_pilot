@@ -301,7 +301,7 @@ it.each([false, true])(
       const files = Object.assign([photo], {
         item: (index: number) => (index === 0 ? photo : null),
       })
-      fireEvent.change(screen.getByLabelText('Profile image (optional)'), {
+      fireEvent.change(screen.getByLabelText('Profile image'), {
         target: { files },
       })
     }
@@ -331,7 +331,7 @@ it.each([false, true])(
     fireEvent.click(
       await screen.findByRole('option', { name: 'Sample Rider (me)' }),
     )
-    fireEvent.change(screen.getByLabelText('Or current age'), {
+    fireEvent.change(screen.getByLabelText('Current age'), {
       target: { value: '8' },
     })
     fireEvent.submit(horseName.closest('form')!)

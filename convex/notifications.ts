@@ -4,7 +4,16 @@ import type { Id } from './_generated/dataModel'
 import type { MutationCtx, QueryCtx } from './_generated/server'
 import { getUserFromIdentity, getInvitationEmails } from './libs/auth'
 import { accessibleHorses, getHorseAccess } from './libs/horsePermissions'
-import { eventReadAccess, sharedEventsForStable } from './libs/eventPermissions'
+import { sharedEventsForStable } from './libs/eventPermissions'
+import { eventDetailAccess } from './activities'
+import { isEventOpen } from '../shared/events/eventOpen'
+import {
+  addDaysToDateKey,
+  earliestTodayDateKey,
+  invitationCutoffDateKey,
+} from './libs/dateKeys'
+import { createEventOccurrences } from '../shared/events/eventOccurrences'
+import { currentSession } from './activityParticipants'
 import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 
 type Item = {
@@ -51,6 +60,26 @@ async function inbox(ctx: QueryCtx | MutationCtx) {
         href: `/horse-invitations/${invite.token}`,
         createdAt: invite.createdAt,
         actionRequired: true,
+      })
+    }
+    const rides = await ctx.db
+      .query('activityParticipants')
+      .withIndex('by_email', (q) => q.eq('email', email))
+      .collect()
+    for (const ride of rides) {
+      if (ride.status !== 'invited' || !(await currentSession(ctx, ride)))
+        continue
+      items.push({
+        key: ride._id,
+        kind: 'activity_invitation',
+        name: ride.title,
+        context: ride.horseName,
+        // Riders answer on Events/Training, where their invitations are listed.
+        href: ride.type === 'training' ? '/training' : '/events',
+        createdAt: ride.createdAt,
+        actionRequired: true,
+        eventDate: ride.date,
+        eventTime: ride.time,
       })
     }
     const stables = await ctx.db
@@ -107,17 +136,29 @@ async function inbox(ctx: QueryCtx | MutationCtx) {
       )
         continue
       const event = await ctx.db.get(row.eventId)
-      if (!event || event.stableId !== horse.stableId) continue
+      if (
+        !event ||
+        event.stableId !== horse.stableId ||
+        !isEventOpen(event, invitationCutoffDateKey())
+      )
+        continue
       items.push({
-        key: row._id,
+        // A re-invitation after decline/withdrawal is a new, unread item.
+        key: row.invitedAt ? `${row._id}:${row.invitedAt}` : row._id,
         kind: 'event_invitation',
         eventHorseId: row._id,
-        eventDate: event.date,
+        eventDate: event.recurrence
+          ? (createEventOccurrences({
+              events: [event],
+              windowStart: earliestTodayDateKey(),
+              windowEnd: addDaysToDateKey(earliestTodayDateKey(), 400),
+            })[0]?.startDate ?? event.date)
+          : event.date,
         eventTime: event.time,
         name: event.title,
         context: getHorseDisplayName(horse),
         href: `/events/${event._id}`,
-        createdAt: row._creationTime,
+        createdAt: row.invitedAt ?? row._creationTime,
         actionRequired: true,
       })
     }
@@ -133,12 +174,21 @@ async function inbox(ctx: QueryCtx | MutationCtx) {
     let href: string | undefined
     if (notice.eventId) {
       const event = await ctx.db.get(notice.eventId)
-      if (!event) continue
-      try {
-        await eventReadAccess(ctx, event)
-      } catch {
+      if (!event) {
+        // A deleted event keeps only the title captured when it was removed.
+        if (!notice.title) continue
+        items.push({
+          key: notice._id,
+          kind: notice.kind,
+          name: notice.title,
+          context: notice.detail,
+          createdAt: notice.createdAt,
+          actionRequired: false,
+        })
         continue
       }
+      // Attendees, riders and organizers follow events without horse access.
+      if ((await eventDetailAccess(ctx, event._id)) === 'missing') continue
       name = event.title
       href = `/events/${event._id}`
       if (event.stableId) {
@@ -179,6 +229,7 @@ async function inbox(ctx: QueryCtx | MutationCtx) {
       key: notice._id,
       kind: notice.kind,
       name,
+      context: notice.detail,
       href,
       createdAt: notice.createdAt,
       actionRequired: false,

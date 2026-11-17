@@ -70,13 +70,15 @@ function ProfilePage() {
   }
 
   return (
-    <DashboardPage>
+    // Capped and left-aligned like route forms, so fields keep a readable width.
+    <DashboardPage width="narrow">
       <DashboardPageHeader title={t('profile.title')} />
 
+      {/* The page title already names this panel. */}
       <DashboardSectionCard
-        title={t('profile.details')}
         description={t('profile.detailsDescription')}
         contentGap="comfortable"
+        data-mobile-flat-section="true"
       >
         <AccountProfileForm
           initialValues={{

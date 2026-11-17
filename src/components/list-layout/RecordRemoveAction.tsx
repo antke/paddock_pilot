@@ -11,6 +11,11 @@ import {
   AlertDialogTrigger,
 } from '#/components/ui/alert-dialog'
 import { Button } from '#/components/ui/button'
+import {
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '#/components/ui/dropdown-menu'
+import { TrashIcon } from '@phosphor-icons/react'
 import { ActionFeedback } from '#/components/ui/action-feedback'
 import { useRef, useState } from 'react'
 import type { RefObject } from 'react'
@@ -29,6 +34,8 @@ type RecordRemoveActionProps = {
   open?: boolean
   onOpenChange?: (open: boolean) => void
   externalTrigger?: RefObject<HTMLButtonElement | null>
+  /** `control` matches a select or input on the same line. */
+  triggerSize?: 'sm' | 'control'
 }
 
 export function RecordRemoveAction({
@@ -44,6 +51,7 @@ export function RecordRemoveAction({
   open: controlledOpen,
   onOpenChange,
   externalTrigger,
+  triggerSize = 'sm',
 }: RecordRemoveActionProps) {
   const t = useT()
 
@@ -101,8 +109,8 @@ export function RecordRemoveAction({
               ref={trigger}
               type="button"
               action="delete"
-              variant="destructive"
-              size="sm"
+              variant="ghost"
+              size={triggerSize}
             />
           }
         >
@@ -148,5 +156,39 @@ export function RecordRemoveAction({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  )
+}
+
+/**
+ * Menu-item trigger for a row whose "…" menu already holds further actions: Remove goes
+ * last, separated. Render it inside the menu and keep a controlled `RecordRemoveAction`
+ * (`open`, `onOpenChange`, `externalTrigger` = the "…" button) outside it, so the one
+ * confirmation dialog survives the menu closing and focus returns to the menu button.
+ */
+export function RecordRemoveMenuItem({
+  disabled,
+  label,
+  ariaLabel,
+  onOpen,
+}: {
+  disabled?: boolean
+  label?: string
+  ariaLabel?: string
+  onOpen: () => void
+}) {
+  const t = useT()
+  return (
+    <>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem
+        variant="destructive"
+        disabled={disabled}
+        aria-label={ariaLabel}
+        onClick={onOpen}
+      >
+        <TrashIcon weight="bold" aria-hidden />
+        {label ?? t('careRecords.remove')}
+      </DropdownMenuItem>
+    </>
   )
 }

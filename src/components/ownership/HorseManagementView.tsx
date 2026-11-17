@@ -283,6 +283,7 @@ export function HorseManagementView({
                       description={m.removeHelp}
                       triggerLabel={c.revoke}
                       triggerAriaLabel={`${c.revoke}: ${name}`}
+                      triggerSize="control"
                       cancelLabel={m.cancel}
                       confirmLabel={c.revoke}
                       disabled={Boolean(accessPending)}

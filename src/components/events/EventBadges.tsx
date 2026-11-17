@@ -4,7 +4,7 @@ import type { Doc } from 'convex/_generated/dataModel'
 import type { ComponentProps } from 'react'
 import type { EventStatus } from 'shared/events/eventSchema'
 
-type EventBadgeProps = Omit<ComponentProps<typeof Badge>, 'children' | 'size'>
+type EventBadgeProps = Omit<ComponentProps<typeof Badge>, 'children'>
 type EventHorseStatus = NonNullable<Doc<'eventsHorses'>['status']>
 
 const eventStatusVariant = {

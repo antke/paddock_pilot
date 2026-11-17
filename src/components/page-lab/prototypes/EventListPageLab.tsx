@@ -53,6 +53,7 @@ export function EventListPageLab({ data }: EventListPageLabProps) {
       <StableEventsPage
         stableId={data.stable._id}
         events={events}
+        horses={data.horses}
         view={view}
         onViewChange={setView}
       />

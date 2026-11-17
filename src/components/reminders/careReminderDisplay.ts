@@ -33,6 +33,10 @@ export function getCareReminderDueLabel(
   const t = localeInstances[locale].t
   const dueState = getCareReminderDueState(reminder, today)
 
+  if (dueState === 'overdue') {
+    return `${t('careLabels.overdue')} · ${formatMediumDateKey(reminder.dueDate, locale)}`
+  }
+
   if (dueState === 'today') return t('careLabels.dueToday')
 
   if (dueState === 'soon') {

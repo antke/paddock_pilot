@@ -31,7 +31,16 @@ import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react'
 
 export type DeletedHorse = StableSettingsData['deletedHorses'][number]
 
-export function DeletedHorsesCard({ horses }: { horses: Array<DeletedHorse> }) {
+type DeletedHorsesSurface = 'canvas' | 'panel'
+
+/** `canvas` is the standalone page, where the page header owns title and help. */
+export function DeletedHorsesCard({
+  horses,
+  surface,
+}: {
+  horses: Array<DeletedHorse>
+  surface?: DeletedHorsesSurface
+}) {
   const t = useT()
 
   const restoreHorse = useMutation(api.horses.restoreHorse)
@@ -39,6 +48,7 @@ export function DeletedHorsesCard({ horses }: { horses: Array<DeletedHorse> }) {
   return (
     <DeletedHorsesView
       horses={horses}
+      surface={surface}
       onRestore={async (horse) => {
         await restoreHorse({ id: horse._id })
         showAppSuccessToast({
@@ -66,10 +76,12 @@ export function DeletedHorsesView({
   horses,
   onRestore,
   onPermanentlyDelete,
+  surface = 'panel',
 }: {
   horses: Array<DeletedHorse>
   onRestore: (horse: DeletedHorse) => Promise<void>
   onPermanentlyDelete: (horse: DeletedHorse) => Promise<void>
+  surface?: DeletedHorsesSurface
 }) {
   const t = useT()
 
@@ -80,8 +92,11 @@ export function DeletedHorsesView({
       role="group"
       aria-label={t('stableSetup.deletedHorses')}
       tabIndex={-1}
-      title={t('stableSetup.deletedHorses')}
-      description={t('stableSetup.deletedHorsesHelp')}
+      surface={surface}
+      {...(surface === 'panel' && {
+        title: t('stableSetup.deletedHorses'),
+        description: t('stableSetup.deletedHorsesHelp'),
+      })}
     >
       <MotionList
         items={horses}

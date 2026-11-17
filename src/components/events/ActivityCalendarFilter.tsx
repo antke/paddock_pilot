@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   includeMyCalendar,
   useCalendarSelection,
@@ -14,9 +14,23 @@ export function useCalendarSourceSelection(
   stableId?: string,
 ) {
   const stables = useQuery(api.stables.list)
-  const { selected, setSelected } = useCalendarSelection(
-    stableId,
+  const saved = useCalendarSelection(
     `paddock:activity-calendars:${page}:${stableId ?? 'mine'}`,
+  )
+  // Inside a stable its calendar shows on its own, unsaved, until a checkbox
+  // changes; that change becomes the saved selection.
+  const [changedIn, setChangedIn] = useState<string>()
+  const selected =
+    stableId && changedIn !== stableId
+      ? includeMyCalendar([stableId])
+      : saved.selected
+  const saveSelection = saved.setSelected
+  const setSelected = useCallback(
+    (next: string[]) => {
+      setChangedIn(stableId)
+      saveSelection(next)
+    },
+    [stableId, saveSelection],
   )
   // Removed memberships must not leave a permanently failing saved selection.
   const stableIds = (stables ?? [])

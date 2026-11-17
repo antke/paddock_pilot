@@ -67,7 +67,7 @@ async function fixture() {
 const event = {
   title: 'Group lesson',
   type: 'training' as const,
-  date: '2026-01-05',
+  date: '2099-01-05',
   time: '10:00',
   training: { activities: ['flatwork' as const], format: 'regular' as const },
 }
@@ -208,6 +208,7 @@ it('adds editor-carer horses directly, excludes viewers, and rejects completed g
   ).toHaveLength(0)
   const id = await f.member.mutation(api.events.add, {
     ...event,
+    date: '2026-01-05', // completed sessions must be in the past
     destination: 'stable',
     stableId: f.stableId,
     horseIds: [f.mine, f.first],
@@ -218,6 +219,7 @@ it('adds editor-carer horses directly, excludes viewers, and rejects completed g
   await expect(
     f.member.mutation(api.events.add, {
       ...event,
+      date: '2026-01-05', // completed sessions must be in the past
       status: 'completed',
       destination: 'stable',
       stableId: f.stableId,
@@ -226,6 +228,7 @@ it('adds editor-carer horses directly, excludes viewers, and rejects completed g
   ).rejects.toThrow('Completed training')
   const completed = await f.admin.mutation(api.events.add, {
     ...event,
+    date: '2026-01-05', // completed sessions must be in the past
     status: 'completed',
     destination: 'stable',
     stableId: f.stableId,

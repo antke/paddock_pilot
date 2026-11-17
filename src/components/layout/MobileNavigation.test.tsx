@@ -14,7 +14,9 @@ import {
   createRouter,
   RouterProvider,
 } from '@tanstack/react-router'
+import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { Dialog, DialogContent, DialogTitle } from '#/components/ui/dialog'
 import { MobileNavigationView } from './MobileNavigation'
 
 beforeEach(() => {
@@ -33,7 +35,19 @@ afterEach(() => {
 async function setup(pathname: string, stableId?: string) {
   const root = createRootRoute({
     component: () => (
-      <MobileNavigationView pathname={pathname} stableId={stableId} />
+      <MobileNavigationView
+        pathname={pathname}
+        stableId={stableId}
+        // Production wraps Menu in the shell drawer's trigger; a bare dialog stands in for it.
+        renderMore={(button) => (
+          <Dialog>
+            <DialogPrimitive.Trigger render={button} />
+            <DialogContent>
+              <DialogTitle>Menu</DialogTitle>
+            </DialogContent>
+          </Dialog>
+        )}
+      />
     ),
   })
   const router = createRouter({
@@ -55,7 +69,7 @@ async function setup(pathname: string, stableId?: string) {
   render(<RouterProvider router={router} />)
   return router
 }
-it('has stable destinations, selected page semantics and a focus-restoring menu sheet', async () => {
+it('has stable destinations, selected page semantics and a focus-restoring menu trigger', async () => {
   await setup('/stables/sample/events', 'sample')
   expect(
     (await screen.findByRole('link', { name: 'Events' })).getAttribute(
@@ -72,9 +86,6 @@ it('has stable destinations, selected page semantics and a focus-restoring menu 
   act(() => more.focus())
   fireEvent.click(more)
   expect(await screen.findByRole('dialog', { name: 'Menu' })).toBeTruthy()
-  expect(screen.getByRole('link', { name: 'Care' }).getAttribute('href')).toBe(
-    '/stables/sample/reminders',
-  )
   fireEvent.click(screen.getByRole('button', { name: 'Close' }))
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   await waitFor(() => expect(document.activeElement).toBe(more))
@@ -98,20 +109,32 @@ it.each(['/', '/horses/sample', '/events', '/training'])(
     expect(
       screen.getByRole('link', { name: 'Training' }).getAttribute('href'),
     ).toBe('/training')
-    expect(home.getAttribute('aria-current')).toBe(
-      path === '/' || path.startsWith('/horses') ? 'page' : null,
-    )
+    expect(home.getAttribute('aria-current')).toBe(path === '/' ? 'page' : null)
+    expect(
+      screen.getByRole('link', { name: 'Horses' }).getAttribute('aria-current'),
+    ).toBe(path.startsWith('/horses') ? 'page' : null)
     expect(document.querySelectorAll('[aria-current="page"]')).toHaveLength(1)
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Open navigation menu' }),
-    )
+  },
+)
+
+it.each([
+  ['/stables/sample/horses', 'sample'],
+  ['/stables/sample/horses/juniper', 'sample'],
+  ['/stables/sample/horses/deleted', 'sample'],
+  ['/horses/contacts', undefined],
+  ['/horses/deleted', undefined],
+])(
+  'selects Horses, not Menu, where Back leads to Horses at %s',
+  async (path, stableId) => {
+    await setup(path, stableId)
+    const horses = await screen.findByRole('link', { name: 'Horses' })
+    expect(horses.getAttribute('href')).toBe('/horses')
+    expect(horses.getAttribute('aria-current')).toBe('page')
+    expect(document.querySelectorAll('[aria-current="page"]')).toHaveLength(1)
     expect(
-      (await screen.findByRole('link', { name: 'Stables' })).getAttribute(
-        'href',
-      ),
-    ).toBe('/stables')
-    expect(
-      screen.getByRole('link', { name: 'My horses' }).getAttribute('href'),
-    ).toBe('/horses')
+      screen
+        .getByRole('button', { name: 'Open navigation menu' })
+        .classList.contains('bg-selection-surface'),
+    ).toBe(false)
   },
 )

@@ -815,7 +815,16 @@ export const eventFields = {
   recurrence: v.optional(eventRecurrenceSetup),
 }
 
-const eventsSchema = defineTable({ ...eventFields })
+const eventsSchema = defineTable({
+  ...eventFields,
+  // Single dates of a series: without horseId the whole date is cancelled,
+  // with horseId only that horse sits it out. Not part of the edit form.
+  occurrenceSkips: v.optional(
+    v.array(
+      v.object({ date: v.string(), horseId: v.optional(v.id('horses')) }),
+    ),
+  ),
+})
   .index('by_stable_id', ['stableId'])
   .index('by_stable_id_date', ['stableId', 'date'])
   .index('by_created_by', ['createdBy'])
@@ -942,6 +951,9 @@ export default defineSchema({
     stableId: v.optional(v.id('stables')),
     // Only a historical stable label; clinical data is resolved at read time.
     stableName: v.optional(v.string()),
+    // Title of a since-deleted event, and a short subject such as a horse name.
+    title: v.optional(v.string()),
+    detail: v.optional(v.string()),
     createdAt: v.number(),
   }).index('by_user', ['userId']),
   ...horseOwnershipTables,

@@ -85,6 +85,8 @@ function HorseRecordsSample({ data }: { data: DashboardLabData }) {
           stableId={data.stable._id}
           horse={horse}
           events={[]}
+          // Production passes the editor's permission; the sample shows the editor view.
+          canManageHorse
           renderReminders={(onCreateActionChange) => (
             <HorseRemindersSample
               horse={horse}
@@ -110,6 +112,7 @@ function HorseRecordsSample({ data }: { data: DashboardLabData }) {
           stableId={data.stable._id}
           horse={horse}
           events={[]}
+          canManageHorse
           renderLogs={(onCreateActionChange) => (
             <NutritionLogsSample
               horse={horse}
@@ -221,6 +224,24 @@ const HorseRemindersSample = memo(function HorseReminderSampleContent({
               current.map((item) =>
                 item._id === record._id
                   ? { ...item, status: 'completed', completedAt: Date.now() }
+                  : item,
+              ),
+            ),
+          )
+        }
+        onEdit={(record, values) =>
+          apply(() =>
+            setRecords((current) =>
+              current.map((item) =>
+                item._id === record._id
+                  ? {
+                      ...item,
+                      title: values.title,
+                      description: values.description,
+                      category: values.category,
+                      dueDate: values.dueDate,
+                      priority: values.priority,
+                    }
                   : item,
               ),
             ),

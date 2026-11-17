@@ -1,9 +1,13 @@
 import { useId } from 'react'
 import { motion } from 'motion/react'
 import { journalMotion, useAppMotion } from '#/components/motion/appMotion'
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 
-import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group'
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+  ToggleGroupItemMark,
+} from '#/components/ui/toggle-group'
 import { cn } from '#/lib/utils'
 
 type ChoiceButtonOption<TValue extends string> = {
@@ -40,6 +44,15 @@ export function ChoiceButtonGroup<TValue extends string>({
   const id = useId()
   const { spatial } = useAppMotion()
   const sliding = layout === 'segmented' && spatial
+  // Compact chips share one width: the longest label plus the mirrored mark padding,
+  // stretched so each row fills the container.
+  // shortcut: 0.5em per character approximates Alegreya Sans; a longer label wraps inside its chip. Measure the labels if the font changes.
+  const longestLabel = Math.max(
+    0,
+    ...options.map((option) =>
+      typeof option.label === 'string' ? option.label.length : 0,
+    ),
+  )
   return (
     <ToggleGroup
       data-slot="choice-button-group"
@@ -54,12 +67,22 @@ export function ChoiceButtonGroup<TValue extends string>({
           onValueChange(option.value)
         }
       }}
+      style={
+        layout === 'compact'
+          ? ({
+              '--choice-min': `calc(${longestLabel * 0.5}em + 3.5rem)`,
+            } as CSSProperties)
+          : undefined
+      }
       className={cn(
-        layout === 'compact' && 'flex w-full flex-wrap gap-2',
+        layout === 'compact' &&
+          // text-sm here so em resolves at the chips' own size.
+          'grid w-full grid-cols-[repeat(auto-fit,minmax(min(100%,var(--choice-min)),1fr))] gap-2 text-sm',
         layout === 'cards' &&
           'grid w-full auto-rows-fr items-stretch gap-2 sm:grid-cols-2',
         layout === 'segmented' &&
-          'inline-flex w-fit max-w-full flex-nowrap gap-0 rounded-control bg-surface-muted inset-ring inset-ring-border',
+          // Equal columns sized to the longest label, so a short option is as wide as a long one.
+          'inline-grid w-fit max-w-full auto-cols-fr grid-flow-col gap-0 rounded-control bg-surface-muted inset-ring inset-ring-border',
         className,
       )}
       disabled={disabled}
@@ -73,8 +96,9 @@ export function ChoiceButtonGroup<TValue extends string>({
           value={option.value}
           className={cn(
             layout !== 'cards' && 'h-auto min-h-10 px-4 py-2 text-sm',
+            layout === 'compact' && 'w-full min-w-0 whitespace-normal',
             layout === 'segmented' &&
-              'ml-0 border-transparent bg-transparent data-pressed:border-transparent hover:border-transparent hover:bg-selection-surface/50 data-pressed:hover:bg-selection-surface',
+              'ml-0 border-transparent bg-transparent data-pressed:border-transparent hover:border-transparent hover:bg-selection-surface/50 data-pressed:hover:bg-selection',
             layout === 'cards' &&
               'h-auto min-h-20 w-full flex-col items-start justify-start gap-1 px-4 py-3 text-left whitespace-normal',
             sliding &&
@@ -88,9 +112,10 @@ export function ChoiceButtonGroup<TValue extends string>({
               layoutDependency={value}
               initial={false}
               transition={journalMotion.spring}
-              className="pointer-events-none absolute inset-0.5 -z-10 rounded-[calc(var(--radius-control)-2px)] bg-selection-surface"
+              className="pointer-events-none absolute inset-0.5 -z-10 rounded-[calc(var(--radius-control)-2px)] bg-selection"
             />
           )}
+          {layout === 'compact' && <ToggleGroupItemMark />}
           <span
             className={cn(
               layout === 'cards' && 'text-base font-semibold leading-snug',

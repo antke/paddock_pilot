@@ -85,10 +85,15 @@ export function DocumentDownloadAction({
   const downloadButton = (
     <Button
       type="button"
-      variant="default"
+      variant="ghost"
       size="sm"
-      className="min-w-32"
       disabled={!fileUrl || isDownloading}
+      // Unavailable stays readable (at least 3:1 on the row) yet quieter than a live download.
+      className={
+        unavailableReason
+          ? 'text-muted-foreground/80 disabled:opacity-100'
+          : undefined
+      }
       aria-busy={isDownloading || undefined}
       aria-label={
         unavailableReason
@@ -105,12 +110,13 @@ export function DocumentDownloadAction({
       }
       onClick={downloadDocument}
     >
+      {/* Labelled like Remove; the feedback reserves its longest label, so the width never moves. */}
       <ActionFeedback
-        label={t('documents.download')}
-        pendingLabel={t('documents.downloading')}
-        confirmedLabel={t('documents.downloadStarted')}
         pending={isDownloading}
         confirmed={confirmation.confirmed}
+        label={t('documents.download')}
+        pendingLabel={t('documents.downloading')}
+        confirmedLabel={t('documents.download')}
         icon={<DownloadSimpleIcon weight="bold" aria-hidden="true" />}
       />
     </Button>

@@ -59,7 +59,7 @@ function createFixtureStables(): Array<DashboardLabStable> {
       postcode: '12572',
       country: 'United States',
       yardRules: 'Quiet hours after evening feed. Record all medication notes.',
-      openingHours: '6:00 AM - 8:30 PM',
+      openingHours: '06:00–20:30',
       ownerId: userId,
     },
     {
@@ -79,6 +79,7 @@ function createFixtureHorses(): Array<DashboardLabHorse> {
       id: juniperId,
       name: 'Juniper',
       age: 9,
+      calendarColourId: 'indigo',
       breed: 'Dutch Warmblood',
       sex: 'mare',
       color: 'Bay',
@@ -103,6 +104,7 @@ function createFixtureHorses(): Array<DashboardLabHorse> {
       id: atlasId,
       name: 'Atlas',
       age: 14,
+      calendarColourId: 'rose',
       breed: 'Quarter Horse',
       sex: 'gelding',
       color: 'Chestnut',
@@ -118,6 +120,7 @@ function createFixtureHorses(): Array<DashboardLabHorse> {
       id: meadowId,
       name: 'Meadow',
       age: 6,
+      calendarColourId: 'gold',
       breed: 'Connemara',
       sex: 'mare',
       color: 'Grey',
@@ -173,6 +176,7 @@ function createFixtureHorse(
     feedingRoutine: input.feedingRoutine,
     profileImageId: input.profileImageId,
     profileImageUrl: input.profileImageUrl,
+    calendarColourId: input.calendarColourId,
   }
 }
 

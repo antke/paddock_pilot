@@ -30,7 +30,8 @@ const tabsListVariants = cva(
       variant: {
         default: '',
         line: 'gap-2 border-0 border-border bg-transparent group-data-horizontal/tabs:border-b group-data-vertical/tabs:border-r',
-        section: 'h-auto max-w-full flex-wrap justify-start',
+        section:
+          'h-auto max-w-full justify-start gap-2 border-0 border-border bg-transparent group-data-horizontal/tabs:border-b',
       },
     },
     defaultVariants: {
@@ -50,7 +51,7 @@ function TabsList({
     <TabsPrimitive.List
       data-slot="tabs-list"
       data-motion-tabs={enabled || undefined}
-      data-variant={variant}
+      data-variant={variant === 'section' ? 'line' : variant}
       className={cn(
         tabsListVariants({ variant }),
         'relative isolate',
@@ -77,7 +78,8 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
         "app-choice-feedback relative inline-flex max-md:min-h-11 pointer-coarse:min-h-11 h-full flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-control border border-transparent px-3 py-1.5 text-sm font-semibold whitespace-nowrap text-muted-foreground group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start group-data-vertical/tabs:py-[calc(--spacing(1.5))] hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         'group-data-[variant=line]/tabs-list:h-12 group-data-[variant=line]/tabs-list:flex-none group-data-[variant=line]/tabs-list:rounded-b-none group-data-[variant=line]/tabs-list:border-0 group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:px-3 group-data-[variant=line]/tabs-list:text-base group-data-[variant=line]/tabs-list:font-bold group-data-[variant=line]/tabs-list:leading-snug group-data-[variant=line]/tabs-list:hover:bg-surface-muted group-data-[variant=line]/tabs-list:data-active:bg-transparent group-data-[variant=line]/tabs-list:data-active:text-foreground group-data-[variant=line]/tabs-list:focus-visible:ring-inset group-data-[variant=line]/tabs-list:focus-visible:ring-ring',
         'group-data-[variant=section]/tabs-list:h-10 group-data-[variant=section]/tabs-list:flex-none group-data-[variant=section]/tabs-list:px-3.5 group-data-[variant=section]/tabs-list:py-2 group-data-[variant=section]/tabs-list:text-base group-data-[variant=section]/tabs-list:font-semibold group-data-[variant=section]/tabs-list:leading-tight',
-        'data-active:border-selection data-active:bg-selection-surface data-active:text-selection data-active:shadow-none',
+        // Pill tabs mark the current tab with the solid selection colour; line tabs use their underline.
+        'data-active:shadow-none group-data-[variant=default]/tabs-list:data-active:border-selection group-data-[variant=default]/tabs-list:data-active:bg-selection group-data-[variant=default]/tabs-list:data-active:text-selection-foreground group-data-[variant=default]/tabs-list:data-active:hover:text-selection-foreground',
         'after:absolute after:bg-selection after:opacity-0 after:transition-opacity after:duration-[160ms] motion-reduce:after:transition-none group-data-horizontal/tabs:after:inset-x-0 group-data-horizontal/tabs:after:bottom-0 group-data-horizontal/tabs:after:h-0.75 group-data-vertical/tabs:after:inset-y-0 group-data-vertical/tabs:after:right-0 group-data-vertical/tabs:after:w-0.75 group-data-[variant=line]/tabs-list:data-active:after:opacity-100',
         className,
       )}

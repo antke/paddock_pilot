@@ -12,6 +12,7 @@ import { Children } from 'react'
 import type { ReactNode } from 'react'
 import { HorseAvatar } from './HorseAvatar'
 import { DashboardMetaList } from '#/components/dashboard/DashboardMetaList'
+import { SelectionCheckMark } from '#/components/forms/FormLayout'
 
 export type HorseListDensity = 'compact' | 'detailed'
 
@@ -30,6 +31,8 @@ type HorseCardContentProps = {
   meta?: ReactNode
   linked?: boolean
   listDensity?: HorseListDensity
+  /** Detailed list facts, shown as the last line under the name. */
+  details?: ReactNode
 }
 
 type HorseCardBaseProps = {
@@ -65,6 +68,7 @@ export function HorseCardContent({
   meta,
   linked = false,
   listDensity,
+  details,
 }: HorseCardContentProps) {
   const { locale } = useLocale()
   const horseMeta = Children.toArray([
@@ -73,6 +77,8 @@ export function HorseCardContent({
     ) : undefined,
     meta,
   ])
+  // Detailed rows: breed, discipline and the detail facts share one muted line.
+  const facts = Children.toArray([horseMeta, details])
   const metaContent = Children.toArray([
     horse.ownerName ? <span key="owner">{horse.ownerName}</span> : undefined,
     horseMeta,
@@ -105,16 +111,19 @@ export function HorseCardContent({
             : undefined
       }
       meta={
-        metaContent.length > 0 ? (
+        metaContent.length > 0 || facts.length > 0 ? (
           listDensity === 'detailed' ? (
             <>
-              {horse.ownerName && <span>{horse.ownerName}</span>}
-              {horseMeta.length > 0 && (
+              {horse.ownerName && (
+                <span className="text-foreground">{horse.ownerName}</span>
+              )}
+              {facts.length > 0 && (
                 <DashboardMetaList
                   separator="dot"
+                  gap="compact"
                   className="text-base leading-6"
                 >
-                  {horseMeta}
+                  {facts}
                 </DashboardMetaList>
               )}
             </>
@@ -177,13 +186,10 @@ export function HorseCardLink({
       density="compact"
       className={cn(
         horseCardSurfaceClassName,
-        'hover:bg-surface-elevated active:bg-surface',
-        listDensity === 'detailed' &&
-          'grid min-h-30 items-center gap-5 px-4 py-5',
-        listDensity === 'detailed' &&
-          details &&
-          'lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.85fr)] lg:gap-8',
-        listDensity === 'compact' && 'flex min-h-20 items-center px-4 py-3',
+        // List rows take the shared hover band, so text stays on the title edge.
+        !listDensity && 'hover:bg-surface-elevated active:bg-surface',
+        listDensity === 'detailed' && 'flex min-h-30 items-center py-4',
+        listDensity === 'compact' && 'flex min-h-20 items-center py-3',
         className,
       )}
       data-horse-list-density={listDensity}
@@ -194,8 +200,8 @@ export function HorseCardLink({
         meta={meta}
         linked
         listDensity={listDensity}
+        details={listDensity === 'detailed' ? details : undefined}
       />
-      {listDensity === 'detailed' && details}
     </DashboardItemLinkCard>
   )
 }
@@ -219,7 +225,8 @@ export function HorseSelectionCard({
       htmlFor={id}
       data-disabled={disabled || undefined}
       data-selected={checked || undefined}
-      className="block w-full"
+      // A grid cell, so the row fills a stretched label and cards sharing a picker row match.
+      className="grid w-full"
     >
       <input
         id={id}
@@ -232,21 +239,28 @@ export function HorseSelectionCard({
         onChange={(event) => onCheckedChange(event.target.checked)}
         className="peer sr-only"
       />
+      {/* An open row, not a boxed card: hover band, pale stone fill and tick when chosen. */}
       <DashboardItemCard
         accent={accent}
-        chrome="cards"
+        chrome="flat"
         density="compact"
         interactive={!disabled}
-        selected={checked}
+        data-selected={checked || undefined}
         className={cn(
           horseCardSurfaceClassName,
-          'cursor-pointer active:bg-selection-surface peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:outline-none',
-          invalid && 'border-destructive/70 ring-2 ring-destructive/20',
+          'flex min-h-11 cursor-pointer items-center gap-3 peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:outline-none',
+          checked && 'bg-selection-surface hover:bg-selection-surface',
           disabled && 'cursor-not-allowed opacity-50',
           className,
         )}
       >
-        <HorseCardContent horse={horse} badges={badges} meta={meta} />
+        <div className="min-w-0 flex-1">
+          <HorseCardContent horse={horse} badges={badges} meta={meta} />
+        </div>
+        <SelectionCheckMark
+          checked={checked}
+          className={cn(invalid && !checked && 'border-destructive')}
+        />
       </DashboardItemCard>
     </label>
   )

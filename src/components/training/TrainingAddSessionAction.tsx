@@ -4,8 +4,8 @@ import { ButtonLink } from '#/components/ui/button'
 import { useT } from '#/i18n/LocaleProvider'
 
 /**
- * The Training page's primary action: "Add training session" in the desktop
- * title row, and "Add training log" in the phone bar above the navigation.
+ * The Training page's primary action, "Add training session": a planned session
+ * from the desktop title row, a completed one from the phone bar.
  * Renders nothing when the viewer cannot record for any listed horse.
  */
 export function TrainingAddSessionAction({

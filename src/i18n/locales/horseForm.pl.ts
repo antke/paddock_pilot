@@ -1,8 +1,10 @@
 export const horseForm = {
+  stable: 'Stajnia',
+  noStable: 'Bez stajni (tylko Ty i opiekunowie)',
+  stableHelp:
+    'Członkowie stajni zobaczą tego konia. Jego wpisy pozostaną prywatne, dopóki ich nie udostępnisz.',
   nickname: 'Przezwisko',
-  useNickname: 'Używaj przezwiska',
-  nicknameHelp:
-    'Pokazuj przezwisko w aplikacji. Pełne imię pozostanie w profilu konia.',
+  useNickname: 'Pokazuj przezwisko zamiast imienia',
   savedContactHelp:
     'Wybierz zapisany kontakt, aby korzystać z aktualnych danych, lub wpisz jednorazowy kontakt. Zmiana telefonu zapisze go tylko przy tym koniu.',
   copiedContactHelp:
@@ -20,8 +22,6 @@ export const horseForm = {
   microchipAdded: 'Dodano mikroczip',
   optional: 'Opcjonalnie',
   nutritionAdded: 'Dodano informacje o żywieniu',
-  detailsHelp:
-    'Imię, właściciel, wiek i podstawowe dane widoczne w profilu konia.',
   details: 'Dane konia',
   name: 'Imię konia',
   owner: 'Imię i nazwisko właściciela',
@@ -32,12 +32,10 @@ export const horseForm = {
     'To tylko dane wyświetlane w profilu. Ich zmiana nie przenosi własności między kontami. Po zapisaniu zarządzaj własnością w sekcji Osoby i stajnia.',
   sex: 'Płeć',
   picture: 'Zdjęcie profilowe',
-  pictureLabel: 'Informacje o zdjęciu profilowym konia',
-  pictureHelp:
-    'Możesz dodać zdjęcie o rozmiarze do 5 MB, które będzie widoczne na karcie konia.',
-  careHelp:
-    'Zbierz w jednym miejscu dokumenty, ubezpieczenie, kontakty do specjalistów i informacje o zdrowiu.',
-  care: 'Opieka i dokumentacja',
+  pictureHelp: 'JPG, PNG lub WEBP, do 5 MB',
+  appearance: 'Rasa i wygląd',
+  identificationInsurance: 'Identyfikacja i ubezpieczenie',
+  care: 'Opieka i zdrowie',
   identification: 'Identyfikacja',
   passport: 'Numer paszportu',
   passportPlaceholder: 'Numer paszportu lub rejestracji',
@@ -76,8 +74,6 @@ export const horseForm = {
   allergies: 'Alergie lub nadwrażliwości',
   allergiesPlaceholder:
     'Jedna pozycja w wierszu\nPenicylina\nUżądlenia pszczół',
-  nutritionHelp:
-    'Zapisz harmonogram karmienia, zalecenia i ograniczenia żywieniowe.',
   nutrition: 'Żywienie',
   feeding: 'Harmonogram karmienia',
   feedingPlaceholder: 'Siano rano, mesz wieczorem, informacje o padokowaniu…',
@@ -96,7 +92,9 @@ export const horseForm = {
   day: 'Dzień',
   birthHelp:
     'Miesiąc i dzień są opcjonalne. Na podstawie samego wieku wyliczamy przybliżony rok urodzenia.',
-  currentAge: 'Lub aktualny wiek',
+  birthDateChoice: 'Data urodzenia',
+  ageChoice: 'Wiek',
+  currentAge: 'Aktualny wiek',
   ageHelp: 'Aktualizuje rok urodzenia.',
   addHorse: 'Dodaj konia',
   editHorse: 'Edytuj profil konia',
@@ -105,11 +103,9 @@ export const horseForm = {
   saved: 'Zapisano konia.',
   opening: 'Otwieranie profilu…',
   openProfile: 'Otwórz profil konia',
-  reset: 'Wyczyść formularz',
   discard: 'Odrzucić zmiany?',
   clearNew: 'Usuń dane wprowadzone dla nowego konia.',
   restoreEdit: 'Przywróć dane konia sprzed rozpoczęcia edycji.',
-  discardAction: 'Odrzuć zmiany',
   saveChanges: 'Zapisz zmiany',
   uploading: 'Przesyłanie zdjęcia…',
   saving: 'Zapisywanie konia…',

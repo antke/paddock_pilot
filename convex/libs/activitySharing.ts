@@ -31,7 +31,10 @@ export async function writeActivityCalendars(
     .query('activityCalendarShares')
     .withIndex('by_event', (q) => q.eq('eventId', event._id))
     .collect()
-  for (const row of previous) await ctx.db.delete(row._id)
+  // Shares to stables this editor is not in belong to another editor; keep them.
+  for (const row of previous)
+    if (await calendarMember(ctx, row.stableId, userId))
+      await ctx.db.delete(row._id)
   for (const stableId of ids)
     await ctx.db.insert('activityCalendarShares', {
       eventId: event._id,
@@ -103,6 +106,7 @@ export async function projectActivityShare(
     location: event.location,
     status: event.status,
     recurrence: event.recurrence,
+    occurrenceSkips: event.occurrenceSkips,
     training: event.training
       ? {
           activities: event.training.activities,
@@ -142,7 +146,14 @@ export async function projectActivityShare(
       outcome: full ? record.outcome : undefined,
       canEdit: false,
     }))
-  return { event: projected, horses, records, readDetails: full }
+  return {
+    event: projected,
+    horses,
+    records,
+    readDetails: full,
+    // The receiving stable's owner may take it off their calendar.
+    removableStableId: role === 'owner' ? share.stableId : undefined,
+  }
 }
 
 export async function sharedActivitySource(

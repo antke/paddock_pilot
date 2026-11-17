@@ -4,11 +4,13 @@ import { MotionNotice } from '#/components/motion/MotionNotice'
 import { ConfirmedCheck } from '#/components/motion/StateFeedback'
 import { ActionFeedback } from '#/components/ui/action-feedback'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
-import { DashboardRecordDetails } from '#/components/dashboard/DashboardRecordDetails'
 import {
-  DetailReferenceField,
-  DetailReferenceList,
-} from '#/components/dashboard/DetailReference'
+  DashboardRecordDetails,
+  dashboardRecordDetailsContentClassName,
+  dashboardRecordDetailsTriggerClassName,
+} from '#/components/dashboard/DashboardRecordDetails'
+import { DisclosureChevron } from '#/components/ui/disclosure-chevron'
+import { DashboardMetaList } from '#/components/dashboard/DashboardMetaList'
 import { DashboardBadgeList } from '#/components/dashboard/DashboardBadgeList'
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
@@ -24,7 +26,10 @@ import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCar
 import { Button } from '#/components/ui/button'
 import { EditActionButton } from '#/components/ui/edit-action'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
-import { RecordRemoveAction } from '#/components/list-layout/RecordRemoveAction'
+import {
+  RecordRemoveAction,
+  RecordRemoveMenuItem,
+} from '#/components/list-layout/RecordRemoveAction'
 import { EditRecordDialog } from '#/components/list-layout/EditRecordDialog'
 import {
   DropdownMenu,
@@ -37,9 +42,11 @@ import { Field, FieldDescription, FieldLabel } from '#/components/ui/field'
 import { careReminderDueDateSchema } from 'shared/reminders/careReminderSchema'
 import { CheckIcon, DotsThreeIcon } from '@phosphor-icons/react'
 import type { Doc } from 'convex/_generated/dataModel'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { ElementType, ReactNode } from 'react'
+import { cn } from '#/lib/utils'
 import {
+  CareReminderDueText,
   CareReminderPriorityBadge,
   CareReminderStatusBadge,
 } from './CareReminderBadges'
@@ -295,6 +302,7 @@ export function CareRemindersCard({
         <DashboardLoadingState label={loadingLabel ?? t('reminders.loading')} />
       ) : (
         <MotionList
+          className="gap-3"
           items={reminders}
           getKey={(item) => item.reminder._id}
           focusTarget={removalFocusTarget}
@@ -399,7 +407,8 @@ function ReminderRow({
   const overdue = isCareReminderOverdue(reminder)
   const dueState = getCareReminderDueState(reminder)
   const showPriorityBadge = reminder.priority === 'high'
-  const showStatusBadge = overdue || reminder.status !== 'pending'
+  // Overdue is carried by the due line; the badge only marks closed reminders.
+  const showStatusBadge = reminder.status !== 'pending'
   const Heading = `h${headingLevel}` as const
   // Listed first in the row's overflow menu. Opens the next-date editor only; nothing is
   // completed until it is saved.
@@ -433,6 +442,15 @@ function ReminderRow({
   const pendingRef = useRef(false)
   const isUpdating = pendingAction !== null
   const [actionError, setActionError] = useState(false)
+  // Pending rows already have a "…" menu, so Remove goes last inside it.
+  const removeInMenu = item.canManage && reminder.status === 'pending'
+  const [removeOpen, setRemoveOpen] = useState(false)
+  const menuTrigger = useRef<HTMLButtonElement>(null)
+  const removeNamed = t('reminders.removeRecordNamed', { name: reminder.title })
+  // Phones put the Details trigger at the start of the action row; its notes open below it.
+  const phoneDetails = Boolean(reminder.description) && hasActions
+  const [detailsOpen, setDetailsOpen] = useState(false)
+  const detailsId = useId()
 
   const runStatusAction = async (
     action: 'complete' | 'dismiss' | 'reopen' | 'edit',
@@ -467,21 +485,63 @@ function ReminderRow({
         interactive={false}
         density="compact"
         footer={
-          actionError ? (
-            <p role="alert" className="text-sm text-destructive sm:col-span-2">
-              {t('reminders.updateFailed')}
-            </p>
-          ) : undefined
+          <>
+            {phoneDetails && (
+              <div
+                id={detailsId}
+                hidden={!detailsOpen}
+                className={cn(
+                  dashboardRecordDetailsContentClassName,
+                  'sm:hidden',
+                )}
+              >
+                {reminder.description}
+              </div>
+            )}
+            {actionError && (
+              <p
+                role="alert"
+                className="text-sm text-destructive sm:col-span-2"
+              >
+                {t('reminders.updateFailed')}
+              </p>
+            )}
+          </>
         }
-        actionsPlacement="footer"
-        actionsClassName="w-full justify-start border-t border-border-subtle pt-3"
+        // Like document rows: an inline right-hand action column from `sm`,
+        // a full-width row under the text on phones.
+        actionColumnClassName="sm:col-start-2 sm:row-start-1"
+        actionsClassName="max-sm:w-full"
         actions={
           hasActions ? (
             <>
+              {phoneDetails && (
+                <Button
+                  type="button"
+                  variant="link"
+                  // Own slot, so the phone action row's button padding skips it and the text sits on the title edge.
+                  data-slot="record-details-trigger"
+                  aria-expanded={detailsOpen}
+                  aria-controls={detailsId}
+                  onClick={() => setDetailsOpen((open) => !open)}
+                  className={cn(
+                    dashboardRecordDetailsTriggerClassName,
+                    'h-auto px-0 sm:hidden',
+                  )}
+                >
+                  {t('reminders.details')}
+                  <span className="sr-only">
+                    {t('reminders.forPrefix')}
+                    {reminder.title}
+                  </span>
+                  <DisclosureChevron open={detailsOpen} />
+                </Button>
+              )}
               {reminder.status === 'pending' &&
                 (item.canComplete ?? item.canManage) && (
                   <Button
                     type="button"
+                    variant="outline"
                     size="sm"
                     disabled={isUpdating || confirmed}
                     aria-busy={pendingAction === 'complete' || undefined}
@@ -493,7 +553,7 @@ function ReminderRow({
                     <ActionFeedback
                       label={t('reminders.complete')}
                       pendingLabel={t('reminders.completing')}
-                      confirmedLabel={t('reminders.completed')}
+                      confirmedLabel={t('careLabels.reminderStatus.completed')}
                       pending={pendingAction === 'complete'}
                       confirmed={confirmed}
                       icon={
@@ -515,11 +575,22 @@ function ReminderRow({
                     {t('reminders.reopen')}
                   </Button>
                 )}
-              {item.canManage && reminder.status === 'pending' && (
+              {item.canManage && onEdit && (
+                <EditActionButton
+                  label={t('reminders.editNamed', { name: reminder.title })}
+                  disabled={isUpdating}
+                  onClick={() => {
+                    setActionError(false)
+                    setEditor('edit')
+                  }}
+                />
+              )}
+              {removeInMenu && (
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     render={
                       <Button
+                        ref={menuTrigger}
                         type="button"
                         variant="ghost"
                         size="icon-sm"
@@ -544,103 +615,112 @@ function ReminderRow({
                         {t('reminders.completeAndSchedule')}
                       </DropdownMenuItem>
                     )}
-                    {reminder.status === 'pending' && (
-                      <DropdownMenuItem
-                        onClick={() =>
-                          void runStatusAction('dismiss', onDismiss)
-                        }
-                      >
-                        {t('reminders.dismiss')}
-                      </DropdownMenuItem>
-                    )}
+                    <DropdownMenuItem
+                      onClick={() => void runStatusAction('dismiss', onDismiss)}
+                    >
+                      {t('reminders.dismiss')}
+                    </DropdownMenuItem>
+                    <RecordRemoveMenuItem
+                      ariaLabel={removeNamed}
+                      disabled={isUpdating}
+                      onOpen={() => setRemoveOpen(true)}
+                    />
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
               {item.canManage && (
-                <>
-                  {onEdit && (
-                    <EditActionButton
-                      label={t('reminders.editNamed', { name: reminder.title })}
-                      disabled={isUpdating}
-                      onClick={() => {
-                        setActionError(false)
-                        setEditor('edit')
-                      }}
-                    />
-                  )}
-                  <RecordRemoveAction
-                    triggerAriaLabel={t('reminders.removeRecordNamed', {
-                      name: reminder.title,
-                    })}
-                    title={t('reminders.removeNamed', { name: reminder.title })}
-                    description={t('reminders.removeHelp')}
-                    confirmLabel={t('reminders.remove')}
-                    disabled={isUpdating}
-                    onConfirm={() => onRemove(reminder)}
-                    removalFocusTarget={removalFocusTarget}
-                  />
-                </>
+                <RecordRemoveAction
+                  triggerAriaLabel={removeNamed}
+                  title={t('reminders.removeNamed', { name: reminder.title })}
+                  description={t('reminders.removeHelp')}
+                  confirmLabel={t('reminders.remove')}
+                  disabled={isUpdating}
+                  onConfirm={() => onRemove(reminder)}
+                  removalFocusTarget={removalFocusTarget}
+                  {...(removeInMenu && {
+                    open: removeOpen,
+                    onOpenChange: setRemoveOpen,
+                    externalTrigger: menuTrigger,
+                  })}
+                />
               )}
             </>
           ) : undefined
         }
       >
-        <div className="grid min-w-0 gap-4 sm:col-span-2">
-          <header className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-            <Heading
-              className={`${dashboardItemLargeTitleClassName} min-w-0 wrap-anywhere`}
-            >
-              {reminder.title}
-            </Heading>
-            {(showPriorityBadge || showStatusBadge) && (
-              <DashboardBadgeList gap="compact">
-                {showPriorityBadge && (
-                  <CareReminderPriorityBadge priority="high" />
-                )}
-                {showStatusBadge && (
-                  <CareReminderStatusBadge
-                    status={reminder.status}
-                    overdue={overdue}
-                  />
-                )}
-              </DashboardBadgeList>
-            )}
-          </header>
-          <DetailReferenceList mobileColumns={2}>
-            <DetailReferenceField
-              label={t('reminders.dueDate')}
-              value={
-                <time
-                  dateTime={reminder.dueDate}
+        <div className="grid min-w-0 gap-3">
+          <header className="grid min-w-0 gap-1">
+            {/* Inline flow, so the chips follow the title's last word as it wraps;
+                the one space between them carries the gap and vanishes at a line start. */}
+            <div className="min-w-0 [word-spacing:0.5rem]">
+              <Heading
+                className={`${dashboardItemLargeTitleClassName} inline [word-spacing:normal] wrap-anywhere`}
+              >
+                {reminder.title}
+              </Heading>{' '}
+              {(showPriorityBadge || showStatusBadge) && (
+                <DashboardBadgeList
+                  gap="compact"
+                  className="inline-flex align-middle [word-spacing:normal]"
+                >
+                  {showPriorityBadge && (
+                    <CareReminderPriorityBadge priority="high" />
+                  )}
+                  {showStatusBadge && (
+                    <CareReminderStatusBadge
+                      status={reminder.status}
+                      overdue={false}
+                    />
+                  )}
+                </DashboardBadgeList>
+              )}
+            </div>
+            {/* Details shares the meta line when it fits and opens onto its own line. */}
+            <div className="flex min-w-0 flex-wrap items-center gap-x-4">
+              <DashboardMetaList separator="dot" gap="compact">
+                <CareReminderDueText
+                  dueDate={reminder.dueDate}
+                  overdue={overdue}
                   className={
-                    dueState === 'overdue'
-                      ? 'font-semibold text-destructive'
-                      : dueState === 'today' || dueState === 'soon'
-                        ? 'font-semibold'
-                        : undefined
+                    dueState === 'today' || dueState === 'soon'
+                      ? 'font-semibold text-foreground'
+                      : undefined
                   }
                 >
                   {getCareReminderDueLabel(reminder, undefined, locale)}
-                </time>
-              }
-            />
-            <DetailReferenceField
-              label={t('reminders.category')}
-              value={t(`careLabels.category.${reminder.category}`)}
-            />
-            <DetailReferenceField
-              label={t('reminders.responsible')}
-              value={item.assigneeName}
-              missingValue={t('reminders.unassigned')}
-              fullWidth={!showHorse || !item.horseName}
-            />
-            {showHorse && item.horseName && (
-              <DetailReferenceField
-                label={t('reminders.horse')}
-                value={item.horseName}
-              />
-            )}
-          </DetailReferenceList>
+                </CareReminderDueText>
+                <span>
+                  <span className="sr-only">{t('reminders.category')}: </span>
+                  {t(`careLabels.category.${reminder.category}`)}
+                </span>
+                {showHorse && item.horseName && (
+                  <span>
+                    <span className="sr-only">{t('reminders.horse')}: </span>
+                    {item.horseName}
+                  </span>
+                )}
+                <span>
+                  <span className="sr-only">
+                    {t('reminders.responsible')}:{' '}
+                  </span>
+                  {item.assigneeName || t('reminders.unassigned')}
+                </span>
+              </DashboardMetaList>
+              {reminder.description && (
+                <DashboardRecordDetails
+                  recordTitle={reminder.title}
+                  open={detailsOpen}
+                  onToggle={(event) => setDetailsOpen(event.currentTarget.open)}
+                  className={cn(
+                    'open:basis-full md:[&>summary]:py-0.5',
+                    phoneDetails && 'max-sm:hidden',
+                  )}
+                >
+                  {reminder.description}
+                </DashboardRecordDetails>
+              )}
+            </div>
+          </header>
           {reminder.status === 'completed' && reminder.completedAt && (
             <p className="text-sm text-muted-foreground">
               {t(
@@ -662,17 +742,14 @@ function ReminderRow({
               {t('reminders.followUpScheduled')}
             </p>
           )}
-          {reminder.description && (
-            <DashboardRecordDetails recordTitle={reminder.title}>
-              {reminder.description}
-            </DashboardRecordDetails>
-          )}
         </div>
         {reminder.horseId && (
-          <WorkspaceRecordAudience
-            horseId={reminder.horseId}
-            recordId={reminder._id}
-          />
+          <div className="empty:hidden sm:col-span-2">
+            <WorkspaceRecordAudience
+              horseId={reminder.horseId}
+              recordId={reminder._id}
+            />
+          </div>
         )}
       </DashboardItemRecordCard>
       <EditRecordDialog
