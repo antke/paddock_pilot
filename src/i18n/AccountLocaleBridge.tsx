@@ -16,10 +16,11 @@ export function AccountLocaleBridge() {
         ? {
             id: userId,
             locale: user?.clerkId === userId ? user.locale : undefined,
+            currency: user?.clerkId === userId ? user.currency : undefined,
             save: (locale) => save({ locale }),
           }
         : null,
     )
-  }, [userId, user?.clerkId, user?.locale, save, syncAccount])
+  }, [userId, user?.clerkId, user?.locale, user?.currency, save, syncAccount])
   return null
 }

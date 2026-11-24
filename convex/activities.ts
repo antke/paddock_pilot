@@ -10,6 +10,7 @@ import { query } from './_generated/server'
 import type { Doc, Id } from './_generated/dataModel'
 import type { MutationCtx, QueryCtx } from './_generated/server'
 import { listPersonalEvents } from './events'
+import { showsInEvents } from '../shared/events/eventSchema'
 import { listHorseTraining, listStableTraining } from './training'
 import { listMyParticipations } from './activityParticipants'
 import { accessibleHorses, getHorseAccess } from './libs/horsePermissions'
@@ -74,7 +75,8 @@ export async function listActivities(
     sources.push({
       ...explicit,
       events: explicit.events.filter(
-        (event) => (event.type === 'training') === training,
+        (event) =>
+          training ? event.type === 'training' : showsInEvents(event),
       ),
       records: training ? explicit.records : [],
     })
@@ -82,7 +84,7 @@ export async function listActivities(
     else {
       // sharedEventsForStable checks current membership even for an empty calendar.
       const events = (await sharedEventsForStable(ctx, stableId)).filter(
-        (event) => event.type !== 'training',
+        showsInEvents,
       )
       const horses = (
         await ctx.db
@@ -109,7 +111,12 @@ export async function listActivities(
       .collect()
     for (const row of attendance) {
       const detail = await attendanceDetail(ctx, row.eventId, user._id)
-      if (detail && (detail.event.type === 'training') === training)
+      if (
+        detail &&
+        (training
+          ? detail.event.type === 'training'
+          : showsInEvents(detail.event))
+      )
         sources.push({
           events: [detail.event],
           horses: detail.horses,

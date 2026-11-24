@@ -12,6 +12,12 @@ export const eventTypes = [
   'other',
 ] as const
 
+/** Training logs stay in Training; training added from Events shows in both. */
+export const showsInEvents = (event: {
+  type: string
+  listedInEvents?: boolean
+}) => event.type !== 'training' || event.listedInEvents === true
+
 export const eventStatuses = ['planned', 'completed', 'cancelled'] as const
 
 export const recurrenceFrequencies = ['daily', 'weekly', 'monthly'] as const

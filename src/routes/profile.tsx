@@ -9,6 +9,7 @@ import {
 import { Switch } from '#/components/ui/switch'
 import { useT } from '#/i18n/LocaleProvider'
 import { LanguageSelector } from '#/i18n/LanguageSelector'
+import { CurrencySelector } from '#/i18n/CurrencySelector'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
@@ -120,6 +121,15 @@ function ProfilePage() {
       >
         <div className="max-w-xs">
           <LanguageSelector />
+        </div>
+      </DashboardSectionCard>
+      <DashboardSectionCard
+        title={t('currency.label')}
+        description={t('currency.description')}
+        contentGap="comfortable"
+      >
+        <div className="max-w-xs">
+          <CurrencySelector />
         </div>
       </DashboardSectionCard>
     </DashboardPage>

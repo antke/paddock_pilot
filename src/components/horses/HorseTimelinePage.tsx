@@ -195,7 +195,7 @@ function EventTimelineEntry({
   entry: Extract<TimelineEntry, { kind: 'event' }>
 }) {
   const t = useT()
-  const { locale } = useLocale()
+  const { locale, currency } = useLocale()
   const training = 'trainingRecord' in entry ? entry.trainingRecord : undefined
 
   return (
@@ -251,7 +251,7 @@ function EventTimelineEntry({
         <DashboardMetaList>
           <span>
             {t('horseHistory.costShare', {
-              amount: formatCurrencyAmount(entry.costShare, locale),
+              amount: formatCurrencyAmount(entry.costShare, locale, currency),
             })}
           </span>
         </DashboardMetaList>

@@ -290,6 +290,12 @@ export const pl = {
       'Język zmieniono na tym urządzeniu, ale nie udało się zapisać go na koncie. Spróbuj ponownie.',
     retry: 'Zapisz język ponownie',
   },
+  currency: {
+    label: 'Waluta',
+    description:
+      'Używana przy kosztach. Odpowiada Twojemu krajowi, dopóki nie wybierzesz jej tutaj.',
+    saveFailed: 'Nie udało się zapisać waluty. Spróbuj ponownie.',
+  },
   navigation: {
     accountPreferences: 'Preferencje',
     stable: 'Stajnia',

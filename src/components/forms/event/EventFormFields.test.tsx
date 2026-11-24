@@ -221,6 +221,22 @@ describe('EventFormFields', () => {
     ).toBe('false')
   })
 
+  it('fills an empty title from the event type and keeps a written one', () => {
+    render(<Harness />)
+    const title = screen.getByLabelText('Title', {
+      exact: true,
+    }) as HTMLInputElement
+    fireEvent.click(screen.getByRole('button', { name: 'Vet' }))
+    expect(title.value).toBe('Farrier visit')
+    fireEvent.change(title, { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Dentist' }))
+    expect(title.value).toBe('Dentist')
+    fireEvent.click(screen.getByRole('button', { name: 'Massage' }))
+    expect(title.value).toBe('Massage')
+    fireEvent.click(screen.getByRole('button', { name: 'Other' }))
+    expect(title.value).toBe('')
+  })
+
   it('keeps optional labels visible alongside entered details', () => {
     render(<Harness />)
     const logistics = screen.getByRole('button', {

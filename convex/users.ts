@@ -3,7 +3,10 @@ import {
   startDeparture,
   revokeHorseAccess,
 } from './horseTransitions'
-import { localeValidator } from '../shared/i18n/validators'
+import {
+  currencyValidator,
+  localeValidator,
+} from '../shared/i18n/validators'
 import { ConvexError, v } from 'convex/values'
 import { createClerkClient } from '@clerk/backend'
 import type { Id } from './_generated/dataModel'
@@ -46,6 +49,16 @@ export const setLocale = mutation({
     if (!user || user.deletedAt !== undefined)
       throw new ConvexError('User not authenticated')
     await ctx.db.patch(user._id, { locale, updatedAt: Date.now() })
+  },
+})
+
+export const setCurrency = mutation({
+  args: { currency: currencyValidator },
+  handler: async (ctx, { currency }) => {
+    const user = await getUserFromIdentity(ctx)
+    if (!user || user.deletedAt !== undefined)
+      throw new ConvexError('User not authenticated')
+    await ctx.db.patch(user._id, { currency, updatedAt: Date.now() })
   },
 })
 

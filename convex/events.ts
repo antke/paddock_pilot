@@ -62,6 +62,7 @@ import {
 import {
   eventInputSchema,
   createEventSchemas,
+  showsInEvents,
 } from '../shared/events/eventSchema'
 import type { Doc, Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
@@ -421,7 +422,7 @@ export async function listPersonalEvents(ctx: QueryCtx) {
       ...event,
       horseIds: event.horseIds.filter((id) => personalIds.has(id)),
     }))
-    .filter((event) => event.type !== 'training')
+    .filter(showsInEvents)
     .sort(byEventDateAndTime)
 }
 
@@ -636,7 +637,7 @@ export const listForStable = query({
   args: { stableId: v.id('stables') },
   handler: async (ctx, args) =>
     (await sharedEventsForStable(ctx, args.stableId))
-      .filter((event) => event.type !== 'training')
+      .filter(showsInEvents)
       .sort(byEventDateAndTime),
 })
 
@@ -766,6 +767,8 @@ export const add = mutation({
       endDate: eventInput.endDate,
       time: eventInput.time,
       type: eventInput.type,
+      listedInEvents:
+        eventInput.type === 'training' && args.listedInEvents ? true : undefined,
       title: eventInput.title,
       description: eventInput.description,
       location: eventInput.location,

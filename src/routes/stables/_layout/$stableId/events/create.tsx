@@ -53,6 +53,7 @@ function RouteComponent() {
           endDate: data.endDate,
           time: data.time,
           type: data.type,
+          listedInEvents: data.type === 'training' || undefined,
           training: data.training,
           title: data.title,
           description: data.description,

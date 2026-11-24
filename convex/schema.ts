@@ -1,5 +1,8 @@
 import { horseOwnershipTables } from './horseOwnershipSchema'
-import { localeValidator } from '../shared/i18n/validators'
+import {
+  currencyValidator,
+  localeValidator,
+} from '../shared/i18n/validators'
 import { stableAuditDetailsValidator } from '../shared/auditLogs/auditDetails'
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
@@ -39,6 +42,8 @@ export const userFields = {
   reminderDigestTimezone: v.optional(v.string()),
   lastReminderDigestDate: v.optional(v.string()),
   locale: v.optional(localeValidator),
+  // Unset means the browser's region decides.
+  currency: v.optional(currencyValidator),
   profileCompletedAt: v.optional(v.number()),
   onboardingVersion: v.optional(v.number()),
   deletedAt: v.optional(v.number()),
@@ -799,6 +804,8 @@ export const eventFields = {
   createdBy: v.id('users'),
   stableId: v.optional(v.id('stables')),
   type: eventType,
+  // Training added from Events also shows in Events; logs stay in Training.
+  listedInEvents: v.optional(v.boolean()),
   training: v.optional(trainingDetails),
   title: v.string(),
   description: v.optional(v.string()),

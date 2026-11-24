@@ -71,7 +71,7 @@ export function HorseCareSummaryView({
   onPrint?: () => void
 }) {
   const t = useT()
-  const { locale } = useLocale()
+  const { locale, currency } = useLocale()
 
   if (!summary.horse) {
     return (
@@ -394,7 +394,7 @@ export function HorseCareSummaryView({
                   event.providerName,
                   event.totalCost !== undefined
                     ? t('horseHistory.total', {
-                        amount: formatCurrencyAmount(event.totalCost, locale),
+                        amount: formatCurrencyAmount(event.totalCost, locale, currency),
                       })
                     : undefined,
                   event.costPerHorse !== undefined
@@ -402,6 +402,7 @@ export function HorseCareSummaryView({
                         amount: formatCurrencyAmount(
                           event.costPerHorse,
                           locale,
+                          currency,
                         ),
                       })
                     : undefined,

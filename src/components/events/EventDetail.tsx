@@ -76,7 +76,7 @@ export function EventDetail({
   occurrenceDate,
 }: EventDetailProps) {
   const t = useT()
-  const { locale } = useLocale()
+  const { locale, currency } = useLocale()
   const taskState = useTaskOriginState()
   const { today } = useLocalDateContext()
 
@@ -294,13 +294,13 @@ export function EventDetail({
                 {event.totalCost !== undefined && (
                   <DetailReferenceField
                     label={t('eventViews.totalCost')}
-                    value={formatCurrencyAmount(event.totalCost, locale)}
+                    value={formatCurrencyAmount(event.totalCost, locale, currency)}
                   />
                 )}
                 {event.costPerHorse !== undefined && (
                   <DetailReferenceField
                     label={t('eventViews.costPerHorse')}
-                    value={formatCurrencyAmount(event.costPerHorse, locale)}
+                    value={formatCurrencyAmount(event.costPerHorse, locale, currency)}
                   />
                 )}
               </DetailReferenceList>

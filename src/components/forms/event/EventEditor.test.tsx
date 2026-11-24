@@ -214,6 +214,28 @@ describe('EventEditor production composition', () => {
     },
   )
 
+  it('fills the title from the type of work until someone writes their own', () => {
+    setup({
+      mode: 'create',
+      feature: 'training',
+      initialValues: {
+        ...createEventEditorValues(stableId),
+        type: 'training',
+        date: '2026-07-24',
+        time: '10:00',
+        horseIds: [horseId],
+      },
+    })
+    const title = screen.getByLabelText('Title') as HTMLInputElement
+    fireEvent.click(screen.getByRole('button', { name: 'Groundwork' }))
+    expect(title.value).toBe('Groundwork')
+    fireEvent.click(screen.getByRole('button', { name: 'Flatwork' }))
+    expect(title.value).toBe('Groundwork · Flatwork')
+    fireEvent.change(title, { target: { value: 'Pole work' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Groundwork' }))
+    expect(title.value).toBe('Pole work')
+  })
+
   it('restores a real default format on reset and submits it without touching the format group', async () => {
     const { form, props } = setup({
       mode: 'create',

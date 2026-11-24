@@ -284,6 +284,12 @@ export const en = {
       'Your language changed here, but could not be saved to your account. Try again.',
     retry: 'Save language again',
   },
+  currency: {
+    label: 'Currency',
+    description:
+      'Used for costs. It follows your country until you choose one here.',
+    saveFailed: 'Could not save your currency. Try again.',
+  },
   navigation: {
     accountPreferences: 'Preferences',
     stable: 'Stable',

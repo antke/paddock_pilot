@@ -6,11 +6,6 @@ const fileSizeFormatter = (locale: Locale) =>
     maximumFractionDigits: 1,
   })
 
-const gbpCurrencyFormatter = (locale: Locale) =>
-  new Intl.NumberFormat(displayLocales[locale], {
-    style: 'currency',
-    currency: 'GBP',
-  })
 
 export function formatFileSize(size: number, locale: Locale = 'en') {
   if (size < 1024) return `${size} B`
@@ -21,8 +16,15 @@ export function formatFileSize(size: number, locale: Locale = 'en') {
   return `${fileSizeFormatter(locale).format(size / (1024 * 1024))} MB`
 }
 
-export function formatCurrencyAmount(value: number, locale: Locale = 'en') {
-  return gbpCurrencyFormatter(locale).format(value)
+export function formatCurrencyAmount(
+  value: number,
+  locale: Locale = 'en',
+  currency = 'GBP',
+) {
+  return new Intl.NumberFormat(displayLocales[locale], {
+    style: 'currency',
+    currency,
+  }).format(value)
 }
 
 export function formatDecimal(value: number, locale: Locale = 'en') {

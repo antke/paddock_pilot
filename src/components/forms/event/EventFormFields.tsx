@@ -562,7 +562,7 @@ export function EventFormFields({
   const selectedPeople = useWatch({ control, name: 'peopleIds' }) ?? []
   const timedValue = useRef('')
   const t = useT()
-  const { locale } = useLocale()
+  const { locale, currency } = useLocale()
 
   // Only training sessions have a leader, and only a full editor sets one.
   const hasLeader = Boolean(trainingMode) && !scheduleOnly
@@ -617,6 +617,25 @@ export function EventFormFields({
   const recurring = useWatch({ control, name: 'recurring' })
   const recurrence = useWatch({ control, name: 'recurrence' })
   const { errors, submitCount } = useFormState({ control })
+  // The title follows the chosen type until someone writes their own.
+  const typeTitle =
+    eventType === 'training'
+      ? (trainingDraft?.activities ?? [])
+          .map((activity) => t(`training.activities.${activity}`))
+          .join(' · ')
+      : eventType === 'other'
+        ? ''
+        : t(`events.types.${eventType}`)
+  const lastTypeTitle = useRef(typeTitle)
+  useEffect(() => {
+    if (typeTitle === lastTypeTitle.current) return
+    if (!eventTitle.trim() || eventTitle === lastTypeTitle.current)
+      setValue('title', typeTitle, {
+        shouldDirty: true,
+        shouldValidate: Boolean(errors.title),
+      })
+    lastTypeTitle.current = typeTitle
+  }, [typeTitle, eventTitle, errors.title, setValue])
   const recurrencePreview = getRecurrencePreview(
     recurrence,
     eventDate,
@@ -637,7 +656,7 @@ export function EventFormFields({
       providerName,
       totalCost !== undefined
         ? t('eventForm.totalSummary', {
-            amount: formatCurrencyAmount(totalCost, locale),
+            amount: formatCurrencyAmount(totalCost, locale, currency),
           })
         : undefined,
     ]) || undefined

@@ -225,6 +225,7 @@ export function PersonalEventEditor({
         return add({
           ...args,
           destination,
+          listedInEvents: (!training && args.type === 'training') || undefined,
           sharedStableIds: sharedStableIds as Id<'stables'>[] | undefined,
           errorFormat: 'structured',
         })
@@ -300,7 +301,9 @@ function HorseEventDetail({
   })
   const permissions = useQuery(api.events.getPermissions, { id: eventId })
   useClaimNavigationSection(
-    data?.event.type === 'training' ? 'training' : undefined,
+    data?.event.type === 'training' && !data.event.listedInEvents
+      ? 'training'
+      : undefined,
   )
   const training = useQuery(
     api.training.listForEvent,

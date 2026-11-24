@@ -11,16 +11,21 @@ import type { ReactNode } from 'react'
 import { I18nextProvider, useTranslation } from 'react-i18next'
 import { isLocale, resolveLocale } from '../../shared/i18n/locale'
 import type { Locale } from '../../shared/i18n/locale'
+import { currencyForLanguages } from '../../shared/i18n/currency'
+import type { Currency } from '../../shared/i18n/currency'
 import { localeInstances } from './resources'
 
 export const GUEST_LOCALE_KEY = 'paddockPilot.guestLocale'
 type Account = {
   id: string
   locale?: Locale
+  currency?: Currency
   save: (locale: Locale) => Promise<unknown>
 }
 type LocaleContextValue = {
   locale: Locale
+  /** The account's choice, else the browser's country, else by language. */
+  currency: Currency
   guestLocale: Locale
   ready: boolean
   saving: boolean
@@ -30,6 +35,7 @@ type LocaleContextValue = {
 }
 const LocaleContext = createContext<LocaleContextValue>({
   locale: 'en',
+  currency: 'GBP',
   guestLocale: 'en',
   ready: true,
   saving: false,
@@ -47,6 +53,7 @@ export function LocaleProvider({
 }) {
   const [guestLocale, setGuestLocale] = useState(initialLocale)
   const [ready, setReady] = useState(false)
+  const [browserCurrency, setBrowserCurrency] = useState<Currency>()
   const [account, setAccount] = useState<Account | null>(null)
   const accountRef = useRef<Account | null>(null)
   const generation = useRef(0)
@@ -63,6 +70,7 @@ export function LocaleProvider({
       /* Private browsing. */
     }
     setGuestLocale(resolveLocale(stored, navigator.languages))
+    setBrowserCurrency(currencyForLanguages(navigator.languages))
     setReady(true)
     const onStorage = (event: StorageEvent) => {
       if (event.key === GUEST_LOCALE_KEY) {
@@ -126,12 +134,16 @@ export function LocaleProvider({
     }
   }, [])
 
+  const currency =
+    account?.currency ?? browserCurrency ?? (locale === 'pl' ? 'PLN' : 'GBP')
+
   useEffect(() => {
     document.documentElement.lang = locale
   }, [locale])
   const value = useMemo(
     () => ({
       locale,
+      currency,
       guestLocale,
       ready,
       saving,
@@ -139,7 +151,16 @@ export function LocaleProvider({
       changeLocale,
       syncAccount,
     }),
-    [locale, guestLocale, ready, saving, saveFailed, changeLocale, syncAccount],
+    [
+      locale,
+      currency,
+      guestLocale,
+      ready,
+      saving,
+      saveFailed,
+      changeLocale,
+      syncAccount,
+    ],
   )
 
   return (

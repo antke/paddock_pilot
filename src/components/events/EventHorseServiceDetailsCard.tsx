@@ -199,7 +199,7 @@ function EventHorseServiceRow({
   training?: boolean
 }) {
   const t = useT()
-  const { locale } = useLocale()
+  const { locale, currency } = useLocale()
   const [isEditing, setIsEditing] = useState(false)
   const [withdrawOpen, setWithdrawOpen] = useState(false)
   const [isWithdrawing, setIsWithdrawing] = useState(false)
@@ -429,7 +429,7 @@ function EventHorseServiceRow({
         meta={
           eventHorse.costShare !== undefined
             ? t('eventViews.cost', {
-                amount: formatCurrencyAmount(eventHorse.costShare, locale),
+                amount: formatCurrencyAmount(eventHorse.costShare, locale, currency),
               })
             : undefined
         }
