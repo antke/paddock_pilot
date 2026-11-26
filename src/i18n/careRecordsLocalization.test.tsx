@@ -64,7 +64,7 @@ it('keeps a dirty health dialog and its validation mounted while changing langua
   )
   fireEvent.change(description, { target: { value: 'Kontrola lewego kopyta' } })
   fireEvent.click(screen.getByRole('button', { name: 'Add issue' }))
-  await screen.findByText('Title must have minimum 1 character.')
+  await screen.findByText('Enter a title.')
   act(() => description.focus())
   await act(async () => changeLocale('pl'))
   await screen.findByText('Wpisz tytuł.')
@@ -88,12 +88,12 @@ it('translates a failed health submission without clearing the draft or resubmit
   fireEvent.change(title, { target: { value: 'Kontrola kopyta' } })
   fireEvent.click(screen.getByRole('button', { name: 'Add issue' }))
   await screen.findByText(
-    'Could not save this record. Your entries are still here; please try again.',
+    'Couldn’t save the record. Your entries are still here. You’re offline, so nothing changed. Reconnect and try again.',
   )
   switchLocale('pl')
   expect(
     screen.getByText(
-      'Nie udało się zapisać wpisu. Wprowadzone dane zostały zachowane. Spróbuj ponownie.',
+      'Nie udało się zapisać wpisu. Wpisane dane nadal tu są. Nie masz internetu, więc nic się nie zmieniło. Połącz się i spróbuj ponownie.',
     ),
   ).toBeTruthy()
   expect(title.value).toBe('Kontrola kopyta')
@@ -121,9 +121,7 @@ it('refreshes medication date-order validation and keeps the original dates and 
   fireEvent.click(screen.getByRole('button', { name: 'Add medication' }))
   await screen.findByText('End date cannot be before the start date.')
   switchLocale('pl')
-  await screen.findByText(
-    'Data zakończenia nie może być wcześniejsza niż data rozpoczęcia.',
-  )
+  await screen.findByText('Data końca nie może być przed datą początku.')
   expect(end.value).toBe('2026-09-28')
   fireEvent.change(end, { target: { value: '2026-10-01' } })
   fireEvent.click(screen.getByRole('button', { name: 'Dodaj lek' }))
@@ -148,15 +146,13 @@ it('keeps numeric units and draft measurements while translating range errors', 
   )
   const weight = screen.getByLabelText<HTMLInputElement>('Weight')
   fireEvent.change(weight, { target: { value: '-1' } })
-  fireEvent.click(screen.getByRole('button', { name: 'Add weight record' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Add weight' }))
   await screen.findByText('Weight must be greater than 0.')
   switchLocale('pl')
-  await screen.findByText('Masa ciała musi być większa niż 0.')
+  await screen.findByText('Wpisz masę większą niż 0.')
   expect(weight.value).toBe('-1')
   fireEvent.change(weight, { target: { value: '520.5' } })
-  fireEvent.click(
-    screen.getByRole('button', { name: 'Dodaj pomiar masy ciała' }),
-  )
+  fireEvent.click(screen.getByRole('button', { name: 'Dodaj pomiar' }))
   await waitFor(() =>
     expect(save).toHaveBeenCalledWith(
       expect.objectContaining({ weight: 520.5, unit: 'kg' }),
@@ -171,7 +167,7 @@ it('preserves multiline nutrition drafts and localizes list validation', async (
       <NutritionLogForm horse={horse} onSubmit={save} />
     </LocaleProvider>,
   )
-  fireEvent.change(screen.getByLabelText('Change summary'), {
+  fireEvent.change(screen.getByLabelText('What changed'), {
     target: { value: 'Zmiana planu' },
   })
   const list = screen.getByLabelText<HTMLTextAreaElement>(
@@ -180,9 +176,9 @@ it('preserves multiline nutrition drafts and localizes list validation', async (
   const draft = 'Moczone siano\n' + 'a'.repeat(101)
   fireEvent.change(list, { target: { value: draft } })
   fireEvent.click(screen.getByRole('button', { name: 'Add nutrition log' }))
-  await screen.findByText('List items cannot be longer than 100 characters.')
+  await screen.findByText('Use up to 100 characters per item.')
   switchLocale('pl')
-  await screen.findByText('Pozycja listy może mieć maksymalnie 100 znaków.')
+  await screen.findByText('Skróć pozycję (maks. 100 znaków).')
   expect(list.value).toBe(draft)
   expect(save).not.toHaveBeenCalled()
 })

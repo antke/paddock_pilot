@@ -16,6 +16,12 @@ it('maps known recoverable errors without exposing server diagnostics', () => {
   ).toContain('Poczekaj godzinę')
   expect(
     ownershipErrorMessage(
+      { data: 'Horse owner must belong to this stable' },
+      'en',
+    ),
+  ).toContain('join that stable first')
+  expect(
+    ownershipErrorMessage(
       new Error('Internal error at SECRET_DATABASE_URL'),
       'en',
     ),

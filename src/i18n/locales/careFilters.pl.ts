@@ -8,7 +8,7 @@ export const careFilters = {
   healthSearch: 'Szukaj problemów zdrowotnych',
   healthPlaceholder: 'Szukaj problemów zdrowotnych',
   severity: 'Nasilenie',
-  allSeverities: 'Wszystkie poziomy nasilenia',
+  allSeverities: 'Każde nasilenie',
   medicationSearch: 'Szukaj leków',
   medicationPlaceholder: 'Szukaj leków',
   nutritionSearch: 'Szukaj wpisów o żywieniu',

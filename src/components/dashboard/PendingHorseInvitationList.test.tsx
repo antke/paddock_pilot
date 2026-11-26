@@ -85,10 +85,10 @@ describe('pending horse invitation decisions', () => {
     expect(screen.getByRole('status').textContent).toContain('was approved')
     await act(async () => b.reject(new Error('Offline')))
     const error = screen.getByRole('alert')
-    expect(error.textContent).toContain('Could not decline')
+    expect(error.textContent).toContain('Couldn’t decline')
     expect(action('Decline', 1).getAttribute('aria-describedby')).toBe(error.id)
     fireEvent.click(action('Decline', 1))
-    await screen.findByText('No pending horse invitations.')
+    await screen.findByText('No invitations waiting.')
     expect(screen.getByRole('status').textContent).toContain('was declined')
     expect(decline).toHaveBeenCalledTimes(2)
   })
@@ -107,7 +107,7 @@ describe('pending horse invitation decisions', () => {
       expect(document.activeElement).toBe(action('Approve', 1)),
     )
     fireEvent.click(action('Decline', 1))
-    await screen.findByText('No pending horse invitations.')
+    await screen.findByText('No invitations waiting.')
     expect(document.activeElement).toBe(
       screen.getByRole('region', { name: 'Horse invitations' }),
     )
@@ -159,7 +159,7 @@ describe('pending horse invitation decisions', () => {
       />,
     )
     fireEvent.click(action('Decline', 0))
-    await screen.findByText('No pending horse invitations.')
+    await screen.findByText('No invitations waiting.')
     const invitedAt =
       (item.invitation.invitedAt ??
         item.invitation.updatedAt ??
@@ -197,7 +197,7 @@ describe('pending horse invitation decisions', () => {
         onDecline={vi.fn()}
       />,
     )
-    expect(screen.getByText('No pending horse invitations.')).toBeTruthy()
+    expect(screen.getByText('No invitations waiting.')).toBeTruthy()
   })
 
   it.each([
@@ -226,9 +226,7 @@ describe('pending horse invitation decisions', () => {
       target: { value: 'failure' },
     })
     fireEvent.click(action('Approve', 0))
-    await screen.findByText(
-      'Could not approve this invitation. Please try again.',
-    )
+    await screen.findByText(/^Couldn’t approve the invitation\. /)
     fireEvent.click(action('Approve', 0))
     await waitFor(() =>
       expect(screen.getByRole('status').textContent).toContain('was approved'),
@@ -237,7 +235,7 @@ describe('pending horse invitation decisions', () => {
     fireEvent.change(screen.getByLabelText('Sample invitations'), {
       target: { value: 'empty' },
     })
-    await screen.findByText('No pending horse invitations.')
+    await screen.findByText('No invitations waiting.')
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 200))
     })

@@ -8,22 +8,19 @@ export const listControls = {
   remove: 'Usuń filtr {{title}}',
   sectionViews: 'Widoki sekcji',
   showSuggestions: 'Pokaż podpowiedzi',
-  personPlaceholder: 'Wyszukaj lub wpisz imię i nazwisko',
+  personPlaceholder: 'Szukaj lub wpisz imię',
   currentPerson: '{{name}} (ja)',
   showPeopleSuggestions: 'Pokaż podpowiedzi osób',
-  peopleSuggestionsLoading:
-    'Wczytywanie osób. Możesz też wpisać imię i nazwisko.',
+  peopleSuggestionsLoading: 'Wczytujemy osoby. Możesz też wpisać imię.',
   peopleSuggestionsFailed:
     'Nie udało się wczytać osób. Nadal możesz wpisać imię i nazwisko.',
-  noPeopleSuggestions:
-    'Brak pasujących osób. Możesz wpisać inne imię i nazwisko.',
-  dashboardEmpty: 'Utwórz stajnię, aby zacząć korzystać z panelu głównego.',
+  noPeopleSuggestions: 'Brak pasujących osób. Wpisz inne imię.',
+  dashboardEmpty: 'Utwórz stajnię, żeby zacząć.',
   dashboardFailed: 'Nie udało się wczytać panelu stajni',
   dashboardFailedHelp:
-    'Sprawdź połączenie i spróbuj ponownie. Dane stajni nie zostały zmienione.',
+    'Sprawdź połączenie i spróbuj ponownie. Dane stajni są bez zmian.',
   membershipMissing: 'Nie znaleziono członkostwa',
-  membershipMissingHelp:
-    'Twoje konto nie ma aktywnego członkostwa w tej stajni.',
+  membershipMissingHelp: 'Nie jesteś aktywnym członkiem tej stajni.',
   results_one: '{{count}} wynik',
   results_few: '{{count}} wyniki',
   results_many: '{{count}} wyników',

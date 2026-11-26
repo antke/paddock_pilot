@@ -1,8 +1,8 @@
-import { ArrowRightIcon } from '@phosphor-icons/react'
+import { ListBulletsIcon } from '@phosphor-icons/react'
 import { createLink } from '@tanstack/react-router'
 import { forwardRef } from 'react'
 import type { ComponentProps } from 'react'
-import { buttonVariants } from '#/components/ui/button'
+import { PhoneShortLabel, buttonVariants } from '#/components/ui/button'
 import { cn } from '#/lib/utils'
 
 const SeeAllAnchor = forwardRef<HTMLAnchorElement, ComponentProps<'a'>>(
@@ -19,8 +19,8 @@ const SeeAllAnchor = forwardRef<HTMLAnchorElement, ComponentProps<'a'>>(
         )}
         {...props}
       >
-        {children}
-        <ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
+        <ListBulletsIcon data-icon="inline-start" aria-hidden="true" />
+        <PhoneShortLabel>{children}</PhoneShortLabel>
       </a>
     )
   },

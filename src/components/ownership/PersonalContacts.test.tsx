@@ -86,7 +86,7 @@ it('requires an explicit confirmation before deleting and retains retry inside t
   )
   const dialog = await screen.findByRole('alertdialog')
   expect(remove).not.toHaveBeenCalled()
-  expect(within(dialog).getByText(/cannot be undone/)).toBeTruthy()
+  expect(within(dialog).getByText(/You can’t undo this/)).toBeTruthy()
   fireEvent.click(
     within(dialog).getByRole('button', { name: 'Delete contact' }),
   )
@@ -110,7 +110,7 @@ it('adds from the title row, prevents duplicate saves and closes only after ackn
   )
   fireEvent.click(screen.getAllByRole('button', { name: 'Add contact' })[0])
   const form = await screen.findByRole('form', { name: 'Add a care contact' })
-  const name = within(form).getByLabelText<HTMLInputElement>('Provider name')
+  const name = within(form).getByLabelText<HTMLInputElement>('Vet or farrier')
   fireEvent.change(name, { target: { value: 'New vet' } })
   fireEvent.submit(form)
   fireEvent.submit(form)

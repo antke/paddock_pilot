@@ -111,16 +111,16 @@ describe('shared tooltip description ownership', () => {
       </TooltipProvider>,
     )
     const unavailable = screen.getByLabelText(
-      'Download unavailable: No file is attached',
+      'Download unavailable: No file attached',
     )
     expect(unavailable.tabIndex).toBe(0)
     act(() => unavailable.focus())
     const tooltip = await screen.findByRole('tooltip')
-    expect(tooltip.textContent).toContain('No file is attached')
+    expect(tooltip.textContent).toContain('No file attached')
     expect(unavailable.getAttribute('aria-describedby')).toBe(tooltip.id)
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'Download unavailable for Passport.pdf: No file is attached',
+        name: 'Download unavailable for Passport.pdf: No file attached',
       }),
     )
     expect(fetch).not.toHaveBeenCalled()

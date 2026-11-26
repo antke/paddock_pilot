@@ -12,6 +12,7 @@ import { ListFilterLayout } from '#/components/list-filtering/ListFilterLayout'
 import { useListFiltering } from '#/components/list-filtering/useListFiltering'
 import { Button, ButtonLink } from '#/components/ui/button'
 import { ScrollableList } from '#/components/ui/scrollable-list'
+import { TextToggleGroup } from '#/components/ui/text-toggle-group'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import { useSmallScreen } from '#/lib/useSmallScreen'
 import type { HorseDetailSectionProps } from './HorseDetail'
@@ -100,25 +101,15 @@ function HorseActivity({ stableId, horse, events }: HorseDetailSectionProps) {
       {mode === 'log' && (
         <div className="flex flex-wrap items-center justify-between gap-2">
           {/* A time filter, not a view: quiet text toggle so it never twins the segmented Log/Calendar. */}
-          <div
-            role="group"
-            aria-label={t('horseHistory.activityPeriod')}
-            className="-ml-2 flex items-center"
-          >
-            {(['upcoming', 'history'] as const).map((value) => (
-              <Button
-                key={value}
-                type="button"
-                variant="subtle"
-                size="sm"
-                aria-pressed={activeTab === value}
-                onClick={() => setActiveTab(value)}
-                className="px-2 text-sm font-medium decoration-2 underline-offset-[6px] hover:bg-transparent aria-pressed:font-semibold aria-pressed:text-foreground aria-pressed:underline"
-              >
-                {t(`horseHistory.${value}`)}
-              </Button>
-            ))}
-          </div>
+          <TextToggleGroup
+            label={t('horseHistory.activityPeriod')}
+            value={activeTab}
+            onChange={setActiveTab}
+            options={(['upcoming', 'history'] as const).map((value) => ({
+              value,
+              label: t(`horseHistory.${value}`),
+            }))}
+          />
           <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
             {viewControl}
             {addEvent}

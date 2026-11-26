@@ -47,9 +47,9 @@ it('translates provider choices and validation while preserving the stored type 
   expect(
     screen.getByRole('button', { name: 'Kowal' }).getAttribute('aria-pressed'),
   ).toBe('true')
-  expect(
-    screen.getByLabelText<HTMLInputElement>('Imię i nazwisko lub nazwa').value,
-  ).toBe('Łukasz Żak')
+  expect(screen.getByLabelText<HTMLInputElement>('Specjalista').value).toBe(
+    'Łukasz Żak',
+  )
   expect(save).not.toHaveBeenCalled()
   fireEvent.change(screen.getByLabelText('E-mail', { exact: true }), {
     target: { value: 'kowal@example.com' },
@@ -87,10 +87,10 @@ it('translates the stable continuation error without repeating an acknowledged c
     target: { value: 'Łódź' },
   })
   fireEvent.click(screen.getByRole('button', { name: 'Create stable' }))
-  await screen.findByText(/Your stable was created, but setup could not open/)
+  await screen.findByText(/Your stable is created, but setup didn’t open/)
   polish()
   expect(screen.getByRole('alert').textContent).toContain(
-    'Stajnia została utworzona',
+    'Stajnia jest już utworzona',
   )
   fireEvent.click(
     screen.getByRole('button', { name: 'Przejdź do konfiguracji' }),

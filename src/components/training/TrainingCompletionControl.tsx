@@ -6,7 +6,7 @@ import { useMutation } from 'convex/react'
 import { api } from 'convex/_generated/api'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
-import { getUserFacingErrorCode } from 'shared/i18n/errors'
+import { useActionErrorText } from '#/lib/actionError'
 import { cn } from '#/lib/utils'
 import { Spinner } from '#/components/ui/spinner'
 import { Button } from '#/components/ui/button'
@@ -194,6 +194,7 @@ export function CompletionCheckButton({
 }) {
   const t = useT()
   const keys = completionCopy[copy]
+  const describe = useActionErrorText()
   const submitting = useRef(false)
   const [pending, setPending] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
@@ -242,9 +243,9 @@ export function CompletionCheckButton({
             description: name,
           })
         } catch (error) {
-          const code = getUserFacingErrorCode(error)
           showAppErrorToast({
-            title: code ? t(`serverErrors.${code}`) : t(keys.failed),
+            title: t(keys.failed),
+            description: describe(error),
           })
         } finally {
           submitting.current = false

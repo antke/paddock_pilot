@@ -31,8 +31,12 @@ import { useMutation } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'
 import { useEffect, useRef, useState } from 'react'
 import type { EventHorseDetailsFormSchema } from 'shared/events/eventHorseDetailsSchema'
-import { showAppSuccessToast } from '#/components/ui/sonner'
-import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
+import { canWithdrawFromEvent } from 'shared/events/eventOpen'
+import { getUserFacingErrorCode } from 'shared/i18n/errors'
+import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
+import { useActionErrorText } from '#/lib/actionError'
+import { ActionErrorAlert } from '#/components/layout/ActionErrorAlert'
+import { UnavailableAction } from '#/components/ui/unavailable-action'
 import { EventHorseStatusBadge } from './EventBadges'
 import { EventHorseServiceDetailsForm } from './EventHorseServiceDetailsForm'
 import { formatCurrencyAmount } from '#/lib/numberDisplay'
@@ -64,12 +68,16 @@ export function EventHorseServiceDetailsCard({
   const withdrawHorse = useMutation(api.events.withdrawHorseFromEvent)
   const setOccurrenceSkip = useMutation(api.events.setOccurrenceSkip)
   const { locale } = useLocale()
+  const describe = useActionErrorText()
   if (!data.event) return null
   const event = data.event
+  const today = getTodayDateKey()
   const dateSkip =
     occurrenceDate && event.recurrence && !trainingDisclosure
       ? {
           label: formatShortDateKey(occurrenceDate, locale),
+          // A past date can't be skipped any more, but an earlier skip can still be undone.
+          open: occurrenceDate >= today,
           skipped: (horseId: string) =>
             Boolean(
               event.occurrenceSkips?.some(
@@ -83,14 +91,25 @@ export function EventHorseServiceDetailsCard({
               date: occurrenceDate,
               horseId,
               skipped,
-              today: getTodayDateKey(),
-            }),
+              today,
+            }).catch((error: unknown) =>
+              showAppErrorToast({
+                title: t(
+                  skipped
+                    ? 'eventViews.skipDateFailed'
+                    : 'eventViews.joinDateFailed',
+                  { date: formatShortDateKey(occurrenceDate, locale) },
+                ),
+                description: describe(error),
+              }),
+            ),
         }
       : undefined
 
   return (
     <EventHorseServiceDetailsView
       rows={data.rows}
+      eventClosed={!canWithdrawFromEvent(event, today)}
       trainingDisclosure={trainingDisclosure}
       dateSkip={dateSkip}
       onSave={async (rowId, values) => {
@@ -115,10 +134,13 @@ type EventHorseServiceDetailsViewProps = {
   withdrawalDescription?: string
   trainingDisclosure?: boolean
   dateSkip?: DateSkip
+  /** The event already started or is completed: Withdraw is greyed out and points to editing the event. */
+  eventClosed?: boolean
 }
 
 type DateSkip = {
   label: string
+  open: boolean
   skipped: (horseId: string) => boolean
   toggle: (horseId: Id<'horses'>, skipped: boolean) => Promise<unknown>
 }
@@ -131,6 +153,7 @@ export function EventHorseServiceDetailsView({
   withdrawalDescription,
   trainingDisclosure = false,
   dateSkip,
+  eventClosed = false,
 }: EventHorseServiceDetailsViewProps) {
   const t = useT()
   const content =
@@ -146,6 +169,7 @@ export function EventHorseServiceDetailsView({
             row={row}
             training={trainingDisclosure}
             dateSkip={dateSkip}
+            eventClosed={eventClosed}
             onSubmit={(values) => onSave(row.eventHorse._id, values)}
             onWithdraw={() => onWithdraw(row.eventHorse._id)}
             withdrawalDescription={
@@ -190,8 +214,10 @@ function EventHorseServiceRow({
   withdrawalDescription,
   training = false,
   dateSkip,
+  eventClosed,
 }: {
   dateSkip?: DateSkip
+  eventClosed: boolean
   row: EventHorseDetailRow
   onSubmit: (values: EventHorseDetailsFormSchema) => Promise<void>
   onWithdraw: () => Promise<void>
@@ -203,7 +229,7 @@ function EventHorseServiceRow({
   const [isEditing, setIsEditing] = useState(false)
   const [withdrawOpen, setWithdrawOpen] = useState(false)
   const [isWithdrawing, setIsWithdrawing] = useState(false)
-  const [withdrawError, setWithdrawError] = useState(false)
+  const [withdrawError, setWithdrawError] = useState<unknown>(null)
   const withdrawing = useRef(false)
   const editTrigger = useRef<HTMLButtonElement>(null)
   const withdrawTrigger = useRef<HTMLButtonElement>(null)
@@ -219,12 +245,12 @@ function EventHorseServiceRow({
     if (withdrawing.current) return
     withdrawing.current = true
     setIsWithdrawing(true)
-    setWithdrawError(false)
+    setWithdrawError(null)
     try {
       await onWithdraw()
       setWithdrawOpen(false)
-    } catch {
-      setWithdrawError(true)
+    } catch (error) {
+      setWithdrawError(error ?? new Error('Withdrawal failed'))
     } finally {
       withdrawing.current = false
       setIsWithdrawing(false)
@@ -232,6 +258,8 @@ function EventHorseServiceRow({
   }
 
   const { eventHorse, horse, canManage, canWithdraw } = row
+  // A page left open past the event's start: the server's refusal swaps in the same help.
+  const withdrawClosed = getUserFacingErrorCode(withdrawError) === 'eventClosed'
   const horseName = getHorseDisplayName(horse) ?? t('eventViews.unknownHorse')
   const showStatus = Boolean(
     eventHorse.status && eventHorse.status !== 'confirmed',
@@ -259,24 +287,29 @@ function EventHorseServiceRow({
       actions={
         !isEditing && (canManage || canWithdraw || showStatus) ? (
           <>
-            {canWithdraw && dateSkip && (
-              // Same size as Withdraw beside it.
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  void dateSkip.toggle(horse._id, !dateSkip.skipped(horse._id))
-                }
-              >
-                {t(
-                  dateSkip.skipped(horse._id)
-                    ? 'eventViews.joinDate'
-                    : 'eventViews.skipDate',
-                  { date: dateSkip.label },
-                )}
-              </Button>
-            )}
+            {canWithdraw &&
+              dateSkip &&
+              (dateSkip.open || dateSkip.skipped(horse._id)) && (
+                // Same size as Withdraw beside it.
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    void dateSkip.toggle(
+                      horse._id,
+                      !dateSkip.skipped(horse._id),
+                    )
+                  }
+                >
+                  {t(
+                    dateSkip.skipped(horse._id)
+                      ? 'eventViews.joinDate'
+                      : 'eventViews.skipDate',
+                    { date: dateSkip.label },
+                  )}
+                </Button>
+              )}
             {/* The status takes Withdraw's place and height, so the row keeps its shape. */}
             {showStatus && (
               <EventHorseStatusBadge
@@ -308,69 +341,98 @@ function EventHorseServiceRow({
                   {t('eventViews.addDetails')}
                 </Button>
               ))}
-            {canWithdraw && (
-              <AlertDialog
-                open={withdrawOpen}
-                onOpenChange={(open) => {
-                  if (!withdrawing.current) {
-                    setWithdrawOpen(open)
-                    if (open) setWithdrawError(false)
-                  }
-                }}
+            {canWithdraw && eventClosed ? (
+              <UnavailableAction
+                variant="outline"
+                size="sm"
+                reason={t('eventViews.withdrawClosedReason')}
               >
-                <AlertDialogTrigger
-                  render={
-                    <Button
-                      ref={withdrawTrigger}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                    />
-                  }
+                {t('eventViews.withdraw')}
+              </UnavailableAction>
+            ) : (
+              canWithdraw && (
+                <AlertDialog
+                  open={withdrawOpen}
+                  onOpenChange={(open) => {
+                    if (!withdrawing.current) {
+                      setWithdrawOpen(open)
+                      if (open) setWithdrawError(null)
+                    }
+                  }}
                 >
-                  {t('eventViews.withdraw')}
-                </AlertDialogTrigger>
-                <AlertDialogContent
-                  finalFocus={() =>
-                    withdrawTrigger.current ?? rowFocusTarget.current
-                  }
-                >
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      {getHorseDisplayName(horse)
-                        ? t('eventViews.withdrawNamed', {
-                            name: getHorseDisplayName(horse),
-                          })
-                        : t('eventViews.withdrawUnnamed')}
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {withdrawalDescription}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  {withdrawError && (
-                    <RouteStatusAlert
-                      tone="danger"
-                      title={t('eventViews.withdrawFailed')}
-                      description={t('eventViews.withdrawFailedHelp')}
-                    />
-                  )}
-                  <AlertDialogFooter>
-                    <AlertDialogCancel disabled={isWithdrawing}>
-                      {t('eventViews.keepHorse')}
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      variant="destructive"
-                      disabled={isWithdrawing}
-                      aria-busy={isWithdrawing || undefined}
-                      onClick={() => void confirmWithdrawal()}
-                    >
-                      {isWithdrawing
-                        ? t('eventViews.withdrawing')
-                        : t('eventViews.withdraw')}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                  <AlertDialogTrigger
+                    render={
+                      <Button
+                        ref={withdrawTrigger}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                      />
+                    }
+                  >
+                    {t('eventViews.withdraw')}
+                  </AlertDialogTrigger>
+                  <AlertDialogContent
+                    finalFocus={() =>
+                      withdrawTrigger.current ?? rowFocusTarget.current
+                    }
+                  >
+                    {withdrawClosed ? (
+                      <>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            {t('eventViews.withdrawClosedTitle')}
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {t('eventViews.withdrawClosedHelp')}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>
+                            {t('eventViews.withdrawClosedDismiss')}
+                          </AlertDialogCancel>
+                        </AlertDialogFooter>
+                      </>
+                    ) : (
+                      <>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            {getHorseDisplayName(horse)
+                              ? t('eventViews.withdrawNamed', {
+                                  name: getHorseDisplayName(horse),
+                                })
+                              : t('eventViews.withdrawUnnamed')}
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {withdrawalDescription}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        {withdrawError != null && (
+                          <ActionErrorAlert
+                            title={t('eventViews.withdrawFailed')}
+                            error={withdrawError}
+                          />
+                        )}
+                        <AlertDialogFooter>
+                          <AlertDialogCancel disabled={isWithdrawing}>
+                            {t('eventViews.keepHorse')}
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            variant="destructive"
+                            disabled={isWithdrawing}
+                            aria-busy={isWithdrawing || undefined}
+                            onClick={() => void confirmWithdrawal()}
+                          >
+                            {isWithdrawing
+                              ? t('eventViews.withdrawing')
+                              : t('eventViews.withdraw')}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </>
+                    )}
+                  </AlertDialogContent>
+                </AlertDialog>
+              )
             )}
           </>
         ) : undefined
@@ -429,7 +491,11 @@ function EventHorseServiceRow({
         meta={
           eventHorse.costShare !== undefined
             ? t('eventViews.cost', {
-                amount: formatCurrencyAmount(eventHorse.costShare, locale, currency),
+                amount: formatCurrencyAmount(
+                  eventHorse.costShare,
+                  locale,
+                  currency,
+                ),
               })
             : undefined
         }

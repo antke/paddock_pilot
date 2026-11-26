@@ -39,7 +39,7 @@ describe('training calendar', () => {
     expect(formatTrainingTimeRange('10:00', 40)).toBe('10:00–10:40')
     expect(formatTrainingTimeRange('10:45', 90)).toBe('10:45–12:15')
     expect(formatTrainingTimeRange('23:30', 60)).toBe('23:30–00:30 (+1 day)')
-    expect(formatTrainingTimeRange('10:00')).toBe('10:00 · End not set')
+    expect(formatTrainingTimeRange('10:00')).toBe('10:00 · no end time')
   })
   it('handles weeks across year boundaries and leap-year months', () => {
     expect(trainingWindow('2026-01-01', 'week')).toMatchObject({

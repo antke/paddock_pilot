@@ -8,7 +8,7 @@ const defaultMessages = {
   dosageRequired: 'Dosage is required.',
   dosageMax: 'Dosage cannot be longer than 100 characters.',
   shortMax: 'Please use 100 characters or fewer.',
-  noteMax: 'Please use a shorter note.',
+  noteMax: 'Use a shorter note.',
   dateInvalid: 'Use a valid date.',
   dateOrder: 'End date cannot be before the start date.',
   textInvalid: 'Enter text.',

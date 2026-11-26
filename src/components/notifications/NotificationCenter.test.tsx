@@ -67,7 +67,9 @@ it('marks only unread items and keeps failed actions recoverable', async () => {
   fireEvent.click(screen.getByRole('button', { name: /Notifications/ }))
   fireEvent.click(screen.getByRole('button', { name: 'Mark all as read' }))
   await waitFor(() =>
-    expect(screen.getByRole('alert').textContent).toContain('Could not update'),
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Couldn’t mark notifications as read. You’re offline, so nothing changed. Reconnect and try again.',
+    ),
   )
   expect(onRead).toHaveBeenCalledWith(['invite'])
   expect(screen.getByRole('link', { name: 'Review invitation' })).toBeTruthy()

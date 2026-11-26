@@ -19,7 +19,7 @@ const defaultMessages = {
   itemMin: 'List items cannot be empty.',
   itemMax: 'List items cannot be longer than 100 characters.',
   listMax: 'Use 30 items or fewer.',
-  noteMax: 'Please use a shorter note.',
+  noteMax: 'Use a shorter note.',
   shortMax: 'Please use 100 characters or fewer.',
   phoneMax: 'Please use 50 characters or fewer.',
   birthInvalid: 'Use a valid birth date.',

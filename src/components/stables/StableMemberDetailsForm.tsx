@@ -5,7 +5,8 @@ import { InlineForm } from '#/components/forms/FormLayout'
 import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
 import { Field, FieldError, FieldGrid, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
-import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
+import { showAppSuccessToast } from '#/components/ui/sonner'
+import { useActionErrorText } from '#/lib/actionError'
 import { Textarea } from '#/components/ui/textarea'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { api } from 'convex/_generated/api'
@@ -35,15 +36,11 @@ export function StableMemberDetailsForm({
   const t = useT()
 
   const updateDetails = useMutation(api.stableMembers.updateDetails)
+  // Throws on failure so the form can show why.
   const onSave = async (data: StableMemberDetailsFormSchema) => {
-    try {
-      await updateDetails({ id: member._id, ...data })
-      showAppSuccessToast({ title: t('onboarding.memberUpdated') })
-      return true
-    } catch {
-      showAppErrorToast({ title: t('onboarding.memberSaveFailed') })
-      return false
-    }
+    await updateDetails({ id: member._id, ...data })
+    showAppSuccessToast({ title: t('onboarding.memberUpdated') })
+    return true
   }
 
   return (
@@ -82,7 +79,8 @@ function MemberDetailsFields({
   const formId = useId()
   const pendingRef = useRef(false)
   const [isPending, setIsPending] = useState(false)
-  const [saveError, setSaveError] = useState(false)
+  const [saveError, setSaveError] = useState<unknown>(null)
+  const describeError = useActionErrorText()
   const form = useForm<StableMemberDetailsFormSchema>({
     resolver: zodResolver(
       createStableMemberSchemas((key) => t(`stableValidation.${key}`))
@@ -101,13 +99,13 @@ function MemberDetailsFields({
     if (pendingRef.current) return
     pendingRef.current = true
     setIsPending(true)
-    setSaveError(false)
+    setSaveError(null)
     onPendingChange?.(true)
     try {
       if (await onSave(data)) onSaved()
-      else setSaveError(true)
-    } catch {
-      setSaveError(true)
+      else setSaveError(new Error('Member save failed'))
+    } catch (error) {
+      setSaveError(error ?? new Error('Member save failed'))
     } finally {
       pendingRef.current = false
       setIsPending(false)
@@ -117,10 +115,10 @@ function MemberDetailsFields({
 
   return (
     <InlineForm gap="tight" onSubmit={form.handleSubmit(onSubmit)}>
-      {saveError && (
+      {saveError != null && (
         <Alert variant="destructive">
           <AlertDescription>
-            {t('onboarding.memberSaveFailed')}
+            {`${t('onboarding.memberSaveFailed')} ${describeError(saveError)}`}
           </AlertDescription>
         </Alert>
       )}

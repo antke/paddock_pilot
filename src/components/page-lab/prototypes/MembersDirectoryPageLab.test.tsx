@@ -50,7 +50,7 @@ describe('member directory sample', () => {
     expect(document.activeElement).not.toBe(edit)
     fireEvent.click(edit)
     const name = screen.getByRole<HTMLInputElement>('textbox', {
-      name: 'Yard display name',
+      name: 'Name at the yard',
     })
     expect(document.activeElement).toBe(name)
     fireEvent.change(name, { target: { value: 'Unsaved nickname' } })
@@ -63,7 +63,7 @@ describe('member directory sample', () => {
     )
     expect(
       screen.getByRole<HTMLInputElement>('textbox', {
-        name: 'Yard display name',
+        name: 'Name at the yard',
       }).value,
     ).toBe('Alex Morgan')
     expect(useMutation).not.toHaveBeenCalled()
@@ -77,7 +77,7 @@ describe('member directory sample', () => {
       screen.getByRole('button', { name: 'Edit your yard profile' }),
     )
     const name = screen.getByRole<HTMLInputElement>('textbox', {
-      name: 'Yard display name',
+      name: 'Name at the yard',
     })
     fireEvent.change(name, { target: { value: 'Sample new name' } })
     fireEvent.submit(name.closest('form')!)
@@ -104,7 +104,7 @@ describe('member directory sample', () => {
       { timeout: 2500 },
     )
     expect(
-      screen.queryByRole('textbox', { name: 'Yard display name' }),
+      screen.queryByRole('textbox', { name: 'Name at the yard' }),
     ).toBeNull()
     // The acknowledged view commits before its focus-restoration effect runs.
     await waitFor(() =>

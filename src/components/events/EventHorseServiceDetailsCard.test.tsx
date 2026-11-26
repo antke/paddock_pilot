@@ -10,6 +10,7 @@ import {
 } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useState } from 'react'
+import { ConvexError } from 'convex/values'
 import type { Id } from 'convex/_generated/dataModel'
 import { createDashboardLabFixtureData } from '#/components/dashboard-lab/dashboardLabFixtures'
 import { EventHorseServiceDetailsView } from './EventHorseServiceDetailsCard'
@@ -64,9 +65,7 @@ describe('Event horse service interactions', () => {
       screen.getByRole('button', { name: 'Edit details for Juniper' }),
     )
     expect(screen.getByLabelText('Before the session')).toBeTruthy()
-    expect(
-      screen.getByLabelText('Additional notes after the session'),
-    ).toBeTruthy()
+    expect(screen.getByLabelText('Notes after the session')).toBeTruthy()
   })
 
   it('returns focus to the labelled horse row when successful withdrawal removes its trigger', async () => {
@@ -172,8 +171,8 @@ describe('Event horse service interactions', () => {
         .disabled,
     ).toBe(true)
     await act(async () => first.reject(new Error('Offline')))
-    expect(screen.getByRole('alert').textContent).toContain(
-      'Your entries are still here',
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Couldn’t save the service detailsYour entries are still here. You’re offline, so nothing changed. Reconnect and try again.',
     )
     expect(notes.value).toBe('Check front shoes\nDiscuss follow-up')
     fireEvent.click(screen.getByRole('button', { name: 'Save details' }))
@@ -219,15 +218,87 @@ describe('Event horse service interactions', () => {
     fireEvent.keyDown(dialog, { key: 'Escape' })
     expect(screen.getByRole('alertdialog')).toBeTruthy()
     await act(async () => first.reject(new Error('Offline')))
-    expect(within(dialog).getByRole('alert').textContent).toContain(
-      'Could not withdraw',
-    )
+    const alert = within(dialog).getByRole('alert').textContent
+    // The alert says what failed, why, and what to do.
+    expect(alert).toContain('Couldn’t withdraw the horse')
+    expect(alert).toContain('You’re offline, so nothing changed.')
     fireEvent.click(
       within(dialog).getByRole('button', { name: 'Withdraw horse' }),
     )
     await waitFor(() => expect(withdraw).toHaveBeenCalledTimes(2))
     await act(async () => second.resolve())
     await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
+  })
+
+  it('greys out Withdraw on an event that already happened and says to edit the event instead', async () => {
+    const withdraw = vi.fn()
+    render(
+      <EventHorseServiceDetailsView
+        rows={[sampleRow()]}
+        onSave={async () => undefined}
+        onWithdraw={withdraw}
+        eventClosed
+      />,
+    )
+    const button = screen.getByRole('button', { name: 'Withdraw horse' })
+    expect(button.getAttribute('aria-disabled')).toBe('true')
+    expect(button.getAttribute('aria-describedby')).toBeTruthy()
+    expect(screen.queryByRole('dialog')).toBeNull()
+    // A tap opens the reason too, since phones have no hover.
+    fireEvent.click(button)
+    expect((await screen.findByRole('dialog')).textContent).toContain(
+      'edit the event and untick it',
+    )
+    expect(screen.queryByRole('alertdialog')).toBeNull()
+    expect(withdraw).not.toHaveBeenCalled()
+  })
+
+  it('offers Skip only from today on, but keeps undoing an earlier skip', () => {
+    const dateSkip = (open: boolean, skipped: boolean) => ({
+      label: '3 Mar',
+      open,
+      skipped: () => skipped,
+      toggle: async () => undefined,
+    })
+    const view = render(
+      <EventHorseServiceDetailsView
+        rows={[sampleRow()]}
+        onSave={async () => undefined}
+        onWithdraw={async () => undefined}
+        dateSkip={dateSkip(false, false)}
+      />,
+    )
+    expect(screen.queryByRole('button', { name: 'Skip 3 Mar' })).toBeNull()
+    view.rerender(
+      <EventHorseServiceDetailsView
+        rows={[sampleRow()]}
+        onSave={async () => undefined}
+        onWithdraw={async () => undefined}
+        dateSkip={dateSkip(false, true)}
+      />,
+    )
+    expect(screen.getByRole('button', { name: 'Join 3 Mar' })).toBeTruthy()
+  })
+
+  it('swaps in the same help when the server says the event has closed meanwhile', async () => {
+    render(
+      <EventHorseServiceDetailsView
+        rows={[sampleRow()]}
+        onSave={async () => undefined}
+        onWithdraw={() =>
+          Promise.reject(
+            new ConvexError({ code: 'eventClosed', message: 'closed' }),
+          )
+        }
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Withdraw horse' }))
+    const dialog = await screen.findByRole('alertdialog')
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: 'Withdraw horse' }),
+    )
+    await within(dialog).findByText('This event already happened')
+    expect(within(dialog).queryByRole('alert')).toBeNull()
   })
 
   it('associates validation errors with fields and allows independent editors without duplicate IDs', async () => {

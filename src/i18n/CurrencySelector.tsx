@@ -4,12 +4,14 @@ import { api } from 'convex/_generated/api'
 import { FieldLabel } from '#/components/ui/field'
 import { Select } from '#/components/ui/select'
 import { showAppErrorToast } from '#/components/ui/sonner'
+import { useActionErrorText } from '#/lib/actionError'
 import { currencies, isCurrency } from '../../shared/i18n/currency'
 import { useLocale, useT } from './LocaleProvider'
 
 export function CurrencySelector() {
   const { locale, currency } = useLocale()
   const t = useT()
+  const describeError = useActionErrorText()
   const id = useId()
   const save = useMutation(api.users.setCurrency)
   const [saving, setSaving] = useState(false)
@@ -28,8 +30,11 @@ export function CurrencySelector() {
           setSaving(true)
           try {
             await save({ currency: event.target.value })
-          } catch {
-            showAppErrorToast({ title: t('currency.saveFailed') })
+          } catch (error) {
+            showAppErrorToast({
+              title: t('currency.saveFailed'),
+              description: describeError(error),
+            })
           } finally {
             setSaving(false)
           }

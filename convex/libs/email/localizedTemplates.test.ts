@@ -56,7 +56,7 @@ describe('Polish email content', () => {
     }
     const polish = createEventDetailsChangedEmail({ ...input, locale: 'pl' })
     expect(polish.text).toContain(
-      'Zmieniono godzinę wydarzenia; Zmieniono miejsce; Legacy detail <North>',
+      'Zmieniono godzinę; Zmieniono miejsce; Legacy detail <North>',
     )
     expect(polish.html).toContain('Legacy detail &lt;North&gt;')
     const legacy = createEventDetailsChangedEmail(input)

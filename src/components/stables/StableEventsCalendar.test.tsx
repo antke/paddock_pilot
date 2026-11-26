@@ -156,7 +156,7 @@ function table() {
   return screen.getByRole('table', { name: 'August 2026 event calendar' })
 }
 function trigger() {
-  return within(table()).getByRole('button', { name: /additional events on/ })
+  return within(table()).getByRole('button', { name: /more events on/ })
 }
 function open() {
   const button = trigger()

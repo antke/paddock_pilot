@@ -176,7 +176,9 @@ describe('focused training recording', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'Save training record' }),
     )
-    await screen.findByText('Could not save training. Please try again.')
+    await screen.findByText(
+      'Couldn’t save the training record. Your entries are still here. You’re offline, so nothing changed. Reconnect and try again.',
+    )
     expect(outcome.value).toBe('Calm transitions')
     // The house submit turns into Try again after a failed save, as on every form.
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
@@ -233,7 +235,7 @@ describe('focused training recording', () => {
     ).toBeNull()
     expect(
       screen.getByText(
-        'The horse owner or stable admin can record this horse’s training.',
+        'Only this horse’s owner, an editing carer or a stable admin can log its training.',
       ),
     ).toBeTruthy()
   })

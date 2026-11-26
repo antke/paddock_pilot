@@ -11,7 +11,7 @@ import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Alert, AlertDescription } from '#/components/ui/alert'
+import { ActionErrorAlert } from '#/components/layout/ActionErrorAlert'
 
 import { DashboardItemRecordFooter } from '#/components/dashboard/DashboardItemCard'
 import {
@@ -40,7 +40,7 @@ import {
   FieldPanel,
   FieldTitle,
 } from '#/components/ui/field'
-import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
+import { showAppSuccessToast } from '#/components/ui/sonner'
 import { formatCommaList } from '#/lib/textDisplay'
 import { StableInvitationsList } from './StableInvitationsList'
 import { StableInviteForm } from './StableInviteForm'
@@ -316,33 +316,26 @@ function RemoveMemberButton(props: RemoveMemberButtonProps) {
   )
   const memberName = formatStableMemberName(member, locale)
 
+  // Throws on failure so the dialog can show why.
   const onRemove = async (reassignToUserId?: Doc<'users'>['_id']) => {
-    try {
-      const result = await removeMember({
-        id: membership._id,
-        reassignToUserId,
-      })
-      showAppSuccessToast({
-        title: t('stables.memberRemoved'),
-        description: (
-          <p>
-            {t('stables.memberAccessRemoved', {
-              name: memberName,
-              stable: stableName,
-            })}
-            {result.reassignedHorseCount > 0 &&
-              ` ${t('stables.reassigned', { count: result.reassignedHorseCount })}`}
-          </p>
-        ),
-      })
-      return true
-    } catch {
-      showAppErrorToast({
-        title: t('stables.removeMemberFailed'),
-        description: <p>{t('stables.reassignmentCheck')}</p>,
-      })
-      return false
-    }
+    const result = await removeMember({
+      id: membership._id,
+      reassignToUserId,
+    })
+    showAppSuccessToast({
+      title: t('stables.memberRemoved'),
+      description: (
+        <p>
+          {t('stables.memberAccessRemoved', {
+            name: memberName,
+            stable: stableName,
+          })}
+          {result.reassignedHorseCount > 0 &&
+            ` ${t('stables.reassigned', { count: result.reassignedHorseCount })}`}
+        </p>
+      ),
+    })
+    return true
   }
 
   return <RemoveMemberButtonView {...props} onRemove={onRemove} />
@@ -364,7 +357,7 @@ export function RemoveMemberButtonView({
   const [open, setOpen] = useState(false)
   const c = useOwnershipCopy()
   const [isRemoving, setIsRemoving] = useState(false)
-  const [removeError, setRemoveError] = useState(false)
+  const [removeError, setRemoveError] = useState<unknown>(null)
   const removeTrigger = useRef<HTMLButtonElement>(null)
   const removalAccepted = useRef(false)
   const memberName = formatStableMemberName(member, locale)
@@ -374,14 +367,14 @@ export function RemoveMemberButtonView({
     if (pendingRef.current || disabled) return
     pendingRef.current = true
     setIsRemoving(true)
-    setRemoveError(false)
+    setRemoveError(null)
     try {
       if (await onRemove(undefined)) {
         removalAccepted.current = true
         setOpen(false)
-      } else setRemoveError(true)
-    } catch {
-      setRemoveError(true)
+      } else setRemoveError(new Error('Removal failed'))
+    } catch (error) {
+      setRemoveError(error ?? new Error('Removal failed'))
     } finally {
       pendingRef.current = false
       setIsRemoving(false)
@@ -394,7 +387,7 @@ export function RemoveMemberButtonView({
       onOpenChange={(nextOpen) => {
         if (!pendingRef.current) {
           setOpen(nextOpen)
-          if (!nextOpen) setRemoveError(false)
+          if (!nextOpen) setRemoveError(null)
           else removalAccepted.current = false
         }
       }}
@@ -424,20 +417,18 @@ export function RemoveMemberButtonView({
       >
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {t('stables.remove')}
-            {memberName}?
+            {t('stables.removeMemberConfirm', { name: memberName })}
           </AlertDialogTitle>
           <AlertDialogDescription>
             {t('stables.removeMemberConsequences', { stable: stableName })}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        {removeError && (
-          <Alert variant="destructive">
-            <AlertDescription>
-              {t('stables.removeMemberFailedHelp')}
-            </AlertDescription>
-          </Alert>
+        {removeError != null && (
+          <ActionErrorAlert
+            title={t('stables.removeMemberFailed', { name: memberName })}
+            error={removeError}
+          />
         )}
         {horses.length > 0 && (
           <FieldPanel>

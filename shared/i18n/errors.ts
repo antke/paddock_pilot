@@ -18,11 +18,13 @@ export const userFacingErrorMessages = {
   trainingNotFound: 'Training session not found',
   trainingHorseUnconfirmed: 'This horse is not confirmed for this session',
   trainingPermission:
-    'Only the horse owner or stable admin can record its training',
+    'Only the horse’s owner, an editing carer or a stable admin can record its training',
   trainingOccurrence: 'Choose a scheduled occurrence of this session',
   eventDeleteBlocked:
-    'Another owner’s horse takes part in this event or has recorded history in it. Cancel it instead.',
+    'Some horses already have this in their history, or another owner’s horse takes part, so it can’t be deleted. Cancel it instead.',
   eventClosed: 'This event has already happened or was cancelled',
+  stableHasUnclaimedHorses:
+    'Some horses here still don’t have an owner. Once their owners accept your invites, or you delete those horses, you can archive the stable.',
 } as const
 export type UserFacingErrorCode = keyof typeof userFacingErrorMessages
 

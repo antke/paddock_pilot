@@ -40,7 +40,7 @@ it('distinguishes no completed training from completed sessions missing duration
     />,
   )
   expect(
-    screen.getAllByText('No completed training recorded in this period.'),
+    screen.getAllByText('No completed training in this period.'),
   ).toHaveLength(2)
   expect(screen.queryByText('Duration unknown', { exact: false })).toBeNull()
   expect(screen.queryByText(/Duration recorded for/)).toBeNull()

@@ -44,7 +44,7 @@ function setup(
     ...overrides,
   }
   const view = render(<HorseProfileForm {...props} />)
-  const name = screen.getByLabelText<HTMLInputElement>('Horse name')
+  const name = screen.getByLabelText<HTMLInputElement>('Name')
   const form = name.closest('form')!
   if (props.mode === 'create')
     fireEvent.click(
@@ -211,7 +211,7 @@ describe('horse profile lifecycle', () => {
         },
       })
       openSection(/^Care & health/)
-      for (const name of ['Sex', 'Shoeing status']) {
+      for (const name of ['Sex', 'Shoeing']) {
         const group = within(screen.getByRole('group', { name }))
         if (savedChoices)
           fireEvent.click(group.getByRole('button', { name: 'Not specified' }))
@@ -235,7 +235,7 @@ describe('horse profile lifecycle', () => {
       ownerSuggestions: ['  Alex Rider  ', 'Alex Rider', '', 'Żaneta Łącka'],
     })
     const owner = screen.getByRole<HTMLInputElement>('combobox', {
-      name: 'Owner name',
+      name: 'Owner',
     })
     expect(owner.value).toBe('')
     fireEvent.click(
@@ -261,7 +261,7 @@ describe('horse profile lifecycle', () => {
       mode: 'create',
       ownerSuggestions: ['Alex Rider'],
     })
-    const owner = screen.getByLabelText<HTMLInputElement>('Owner name')
+    const owner = screen.getByLabelText<HTMLInputElement>('Owner')
     fireEvent.change(owner, { target: { value: 'Independent owner' } })
     fireEvent.blur(owner)
     expect(owner.value).toBe('Independent owner')
@@ -433,8 +433,8 @@ describe('horse profile lifecycle', () => {
       fireEvent.submit(form)
       expect(save).toHaveBeenCalledTimes(1)
       await act(async () => mutation.reject(new Error('offline')))
-      expect(screen.getByRole('alert').textContent).toContain(
-        'Could not save this horse',
+      expect(screen.getByRole('alert').textContent).toBe(
+        'Couldn’t save the horse. Your entries and photo are still here. You’re offline, so nothing changed. Reconnect and try again.',
       )
       expect(name.value).toBe('Maple revised')
       expect(name.disabled).toBe(false)
@@ -459,7 +459,7 @@ describe('horse profile lifecycle', () => {
     const { form, imageInput, props } = setup({ uploadImage, save })
     fireEvent.change(imageInput, { target: { files: files(photo()) } })
     fireEvent.submit(form)
-    await screen.findByText(/Could not save this horse/)
+    await screen.findByText(/Couldn’t save the horse/)
     const replacement = photo('new-photo.png')
     fireEvent.change(imageInput, { target: { files: files(replacement) } })
     fireEvent.submit(form)
@@ -475,9 +475,7 @@ describe('horse profile lifecycle', () => {
     fireEvent.change(name, { target: { value: 'Maple revised' } })
     fireEvent.change(imageInput, { target: { files: files(photo()) } })
     fireEvent.submit(form)
-    expect(
-      await screen.findByText(/Could not upload the horse photo/),
-    ).toBeTruthy()
+    expect(await screen.findByText(/Couldn’t upload the photo/)).toBeTruthy()
     expect(name.value).toBe('Maple revised')
     expect(screen.getByText('maple.png')).toBeTruthy()
     expect(props.save).not.toHaveBeenCalled()
@@ -502,7 +500,7 @@ describe('horse profile lifecycle', () => {
     fireEvent.submit(form)
     expect(
       await screen.findByText(
-        /Your horse was saved, but the profile could not open/,
+        /Your horse is saved, but the profile didn’t open/,
       ),
     ).toBeTruthy()
     expect(screen.getByText('Horse saved.')).toBeTruthy()

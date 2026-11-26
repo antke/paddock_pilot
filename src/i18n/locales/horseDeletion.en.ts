@@ -1,33 +1,32 @@
 export const horseDeletion = {
   moved: 'Horse moved to deleted horses',
-  movedHelp: '{{name}} can be restored from stable settings for 14 days.',
-  moveFailed:
-    'Moving this horse was not confirmed. Please try again or cancel.',
+  movedHelp: 'You can restore {{name}} in stable settings for 14 days.',
+  moveFailed: 'Couldn’t move {{name}} to deleted horses',
   continueFailed:
-    '{{name}} was moved to deleted horses and can be restored from stable settings for 14 days. Could not continue to the next page. Retry continuing; the horse will not be moved again.',
+    '{{name}} is in deleted horses; you can restore it in stable settings for 14 days. The next page didn’t open. Try again; the horse won’t be moved twice.',
   continuing: 'Continuing…',
   moving: 'Moving…',
-  retry: 'Retry continuing',
+  retry: 'Try again',
   move: 'Move horse',
   region: '{{name}} deletion',
   delete: 'Delete horse',
-  help: 'Use the 14-day deleted horses area for recoverable mistakes. Permanent deletion cannot be undone.',
+  help: 'You can restore deleted horses for 14 days. Deleting for good can’t be undone.',
   acknowledged:
-    '{{name}} was moved to deleted horses. Restoration is available in stable settings for 14 days.',
+    '{{name}} is in deleted horses. You can restore it in stable settings for 14 days.',
   moveAction: 'Move to deleted horses',
   movedTitle: '{{name}} moved to deleted horses',
   moveQuestion: 'Move {{name}} to deleted horses?',
   confirmed:
-    'The move is confirmed. All records remain available for restoration from stable settings for 14 days.',
+    'Done. You can restore the horse and all its records in stable settings for 14 days.',
   warning:
-    'The horse disappears from daily views but all records remain available for restoration for 14 days.',
+    'The horse leaves everyday views, but you can restore it with all its records for 14 days.',
   close: 'Close',
   cancel: 'Cancel',
   deletedHorses: 'Deleted horses',
-  rosterFailed: 'The horse roster couldn’t load',
+  rosterFailed: 'Couldn’t load horses',
   rosterFailedHelp:
-    'Check your connection, then try again. Your horse records have not been changed.',
-  readOnly: 'This horse profile is read-only for you',
+    'Check your connection and try again. Nothing about your horses has changed.',
+  readOnly: 'You can view this horse, not edit it',
   readOnlyHelp:
-    'Members can edit only their own horses. The stable owner can manage every horse in the stable.',
+    'Members can edit only their own horses. The stable owner can edit every horse.',
 } as const

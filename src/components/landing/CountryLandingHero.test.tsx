@@ -15,26 +15,20 @@ describe('CountryCareExample', () => {
     const planned = screen.getByRole('button', { name: 'Planned' })
 
     expect(completed.getAttribute('aria-pressed')).toBe('true')
-    expect(
-      screen.getByText('Trim completed. Next visit to be arranged.'),
-    ).toBeTruthy()
+    expect(screen.getByText('Trim done. Next visit to book.')).toBeTruthy()
 
     fireEvent.click(planned)
 
     expect(planned.getAttribute('aria-pressed')).toBe('true')
     expect(completed.getAttribute('aria-pressed')).toBe('false')
-    expect(
-      screen.queryByText('Trim completed. Next visit to be arranged.'),
-    ).toBeNull()
+    expect(screen.queryByText('Trim done. Next visit to book.')).toBeNull()
     expect(screen.getByText('Sam Taylor, farrier.')).toBeTruthy()
     expect(screen.getByRole('heading', { name: 'Farrier visit' })).toBeTruthy()
 
     fireEvent.click(completed)
 
     expect(completed.getAttribute('aria-pressed')).toBe('true')
-    expect(
-      screen.getByText('Trim completed. Next visit to be arranged.'),
-    ).toBeTruthy()
+    expect(screen.getByText('Trim done. Next visit to book.')).toBeTruthy()
     expect(screen.getByText('Example')).toBeTruthy()
   })
 })

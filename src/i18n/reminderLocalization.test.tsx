@@ -54,14 +54,14 @@ it('preserves horse selection, typed notes and a failed save through language ch
   fireEvent.change(title, { target: { value: 'Kontrola kopyt' } })
   fireEvent.submit(title.closest('form')!)
   await screen.findByText(
-    'Nie udało się dodać przypomnienia. Wprowadzone dane zostały zachowane. Spróbuj ponownie.',
+    'Nie udało się dodać przypomnienia. Wpisane dane nadal tu są. Nie masz internetu, więc nic się nie zmieniło. Połącz się i spróbuj ponownie.',
   )
   fireEvent.change(screen.getByRole('combobox', { name: 'Język' }), {
     target: { value: 'en' },
   })
   expect(
     screen.getByText(
-      'Could not add this reminder. Your entries are still here; please try again.',
+      'Couldn’t add the reminder. Your entries are still here. You’re offline, so nothing changed. Reconnect and try again.',
     ),
   ).toBeTruthy()
   expect(save).toHaveBeenCalledTimes(1)

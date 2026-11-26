@@ -243,6 +243,7 @@ export function createInvitationSample(
             isAcceptedByViewer:
               scenario === 'accepted' || scenario === 'legacy',
             isDeclinedByViewer: scenario === 'declined',
+            hasLeftStable: false,
           },
   }
 }

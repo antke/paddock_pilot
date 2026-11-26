@@ -15,12 +15,12 @@ export const calendar = {
 
   horseColours: 'Kolory koni',
   horseColoursHelp:
-    'Kropki oznaczają konie, nie ukończone treningi. Wybierz dzień, aby zobaczyć nazwy i szczegóły. +N oznacza dodatkowe konie.',
+    'Kropki to konie, a nie odbyte treningi. Wybierz dzień, żeby zobaczyć imiona i szczegóły. +N to kolejne konie.',
   generalEvent: 'Bez konia',
   colourInUse: 'W użyciu',
   colourField: 'Kolor w kalendarzu',
   colourFieldHelp:
-    'Wspólny dla wszystkich osób mających dostęp do konia. Używany w wydarzeniach i treningach.',
+    'Widzi go każdy, kto ma dostęp do konia, w wydarzeniach i treningach.',
   colourUsed: 'Używany również przez: {{names}}.',
   horseNames: 'Konie: {{names}}',
   daySessions: 'Treningi w dniu {{date}}',
@@ -43,7 +43,7 @@ export const calendar = {
   today: 'Dzisiaj',
   next: 'Następny',
   agenda: 'Plan miesiąca',
-  empty: 'W tym miesiącu nie zaplanowano wydarzeń.',
+  empty: 'W tym miesiącu nic nie zaplanowano.',
   dayEmpty: 'Brak wydarzeń w tym dniu.',
   chooseDay: 'Wybierz dzień: {{month}}',
   selectDay_one: '{{date}}, {{count}} wydarzenie',
@@ -68,7 +68,7 @@ export const calendar = {
   withdrawn: 'Wycofano',
   event: 'Wydarzenie',
   noUpcoming: 'Brak nadchodzących wydarzeń.',
-  addEventHelp: 'Dodaj wydarzenie, aby rozpocząć planowanie w tej stajni.',
+  addEventHelp: 'Dodaj wydarzenie, żeby zacząć plan stajni.',
   nextEvents: 'Najbliższe wydarzenia',
   nextEventsHelp: 'Najbliższe zaplanowane pozycje: {{count}}.',
   monthCount_one: '{{count}} wydarzenie w tym miesiącu',

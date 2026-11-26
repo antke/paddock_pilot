@@ -1975,8 +1975,9 @@ function FeedbackOverlaySpecimen({
               variant="ghost"
               onClick={() =>
                 showAppErrorToast({
-                  title: 'Could not save record',
-                  description: 'Review the form and try again.',
+                  title: 'Couldn’t save the weight',
+                  description:
+                    'You’re offline, so nothing changed. Reconnect and try again.',
                 })
               }
             >

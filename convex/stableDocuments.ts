@@ -8,7 +8,10 @@ import { sharedStableRecords } from './libs/sharedStableRecords'
 import { creationReplay, recordCreation } from './libs/creationRequests'
 import { getHorseDisplayName } from '../shared/horses/horseDisplayName'
 import { ConvexError, v } from 'convex/values'
-import { stableDocumentInputSchema } from '../shared/stables/stableDocumentSchema'
+import {
+  maxDocumentBytes,
+  stableDocumentInputSchema,
+} from '../shared/stables/stableDocumentSchema'
 import { stableDocumentType } from './schema'
 import type { Doc } from './_generated/dataModel'
 import type { MutationCtx, QueryCtx } from './_generated/server'
@@ -175,7 +178,7 @@ export const add = mutation({
         args.storageId,
       )
       if (
-        metadata.size > 25 * 1024 * 1024 ||
+        metadata.size > maxDocumentBytes ||
         (args.size !== undefined && metadata.size !== args.size) ||
         (args.contentType && metadata.contentType !== args.contentType)
       )

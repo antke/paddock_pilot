@@ -1,5 +1,6 @@
 import type { Locale } from 'shared/i18n/locale'
 import { useLocale } from '#/i18n/LocaleProvider'
+import { useActionErrorText } from '#/lib/actionError'
 
 const messages = {
   en: {
@@ -24,8 +25,7 @@ const messages = {
       'Enter a contact name of up to 120 characters and a phone number of up to 50 characters.',
     contactMissing:
       'This contact is no longer available. Return to the contact list and choose another.',
-    stable:
-      'Join the destination stable before connecting your horse. Ask its administrator for an invitation.',
+    stable: 'You need to join that stable first. Ask its admin to invite you.',
     different: 'Choose a stable other than the horse’s current stable.',
     age: 'Enter the horse’s name and an age between 0 and 100.',
   },
@@ -52,7 +52,7 @@ const messages = {
     contactMissing:
       'Ten kontakt nie jest już dostępny. Wróć do listy kontaktów i wybierz inny.',
     stable:
-      'Dołącz do docelowej stajni, zanim połączysz z nią konia. Poproś administratora o zaproszenie.',
+      'Najpierw musisz dołączyć do tej stajni. Poproś jej administratora o zaproszenie.',
     different: 'Wybierz stajnię inną niż obecna stajnia konia.',
     age: 'Wpisz imię konia i wiek od 0 do 100 lat.',
   },
@@ -95,14 +95,23 @@ export function ownershipErrorMessage(error: unknown, locale: Locale) {
   if (raw.includes('valid age')) return c.age
   if (raw.includes('Horse is unavailable') || raw.includes('Horse not found'))
     return c.horse
-  if (raw.includes('participant') || raw.includes('member of this stable'))
+  if (
+    raw.includes('participant') ||
+    raw.includes('member of this stable') ||
+    raw.includes('must belong to this stable')
+  )
     return c.stable
   if (raw.includes('Not authorized') || raw.includes('Only the'))
     return c.permission
   return c.fallback
 }
 
+/** "What failed" then why: a known ownership rule, else the general cause. */
 export function useOwnershipErrorMessage() {
   const { locale } = useLocale()
-  return (error: unknown) => ownershipErrorMessage(error, locale)
+  const describe = useActionErrorText()
+  return (what: string, error: unknown) => {
+    const known = ownershipErrorMessage(error, locale)
+    return `${what} ${known === messages[locale].fallback ? describe(error) : known}`
+  }
 }

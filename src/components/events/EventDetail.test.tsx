@@ -104,7 +104,7 @@ it('lets a manager tick off a started single event from the header', async () =>
   expect(
     screen.getByRole('button', { name: 'Mark complete: Schooling' }),
   ).toBeTruthy()
-  expect(screen.queryByRole('link', { name: 'Change status' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Change status' })).toBeNull()
 })
 
 it('keeps Change status for series, future and cancelled events', async () => {
@@ -115,7 +115,7 @@ it('keeps Change status for series, future and cancelled events', async () => {
   ] as Array<Partial<Doc<'events'>>>) {
     await mount({ type: 'hoof_trimming', horseIds: [], ...event }, true)
     expect(screen.queryByRole('button', { name: /Mark complete/ })).toBeNull()
-    expect(screen.getByRole('link', { name: 'Change status' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Change status' })).toBeTruthy()
     cleanup()
   }
 })

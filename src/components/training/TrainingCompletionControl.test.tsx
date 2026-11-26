@@ -171,7 +171,10 @@ it('prevents duplicate submissions, keeps failure recoverable, and offers undo a
   expect(mocks.save).toHaveBeenCalledTimes(1)
   expect(button.getAttribute('aria-busy')).toBe('true')
   await act(async () => reject(new Error('offline')))
-  expect(mocks.error).toHaveBeenCalled()
+  expect(mocks.error).toHaveBeenCalledWith({
+    title: 'Couldn’t save the training session',
+    description: 'You’re offline, so nothing changed. Reconnect and try again.',
+  })
   expect(button.getAttribute('aria-pressed')).toBe('false')
   expect(button.hasAttribute('disabled')).toBe(false)
   fireEvent.click(button)

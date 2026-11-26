@@ -126,7 +126,8 @@ function ConnectedInvitation({
       />
       {preview.state === 'found' &&
       preview.status === 'accepted' &&
-      preview.viewer?.isAcceptedByViewer ? (
+      preview.viewer?.isAcceptedByViewer &&
+      !preview.viewer.hasLeftStable ? (
         <ExistingHorseSharing stableId={preview.stableId} />
       ) : null}
     </>

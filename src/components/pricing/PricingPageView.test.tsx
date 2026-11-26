@@ -59,7 +59,7 @@ describe('pricing states and local return', () => {
     await show(false, '//example.com')
     expect(await screen.findByText('Testing access')).toBeTruthy()
     expect(
-      screen.queryByRole('link', { name: 'Return to invitation' }),
+      screen.queryByRole('link', { name: 'Back to invitation' }),
     ).toBeNull()
     cleanup()
     await show(true, '/invitations/sample-token')
@@ -68,7 +68,7 @@ describe('pricing states and local return', () => {
     expect(screen.queryByText(/Testers can use every current/)).toBeNull()
     expect(
       screen
-        .getByRole('link', { name: 'Return to invitation' })
+        .getByRole('link', { name: 'Back to invitation' })
         .getAttribute('href'),
     ).toBe('/invitations/sample-token')
     fireEvent.click(screen.getByRole('button', { name: 'Retry loading plans' }))

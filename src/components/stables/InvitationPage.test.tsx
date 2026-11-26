@@ -31,6 +31,7 @@ const state = vi.hoisted(() => ({
       hasEmail: true,
       isAcceptedByViewer: false,
       isDeclinedByViewer: false,
+      hasLeftStable: false,
     },
   },
   accept: vi.fn(),
@@ -102,6 +103,7 @@ beforeEach(() => {
     hasEmail: true,
     isAcceptedByViewer: false,
     isDeclinedByViewer: false,
+    hasLeftStable: false,
   }
   state.accept.mockReset().mockResolvedValue({ stableId: 'yard-id' })
   state.decline.mockReset().mockResolvedValue(undefined)
@@ -240,7 +242,7 @@ describe('invitation response page', () => {
     fireEvent.change(input, { target: { value: '012345' } })
     fireEvent.click(screen.getByRole('button', { name: 'Verify email' }))
     expect((await screen.findByRole('alert')).textContent).toContain(
-      'couldn’t verify',
+      'didn’t work',
     )
     expect(input.value).toBe('012345')
     expect(state.sync).not.toHaveBeenCalled()
@@ -262,8 +264,8 @@ describe('invitation response page', () => {
       { target: { value: '012345' } },
     )
     fireEvent.click(screen.getByRole('button', { name: 'Verify email' }))
-    expect((await screen.findByRole('alert')).textContent).toContain(
-      'couldn’t refresh',
+    expect((await screen.findByRole('alert')).textContent).toBe(
+      'Couldn’t refresh your account. You’re offline, so nothing changed. Reconnect and try again.',
     )
     expect(screen.queryByRole('textbox')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Refresh account' }))

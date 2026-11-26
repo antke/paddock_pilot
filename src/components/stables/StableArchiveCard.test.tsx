@@ -38,9 +38,9 @@ describe('Stable archive confirmation', () => {
     expect(screen.getByRole('alertdialog')).toBe(dialog)
     expect(archive).toHaveBeenCalledTimes(1)
     await act(async () => reject(new Error('Offline')))
-    expect(within(dialog).getByRole('alert').textContent).toContain(
-      'Archiving was not confirmed',
-    )
+    const alert = within(dialog).getByRole('alert').textContent
+    expect(alert).toContain('Couldn’t archive the stable')
+    expect(alert).toContain('You’re offline, so nothing changed.')
     fireEvent.click(
       within(dialog).getByRole('button', { name: 'Archive stable' }),
     )

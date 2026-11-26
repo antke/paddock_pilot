@@ -17,14 +17,16 @@ describe('care reminder list query filters', () => {
     if (!horseValue) throw new Error('Missing horse filter option')
 
     expect(
-      getCareReminderListQueryArgs({
-        query: '  vaccine  ',
-        facets: {
-          horse: horseValue,
-          state: 'completed',
-          category: 'vet',
+      getCareReminderListQueryArgs(
+        {
+          query: '  vaccine  ',
+          facets: {
+            horse: horseValue,
+            category: 'vet',
+          },
         },
-      }),
+        'completed',
+      ),
     ).toEqual({
       searchQuery: 'vaccine',
       horseId: 'horse-1',
@@ -34,7 +36,7 @@ describe('care reminder list query filters', () => {
     })
   })
 
-  it('maps stable-wide and overdue filters', () => {
+  it('maps the stable-wide filter and leaves All unscoped by status', () => {
     const config = createCareReminderListFilterConfig([])
     const stableWideValue = config.facets.find((facet) => facet.id === 'horse')
       ?.options[0]?.value
@@ -45,14 +47,13 @@ describe('care reminder list query filters', () => {
         query: '',
         facets: {
           horse: stableWideValue,
-          state: 'overdue',
         },
       }),
     ).toEqual({
       searchQuery: undefined,
       horseId: undefined,
       stableWideOnly: true,
-      state: 'overdue',
+      state: undefined,
       category: undefined,
     })
   })

@@ -156,9 +156,7 @@ it('keeps the same editable input and draft through loading and request failure'
   fireEvent.change(input, { target: { value: 'Guest rider' } })
   people.query.mockReturnValue({ people: new Error('offline') })
   view.rerender(<NameHarness />)
-  await screen.findByText(
-    'People could not be loaded. You can still enter a name.',
-  )
+  await screen.findByText('Couldn’t load people. You can still enter a name.')
   expect(screen.getByRole('combobox', { name: 'Person' })).toBe(input)
   expect(input.value).toBe('Guest rider')
   fireEvent.blur(input)

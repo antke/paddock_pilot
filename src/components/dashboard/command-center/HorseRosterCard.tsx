@@ -3,7 +3,7 @@ import { SeeAllLink } from './SeeAllLink'
 import { HorseAvatar } from '#/components/horses/HorseAvatar'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT } from '#/i18n/LocaleProvider'
-import { ButtonLink } from '#/components/ui/button'
+import { ButtonLink, PhoneShortLabel } from '#/components/ui/button'
 import { HorseCard, HorseCardLink } from '#/components/horses/HorseCard'
 import { NoHorsesPrompt } from '#/components/horses/NoHorsesPrompt'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
@@ -63,7 +63,7 @@ export function HorseRosterCard({
               size="sm"
               className="min-h-11"
             >
-              {t('dashboard.addHorse')}
+              <PhoneShortLabel>{t('dashboard.addHorse')}</PhoneShortLabel>
             </ButtonLink>
           )}
         </>

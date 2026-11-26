@@ -6,7 +6,7 @@ import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardItemRecordCard } from '#/components/dashboard/DashboardItemCard'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
-import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
+import { ActionErrorAlert } from '#/components/layout/ActionErrorAlert'
 import { Button } from '#/components/ui/button'
 import { EditActionButton } from '#/components/ui/edit-action'
 import {
@@ -237,12 +237,12 @@ export function StableProviderRemoveAction({
   const [localOpen, setLocalOpen] = useState(false)
   const open = controlledOpen ?? localOpen
   const setOpen = (value: boolean) => {
-    if (!value) setFailed(false)
+    if (!value) setRemoveError(null)
     setLocalOpen(value)
     onOpenChange?.(value)
   }
   const [pending, setPending] = useState(false)
-  const [failed, setFailed] = useState(false)
+  const [removeError, setRemoveError] = useState<unknown>(null)
   const removing = useRef(false)
   const trigger = useRef<HTMLButtonElement>(null)
   const busy = pending || isRemoving
@@ -250,13 +250,13 @@ export function StableProviderRemoveAction({
     if (removing.current || isRemoving) return
     removing.current = true
     setPending(true)
-    setFailed(false)
+    setRemoveError(null)
     try {
       const removed = await onRemove()
       if (removed) setOpen(false)
-      else setFailed(true)
-    } catch {
-      setFailed(true)
+      else setRemoveError(new Error('Provider removal failed'))
+    } catch (error) {
+      setRemoveError(error ?? new Error('Provider removal failed'))
     } finally {
       removing.current = false
       setPending(false)
@@ -268,7 +268,7 @@ export function StableProviderRemoveAction({
       onOpenChange={(nextOpen) => {
         if (!removing.current && !isRemoving) {
           setOpen(nextOpen)
-          if (nextOpen) setFailed(false)
+          if (nextOpen) setRemoveError(null)
         }
       }}
     >
@@ -305,11 +305,10 @@ export function StableProviderRemoveAction({
             {t('stables.removeProviderHelp')}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        {failed && (
-          <RouteStatusAlert
-            tone="danger"
+        {removeError != null && (
+          <ActionErrorAlert
             title={t('stables.removeProviderFailed')}
-            description={t('stables.removeNotConfirmed')}
+            error={removeError}
           />
         )}
         <AlertDialogFooter>

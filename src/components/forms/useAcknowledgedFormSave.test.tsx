@@ -16,7 +16,10 @@ it('preserves failure classification and permits a later unacknowledged save', a
   )
   await act(async () => result.current.submit({ name: 'Draft' }))
   expect(result.current.errorKind).toBe('save')
-  expect(result.current.error).toBe('Save failed')
+  // The cause follows what failed; the raw message stays private.
+  expect(result.current.error).toBe(
+    'Save failed Something went wrong on our side and nothing changed. Try again in a moment.',
+  )
   expect(result.current.acknowledged).toBe(false)
   await act(async () => result.current.submit({ name: 'Draft' }))
   expect(save).toHaveBeenCalledTimes(2)

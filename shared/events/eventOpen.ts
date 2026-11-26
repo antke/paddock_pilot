@@ -10,3 +10,13 @@ export function isEventOpen(
   const end = event.recurrence.end
   return end?.type !== 'on_date' || end.date >= today
 }
+
+/** Withdrawal ends participation from today, so a one-off event must not have started and nothing can leave a completed one. */
+export function canWithdrawFromEvent(
+  event: Pick<Doc<'events'>, 'status' | 'date' | 'recurrence'>,
+  today: string,
+) {
+  return (
+    event.status !== 'completed' && (!!event.recurrence || event.date >= today)
+  )
+}

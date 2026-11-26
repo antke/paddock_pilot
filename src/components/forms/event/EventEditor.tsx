@@ -16,7 +16,6 @@ import type { api } from 'convex/_generated/api'
 import { createRequestId } from '#/lib/createRequestId'
 import { ScheduledTrainingChoices } from '#/components/sharing/ScheduledTrainingChoices'
 import { NewRecordAudience } from '#/components/sharing/RecordAudience'
-import { getUserFacingErrorCode } from 'shared/i18n/errors'
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { createEventSchemas } from 'shared/events/eventSchema'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
@@ -257,16 +256,6 @@ export function EventEditor({
   useLocalizedValidation(form)
   const saved = useRef(false)
   const save = useAcknowledgedFormSave({
-    formatSaveError: (error) => {
-      const code = getUserFacingErrorCode(error)
-      return code
-        ? t(`serverErrors.${code}`)
-        : t(
-            isTraining
-              ? 'eventEditor.trainingSaveFailed'
-              : 'eventEditor.eventSaveFailed',
-          )
-    },
     save: (values: EventFormSchema) =>
       onSave(
         mode === 'create'

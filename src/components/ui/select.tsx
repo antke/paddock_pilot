@@ -8,14 +8,14 @@ function Select({ className, ...props }: React.ComponentProps<'select'>) {
       <select
         data-slot="select"
         className={cn(
-          'app-control app-control-focus app-control-invalid cursor-pointer appearance-none py-1.5 pr-9',
+          'app-control app-control-focus app-control-invalid cursor-pointer appearance-none py-1.5 pr-9 max-md:pr-10 pointer-coarse:pr-10',
           className,
         )}
         {...props}
       />
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute top-1/2 right-1 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent text-foreground/80 transition-[background-color,color,transform] duration-150 group-hover/select:bg-surface-muted group-hover/select:text-foreground motion-safe:group-active/select:scale-95 group-active/select:bg-surface-muted motion-reduce:transition-none"
+        className="pointer-events-none absolute top-1/2 right-1 flex size-8 max-md:right-1.5 pointer-coarse:right-1.5 -translate-y-1/2 items-center justify-center rounded-full bg-transparent text-foreground/80 transition-[background-color,color,transform] duration-150 group-hover/select:bg-surface-muted group-hover/select:text-foreground motion-safe:group-active/select:scale-95 group-active/select:bg-surface-muted motion-reduce:transition-none"
       >
         <svg
           className="size-4"

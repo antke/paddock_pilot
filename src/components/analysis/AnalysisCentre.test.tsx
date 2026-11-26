@@ -164,13 +164,13 @@ describe('actual analysis view', () => {
         .getAttribute('aria-pressed'),
     ).toBe('true')
     const region = screen.getByRole('region', {
-      name: 'Care records in selected period',
+      name: 'Care records in this period',
     })
     expect(region.tabIndex).toBe(0)
     expect(within(region).getByText('Sample reminder record 10')).toBeTruthy()
     expect(
       screen.getByText(
-        /Event filters apply to the chart, counts and appointment list/,
+        /Filters apply to the chart, counts and appointment list/,
       ),
     ).toBeTruthy()
     fireEvent.click(screen.getByRole('checkbox', { name: 'Vet' }))
@@ -182,12 +182,10 @@ describe('actual analysis view', () => {
     ).toBeTruthy()
     expect(
       screen.queryByRole('region', {
-        name: 'Filtered appointments in selected period',
+        name: 'Filtered appointments in this period',
       }),
     ).toBeNull()
-    expect(
-      screen.getByText(/Select an appointment to open its event page/),
-    ).toBeTruthy()
+    expect(screen.getByText(/Pick an appointment to open it/)).toBeTruthy()
     fireEvent.click(within(scale).getByRole('button', { name: 'Week' }))
     expect(
       within(scale)
@@ -205,7 +203,7 @@ describe('actual analysis view', () => {
       name: 'What changed across the yard?',
     })
     const activity = screen.getByRole('heading', {
-      name: 'Activity through the period',
+      name: 'Activity',
     })
     expect(
       overview.compareDocumentPosition(activity) &

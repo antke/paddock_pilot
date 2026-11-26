@@ -6,7 +6,7 @@ import {
   DetailReferenceGroup,
 } from '#/components/dashboard/DetailReference'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
-import { useState } from 'react'
+import { useDeferredValue, useState } from 'react'
 import type { ReactNode } from 'react'
 import { HorseCareRemindersCard } from '../reminders/HorseCareRemindersCard'
 import type { HorseDetailSectionProps } from './HorseDetail'
@@ -61,6 +61,8 @@ export function HorseCareSection({
 
   const [localTab, setLocalTab] = useState<CareTab>('reminders')
   const activeTab = controlledTab ?? localTab
+  // The old tab stays until the new one's data arrives, instead of suspending the page.
+  const shownTab = useDeferredValue(activeTab)
   const [headerAction, setHeaderAction] = useState<ReactNode>(null)
 
   const hasContacts = Boolean(
@@ -141,7 +143,7 @@ export function HorseCareSection({
         }}
         actions={headerAction}
       >
-        {activeTab === 'reminders' &&
+        {shownTab === 'reminders' &&
           (renderReminders ? (
             renderReminders(setHeaderAction)
           ) : (
@@ -150,7 +152,7 @@ export function HorseCareSection({
               onCreateActionChange={setHeaderAction}
             />
           ))}
-        {activeTab === 'health' &&
+        {shownTab === 'health' &&
           (renderHealthIssues ? (
             renderHealthIssues(setHeaderAction)
           ) : (
@@ -159,7 +161,7 @@ export function HorseCareSection({
               onCreateActionChange={setHeaderAction}
             />
           ))}
-        {activeTab === 'medication' &&
+        {shownTab === 'medication' &&
           (renderMedication ? (
             renderMedication(setHeaderAction)
           ) : (

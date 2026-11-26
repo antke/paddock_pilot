@@ -85,7 +85,7 @@ describe('actual weight and nutrition sample views', () => {
     expect(screen.getByRole('dialog')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Close' })).toBeNull()
     await screen.findByText(
-      'Could not add this weight record. Your measurement is still here. Please try again.',
+      /^Couldn’t add the weight\. Your measurement is still here\. /,
     )
     expect(input.value).toBe('512')
     fireEvent.submit(input.closest('form')!)
@@ -101,9 +101,7 @@ describe('actual weight and nutrition sample views', () => {
       await screen.findByRole('button', { name: 'Remove record' }),
     )
     await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
-    expect(
-      screen.getByText('No weight records have been added for this horse yet.'),
-    ).toBeTruthy()
+    expect(screen.getByText('No weights recorded yet.')).toBeTruthy()
     await waitFor(() =>
       expect(document.activeElement).toBe(
         screen.getByRole('group', { name: 'Weight records' }),
@@ -123,9 +121,9 @@ describe('actual weight and nutrition sample views', () => {
     fireEvent.click(
       screen.getAllByRole('button', { name: 'Add nutrition log' })[0],
     )
-    const summary = await screen.findByLabelText('Change summary')
+    const summary = await screen.findByLabelText('What changed')
     fireEvent.change(summary, { target: { value: 'Sample historical entry' } })
-    fireEvent.change(screen.getByLabelText('Feeding routine snapshot'), {
+    fireEvent.change(screen.getByLabelText('Routine after the change'), {
       target: { value: 'A different historical routine' },
     })
     fireEvent.change(screen.getByLabelText('Recommended after change'), {
@@ -155,7 +153,7 @@ describe('actual weight and nutrition sample views', () => {
     fireEvent.click(
       screen.getAllByRole('button', { name: 'Add nutrition log' })[0],
     )
-    const summary = await screen.findByLabelText('Change summary')
+    const summary = await screen.findByLabelText('What changed')
     fireEvent.change(summary, { target: { value: 'Old horse late entry' } })
     fireEvent.submit(summary.closest('form')!)
     await screen.findByRole('button', { name: 'Adding...' })

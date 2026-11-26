@@ -1,9 +1,12 @@
 import {
   isOnlyOutstandingFilter,
   createCareReminderListFilterConfig,
+  matchesStatusView,
 } from './careReminderListFilters'
+import type { CareReminderStatusView } from './careReminderListFilters'
+import { CareReminderStatusToggle } from './CareReminderStatusToggle'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { ComponentProps } from 'react'
 
 import {
@@ -33,10 +36,10 @@ export function FilterableCareRemindersCard({
     () => createCareReminderListFilterConfig(horseOptions ?? [], locale),
     [horseOptions, locale],
   )
+  const [view, setView] = useState<CareReminderStatusView>('pending')
   const filtering = useListFiltering({
-    items: reminders,
+    items: reminders.filter((item) => matchesStatusView(item, view)),
     config: filterConfig,
-    initialFacets: { state: 'pending' },
   })
 
   const View = pageLayout ? StableRemindersPageView : CareRemindersCard
@@ -50,7 +53,7 @@ export function FilterableCareRemindersCard({
       reminders={filtering.items}
       horseOptions={horseOptions}
       emptyMessage={
-        isOnlyOutstandingFilter({
+        isOnlyOutstandingFilter(view, {
           query: filtering.query,
           facets: filtering.selectedFacets,
         })
@@ -62,12 +65,17 @@ export function FilterableCareRemindersCard({
             })
       }
       listToolbar={
-        <ListFilterControls
-          config={filterConfig}
-          filtering={filtering}
-          sticky={pageLayout}
-          hideWhenEmpty={!pageLayout}
-        />
+        <>
+          <ListFilterControls
+            config={filterConfig}
+            filtering={filtering}
+            sticky={pageLayout}
+            hideWhenEmpty={!pageLayout}
+          />
+          {(pageLayout || reminders.length > 0) && (
+            <CareReminderStatusToggle value={view} onChange={setView} />
+          )}
+        </>
       }
     />
   )

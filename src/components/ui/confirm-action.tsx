@@ -12,6 +12,7 @@ import {
   AlertDialogTrigger,
 } from '#/components/ui/alert-dialog'
 import { Button } from '#/components/ui/button'
+import { ActionErrorAlert } from '#/components/layout/ActionErrorAlert'
 
 /** A button that asks before doing something people cannot undo themselves. */
 export function ConfirmActionButton({
@@ -29,22 +30,23 @@ export function ConfirmActionButton({
   description: string
   confirmLabel?: string
   cancelLabel: string
+  /** What failed, e.g. "Couldn’t leave the stable"; the cause follows it. */
   failedLabel: string
   onConfirm: () => Promise<unknown>
   size?: ComponentProps<typeof Button>['size']
 }) {
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [failed, setFailed] = useState(false)
+  const [failure, setFailure] = useState<unknown>(null)
   const confirm = async () => {
     if (busy) return
     setBusy(true)
-    setFailed(false)
+    setFailure(null)
     try {
       await onConfirm()
       setOpen(false)
-    } catch {
-      setFailed(true)
+    } catch (error) {
+      setFailure(error ?? new Error('Action failed'))
     } finally {
       setBusy(false)
     }
@@ -55,7 +57,7 @@ export function ConfirmActionButton({
       onOpenChange={(next) => {
         if (busy) return
         setOpen(next)
-        if (next) setFailed(false)
+        if (next) setFailure(null)
       }}
     >
       <AlertDialogTrigger
@@ -68,10 +70,8 @@ export function ConfirmActionButton({
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
-        {failed && (
-          <p role="alert" className="text-sm text-destructive">
-            {failedLabel}
-          </p>
+        {failure != null && (
+          <ActionErrorAlert title={failedLabel} error={failure} />
         )}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={busy}>{cancelLabel}</AlertDialogCancel>

@@ -110,7 +110,7 @@ describe('DocumentsPageLab actual local interactions', () => {
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
     expect(screen.getByRole('dialog')).toBeTruthy()
     await screen.findByText(
-      'Could not add this document. Your file and details are still here. Please try again.',
+      /^Couldn’t add the document\. Your file and details are still here\. /,
     )
     expect(name.value).toBe('local-sample.txt')
     expect(createUrl).toHaveBeenCalledTimes(4)
@@ -132,7 +132,7 @@ describe('DocumentsPageLab actual local interactions', () => {
     )
     fireEvent.keyDown(screen.getByRole('alertdialog'), { key: 'Escape' })
     expect(screen.getByRole('alertdialog')).toBeTruthy()
-    await screen.findByText('Could not remove this record. Please try again.')
+    await screen.findByText('Couldn’t remove this record')
     fireEvent.click(screen.getByRole('button', { name: 'Remove document' }))
     await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
     expect(

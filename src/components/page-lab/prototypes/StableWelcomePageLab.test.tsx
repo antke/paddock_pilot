@@ -52,11 +52,11 @@ describe('stable welcome sample', () => {
       '4',
     )
     expect(
-      screen.getByRole('listitem', { name: 'Add the first horse: Complete' }),
+      screen.getByRole('listitem', { name: 'Add the first horse: Done' }),
     ).toBeTruthy()
     expect(
       screen.getByRole('listitem', {
-        name: 'Invite the first member: Not complete',
+        name: 'Invite the first member: Not done',
       }),
     ).toBeTruthy()
     fireEvent.change(screen.getByLabelText('Sample welcome state'), {
@@ -108,7 +108,7 @@ describe('stable welcome sample', () => {
     )
     expect(
       screen.getByRole('listitem', {
-        name: 'Complete your yard profile: Complete',
+        name: 'Finish your yard profile: Done',
       }),
     ).toBeTruthy()
     expect(screen.queryByLabelText('Phone', { exact: true })).toBeNull()

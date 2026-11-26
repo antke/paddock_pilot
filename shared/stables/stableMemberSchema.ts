@@ -1,9 +1,9 @@
 import z from 'zod'
 
 const defaultMessages = {
-  shortTextMax: 'Please use a shorter value.',
-  phoneMax: 'Please use a shorter phone number.',
-  emergencyContactMax: 'Please use a shorter emergency contact.',
+  shortTextMax: 'Use a shorter value (max 100 characters).',
+  phoneMax: 'Use a shorter phone number.',
+  emergencyContactMax: 'Use a shorter emergency contact.',
 } as const
 export function createStableMemberSchemas(
   message: (key: keyof typeof defaultMessages) => string = (key) =>

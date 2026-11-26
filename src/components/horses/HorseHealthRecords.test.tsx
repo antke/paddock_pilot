@@ -68,7 +68,7 @@ describe('health and medication record recovery', () => {
     await act(async () => vi.advanceTimersByTimeAsync(150))
     vi.useRealTimers()
     await screen.findByText(
-      'Could not save this record. Your entries are still here; please try again.',
+      /^Couldn’t save the record\. Your entries are still here\. /,
     )
     expect(title.value).toBe('Sample eye check')
     fireEvent.submit(title.closest('form')!)
@@ -101,7 +101,7 @@ describe('health and medication record recovery', () => {
     fireEvent.change(title, { target: { value: 'Hoof follow-up' } })
     fireEvent.submit(title.closest('form')!)
     await screen.findByText(
-      'Could not save this record. Your entries are still here; please try again.',
+      'Couldn’t save the record. Your entries are still here. You’re offline, so nothing changed. Reconnect and try again.',
     )
     expect(title.value).toBe('Hoof follow-up')
     fireEvent.submit(title.closest('form')!)
@@ -208,7 +208,7 @@ describe('health and medication record recovery', () => {
       name: 'Resolve Turnout follow-up',
     })
     fireEvent.click(resolve)
-    await screen.findByText('Could not update this record. Please try again.')
+    await screen.findByText(/^Couldn’t resolve the issue\. /)
     fireEvent.click(resolve)
     await screen.findByText(
       'Sample resolution applied locally. No live records changed.',

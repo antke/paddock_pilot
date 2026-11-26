@@ -97,7 +97,7 @@ describe('EventEditor production composition', () => {
         [],
       ),
     })
-    fireEvent.click(screen.getByRole('button', { name: /Additional details/ }))
+    fireEvent.click(screen.getByRole('button', { name: /More details/ }))
     const duration =
       screen.getByLabelText<HTMLInputElement>('Duration (minutes)')
     fireEvent.change(duration, { target: { value: '' } })
@@ -125,9 +125,7 @@ describe('EventEditor production composition', () => {
           },
         },
       })
-      fireEvent.click(
-        screen.getByRole('button', { name: /Additional details/ }),
-      )
+      fireEvent.click(screen.getByRole('button', { name: /More details/ }))
       expect(
         screen.getByRole('button', { name: 'Planned', pressed: true }),
       ).toBeTruthy()
@@ -226,7 +224,7 @@ describe('EventEditor production composition', () => {
         horseIds: [horseId],
       },
     })
-    const title = screen.getByLabelText('Title') as HTMLInputElement
+    const title = screen.getByLabelText<HTMLInputElement>('Title')
     fireEvent.click(screen.getByRole('button', { name: 'Groundwork' }))
     expect(title.value).toBe('Groundwork')
     fireEvent.click(screen.getByRole('button', { name: 'Flatwork' }))
@@ -405,7 +403,7 @@ describe('EventEditor production composition', () => {
     expect(
       screen.getByRole('heading', { name: 'Add training session' }),
     ).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: /Additional details/ }))
+    fireEvent.click(screen.getByRole('button', { name: /More details/ }))
     const duration = screen.getByLabelText('Duration (minutes)')
     fireEvent.change(duration, { target: { value: '0' } })
     fireEvent.submit(form)
@@ -452,7 +450,7 @@ describe('EventEditor production composition', () => {
     expect(
       document.getElementById(title.getAttribute('aria-describedby')!)
         ?.textContent,
-    ).toContain('Title must')
+    ).toContain('Enter a title')
     expect(props.onSave).not.toHaveBeenCalled()
     expect(props.onSaved).not.toHaveBeenCalled()
   })
@@ -481,7 +479,7 @@ describe('EventEditor production composition', () => {
       await waitFor(() => expect(title.disabled).toBe(false))
       expect(title.value).toBe('Autumn farrier visit')
       expect(screen.getByRole('alert').textContent).toContain(
-        'Could not save event',
+        'Couldn’t save the event',
       )
       expect(document.activeElement).toBe(screen.getByRole('alert'))
       expect(props.onSaved).not.toHaveBeenCalled()
@@ -500,7 +498,7 @@ describe('EventEditor production composition', () => {
       .mockReturnValueOnce(opening.promise)
     const { form, title, props } = setup({ onSaved })
     fireEvent.submit(form)
-    await screen.findByText(/Event saved, but its page could not be opened/)
+    await screen.findByText(/Event saved, but its page didn’t open/)
     expect(title.disabled).toBe(true)
     expect(screen.queryByRole('button', { name: 'Discard changes' })).toBeNull()
     expect(props.onSave).toHaveBeenCalledTimes(1)
@@ -580,7 +578,13 @@ describe('EventEditor production composition', () => {
     expect(editEventEditorValues(event, []).horseIds).toEqual(event.horseIds)
     expect(
       editEventEditorValues(event, [{ horseId, status: 'declined' }]).horseIds,
-    ).toEqual(event.horseIds)
+    ).toEqual([])
+    // A horse that left the stable must not come back into a past event's form.
+    expect(
+      editEventEditorValues(event, [
+        { horseId, status: 'confirmed', participationEndsAt: '2026-01-01' },
+      ]).horseIds,
+    ).toEqual([])
   })
 
   it('does not replace an unsaved draft when reactive initial values change', () => {
@@ -627,7 +631,7 @@ it('filters horses by destination and confirms removal while preserving the draf
     },
   })
   expect(screen.getByText('Requires approval')).toBeTruthy()
-  expect(screen.getByText('Added directly: 1 · Invitations: 1')).toBeTruthy()
+  expect(screen.getByText('Added: 1 · Invited: 1')).toBeTruthy()
   fireEvent.click(screen.getByRole('checkbox', { name: 'Willow' }))
   expect(screen.getByRole('alertdialog')).toBeTruthy()
   expect(title.value).toBe('Group visit')

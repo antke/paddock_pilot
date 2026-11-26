@@ -86,7 +86,7 @@ describe('actual members settings sample', () => {
         .every((button) => button.hasAttribute('disabled')),
     ).toBe(true)
     await screen.findByText(
-      'Could not save member details. Your changes are still here. Please try again.',
+      /^Couldn’t save your details\. Your changes are still here\. /,
     )
     expect(input.value).toBe('+48 500 123 456')
     fireEvent.submit(input.closest('form')!)
@@ -119,9 +119,7 @@ describe('actual members settings sample', () => {
     expect(
       screen.queryByText('new-member@example.test', { exact: true }),
     ).toBeNull()
-    await screen.findByText(
-      'Could not create the invitation. Check the email address and try again.',
-    )
+    await screen.findByText(/^Couldn’t send the invite\. /)
     expect(input.value).toBe('new-member@example.test')
     fireEvent.submit(input.closest('form')!)
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
@@ -148,9 +146,7 @@ describe('actual members settings sample', () => {
     })
     expect(confirmation.hasAttribute('disabled')).toBe(false)
     fireEvent.click(confirmation)
-    await screen.findByText(
-      'Could not remove this member. Refresh the member details and try again.',
-    )
+    await screen.findByText(/^Couldn’t remove .+ from the stable$/)
     expect(screen.getByRole('alertdialog')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Remove member' }))
     await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())

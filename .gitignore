@@ -19,3 +19,8 @@ todos.json
 
 # Local browser layout evidence
 .browser-checks/
+
+# Playwright e2e artifacts and signed-in sessions
+/e2e/.results/
+/e2e/.report/
+/e2e/.auth/

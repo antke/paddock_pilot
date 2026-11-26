@@ -2,43 +2,40 @@ export const eventEditor = {
   createIn: 'Udostępnianie',
   personal: 'Prywatna',
   personalHelp:
-    'Widoczne tylko dla właścicieli wybranych koni i upoważnionych opiekunów. Nie jest udostępniane stajni.',
+    'Widzą to tylko właściciele tych koni i upoważnieni opiekunowie. Stajnia tego nie widzi.',
   stableHelp:
-    'Wpis pojawi się w wybranych stajniach. Właściciele i uprawnieni opiekunowie zachowują dostęp. Członkowie widzą harmonogram i status, a administratorzy udostępnione szczegóły. Udostępnienie nie daje dostępu do innych wpisów konia.',
+    'Wpis pojawi się w wybranych stajniach. Właściciele i upoważnieni opiekunowie nadal go widzą. Członkowie widzą termin i status, a administratorzy udostępnione szczegóły. Nie daje to dostępu do innych wpisów konia.',
   requiresApproval: 'Wymaga akceptacji',
   approvalHelp:
     'Właściciel konia, opiekun z prawem edycji lub administrator stajni musi zaakceptować zaproszenie.',
-  summary:
-    'Konie dodane od razu: {{confirmed}} · Konie do zaproszenia: {{invited}}',
+  summary: 'Dodane od razu: {{confirmed}} · Do zaproszenia: {{invited}}',
   switchTitle: 'Usunąć konie z tego wpisu?',
   switchHelp:
-    'Te konie wymagają kalendarza stajni, który odznaczasz: {{horses}}. Pozostała część wpisu zostanie zachowana.',
+    'Te konie potrzebują kalendarza stajni, który odznaczasz: {{horses}}. Reszta wpisu się nie zmieni.',
   switchConfirm: 'Usuń konie i kontynuuj',
   keepSpace: 'Zachowaj wybrane kalendarze',
   createPrivateEvent: 'Utwórz prywatne wydarzenie',
   createPrivateTraining: 'Utwórz prywatny trening',
   createStable: 'Utwórz w: {{stable}}',
   recordPermission:
-    'Ukończony trening możesz zapisać tylko dla koni, którymi możesz zarządzać. Usuń konie wymagające akceptacji lub zmień status na Planowany.',
+    'Zakończony trening zapiszesz tylko dla koni, którymi zarządzasz. Usuń konie, które wymagają akceptacji, albo zmień status na Planowany.',
   awaiting: 'Oczekuje na akceptację',
-  participants: 'Udział koni',
+  participants: 'Konie',
   confirmed: 'Potwierdzony',
   declined: 'Odrzucony',
   withdrawn: 'Wycofany',
   invitationsLoading: 'Ładowanie zaproszeń dla koni…',
   invitationsFailed:
-    'Nie udało się wczytać zaproszeń dla koni. Odśwież stronę, aby spróbować ponownie.',
+    'Nie udało się wczytać zaproszeń dla koni. Odśwież stronę.',
 
   eventSavedSentence: 'Wydarzenie zapisane.',
   trainingSavedSentence: 'Trening zapisany.',
-  eventSaveFailed:
-    'Nie udało się zapisać wydarzenia. Wprowadzone dane zostały zachowane. Spróbuj ponownie.',
-  trainingSaveFailed:
-    'Nie udało się zapisać treningu. Wprowadzone dane zostały zachowane. Spróbuj ponownie.',
+  eventSaveFailed: 'Nie udało się zapisać wydarzenia. Twoje dane nadal tu są.',
+  trainingSaveFailed: 'Nie udało się zapisać treningu. Twoje dane nadal tu są.',
   trainingContinueFailed:
-    'Trening został zapisany, ale nie udało się otworzyć jego strony. Otwórz trening, aby kontynuować. Nie trzeba ponownie zapisywać zmian.',
+    'Trening zapisany, ale nie udało się otworzyć jego strony. Otwórz go, żeby kontynuować. Nie musisz zapisywać ponownie.',
   eventContinueFailed:
-    'Wydarzenie zostało zapisane, ale nie udało się otworzyć jego strony. Otwórz wydarzenie, aby kontynuować. Nie trzeba ponownie zapisywać zmian.',
+    'Wydarzenie zapisane, ale nie udało się otworzyć jego strony. Otwórz je, żeby kontynuować. Nie musisz zapisywać ponownie.',
   addEvent: 'Dodaj wydarzenie',
   editEvent: 'Edytuj wydarzenie',
   addTraining: 'Dodaj trening',
@@ -52,11 +49,11 @@ export const eventEditor = {
   resetEvent: 'Odrzucić zmiany wydarzenia?',
   resetTraining: 'Odrzucić zmiany treningu?',
   resetHelp:
-    'Niezapisane dane zostaną zastąpione wartościami z chwili otwarcia formularza.',
+    'Formularz wróci do stanu z chwili otwarcia. Niezapisane zmiany przepadną.',
   createEvent: 'Utwórz wydarzenie',
-  updateEvent: 'Zaktualizuj wydarzenie',
+  updateEvent: 'Zapisz zmiany',
   createTraining: 'Utwórz trening',
-  updateTraining: 'Zaktualizuj trening',
+  updateTraining: 'Zapisz zmiany',
   creating: 'Tworzenie…',
   saving: 'Zapisywanie…',
 } as const

@@ -84,7 +84,7 @@ describe('FileUploadField', () => {
     expect(screen.getByText('passport.pdf')).toBeTruthy()
     expect(onFilesChange).toHaveBeenCalledWith([file])
     expect(screen.getByRole('status').textContent).toBe(
-      'passport.pdf selected. Save the form to attach it.',
+      'passport.pdf selected. Save to attach it.',
     )
     expect(screen.getByText('Selected · not saved yet')).toBeTruthy()
   })

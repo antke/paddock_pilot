@@ -8,6 +8,7 @@ import { Textarea } from '#/components/ui/textarea'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useId, useRef, useState } from 'react'
 import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
+import { useActionErrorText } from '#/lib/actionError'
 import { useForm } from 'react-hook-form'
 import { createEventHorseDetailsSchemas } from 'shared/events/eventHorseDetailsSchema'
 import type {
@@ -35,7 +36,8 @@ export function EventHorseServiceDetailsForm({
   )
   const formId = useId()
   const submitting = useRef(false)
-  const [saveError, setSaveError] = useState(false)
+  const describe = useActionErrorText()
+  const [saveError, setSaveError] = useState<unknown>(null)
   const [isSaving, setIsSaving] = useState(false)
   const form = useForm<
     EventHorseDetailsFormInput,
@@ -52,11 +54,11 @@ export function EventHorseServiceDetailsForm({
     if (submitting.current) return
     submitting.current = true
     setIsSaving(true)
-    setSaveError(false)
+    setSaveError(null)
     try {
       await onSubmit(values)
-    } catch {
-      setSaveError(true)
+    } catch (error) {
+      setSaveError(error ?? new Error('Save failed'))
     } finally {
       submitting.current = false
       setIsSaving(false)
@@ -70,11 +72,11 @@ export function EventHorseServiceDetailsForm({
       gap="compact"
       onSubmit={form.handleSubmit(submit)}
     >
-      {saveError && (
+      {saveError != null && (
         <RouteStatusAlert
           tone="danger"
           title={t('eventViews.saveFailed')}
-          description={t('eventViews.saveFailedHelp')}
+          description={`${t('eventViews.saveFailedHelp')} ${describe(saveError)}`}
         />
       )}
       <Field

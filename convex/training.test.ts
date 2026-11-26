@@ -224,7 +224,7 @@ describe('training records', () => {
         status: 'completed',
         details,
       }),
-    ).rejects.toThrow('Only the horse owner')
+    ).rejects.toThrow('Only the horse’s owner')
     await expect(
       f.asMember.mutation(api.training.saveRecord, {
         eventId: id,
@@ -237,7 +237,7 @@ describe('training records', () => {
     ).rejects.toMatchObject({
       data: {
         code: 'trainingPermission',
-        message: 'Only the horse owner or stable admin can record its training',
+        message: 'Only the horse’s owner, an editing carer or a stable admin can record its training',
       },
     })
     await expect(

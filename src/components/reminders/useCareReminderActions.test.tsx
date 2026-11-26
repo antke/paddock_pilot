@@ -61,7 +61,12 @@ it('acknowledges Undo, reports a failure honestly and retries only the restore',
   expect(await screen.findByText('Restoring reminder…')).toBeTruthy()
   await act(async () => reject(new Error('offline')))
   expect(
-    await screen.findByText('Could not restore this reminder'),
+    await screen.findByText('Couldn’t restore Juniper’s hoof check'),
+  ).toBeTruthy()
+  expect(
+    screen.getByText(
+      'You’re offline, so nothing changed. Reconnect and try again.',
+    ),
   ).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
   expect(await screen.findByText('Reminder reopened')).toBeTruthy()

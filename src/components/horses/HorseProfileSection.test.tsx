@@ -78,19 +78,15 @@ it('groups standing care before administrative facts with semantic label/value p
   open()
   expect(
     screen.getAllByRole('heading', { level: 2 }).map((el) => el.textContent),
-  ).toEqual([
-    'Horse details',
-    'Care information',
-    'Identification and insurance',
-  ])
+  ).toEqual(['Horse details', 'Care information', 'ID & insurance'])
   const care = screen.getByRole('region', { name: 'Care information' })
   expect(definition('Allergies', care).textContent).toBe('Recorded allergy')
-  expect(definition('Shoeing status', care).textContent).toBe('Full set')
-  expect(definition('Deworming notes', care).textContent).toBe(
+  expect(definition('Shoeing', care).textContent).toBe('Full set')
+  expect(definition('Deworming', care).textContent).toBe(
     completeHorse.dewormingNotes,
   )
   const registration = screen.getByRole('region', {
-    name: 'Identification and insurance',
+    name: 'ID & insurance',
   })
   expect(definition('Insurer', registration).textContent).toBe(
     'Example insurer',
@@ -119,11 +115,9 @@ it('keeps zero age and makes unknown allergies explicit without empty optional g
   open({ ...baseHorse, age: 0 })
   expect(definition('Age').textContent).toBe('0')
   expect(definition('Allergies').textContent).toBe('Not recorded')
-  expect(
-    screen.queryByRole('region', { name: 'Identification and insurance' }),
-  ).toBeNull()
+  expect(screen.queryByRole('region', { name: 'ID & insurance' })).toBeNull()
   expect(screen.queryByRole('heading', { name: 'Parentage' })).toBeNull()
-  expect(screen.queryByText('Deworming notes')).toBeNull()
+  expect(screen.queryByText('Deworming')).toBeNull()
 })
 
 it('preserves an explicitly entered none separately from an empty allergy list', () => {
@@ -157,7 +151,7 @@ it('keeps maximum-length care content fully available as a list and multiline pr
   expect(
     within(definition('Allergies') as HTMLElement).getAllByRole('listitem'),
   ).toHaveLength(30)
-  expect(definition('Deworming notes').textContent).toBe(notes)
+  expect(definition('Deworming').textContent).toBe(notes)
   expect(screen.queryByText('Read more')).toBeNull()
 })
 
@@ -189,7 +183,7 @@ it('retains accessible copy pending feedback, success and manual-copy recovery',
   fireEvent.click(screen.getByRole('button', { name: 'Copy microchip number' }))
   await waitFor(() => expect(showAppErrorToast).toHaveBeenCalledOnce())
   expect(vi.mocked(showAppErrorToast).mock.calls[0][0]).toMatchObject({
-    title: 'Could not copy microchip number',
+    title: 'Couldn’t copy microchip number',
   })
   expect(definition('Microchip').textContent).toBe('CHIP-456')
   expect(
@@ -216,14 +210,10 @@ it('localises the new grouping and missing values in Polish while preserving rec
   )
   expect(
     screen.getAllByRole('heading', { level: 2 }).map((el) => el.textContent),
-  ).toEqual([
-    'Dane konia',
-    'Informacje o opiece',
-    'Identyfikacja i ubezpieczenie',
-  ])
+  ).toEqual(['Dane konia', 'Informacje o opiece', 'ID i ubezpieczenie'])
   expect(definition('Alergie').textContent).toBe('Brak danych')
   expect(definition('Ubezpieczyciel').textContent).toBe('Example insurer')
-  expect(definition('Notatki o odrobaczaniu').textContent).toBe(
+  expect(definition('Odrobaczanie').textContent).toBe(
     completeHorse.dewormingNotes,
   )
 })

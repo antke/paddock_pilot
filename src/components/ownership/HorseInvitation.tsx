@@ -148,7 +148,7 @@ export function HorseInvitationView({
       await onRespond(accept, selected)
       setResponse(accept)
     } catch (cause) {
-      setError(formatError(cause))
+      setError(formatError(accept ? r.acceptFailed : r.declineFailed, cause))
       setFailedChoice(accept)
     } finally {
       pendingRef.current = false

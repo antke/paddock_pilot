@@ -6,6 +6,9 @@ export type StableInvitationStatus =
   | 'revoked'
   | 'expired'
 
+/** The server refuses a resend sooner than this after the last email. */
+export const INVITATION_RESEND_COOLDOWN_MS = 60 * 1000
+
 export const getEffectiveInvitationStatus = ({
   status,
   expiresAt,

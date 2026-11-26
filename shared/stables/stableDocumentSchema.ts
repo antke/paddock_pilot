@@ -20,6 +20,8 @@ export const stableDocumentTypeLabels = {
   other: 'Other',
 } satisfies Record<StableDocumentType, string>
 
+export const maxDocumentBytes = 25 * 1024 * 1024
+
 const defaultMessages = {
   nameRequired: 'Document name is required.',
   nameMax: 'Document name cannot be longer than 180 characters.',
@@ -27,6 +29,8 @@ const defaultMessages = {
   notesMax: 'Notes cannot be longer than 1000 characters.',
   sizeMin: 'File size cannot be negative.',
   fileRequired: 'Choose a file to upload.',
+  fileTooLarge:
+    'This file is over 25 MB. Pick a smaller one or compress it first.',
   textInvalid: 'Enter text.',
   typeInvalid: 'Choose a document type.',
 } as const
@@ -92,7 +96,11 @@ export function createStableDocumentSchemas(
     type: stableDocumentTypeSchema,
     file: z
       .custom<FileList>()
-      .refine((files) => files?.length > 0, message('fileRequired')),
+      .refine((files) => files?.length > 0, message('fileRequired'))
+      .refine(
+        (files) => (files?.[0]?.size ?? 0) <= maxDocumentBytes,
+        message('fileTooLarge'),
+      ),
     fileName: documentFileNameSchema,
     notes: documentNotesSchema,
   })

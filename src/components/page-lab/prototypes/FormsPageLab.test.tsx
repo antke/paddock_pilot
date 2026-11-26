@@ -70,7 +70,7 @@ describe('FormsPageLab', () => {
     await waitFor(() =>
       expect(screen.getByRole('group', { name: 'Horses' })).toBeTruthy(),
     )
-    expect(screen.getByText(/No horses are available/)).toBeTruthy()
+    expect(screen.getByText(/No horses in this stable yet/)).toBeTruthy()
     expect(screen.queryByRole('status')).toBeNull()
   })
   it('fills provider contact details when selecting a saved provider with the keyboard', async () => {
@@ -113,8 +113,8 @@ describe('FormsPageLab', () => {
     fireEvent.change(screen.getByLabelText('Next sample result'), {
       target: { value: 'open' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Update event' }))
-    await screen.findByText(/Event saved, but its page could not be opened/)
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+    await screen.findByText(/Event saved, but its page didn’t open/)
     fireEvent.click(screen.getByRole('button', { name: 'Open event' }))
     await waitFor(() =>
       expect(screen.getByRole('status').textContent).toContain(
@@ -131,11 +131,11 @@ describe('FormsPageLab', () => {
     fireEvent.change(screen.getByLabelText('Next sample result'), {
       target: { value: 'save' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Update event' }))
-    await screen.findByText(/Could not save event/)
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+    await screen.findByText(/Couldn’t save the event/)
     expect(title.value).toBe('Local retry visit')
     expect(title.disabled).toBe(false)
-    fireEvent.click(screen.getByRole('button', { name: 'Update event' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
     await waitFor(() =>
       expect(screen.getByRole('status').textContent).toContain(
         'Sample changes applied locally',

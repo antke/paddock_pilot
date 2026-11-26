@@ -149,21 +149,15 @@ describe('EventFormFields', () => {
 
   it('gives personal appointments local-time guidance and a path to add a missing horse', () => {
     render(<Harness empty eventContext="personal" />)
-    expect(
-      screen.getByText('Local time where the appointment takes place.'),
-    ).toBeTruthy()
+    expect(screen.getByText('Local time where the visit is.')).toBeTruthy()
     expect(
       screen.getByRole('group', { name: 'Horses' }).closest('[hidden]'),
     ).toBeNull()
-    expect(
-      screen.getByText(/No horses are available for you to schedule/),
-    ).toBeTruthy()
+    expect(screen.getByText(/You have no horses to schedule/)).toBeTruthy()
     expect(
       screen.getByRole('link', { name: 'Add horse' }).getAttribute('href'),
     ).toBe('/horses/create')
-    expect(
-      screen.queryByText(/No horses are available in this stable/),
-    ).toBeNull()
+    expect(screen.queryByText(/No horses in this stable yet/)).toBeNull()
   })
 
   it('saves the essentials without opening any optional sections', async () => {
@@ -182,7 +176,7 @@ describe('EventFormFields', () => {
       expect(input.closest('[hidden]')).toBeNull()
     }
     for (const name of [
-      /Additional details Optional/,
+      /More details Optional/,
       /Place & provider Optional/,
       /Repeat schedule Optional/,
       /Notes & outcome Optional/,
@@ -207,7 +201,7 @@ describe('EventFormFields', () => {
     render(<Harness initialFocus="status" />)
     expect(
       screen
-        .getByRole('button', { name: /Additional details Optional/ })
+        .getByRole('button', { name: /More details Optional/ })
         .getAttribute('aria-expanded'),
     ).toBe('true')
     const status = screen.getByRole('group', { name: 'Event status' })
@@ -223,9 +217,9 @@ describe('EventFormFields', () => {
 
   it('fills an empty title from the event type and keeps a written one', () => {
     render(<Harness />)
-    const title = screen.getByLabelText('Title', {
+    const title = screen.getByLabelText<HTMLInputElement>('Title', {
       exact: true,
-    }) as HTMLInputElement
+    })
     fireEvent.click(screen.getByRole('button', { name: 'Vet' }))
     expect(title.value).toBe('Farrier visit')
     fireEvent.change(title, { target: { value: '' } })

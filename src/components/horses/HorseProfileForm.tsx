@@ -4,6 +4,7 @@ import type { PersonNameSuggestion } from '#/components/forms/PersonNameAutocomp
 import type { ProviderOption } from '#/components/ui/provider-autocomplete'
 import type { PersonNameScope } from '#/components/forms/PersonNameField'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
+import { useActionErrorText } from '#/lib/actionError'
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { useEffect, useId, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
@@ -81,6 +82,7 @@ export function HorseProfileForm({
   stableChoice,
 }: HorseProfileFormProps) {
   const t = useT()
+  const describe = useActionErrorText()
   const { locale } = useLocale()
 
   const formId = useId()
@@ -95,7 +97,8 @@ export function HorseProfileForm({
   >('idle')
   const [savedId, setSavedId] = useState<Id<'horses'>>()
   const [error, setError] = useState<
-    'openFailed' | 'uploadFailed' | 'saveFailed'
+    | { key: 'openFailed' }
+    | { key: 'uploadFailed' | 'saveFailed'; cause: unknown }
   >()
   const pendingChange = useRef(onPendingChange)
   pendingChange.current = onPendingChange
@@ -139,7 +142,7 @@ export function HorseProfileForm({
     try {
       await onSaved(id)
     } catch {
-      if (mounted.current) setError('openFailed')
+      if (mounted.current) setError({ key: 'openFailed' })
     }
   }
   const retryOpening = async () => {
@@ -167,8 +170,8 @@ export function HorseProfileForm({
           setPhase('uploading')
           try {
             imageId = await uploadImage(file)
-          } catch {
-            if (mounted.current) setError('uploadFailed')
+          } catch (cause) {
+            if (mounted.current) setError({ key: 'uploadFailed', cause })
             return
           }
           if (!mounted.current) return
@@ -180,8 +183,8 @@ export function HorseProfileForm({
       let id: Id<'horses'>
       try {
         id = await save(values, imageId)
-      } catch {
-        if (mounted.current) setError('saveFailed')
+      } catch (cause) {
+        if (mounted.current) setError({ key: 'saveFailed', cause })
         return
       }
       if (!mounted.current) return
@@ -216,7 +219,12 @@ export function HorseProfileForm({
       actions={
         <>
           <FormSubmissionError
-            message={error ? t(`horseForm.${error}`) : undefined}
+            message={
+              error &&
+              (error.key === 'openFailed'
+                ? t('horseForm.openFailed')
+                : `${t(`horseForm.${error.key}`)} ${describe(error.cause)}`)
+            }
           />
           {savedId ? (
             <>

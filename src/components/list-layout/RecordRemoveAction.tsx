@@ -19,7 +19,7 @@ import { TrashIcon } from '@phosphor-icons/react'
 import { ActionFeedback } from '#/components/ui/action-feedback'
 import { useRef, useState } from 'react'
 import type { RefObject } from 'react'
-import { Alert, AlertDescription } from '#/components/ui/alert'
+import { ActionErrorAlert } from '#/components/layout/ActionErrorAlert'
 
 type RecordRemoveActionProps = {
   confirmLabel?: string
@@ -58,12 +58,12 @@ export function RecordRemoveAction({
   const [localOpen, setLocalOpen] = useState(false)
   const open = controlledOpen ?? localOpen
   const setOpen = (value: boolean) => {
-    if (!value) setFailed(false)
+    if (!value) setFailure(null)
     setLocalOpen(value)
     onOpenChange?.(value)
   }
   const [isRemoving, setIsRemoving] = useState(false)
-  const [failed, setFailed] = useState(false)
+  const [failure, setFailure] = useState<unknown>(null)
   const pending = useRef(false)
   const removed = useRef(false)
   const trigger = useRef<HTMLButtonElement>(null)
@@ -71,14 +71,14 @@ export function RecordRemoveAction({
   const confirmRemoval = async () => {
     if (pending.current || disabled) return
     pending.current = true
-    setFailed(false)
+    setFailure(null)
     try {
       setIsRemoving(true)
       await onConfirm()
       removed.current = true
       setOpen(false)
-    } catch {
-      setFailed(true)
+    } catch (error) {
+      setFailure(error ?? new Error('Removal failed'))
     } finally {
       pending.current = false
       setIsRemoving(false)
@@ -94,7 +94,7 @@ export function RecordRemoveAction({
         if (!pending.current) {
           setOpen(nextOpen)
           if (nextOpen) {
-            setFailed(false)
+            setFailure(null)
             removed.current = false
           }
         }
@@ -130,10 +130,11 @@ export function RecordRemoveAction({
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
-        {failed && (
-          <Alert variant="destructive">
-            <AlertDescription>{t('careRecords.removeFailed')}</AlertDescription>
-          </Alert>
+        {failure != null && (
+          <ActionErrorAlert
+            title={t('careRecords.removeFailed')}
+            error={failure}
+          />
         )}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={actionDisabled}>

@@ -31,7 +31,7 @@ async function fixture() {
       userId: memberId,
       role: 'member',
     })
-    await ctx.db.insert('stableMembers', {
+    const otherMembershipId = await ctx.db.insert('stableMembers', {
       stableId,
       userId: otherId,
       role: 'member',
@@ -50,6 +50,7 @@ async function fixture() {
       stableId,
       horseId,
       memberMembershipId,
+      otherMembershipId,
     }
   })
   const owner = t.withIdentity({ subject: 'owner' })
@@ -116,6 +117,71 @@ describe('reminder responsibility and correction', () => {
     await expect(
       f.member.mutation(api.careReminders.complete, { id }),
     ).rejects.toThrow('Not authorized')
+  })
+
+  it('lets a stable member assigned to a horse reminder complete and reopen it', async () => {
+    const f = await fixture()
+    const id = await f.owner.mutation(api.careReminders.add, {
+      ...f.input,
+      horseId: f.horseId,
+      assignedTo: f.otherId,
+    })
+    expect(
+      await f.other.query(api.careReminders.get, { stableId: f.stableId, id }),
+    ).toMatchObject({ canManage: false, canComplete: true })
+    await f.other.mutation(api.careReminders.complete, { id })
+    expect(
+      await f.other.query(api.careReminders.get, { stableId: f.stableId, id }),
+    ).toMatchObject({ canReopen: true, reminder: { status: 'completed' } })
+    await f.other.mutation(api.careReminders.reopen, { id })
+    await f.t.run((ctx) => ctx.db.delete(f.otherMembershipId))
+    await expect(
+      f.other.mutation(api.careReminders.complete, { id }),
+    ).rejects.toThrow('Not authorized')
+  })
+
+  it('offers as responsible exactly the people the save accepts, per horse and across several', async () => {
+    const f = await fixture()
+    const [ownHorse, unclaimed] = await f.t.run(async (ctx) => [
+      await ctx.db.insert('horses', {
+        stableId: f.stableId,
+        ownerId: f.ownerId,
+        name: 'Own',
+        age: 9,
+      }),
+      await ctx.db.insert('horses', {
+        stableId: f.stableId,
+        name: 'Unclaimed',
+        age: 5,
+      }),
+    ])
+    const offered = async (horseIds: Array<typeof ownHorse>) =>
+      (
+        await f.owner.query(api.careReminders.assigneeOptions, {
+          stableId: f.stableId,
+          horseIds,
+        })
+      )
+        .map((person) => person.id)
+        .sort()
+    const everyone = [f.ownerId, f.memberId, f.otherId].sort()
+    // The stable owner's own horse keeps personal records: only its owner and editors.
+    expect(await offered([ownHorse])).toEqual([f.ownerId])
+    expect(await offered([f.horseId])).toEqual(everyone)
+    // Looked after for an owner who hasn't joined yet: the stable's people.
+    expect(await offered([unclaimed])).toEqual(everyone)
+    expect(await offered([ownHorse, f.horseId])).toEqual([f.ownerId])
+    for (const horseId of [ownHorse, f.horseId, unclaimed])
+      for (const assignedTo of everyone) {
+        const save = f.owner.mutation(api.careReminders.add, {
+          ...f.input,
+          horseId,
+          assignedTo,
+        })
+        if ((await offered([horseId])).includes(assignedTo))
+          await expect(save).resolves.toBeTruthy()
+        else await expect(save).rejects.toThrow()
+      }
   })
 
   it('validates assignee membership and exposes names without private contact data', async () => {

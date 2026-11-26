@@ -223,7 +223,7 @@ function ContactEditor({
           }
           onSaved?.()
         } catch (cause) {
-          setError(formatError(cause))
+          setError(formatError(r.contactSaveFailed, cause))
         } finally {
           pendingRef.current = false
           setPending(false)

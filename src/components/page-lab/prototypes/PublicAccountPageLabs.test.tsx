@@ -41,7 +41,7 @@ describe('local public and account samples', () => {
     })
     fireEvent.change(name, { target: { value: 'Sample updated rider' } })
     fireEvent.submit(name.closest('form')!)
-    expect(await screen.findByText(/Could not save your profile/)).toBeTruthy()
+    expect(await screen.findByText(/Couldn’t save your profile/)).toBeTruthy()
     fireEvent.submit(name.closest('form')!)
     expect(
       await screen.findByText(

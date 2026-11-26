@@ -4,6 +4,7 @@ import { useTransientConfirmation } from '#/lib/useTransientConfirmation'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { useT } from '#/i18n/LocaleProvider'
+import { useActionErrorText } from '#/lib/actionError'
 import { InlineForm } from '#/components/forms/FormLayout'
 import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
 import { FileUploadField } from '#/components/forms/FileUploadField'
@@ -49,6 +50,7 @@ export function DocumentUploadForm({
   onPendingChange,
 }: DocumentUploadFormProps) {
   const t = useT()
+  const describe = useActionErrorText()
 
   const { stableDocumentFormSchema } = createStableDocumentSchemas((key) =>
     t(`documents.validation.${key}`),
@@ -67,7 +69,7 @@ export function DocumentUploadForm({
     }
   }, [])
   const [isPending, setIsPending] = useState(false)
-  const [failed, setFailed] = useState(false)
+  const [failure, setFailure] = useState<unknown>(null)
   const form = useForm<StableDocumentFormSchema>({
     resolver: zodResolver(stableDocumentFormSchema),
     mode: 'onTouched',
@@ -101,7 +103,7 @@ export function DocumentUploadForm({
     if (pending.current) return
     pending.current = true
     setIsPending(true)
-    setFailed(false)
+    setFailure(null)
     confirmation.clear()
     onPendingChange?.(true)
     try {
@@ -120,8 +122,8 @@ export function DocumentUploadForm({
         notes: '',
       })
       confirmation.confirm()
-    } catch {
-      if (mounted.current) setFailed(true)
+    } catch (error) {
+      if (mounted.current) setFailure(error ?? new Error('Upload failed'))
     } finally {
       pending.current = false
       if (mounted.current) {
@@ -139,7 +141,11 @@ export function DocumentUploadForm({
     >
       {audience.control}
       <FormSubmissionError
-        message={failed ? t('documents.saveFailed') : undefined}
+        message={
+          failure != null
+            ? `${t('documents.saveFailed')} ${describe(failure)}`
+            : undefined
+        }
       />
       <DocumentFileField
         formId={formId}
@@ -256,7 +262,7 @@ export function DocumentUploadForm({
       />
 
       <FormSubmitActions
-        failed={failed}
+        failed={failure != null}
         confirmed={confirmation.confirmed}
         confirmedLabel={t('common.saved')}
         isSubmitting={form.formState.isSubmitting || isPending}

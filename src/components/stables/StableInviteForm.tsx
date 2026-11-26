@@ -24,6 +24,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { createStableInvitationSchema } from 'shared/stableInvitations/invitationSchema'
 import type { StableInvitationInput } from 'shared/stableInvitations/invitationSchema'
 import { getInvitationUrl } from 'shared/stableInvitations/invitationState'
+import { useInvitationErrorText } from '#/components/invitations/invitationErrors'
 
 type StableInviteFormProps = {
   stableId: Id<'stables'>
@@ -43,27 +44,26 @@ export function StableInviteForm({
       await copyTextToClipboard(getInvitationUrl(window.location.origin, token))
       showAppSuccessToast({ title: t('invitations.linkCopied') })
     } catch {
-      showAppErrorToast({ title: t('invitations.copyFailed') })
+      showAppErrorToast({
+        title: t('invitations.copyFailed'),
+        description: <p>{t('invitationFlow.copyBlocked')}</p>,
+      })
     }
   }
+  // Throws on failure so the form can show why.
   const onInvite = async (
     values: StableInvitationInput & { locale?: Locale },
   ) => {
-    try {
-      const result = await createInvitation({ stableId, ...values })
-      showAppSuccessToast({
-        title: t('invitations.created'),
-        description: <p>{t('invitations.queued', { email: values.email })}</p>,
-        action: {
-          label: t('invitations.copy'),
-          onClick: () => copyInvitation(result.token),
-        },
-      })
-      return true
-    } catch {
-      showAppErrorToast()
-      return false
-    }
+    const result = await createInvitation({ stableId, ...values })
+    showAppSuccessToast({
+      title: t('invitations.created'),
+      description: <p>{t('invitations.queued', { email: values.email })}</p>,
+      action: {
+        label: t('invitations.copy'),
+        onClick: () => copyInvitation(result.token),
+      },
+    })
+    return true
   }
   return (
     <StableInviteFormView
@@ -91,7 +91,8 @@ export function StableInviteFormView({
   const formId = useId()
   const pendingRef = useRef(false)
   const [isPending, setIsPending] = useState(false)
-  const [inviteError, setInviteError] = useState(false)
+  const [inviteError, setInviteError] = useState<unknown>(null)
+  const describeError = useInvitationErrorText()
   const form = useForm<StableInvitationInput>({
     resolver: zodResolver(
       createStableInvitationSchema(t('invitations.invalidEmail')),
@@ -108,15 +109,15 @@ export function StableInviteFormView({
     if (pendingRef.current) return
     pendingRef.current = true
     setIsPending(true)
-    setInviteError(false)
+    setInviteError(null)
     onPendingChange?.(true)
     try {
       if (await onInvite({ ...values, locale: invitationLocale ?? locale })) {
         form.reset()
         onCreated?.()
-      } else setInviteError(true)
-    } catch {
-      setInviteError(true)
+      } else setInviteError(new Error('Invitation failed'))
+    } catch (error) {
+      setInviteError(error ?? new Error('Invitation failed'))
     } finally {
       pendingRef.current = false
       setIsPending(false)
@@ -198,9 +199,11 @@ export function StableInviteFormView({
           submittingLabel={t('invitations.inviting')}
         />
       </div>
-      {inviteError && (
+      {inviteError != null && (
         <Alert variant="destructive" className="sm:col-span-2">
-          <AlertDescription>{t('invitations.failed')}</AlertDescription>
+          <AlertDescription>
+            {`${t('invitations.failed')} ${describeError(inviteError)}`}
+          </AlertDescription>
         </Alert>
       )}
     </InlineForm>

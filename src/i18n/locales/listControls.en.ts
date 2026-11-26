@@ -12,16 +12,14 @@ export const listControls = {
   currentPerson: '{{name}} (me)',
   showPeopleSuggestions: 'Show people suggestions',
   peopleSuggestionsLoading: 'Loading people. You can also enter a name.',
-  peopleSuggestionsFailed:
-    'People could not be loaded. You can still enter a name.',
+  peopleSuggestionsFailed: 'Couldn’t load people. You can still enter a name.',
   noPeopleSuggestions: 'No matching people. You can enter another name.',
-  dashboardEmpty: 'Create a stable to start using the dashboard.',
-  dashboardFailed: 'The stable noticeboard couldn’t load',
+  dashboardEmpty: 'Create a stable to get started.',
+  dashboardFailed: 'Couldn’t load the noticeboard',
   dashboardFailedHelp:
-    'Check your connection, then try again. Your stable records have not been changed.',
+    'Check your connection and try again. Nothing in your stable has changed.',
   membershipMissing: 'Membership not found',
-  membershipMissingHelp:
-    'Your account is not connected to this stable as an active member.',
+  membershipMissingHelp: 'You’re not an active member of this stable.',
   results_one: '{{count}} result',
   results_few: '{{count}} results',
   results_many: '{{count}} results',

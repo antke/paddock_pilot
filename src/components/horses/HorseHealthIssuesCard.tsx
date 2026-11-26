@@ -2,6 +2,7 @@ import { WorkspaceRecordAudience } from '#/components/sharing/RecordAudienceLabe
 import { useWorkspace } from '#/components/layout/WorkspaceContext'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
+import { useActionErrorText } from '#/lib/actionError'
 import { HealthIssueForm } from '#/components/horses/HealthIssueForm'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { FilteredDashboardItemList } from '#/components/list-filtering/FilteredDashboardItemList'
@@ -12,7 +13,7 @@ import {
 } from '#/components/dashboard/DashboardItemCard'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import { Button } from '#/components/ui/button'
-import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
+import { showAppSuccessToast } from '#/components/ui/sonner'
 import { formatMediumTimestampDate } from '#/lib/dateDisplay'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -55,6 +56,14 @@ export function HorseHealthIssuesCard({
   const addIssue = useMutation(api.horseHealthIssues.add)
   const resolveIssue = useMutation(api.horseHealthIssues.resolve)
   const removeIssue = useMutation(api.horseHealthIssues.remove)
+  // Stable, so the reported create dialog doesn't change on every render.
+  const onAdd = useCallback(
+    async (data: HealthIssueFormSchema) => {
+      await addIssue({ horseId: horse._id, ...data })
+      showAppSuccessToast({ title: t('careRecords.issueAdded') })
+    },
+    [addIssue, horse._id, t],
+  )
   return (
     <HorseHealthIssuesCardView
       enableSharing
@@ -63,32 +72,14 @@ export function HorseHealthIssuesCard({
       issues={issues}
       canManage={permissions.canManage}
       onCreateActionChange={onCreateActionChange}
-      onAdd={async (data) => {
-        try {
-          await addIssue({ horseId: horse._id, ...data })
-          showAppSuccessToast({ title: t('careRecords.issueAdded') })
-        } catch (error) {
-          showAppErrorToast()
-          throw error
-        }
-      }}
+      onAdd={onAdd}
       onResolve={async (issue) => {
-        try {
-          await resolveIssue({ id: issue._id })
-          showAppSuccessToast({ title: t('careRecords.issueResolved') })
-        } catch (error) {
-          showAppErrorToast()
-          throw error
-        }
+        await resolveIssue({ id: issue._id })
+        showAppSuccessToast({ title: t('careRecords.issueResolved') })
       }}
       onRemove={async (issue) => {
-        try {
-          await removeIssue({ id: issue._id })
-          showAppSuccessToast({ title: t('careRecords.issueRemoved') })
-        } catch (error) {
-          showAppErrorToast()
-          throw error
-        }
+        await removeIssue({ id: issue._id })
+        showAppSuccessToast({ title: t('careRecords.issueRemoved') })
       }}
     />
   )
@@ -117,7 +108,7 @@ export function HorseHealthIssuesCardView({
 
   const activeOperations = useRef(new Set<string>())
   const [operations, setOperations] = useState<
-    Record<string, { pending: 'status' | 'remove' | null; failed: boolean }>
+    Record<string, { pending: 'status' | 'remove' | null; failure: unknown }>
   >({})
   const runRecordAction = async (
     id: string,
@@ -128,19 +119,20 @@ export function HorseHealthIssuesCardView({
     activeOperations.current.add(id)
     setOperations((states) => ({
       ...states,
-      [id]: { pending: kind, failed: false },
+      [id]: { pending: kind, failure: null },
     }))
-    let failed = false
+    let failure: unknown = null
     try {
       await callback()
     } catch (error) {
-      failed = true
+      // The remove dialog shows its own failure.
       if (kind === 'remove') throw error
+      failure = error ?? new Error('Update failed')
     } finally {
       activeOperations.current.delete(id)
       setOperations((states) => ({
         ...states,
-        [id]: { pending: null, failed },
+        [id]: { pending: null, failure },
       }))
     }
   }
@@ -201,7 +193,7 @@ export function HorseHealthIssuesCardView({
           key={issue._id}
           issue={issue}
           pending={operations[issue._id]?.pending ?? null}
-          failed={operations[issue._id]?.failed ?? false}
+          failure={operations[issue._id]?.failure ?? null}
           run={(kind, callback) => runRecordAction(issue._id, kind, callback)}
           canManage={canManage && issue.canEdit !== false}
           removalFocusTarget={() => listRegion.current}
@@ -236,7 +228,7 @@ function IssueRow({
   issue,
   canManage,
   pending,
-  failed,
+  failure,
   run,
   removalFocusTarget,
   onResolve,
@@ -245,7 +237,7 @@ function IssueRow({
   issue: Doc<'horseHealthIssues'>
   canManage: boolean
   pending: 'status' | 'remove' | null
-  failed: boolean
+  failure: unknown
   run: (
     kind: 'status' | 'remove',
     callback: () => Promise<void>,
@@ -255,6 +247,7 @@ function IssueRow({
   onRemove: (issue: Doc<'horseHealthIssues'>) => Promise<void>
 }) {
   const t = useT()
+  const describe = useActionErrorText()
   const { locale } = useLocale()
 
   const showSeverityBadge = issue.severity === 'high'
@@ -264,9 +257,9 @@ function IssueRow({
     <DashboardItemRecordCard
       chrome="flat"
       footer={
-        failed ? (
+        failure != null ? (
           <p role="alert" className="text-sm text-destructive">
-            {t('careRecords.updateFailed')}
+            {`${t('careRecords.resolveFailed')} ${describe(failure)}`}
           </p>
         ) : undefined
       }

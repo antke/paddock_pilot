@@ -4,7 +4,11 @@ import { NewRecordAudience } from '#/components/sharing/RecordAudience'
 import type { SharingChoice } from '#/components/sharing/RecordAudience'
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { useT } from '#/i18n/LocaleProvider'
-import { useId, useState, useRef } from 'react'
+import { useActionErrorText } from '#/lib/actionError'
+import { useEffect, useId, useState, useRef } from 'react'
+import { useQuery } from 'convex/react'
+import { api } from 'convex/_generated/api'
+import type { Id } from 'convex/_generated/dataModel'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
 import { DashboardValueBadge } from '#/components/dashboard/DashboardBadges'
@@ -32,6 +36,7 @@ import { Textarea } from '#/components/ui/textarea'
 import { getTodayDateKey } from '#/lib/dateDisplay'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
+import type { UseFormReturn } from 'react-hook-form'
 import {
   careReminderCategories,
   createCareReminderSchemas,
@@ -76,10 +81,15 @@ type HorseOption = {
   name: string
 }
 
+/** 'live' asks the server who the save will accept for the horses picked in the form. */
+export type AssigneeOptions = Array<HorseOption> | 'live'
+
 type CareReminderFormProps = {
   enableSharing?: boolean
   horseOptions?: Array<HorseOption>
-  assigneeOptions?: Array<HorseOption>
+  assigneeOptions?: AssigneeOptions
+  /** The reminder being edited, so live options follow its own scope. */
+  reminderId?: string
   initialValues?: CareReminderSubmitBaseData
   fixedHorseId?: string
   onSubmit: (data: CareReminderSubmitData) => Promise<void>
@@ -96,6 +106,7 @@ export function CareReminderForm({
   enableSharing = false,
   horseOptions = [],
   assigneeOptions = [],
+  reminderId,
   initialValues,
   fixedHorseId,
   onSubmit,
@@ -105,6 +116,7 @@ export function CareReminderForm({
 }: CareReminderFormProps) {
   const defaultShared = Boolean(useWorkspace()?.stableId)
   const t = useT()
+  const describe = useActionErrorText()
   const requestId = useRef(createRequestId())
   const pending = useRef(false)
   const [saving, setSaving] = useState(false)
@@ -123,7 +135,7 @@ export function CareReminderForm({
     label: t(`careLabels.priority.${priority}`),
   })) satisfies Array<{ value: CareReminderPriority; label: string }>
 
-  const [failed, setFailed] = useState(false)
+  const [failure, setFailure] = useState<unknown>(null)
   const { careReminderFormSchema } = createCareReminderSchemas((key) =>
     t(`reminders.validation.${key}`),
   )
@@ -162,7 +174,7 @@ export function CareReminderForm({
     if (pending.current) return
     pending.current = true
     setSaving(true)
-    setFailed(false)
+    setFailure(null)
     const reminder = {
       assignedTo: values.assignedTo,
       title: values.title,
@@ -230,8 +242,8 @@ export function CareReminderForm({
           dueDate: getTodayDateKey(),
           priority: values.priority,
         })
-    } catch {
-      setFailed(true)
+    } catch (error) {
+      setFailure(error ?? new Error('Save failed'))
     } finally {
       pending.current = false
       setSaving(false)
@@ -503,32 +515,23 @@ export function CareReminderForm({
         )}
       />
 
-      {assigneeOptions.length > 0 && (
-        <Field>
-          <FieldLabel htmlFor={`${formId}-assignedTo`}>
-            {t('reminders.responsible')}
-          </FieldLabel>
-          <Select
-            id={`${formId}-assignedTo`}
-            disabled={isSubmitting}
-            {...register('assignedTo')}
-          >
-            <option value="">{t('reminders.unassigned')}</option>
-            {initialValues?.assignedTo &&
-              !assigneeOptions.some(
-                (person) => person.id === initialValues.assignedTo,
-              ) && (
-                <option value={initialValues.assignedTo}>
-                  {t('reminders.unavailableAssignee')}
-                </option>
-              )}
-            {assigneeOptions.map((person) => (
-              <option key={person.id} value={person.id}>
-                {person.name}
-              </option>
-            ))}
-          </Select>
-        </Field>
+      {assigneeOptions === 'live' ? (
+        <LiveAssigneeField
+          form={form}
+          id={`${formId}-assignedTo`}
+          disabled={isSubmitting}
+          initialAssignee={initialValues?.assignedTo}
+          reminderId={reminderId}
+          horseIds={targetType === 'horses' ? selectedHorseIds : []}
+        />
+      ) : (
+        <AssigneeField
+          form={form}
+          id={`${formId}-assignedTo`}
+          disabled={isSubmitting}
+          initialAssignee={initialValues?.assignedTo}
+          options={assigneeOptions}
+        />
       )}
       <Field data-invalid={!!errors.description}>
         <FieldLabel htmlFor={`${formId}-description`}>
@@ -550,15 +553,15 @@ export function CareReminderForm({
         />
       </Field>
 
-      {failed ? (
+      {failure != null ? (
         <FieldError
           errors={[
             {
-              message: t(
+              message: `${t(
                 initialValues
                   ? 'reminders.saveChangesFailed'
                   : 'reminders.saveFailed',
-              ),
+              )} ${describe(failure)}`,
             },
           ]}
         />
@@ -573,4 +576,70 @@ export function CareReminderForm({
       />
     </DashboardInlineForm>
   )
+}
+
+type AssigneeFieldProps = {
+  form: UseFormReturn<CareReminderFormSchema>
+  id: string
+  disabled: boolean
+  initialAssignee?: string
+}
+
+function AssigneeField({
+  form,
+  id,
+  disabled,
+  initialAssignee,
+  options,
+}: AssigneeFieldProps & { options: Array<HorseOption> }) {
+  const t = useT()
+  if (!options.length) return null
+  return (
+    <Field>
+      <FieldLabel htmlFor={id}>{t('reminders.responsible')}</FieldLabel>
+      <Select id={id} disabled={disabled} {...form.register('assignedTo')}>
+        <option value="">{t('reminders.unassigned')}</option>
+        {initialAssignee &&
+          !options.some((person) => person.id === initialAssignee) && (
+            <option value={initialAssignee}>
+              {t('reminders.unavailableAssignee')}
+            </option>
+          )}
+        {options.map((person) => (
+          <option key={person.id} value={person.id}>
+            {person.name}
+          </option>
+        ))}
+      </Select>
+    </Field>
+  )
+}
+
+function LiveAssigneeField({
+  reminderId,
+  horseIds,
+  ...props
+}: AssigneeFieldProps & { reminderId?: string; horseIds: Array<string> }) {
+  const stableId = useWorkspace()?.stableId
+  const result = useQuery(api.careReminders.assigneeOptions, {
+    stableId,
+    horseIds: horseIds as Array<Id<'horses'>>,
+    reminderId: reminderId as Id<'careReminders'> | undefined,
+  })
+  // Keep the last list while a new horse selection loads, so the field doesn't flicker.
+  const [options, setOptions] = useState<Array<HorseOption>>([])
+  if (result && result !== options) setOptions(result)
+  const { form, initialAssignee } = props
+  const assignee = form.watch('assignedTo')
+  // Someone the new horse selection doesn't accept would only fail on save.
+  useEffect(() => {
+    if (
+      result &&
+      assignee &&
+      assignee !== initialAssignee &&
+      !result.some((person) => person.id === assignee)
+    )
+      form.setValue('assignedTo', '')
+  }, [result, assignee, initialAssignee, form])
+  return <AssigneeField {...props} options={options} />
 }

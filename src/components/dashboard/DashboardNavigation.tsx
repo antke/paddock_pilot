@@ -119,7 +119,15 @@ export function DashboardNavigation({
   useEffect(() => {
     const list = listRef.current
     if (!list || overflow !== 'scroll') return
+    let lastActive: HTMLElement | undefined
+    // Faded edges show there is more of the rail to scroll to.
+    const markEdges = () => {
+      const end = list.scrollWidth - list.clientWidth
+      list.toggleAttribute('data-fade-start', list.scrollLeft > 1)
+      list.toggleAttribute('data-fade-end', list.scrollLeft < end - 1)
+    }
     const revealActive = () => {
+      markEdges()
       if (list.scrollWidth <= list.clientWidth) return
       // A hidden desktop link may share its active state with a mobile menu trigger.
       const active = Array.from(
@@ -131,18 +139,37 @@ export function DashboardNavigation({
       const itemRect = active.getBoundingClientRect()
       const listRect = list.getBoundingClientRect()
       const clearance = 8
+      const first = lastActive === undefined
+      const changed = active !== lastActive
+      lastActive = active
       // Change only this horizontal strip; preserve page scroll and keyboard focus.
+      // A newly chosen item moves to the centre, so its neighbours stay in view.
       let nextScroll = list.scrollLeft
-      if (itemRect.left < listRect.left + clearance)
+      if (changed)
+        nextScroll +=
+          itemRect.left +
+          itemRect.width / 2 -
+          (listRect.left + listRect.width / 2)
+      else if (itemRect.left < listRect.left + clearance)
         nextScroll += itemRect.left - listRect.left - clearance
       else if (itemRect.right > listRect.right - clearance)
         nextScroll += itemRect.right - listRect.right + clearance
-      list.scrollLeft = Math.max(
-        0,
-        Math.min(list.scrollWidth - list.clientWidth, nextScroll),
-      )
+      list.scrollTo({
+        left: Math.max(
+          0,
+          Math.min(list.scrollWidth - list.clientWidth, nextScroll),
+        ),
+        // The first reveal is instant; later choices glide unless motion is reduced.
+        behavior:
+          changed &&
+          !first &&
+          !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+            ? 'smooth'
+            : 'auto',
+      })
     }
     revealActive()
+    list.addEventListener('scroll', markEdges, { passive: true })
     const mutations = new MutationObserver(revealActive)
     mutations.observe(list, {
       subtree: true,
@@ -162,6 +189,7 @@ export function DashboardNavigation({
       mutations.disconnect()
       resize?.disconnect()
       window.removeEventListener('resize', revealActive)
+      list.removeEventListener('scroll', markEdges)
     }
   }, [overflow])
 
@@ -182,7 +210,7 @@ export function DashboardNavigation({
         className={cn(
           dashboardNavigationListClassName,
           overflow === 'scroll' &&
-            'max-w-full flex-nowrap justify-start overflow-x-auto overscroll-x-contain [scrollbar-width:none]',
+            'max-w-full flex-nowrap justify-start overflow-x-auto overscroll-x-contain [scrollbar-width:none] [--fade-end:0px] [--fade-start:0px] [mask-image:linear-gradient(to_right,transparent,black_var(--fade-start),black_calc(100%-var(--fade-end)),transparent)] data-fade-end:[--fade-end:2.5rem] data-fade-start:[--fade-start:2.5rem]',
           alignAlways && 'justify-end',
           alignResponsive && 'lg:justify-end',
           listClassName,

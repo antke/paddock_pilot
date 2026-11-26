@@ -19,7 +19,7 @@ import {
   DashboardItemRecordCard,
   DashboardItemRecordContent,
 } from '#/components/dashboard/DashboardItemCard'
-import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
+import { showAppSuccessToast } from '#/components/ui/sonner'
 import { TextLabel } from '#/components/ui/text-label'
 import {
   dateKeyToTimestamp,
@@ -65,53 +65,43 @@ export function HorseWeightRecordsCard({
   const removeWeightRecord = useMutation(api.horseWeightRecords.remove)
   const onAddWeightRecord = useCallback(
     async (data: WeightRecordFormSchema & RecordCreationOptions) => {
-      try {
-        await addWeightRecord({
-          horseId: horse._id,
-          requestId: data.requestId,
-          shareWithStable: data.shareWithStable,
-          weight: data.weight,
-          unit: data.unit,
-          measuredAt: dateKeyToTimestamp(data.measuredDate),
-          bodyConditionScore: data.bodyConditionScore,
-          notes: data.notes,
-        })
+      await addWeightRecord({
+        horseId: horse._id,
+        requestId: data.requestId,
+        shareWithStable: data.shareWithStable,
+        weight: data.weight,
+        unit: data.unit,
+        measuredAt: dateKeyToTimestamp(data.measuredDate),
+        bodyConditionScore: data.bodyConditionScore,
+        notes: data.notes,
+      })
 
-        showAppSuccessToast({
-          title: t('careRecords.weightAdded'),
-          description: (
-            <p>
-              {t('careRecords.weightHistoryUpdated', {
-                name: horseDisplayName,
-              })}
-            </p>
-          ),
-        })
-      } catch (err) {
-        showAppErrorToast()
-        throw err
-      }
+      showAppSuccessToast({
+        title: t('careRecords.weightAdded'),
+        description: (
+          <p>
+            {t('careRecords.weightHistoryUpdated', {
+              name: horseDisplayName,
+            })}
+          </p>
+        ),
+      })
     },
     [addWeightRecord, horse._id, horseDisplayName, t],
   )
 
   const onRemoveWeightRecord = async (record: Doc<'horseWeightRecords'>) => {
-    try {
-      await removeWeightRecord({ id: record._id })
-      showAppSuccessToast({
-        title: t('careRecords.weightRemoved'),
-        description: (
-          <p>
-            {t('careRecords.recordRemoved', {
-              date: formatMediumTimestampDate(record.measuredAt, locale),
-            })}
-          </p>
-        ),
-      })
-    } catch (err) {
-      showAppErrorToast()
-      throw err
-    }
+    await removeWeightRecord({ id: record._id })
+    showAppSuccessToast({
+      title: t('careRecords.weightRemoved'),
+      description: (
+        <p>
+          {t('careRecords.recordRemoved', {
+            date: formatMediumTimestampDate(record.measuredAt, locale),
+          })}
+        </p>
+      ),
+    })
   }
 
   return (

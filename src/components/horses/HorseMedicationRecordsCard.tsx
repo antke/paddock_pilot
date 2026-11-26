@@ -2,6 +2,7 @@ import { WorkspaceRecordAudience } from '#/components/sharing/RecordAudienceLabe
 import { useWorkspace } from '#/components/layout/WorkspaceContext'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
+import { useActionErrorText } from '#/lib/actionError'
 import { MedicationRecordForm } from '#/components/horses/MedicationRecordForm'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import { FilteredDashboardItemList } from '#/components/list-filtering/FilteredDashboardItemList'
@@ -26,7 +27,7 @@ import { useMutation } from 'convex/react'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { MedicationRecordFormSchema } from 'shared/horses/medicationRecordSchema'
 import { MedicationRecordStatusBadge } from './HorseCareBadges'
-import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
+import { showAppSuccessToast } from '#/components/ui/sonner'
 import { createHorseMedicationRecordListFilterConfig } from './horseDetailListFilters'
 import type { HorseDetailCreateActionChange } from './useHorseDetailCreateAction'
 import { useHorseDetailCreateAction } from './useHorseDetailCreateAction'
@@ -62,6 +63,14 @@ export function HorseMedicationRecordsCard({
     api.horseMedicationRecords.complete,
   )
   const removeMedicationRecord = useMutation(api.horseMedicationRecords.remove)
+  // Stable, so the reported create dialog doesn't change on every render.
+  const onAdd = useCallback(
+    async (data: MedicationRecordFormSchema) => {
+      await addMedicationRecord({ horseId: horse._id, ...data })
+      showAppSuccessToast({ title: t('careRecords.medicationAdded') })
+    },
+    [addMedicationRecord, horse._id, t],
+  )
   return (
     <HorseMedicationRecordsCardView
       enableSharing
@@ -70,32 +79,14 @@ export function HorseMedicationRecordsCard({
       records={records}
       canManage={permissions.canManage}
       onCreateActionChange={onCreateActionChange}
-      onAdd={async (data) => {
-        try {
-          await addMedicationRecord({ horseId: horse._id, ...data })
-          showAppSuccessToast({ title: t('careRecords.medicationAdded') })
-        } catch (error) {
-          showAppErrorToast()
-          throw error
-        }
-      }}
+      onAdd={onAdd}
       onComplete={async (record) => {
-        try {
-          await completeMedicationRecord({ id: record._id, endDate: today })
-          showAppSuccessToast({ title: t('careRecords.medicationCompleted') })
-        } catch (error) {
-          showAppErrorToast()
-          throw error
-        }
+        await completeMedicationRecord({ id: record._id, endDate: today })
+        showAppSuccessToast({ title: t('careRecords.medicationCompleted') })
       }}
       onRemove={async (record) => {
-        try {
-          await removeMedicationRecord({ id: record._id })
-          showAppSuccessToast({ title: t('careRecords.medicationRemoved') })
-        } catch (error) {
-          showAppErrorToast()
-          throw error
-        }
+        await removeMedicationRecord({ id: record._id })
+        showAppSuccessToast({ title: t('careRecords.medicationRemoved') })
       }}
     />
   )
@@ -124,7 +115,7 @@ export function HorseMedicationRecordsCardView({
 
   const activeOperations = useRef(new Set<string>())
   const [operations, setOperations] = useState<
-    Record<string, { pending: 'status' | 'remove' | null; failed: boolean }>
+    Record<string, { pending: 'status' | 'remove' | null; failure: unknown }>
   >({})
   const runRecordAction = async (
     id: string,
@@ -135,19 +126,20 @@ export function HorseMedicationRecordsCardView({
     activeOperations.current.add(id)
     setOperations((states) => ({
       ...states,
-      [id]: { pending: kind, failed: false },
+      [id]: { pending: kind, failure: null },
     }))
-    let failed = false
+    let failure: unknown = null
     try {
       await callback()
     } catch (error) {
-      failed = true
+      // The remove dialog shows its own failure.
       if (kind === 'remove') throw error
+      failure = error ?? new Error('Update failed')
     } finally {
       activeOperations.current.delete(id)
       setOperations((states) => ({
         ...states,
-        [id]: { pending: null, failed },
+        [id]: { pending: null, failure },
       }))
     }
   }
@@ -210,7 +202,7 @@ export function HorseMedicationRecordsCardView({
           key={record._id}
           record={record}
           pending={operations[record._id]?.pending ?? null}
-          failed={operations[record._id]?.failed ?? false}
+          failure={operations[record._id]?.failure ?? null}
           run={(kind, callback) => runRecordAction(record._id, kind, callback)}
           canManage={canManage && record.canEdit !== false}
           removalFocusTarget={() => listRegion.current}
@@ -311,7 +303,7 @@ function MedicationRecordRow({
   record,
   canManage,
   pending,
-  failed,
+  failure,
   run,
   removalFocusTarget,
   today,
@@ -321,7 +313,7 @@ function MedicationRecordRow({
   record: Doc<'horseMedicationRecords'>
   canManage: boolean
   pending: 'status' | 'remove' | null
-  failed: boolean
+  failure: unknown
   run: (
     kind: 'status' | 'remove',
     callback: () => Promise<void>,
@@ -332,15 +324,16 @@ function MedicationRecordRow({
   onRemove: (record: Doc<'horseMedicationRecords'>) => Promise<void>
 }) {
   const t = useT()
+  const describe = useActionErrorText()
   const { locale } = useLocale()
 
   return (
     <DashboardItemRecordCard
       chrome="flat"
       footer={
-        failed ? (
+        failure != null ? (
           <p role="alert" className="text-sm text-destructive">
-            {t('careRecords.updateFailed')}
+            {`${t('careRecords.completeFailed')} ${describe(failure)}`}
           </p>
         ) : undefined
       }

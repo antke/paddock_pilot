@@ -31,7 +31,7 @@ describe('shared yard updates view', () => {
     rerender(
       <DashboardUpdates updates={[]} onSave={vi.fn()} onRemove={vi.fn()} />,
     )
-    expect(screen.getByText(/No current yard updates/)).toBeTruthy()
+    expect(screen.getByText(/No updates right now/)).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Add update' })).toBeTruthy()
   })
   it('keeps a rejected draft and prevents empty or duplicate saves', async () => {
@@ -59,7 +59,7 @@ describe('shared yard updates view', () => {
     ).toBe(true)
     const body = screen.getByLabelText('Update')
     fireEvent.submit(body.closest('form')!)
-    expect(screen.getByText(/Write an update between/)).toBeTruthy()
+    expect(screen.getByText(/Write 1 to 2000 characters/)).toBeTruthy()
     expect(onSave).not.toHaveBeenCalled()
     fireEvent.change(body, { target: { value: 'Gate repair today.' } })
     fireEvent.submit(body.closest('form')!)
@@ -67,8 +67,15 @@ describe('shared yard updates view', () => {
     expect(onSave).toHaveBeenCalledTimes(1)
     reject(new Error('Network'))
     await waitFor(() =>
-      expect(screen.getByText(/Could not save this change/)).toBeTruthy(),
+      expect(
+        screen.getByText('Couldn’t save the update. Your draft is still here.'),
+      ).toBeTruthy(),
     )
+    expect(
+      screen.getByText(
+        'You’re offline, so nothing changed. Reconnect and try again.',
+      ),
+    ).toBeTruthy()
     expect((body as HTMLTextAreaElement).value).toBe('Gate repair today.')
   })
   it('limits management to records allowed by the server and keeps preview read-only', () => {

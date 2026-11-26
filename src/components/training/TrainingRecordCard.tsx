@@ -2,8 +2,7 @@ import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
 import type { ReactNode } from 'react'
 import { CreatorByline } from '#/components/events/CreatorByline'
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
-import { getUserFacingErrorCode } from 'shared/i18n/errors'
-import type { UserFacingErrorCode } from 'shared/i18n/errors'
+import { useActionErrorText } from '#/lib/actionError'
 import { formatMediumTimestampDateTime } from '#/lib/dateDisplay'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import { CheckCircleIcon } from '@phosphor-icons/react'
@@ -262,7 +261,8 @@ function TrainingRecordEditor({
     useState<Doc<'trainingRecords'>['status']>(defaultStatus)
   const [outcome, setOutcome] = useState(entry.record?.outcome ?? '')
   const [error, setError] = useState<TrainingValidationKey | 'save'>()
-  const [serverErrorCode, setServerErrorCode] = useState<UserFacingErrorCode>()
+  const describe = useActionErrorText()
+  const [saveFailure, setSaveFailure] = useState<unknown>(null)
   const { trainingRecordFormSchema } = createTrainingSchemas((key) => key)
   const [pending, setPending] = useState(false)
   const form = useForm<EventFormInput, unknown, EventFormSchema>({
@@ -296,7 +296,7 @@ function TrainingRecordEditor({
         event.preventDefault()
         if (submitting.current) return
         form.clearErrors()
-        setServerErrorCode(undefined)
+        setSaveFailure(null)
         const parsed = trainingRecordFormSchema.safeParse({
           ...form.getValues('training'),
           status,
@@ -361,7 +361,7 @@ function TrainingRecordEditor({
           }
         } catch (reason) {
           console.error('Could not save training record', reason)
-          setServerErrorCode(getUserFacingErrorCode(reason))
+          setSaveFailure(reason)
           setError('save')
         } finally {
           submitting.current = false
@@ -401,7 +401,9 @@ function TrainingRecordEditor({
                 key={value}
                 value={value}
                 disabled={
-                  value === 'completed' && entry.occurrence.startDate > today
+                  value === 'completed' &&
+                  recordDate > today &&
+                  entry.record?.status !== 'completed'
                 }
               >
                 {t(`training.status.${value}`)}
@@ -449,9 +451,7 @@ function TrainingRecordEditor({
       <FormSubmissionError
         message={
           error === 'save'
-            ? serverErrorCode
-              ? t(`serverErrors.${serverErrorCode}`)
-              : t('trainingViews.saveFailed')
+            ? `${t('trainingViews.saveRecordFailed')} ${describe(saveFailure)}`
             : error
               ? t(`trainingValidation.${error}`)
               : undefined

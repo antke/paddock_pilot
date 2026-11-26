@@ -35,7 +35,7 @@ describe('care reminder form recovery', () => {
     fireEvent.change(title, { target: { value: 'Book farrier visit' } })
     fireEvent.submit(title.closest('form')!)
     await screen.findByText(
-      'Could not add this reminder. Your entries are still here; please try again.',
+      'Couldn’t add the reminder. Your entries are still here. You’re offline, so nothing changed. Reconnect and try again.',
     )
     expect(title.value).toBe('Book farrier visit')
     fireEvent.submit(title.closest('form')!)
@@ -74,15 +74,14 @@ describe('care reminder form recovery', () => {
     )
     const title = screen.getByLabelText<HTMLInputElement>('Title')
     const due = screen.getByLabelText<HTMLInputElement>('Due date')
-    const responsible =
-      screen.getByLabelText<HTMLSelectElement>('Responsible person')
+    const responsible = screen.getByLabelText<HTMLSelectElement>('Assigned to')
     expect(due.value).toBe('2026-10-01')
     expect(responsible.value).toBe('member-1')
     fireEvent.change(due, { target: { value: '2026-10-07' } })
     fireEvent.change(responsible, { target: { value: 'member-2' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
     await screen.findByText(
-      'Could not save this reminder. Your entries are still here; please try again.',
+      /^Couldn’t save the reminder\. Your entries are still here\. /,
     )
     expect(due.value).toBe('2026-10-07')
     expect(responsible.value).toBe('member-2')

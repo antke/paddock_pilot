@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useActionErrorText } from '#/lib/actionError'
 
 /** A server acknowledgement is durable; retries repeat only a failed continuation. */
 export function useAcknowledgedFormSave<TValues, TResult>({
@@ -18,6 +19,7 @@ export function useAcknowledgedFormSave<TValues, TResult>({
   onAcknowledged?: (result: TResult, values: TValues) => void
   onPendingChange?: (pending: boolean) => void
 }) {
+  const describe = useActionErrorText()
   const lock = useRef(false)
   const saved = useRef<{ result: TResult } | null>(null)
   const epoch = useRef(0)
@@ -120,7 +122,8 @@ export function useAcknowledgedFormSave<TValues, TResult>({
     completed,
     error:
       errorKind === 'save'
-        ? (formatSaveError?.(saveFailure) ?? saveError)
+        ? (formatSaveError?.(saveFailure) ??
+          `${saveError} ${describe(saveFailure)}`)
         : errorKind === 'continuation'
           ? continueError
           : undefined,

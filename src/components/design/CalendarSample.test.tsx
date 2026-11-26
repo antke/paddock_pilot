@@ -61,7 +61,7 @@ function selectMondayMonth() {
 function openDenseDay() {
   fireEvent.click(
     screen.getByRole('button', {
-      name: /Show 5 additional events on 18 Jun 2026/,
+      name: /Show 5 more events on 18 Jun 2026/,
     }),
   )
   return screen.getByRole('region', { name: 'Events on 18 Jun 2026' })
@@ -126,7 +126,7 @@ describe('actual local calendar specimens', () => {
     })
     expect(
       screen.getByRole('button', {
-        name: /Show 5 additional events on 18 Feb 2024/,
+        name: /Show 5 more events on 18 Feb 2024/,
       }),
     ).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /Keep two events/ }))
@@ -138,7 +138,7 @@ describe('actual local calendar specimens', () => {
     })
     expect(
       screen.getByRole('button', {
-        name: /Show 5 additional events on 18 Feb 2024/,
+        name: /Show 5 more events on 18 Feb 2024/,
       }),
     ).toBeTruthy()
   })

@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '#/components/ui/dialog'
+import { CurrencySelector } from '#/i18n/CurrencySelector'
 import { LanguageSelector } from '#/i18n/LanguageSelector'
 import { useT } from '#/i18n/LocaleProvider'
 
@@ -29,6 +30,7 @@ export function AccountPreferencesDialog({
         </DialogHeader>
         <div className="grid gap-5">
           <LanguageSelector />
+          <CurrencySelector />
           <fieldset className="grid min-w-0 gap-1">
             <legend className="mb-1 text-sm font-medium">
               {t('navigationShell.appearance')}

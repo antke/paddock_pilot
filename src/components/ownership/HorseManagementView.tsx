@@ -91,7 +91,7 @@ export function HorseManagementView({
       await action()
       setAccessMessage(message)
     } catch (error) {
-      setAccessError(errorMessage(error))
+      setAccessError(errorMessage(m.accessFailed, error))
       throw error
     } finally {
       busy.current = false
@@ -172,7 +172,7 @@ export function HorseManagementView({
                     setPlacementMessage(m.connected(destination.name))
                     setStableId('')
                   } catch (error) {
-                    setPlacementError(errorMessage(error))
+                    setPlacementError(errorMessage(m.connectFailed, error))
                   } finally {
                     busy.current = false
                     setPending(false)
@@ -444,7 +444,7 @@ function InviteHorseAccessForm({
           setMessage(m.invitationSent(email))
           setEmail('')
         } catch (cause) {
-          setError(errorMessage(cause))
+          setError(errorMessage(m.inviteFailed, cause))
         } finally {
           busy.current = false
           setPending(false)
@@ -528,6 +528,7 @@ function DeleteHorseAction({
 }: Pick<ManagementProps, 'horseId' | 'archive'> & { horseName: string }) {
   const c = useOwnershipCopy()
   const m = useManagementCopy()
+  const errorMessage = useOwnershipErrorMessage()
   const { locale } = useLocale()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
@@ -592,8 +593,8 @@ function DeleteHorseAction({
                     await archive({ id: horseId })
                     setDeleted(true)
                     setOpen(false)
-                  } catch {
-                    setError(m.deleteFailed)
+                  } catch (cause) {
+                    setError(errorMessage(m.deleteFailed, cause))
                     return
                   } finally {
                     busy.current = false

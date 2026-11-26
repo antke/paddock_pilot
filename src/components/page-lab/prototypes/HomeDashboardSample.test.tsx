@@ -59,9 +59,7 @@ it('offers actual combined home with local failure/retry through the existing da
   fireEvent.change(await screen.findByLabelText('Preview composition'), {
     target: { value: 'home' },
   })
-  expect(
-    screen.getByRole('heading', { level: 1, name: 'Home' }),
-  ).toBeTruthy()
+  expect(screen.getByRole('heading', { level: 1, name: 'Home' })).toBeTruthy()
   fireEvent.change(screen.getByLabelText('Next sample invitation result'), {
     target: { value: 'failure' },
   })
@@ -70,7 +68,7 @@ it('offers actual combined home with local failure/retry through the existing da
     name: /^Decline invitation/,
   })[0]
   fireEvent.click(first)
-  await within(region).findByText(/Could not decline this invitation/)
+  await within(region).findByText(/Couldn’t decline the invitation/)
   expect(within(region).getAllByRole('listitem')).toHaveLength(2)
   fireEvent.click(
     within(region).getAllByRole('button', { name: /^Decline invitation/ })[0],

@@ -20,6 +20,7 @@ import {
 } from './libs/stablePermissions'
 import { ensureStableOnboarding } from './libs/onboarding'
 import { recordStableAudit } from './libs/audit'
+import { userFacingError } from './libs/userFacingError'
 import { queueStableArchivedEmails } from './libs/email/notifications'
 
 const isStable = (stable: Doc<'stables'> | null): stable is Doc<'stables'> =>
@@ -238,9 +239,7 @@ export const remove = mutation({
       .withIndex('by_stable_id', (q) => q.eq('stableId', args.id))
       .collect()
     if (horses.some((horse) => !horse.ownerId && horse.deletedAt === undefined))
-      throw new ConvexError(
-        'Claim or archive the unclaimed horses before archiving this stable',
-      )
+      throw userFacingError('stableHasUnclaimedHorses', 'structured')
     for (const horse of horses) {
       if (horse.currentPlacementId && !horse.transitionId) {
         const preview = await departurePreview(ctx, horse)

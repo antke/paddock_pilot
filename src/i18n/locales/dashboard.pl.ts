@@ -2,7 +2,7 @@ export const dashboard = {
   back: 'Wstecz',
   events: 'Wydarzenia',
   fullCalendar: 'Wszystkie wydarzenia',
-  noUpcomingEvents: 'Brak nadchodzących wydarzeń w ciągu najbliższych 7 dni.',
+  noUpcomingEvents: 'Nic nie zaplanowano na najbliższe 7 dni.',
   eventCount_one: '{{count}} wydarzenie',
   eventCount_few: '{{count}} wydarzenia',
   eventCount_many: '{{count}} wydarzeń',
@@ -27,15 +27,14 @@ export const dashboard = {
   quickGoTo: 'Przejdź do',
   addEvent: 'Dodaj wydarzenie',
   quietDay: 'Na dziś nic nie zaplanowano.',
-  quietDayHelp:
-    'Przypomnienia o opiece i problemy zdrowotne są pokazane osobno.',
+  quietDayHelp: 'Przypomnienia i problemy zdrowotne masz osobno.',
   week: 'Najbliższe 7 dni',
   weekHelp:
-    'Wybierz dzień, aby zobaczyć wpisy w kalendarzu, w tym zakończone i odwołane wydarzenia.',
+    'Wybierz dzień, żeby zobaczyć jego plan, także zakończone i odwołane wydarzenia.',
   weekSchedule: 'Plan na siedem dni',
   noEntries: 'Brak wpisów',
   calendarEmpty: 'Brak wpisów w kalendarzu.',
-  dayEmpty: 'Brak wpisów w kalendarzu na ten dzień.',
+  dayEmpty: 'Tego dnia nic nie ma.',
   healthIssues: 'Problemy zdrowotne',
   reminders: 'Przypomnienia',
   attention: 'Do sprawdzenia',
@@ -72,19 +71,19 @@ export const dashboard = {
   yardIssues_many: '{{count}} poważnych problemów zdrowotnych w stajni.',
   yardIssues_other: '{{count}} poważnego problemu zdrowotnego w stajni.',
   missingIssues_one:
-    'Liczba dodatkowych poważnych problemów zdrowotnych nieuwzględnionych w tym przeglądzie: {{count}}. Lista koni zawiera wszystkie profile, ale nie wskazuje tych brakujących problemów.',
+    'Poważne problemy zdrowotne, których tu nie widać: {{count}}. Lista koni ma wszystkie konie, ale ich nie wskaże.',
   missingIssues_other:
-    'Liczba dodatkowych poważnych problemów zdrowotnych nieuwzględnionych w tym przeglądzie: {{count}}. Lista koni zawiera wszystkie profile, ale nie wskazuje tych brakujących problemów.',
+    'Poważne problemy zdrowotne, których tu nie widać: {{count}}. Lista koni ma wszystkie konie, ale ich nie wskaże.',
   missingIssues_few:
-    'Liczba dodatkowych poważnych problemów zdrowotnych nieuwzględnionych w tym przeglądzie: {{count}}. Lista koni zawiera wszystkie profile, ale nie wskazuje tych brakujących problemów.',
+    'Poważne problemy zdrowotne, których tu nie widać: {{count}}. Lista koni ma wszystkie konie, ale ich nie wskaże.',
   missingIssues_many:
-    'Liczba dodatkowych poważnych problemów zdrowotnych nieuwzględnionych w tym przeglądzie: {{count}}. Lista koni zawiera wszystkie profile, ale nie wskazuje tych brakujących problemów.',
+    'Poważne problemy zdrowotne, których tu nie widać: {{count}}. Lista koni ma wszystkie konie, ale ich nie wskaże.',
   remainingReminders_one:
-    'Pozostałe przypomnienia na najbliższe 14 dni: {{count}}. Wybierz „Zobacz przypomnienia”, aby otworzyć pełną listę.',
+    'Kolejne przypomnienia na 14 dni: {{count}}. Pełna lista: „Wszystkie przypomnienia”.',
   remainingReminders_other:
-    'Pozostałe przypomnienia na najbliższe 14 dni: {{count}}. Wybierz „Zobacz przypomnienia”, aby otworzyć pełną listę.',
+    'Kolejne przypomnienia na 14 dni: {{count}}. Pełna lista: „Wszystkie przypomnienia”.',
   remainingReminders_few:
-    'Pozostałe przypomnienia na najbliższe 14 dni: {{count}}. Wybierz „Zobacz przypomnienia”, aby otworzyć pełną listę.',
+    'Kolejne przypomnienia na 14 dni: {{count}}. Pełna lista: „Wszystkie przypomnienia”.',
   remainingReminders_many:
-    'Pozostałe przypomnienia na najbliższe 14 dni: {{count}}. Wybierz „Zobacz przypomnienia”, aby otworzyć pełną listę.',
+    'Kolejne przypomnienia na 14 dni: {{count}}. Pełna lista: „Wszystkie przypomnienia”.',
 } as const

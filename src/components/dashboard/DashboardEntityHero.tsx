@@ -22,12 +22,17 @@ type DashboardEntityHeroProps = {
   title: ReactNode
   /** Defaults to the route's `PageBack`; pass `null` to suppress it. */
   backAction?: ReactNode
+  /**
+   * Phones show this `EntityActionsMenu` in the Back row instead of `actions`;
+   * `null` hides the actions on phones when a round button already holds them.
+   */
+  phoneMenu?: ReactNode
 }
 
 /**
  * The one detail header: Back, identity (leading block, title, meta line),
- * then the entity's actions — a left-aligned row under the identity on phones,
- * right-aligned beside it from `md` — then any secondary content.
+ * then the entity's actions — right-aligned beside it from `md`; on phones one
+ * `phoneMenu` at the end of the Back row — then any secondary content.
  */
 export function DashboardEntityHero({
   actions,
@@ -37,6 +42,7 @@ export function DashboardEntityHero({
   leading,
   title,
   backAction,
+  phoneMenu,
 }: DashboardEntityHeroProps) {
   const workspace = useWorkspace()
   // The title stands alone; Personal or the stable's name leads the meta line.
@@ -46,8 +52,9 @@ export function DashboardEntityHero({
       : undefined
   return (
     <DashboardHeroSection className={cn('grid gap-5', className)}>
-      <PageBackSlot className="-mb-2">
+      <PageBackSlot className="-mb-2 items-center">
         {backAction === undefined ? <PageBack /> : backAction}
+        {phoneMenu && <div className="ml-auto md:hidden">{phoneMenu}</div>}
       </PageBackSlot>
       <div className="mx-auto grid w-full max-w-[var(--page-column,none)] min-w-0 gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-x-8">
         <div
@@ -75,7 +82,10 @@ export function DashboardEntityHero({
         {actions && (
           <div
             data-slot="entity-hero-actions"
-            className="flex min-w-0 flex-wrap items-center gap-2 md:justify-end"
+            className={cn(
+              'flex min-w-0 flex-wrap items-center gap-2 md:justify-end',
+              phoneMenu !== undefined && 'max-md:hidden',
+            )}
           >
             {actions}
           </div>

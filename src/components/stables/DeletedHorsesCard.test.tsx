@@ -52,7 +52,7 @@ describe('Deleted horse recovery and permanent removal', () => {
     expect(
       screen.queryByRole('button', { name: 'Delete permanently' }),
     ).toBeNull()
-    expect(screen.getByText(/Eligible for permanent removal/)).toBeTruthy()
+    expect(screen.getByText(/Can be deleted for good from/)).toBeTruthy()
   })
 
   it('guards repeated restores, retains failure and moves focus to the surviving section after retry succeeds', async () => {
@@ -86,9 +86,9 @@ describe('Deleted horse recovery and permanent removal', () => {
     expect(restore).toHaveBeenCalledTimes(1)
     expect(screen.getByText('Willow')).toBeTruthy()
     await act(async () => first.reject(new Error('Offline')))
-    expect(screen.getByRole('alert').textContent).toContain(
-      'Could not restore horse',
-    )
+    const alert = screen.getByRole('alert').textContent
+    expect(alert).toContain('Couldn’t restore the horse')
+    expect(alert).toContain('You’re offline, so nothing changed.')
     fireEvent.click(screen.getByRole('button', { name: 'Restore' }))
     await waitFor(() => expect(restore).toHaveBeenCalledTimes(2))
     await act(async () => retry.resolve())
@@ -122,7 +122,7 @@ describe('Deleted horse recovery and permanent removal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Delete permanently' }))
     const dialog = await screen.findByRole('alertdialog')
     expect(remove).not.toHaveBeenCalled()
-    expect(within(dialog).getByText(/This cannot be undone/)).toBeTruthy()
+    expect(within(dialog).getByText(/You can’t undo this/)).toBeTruthy()
     fireEvent.click(
       within(dialog).getByRole('button', { name: 'Delete permanently' }),
     )
@@ -133,7 +133,7 @@ describe('Deleted horse recovery and permanent removal', () => {
     expect(screen.getByRole('alertdialog')).toBeTruthy()
     await act(async () => first.reject(new Error('Offline')))
     expect(within(dialog).getByRole('alert').textContent).toContain(
-      'Deletion was not confirmed',
+      'Couldn’t permanently delete the horse',
     )
     fireEvent.click(
       within(dialog).getByRole('button', { name: 'Delete permanently' }),

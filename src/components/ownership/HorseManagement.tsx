@@ -64,7 +64,8 @@ export function HorseManagement({ horseId }: { horseId: Id<'horses'> }) {
         connect={connect}
         archive={archive}
       />
-      {data.access.isOwner && data.access.stable ? (
+      {/* Same rule as the server's owner check: not while the horse is moving. */}
+      {data.access.canManageAccess && data.access.stable ? (
         <DashboardSectionCard
           title={
             locale === 'pl' ? 'Udostępnij historię' : 'Share existing history'

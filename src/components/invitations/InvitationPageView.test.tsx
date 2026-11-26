@@ -97,6 +97,9 @@ describe('invitation response contract', () => {
     ).toBe(true)
     await act(async () => request.reject())
     const error = screen.getByRole('alert')
+    expect(error.textContent).toBe(
+      'Couldn’t accept the invitation. Something went wrong on our side and nothing changed. Try again in a moment.',
+    )
     const retry = screen.getByRole('button', { name: 'Try accepting again' })
     expect(retry.getAttribute('aria-describedby')).toBe(error.id)
     retry.focus()
@@ -137,7 +140,7 @@ describe('invitation response contract', () => {
     expect(
       await screen.findByRole('heading', { name: 'Invitation declined' }),
     ).toBeTruthy()
-    expect(screen.getByText(/This sample invitation is declined/)).toBeTruthy()
+    expect(screen.getByText(/Sample invite declined/)).toBeTruthy()
     expect(decline).toHaveBeenCalledTimes(2)
   })
 
@@ -187,15 +190,15 @@ describe('invitation response contract', () => {
     ['signed-out', 'Sign in with the invited account'],
     ['signed-out-accepted', 'Sign in to continue'],
     ['preparing', 'Preparing your account'],
-    ['wrong-email', 'This invitation belongs to another email'],
-    ['no-email', 'Your account email is not available yet'],
+    ['wrong-email', 'This invite is for a different email'],
+    ['no-email', 'Your email isn’t available yet'],
     ['expired', 'This invitation has expired'],
     ['revoked', 'This invitation was revoked'],
     ['declined', 'Invitation declined'],
     ['declined-other', 'Invitation declined'],
-    ['accepted', 'You are already a member'],
-    ['accepted-other', 'This invitation has already been used'],
-    ['legacy-other', 'This invitation has already been accepted'],
+    ['accepted', 'You’re already a member'],
+    ['accepted-other', 'This invitation was already used'],
+    ['legacy-other', 'This invitation was already accepted'],
     ['not-found', 'Invitation not found'],
   ])(
     'renders %s without offering an unauthorized decision',
@@ -267,7 +270,7 @@ describe('local invitation sample boundary', () => {
     await act(async () => vi.advanceTimersByTimeAsync(3000))
     expect(
       screen.getByText(
-        'This sample shows active membership. No real stable access was granted.',
+        'This sample shows an active membership. No real access was given.',
       ),
     ).toBeTruthy()
     fireEvent.change(screen.getByLabelText('Sample invitation state'), {

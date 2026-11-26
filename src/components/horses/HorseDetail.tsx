@@ -1,13 +1,22 @@
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useOwnershipCopy } from '#/components/ownership/ownershipCopy'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
-import { PencilSimpleIcon, UsersThreeIcon } from '@phosphor-icons/react'
+import {
+  ChartLineIcon,
+  ClipboardTextIcon,
+  ClockCounterClockwiseIcon,
+  FilesIcon,
+  FirstAidKitIcon,
+  GrainsIcon,
+  HorseIcon,
+  PencilSimpleIcon,
+  UsersThreeIcon,
+} from '@phosphor-icons/react'
+import { EventIcon, TrainingIcon } from '#/components/icons/domain-icons'
 import { getHorseBreedLabel } from 'shared/i18n/horseBreedLabels'
 import {
   DashboardNavigation,
   DashboardNavigationLinkItem,
-  DashboardNavigationMenuGroup,
-  DashboardNavigationMenuLink,
 } from '#/components/dashboard/DashboardNavigation'
 import { DashboardEntityHero } from '#/components/dashboard/DashboardEntityHero'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
@@ -22,7 +31,7 @@ import {
 } from '@tanstack/react-router'
 import type { Doc } from 'convex/_generated/dataModel'
 import type { ReactNode } from 'react'
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useDeferredValue, useMemo, useRef } from 'react'
 import { RecordCreateActionsProvider } from '#/components/list-layout/RecordCreateActionsContext'
 import { HorseTrainingSection } from './HorseTrainingSection'
 import type { HorseTrainingData } from './HorseTrainingSection'
@@ -84,16 +93,6 @@ export function HorseDetail({
   const { locale } = useLocale()
   const isSmallScreen = useSmallScreen()
 
-  const categoryItems = horseDetailTabs.map((id) => ({
-    id,
-    label: t(`horseDetail.${id}`),
-  }))
-  // Phones keep four sections in reach; the rest sit in More with no scrolling.
-  const phoneMoreCategories: ReadonlyArray<HorseDetailCategory> = [
-    'nutrition',
-    'documents',
-  ]
-
   const { pathname, state: locationState } = useLocation()
   const stableId = pathname.startsWith('/stables/')
     ? placementStableId
@@ -131,27 +130,47 @@ export function HorseDetail({
     pathAfterHorse === '/health' ? '/care' : pathAfterHorse,
   ].join('')
   const activeCategory = category ?? getHorseDetailCategory(pathAfterHorse)
-  const moreSectionActive =
-    ['/timeline', '/care-summary', '/manage', '/analysis'].some((path) =>
-      pathAfterHorse.startsWith(path),
-    ) ||
-    (isSmallScreen && phoneMoreCategories.some((id) => id === activeCategory))
+  // Sections load with suspense queries. Deferring keeps the previous section
+  // on screen until the next one is ready, instead of the whole-page loader.
+  const shownCategory = useDeferredValue(activeCategory)
   const taskState = useTaskOriginState()
-  // The rail names the section you are on, even when it lives in More.
-  const moreLabel =
-    [
-      { path: '/analysis', label: t('navigation.analysis') },
-      { path: '/manage', label: c.manage },
-      { path: '/timeline', label: t('horseDetail.timeline') },
-      { path: '/care-summary', label: t('horseDetail.summary') },
-    ].find((item) => pathAfterHorse.startsWith(item.path))?.label ??
-    (isSmallScreen
-      ? categoryItems.find(
-          (item) =>
-            item.id === activeCategory && phoneMoreCategories.includes(item.id),
-        )?.label
-      : undefined) ??
-    t('horseDetail.more')
+  const horseRoute = stableId
+    ? '/stables/$stableId/horses/$horseId'
+    : '/horses/$horseId'
+  // Every section stays in one scrolling rail, so none hides behind a menu.
+  const sectionLinks = [
+    ...horseDetailTabs.map((id) => ({
+      id,
+      label: t(`horseDetail.${id}`),
+      to: `${horseRoute}/${id}`,
+      active: activeCategory === id,
+    })),
+    {
+      id: 'analysis',
+      label: t('navigation.analysis'),
+      // Analysis and management live on the personal page only.
+      to: '/horses/$horseId/analysis',
+      active: pathAfterHorse.startsWith('/analysis'),
+    },
+    {
+      id: 'manage',
+      label: c.manage,
+      to: '/horses/$horseId/manage',
+      active: pathAfterHorse.startsWith('/manage'),
+    },
+    {
+      id: 'timeline',
+      label: t('horseDetail.timeline'),
+      to: `${horseRoute}/timeline`,
+      active: pathAfterHorse.startsWith('/timeline'),
+    },
+    {
+      id: 'care-summary',
+      label: t('horseDetail.summary'),
+      to: `${horseRoute}/care-summary`,
+      active: pathAfterHorse.startsWith('/care-summary'),
+    },
+  ] as const
   const avatar = (
     <HorseAvatar
       name={getHorseDisplayName(horse)}
@@ -229,14 +248,17 @@ export function HorseDetail({
                     state={taskState}
                     variant="outline"
                     action="edit"
+                    aria-label={t('horseDetail.edit')}
                     className="min-h-11 whitespace-nowrap"
                   >
-                    {t('horseDetail.edit')}
+                    {t('common.edit')}
                   </ButtonLink>
                 )}
               </>
             ) : undefined
           }
+          // The round + menu already holds every header action on phones.
+          phoneMenu={null}
           leading={
             canManageHorse && !pathAfterHorse.startsWith('/edit') ? (
               <Link
@@ -275,127 +297,29 @@ export function HorseDetail({
               inset={false}
               overflow="scroll"
             >
-              {categoryItems
-                .filter(
-                  (item) =>
-                    !isSmallScreen || !phoneMoreCategories.includes(item.id),
-                )
-                .map((item) => (
+              {sectionLinks.map(({ id, label, to, active }) => {
+                const Icon = horseSectionIcons[id]
+                return (
                   <DashboardNavigationLinkItem
-                    key={item.id}
+                    key={id}
                     variant="section"
                     render={
                       <Link
                         resetScroll={false}
-                        to={
-                          stableId
-                            ? `/stables/$stableId/horses/$horseId/${item.id}`
-                            : `/horses/$horseId/${item.id}`
-                        }
+                        to={to}
                         params={{
                           horseId: horse._id,
                           stableId: stableId ?? '',
                         }}
                       />
                     }
-                    active={activeCategory === item.id}
+                    active={active}
                   >
-                    {item.label}
+                    <Icon aria-hidden="true" />
+                    {label}
                   </DashboardNavigationLinkItem>
-                ))}
-              <DashboardNavigationMenuGroup
-                active={moreSectionActive}
-                label={moreLabel}
-                contentWidth="sm"
-                variant="section"
-              >
-                {isSmallScreen &&
-                  categoryItems
-                    .filter((item) => phoneMoreCategories.includes(item.id))
-                    .map((item) => (
-                      <DashboardNavigationMenuLink
-                        key={item.id}
-                        active={activeCategory === item.id}
-                        variant="section"
-                        render={
-                          <Link
-                            resetScroll={false}
-                            to={
-                              stableId
-                                ? `/stables/$stableId/horses/$horseId/${item.id}`
-                                : `/horses/$horseId/${item.id}`
-                            }
-                            params={{
-                              horseId: horse._id,
-                              stableId: stableId ?? '',
-                            }}
-                          />
-                        }
-                      >
-                        {item.label}
-                      </DashboardNavigationMenuLink>
-                    ))}
-                <DashboardNavigationMenuLink
-                  active={pathAfterHorse.startsWith('/analysis')}
-                  variant="section"
-                  render={
-                    <Link
-                      resetScroll={false}
-                      to="/horses/$horseId/analysis"
-                      params={{ horseId: horse._id }}
-                    />
-                  }
-                >
-                  {t('navigation.analysis')}
-                </DashboardNavigationMenuLink>
-                <DashboardNavigationMenuLink
-                  active={pathAfterHorse.startsWith('/manage')}
-                  variant="section"
-                  render={
-                    <Link
-                      resetScroll={false}
-                      to="/horses/$horseId/manage"
-                      params={{ horseId: horse._id }}
-                    />
-                  }
-                >
-                  {c.manage}
-                </DashboardNavigationMenuLink>
-                <DashboardNavigationMenuLink
-                  active={pathAfterHorse.startsWith('/timeline')}
-                  variant="section"
-                  render={
-                    <Link
-                      resetScroll={false}
-                      to={
-                        stableId
-                          ? '/stables/$stableId/horses/$horseId/timeline'
-                          : '/horses/$horseId/timeline'
-                      }
-                      params={{ horseId: horse._id, stableId: stableId ?? '' }}
-                    />
-                  }
-                >
-                  {t('horseDetail.timeline')}
-                </DashboardNavigationMenuLink>
-                <DashboardNavigationMenuLink
-                  active={pathAfterHorse.startsWith('/care-summary')}
-                  variant="section"
-                  render={
-                    <Link
-                      resetScroll={false}
-                      to={
-                        stableId
-                          ? '/stables/$stableId/horses/$horseId/care-summary'
-                          : '/horses/$horseId/care-summary'
-                      }
-                      params={{ horseId: horse._id, stableId: stableId ?? '' }}
-                    />
-                  }
-                >
-                  {t('horseDetail.summary')}
-                </DashboardNavigationMenuLink>
-              </DashboardNavigationMenuGroup>
+                )
+              })}
             </DashboardNavigation>
           </div>
         </DashboardEntityHero>
@@ -412,6 +336,7 @@ export function HorseDetail({
 
         <div
           data-slot="horse-section-content"
+          aria-busy={shownCategory !== activeCategory || undefined}
           className="grid min-w-0 gap-[var(--app-section-gap)]"
         >
           {stableId &&
@@ -441,7 +366,7 @@ export function HorseDetail({
                 </Link>
               </p>
             )}
-          {activeCategory === 'profile' && (
+          {shownCategory === 'profile' && (
             <HorseProfileSection
               stableId={stableId}
               horse={horse}
@@ -449,14 +374,14 @@ export function HorseDetail({
               canManageHorse={canManageHorse}
             />
           )}
-          {activeCategory === 'activity' && (
+          {shownCategory === 'activity' && (
             <HorseActivitySection
               stableId={stableId}
               horse={horse}
               events={events}
             />
           )}
-          {activeCategory === 'training' && (
+          {shownCategory === 'training' && (
             <HorseTrainingSection
               stableId={stableId}
               horse={horse}
@@ -464,7 +389,7 @@ export function HorseDetail({
               renderMobileActions={() => null}
             />
           )}
-          {activeCategory === 'care' && (
+          {shownCategory === 'care' && (
             <HorseCareSection
               stableId={stableId}
               horse={horse}
@@ -484,7 +409,7 @@ export function HorseDetail({
               }}
             />
           )}
-          {activeCategory === 'nutrition' && (
+          {shownCategory === 'nutrition' && (
             <HorseNutritionSection
               stableId={stableId}
               horse={horse}
@@ -504,18 +429,31 @@ export function HorseDetail({
               }}
             />
           )}
-          {activeCategory === 'documents' && (
+          {shownCategory === 'documents' && (
             <HorseDocumentsSection
               stableId={stableId}
               horse={horse}
               events={events}
             />
           )}
-          {!activeCategory && children}
+          {!shownCategory && children}
         </div>
       </DashboardPage>
     </RecordCreateActionsProvider>
   )
+}
+
+const horseSectionIcons = {
+  profile: HorseIcon,
+  activity: EventIcon,
+  training: TrainingIcon,
+  care: FirstAidKitIcon,
+  nutrition: GrainsIcon,
+  documents: FilesIcon,
+  analysis: ChartLineIcon,
+  manage: UsersThreeIcon,
+  timeline: ClockCounterClockwiseIcon,
+  'care-summary': ClipboardTextIcon,
 }
 
 function getHorseDetailCategory(

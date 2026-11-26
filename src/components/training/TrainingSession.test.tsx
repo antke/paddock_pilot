@@ -90,7 +90,7 @@ it('blocks duplicate submissions while a session save is pending', async () => {
   const button = screen.getByRole('button', {
     name: 'Mark complete: Atlas, Maple, and Willow · Group lesson',
   })
-  expect(button.textContent).toContain('Complete session for all horses')
+  expect(button.textContent).toContain('Complete')
   fireEvent.click(button)
   fireEvent.click(button)
   expect(save).toHaveBeenCalledTimes(1)

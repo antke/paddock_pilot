@@ -36,7 +36,9 @@ export function AttendingPeople({
             })}
             description={t('eventViews.leaveAttendanceHelp')}
             cancelLabel={t('eventViews.stayAttending')}
-            failedLabel={t('eventViews.lifecycleFailed')}
+            failedLabel={t('eventViews.leaveAttendanceFailed', {
+              title: title ?? '',
+            })}
             onConfirm={() => leave({ eventId })}
           />
         ) : undefined

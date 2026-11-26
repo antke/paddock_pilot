@@ -16,7 +16,7 @@ import { UserAvatar } from '#/components/users/UserAvatar'
 import { Field, FieldError, FieldGrid, FieldLabel } from '#/components/ui/field'
 import { BackButton } from '#/components/ui/back-action'
 import { Input } from '#/components/ui/input'
-import { showAppErrorToast } from '#/components/ui/sonner'
+import { useActionErrorText } from '#/lib/actionError'
 import { api } from 'convex/_generated/api'
 
 export type { AccountProfileValues } from './accountProfileSchema'
@@ -36,7 +36,6 @@ type AccountProfileFormProps = {
 }
 
 export function AccountProfileForm(props: AccountProfileFormProps) {
-  const t = useT()
   const updateProfile = useMutation(api.onboarding.updateAccountProfile)
   const generateUploadUrl = useMutation(
     api.onboarding.generateProfileImageUploadUrl,
@@ -61,22 +60,18 @@ export function AccountProfileForm(props: AccountProfileFormProps) {
     return { storageId, uploadToken }
   }
 
+  // Throws on failure so the form can show why.
   const onSave = async (values: AccountProfileValues) => {
-    try {
-      const profileImageUpload = await uploadProfileImage(
-        values.profileImage?.item(0) ?? undefined,
-      )
-      await updateProfile({
-        preferredName: values.preferredName,
-        phone: values.phone || undefined,
-        profileImageId: profileImageUpload?.storageId,
-        profileUploadToken: profileImageUpload?.uploadToken,
-      })
-      return true
-    } catch {
-      showAppErrorToast({ title: t('profileForm.saveFailedTitle') })
-      return false
-    }
+    const profileImageUpload = await uploadProfileImage(
+      values.profileImage?.item(0) ?? undefined,
+    )
+    await updateProfile({
+      preferredName: values.preferredName,
+      phone: values.phone || undefined,
+      profileImageId: profileImageUpload?.storageId,
+      profileUploadToken: profileImageUpload?.uploadToken,
+    })
+    return true
   }
   return <AccountProfileFormView {...props} onSave={onSave} />
 }
@@ -98,9 +93,8 @@ export function AccountProfileFormView({
   const pending = useRef(false)
   const [isPending, setIsPending] = useState(false)
   const [continuationFailed, setContinuationFailed] = useState(false)
-  const [error, setError] = useState<
-    'profileForm.saveFailed' | 'profileForm.continueFailed'
-  >()
+  const describeError = useActionErrorText()
+  const [error, setError] = useState<string>()
   const form = useForm<AccountProfileValues>({
     resolver: zodResolver(createAccountProfileSchema(t)),
     mode: 'onTouched',
@@ -123,8 +117,8 @@ export function AccountProfileFormView({
           const acknowledged = await onSave(values)
           if (acknowledged === false)
             throw new Error('Profile not acknowledged')
-        } catch {
-          setError('profileForm.saveFailed')
+        } catch (saveError) {
+          setError(`${t('profileForm.saveFailed')} ${describeError(saveError)}`)
           return
         }
         form.reset({
@@ -138,7 +132,7 @@ export function AccountProfileFormView({
         setContinuationFailed(false)
       } catch {
         setContinuationFailed(true)
-        setError('profileForm.continueFailed')
+        setError(t('profileForm.continueFailed'))
       }
     } finally {
       pending.current = false
@@ -276,7 +270,7 @@ export function AccountProfileFormView({
         </FormSection>
       )}
 
-      <FormSubmissionError message={error ? t(error) : undefined} />
+      <FormSubmissionError message={error} />
       <div
         // Inside onboarding, phones float this row as the route-form pills.
         // On Profile it stays in flow (the tab bar owns the phone bottom), under

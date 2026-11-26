@@ -14,7 +14,7 @@
   is the brief and wins every conflict.
 - `frontend-design` is for blank-slate surfaces only (landing studies, a new world).
   Its readability and copy advice applies everywhere, but its "AI tells" list does not
-  override DESIGN.md: dot-separated meta lines, SeeAllLink's trailing arrow, the
+  override DESIGN.md: dot-separated meta lines, SeeAllLink's list icon, the
   paper/serif palette and Alegreya are deliberate here.
 
 ## Use the house component
@@ -58,4 +58,6 @@ Structure (borders), Canvas List, Section Ownership, Add / Add Weight, Pencil, R
 - `pnpm test` (includes `designSystemConformance.test.ts`)
 - `pnpm test:forms:webkit` after shared form layout changes
 - `node .browser-checks/alike-dimensions.mjs` after control or row changes
+- `pnpm test:e2e` after changing who can do what (permissions, dates, ownership):
+  multi-user journeys against a disposable Convex deployment. Setup: `e2e/README.md`
 - Look at the result in light and dark, at desktop width and at 390px

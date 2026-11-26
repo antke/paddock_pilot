@@ -78,7 +78,7 @@ describe('DocumentDownloadAction', () => {
     expect(activatedLink?.download).toBe('Thistle Run passport.pdf')
     expect(activatedLink?.href).toBe('blob:downloaded-passport')
     expect(screen.getByRole('status').textContent).toBe(
-      'Download started for Thistle Run passport.pdf.',
+      'Downloading Thistle Run passport.pdf.',
     )
     await waitFor(() =>
       expect(revokeObjectUrl).toHaveBeenCalledWith('blob:downloaded-passport'),
@@ -153,7 +153,7 @@ describe('DocumentDownloadAction', () => {
     await waitFor(() =>
       expect(toastMocks.showAppErrorToast).toHaveBeenCalledWith(
         expect.objectContaining({
-          title: 'Could not download document',
+          title: 'Couldn’t download the document',
         }),
       ),
     )
@@ -176,7 +176,7 @@ describe('DocumentDownloadAction', () => {
     )
 
     const button = screen.getByRole<HTMLButtonElement>('button', {
-      name: 'Download unavailable for insurance summary.pdf: No file is attached',
+      name: 'Download unavailable for insurance summary.pdf: No file attached',
     })
 
     expect(button.disabled).toBe(true)
@@ -185,7 +185,7 @@ describe('DocumentDownloadAction', () => {
     expect(screen.queryByRole('status')).toBeNull()
     expect(button.getAttribute('data-variant')).toBe('ghost')
     expect(button.parentElement?.getAttribute('aria-label')).toBe(
-      'Download unavailable: No file is attached',
+      'Download unavailable: No file attached',
     )
     expect(fetchMock).not.toHaveBeenCalled()
   })

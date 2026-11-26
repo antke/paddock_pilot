@@ -11,7 +11,7 @@ import {
 } from '#/components/dashboard/DashboardItemCard'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
-import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
+import { ActionErrorAlert } from '#/components/layout/ActionErrorAlert'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -143,7 +143,10 @@ function DeletedHorseRow({
   const { locale } = useLocale()
 
   const [pendingAction, setPendingAction] = useState<'restore' | 'delete'>()
-  const [failedAction, setFailedAction] = useState<'restore' | 'delete'>()
+  const [failure, setFailure] = useState<{
+    action: 'restore' | 'delete'
+    error: unknown
+  }>()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const pending = useRef(false)
   const deleteTrigger = useRef<HTMLButtonElement>(null)
@@ -151,15 +154,15 @@ function DeletedHorseRow({
     if (pending.current) return
     pending.current = true
     setPendingAction(action)
-    setFailedAction(undefined)
+    setFailure(undefined)
     try {
       if (action === 'restore') await onRestore()
       else {
         await onPermanentlyDelete()
         setDeleteOpen(false)
       }
-    } catch {
-      setFailedAction(action)
+    } catch (error) {
+      setFailure({ action, error })
     } finally {
       pending.current = false
       setPendingAction(undefined)
@@ -197,7 +200,7 @@ function DeletedHorseRow({
               onOpenChange={(open) => {
                 if (!pending.current) {
                   setDeleteOpen(open)
-                  if (open) setFailedAction(undefined)
+                  if (open) setFailure(undefined)
                 }
               }}
             >
@@ -232,11 +235,10 @@ function DeletedHorseRow({
                     {t('stableSetup.deleteWarning')}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                {failedAction === 'delete' && (
-                  <RouteStatusAlert
-                    tone="danger"
+                {failure?.action === 'delete' && (
+                  <ActionErrorAlert
                     title={t('stableSetup.deleteFailed')}
-                    description={t('stableSetup.deleteFailedHelp')}
+                    error={failure.error}
                   />
                 )}
                 <AlertDialogFooter>
@@ -263,11 +265,10 @@ function DeletedHorseRow({
         </>
       }
       footer={
-        failedAction === 'restore' ? (
-          <RouteStatusAlert
-            tone="danger"
+        failure?.action === 'restore' ? (
+          <ActionErrorAlert
             title={t('stableSetup.restoreFailed')}
-            description={t('stableSetup.restoreFailedHelp')}
+            error={failure.error}
           />
         ) : undefined
       }

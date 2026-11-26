@@ -17,7 +17,7 @@ import {
   DashboardItemRecordCard,
   DashboardItemRecordContent,
 } from '#/components/dashboard/DashboardItemCard'
-import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
+import { showAppSuccessToast } from '#/components/ui/sonner'
 import {
   dateKeyToTimestamp,
   formatMediumTimestampDate,
@@ -61,50 +61,40 @@ export function HorseNutritionLogsCard({
   const removeNutritionLog = useMutation(api.horseNutritionLogs.remove)
   const onAddNutritionLog = useCallback(
     async (data: NutritionLogFormSchema & RecordCreationOptions) => {
-      try {
-        await addNutritionLog({
-          horseId: horse._id,
-          requestId: data.requestId,
-          shareWithStable: data.shareWithStable,
-          changedAt: dateKeyToTimestamp(data.changedDate),
-          summary: data.summary,
-          feedingRoutineSnapshot: data.feedingRoutineSnapshot,
-          recommendedSnapshot: data.recommendedSnapshot,
-          avoidSnapshot: data.avoidSnapshot,
-          notes: data.notes,
-        })
+      await addNutritionLog({
+        horseId: horse._id,
+        requestId: data.requestId,
+        shareWithStable: data.shareWithStable,
+        changedAt: dateKeyToTimestamp(data.changedDate),
+        summary: data.summary,
+        feedingRoutineSnapshot: data.feedingRoutineSnapshot,
+        recommendedSnapshot: data.recommendedSnapshot,
+        avoidSnapshot: data.avoidSnapshot,
+        notes: data.notes,
+      })
 
-        showAppSuccessToast({
-          title: t('careRecords.nutritionAdded'),
-          description: (
-            <p>
-              {t('careRecords.nutritionHistoryUpdated', {
-                name: horseDisplayName,
-              })}
-            </p>
-          ),
-        })
-      } catch (err) {
-        showAppErrorToast()
-        throw err
-      }
+      showAppSuccessToast({
+        title: t('careRecords.nutritionAdded'),
+        description: (
+          <p>
+            {t('careRecords.nutritionHistoryUpdated', {
+              name: horseDisplayName,
+            })}
+          </p>
+        ),
+      })
     },
     [addNutritionLog, horse._id, horseDisplayName, t],
   )
 
   const onRemoveNutritionLog = async (log: Doc<'horseNutritionLogs'>) => {
-    try {
-      await removeNutritionLog({ id: log._id })
-      showAppSuccessToast({
-        title: t('careRecords.nutritionRemoved'),
-        description: (
-          <p>{t('careRecords.namedRemoved', { name: log.summary })}</p>
-        ),
-      })
-    } catch (err) {
-      showAppErrorToast()
-      throw err
-    }
+    await removeNutritionLog({ id: log._id })
+    showAppSuccessToast({
+      title: t('careRecords.nutritionRemoved'),
+      description: (
+        <p>{t('careRecords.namedRemoved', { name: log.summary })}</p>
+      ),
+    })
   }
 
   return (

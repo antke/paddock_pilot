@@ -34,7 +34,7 @@ describe('localized activity log', () => {
       },
     }
     expect(formatStableAuditSummary(entry, 'pl')).toBe(
-      'Zmieniono godzinę wydarzenia, Zmieniono miejsce',
+      'Zmieniono godzinę, Zmieniono miejsce',
     )
     expect(formatStableAuditSummary(entry, 'en')).toBe(
       'Event time changed, Location changed',

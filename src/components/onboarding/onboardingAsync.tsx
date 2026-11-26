@@ -3,6 +3,7 @@ import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { Button } from '#/components/ui/button'
 import { useT } from '#/i18n/LocaleProvider'
+import { useActionErrorText } from '#/lib/actionError'
 
 export const OnboardingPendingContext = createContext<
   (pending: boolean) => void
@@ -20,15 +21,19 @@ export function useOnboardingSave<TValues, TResult>({
   failureMessage: string
 }) {
   const t = useT()
+  const describeError = useActionErrorText()
   const pendingRef = useRef(false)
   const saved = useRef<{ result: TResult } | null>(null)
   const [pending, setPending] = useState(false)
-  const [failure, setFailure] = useState<'save' | 'continue'>()
+  const [failure, setFailure] = useState<{
+    stage: 'save' | 'continue'
+    error: unknown
+  }>()
   const error =
-    failure === 'continue'
+    failure?.stage === 'continue'
       ? t('onboarding.savedContinueFailed')
-      : failure === 'save'
-        ? failureMessage
+      : failure
+        ? `${failureMessage} ${describeError(failure.error)}`
         : undefined
   const [acknowledged, setAcknowledged] = useState(false)
   const setParentPending = useOnboardingPending()
@@ -46,8 +51,8 @@ export function useOnboardingSave<TValues, TResult>({
       await onSaved(saved.current.result)
       saved.current = null
       setAcknowledged(false)
-    } catch {
-      setFailure(saved.current ? 'continue' : 'save')
+    } catch (cause) {
+      setFailure({ stage: saved.current ? 'continue' : 'save', error: cause })
     } finally {
       pendingRef.current = false
       setPending(false)
@@ -60,16 +65,20 @@ export function useOnboardingSave<TValues, TResult>({
 /** Transition errors resolve locally; retry repeats only this transition. */
 export function useOnboardingAction() {
   const t = useT()
+  const describeError = useActionErrorText()
   const lock = useRef(false)
   const retry = useRef<(() => Promise<void>) | null>(null)
   const [pending, setPending] = useState(false)
-  const [failure, setFailure] = useState<'continue' | 'openStable'>()
+  const [failure, setFailure] = useState<{
+    message: 'continue' | 'openStable'
+    error: unknown
+  }>()
   const error = failure
-    ? t(
-        failure === 'openStable'
+    ? `${t(
+        failure.message === 'openStable'
           ? 'onboarding.openFailed'
           : 'onboarding.continueFailed',
-      )
+      )} ${describeError(failure.error)}`
     : undefined
   const run = async (
     operation: () => Promise<void>,
@@ -83,8 +92,8 @@ export function useOnboardingAction() {
     try {
       await operation()
       retry.current = null
-    } catch {
-      setFailure(message)
+    } catch (cause) {
+      setFailure({ message, error: cause })
     } finally {
       lock.current = false
       setPending(false)

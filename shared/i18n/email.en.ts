@@ -2,39 +2,39 @@ export const emailEN = {
   digestSubject: 'Care reminders due',
   digestHeading: 'Care to follow up on',
   digestBody:
-    'These stables have pending care reminders due today or earlier. Open Care to review the latest details.',
+    'These stables have care reminders due today or overdue. Open Care for the details.',
   digestCount: (name: string, count: number) =>
     `${name}: ${count} due or overdue`,
   digestSettings: 'Email settings',
   digestOpenCare: 'Open Care',
   digestPreferences:
-    'You receive this daily summary because you enabled care reminder emails. Manage this preference in your profile:',
+    'You get this daily summary because you turned on care reminder emails. Change this in your profile:',
   invitationSubject: (stableName: string) =>
     `You're invited to ${stableName} on Paddock Pilot`,
   invitationPreheader: (stableName: string) =>
     `Join ${stableName} and take part in the day-to-day care of your yard.`,
   invitationHeading: 'Your place in the yard.',
   invitationBody: (stableName: string) =>
-    `You have been invited to join ${stableName} on Paddock Pilot.`,
+    `You’re invited to join ${stableName} on Paddock Pilot.`,
   invitationContext:
     'Keep up with shared plans, horse care and the everyday details of stable life.',
   reviewInvitation: 'Review invitation',
   invitationNote:
-    'This invitation expires 14 days after it was issued. If you were not expecting it, you can ignore this email.',
+    'This invitation expires in 14 days. If you weren’t expecting it, you can ignore this email.',
   invitationText: (stableName: string, url: string) =>
-    `You have been invited to join ${stableName} on Paddock Pilot. Keep up with shared plans, horse care and the everyday details of stable life.\n\nReview the invitation: ${url}\n\nThis invitation expires 14 days after it was issued. If you were not expecting it, you can ignore this email.`,
+    `You’re invited to join ${stableName} on Paddock Pilot. Keep up with shared plans, horse care and the everyday details of stable life.\n\nSee the invitation: ${url}\n\nThis invitation expires in 14 days. If you weren’t expecting it, you can ignore this email.`,
   horseInvitationSubject: (eventTitle: string) =>
     `Horse invitation for ${eventTitle}`,
   horseInvitationPreheader: (eventTitle: string) =>
     `Review the horse invitation for ${eventTitle}.`,
   horseInvitationHeading: 'An invitation for your horses.',
   horseInvitationBody: (eventTitle: string) =>
-    `Your horses have been invited to ${eventTitle}.`,
+    `Your horses are invited to ${eventTitle}.`,
   reviewEvent: 'Review the event',
   horseInvitationNote:
-    'Review the event, then approve or decline from your Paddock Pilot dashboard.',
+    'Check the event, then approve or decline in Paddock Pilot.',
   horseInvitationText: (horseNames: string, eventTitle: string, url: string) =>
-    `Your horses (${horseNames}) have been invited to ${eventTitle}. Review the event and respond: ${url}`,
+    `Your horses (${horseNames}) are invited to ${eventTitle}. See the event and reply: ${url}`,
   participationHeading: 'An update to the plan.',
   openEvent: 'Open the event',
   approvedSubject: (horseName: string, eventTitle: string) =>
@@ -57,20 +57,20 @@ export const emailEN = {
     `${actorName} withdrew ${horseName} from ${eventTitle}.`,
   eventChangedSubject: (eventTitle: string) => `Event updated: ${eventTitle}`,
   eventChangedPreheader: (eventTitle: string) =>
-    `See what has changed for ${eventTitle}.`,
+    `See what’s changed for ${eventTitle}.`,
   eventChangedHeading: 'A change to your calendar.',
-  eventChangedBody: (eventTitle: string) => `${eventTitle} has been updated.`,
+  eventChangedBody: (eventTitle: string) => `${eventTitle} was updated.`,
   eventChangedText: (eventTitle: string, changes: string, url: string) =>
-    `${eventTitle} has been updated: ${changes}. Review the event: ${url}`,
+    `${eventTitle} was updated: ${changes}. See the event: ${url}`,
   membershipSubject: (stableName: string) => `Welcome to ${stableName}`,
   membershipPreheader: (stableName: string) =>
-    `Your membership of ${stableName} is active.`,
+    `You’re now a member of ${stableName}.`,
   membershipHeading: 'Welcome to the yard.',
   membershipContext:
     'Open the stable to catch up on shared plans and horse care.',
   openStable: 'Open the stable',
   membershipText: (stableName: string, url: string) =>
-    `Your membership of ${stableName} is active. Open the stable: ${url}`,
+    `You’re now a member of ${stableName}. Open the stable: ${url}`,
   acceptedSubject: (memberName: string, stableName: string) =>
     `${memberName} joined ${stableName}`,
   acceptedPreheader: (memberName: string) =>
@@ -78,16 +78,16 @@ export const emailEN = {
   acceptedHeading: 'A new face in the yard.',
   acceptedBody: (memberName: string, stableName: string) =>
     `${memberName} accepted the invitation to join ${stableName}.`,
-  reviewMembers: 'Review stable members',
+  reviewMembers: 'See stable members',
   acceptedText: (memberName: string, stableName: string, url: string) =>
-    `${memberName} accepted the invitation to join ${stableName}. Review stable members: ${url}`,
+    `${memberName} accepted the invitation to join ${stableName}. See stable members: ${url}`,
   removedSubject: (stableName: string) =>
     `Your access to ${stableName} changed`,
   removedPreheader: (stableName: string) =>
-    `Your membership of ${stableName} has ended.`,
+    `You’re no longer a member of ${stableName}.`,
   removedHeading: 'Your stable access has changed.',
   removedBody: (stableName: string) =>
-    `Your membership of ${stableName} has ended and you no longer have access to its shared records.`,
+    `You’re no longer a member of ${stableName} and can’t see its shared records.`,
   removedNote: 'If this was unexpected, contact the stable owner.',
   archivedSubject: (stableName: string) => `${stableName} was archived`,
   archivedPreheader: (stableName: string) =>
@@ -96,23 +96,21 @@ export const emailEN = {
   archivedBody: (stableName: string) =>
     `${stableName} was archived by its owner and is no longer available in Paddock Pilot.`,
   welcomeSubject: 'Welcome to Paddock Pilot',
-  welcomePreheader:
-    'Your account is ready. Take the next step into your shared stable.',
+  welcomePreheader: 'Your account is ready. Now set up your stable.',
   welcomeHeading: 'Make yourself at home.',
   welcomeGreeting: (displayName: string) => `Welcome, ${displayName}.`,
   welcomeBody:
-    'Your Paddock Pilot account is ready. Continue setup to get started with your stable and horses.',
+    'Your Paddock Pilot account is ready. Finish setup to get going with your stable and horses.',
   continueSetup: 'Continue setup',
   welcomeText: (displayName: string, url: string) =>
     `Welcome, ${displayName}. Your Paddock Pilot account is ready. Continue setup: ${url}`,
   deletedSubject: 'Your Paddock Pilot account was deleted',
-  deletedPreheader:
-    'Confirmation that your Paddock Pilot account has been deleted.',
-  deletedHeading: 'Your account has been deleted.',
+  deletedPreheader: 'We’ve deleted your Paddock Pilot account.',
+  deletedHeading: 'Your account is deleted.',
   deletedBody: (displayName: string) =>
-    `${displayName}, your Paddock Pilot account has been deleted.`,
-  deletedNote: 'If you did not request this, contact Paddock Pilot support.',
-  fallback: 'If the button does not work, copy this link into your browser:',
+    `${displayName}, we’ve deleted your Paddock Pilot account.`,
+  deletedNote: 'If you didn’t ask for this, contact Paddock Pilot support.',
+  fallback: 'If the button doesn’t work, copy this link into your browser:',
   footer: 'Good care is a shared effort.',
   footerNote: 'An account or stable update from Paddock Pilot.',
   memberFallback: 'Stable member',

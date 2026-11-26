@@ -4,6 +4,7 @@ import type { Id } from 'convex/_generated/dataModel'
 import { useTransientConfirmation } from '#/lib/useTransientConfirmation'
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { useT } from '#/i18n/LocaleProvider'
+import { useActionErrorText } from '#/lib/actionError'
 import { InlineForm } from '#/components/forms/FormLayout'
 import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
 import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
@@ -54,6 +55,7 @@ export function WeightRecordForm({
 }: WeightRecordFormProps) {
   const audience = useRecordCreationAudience(audienceHorseId)
   const t = useT()
+  const describe = useActionErrorText()
 
   const { weightRecordFormSchema } = createWeightRecordSchemas((key) =>
     t(`careValidation.${key}`),
@@ -62,7 +64,7 @@ export function WeightRecordForm({
   const confirmation = useTransientConfirmation(formId)
   const pending = useRef(false)
   const [isPending, setIsPending] = useState(false)
-  const [failed, setFailed] = useState(false)
+  const [failure, setFailure] = useState<unknown>(null)
   const form = useForm<WeightRecordFormInput, unknown, WeightRecordFormSchema>({
     resolver: zodResolver(weightRecordFormSchema),
     mode: 'onTouched',
@@ -79,7 +81,7 @@ export function WeightRecordForm({
     if (pending.current || disabled) return
     pending.current = true
     setIsPending(true)
-    setFailed(false)
+    setFailure(null)
     confirmation.clear()
     onPendingChange?.(true)
     try {
@@ -93,8 +95,8 @@ export function WeightRecordForm({
         notes: '',
       })
       confirmation.confirm()
-    } catch {
-      setFailed(true)
+    } catch (error) {
+      setFailure(error ?? new Error('Save failed'))
     } finally {
       pending.current = false
       setIsPending(false)
@@ -291,11 +293,15 @@ export function WeightRecordForm({
       />
 
       <FormSubmissionError
-        message={failed ? t('careRecords.weightSaveFailed') : undefined}
+        message={
+          failure != null
+            ? `${t('careRecords.weightSaveFailed')} ${describe(failure)}`
+            : undefined
+        }
       />
 
       <FormSubmitActions
-        failed={failed}
+        failed={failure != null}
         confirmed={confirmation.confirmed}
         confirmedLabel={t('common.saved')}
         isSubmitting={form.formState.isSubmitting || isPending}

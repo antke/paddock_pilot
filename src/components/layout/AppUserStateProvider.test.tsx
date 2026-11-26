@@ -187,7 +187,7 @@ describe('invitation-first account routing', () => {
     state.path = '/invitations/invite-first'
     state.sync.mockRejectedValueOnce(new Error('temporarily unavailable'))
     render(app())
-    await screen.findByText('Could not prepare your account')
+    await screen.findByText('Couldn’t prepare your account')
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
     await screen.findByText('Requested page')
     expect(state.sync).toHaveBeenCalledTimes(2)
@@ -202,7 +202,7 @@ describe('invitation-first account routing', () => {
     expect(screen.queryByRole('contentinfo')).toBeNull()
     expect(screen.getByRole('main').textContent).toContain('Loading account')
     await screen.findByRole('heading', {
-      name: 'Could not prepare your account',
+      name: 'Couldn’t prepare your account',
     })
     expect(screen.getByRole('banner')).toBeTruthy()
     expect(screen.queryByRole('contentinfo')).toBeNull()
@@ -235,7 +235,7 @@ describe('invitation-first account routing', () => {
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeTruthy()
     await act(async () => rejectRetry(new Error('still unavailable')))
     expect(screen.getByRole('status').textContent).toContain(
-      'still couldn’t be refreshed',
+      'Still couldn’t refresh your account',
     )
     fireEvent.click(screen.getByRole('button', { name: 'Sign out' }))
     await waitFor(() =>
@@ -270,7 +270,7 @@ describe('invitation-first account routing', () => {
       await vi.advanceTimersByTimeAsync(20_000)
     })
     expect(
-      screen.getByRole('heading', { name: 'Could not prepare your account' }),
+      screen.getByRole('heading', { name: 'Couldn’t prepare your account' }),
     ).toBeTruthy()
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
@@ -278,7 +278,7 @@ describe('invitation-first account routing', () => {
     await act(async () => resolveStalled())
     expect(screen.queryByText('Requested page')).toBeNull()
     expect(screen.getByRole('status').textContent).toContain(
-      'still couldn’t be refreshed',
+      'Still couldn’t refresh your account',
     )
   })
 })

@@ -176,6 +176,9 @@ const mapStableReminderListItems = async (
     if (reminder.horseId && !isActiveHorse(horse)) return []
     const permission = recordAccess[index]
     if (horse && !capabilities[index]?.readSchedule) return []
+    const assignee =
+      reminder.assignedTo === access.userId &&
+      (!horse || reminderScope(reminder, horse) !== undefined)
     const itemAccess = {
       ...access,
       canManage: permission
@@ -197,13 +200,10 @@ const mapStableReminderListItems = async (
           ? personName(people[index].completer)
           : undefined,
         canComplete:
-          canManageReminder(itemAccess, reminder, horse, event) ||
-          (!horse && reminder.assignedTo === access.userId),
+          canManageReminder(itemAccess, reminder, horse, event) || assignee,
         canReopen:
           canManageReminder(itemAccess, reminder, horse, event) ||
-          (!horse &&
-            reminder.completedBy === access.userId &&
-            reminder.assignedTo === access.userId),
+          (assignee && reminder.completedBy === access.userId),
         canManage: canManageReminder(itemAccess, reminder, horse, event),
       },
     ]
@@ -553,14 +553,7 @@ export const update = mutation({
     })
     if (args.horseId !== reminder.horseId || args.eventId !== reminder.eventId)
       throw new ConvexError('Create a new task to change its horse or event')
-    // A task carried out of a stable keeps its origin as provenance only; it is
-    // checked against the horse's current (personal) care, not the old yard.
-    const scopeStableId =
-      horse &&
-      reminder.sourcePlacementId &&
-      reminder.sourcePlacementId !== horse.currentPlacementId
-        ? undefined
-        : reminder.stableId
+    const scopeStableId = reminderScope(reminder, horse)
     const nextRows = await assertLinkedRowsBelongToStable(
       ctx,
       scopeStableId,
@@ -603,10 +596,7 @@ export const complete = mutation({
     const { reminder, horse, event } = await getReminderContext(ctx, args.id)
     const access = await getReminderAccess(ctx, reminder, user._id)
     const canManage = canManageReminder(access, reminder, horse, event)
-    if (
-      !canManage &&
-      (Boolean(reminder.horseId) || reminder.assignedTo !== user._id)
-    ) {
+    if (!canManage && !access.assignee) {
       throw new ConvexError('Not authorized to complete this reminder')
     }
     if (reminder.status === 'completed') return reminder.followUpReminderId
@@ -671,7 +661,7 @@ export const reopen = mutation({
     if (
       !canManageReminder(access, reminder, horse, event) &&
       !(
-        !reminder.horseId &&
+        access.assignee &&
         reminder.status === 'completed' &&
         reminder.completedBy === user._id &&
         reminder.assignedTo === user._id
@@ -749,51 +739,91 @@ const assertAssignee = async (
   }
 }
 
-export const assigneeOptions = query({
-  args: {
-    stableId: v.optional(v.id('stables')),
-    horseId: v.optional(v.id('horses')),
-  },
-  handler: async (ctx, args) => {
-    if (args.horseId) {
-      const horse = await ctx.db.get(args.horseId)
-      if (!horse) return []
-      const access = await assertCanReadHorse(ctx, horse)
-      if (!access.isAdmin || access.canEditPersonalRecords) {
-        const carers = await ctx.db
-          .query('horseCarers')
-          .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
-          .collect()
-        const ids = [
-          ...new Set([
-            ...(horse.ownerId ? [horse.ownerId] : []),
-            ...carers.filter((c) => c.role === 'editor').map((c) => c.userId),
-          ]),
-        ]
-        const people = await Promise.all(ids.map((id) => ctx.db.get(id)))
-        return people.flatMap((user) =>
-          user && user.deletedAt === undefined
-            ? [{ id: user._id, name: personName(user) }]
-            : [],
-        )
-      }
-    }
-    const access = await assertCanViewStable(ctx, args.stableId)
-    const members = await ctx.db
-      .query('stableMembers')
-      .withIndex('by_stable_id', (q) => q.eq('stableId', access.stable._id))
-      .collect()
-    const ids = [
-      ...new Set([
-        access.stable.ownerId,
-        ...members.filter((m) => m.role === 'member').map((m) => m.userId),
-      ]),
-    ]
-    const people = await Promise.all(ids.map((id) => ctx.db.get(id)))
-    return people.flatMap((user) =>
+/** The stable whose people a saved reminder may be assigned to; none means the horse's owner and editors. */
+function reminderScope(
+  reminder: Doc<'careReminders'>,
+  horse: Doc<'horses'> | null,
+) {
+  // A task carried out of a stable keeps its origin as provenance only; it is
+  // checked against the horse's current (personal) care, not the old yard.
+  return horse &&
+    reminder.sourcePlacementId &&
+    reminder.sourcePlacementId !== horse.currentPlacementId
+    ? undefined
+    : reminder.stableId
+}
+
+const people = async (ctx: QueryCtx, ids: Array<Id<'users'>>) =>
+  (await Promise.all([...new Set(ids)].map((id) => ctx.db.get(id)))).flatMap(
+    (user) =>
       user && user.deletedAt === undefined
         ? [{ id: user._id, name: personName(user) }]
         : [],
+  )
+
+const stablePeople = async (ctx: QueryCtx, stableId: Id<'stables'>) => {
+  const access = await assertCanViewStable(ctx, stableId).catch(() => null)
+  if (!access) return []
+  const members = await ctx.db
+    .query('stableMembers')
+    .withIndex('by_stable_id', (q) => q.eq('stableId', stableId))
+    .collect()
+  return people(ctx, [
+    access.stable.ownerId,
+    ...members.filter((m) => m.role === 'member').map((m) => m.userId),
+  ])
+}
+
+const horseEditors = async (ctx: QueryCtx, horse: Doc<'horses'>) => {
+  const carers = await ctx.db
+    .query('horseCarers')
+    .withIndex('by_horse_id', (q) => q.eq('horseId', horse._id))
+    .collect()
+  return people(ctx, [
+    ...(horse.ownerId ? [horse.ownerId] : []),
+    ...carers.filter((c) => c.role === 'editor').map((c) => c.userId),
+  ])
+}
+
+/**
+ * Who the save will accept as responsible: each horse resolves to the scope
+ * assertAssignee checks, and several horses offer only people all of them accept.
+ */
+export const assigneeOptions = query({
+  args: {
+    stableId: v.optional(v.id('stables')),
+    horseIds: v.optional(v.array(v.id('horses'))),
+    reminderId: v.optional(v.id('careReminders')),
+  },
+  handler: async (ctx, args) => {
+    const reminder = args.reminderId ? await ctx.db.get(args.reminderId) : null
+    if (args.reminderId && !reminder) return []
+    const horseIds = reminder
+      ? reminder.horseId
+        ? [reminder.horseId]
+        : []
+      : (args.horseIds ?? [])
+    if (!horseIds.length) {
+      const stableId = reminder ? reminder.stableId : args.stableId
+      return stableId ? stablePeople(ctx, stableId) : []
+    }
+    const lists = await Promise.all(
+      horseIds.map(async (horseId) => {
+        const horse = await ctx.db.get(horseId)
+        if (!horse) return []
+        const access = await getHorseAccess(ctx, horse)
+        if (!access.canRead) return []
+        const stableId = reminder
+          ? reminderScope(reminder, horse)
+          : access.canEditPersonalRecords && !access.isCustodian
+            ? undefined
+            : horse.stableId
+        return stableId ? stablePeople(ctx, stableId) : horseEditors(ctx, horse)
+      }),
+    )
+    const [first, ...rest] = lists
+    return first.filter((person) =>
+      rest.every((list) => list.some((other) => other.id === person.id)),
     )
   },
 })
@@ -823,14 +853,23 @@ async function getReminderAccess(
   userId: Id<'users'>,
 ) {
   if (!reminder.horseId)
-    return assertCanViewStable(ctx, reminder.stableId, userId)
+    return {
+      ...(await assertCanViewStable(ctx, reminder.stableId, userId)),
+      assignee: reminder.assignedTo === userId,
+    }
   const horse = await ctx.db.get(reminder.horseId)
   if (!horse) throw new ConvexError('Horse not found')
   const access = await getHorseAccess(ctx, horse, userId)
   const capabilities = await recordCapabilities(ctx, horse, reminder, userId)
-  if (!capabilities.readDetails)
+  // Whoever it's assigned to may tick it off without seeing the horse's private details.
+  const stableId = reminderScope(reminder, horse)
+  const assignee =
+    reminder.assignedTo === userId &&
+    stableId !== undefined &&
+    Boolean(await assertCanViewStable(ctx, stableId, userId).catch(() => null))
+  if (!capabilities.readDetails && !assignee)
     throw new ConvexError('Not authorized to view this reminder')
   if (horse.transitionId)
     throw new ConvexError('Horse is moving; please try again shortly')
-  return { ...access, canManage: capabilities.editContent }
+  return { ...access, canManage: capabilities.editContent, assignee }
 }

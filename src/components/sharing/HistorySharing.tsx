@@ -4,6 +4,7 @@ import { useMutation, useQuery } from 'convex/react'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { useLocale } from '#/i18n/LocaleProvider'
+import { useActionErrorText } from '#/lib/actionError'
 import { Button, ButtonLink } from '#/components/ui/button'
 import { Checkbox } from '#/components/ui/checkbox'
 import { FieldLabel } from '#/components/ui/field'
@@ -46,7 +47,8 @@ export function HorseHistorySharing({
   const [selected, setSelected] = useState<Array<Category>>([])
   const [review, setReview] = useState(false)
   const [pending, setPending] = useState(false)
-  const [failed, setFailed] = useState(false)
+  const [failure, setFailure] = useState<unknown>(null)
+  const describeError = useActionErrorText()
   const request = useRef(createRequestId())
   const busy = useRef(false)
   if (!preview || !jobs)
@@ -78,7 +80,9 @@ export function HorseHistorySharing({
           <Button
             type="button"
             onClick={() =>
-              void retry({ id: job._id }).catch(() => setFailed(true))
+              void retry({ id: job._id }).catch((error: unknown) =>
+                setFailure(error ?? new Error('Retry failed')),
+              )
             }
           >
             {pl ? 'Ponów udostępnianie' : 'Retry sharing'}
@@ -86,10 +90,8 @@ export function HorseHistorySharing({
         ) : null}
         <FormSubmissionError
           message={
-            failed
-              ? pl
-                ? 'Nie udało się ponowić. Spróbuj ponownie.'
-                : 'Could not retry. Please try again.'
+            failure != null
+              ? `${pl ? 'Nie udało się wznowić udostępniania.' : 'Couldn’t restart sharing.'} ${describeError(failure)}`
               : undefined
           }
         />
@@ -158,7 +160,7 @@ export function HorseHistorySharing({
                 if (busy.current) return
                 busy.current = true
                 setPending(true)
-                setFailed(false)
+                setFailure(null)
                 try {
                   await start({
                     horseId,
@@ -167,8 +169,8 @@ export function HorseHistorySharing({
                     cutoff: preview.cutoff,
                     requestId: request.current,
                   })
-                } catch {
-                  setFailed(true)
+                } catch (error) {
+                  setFailure(error ?? new Error('Sharing failed'))
                 } finally {
                   busy.current = false
                   setPending(false)
@@ -200,10 +202,8 @@ export function HorseHistorySharing({
       )}
       <FormSubmissionError
         message={
-          failed
-            ? pl
-              ? 'Nie udało się zapisać. Wybór zachowany — spróbuj ponownie.'
-              : 'Could not save. Your selection is preserved; please retry.'
+          failure != null
+            ? `${pl ? 'Nie udało się udostępnić historii. Twój wybór nadal tu jest.' : 'Couldn’t share the history. Your selection is still here.'} ${describeError(failure)}`
             : undefined
         }
       />
@@ -268,8 +268,14 @@ export function ExistingHorseSharing({
                     {pl ? 'Sprawdź przeniesienie' : 'Review move'}
                   </ButtonLink>
                 </div>
-              ) : (
+              ) : horse.access.canManageAccess ? (
                 <HorseHistorySharing horseId={horse._id} stableId={stableId} />
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {pl
+                    ? 'Przenosimy konia. Wróć tu, kiedy przeprowadzka się skończy.'
+                    : 'This horse is moving. Come back once the move is done.'}
+                </p>
               )
             ) : null}
           </div>

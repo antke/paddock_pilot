@@ -3,15 +3,16 @@ import { api } from 'convex/_generated/api'
 import type { Doc, Id } from 'convex/_generated/dataModel'
 import { useT } from '#/i18n/LocaleProvider'
 import {
-  showAppErrorToast,
   showAppPromiseToast,
   showAppSuccessToast,
 } from '#/components/ui/sonner'
+import { useActionErrorText } from '#/lib/actionError'
 import type { CareReminderSubmitData } from './CareReminderForm'
 
 /** Shared mutation feedback for stable and horse reminder lists. */
 export function useCareReminderActions() {
   const t = useT()
+  const describe = useActionErrorText()
   const complete = useMutation(api.careReminders.complete)
   const dismiss = useMutation(api.careReminders.dismiss)
   const remove = useMutation(api.careReminders.remove)
@@ -23,44 +24,39 @@ export function useCareReminderActions() {
     record?: Doc<'careReminders'>,
     description?: string,
   ) => {
-    try {
-      await operation()
-      let undoPending = false
-      const undo = () => {
-        if (!record || undoPending) return
-        undoPending = true
-        const request = reopen({ id: record._id })
-        showAppPromiseToast(request, {
-          loading: t('reminders.reopening'),
-          success: t('reminders.reopened'),
-          description: record.title,
-          error: () => ({
-            message: t('reminders.undoFailed'),
-            description: record.title,
-            action: { label: t('common.retry'), onClick: undo },
-          }),
-          finally: () => {
-            undoPending = false
-          },
-        })
-      }
-      showAppSuccessToast({
-        title,
-        description:
-          [record?.title, description].filter(Boolean).join(' · ') || undefined,
-        ...(record
-          ? {
-              action: {
-                label: t('reminders.undo'),
-                onClick: undo,
-              },
-            }
-          : {}),
+    await operation()
+    let undoPending = false
+    const undo = () => {
+      if (!record || undoPending) return
+      undoPending = true
+      const request = reopen({ id: record._id })
+      showAppPromiseToast(request, {
+        loading: t('reminders.reopening'),
+        success: t('reminders.reopened'),
+        description: record.title,
+        error: (error: unknown) => ({
+          message: t('reminders.undoFailed', { name: record.title }),
+          description: describe(error),
+          action: { label: t('common.retry'), onClick: undo },
+        }),
+        finally: () => {
+          undoPending = false
+        },
       })
-    } catch (error) {
-      showAppErrorToast()
-      throw error
     }
+    showAppSuccessToast({
+      title,
+      description:
+        [record?.title, description].filter(Boolean).join(' · ') || undefined,
+      ...(record
+        ? {
+            action: {
+              label: t('reminders.undo'),
+              onClick: undo,
+            },
+          }
+        : {}),
+    })
   }
   return {
     onComplete: (reminder: Doc<'careReminders'>, nextDueDate?: string) =>

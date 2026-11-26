@@ -1,7 +1,7 @@
 import z from 'zod'
 
 const defaultMessages = {
-  noteMax: 'Please use a shorter note.',
+  noteMax: 'Use a shorter note.',
   dateInvalid: 'Use a valid date.',
   summaryRequired: 'Summary is required.',
   summaryMax: 'Summary cannot be longer than 180 characters.',

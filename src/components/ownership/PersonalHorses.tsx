@@ -20,6 +20,7 @@ import { Button, ButtonLink } from '#/components/ui/button'
 import { HorseAvatar } from '#/components/horses/HorseAvatar'
 import { RoutePending } from '#/components/layout/RoutePending'
 import { useOwnershipCopy } from './ownershipCopy'
+import { useOwnershipErrorMessage } from './ownershipErrors'
 
 export function PersonalHorses() {
   const c = useOwnershipCopy()
@@ -139,6 +140,7 @@ export function PersonalHorseTrash() {
   const t = useT()
   const restoring = useRef(false)
   const c = useOwnershipCopy()
+  const errorMessage = useOwnershipErrorMessage()
   const horses = useQuery(api.horses.listMyDeleted)
   const restore = useMutation(api.horses.restoreHorse)
   const [pendingId, setPendingId] = useState<Id<'horses'> | null>(null)
@@ -150,8 +152,8 @@ export function PersonalHorseTrash() {
     setError('')
     try {
       await restore({ id })
-    } catch {
-      setError(c.failed)
+    } catch (cause) {
+      setError(errorMessage(c.restoreFailed, cause))
     } finally {
       restoring.current = false
       setPendingId(null)

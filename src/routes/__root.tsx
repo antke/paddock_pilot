@@ -14,6 +14,7 @@ import { ApplicationRouteShell } from '#/components/layout/ApplicationRouteShell
 import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
 import { ButtonLink } from '#/components/ui/button'
 import { Toaster } from '#/components/ui/sonner'
+import { OfflineNotice } from '#/components/layout/OfflineNotice'
 import { TooltipProvider } from '#/components/ui/tooltip'
 import {
   AppUserStateGate,
@@ -195,6 +196,7 @@ function LocalizedRootDocument({ children }: { children: React.ReactNode }) {
                 </ApplicationRouteShell>
 
                 <Toaster />
+                <OfflineNotice />
 
                 {import.meta.env.DEV ? (
                   <TanStackDevtools

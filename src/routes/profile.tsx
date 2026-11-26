@@ -23,6 +23,7 @@ import { RouteQueryErrorAlert } from '#/components/layout/RouteStatusAlert'
 import { SignedOutRoutePrompt } from '#/components/layout/SignedOutRoutePrompt'
 import { AccountProfileForm } from '#/components/onboarding/AccountProfileForm'
 import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
+import { useActionErrorText } from '#/lib/actionError'
 import { api } from 'convex/_generated/api'
 
 export const Route = createFileRoute('/profile')({
@@ -49,6 +50,7 @@ function ProfilePage() {
   const t = useT()
   const setReminderDigest = useMutation(api.users.setReminderDigest)
   const [savingDigest, setSavingDigest] = useState(false)
+  const describeError = useActionErrorText()
   const { data: profile } = useSuspenseQuery(
     convexQuery(api.onboarding.getAccountProfile),
   )
@@ -63,8 +65,11 @@ function ProfilePage() {
     try {
       await setReminderDigest({ enabled, timezone: digestTimezone })
       showAppSuccessToast({ title: t('profile.digestSaved') })
-    } catch {
-      showAppErrorToast({ title: t('profile.digestError') })
+    } catch (error) {
+      showAppErrorToast({
+        title: t('profile.digestError'),
+        description: <p>{describeError(error)}</p>,
+      })
     } finally {
       setSavingDigest(false)
     }

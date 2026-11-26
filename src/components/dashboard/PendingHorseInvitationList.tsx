@@ -1,5 +1,6 @@
 import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
+import { useActionErrorText } from '#/lib/actionError'
 import { useId, useLayoutEffect, useRef, useState } from 'react'
 import type { FunctionReturnType } from 'convex/server'
 import type { api } from 'convex/_generated/api'
@@ -24,6 +25,7 @@ type Operation = {
   version: number
   pending?: Decision
   failed?: Decision
+  error?: unknown
   acknowledged?: boolean
 }
 
@@ -42,6 +44,7 @@ export function PendingHorseInvitationList({
   showWhenEmpty = false,
 }: PendingHorseInvitationListProps) {
   const t = useT()
+  const describe = useActionErrorText()
   const { locale } = useLocale()
   const listId = useId()
   const region = useRef<HTMLDivElement>(null)
@@ -107,10 +110,10 @@ export function PendingHorseInvitationList({
         [id]: { version, acknowledged: true },
       }))
       setAcknowledgement({ item, decision })
-    } catch {
+    } catch (error) {
       setOperations((state) => ({
         ...state,
-        [id]: { version, failed: decision },
+        [id]: { version, failed: decision, error },
       }))
     } finally {
       inFlight.current.delete(id)
@@ -202,11 +205,11 @@ export function PendingHorseInvitationList({
                           role="alert"
                           className="text-sm text-destructive"
                         >
-                          {t(
+                          {`${t(
                             state.failed === 'approve'
                               ? 'events.approveFailed'
                               : 'events.declineFailed',
-                          )}
+                          )} ${describe(state.error)}`}
                         </p>
                       ) : undefined
                     }

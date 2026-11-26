@@ -2,42 +2,40 @@ export const eventEditor = {
   createIn: 'Sharing',
   personal: 'Private',
   personalHelp:
-    'Visible only to the selected horses’ owners and authorised carers. Not shared with a stable.',
+    'Only these horses’ owners and authorised carers see it. Not shared with any stable.',
   stableHelp:
-    'Appears in the selected stables. Owners and authorised carers keep their access. Members see the schedule and status; stable administrators can read shared details. Sharing does not grant access to other horse records.',
+    'Shows in the stables you pick. Owners and authorised carers keep access. Members see the time and status; stable admins see shared details. Sharing doesn’t open up other horse records.',
   requiresApproval: 'Requires approval',
   approvalHelp:
-    'The horse’s owner, authorised editor carer or stable administrator must accept before it joins.',
-  summary: 'Added directly: {{confirmed}} · Invitations: {{invited}}',
+    'The horse joins once its owner, an editing carer or a stable admin accepts.',
+  summary: 'Added: {{confirmed}} · Invited: {{invited}}',
   switchTitle: 'Remove horses from this activity?',
   switchHelp:
-    'These horses need a stable calendar you are deselecting: {{horses}}. The rest of your draft will be kept.',
+    'These horses need a stable calendar you’re unticking: {{horses}}. The rest of your draft stays.',
   switchConfirm: 'Remove horses and continue',
   keepSpace: 'Keep selected calendars',
   createPrivateEvent: 'Create private event',
   createPrivateTraining: 'Create private training',
   createStable: 'Create in {{stable}}',
   recordPermission:
-    'Completed training requires recording permission for every horse. Remove horses requiring approval or change the status to Planned.',
+    'To log completed training, you need permission for every horse. Remove horses that need approval, or set the status to Planned.',
   awaiting: 'Awaiting approval',
-  participants: 'Horse participation',
+  participants: 'Horses',
   confirmed: 'Confirmed',
   declined: 'Declined',
   withdrawn: 'Withdrawn',
   invitationsLoading: 'Loading horse invitations…',
   invitationsFailed:
-    'Horse invitations could not be loaded. Reload the page to try again.',
+    'Couldn’t load horse invitations. Reload the page to try again.',
 
   eventSavedSentence: 'Event saved.',
   trainingSavedSentence: 'Training session saved.',
-  eventSaveFailed:
-    'Could not save event. Your entries are still here. Please try again.',
-  trainingSaveFailed:
-    'Could not save training session. Your entries are still here. Please try again.',
+  eventSaveFailed: 'Couldn’t save the event. Your entries are still here.',
+  trainingSaveFailed: 'Couldn’t save the session. Your entries are still here.',
   trainingContinueFailed:
-    'Training session saved, but its page could not be opened. Open the session to continue; your changes do not need to be saved again.',
+    'Training session saved, but its page didn’t open. Open the session to carry on; no need to save again.',
   eventContinueFailed:
-    'Event saved, but its page could not be opened. Open the event to continue; your changes do not need to be saved again.',
+    'Event saved, but its page didn’t open. Open the event to carry on; no need to save again.',
   addEvent: 'Add event',
   editEvent: 'Edit event',
   addTraining: 'Add training session',
@@ -51,11 +49,11 @@ export const eventEditor = {
   resetEvent: 'Discard event changes?',
   resetTraining: 'Discard training session changes?',
   resetHelp:
-    'Your unsaved entries will be replaced with the values from when you opened this form.',
+    'The form goes back to how it was when you opened it. Unsaved changes are lost.',
   createEvent: 'Create event',
-  updateEvent: 'Update event',
+  updateEvent: 'Save changes',
   createTraining: 'Create training session',
-  updateTraining: 'Update training session',
+  updateTraining: 'Save changes',
   creating: 'Creating…',
   saving: 'Saving…',
 } as const

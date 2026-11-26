@@ -3,6 +3,11 @@ import { SelectionCheckMark } from '#/components/forms/FormLayout'
 import { cn } from '#/lib/utils'
 import { FieldGrid, FieldLegend, FieldSet } from '#/components/ui/field'
 import { UserAvatar } from '#/components/users/UserAvatar'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
 
 export type PersonOption = {
@@ -71,7 +76,8 @@ export function PeopleSelection({
       <FieldGrid
         breakpoint="sm"
         gap="compact"
-        className="items-stretch gap-x-3 gap-y-1"
+        // Equal rows, so a person with many horses isn't taller than the rest.
+        className="auto-rows-fr items-stretch gap-x-3 gap-y-1"
       >
         {people.map((person) => {
           const locked = lockedIds.includes(person.id)
@@ -146,12 +152,23 @@ export function PeopleSelection({
                     </span>
                   )}
                   {Boolean(person.horseNames?.length) && (
-                    <span
-                      id={`${id}-${person.id}-horses`}
-                      className="block text-sm text-muted-foreground"
-                    >
-                      {pl ? 'Konie' : 'Horses'}: {person.horseNames!.join(', ')}
-                    </span>
+                    // One line however many horses; hovering shows them all.
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <span
+                            id={`${id}-${person.id}-horses`}
+                            className="block truncate text-sm text-muted-foreground"
+                          />
+                        }
+                      >
+                        {pl ? 'Konie' : 'Horses'}:{' '}
+                        {person.horseNames!.join(', ')}
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        {person.horseNames!.join(', ')}
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                 </span>
                 <SelectionCheckMark checked={checked} />

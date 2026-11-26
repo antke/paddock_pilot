@@ -10,15 +10,17 @@ import {
   DetailReferenceList,
 } from '#/components/dashboard/DetailReference'
 import { DashboardEntityHero } from '#/components/dashboard/DashboardEntityHero'
-import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
-import { DashboardItemList } from '#/components/dashboard/DashboardItemCard'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
-import { EventEditAction } from './EventEditAction'
+import {
+  EventEditAction,
+  EventEditFloatingAction,
+  EventEditMenuItem,
+} from './EventEditAction'
 import { EventLifecycleActions } from './EventLifecycleActions'
 import { ButtonLink } from '#/components/ui/button'
 import { ContactLink } from '#/components/ui/contact-link'
 import { useTaskOriginState } from '#/components/layout/mobileTaskNavigation'
-import { HorseCardLink } from '#/components/horses/HorseCard'
+import { EventParticipation } from './EventParticipation'
 import type { Doc } from 'convex/_generated/dataModel'
 import type { EventStatus } from 'shared/events/eventSchema'
 import { formatCurrencyAmount } from '#/lib/numberDisplay'
@@ -44,6 +46,8 @@ type EventDetailProps = {
   event: Doc<'events'>
   horses: Array<Doc<'horses'>>
   canManageEvent: boolean
+  /** False when horses' history keeps the event, so only cancelling is offered. */
+  canDeleteEvent?: boolean
   showServiceDetails?: boolean
   showHeader?: boolean
   showHorses?: boolean
@@ -67,6 +71,7 @@ export function EventDetail({
   createdByName,
   horses,
   canManageEvent,
+  canDeleteEvent = true,
   showServiceDetails = true,
   showHeader = true,
   showHorses = true,
@@ -103,18 +108,8 @@ export function EventDetail({
   // The check replaces Change status: Cancel lives in the "…" menu.
   const quickComplete =
     statusInHeader && canManageEvent && canQuickCompleteEvent(event, today)
-  const changeStatusLink = (
-    <ButtonLink
-      to="/events/$eventId/edit"
-      params={{ eventId: event._id }}
-      search={{ ...editSearch, focus: 'status' }}
-      state={taskState}
-      // Outlined like Edit event and the same height, so the pair reads as one row.
-      variant="outline"
-    >
-      {t('eventViews.changeStatus')}
-    </ButtonLink>
-  )
+  // Change status sets the status in place, so it never opens the edit form.
+  const statusMenu = statusInHeader && !quickComplete ? eventStatus : undefined
   const statusField = (
     <DetailReferenceField
       label={t('eventViews.status')}
@@ -178,31 +173,59 @@ export function EventDetail({
           }
           actions={
             canManageEvent ? (
-              <>
-                {statusInHeader && !quickComplete && changeStatusLink}
-                {canManageEvent && (
+              <EventLifecycleActions
+                status={statusMenu}
+                editAction={
                   <EventEditAction
                     search={editSearch}
                     eventId={event._id}
                     training={event.type === 'training'}
                   />
+                }
+                eventId={event._id}
+                title={event.title}
+                cancelled={event.status === 'cancelled'}
+                canDelete={canDeleteEvent}
+                training={event.type === 'training'}
+                stableId={stableId}
+                occurrenceDate={occurrenceDate}
+                occurrenceCancelled={event.occurrenceSkips?.some(
+                  (skip) => skip.date === occurrenceDate && !skip.horseId,
                 )}
-                {canManageEvent && (
-                  <EventLifecycleActions
-                    eventId={event._id}
-                    title={event.title}
-                    cancelled={event.status === 'cancelled'}
-                    training={event.type === 'training'}
-                    stableId={stableId}
-                    occurrenceDate={occurrenceDate}
-                    occurrenceCancelled={event.occurrenceSkips?.some(
-                      (skip) => skip.date === occurrenceDate && !skip.horseId,
-                    )}
-                  />
-                )}
-              </>
+              />
             ) : undefined
           }
+          phoneMenu={
+            canManageEvent ? (
+              <EventLifecycleActions
+                status={statusMenu}
+                eventId={event._id}
+                title={event.title}
+                cancelled={event.status === 'cancelled'}
+                canDelete={canDeleteEvent}
+                training={event.type === 'training'}
+                stableId={stableId}
+                occurrenceDate={occurrenceDate}
+                occurrenceCancelled={event.occurrenceSkips?.some(
+                  (skip) => skip.date === occurrenceDate && !skip.horseId,
+                )}
+                leadingItems={
+                  <EventEditMenuItem
+                    search={editSearch}
+                    eventId={event._id}
+                    training={event.type === 'training'}
+                  />
+                }
+              />
+            ) : undefined
+          }
+        />
+      )}
+      {showHeader && canManageEvent && (
+        <EventEditFloatingAction
+          search={editSearch}
+          eventId={event._id}
+          training={event.type === 'training'}
         />
       )}
 
@@ -294,13 +317,21 @@ export function EventDetail({
                 {event.totalCost !== undefined && (
                   <DetailReferenceField
                     label={t('eventViews.totalCost')}
-                    value={formatCurrencyAmount(event.totalCost, locale, currency)}
+                    value={formatCurrencyAmount(
+                      event.totalCost,
+                      locale,
+                      currency,
+                    )}
                   />
                 )}
                 {event.costPerHorse !== undefined && (
                   <DetailReferenceField
                     label={t('eventViews.costPerHorse')}
-                    value={formatCurrencyAmount(event.costPerHorse, locale, currency)}
+                    value={formatCurrencyAmount(
+                      event.costPerHorse,
+                      locale,
+                      currency,
+                    )}
                   />
                 )}
               </DetailReferenceList>
@@ -322,30 +353,8 @@ export function EventDetail({
         </DetailReference>
       </DashboardSectionCard>
 
-      {showHorses && (
-        <DashboardSectionCard
-          title={t('eventViews.horses')}
-          size="panel"
-          contentGap="comfortable"
-        >
-          {horses.length === 0 ? (
-            <DashboardEmptyState chrome="soft" spacing="flush">
-              {t('eventViews.noHorses')}
-            </DashboardEmptyState>
-          ) : (
-            <DashboardItemList gap="comfortable">
-              {horses.map((horse) => (
-                <HorseCardLink
-                  key={horse._id}
-                  horse={horse}
-                  stableId={stableId}
-                  horseId={horse._id}
-                />
-              ))}
-            </DashboardItemList>
-          )}
-        </DashboardSectionCard>
-      )}
+      {/* Each horse with its status; the summary adds declined and withdrawn horses. */}
+      {showHorses && <EventParticipation eventId={event._id} horses={horses} />}
 
       {showServiceDetails && (
         <EventHorseServiceDetailsCard

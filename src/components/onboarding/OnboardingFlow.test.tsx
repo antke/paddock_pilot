@@ -49,7 +49,7 @@ describe('onboarding real forms and local controller', () => {
     await screen.findByRole('heading', { name: 'Tell us about yourself' })
     choose('Next sample response', 'save-failure')
     fireEvent.click(screen.getByRole('button', { name: 'Save and continue' }))
-    await screen.findByText(/Could not save your profile/)
+    await screen.findByText(/Couldn’t save your profile/)
     expect(screen.queryByLabelText('Stable name')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Save and continue' }))
     await screen.findByLabelText('Stable name')
@@ -60,13 +60,13 @@ describe('onboarding real forms and local controller', () => {
     choose('Location', 'Łódź')
     choose('Next sample response', 'save-failure')
     submit('Stable name')
-    await screen.findByText(/Could not create the stable/)
+    await screen.findByText(/Couldn’t create the stable/)
     expect(screen.getByLabelText<HTMLInputElement>('Stable name').value).toBe(
       'Sample New Stable',
     )
     choose('Next sample response', 'advance-failure')
     submit('Stable name')
-    await screen.findByText(/Your changes were saved, but/)
+    await screen.findByText(/Your changes are saved, but/)
     expect(
       screen.getByLabelText<HTMLInputElement>('Stable name').disabled,
     ).toBe(true)
@@ -143,17 +143,17 @@ describe('onboarding real forms and local controller', () => {
         onDeferred={() => {}}
       />,
     )
-    choose('Primary contact', 'a'.repeat(101))
-    submit('Primary contact')
-    const input = screen.getByLabelText('Primary contact')
+    choose('Main contact', 'a'.repeat(101))
+    submit('Main contact')
+    const input = screen.getByLabelText('Main contact')
     await waitFor(() => expect(input.getAttribute('aria-invalid')).toBe('true'))
     expect(
       document.getElementById(input.getAttribute('aria-describedby')!)
         ?.textContent,
     ).toContain('shorter')
     expect(document.activeElement).toBe(input)
-    choose('Primary contact', 'Anna')
-    submit('Primary contact')
+    choose('Main contact', 'Anna')
+    submit('Main contact')
     await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1))
   })
 
@@ -178,7 +178,7 @@ describe('onboarding real forms and local controller', () => {
     await act(async () => {
       acknowledge(data.stable._id)
     })
-    await screen.findByText(/Your changes were saved, but/)
+    await screen.findByText(/Your changes are saved, but/)
     expect(
       screen.getByLabelText<HTMLInputElement>('Stable name').disabled,
     ).toBe(true)
@@ -192,8 +192,8 @@ describe('onboarding real forms and local controller', () => {
   it('blocks back/step navigation while saving and retries only progress after failure', async () => {
     render(<OnboardingPageLab data={data} />)
     choose('Next sample response', 'advance-failure')
-    choose('Primary contact', 'Sample Anna')
-    submit('Primary contact')
+    choose('Main contact', 'Sample Anna')
+    submit('Main contact')
     await waitFor(() =>
       expect(
         screen.getByRole<HTMLButtonElement>('button', { name: 'Back' })
@@ -201,7 +201,7 @@ describe('onboarding real forms and local controller', () => {
       ).toBe(true),
     )
     const progress = screen.getByRole('navigation', {
-      name: 'Onboarding progress',
+      name: 'Setup progress',
     })
     expect(
       within(progress)
@@ -209,9 +209,9 @@ describe('onboarding real forms and local controller', () => {
         .filter((button) => !button.hasAttribute('aria-expanded'))
         .every((button) => button.disabled),
     ).toBe(true)
-    await screen.findByText(/Could not continue. Your saved details are safe/)
+    await screen.findByText(/Couldn’t continue. Your saved details are safe/)
     expect(
-      screen.getByLabelText('Primary contact').closest('fieldset')?.disabled,
+      screen.getByLabelText('Main contact').closest('fieldset')?.disabled,
     ).toBe(true)
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
     await screen.findByRole('heading', { name: 'Add your first horse' })
@@ -233,7 +233,7 @@ describe('onboarding real forms and local controller', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'Open Sample Cedar Ridge' }),
     )
-    await screen.findByText(/Could not open the stable/)
+    await screen.findByText(/Couldn’t open the stable/)
     choose('Next sample response', 'advance-failure')
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
     await screen.findByText('Sample setup complete')
@@ -258,7 +258,7 @@ describe('onboarding real forms and local controller', () => {
 
   it('keeps an interrupted sample response out of the newly selected workflow', async () => {
     render(<OnboardingPageLab data={data} />)
-    submit('Primary contact')
+    submit('Main contact')
     await waitFor(() =>
       expect(
         screen.getByRole<HTMLButtonElement>('button', { name: 'Back' })

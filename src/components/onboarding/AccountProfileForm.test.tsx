@@ -61,9 +61,7 @@ describe('account profile acknowledgement', () => {
     Object.defineProperty(large, 'size', { value: 5 * 1024 * 1024 + 1 })
     fireEvent.change(input, { target: { files: files(large) } })
     fireEvent.submit(names[0].closest('form')!)
-    expect(
-      await screen.findByText('Choose an image no larger than 5 MB.'),
-    ).toBeTruthy()
+    expect(await screen.findByText('Choose an image up to 5 MB.')).toBeTruthy()
     expect(onSave).not.toHaveBeenCalled()
   })
   it('retains rejected file and draft, guards repeated submit, clears only acknowledged file', async () => {
@@ -128,14 +126,14 @@ describe('account profile acknowledgement', () => {
     })
     fireEvent.submit(name.closest('form')!)
     expect(
-      await screen.findByRole('button', { name: 'Retry continuing' }),
+      await screen.findByRole('button', { name: 'Try again' }),
     ).toBeTruthy()
     expect(screen.getByRole('alert').textContent).toContain(
-      'Your profile was saved',
+      'Your profile is saved',
     )
     expect(name.hasAttribute('disabled')).toBe(true)
     await waitFor(() => expect(screen.queryByText('portrait.png')).toBeNull())
-    fireEvent.click(screen.getByRole('button', { name: 'Retry continuing' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
     await waitFor(() => expect(advance).toHaveBeenCalledTimes(2))
     expect(save).toHaveBeenCalledTimes(1)
     expect(pending.mock.calls.map(([value]) => value)).toEqual([

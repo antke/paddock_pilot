@@ -18,6 +18,7 @@ import type * as dashboard from "../dashboard.js";
 import type * as devHorseAnalysisSeed from "../devHorseAnalysisSeed.js";
 import type * as devOwnership from "../devOwnership.js";
 import type * as devSeed from "../devSeed.js";
+import type * as e2e from "../e2e.js";
 import type * as emailDeliveries from "../emailDeliveries.js";
 import type * as emailMaintenance from "../emailMaintenance.js";
 import type * as emails from "../emails.js";
@@ -109,6 +110,7 @@ declare const fullApi: ApiFromModules<{
   devHorseAnalysisSeed: typeof devHorseAnalysisSeed;
   devOwnership: typeof devOwnership;
   devSeed: typeof devSeed;
+  e2e: typeof e2e;
   emailDeliveries: typeof emailDeliveries;
   emailMaintenance: typeof emailMaintenance;
   emails: typeof emails;

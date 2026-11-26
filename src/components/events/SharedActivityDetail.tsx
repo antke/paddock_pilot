@@ -50,7 +50,9 @@ export function SharedActivityDetail({
               title={t('eventViews.removeShareNamed', { title: event.title })}
               description={t('eventViews.removeShareHelp')}
               cancelLabel={t('eventViews.keepEvent')}
-              failedLabel={t('eventViews.lifecycleFailed')}
+              failedLabel={t('eventViews.removeShareFailed', {
+                title: event.title,
+              })}
               onConfirm={async () => {
                 await removeFromStable({ eventId, stableId: removableStableId })
                 await navigate({ to: '/events' })

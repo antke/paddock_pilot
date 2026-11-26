@@ -71,13 +71,11 @@ describe('localized onboarding and invitation interaction', () => {
       target: { value: 'Łódź' },
     })
     fireEvent.submit(name.closest('form')!)
-    await screen.findByText('Name must have at least 3 characters.')
+    await screen.findByText('Name needs at least 3 characters.')
     name.focus()
     changeLanguage('pl')
     await screen.findByText('Nazwa musi mieć co najmniej 3 znaki.')
-    expect(
-      screen.queryByText('Name must have at least 3 characters.'),
-    ).toBeNull()
+    expect(screen.queryByText('Name needs at least 3 characters.')).toBeNull()
     expect(name.value).toBe('Ł')
     expect(screen.getByLabelText<HTMLInputElement>('Lokalizacja').value).toBe(
       'Łódź',
@@ -107,9 +105,9 @@ describe('localized onboarding and invitation interaction', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'Create stable and continue' }),
     )
-    await screen.findByText(/Your changes were saved, but/)
+    await screen.findByText(/Your changes are saved, but/)
     changeLanguage('pl')
-    expect(screen.getByText(/Zmiany zostały zapisane, ale/)).toBeTruthy()
+    expect(screen.getByText(/Zmiany są zapisane, ale/)).toBeTruthy()
     fireEvent.click(
       screen.getByRole('button', { name: 'Kontynuuj bez ponownego zapisu' }),
     )
@@ -192,7 +190,7 @@ describe('localized onboarding and invitation interaction', () => {
     fireEvent.click(
       await screen.findByRole('button', { name: 'Accept invitation' }),
     )
-    await screen.findByText(/Could not accept this invitation/)
+    await screen.findByText(/Couldn’t accept the invitation/)
     changeLanguage('pl')
     expect(screen.getByRole('alert').textContent).toContain(
       'Nie udało się przyjąć zaproszenia',

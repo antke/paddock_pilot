@@ -45,7 +45,7 @@ it('translates dirty horse validation and acknowledged-save errors without reset
   fireEvent.click(
     await screen.findByRole('button', { name: 'Optional horse details' }),
   )
-  fireEvent.change(screen.getByLabelText('Owner name'), {
+  fireEvent.change(screen.getByLabelText('Owner'), {
     target: { value: 'Żaneta Łącka' },
   })
   fireEvent.change(screen.getByLabelText('Year'), { target: { value: '2018' } })
@@ -60,28 +60,25 @@ it('translates dirty horse validation and acknowledged-save errors without reset
     await vi.runOnlyPendingTimersAsync()
   })
   vi.useRealTimers()
-  expect(screen.getByText('Name must have minimum 1 character.')).toBeTruthy()
-  expect(document.activeElement).toBe(screen.getByLabelText('Horse name'))
+  expect(screen.getByText('Enter a name.')).toBeTruthy()
+  expect(document.activeElement).toBe(screen.getByLabelText('Name'))
   const selector = screen.getByRole('combobox', { name: 'Language' })
   selector.focus()
   fireEvent.change(selector, { target: { value: 'pl' } })
   await screen.findByText('Podaj imię konia.')
   expect(document.activeElement).toBe(selector)
-  expect(
-    screen.getByLabelText<HTMLInputElement>('Imię i nazwisko właściciela')
-      .value,
-  ).toBe('Żaneta Łącka')
+  expect(screen.getByLabelText<HTMLInputElement>('Właściciel').value).toBe(
+    'Żaneta Łącka',
+  )
   expect(screen.getByLabelText<HTMLInputElement>('Rok').value).toBe('2018')
   expect(
     screen.getByRole('button', { name: 'Klacz' }).getAttribute('aria-pressed'),
   ).toBe('true')
-  fireEvent.change(screen.getByLabelText('Imię konia'), {
+  fireEvent.change(screen.getByLabelText('Imię'), {
     target: { value: 'Źrebak' },
   })
   fireEvent.click(screen.getByRole('button', { name: 'Dodaj konia' }))
-  await screen.findByText(
-    /Koń został zapisany, ale nie udało się otworzyć profilu/,
-  )
+  await screen.findByText(/Koń jest zapisany, ale profil się nie otworzył/)
   expect(save).toHaveBeenCalledTimes(1)
   expect(save.mock.calls[0][0]).toMatchObject({
     name: 'Źrebak',
@@ -93,7 +90,7 @@ it('translates dirty horse validation and acknowledged-save errors without reset
     target: { value: 'en' },
   })
   expect(
-    screen.getByText(/Your horse was saved, but the profile could not open/),
+    screen.getByText(/Your horse is saved, but the profile didn’t open/),
   ).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: 'Open horse profile' }))
   await waitFor(() => expect(open).toHaveBeenCalledTimes(2))

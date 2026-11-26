@@ -5,6 +5,7 @@ import { convexQuery } from '@convex-dev/react-query'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { useT } from '#/i18n/LocaleProvider'
+import { useActionErrorText } from '#/lib/actionError'
 import { Alert, AlertDescription } from '#/components/ui/alert'
 import { Button, ButtonLink } from '#/components/ui/button'
 import { showAppErrorToast } from '#/components/ui/sonner'
@@ -13,6 +14,7 @@ import { DashboardActions } from './DashboardActions'
 /** Shared, optional setup prompt for either stable dashboard entry point. */
 export function StableSetupNotice({ stableId }: { stableId: Id<'stables'> }) {
   const t = useT()
+  const describe = useActionErrorText()
   const { data } = useSuspenseQuery(
     convexQuery(api.stableSetup.get, { stableId }),
   )
@@ -48,8 +50,11 @@ export function StableSetupNotice({ stableId }: { stableId: Id<'stables'> }) {
             setPending(true)
             try {
               await dismiss({ stableId })
-            } catch {
-              showAppErrorToast()
+            } catch (error) {
+              showAppErrorToast({
+                title: t('stableSetup.dismissFailed'),
+                description: describe(error),
+              })
             } finally {
               setPending(false)
             }

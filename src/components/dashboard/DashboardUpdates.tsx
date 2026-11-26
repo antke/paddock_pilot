@@ -15,7 +15,7 @@ import { DashboardActions } from './DashboardActions'
 import { InlineForm } from '#/components/forms/FormLayout'
 import { UnsavedChangesGuard } from '#/components/forms/UnsavedChangesGuard'
 import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
-import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
+import { ActionErrorAlert } from '#/components/layout/ActionErrorAlert'
 import { Button } from '#/components/ui/button'
 import { EditActionButton } from '#/components/ui/edit-action'
 import { useFloatingCreateAction } from '#/components/layout/floatingActionsContext'
@@ -74,7 +74,7 @@ export function DashboardUpdates({
   const [editing, setEditing] = useState<DashboardUpdate | 'new'>()
   const [removing, setRemoving] = useState<string>()
   const [busy, setBusy] = useState(false)
-  const [removeFailed, setRemoveFailed] = useState(false)
+  const [removeFailure, setRemoveFailure] = useState<unknown>(null)
   const pending = useRef(false)
   const section = useRef<HTMLDivElement>(null)
   const finish = () => {
@@ -159,7 +159,7 @@ export function DashboardUpdates({
                       variant="ghost"
                       disabled={Boolean(editing)}
                       onClick={() => {
-                        setRemoveFailed(false)
+                        setRemoveFailure(null)
                         setRemoving(update.id)
                       }}
                     >
@@ -214,10 +214,10 @@ export function DashboardUpdates({
               {t('stableUpdates.removeDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {removeFailed && (
-            <RouteStatusAlert
-              tone="danger"
+          {removeFailure != null && (
+            <ActionErrorAlert
               title={t('stableUpdates.removeFailed')}
+              error={removeFailure}
             />
           )}
           <AlertDialogFooter>
@@ -231,12 +231,12 @@ export function DashboardUpdates({
                 if (!removing || pending.current) return
                 pending.current = true
                 setBusy(true)
-                setRemoveFailed(false)
+                setRemoveFailure(null)
                 try {
                   await onRemove(removing)
                   setRemoving(undefined)
-                } catch {
-                  setRemoveFailed(true)
+                } catch (error) {
+                  setRemoveFailure(error ?? new Error('Remove failed'))
                 } finally {
                   pending.current = false
                   setBusy(false)
@@ -266,7 +266,7 @@ function UpdateForm({
   const [body, setBody] = useState(initial?.body ?? '')
   const [expiresOn, setExpiresOn] = useState(initial?.expiresOn ?? '')
   const [busy, setBusy] = useState(false)
-  const [failed, setFailed] = useState(false)
+  const [failure, setFailure] = useState<unknown>(null)
   const [invalid, setInvalid] = useState(false)
   const pending = useRef(false)
   const input = useRef<HTMLTextAreaElement>(null)
@@ -282,11 +282,11 @@ function UpdateForm({
         }
         pending.current = true
         setBusy(true)
-        setFailed(false)
+        setFailure(null)
         try {
           await onSave({ body: body.trim(), expiresOn: expiresOn || undefined })
-        } catch {
-          setFailed(true)
+        } catch (error) {
+          setFailure(error ?? new Error('Save failed'))
         } finally {
           pending.current = false
           setBusy(false)
@@ -299,8 +299,8 @@ function UpdateForm({
           expiresOn !== (initial?.expiresOn ?? '')
         }
       />
-      {failed && (
-        <RouteStatusAlert tone="danger" title={t('stableUpdates.failed')} />
+      {failure != null && (
+        <ActionErrorAlert title={t('stableUpdates.failed')} error={failure} />
       )}
       <Field data-invalid={invalid}>
         <FieldLabel htmlFor={`${id}-body`}>

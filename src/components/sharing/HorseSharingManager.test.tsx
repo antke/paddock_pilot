@@ -32,6 +32,7 @@ vi.mock('convex/react', () => ({
 }))
 vi.mock('#/i18n/LocaleProvider', () => ({
   useLocale: () => ({ locale: 'en' }),
+  useT: () => (key: string) => key,
 }))
 afterEach(() => {
   cleanup()
@@ -65,7 +66,7 @@ it('shows effective occurrence access, announces saves, and clears stale success
   )
   await waitFor(() =>
     expect(
-      screen.getByText('Could not change access. Please retry.'),
+      screen.getByText('Couldn’t change access. actionErrors.offline'),
     ).toBeDefined(),
   )
   expect(screen.queryByText('Sharing saved for 2026-10-25.')).toBeNull()

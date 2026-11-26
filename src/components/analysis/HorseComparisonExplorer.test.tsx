@@ -115,9 +115,7 @@ it('starts with sessions and health, removes the summary block, and handles inva
   ).toBeGreaterThan(0)
   expect(screen.queryByRole('group', { name: 'Compare over time' })).toBeNull()
   expect(
-    screen
-      .getByRole('link', { name: 'Open source records' })
-      .getAttribute('href'),
+    screen.getByRole('link', { name: 'Open records' }).getAttribute('href'),
   ).toBe('/horses/sample')
 })
 it('renders isolated points without fabricating a trend or a condition score', () => {
@@ -384,9 +382,7 @@ it('opens the selected training occurrence date', () => {
     ),
   )
   expect(
-    screen
-      .getByRole('link', { name: 'Open source records' })
-      .getAttribute('href'),
+    screen.getByRole('link', { name: 'Open records' }).getAttribute('href'),
   ).toBe('/events/recurring-event?date=2026-09-10&horseId=sample')
 })
 
@@ -429,9 +425,7 @@ it.each([
       ).getByRole('button', { name: label }),
     )
     expect(
-      screen
-        .getByRole('link', { name: 'Open source records' })
-        .getAttribute('href'),
+      screen.getByRole('link', { name: 'Open records' }).getAttribute('href'),
     ).toBe(`/horses/sample/${query}`)
   },
 )

@@ -16,6 +16,9 @@ import {
 } from '#/i18n/LocaleProvider'
 import { AccountPreferencesDialog } from './AccountPreferencesDialog'
 
+const setCurrency = vi.hoisted(() => vi.fn(async () => null))
+vi.mock('convex/react', () => ({ useMutation: () => setCurrency }))
+
 let systemDark = false
 let themeListeners: Set<() => void>
 
@@ -81,22 +84,27 @@ it('offers labeled preferences, preserves theme changes and returns focus when c
   const dialog = await screen.findByRole('dialog', { name: 'Preferences' })
   expect(dialog.getAttribute('data-mobile-fullscreen')).toBeNull()
   expect(screen.getByRole('combobox', { name: 'Language' })).toBeTruthy()
+  const currency = screen.getByRole('combobox', { name: 'Currency' })
+  fireEvent.change(currency, { target: { value: 'EUR' } })
+  await waitFor(() =>
+    expect(setCurrency).toHaveBeenCalledWith({ currency: 'EUR' }),
+  )
   expect(screen.getByRole('group', { name: 'Appearance' })).toBeTruthy()
-  const theme = screen.getByRole('button', { name: /Theme mode: light/ })
+  const theme = screen.getByRole('button', { name: /Theme: light/ })
   expect(theme.textContent).toBe('Light')
   fireEvent.click(theme)
   expect(localStorage.getItem('theme')).toBe('dark')
   expect(document.documentElement.classList.contains('dark')).toBe(true)
-  expect(
-    screen.getByRole('button', { name: /Theme mode: dark/ }).textContent,
-  ).toBe('Dark')
+  expect(screen.getByRole('button', { name: /Theme: dark/ }).textContent).toBe(
+    'Dark',
+  )
 
   fireEvent.click(screen.getByRole('button', { name: 'Close' }))
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   await waitFor(() => expect(document.activeElement).toBe(trigger))
   fireEvent.click(trigger)
   expect(
-    await screen.findByRole('button', { name: /Theme mode: dark/ }),
+    await screen.findByRole('button', { name: /Theme: dark/ }),
   ).toBeTruthy()
 })
 

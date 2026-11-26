@@ -3,6 +3,7 @@ import { useT } from '#/i18n/LocaleProvider'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { Alert, AlertDescription } from '#/components/ui/alert'
+import { ActionErrorAlert } from '#/components/layout/ActionErrorAlert'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -85,7 +86,7 @@ function HorseDeletionState({
   const [open, setOpen] = useState(false)
   const [isPending, setIsPending] = useState(false)
   const [acknowledged, setAcknowledged] = useState(false)
-  const [failure, setFailure] = useState<'delete' | 'continue'>()
+  const [failure, setFailure] = useState<{ error: unknown } | 'continue'>()
   const pending = useRef(false)
   const deleted = useRef(false)
   const epoch = useRef(0)
@@ -121,7 +122,7 @@ function HorseDeletionState({
         const result = await onDelete()
         if (!current()) return
         if (result === false) {
-          setFailure('delete')
+          setFailure({ error: new Error('Horse move not confirmed') })
           return
         }
         deleted.current = true
@@ -133,8 +134,13 @@ function HorseDeletionState({
         setOpen(false)
         if (restoreSectionFocus) section.current?.focus()
       }
-    } catch {
-      if (current()) setFailure(deleted.current ? 'continue' : 'delete')
+    } catch (error) {
+      if (current())
+        setFailure(
+          deleted.current
+            ? 'continue'
+            : { error: error ?? new Error('Horse move failed') },
+        )
     } finally {
       if (current()) {
         pending.current = false
@@ -143,25 +149,31 @@ function HorseDeletionState({
       }
     }
   }
-  const error =
-    failure === 'delete'
-      ? t('horseDeletion.moveFailed')
-      : failure === 'continue'
-        ? t('horseDeletion.continueFailed', {
-            name: getHorseDisplayName(horse),
-          })
-        : undefined
   const busyLabel = acknowledged
     ? t('horseDeletion.continuing')
     : t('horseDeletion.moving')
   const actionLabel = acknowledged
     ? t('horseDeletion.retry')
     : t('horseDeletion.move')
-  const errorAlert = error && (
-    <Alert variant="destructive">
-      <AlertDescription>{error}</AlertDescription>
-    </Alert>
-  )
+  const errorAlert =
+    failure === 'continue' ? (
+      <Alert variant="destructive">
+        <AlertDescription>
+          {t('horseDeletion.continueFailed', {
+            name: getHorseDisplayName(horse),
+          })}
+        </AlertDescription>
+      </Alert>
+    ) : (
+      failure && (
+        <ActionErrorAlert
+          title={t('horseDeletion.moveFailed', {
+            name: getHorseDisplayName(horse),
+          })}
+          error={failure.error}
+        />
+      )
+    )
 
   return (
     // A quiet footer after the form, not a peer of the horse record.

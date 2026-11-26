@@ -216,9 +216,7 @@ describe('actual horse activity sample', () => {
     expect(history.querySelectorAll('a').length).toBe(20)
     expect(screen.getByRole('button', { name: 'Compact list' })).toBeTruthy()
     fireEvent.change(scenario, { target: { value: 'empty' } })
-    expect(
-      screen.getByText('No upcoming activity for this horse.'),
-    ).toBeTruthy()
+    expect(screen.getByText('No upcoming activity.')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'History' }))
     expect(screen.getByText('No activity history yet.')).toBeTruthy()
     fireEvent.change(scenario, { target: { value: 'missing' } })

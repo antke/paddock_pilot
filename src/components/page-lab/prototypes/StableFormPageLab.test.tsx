@@ -115,7 +115,7 @@ describe('stable form sample validation and outcomes', () => {
     expect(screen.queryByText('Sample continuation complete')).toBeNull()
     await waitFor(() =>
       expect(screen.getByRole('alert').textContent).toContain(
-        'Could not save this stable',
+        'Couldn’t save the stable',
       ),
     )
     expect(nameInput().value).toBe('Stajnia Łąka')
@@ -157,7 +157,7 @@ describe('stable form sample validation and outcomes', () => {
       target: { value: 'continuation-failure' },
     })
     submit()
-    await screen.findByText(/Your stable was created, but setup could not open/)
+    await screen.findByText(/Your stable is created, but setup didn’t open/)
     expect(nameInput().disabled).toBe(true)
     fireEvent.change(screen.getByLabelText('Next sample result'), {
       target: { value: 'failure' },

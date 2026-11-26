@@ -58,6 +58,14 @@ function showAppErrorToast({
   })
 }
 
+function showAppWarningToast({ title, ...options }: AppSuccessToastOptions) {
+  toast.warning(title, { ...appToastOptions, ...options })
+}
+
+function dismissAppToast(id: string) {
+  toast.dismiss(id)
+}
+
 function showAppValidationToast({
   title,
   ...options
@@ -150,9 +158,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
 }
 
 export {
+  dismissAppToast,
   showAppPromiseToast,
   showAppErrorToast,
   showAppSuccessToast,
   showAppValidationToast,
+  showAppWarningToast,
   Toaster,
 }

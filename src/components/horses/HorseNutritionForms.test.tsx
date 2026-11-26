@@ -69,7 +69,7 @@ describe('horse weight and nutrition forms', () => {
       )
       .mockResolvedValueOnce(undefined)
     render(<NutritionLogForm horse={horse} onSubmit={onSubmit} />)
-    const summary = screen.getByLabelText('Change summary')
+    const summary = screen.getByLabelText('What changed')
     const recommended = screen.getByLabelText<HTMLTextAreaElement>(
       'Recommended after change',
     )
@@ -101,14 +101,14 @@ describe('horse weight and nutrition forms', () => {
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(2))
     await waitFor(() => expect((summary as HTMLInputElement).value).toBe(''))
     expect(
-      screen.getByText(/does not change the horse’s current feeding plan/),
+      screen.getByText(/won’t change the current feeding plan/),
     ).toBeTruthy()
   })
 
   it('surfaces list-item validation at the textarea and focuses its registered ref', async () => {
     const onSubmit = vi.fn()
     render(<NutritionLogForm horse={horse} onSubmit={onSubmit} />)
-    const summary = screen.getByLabelText('Change summary')
+    const summary = screen.getByLabelText('What changed')
     fireEvent.change(summary, { target: { value: 'Sample history' } })
     const recommended = screen.getByLabelText('Recommended after change')
     fireEvent.change(recommended, { target: { value: 'x'.repeat(101) } })
@@ -120,7 +120,7 @@ describe('horse weight and nutrition forms', () => {
     expect(
       document.getElementById(recommended.getAttribute('aria-describedby')!)
         ?.textContent,
-    ).toContain('List items cannot be longer than 100 characters')
+    ).toContain('Use up to 100 characters per item')
     expect(onSubmit).not.toHaveBeenCalled()
   })
 })

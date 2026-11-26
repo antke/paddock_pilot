@@ -4,7 +4,7 @@ import { cva } from 'class-variance-authority'
 import type { VariantProps } from 'class-variance-authority'
 import { createLink } from '@tanstack/react-router'
 import { forwardRef } from 'react'
-import type { ComponentProps } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 
 import { cn } from '#/lib/utils.ts'
 
@@ -64,6 +64,8 @@ const buttonVariants = cva(
           "size-7 rounded-sm max-md:size-11 pointer-coarse:size-11 [&_svg:not([class*='size-'])]:size-3",
         'icon-sm': 'size-8 rounded-md max-md:size-11 pointer-coarse:size-11',
         'icon-lg': 'size-11',
+        // A record row's "…": 32px to sit quietly beside a two-line row, with an invisible 44px touch target.
+        'icon-row': "size-8 after:absolute after:-inset-1.5 after:content-['']",
         'chip-icon':
           "-mr-1 size-5 rounded-full border-0 after:absolute after:-inset-3 after:content-[''] focus-visible:outline-offset-[-3px] [&_svg:not([class*='size-'])]:size-3",
         fab: "size-14 rounded-full [&_svg:not([class*='size-'])]:size-6",
@@ -171,4 +173,28 @@ const ButtonLinkAnchor = forwardRef<
 
 const ButtonLink = createLink(ButtonLinkAnchor)
 
-export { Button, ButtonAnchor, ButtonLink, buttonVariants }
+/**
+ * Phones show `short` ("Add", "All") so a title row's actions stay on one line;
+ * without `short` the button is its icon alone there. The full label is the
+ * accessible name at every width and visible from `md`.
+ */
+function PhoneShortLabel({
+  short,
+  children,
+}: {
+  short?: ReactNode
+  children: ReactNode
+}) {
+  return (
+    <>
+      <span className="max-md:sr-only">{children}</span>
+      {short && (
+        <span aria-hidden="true" className="md:hidden">
+          {short}
+        </span>
+      )}
+    </>
+  )
+}
+
+export { Button, ButtonAnchor, ButtonLink, PhoneShortLabel, buttonVariants }

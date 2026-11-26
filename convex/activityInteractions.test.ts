@@ -234,7 +234,7 @@ it('withdraws from today on and keeps sessions that already happened', async () 
       eventHorseId: (await f.row(pastOneOff, f.horseA))._id,
       today: '2026-06-01',
     }),
-  ).rejects.toThrow('already started')
+  ).rejects.toThrow('already happened')
 
   const series = await f.creator.mutation(api.events.add, {
     horseIds: [f.horseA],
@@ -580,9 +580,18 @@ it('deletes only events nobody else depends on, and tells the invited', async ()
     ).toMatchObject({ name: 'Shared vet' })
 
   const joined = await f.stableEvent()
+  expect(
+    (await f.creator.query(api.events.getPermissions, { id: joined }))
+      ?.canDeleteEvent,
+  ).toBe(true)
   await f.owner.mutation(api.events.approveHorseInvitation, {
     eventHorseId: (await f.row(joined, f.horseB))._id,
   })
+  // The screen knows up front, so Delete explains and offers Cancel instead.
+  expect(
+    (await f.creator.query(api.events.getPermissions, { id: joined }))
+      ?.canDeleteEvent,
+  ).toBe(false)
   await expect(
     f.creator.mutation(api.events.remove, { id: joined }),
   ).rejects.toThrow('Cancel it instead')

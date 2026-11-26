@@ -1,6 +1,7 @@
 import { localeValidator } from '../shared/i18n/validators'
 import { ConvexError, v } from 'convex/values'
 import {
+  INVITATION_RESEND_COOLDOWN_MS,
   getEffectiveInvitationStatus,
   maskInvitationEmail,
 } from '../shared/stableInvitations/invitationState'
@@ -20,7 +21,6 @@ import { enqueueEmail } from './libs/email/outbox'
 import { queueMembershipActivatedEmails } from './libs/email/notifications'
 
 const INVITATION_TTL_MS = 1000 * 60 * 60 * 24 * 14
-const INVITATION_RESEND_COOLDOWN_MS = 60 * 1000
 const MAX_INVITATIONS_PER_STABLE_PER_HOUR = 20
 const MAX_DELIVERY_REQUESTS_PER_INVITATION = 10
 
@@ -137,6 +137,22 @@ export const preview = query({
       expiresAt: invitation.expiresAt,
     })
     const viewerEmails = viewer ? await getInvitationEmails(ctx, viewer) : []
+    const acceptedByViewer = Boolean(
+      viewer && invitation.acceptedBy === viewer._id,
+    )
+    // An accepted link outlives the membership it created: say so after leaving.
+    const viewerLeft =
+      acceptedByViewer &&
+      status === 'accepted' &&
+      stable.ownerId !== viewer!._id &&
+      (
+        await ctx.db
+          .query('stableMembers')
+          .withIndex('by_stable_id_user_id', (q) =>
+            q.eq('stableId', stable._id).eq('userId', viewer!._id),
+          )
+          .first()
+      )?.role !== 'member'
 
     return {
       state: 'found' as const,
@@ -154,7 +170,8 @@ export const preview = query({
               normalizeEmail(invitation.email),
             ),
             hasEmail: viewerEmails.length > 0,
-            isAcceptedByViewer: invitation.acceptedBy === viewer._id,
+            isAcceptedByViewer: acceptedByViewer,
+            hasLeftStable: viewerLeft,
             isDeclinedByViewer: invitation.declinedBy === viewer._id,
           }
         : null,

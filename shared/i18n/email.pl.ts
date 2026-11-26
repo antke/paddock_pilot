@@ -1,16 +1,16 @@
 import type { EmailCopy } from './email.en'
 
 export const emailPL = {
-  digestSubject: 'Przypomnienia o opiece do wykonania',
-  digestHeading: 'Opieka wymagająca uwagi',
+  digestSubject: 'Przypomnienia o opiece',
+  digestHeading: 'Opieka do sprawdzenia',
   digestBody:
-    'W tych stajniach są oczekujące przypomnienia z terminem na dziś lub wcześniejszym. Otwórz Opiekę, aby zobaczyć aktualne szczegóły.',
+    'W tych stajniach są przypomnienia na dziś lub zaległe. Szczegóły znajdziesz w Opiece.',
   digestCount: (name: string, count: number) =>
     `${name}: do wykonania lub zaległe — ${count}`,
   digestSettings: 'Ustawienia e-mail',
   digestOpenCare: 'Otwórz opiekę',
   digestPreferences:
-    'Otrzymujesz to codzienne podsumowanie, ponieważ włączono e-maile z przypomnieniami o opiece. Zmień to ustawienie w swoim profilu:',
+    'Dostajesz to codzienne podsumowanie, bo masz włączone e-maile z przypomnieniami o opiece. Zmienisz to w profilu:',
   invitationSubject: (stableName: string) =>
     `Zaproszenie do stajni ${stableName} w Paddock Pilot`,
   invitationPreheader: (stableName: string) =>
@@ -22,21 +22,21 @@ export const emailPL = {
     'Bądź na bieżąco ze wspólnymi planami, opieką nad końmi i codziennym życiem stajni.',
   reviewInvitation: 'Zobacz zaproszenie',
   invitationNote:
-    'Zaproszenie wygasa po 14 dniach od wystawienia. Jeśli nie oczekujesz zaproszenia, możesz zignorować tę wiadomość.',
+    'Zaproszenie wygasa po 14 dniach. Jeśli się go nie spodziewasz, zignoruj tę wiadomość.',
   invitationText: (stableName: string, url: string) =>
-    `Czeka na Ciebie zaproszenie do stajni ${stableName} w Paddock Pilot. Bądź na bieżąco ze wspólnymi planami, opieką nad końmi i codziennym życiem stajni.\n\nZobacz zaproszenie: ${url}\n\nZaproszenie wygasa po 14 dniach od wystawienia. Jeśli nie oczekujesz zaproszenia, możesz zignorować tę wiadomość.`,
+    `Czeka na Ciebie zaproszenie do stajni ${stableName} w Paddock Pilot. Bądź na bieżąco ze wspólnymi planami, opieką nad końmi i codziennym życiem stajni.\n\nZobacz zaproszenie: ${url}\n\nZaproszenie wygasa po 14 dniach. Jeśli się go nie spodziewasz, zignoruj tę wiadomość.`,
   horseInvitationSubject: (eventTitle: string) =>
     `Zaproszenie koni na wydarzenie: ${eventTitle}`,
   horseInvitationPreheader: (eventTitle: string) =>
     `Sprawdź zaproszenie koni na wydarzenie: ${eventTitle}.`,
   horseInvitationHeading: 'Zaproszenie dla Twoich koni.',
   horseInvitationBody: (eventTitle: string) =>
-    `Twoje konie zostały zaproszone na wydarzenie: ${eventTitle}.`,
+    `Twoje konie mają zaproszenie na wydarzenie: ${eventTitle}.`,
   reviewEvent: 'Zobacz wydarzenie',
   horseInvitationNote:
-    'Sprawdź wydarzenie, a następnie zaakceptuj lub odrzuć zaproszenie w panelu Paddock Pilot.',
+    'Sprawdź wydarzenie, potem zaakceptuj lub odrzuć zaproszenie w Paddock Pilot.',
   horseInvitationText: (horseNames: string, eventTitle: string, url: string) =>
-    `Twoje konie (${horseNames}) zostały zaproszone na wydarzenie: ${eventTitle}. Sprawdź szczegóły i odpowiedz: ${url}`,
+    `Twoje konie (${horseNames}) mają zaproszenie na wydarzenie: ${eventTitle}. Sprawdź szczegóły i odpowiedz: ${url}`,
   participationHeading: 'Zmiana w planach.',
   openEvent: 'Otwórz wydarzenie',
   approvedSubject: (horseName: string, eventTitle: string) =>
@@ -46,11 +46,11 @@ export const emailPL = {
   withdrawnSubject: (horseName: string, eventTitle: string) =>
     `Wycofano udział konia ${horseName}: ${eventTitle}`,
   approvedPreheader: (horseName: string, eventTitle: string) =>
-    `Koń ${horseName}: udział w wydarzeniu ${eventTitle} został potwierdzony.`,
+    `Koń ${horseName}: potwierdzony udział w wydarzeniu ${eventTitle}.`,
   declinedPreheader: (horseName: string, eventTitle: string) =>
-    `Koń ${horseName}: zaproszenie na wydarzenie ${eventTitle} zostało odrzucone.`,
+    `Koń ${horseName}: odrzucone zaproszenie na wydarzenie ${eventTitle}.`,
   withdrawnPreheader: (horseName: string, eventTitle: string) =>
-    `Koń ${horseName}: udział w wydarzeniu ${eventTitle} został wycofany.`,
+    `Koń ${horseName}: wycofany z wydarzenia ${eventTitle}.`,
   approvedBody: (actorName: string, horseName: string, eventTitle: string) =>
     `${actorName} potwierdza udział konia ${horseName} w wydarzeniu: ${eventTitle}.`,
   declinedBody: (actorName: string, horseName: string, eventTitle: string) =>
@@ -58,20 +58,20 @@ export const emailPL = {
   withdrawnBody: (actorName: string, horseName: string, eventTitle: string) =>
     `${actorName} wycofuje udział konia ${horseName} w wydarzeniu: ${eventTitle}.`,
   eventChangedSubject: (eventTitle: string) =>
-    `Zaktualizowano wydarzenie: ${eventTitle}`,
+    `Zmiany w wydarzeniu: ${eventTitle}`,
   eventChangedPreheader: (eventTitle: string) =>
     `Sprawdź zmiany w wydarzeniu: ${eventTitle}.`,
   eventChangedHeading: 'Zmiana w Twoim kalendarzu.',
   eventChangedBody: (eventTitle: string) =>
-    `Zaktualizowano wydarzenie: ${eventTitle}.`,
+    `Zmiany w wydarzeniu: ${eventTitle}.`,
   eventChangedText: (eventTitle: string, changes: string, url: string) =>
-    `Zaktualizowano wydarzenie ${eventTitle}: ${changes}. Zobacz wydarzenie: ${url}`,
+    `Zmiany w wydarzeniu ${eventTitle}: ${changes}. Zobacz wydarzenie: ${url}`,
   membershipSubject: (stableName: string) => `Witamy w stajni ${stableName}`,
   membershipPreheader: (stableName: string) =>
     `Masz już dostęp do stajni ${stableName}.`,
   membershipHeading: 'Witamy w stajni.',
   membershipContext:
-    'Otwórz stajnię, aby sprawdzić wspólne plany i informacje o opiece nad końmi.',
+    'Otwórz stajnię, żeby zobaczyć wspólne plany i opiekę nad końmi.',
   openStable: 'Otwórz stajnię',
   membershipText: (stableName: string, url: string) =>
     `Masz już dostęp do stajni ${stableName}. Otwórz stajnię: ${url}`,
@@ -88,16 +88,16 @@ export const emailPL = {
   removedSubject: (stableName: string) =>
     `Zmiana dostępu do stajni ${stableName}`,
   removedPreheader: (stableName: string) =>
-    `Twój dostęp do stajni ${stableName} został zakończony.`,
+    `Nie masz już dostępu do stajni ${stableName}.`,
   removedHeading: 'Zmienił się Twój dostęp do stajni.',
   removedBody: (stableName: string) =>
-    `Twój dostęp do stajni ${stableName} został zakończony. Nie masz już dostępu do jej wspólnej dokumentacji.`,
+    `Nie należysz już do stajni ${stableName} i nie widzisz jej wspólnej dokumentacji.`,
   removedNote: 'Jeśli to pomyłka, skontaktuj się z właścicielem stajni.',
   archivedSubject: (stableName: string) =>
-    `Stajnia ${stableName} została zarchiwizowana`,
+    `Stajnia ${stableName} jest w archiwum`,
   archivedPreheader: (stableName: string) =>
     `Stajnia ${stableName} nie jest już dostępna w Paddock Pilot.`,
-  archivedHeading: 'Twoja stajnia została zarchiwizowana.',
+  archivedHeading: 'Twoja stajnia jest w archiwum.',
   archivedBody: (stableName: string) =>
     `Właściciel zarchiwizował stajnię ${stableName}. Nie jest ona już dostępna w Paddock Pilot.`,
   welcomeSubject: 'Witamy w Paddock Pilot',
@@ -106,19 +106,19 @@ export const emailPL = {
   welcomeHeading: 'Poczuj się jak u siebie.',
   welcomeGreeting: (displayName: string) => `Witaj, ${displayName}.`,
   welcomeBody:
-    'Twoje konto Paddock Pilot jest gotowe. Dokończ konfigurację, aby zacząć organizować stajnię i opiekę nad końmi.',
-  continueSetup: 'Kontynuuj konfigurację',
+    'Twoje konto Paddock Pilot jest gotowe. Dokończ konfigurację, żeby zacząć dbać o stajnię i konie.',
+  continueSetup: 'Dokończ konfigurację',
   welcomeText: (displayName: string, url: string) =>
-    `Witaj, ${displayName}. Twoje konto Paddock Pilot jest gotowe. Kontynuuj konfigurację: ${url}`,
-  deletedSubject: 'Twoje konto Paddock Pilot zostało usunięte',
-  deletedPreheader: 'Potwierdzenie usunięcia Twojego konta Paddock Pilot.',
-  deletedHeading: 'Twoje konto zostało usunięte.',
+    `Witaj, ${displayName}. Twoje konto Paddock Pilot jest gotowe. Dokończ konfigurację: ${url}`,
+  deletedSubject: 'Usunęliśmy Twoje konto Paddock Pilot',
+  deletedPreheader: 'Usunęliśmy Twoje konto Paddock Pilot.',
+  deletedHeading: 'Twoje konto jest usunięte.',
   deletedBody: (displayName: string) =>
-    `${displayName}, Twoje konto Paddock Pilot zostało usunięte.`,
+    `${displayName}, usunęliśmy Twoje konto Paddock Pilot.`,
   deletedNote:
-    'Jeśli usunięcie konta nie było Twoją decyzją, skontaktuj się z pomocą Paddock Pilot.',
+    'Jeśli to nie była Twoja decyzja, napisz do pomocy Paddock Pilot.',
   fallback: 'Jeśli przycisk nie działa, skopiuj ten link do przeglądarki:',
   footer: 'Dobra opieka to wspólny wysiłek.',
-  footerNote: 'Wiadomość od Paddock Pilot dotycząca Twojego konta lub stajni.',
+  footerNote: 'Wiadomość od Paddock Pilot o Twoim koncie lub stajni.',
   memberFallback: 'Osoba ze stajni',
 } satisfies EmailCopy

@@ -75,8 +75,8 @@ describe('horse deletion acknowledgement and continuation', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
     expect(screen.getByRole('alertdialog')).toBe(dialog)
     await act(async () => request.reject(new Error('offline')))
-    expect(within(dialog).getByRole('alert').textContent).toContain(
-      'Moving this horse was not confirmed',
+    expect(within(dialog).getByRole('alert').textContent).toBe(
+      'Couldn’t move Juniper to deleted horsesYou’re offline, so nothing changed. Reconnect and try again.',
     )
     expect(continued).not.toHaveBeenCalled()
     fireEvent.click(within(dialog).getByRole('button', { name: 'Move horse' }))
@@ -143,7 +143,7 @@ describe('horse deletion acknowledgement and continuation', () => {
     const dialog = await open()
     fireEvent.click(within(dialog).getByRole('button', { name: 'Move horse' }))
     const error = await within(dialog).findByRole('alert')
-    expect(error.textContent).toContain('Juniper was moved to deleted horses')
+    expect(error.textContent).toContain('Juniper is in deleted horses')
     expect(error.textContent).toContain('14 days')
     expect(
       within(dialog).queryByRole('button', { name: 'Move horse' }),
@@ -151,9 +151,9 @@ describe('horse deletion acknowledgement and continuation', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }))
     await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
     expect(screen.getByRole('alert').textContent).toContain(
-      'Could not continue',
+      'The next page didn’t open',
     )
-    const retry = screen.getByRole('button', { name: 'Retry continuing' })
+    const retry = screen.getByRole('button', { name: 'Try again' })
     retry.focus()
     fireEvent.click(retry)
     const busy = screen.getByRole('button', { name: 'Continuing…' })
@@ -236,9 +236,7 @@ describe('horse deletion acknowledgement and continuation', () => {
     const dialog = await open()
     fireEvent.click(within(dialog).getByRole('button', { name: 'Move horse' }))
     await within(dialog).findByRole('alert')
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: 'Retry continuing' }),
-    )
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Try again' }))
     await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
     expect(backend.remove).toHaveBeenCalledExactlyOnceWith({ id: horse._id })
     expect(backend.toast).toHaveBeenCalledTimes(1)

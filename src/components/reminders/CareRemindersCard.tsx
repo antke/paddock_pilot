@@ -2,16 +2,15 @@ import { WorkspaceRecordAudience } from '#/components/sharing/RecordAudienceLabe
 import { MotionList } from '#/components/motion/MotionList'
 import { MotionNotice } from '#/components/motion/MotionNotice'
 import { ConfirmedCheck } from '#/components/motion/StateFeedback'
-import { ActionFeedback } from '#/components/ui/action-feedback'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
+import { useActionErrorText } from '#/lib/actionError'
+import { dashboardRecordDetailsContentClassName } from '#/components/dashboard/DashboardRecordDetails'
 import {
-  DashboardRecordDetails,
-  dashboardRecordDetailsContentClassName,
-  dashboardRecordDetailsTriggerClassName,
-} from '#/components/dashboard/DashboardRecordDetails'
-import { DisclosureChevron } from '#/components/ui/disclosure-chevron'
+  DisclosureChevron,
+  DisclosureTitleButton,
+  disclosureTitleClassName,
+} from '#/components/ui/disclosure-chevron'
 import { DashboardMetaList } from '#/components/dashboard/DashboardMetaList'
-import { DashboardBadgeList } from '#/components/dashboard/DashboardBadgeList'
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
@@ -24,7 +23,6 @@ import {
 } from '#/components/dashboard/DashboardItemCard'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { Button } from '#/components/ui/button'
-import { EditActionButton } from '#/components/ui/edit-action'
 import { CreateRecordDialog } from '#/components/list-layout/CreateRecordDialog'
 import {
   RecordRemoveAction,
@@ -40,21 +38,19 @@ import {
 import { Input } from '#/components/ui/input'
 import { Field, FieldDescription, FieldLabel } from '#/components/ui/field'
 import { careReminderDueDateSchema } from 'shared/reminders/careReminderSchema'
-import { CheckIcon, DotsThreeIcon } from '@phosphor-icons/react'
+import { DotsThreeVerticalIcon } from '@phosphor-icons/react'
 import type { Doc } from 'convex/_generated/dataModel'
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { ElementType, ReactNode } from 'react'
+import { CareReminderForm } from './CareReminderForm'
+import type {
+  AssigneeOptions,
+  CareReminderSubmitData,
+} from './CareReminderForm'
+import { getCareReminderDueLabel } from './careReminderDisplay'
+import { EventDateBadge } from '#/components/events/EventDateBadge'
 import { cn } from '#/lib/utils'
 import {
-  CareReminderDueText,
-  CareReminderPriorityBadge,
-  CareReminderStatusBadge,
-} from './CareReminderBadges'
-import { CareReminderForm } from './CareReminderForm'
-import type { CareReminderSubmitData } from './CareReminderForm'
-import { getCareReminderDueLabel } from './careReminderDisplay'
-import {
-  getCareReminderDueState,
   getCareReminderRecordAccent,
   isCareReminderOverdue,
 } from './careReminderState'
@@ -84,7 +80,7 @@ type CareRemindersCardProps = {
   reminders: Array<CareReminderListItem>
   canAddReminder: boolean
   horseOptions?: Array<HorseOption>
-  assigneeOptions?: Array<HorseOption>
+  assigneeOptions?: AssigneeOptions
   fixedHorseId?: string
   emptyMessage: ReactNode
   onAdd: (data: CareReminderSubmitData) => Promise<void>
@@ -387,7 +383,7 @@ function ReminderRow({
   removalFocusTarget: () => HTMLElement | null
   headingLevel: 2 | 3
   item: CareReminderListItem
-  assigneeOptions?: Array<HorseOption>
+  assigneeOptions?: AssigneeOptions
   onComplete: (
     reminder: Doc<'careReminders'>,
     nextDueDate?: string,
@@ -402,13 +398,19 @@ function ReminderRow({
   chrome: DashboardChrome
 }) {
   const t = useT()
+  const describe = useActionErrorText()
   const { locale } = useLocale()
   const { reminder } = item
   const overdue = isCareReminderOverdue(reminder)
-  const dueState = getCareReminderDueState(reminder)
-  const showPriorityBadge = reminder.priority === 'high'
-  // Overdue is carried by the due line; the badge only marks closed reminders.
-  const showStatusBadge = reminder.status !== 'pending'
+  // The tile carries urgency: red when overdue, amber when high priority, muted once closed.
+  const tileTone =
+    reminder.status !== 'pending'
+      ? 'text-muted-foreground'
+      : overdue
+        ? 'border-destructive/40 bg-destructive/8 text-destructive'
+        : reminder.priority === 'high'
+          ? 'border-status-warning/40 bg-status-warning-surface text-status-warning'
+          : undefined
   const Heading = `h${headingLevel}` as const
   // Listed first in the row's overflow menu. Opens the next-date editor only; nothing is
   // completed until it is saved.
@@ -416,12 +418,6 @@ function ReminderRow({
     item.canManage &&
     reminder.status === 'pending' &&
     !reminder.followUpReminderId
-  const hasActions =
-    item.canManage ||
-    (reminder.status === 'pending' && (item.canComplete ?? item.canManage)) ||
-    (reminder.status !== 'pending' &&
-      (item.canReopen ?? item.canManage) &&
-      Boolean(onReopen))
   const [pendingAction, setPendingAction] = useState<
     'complete' | 'dismiss' | 'reopen' | 'edit' | null
   >(null)
@@ -441,16 +437,27 @@ function ReminderRow({
   }, [reminder.status])
   const pendingRef = useRef(false)
   const isUpdating = pendingAction !== null
-  const [actionError, setActionError] = useState(false)
-  // Pending rows already have a "…" menu, so Remove goes last inside it.
-  const removeInMenu = item.canManage && reminder.status === 'pending'
+  const [actionError, setActionError] = useState<unknown>(null)
   const [removeOpen, setRemoveOpen] = useState(false)
   const menuTrigger = useRef<HTMLButtonElement>(null)
   const removeNamed = t('reminders.removeRecordNamed', { name: reminder.title })
-  // Phones put the Details trigger at the start of the action row; its notes open below it.
-  const phoneDetails = Boolean(reminder.description) && hasActions
   const [detailsOpen, setDetailsOpen] = useState(false)
   const detailsId = useId()
+  const canComplete =
+    reminder.status === 'pending' && (item.canComplete ?? item.canManage)
+  const canReopen = Boolean(onReopen) && (item.canReopen ?? item.canManage)
+  // Closed rows name their state in the meta line; there is no check to show it.
+  const showStatus = reminder.status !== 'pending'
+  const canEdit = item.canManage && Boolean(onEdit)
+  const canDismiss = item.canManage && reminder.status === 'pending'
+  const reopenInMenu = reminder.status !== 'pending' && canReopen
+  const hasMenu =
+    canComplete ||
+    canScheduleNext ||
+    canEdit ||
+    canDismiss ||
+    reopenInMenu ||
+    item.canManage
 
   const runStatusAction = async (
     action: 'complete' | 'dismiss' | 'reopen' | 'edit',
@@ -460,14 +467,14 @@ function ReminderRow({
     pendingRef.current = true
 
     try {
-      setActionError(false)
+      setActionError(null)
       setPendingAction(action)
       await callback(reminder)
       if (!mounted.current) return
       setConfirmed(action === 'complete')
       setEditor(null)
-    } catch {
-      if (mounted.current) setActionError(true)
+    } catch (error) {
+      if (mounted.current) setActionError(error ?? new Error('Update failed'))
     } finally {
       pendingRef.current = false
       if (mounted.current) setPendingAction(null)
@@ -484,150 +491,101 @@ function ReminderRow({
         chrome={chrome}
         interactive={false}
         density="compact"
+        // Date tile, one-line title and meta, then one outlined "…": the same shape as a horse row.
+        className="grid-cols-[auto_minmax(0,1fr)_auto] gap-x-3 gap-y-0.5 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:gap-x-4"
         footer={
-          <>
-            {phoneDetails && (
-              <div
-                id={detailsId}
-                hidden={!detailsOpen}
-                className={cn(
-                  dashboardRecordDetailsContentClassName,
-                  'sm:hidden',
-                )}
-              >
-                {reminder.description}
-              </div>
-            )}
-            {actionError && (
-              <p
-                role="alert"
-                className="text-sm text-destructive sm:col-span-2"
-              >
-                {t('reminders.updateFailed')}
-              </p>
-            )}
-          </>
+          actionError != null && (
+            <p
+              role="alert"
+              className="col-span-2 col-start-2 mt-2 text-sm text-destructive"
+            >
+              {`${t('reminders.updateFailed')} ${describe(actionError)}`}
+            </p>
+          )
         }
-        // Like document rows: an inline right-hand action column from `sm`,
-        // a full-width row under the text on phones.
-        actionColumnClassName="sm:col-start-2 sm:row-start-1"
-        actionsClassName="max-sm:w-full"
+        // Every action, Complete first, sits in one outlined menu at the row end, as in a detail page's phone header.
+        actionColumnClassName="col-start-3 row-span-2 row-start-1 self-center justify-items-end"
         actions={
-          hasActions ? (
+          hasMenu ? (
             <>
-              {phoneDetails && (
-                <Button
-                  type="button"
-                  variant="link"
-                  // Own slot, so the phone action row's button padding skips it and the text sits on the title edge.
-                  data-slot="record-details-trigger"
-                  aria-expanded={detailsOpen}
-                  aria-controls={detailsId}
-                  onClick={() => setDetailsOpen((open) => !open)}
-                  className={cn(
-                    dashboardRecordDetailsTriggerClassName,
-                    'h-auto px-0 sm:hidden',
-                  )}
-                >
-                  {t('reminders.details')}
-                  <span className="sr-only">
-                    {t('reminders.forPrefix')}
-                    {reminder.title}
-                  </span>
-                  <DisclosureChevron open={detailsOpen} />
-                </Button>
-              )}
-              {reminder.status === 'pending' &&
-                (item.canComplete ?? item.canManage) && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={isUpdating || confirmed}
-                    aria-busy={pendingAction === 'complete' || undefined}
-                    aria-label={t('reminders.completeNamed', {
-                      name: reminder.title,
-                    })}
-                    onClick={() => void runStatusAction('complete', onComplete)}
-                  >
-                    <ActionFeedback
-                      label={t('reminders.complete')}
-                      pendingLabel={t('reminders.completing')}
-                      confirmedLabel={t('careLabels.reminderStatus.completed')}
-                      pending={pendingAction === 'complete'}
-                      confirmed={confirmed}
-                      icon={
-                        <CheckIcon data-icon="inline-start" weight="bold" />
-                      }
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      ref={menuTrigger}
+                      type="button"
+                      variant="outline"
+                      size="icon-row"
+                      disabled={isUpdating}
+                      aria-label={t('reminders.actionsNamed', {
+                        name: reminder.title,
+                      })}
                     />
-                  </Button>
-                )}
-              {reminder.status !== 'pending' &&
-                (item.canReopen ?? item.canManage) &&
-                onReopen && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    disabled={isUpdating}
-                    onClick={() => void runStatusAction('reopen', onReopen)}
-                  >
-                    {t('reminders.reopen')}
-                  </Button>
-                )}
-              {item.canManage && onEdit && (
-                <EditActionButton
-                  label={t('reminders.editNamed', { name: reminder.title })}
-                  disabled={isUpdating}
-                  onClick={() => {
-                    setActionError(false)
-                    setEditor('edit')
-                  }}
-                />
-              )}
-              {removeInMenu && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    render={
-                      <Button
-                        ref={menuTrigger}
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        disabled={isUpdating}
-                        aria-label={t('reminders.actionsNamed', {
-                          name: reminder.title,
-                        })}
-                      />
-                    }
-                  >
-                    <DotsThreeIcon weight="bold" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {canScheduleNext && (
-                      <DropdownMenuItem
-                        disabled={confirmed}
-                        onClick={() => {
-                          setActionError(false)
-                          setEditor('next')
-                        }}
-                      >
-                        {t('reminders.completeAndSchedule')}
-                      </DropdownMenuItem>
-                    )}
+                  }
+                >
+                  <DotsThreeVerticalIcon weight="bold" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  // The width of a detail page's phone menu, so no action wraps.
+                  className="w-64 max-w-[calc(100vw-2rem)] p-2"
+                >
+                  {canComplete && (
+                    <DropdownMenuItem
+                      onClick={() =>
+                        void runStatusAction('complete', onComplete)
+                      }
+                    >
+                      {t('reminders.complete')}
+                    </DropdownMenuItem>
+                  )}
+                  {/* A closed reminder's first action takes Complete's place. */}
+                  {reopenInMenu && onReopen && (
+                    <DropdownMenuItem
+                      onClick={() => void runStatusAction('reopen', onReopen)}
+                    >
+                      {t('reminders.reopen')}
+                    </DropdownMenuItem>
+                  )}
+                  {canScheduleNext && (
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setActionError(null)
+                        setEditor('next')
+                      }}
+                    >
+                      {t('reminders.completeAndSchedule')}
+                    </DropdownMenuItem>
+                  )}
+                  {canEdit && (
+                    <DropdownMenuItem
+                      aria-label={t('reminders.editNamed', {
+                        name: reminder.title,
+                      })}
+                      onClick={() => {
+                        setActionError(null)
+                        setEditor('edit')
+                      }}
+                    >
+                      {t('common.edit')}
+                    </DropdownMenuItem>
+                  )}
+                  {canDismiss && (
                     <DropdownMenuItem
                       onClick={() => void runStatusAction('dismiss', onDismiss)}
                     >
                       {t('reminders.dismiss')}
                     </DropdownMenuItem>
+                  )}
+                  {item.canManage && (
                     <RecordRemoveMenuItem
                       ariaLabel={removeNamed}
                       disabled={isUpdating}
                       onOpen={() => setRemoveOpen(true)}
                     />
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
               {item.canManage && (
                 <RecordRemoveAction
                   triggerAriaLabel={removeNamed}
@@ -637,90 +595,97 @@ function ReminderRow({
                   disabled={isUpdating}
                   onConfirm={() => onRemove(reminder)}
                   removalFocusTarget={removalFocusTarget}
-                  {...(removeInMenu && {
-                    open: removeOpen,
-                    onOpenChange: setRemoveOpen,
-                    externalTrigger: menuTrigger,
-                  })}
+                  open={removeOpen}
+                  onOpenChange={setRemoveOpen}
+                  externalTrigger={menuTrigger}
                 />
               )}
             </>
           ) : undefined
         }
       >
-        <div className="grid min-w-0 gap-3">
-          <header className="grid min-w-0 gap-1">
-            {/* Inline flow, so the chips follow the title's last word as it wraps;
-                the one space between them carries the gap and vanishes at a line start. */}
-            <div className="min-w-0 [word-spacing:0.5rem]">
-              <Heading
-                className={`${dashboardItemLargeTitleClassName} inline [word-spacing:normal] wrap-anywhere`}
-              >
-                {reminder.title}
-              </Heading>{' '}
-              {(showPriorityBadge || showStatusBadge) && (
-                <DashboardBadgeList
-                  gap="compact"
-                  className="inline-flex align-middle [word-spacing:normal]"
-                >
-                  {showPriorityBadge && (
-                    <CareReminderPriorityBadge priority="high" />
-                  )}
-                  {showStatusBadge && (
-                    <CareReminderStatusBadge
-                      status={reminder.status}
-                      overdue={false}
-                    />
-                  )}
-                </DashboardBadgeList>
-              )}
+        <EventDateBadge
+          date={reminder.dueDate}
+          // Centred on the title and meta lines, like the horse thumbnail; opened details sit below.
+          className={cn(
+            'col-start-1 row-span-2 row-start-1 self-center',
+            tileTone,
+          )}
+        />
+        <div className="relative col-start-2 row-start-1 flex min-w-0 items-center gap-1 self-end">
+          {/* The title opens everything beyond the row's one line of facts. */}
+          <DisclosureTitleButton
+            open={detailsOpen}
+            controls={detailsId}
+            onToggle={() => setDetailsOpen((open) => !open)}
+            label={reminder.title}
+          />
+          <Heading
+            className={cn(
+              dashboardItemLargeTitleClassName,
+              disclosureTitleClassName,
+              'min-w-0',
+              detailsOpen ? 'wrap-anywhere' : 'truncate',
+            )}
+          >
+            {reminder.title}
+          </Heading>
+          <DisclosureChevron open={detailsOpen} />
+          {/* The tile's colour, for screen readers. */}
+          {(overdue || reminder.priority === 'high') && (
+            <span className="sr-only">
+              {[
+                overdue && t('careLabels.overdue'),
+                reminder.priority === 'high' &&
+                  `${t('reminders.priority')}: ${t('careLabels.priority.high')}`,
+              ]
+                .filter(Boolean)
+                .join(', ')}
+            </span>
+          )}
+        </div>
+        <DashboardMetaList
+          separator="dot"
+          gap="compact"
+          className="col-start-2 row-start-2 flex-nowrap self-start overflow-hidden whitespace-nowrap"
+        >
+          {showStatus && (
+            <span>{t(`careLabels.reminderStatus.${reminder.status}`)}</span>
+          )}
+          <span>
+            <span className="sr-only">{t('reminders.category')}: </span>
+            {t(`careLabels.category.${reminder.category}`)}
+          </span>
+          {showHorse && item.horseName && (
+            <span>
+              <span className="sr-only">{t('reminders.horse')}: </span>
+              {item.horseName}
+            </span>
+          )}
+        </DashboardMetaList>
+        <div
+          id={detailsId}
+          hidden={!detailsOpen}
+          className="col-span-2 col-start-2 mt-3 grid min-w-0 gap-3"
+        >
+          <DashboardMetaList separator="dot" gap="compact">
+            <span>{getCareReminderDueLabel(reminder, undefined, locale)}</span>
+            {reminder.priority && (
+              <span>
+                {t('reminders.priority')}:{' '}
+                {t(`careLabels.priority.${reminder.priority}`)}
+              </span>
+            )}
+            <span>
+              {t('reminders.responsible')}:{' '}
+              {item.assigneeName || t('reminders.unassigned')}
+            </span>
+          </DashboardMetaList>
+          {reminder.description && (
+            <div className={dashboardRecordDetailsContentClassName}>
+              {reminder.description}
             </div>
-            {/* Details shares the meta line when it fits and opens onto its own line. */}
-            <div className="flex min-w-0 flex-wrap items-center gap-x-4">
-              <DashboardMetaList separator="dot" gap="compact">
-                <CareReminderDueText
-                  dueDate={reminder.dueDate}
-                  overdue={overdue}
-                  className={
-                    dueState === 'today' || dueState === 'soon'
-                      ? 'font-semibold text-foreground'
-                      : undefined
-                  }
-                >
-                  {getCareReminderDueLabel(reminder, undefined, locale)}
-                </CareReminderDueText>
-                <span>
-                  <span className="sr-only">{t('reminders.category')}: </span>
-                  {t(`careLabels.category.${reminder.category}`)}
-                </span>
-                {showHorse && item.horseName && (
-                  <span>
-                    <span className="sr-only">{t('reminders.horse')}: </span>
-                    {item.horseName}
-                  </span>
-                )}
-                <span>
-                  <span className="sr-only">
-                    {t('reminders.responsible')}:{' '}
-                  </span>
-                  {item.assigneeName || t('reminders.unassigned')}
-                </span>
-              </DashboardMetaList>
-              {reminder.description && (
-                <DashboardRecordDetails
-                  recordTitle={reminder.title}
-                  open={detailsOpen}
-                  onToggle={(event) => setDetailsOpen(event.currentTarget.open)}
-                  className={cn(
-                    'open:basis-full md:[&>summary]:py-0.5',
-                    phoneDetails && 'max-sm:hidden',
-                  )}
-                >
-                  {reminder.description}
-                </DashboardRecordDetails>
-              )}
-            </div>
-          </header>
+          )}
           {reminder.status === 'completed' && reminder.completedAt && (
             <p className="text-sm text-muted-foreground">
               {t(
@@ -742,15 +707,15 @@ function ReminderRow({
               {t('reminders.followUpScheduled')}
             </p>
           )}
+          {reminder.horseId && (
+            <div className="empty:hidden">
+              <WorkspaceRecordAudience
+                horseId={reminder.horseId}
+                recordId={reminder._id}
+              />
+            </div>
+          )}
         </div>
-        {reminder.horseId && (
-          <div className="empty:hidden sm:col-span-2">
-            <WorkspaceRecordAudience
-              horseId={reminder.horseId}
-              recordId={reminder._id}
-            />
-          </div>
-        )}
       </DashboardItemRecordCard>
       <EditRecordDialog
         open={editor !== null}
@@ -767,6 +732,7 @@ function ReminderRow({
         {editor === 'edit' && onEdit && (
           <CareReminderForm
             fixedHorseId={reminder.horseId}
+            reminderId={reminder._id}
             assigneeOptions={assigneeOptions}
             initialValues={{
               title: reminder.title,
@@ -836,9 +802,9 @@ function ReminderRow({
                 {t('reminders.nextDueInvalid')}
               </p>
             )}
-            {actionError && (
+            {actionError != null && (
               <p role="alert" className="text-sm text-destructive">
-                {t('reminders.updateFailed')}
+                {`${t('reminders.updateFailed')} ${describe(actionError)}`}
               </p>
             )}
             <Button type="submit" disabled={isUpdating}>

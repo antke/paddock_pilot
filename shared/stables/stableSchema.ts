@@ -10,11 +10,11 @@ const defaultMessages = {
   locationMin: 'Location must have at least 3 characters.',
   locationMax: 'Location cannot be longer than 50 characters.',
   locationCharacters: 'Location contains unsupported characters.',
-  descriptionMax: 'Please use a shorter description',
-  shortTextMax: 'Please use a shorter value.',
-  phoneMax: 'Please use a shorter phone number.',
-  noteMax: 'Please use a shorter note.',
-  emergencyContactMax: 'Please use a shorter emergency contact.',
+  descriptionMax: 'Use a shorter description.',
+  shortTextMax: 'Use a shorter value (max 100 characters).',
+  phoneMax: 'Use a shorter phone number.',
+  noteMax: 'Use a shorter note.',
+  emergencyContactMax: 'Use a shorter emergency contact.',
 } as const
 export type StableValidationKey = keyof typeof defaultMessages
 export function createStableSchemas(

@@ -78,7 +78,7 @@ it('keeps acknowledgement and fields locked when opening fails, without another 
   fireEvent.click(screen.getByRole('button', { name: 'Create stable' }))
   const error = await screen.findByRole('alert')
   expect(error.textContent).toContain(
-    'Your stable was created, but setup could not open',
+    'Your stable is created, but setup didn’t open',
   )
   expect(document.activeElement).toBe(error)
   expect(

@@ -31,20 +31,17 @@ export function StableSettingsOverview({
 
   const archiveStable = useMutation(api.stables.remove)
   const navigate = useNavigate()
+  // Throws on failure so the archive dialog can show why.
   const onArchive = async () => {
-    try {
-      await archiveStable({ id: stable._id })
-      showAppSuccessToast({
-        title: t('stables.archived'),
-        description: (
-          <p>{t('stables.archivedDescription', { name: stable.name })}</p>
-        ),
-      })
-      void navigate({ to: '/stables' })
-      return true
-    } catch {
-      return false
-    }
+    await archiveStable({ id: stable._id })
+    showAppSuccessToast({
+      title: t('stables.archived'),
+      description: (
+        <p>{t('stables.archivedDescription', { name: stable.name })}</p>
+      ),
+    })
+    void navigate({ to: '/stables' })
+    return true
   }
 
   return (

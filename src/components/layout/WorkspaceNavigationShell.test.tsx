@@ -112,7 +112,7 @@ async function setup(
 function headerMenu() {
   return within(
     document.querySelector('[data-slot="app-header"]') as HTMLElement,
-  ).getByRole('button', { name: 'Open navigation menu' })
+  ).getByRole('button', { name: 'Open menu' })
 }
 
 function navigation(container: HTMLElement) {
@@ -258,13 +258,13 @@ it('uses one labelled mobile opener and restores focus from the full-screen menu
   await setup('/stables/stable-a/events')
   const sidebar = await screen.findByRole('complementary', { name: 'Menu' })
   const expectedHrefs = navigationHrefs(sidebar)
-  const menu = screen.getByRole('button', { name: 'Open navigation menu' })
+  const menu = screen.getByRole('button', { name: 'Open menu' })
   expect(menu.textContent).toBe('Menu')
   expect(menu.closest('[data-slot="mobile-app-navigation"]')).toBeTruthy()
   expect(
     within(
       document.querySelector('[data-slot="app-header"]') as HTMLElement,
-    ).queryByRole('button', { name: 'Open navigation menu' }),
+    ).queryByRole('button', { name: 'Open menu' }),
   ).toBeNull()
   act(() => menu.focus())
   fireEvent.click(menu)
@@ -272,15 +272,13 @@ it('uses one labelled mobile opener and restores focus from the full-screen menu
   expect(screen.getAllByRole('dialog')).toHaveLength(1)
   expect(navigationHrefs(drawer)).toEqual(expectedHrefs)
   const close = within(drawer).getByRole('button', {
-    name: 'Close navigation menu',
+    name: 'Close menu',
   })
   expect(close.textContent).toBe('')
   expect(
-    within(drawer).getAllByRole('button', { name: 'Close navigation menu' }),
+    within(drawer).getAllByRole('button', { name: 'Close menu' }),
   ).toHaveLength(1)
-  fireEvent.click(
-    within(drawer).getByRole('button', { name: 'Close navigation menu' }),
-  )
+  fireEvent.click(within(drawer).getByRole('button', { name: 'Close menu' }))
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   await waitFor(() => expect(document.activeElement).toBe(menu))
 })
@@ -294,9 +292,7 @@ it('keeps menu access in the header on mobile task screens without bottom naviga
   const menu = headerMenu()
   fireEvent.click(menu)
   const drawer = await screen.findByRole('dialog', { name: 'Paddock Pilot' })
-  fireEvent.click(
-    within(drawer).getByRole('button', { name: 'Close navigation menu' }),
-  )
+  fireEvent.click(within(drawer).getByRole('button', { name: 'Close menu' }))
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
 })
 
@@ -304,15 +300,13 @@ it('returns focus to Menu when resizing hides the mobile menu opener', async () 
   setViewport(390)
   await setup('/events')
   const more = await screen.findByRole('button', {
-    name: 'Open navigation menu',
+    name: 'Open menu',
   })
   act(() => more.focus())
   fireEvent.click(more)
   const drawer = await screen.findByRole('dialog', { name: 'Paddock Pilot' })
   setViewport(900)
-  fireEvent.click(
-    within(drawer).getByRole('button', { name: 'Close navigation menu' }),
-  )
+  fireEvent.click(within(drawer).getByRole('button', { name: 'Close menu' }))
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   await waitFor(() => expect(document.activeElement).toBe(headerMenu()))
 })
@@ -321,9 +315,7 @@ it('opens global Home and closes the drawer despite a saved stable preference', 
   setViewport(390)
   window.localStorage.setItem(savedStableKey, 'stable-a')
   const router = await setup('/stables/stable-a/events')
-  fireEvent.click(
-    await screen.findByRole('button', { name: 'Open navigation menu' }),
-  )
+  fireEvent.click(await screen.findByRole('button', { name: 'Open menu' }))
   const drawer = await screen.findByRole('dialog', { name: 'Paddock Pilot' })
   fireEvent.click(
     within(navigation(drawer)).getByRole('link', { name: 'Home' }),
@@ -346,9 +338,7 @@ it('opens global Home and closes the drawer despite a saved stable preference', 
 it('opens the stable directory from one entry and closes the drawer', async () => {
   setViewport(390)
   const router = await setup('/stables/stable-a')
-  fireEvent.click(
-    await screen.findByRole('button', { name: 'Open navigation menu' }),
-  )
+  fireEvent.click(await screen.findByRole('button', { name: 'Open menu' }))
   const drawer = await screen.findByRole('dialog', { name: 'Paddock Pilot' })
   const link = within(navigation(drawer)).getByRole('link', {
     name: 'Yard and contacts',
@@ -371,9 +361,7 @@ it('opens the stable directory from one entry and closes the drawer', async () =
 it('exposes account destinations directly and closes the drawer when following a profile link', async () => {
   setViewport(390)
   const router = await setup('/events')
-  fireEvent.click(
-    await screen.findByRole('button', { name: 'Open navigation menu' }),
-  )
+  fireEvent.click(await screen.findByRole('button', { name: 'Open menu' }))
   const drawer = await screen.findByRole('dialog', { name: 'Paddock Pilot' })
   const account = within(drawer).getByRole('region', {
     name: 'Account and preferences',
@@ -410,7 +398,7 @@ it.each(['Preferences', 'Manage account'])(
     })
     await setup('/events', { onManageAccount: action, onPreferences: action })
     const opener = await screen.findByRole('button', {
-      name: 'Open navigation menu',
+      name: 'Open menu',
     })
     act(() => opener.focus())
     fireEvent.click(opener)
@@ -423,7 +411,7 @@ it.each(['Preferences', 'Manage account'])(
       name: 'Paddock Pilot',
     })
     fireEvent.click(
-      within(reopened).getByRole('button', { name: 'Close navigation menu' }),
+      within(reopened).getByRole('button', { name: 'Close menu' }),
     )
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(action).toHaveBeenCalledTimes(1)
@@ -443,9 +431,7 @@ it('prevents duplicate sign-out, reports failure in the drawer, and permits retr
     )
     .mockResolvedValue(undefined)
   await setup('/events', { onSignOut })
-  fireEvent.click(
-    await screen.findByRole('button', { name: 'Open navigation menu' }),
-  )
+  fireEvent.click(await screen.findByRole('button', { name: 'Open menu' }))
   const drawer = await screen.findByRole('dialog', { name: 'Paddock Pilot' })
   const signOut = within(drawer).getByRole<HTMLButtonElement>('button', {
     name: 'Sign out',

@@ -2,7 +2,7 @@ import { useT } from '#/i18n/LocaleProvider'
 import { useId } from 'react'
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import { DashboardEmptyState } from '#/components/dashboard/DashboardEmptyState'
-import { ButtonLink } from '#/components/ui/button'
+import { ButtonLink, PhoneShortLabel } from '#/components/ui/button'
 import { TrainingSessionLink } from '#/components/training/TrainingSessionLink'
 import { groupTrainingSessions } from '#/components/training/trainingSessions'
 import type { DashboardActivityData } from './dashboardTypes'
@@ -56,7 +56,9 @@ export function TodayTrainingCard({
               size="sm"
               className="min-h-11"
             >
-              {t('trainingViews.recordCompleted')}
+              <PhoneShortLabel>
+                {t('trainingViews.recordCompleted')}
+              </PhoneShortLabel>
             </ButtonLink>
           )}
         </>

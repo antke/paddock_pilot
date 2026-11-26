@@ -5,6 +5,8 @@ import {
   useFloatingCreateAction,
 } from '#/components/layout/floatingActionsContext'
 import type { ReactNode } from 'react'
+import { PhoneShortLabel } from '#/components/ui/button'
+import { useT } from '#/i18n/LocaleProvider'
 
 import {
   Dialog,
@@ -42,6 +44,7 @@ export function CreateRecordDialog({
   isPending = false,
   actionId,
 }: CreateRecordDialogProps) {
+  const t = useT()
   const pageActions = useRecordCreateActions()
   const floatingRegistry = useFloatingActionsRegistry()
   const titleTrigger = useRef<HTMLButtonElement>(null)
@@ -81,7 +84,7 @@ export function CreateRecordDialog({
     >
       {/* The title-row trigger is visible on every viewport. */}
       <RecordDialogTitleTrigger triggerRef={titleTrigger}>
-        {triggerLabel}
+        <PhoneShortLabel short={t('common.add')}>{triggerLabel}</PhoneShortLabel>
       </RecordDialogTitleTrigger>
       {/* Without the app's shortcut registry (labs, isolated renders) keep a local phone shortcut. */}
       {!registered && !pageOwnsShortcut && (

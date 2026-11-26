@@ -50,11 +50,11 @@ it('retains the chosen file, document type and notes through translated validati
   fireEvent.change(screen.getByLabelText('Notes (optional)'), {
     target: { value: 'Własna notatka' },
   })
-  await screen.findByText('Document name cannot be longer than 180 characters.')
+  await screen.findByText('Use a shorter name (max 180 characters).')
   const selector = screen.getByRole('combobox', { name: 'Language' })
   act(() => selector.focus())
   fireEvent.change(selector, { target: { value: 'pl' } })
-  await screen.findByText('Nazwa dokumentu może mieć maksymalnie 180 znaków.')
+  await screen.findByText('Skróć nazwę (maks. 180 znaków).')
   expect(document.activeElement).toBe(selector)
   expect(name.value).toHaveLength(181)
   expect(screen.getByText(file.name)).toBeTruthy()
@@ -62,14 +62,14 @@ it('retains the chosen file, document type and notes through translated validati
   fireEvent.change(name, { target: { value: file.name } })
   fireEvent.submit(name.closest('form')!)
   await screen.findByText(
-    'Nie udało się dodać dokumentu. Plik i wprowadzone dane zostały zachowane. Spróbuj ponownie.',
+    'Nie udało się dodać dokumentu. Plik i dane nadal tu są. Nie masz internetu, więc nic się nie zmieniło. Połącz się i spróbuj ponownie.',
   )
   fireEvent.change(screen.getByRole('combobox', { name: 'Język' }), {
     target: { value: 'en' },
   })
   expect(
     screen.getByText(
-      'Could not add this document. Your file and details are still here. Please try again.',
+      'Couldn’t add the document. Your file and details are still here. You’re offline, so nothing changed. Reconnect and try again.',
     ),
   ).toBeTruthy()
   expect(save).toHaveBeenCalledTimes(1)

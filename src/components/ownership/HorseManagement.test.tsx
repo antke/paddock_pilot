@@ -98,7 +98,7 @@ it('retains invitation input after an actionable error and reports success besid
   fireEvent.click(screen.getByRole('button', { name: 'Send invitation' }))
   expect(await screen.findByRole('alert')).toHaveProperty(
     'textContent',
-    'Enter the other person’s email address. You cannot invite your own account.',
+    'Couldn’t send the invite. Enter the other person’s email address. You cannot invite your own account.',
   )
   expect(email.value).toBe('friend@example.com')
   fireEvent.click(screen.getByRole('button', { name: 'Send invitation' }))
@@ -146,9 +146,7 @@ it('makes source, destination, access consequences and task choices explicit bef
   expect(review.getAttribute('aria-expanded')).toBe('true')
   expect(screen.getByText('Move Juniper')).toBeTruthy()
   expect(screen.getByText(/Unchecked tasks are dismissed/)).toBeTruthy()
-  expect(
-    screen.getByText(/You choose which existing records to share/),
-  ).toBeTruthy()
+  expect(screen.getByText(/You pick which records to share/)).toBeTruthy()
   fireEvent.click(screen.getByRole('checkbox', { name: 'Dental check' }))
   fireEvent.click(screen.getByRole('button', { name: 'Move to Meadowbrook' }))
   await screen.findByText(/The move to Meadowbrook has started/)

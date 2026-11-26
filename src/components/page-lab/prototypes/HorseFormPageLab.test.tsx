@@ -37,17 +37,17 @@ async function advance(ms = 700) {
 }
 async function submit() {
   await act(async () => {
-    fireEvent.submit(screen.getByLabelText('Horse name').closest('form')!)
+    fireEvent.submit(screen.getByLabelText('Name').closest('form')!)
   })
 }
 function fillCreate() {
-  fireEvent.change(screen.getByLabelText('Horse name'), {
+  fireEvent.change(screen.getByLabelText('Name'), {
     target: { value: 'Sample Rowan' },
   })
   fireEvent.click(
     screen.getByRole('button', { name: 'Optional horse details' }),
   )
-  fireEvent.change(screen.getByLabelText('Owner name'), {
+  fireEvent.change(screen.getByLabelText('Owner'), {
     target: { value: 'Sample rider' },
   })
   fireEvent.change(screen.getByLabelText('Current age'), {
@@ -65,9 +65,9 @@ describe('actual horse form local specimen', () => {
     const fetch = vi.spyOn(globalThis, 'fetch')
     render(<HorseFormPageLab data={{ ...data, horses: [] }} />)
     await submit()
-    expect(
-      screen.getByLabelText('Horse name').getAttribute('aria-invalid'),
-    ).toBe('true')
+    expect(screen.getByLabelText('Name').getAttribute('aria-invalid')).toBe(
+      'true',
+    )
     expect(screen.queryByText(/Sample save pending/)).toBeNull()
     fillCreate()
     outcome('save')
@@ -79,9 +79,9 @@ describe('actual horse form local specimen', () => {
     ).toBe('true')
     await advance()
     expect(screen.getByRole('alert').textContent).toContain(
-      'Could not save this horse',
+      'Couldn’t save the horse',
     )
-    expect(screen.getByLabelText<HTMLInputElement>('Horse name').value).toBe(
+    expect(screen.getByLabelText<HTMLInputElement>('Name').value).toBe(
       'Sample Rowan',
     )
     outcome('open')
@@ -90,12 +90,10 @@ describe('actual horse form local specimen', () => {
     expect(
       screen.getByRole('button', { name: 'Opening profile…' }),
     ).toBeTruthy()
-    expect(screen.getByLabelText<HTMLInputElement>('Horse name').disabled).toBe(
-      true,
-    )
+    expect(screen.getByLabelText<HTMLInputElement>('Name').disabled).toBe(true)
     await advance()
     expect(screen.getByRole('alert').textContent).toContain(
-      'Your horse was saved',
+      'Your horse is saved',
     )
     expect(
       screen.getByText('Sample horse saved locally. No live record changed.'),
@@ -120,32 +118,26 @@ describe('actual horse form local specimen', () => {
     )
     const dialog = screen.getByRole('alertdialog')
     fireEvent.click(within(dialog).getByRole('button', { name: 'Move horse' }))
-    expect(screen.getByLabelText<HTMLInputElement>('Horse name').disabled).toBe(
-      true,
-    )
+    expect(screen.getByLabelText<HTMLInputElement>('Name').disabled).toBe(true)
     await advance()
     expect(
       within(dialog).getByRole('button', { name: 'Continuing…' }),
     ).toBeTruthy()
     await advance()
     expect(within(dialog).getByRole('alert').textContent).toContain(
-      'was moved to deleted horses',
+      'is in deleted horses',
     )
-    expect(screen.getByLabelText<HTMLInputElement>('Horse name').disabled).toBe(
-      true,
-    )
+    expect(screen.getByLabelText<HTMLInputElement>('Name').disabled).toBe(true)
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }))
     await advance(200)
     expect(screen.queryByRole('alertdialog')).toBeNull()
-    expect(screen.getByLabelText<HTMLInputElement>('Horse name').disabled).toBe(
-      true,
-    )
+    expect(screen.getByLabelText<HTMLInputElement>('Name').disabled).toBe(true)
     expect(
       screen
         .getByRole('button', { name: 'Save changes' })
         .hasAttribute('disabled'),
     ).toBe(true)
-    fireEvent.click(screen.getByRole('button', { name: 'Retry continuing' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
     expect(screen.queryByText(/Sample delete pending/)).toBeNull()
     expect(screen.getByText(/Sample return pending/)).toBeTruthy()
     await advance()
@@ -154,7 +146,7 @@ describe('actual horse form local specimen', () => {
         'The sample returned to the horse list. No live horse was deleted.',
       ),
     ).toBeTruthy()
-    expect(screen.queryByLabelText('Horse name')).toBeNull()
+    expect(screen.queryByLabelText('Name')).toBeNull()
     expect(fetch).not.toHaveBeenCalled()
   })
   it('cancels outstanding work when restarting or switching form mode without late updates', async () => {
@@ -167,10 +159,8 @@ describe('actual horse form local specimen', () => {
     expect(screen.getByText(/Sample save pending/)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Restart sample' }))
     await advance(2000)
-    expect(screen.getByLabelText<HTMLInputElement>('Horse name').value).toBe('')
-    expect(screen.getByLabelText<HTMLInputElement>('Horse name').disabled).toBe(
-      false,
-    )
+    expect(screen.getByLabelText<HTMLInputElement>('Name').value).toBe('')
+    expect(screen.getByLabelText<HTMLInputElement>('Name').disabled).toBe(false)
     expect(screen.queryByText(/Sample profile opened/)).toBeNull()
     fillCreate()
     await submit()
@@ -178,7 +168,7 @@ describe('actual horse form local specimen', () => {
       target: { value: 'edit' },
     })
     await advance(2000)
-    expect(screen.getByLabelText<HTMLInputElement>('Horse name').value).toBe(
+    expect(screen.getByLabelText<HTMLInputElement>('Name').value).toBe(
       data.horses[0].name,
     )
     expect(screen.queryByText(/Sample profile opened/)).toBeNull()

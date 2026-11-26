@@ -3,6 +3,7 @@ import { useClerk, useUser } from '@clerk/tanstack-react-start'
 import { useAction } from 'convex/react'
 import { api } from 'convex/_generated/api'
 import { useT } from '#/i18n/LocaleProvider'
+import { useActionErrorText } from '#/lib/actionError'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 import { DashboardActions } from '#/components/dashboard/DashboardActions'
 import { Button } from '#/components/ui/button'
@@ -71,6 +72,8 @@ export function InvitationEmailRecoveryView({
   const [verified, setVerified] = useState(false)
   const [pending, setPending] = useState<'send' | 'verify' | 'refresh'>()
   const [error, setError] = useState<'send' | 'verify' | 'refresh'>()
+  const [cause, setCause] = useState<unknown>()
+  const describeError = useActionErrorText()
   const [message, setMessage] = useState<'sent' | 'refreshed'>()
   const guard = useRef(false)
   const input = useRef<HTMLInputElement>(null)
@@ -100,8 +103,9 @@ export function InvitationEmailRecoveryView({
         await onRefresh()
         setMessage('refreshed')
       }
-    } catch {
+    } catch (failure) {
       setError(stage)
+      setCause(failure)
     } finally {
       guard.current = false
       setPending(undefined)
@@ -175,13 +179,14 @@ export function InvitationEmailRecoveryView({
       )}
       {error && (
         <p id={`${id}-error`} role="alert" className="text-sm text-destructive">
-          {t(
-            error === 'verify'
-              ? 'invitationFlow.verifyEmailFailed'
-              : error === 'send'
-                ? 'invitationFlow.sendCodeFailed'
-                : 'invitationFlow.refreshAccountFailed',
-          )}
+          {/* A failed verify is almost always a wrong or expired code, which its copy says. */}
+          {error === 'verify'
+            ? t('invitationFlow.verifyEmailFailed')
+            : `${t(
+                error === 'send'
+                  ? 'invitationFlow.sendCodeFailed'
+                  : 'invitationFlow.refreshAccountFailed',
+              )} ${describeError(cause)}`}
         </p>
       )}
       <p role="status" className="text-sm text-muted-foreground">

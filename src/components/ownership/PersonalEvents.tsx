@@ -351,6 +351,7 @@ function HorseEventDetail({
           ) : undefined
         }
         horses={data.horses}
+        canDeleteEvent={permissions.canDeleteEvent}
         canManageEvent={
           permissions.canManageEvent &&
           !(horseId && data.eventHorses.some((r) => r.participationEndsAt))
@@ -359,7 +360,8 @@ function HorseEventDetail({
         showServiceDetails={!isTraining}
         occurrenceDate={!isTraining && data.event.recurrence ? date : undefined}
       />
-      <EventParticipation eventId={eventId} />
+      {/* Other events list their horses inside EventDetail. */}
+      {isTraining && <EventParticipation eventId={eventId} />}
       <ActivitySharing eventId={eventId} />
       <ActivityPeople eventId={eventId} date={selectedDate} />
       <MyActivityInvitations eventId={eventId} />

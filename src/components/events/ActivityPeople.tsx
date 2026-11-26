@@ -17,6 +17,7 @@ import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import { formatEventDateTime } from './eventDisplay'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { useActivityCopy } from './activityCopy'
+import { useActionErrorText } from '#/lib/actionError'
 
 export function ActivityPeople({
   eventId,
@@ -26,6 +27,7 @@ export function ActivityPeople({
   date: string
 }) {
   const c = useActivityCopy()
+  const describe = useActionErrorText()
   const id = useId()
   const data = useQuery(api.activityParticipants.forEvent, { eventId, date })
   const invite = useMutation(api.activityParticipants.invite)
@@ -34,16 +36,18 @@ export function ActivityPeople({
   const [horseId, setHorseId] = useState('')
   const [role, setRole] = useState<'rider' | 'instructor'>('rider')
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState(false)
+  const [error, setError] = useState<{ what: string; error: unknown } | null>(
+    null,
+  )
   const [sent, setSent] = useState(false)
   if (!data?.horses.length) return null
-  async function run(action: () => Promise<unknown>) {
+  async function run(what: string, action: () => Promise<unknown>) {
     setBusy(true)
-    setError(false)
+    setError(null)
     try {
       await action()
-    } catch {
-      setError(true)
+    } catch (caught) {
+      setError({ what, error: caught })
     } finally {
       setBusy(false)
     }
@@ -71,7 +75,9 @@ export function ActivityPeople({
               <Button
                 variant="outline"
                 disabled={busy}
-                onClick={() => void run(() => revoke({ id: person.id }))}
+                onClick={() =>
+                  void run(c.removeFailed, () => revoke({ id: person.id }))
+                }
               >
                 {c.remove}
               </Button>
@@ -83,7 +89,7 @@ export function ActivityPeople({
         className="grid gap-4 sm:grid-cols-2"
         onSubmit={(event) => {
           event.preventDefault()
-          void run(async () => {
+          void run(c.inviteFailed, async () => {
             await invite({
               eventId,
               date,
@@ -163,7 +169,7 @@ export function ActivityPeople({
       )}
       {error && (
         <p role="alert" className="text-sm text-destructive">
-          {c.failed}
+          {`${error.what} ${describe(error.error)}`}
         </p>
       )}
     </DashboardSectionCard>
@@ -203,6 +209,7 @@ export function MyActivityInvitations({
 function ActivityInvitation({ row }: { row: Participation }) {
   const t = useT()
   const c = useActivityCopy()
+  const describe = useActionErrorText()
   const { locale } = useLocale()
   const { today } = useLocalDateContext()
   const id = useId()
@@ -225,14 +232,16 @@ function ActivityInvitation({ row }: { row: Participation }) {
     ),
   )
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState(false)
-  async function run(action: () => Promise<unknown>) {
+  const [error, setError] = useState<{ what: string; error: unknown } | null>(
+    null,
+  )
+  async function run(what: string, action: () => Promise<unknown>) {
     setBusy(true)
-    setError(false)
+    setError(null)
     try {
       await action()
-    } catch {
-      setError(true)
+    } catch (caught) {
+      setError({ what, error: caught })
     } finally {
       setBusy(false)
     }
@@ -255,7 +264,9 @@ function ActivityInvitation({ row }: { row: Participation }) {
           <Button
             disabled={busy}
             onClick={() =>
-              void run(() => respond({ id: row.id, accept: true }))
+              void run(c.acceptFailed, () =>
+                respond({ id: row.id, accept: true }),
+              )
             }
           >
             {c.accept}
@@ -264,7 +275,9 @@ function ActivityInvitation({ row }: { row: Participation }) {
             variant="outline"
             disabled={busy}
             onClick={() =>
-              void run(() => respond({ id: row.id, accept: false }))
+              void run(c.declineFailed, () =>
+                respond({ id: row.id, accept: false }),
+              )
             }
           >
             {c.decline}
@@ -306,7 +319,7 @@ function ActivityInvitation({ row }: { row: Participation }) {
                 title={c.leaveTitle}
                 description={c.leaveHelp}
                 cancelLabel={c.stay}
-                failedLabel={c.failed}
+                failedLabel={c.leaveFailed}
                 onConfirm={() => leave({ id: row.id })}
               />
             </div>
@@ -316,7 +329,7 @@ function ActivityInvitation({ row }: { row: Participation }) {
               className="grid gap-3"
               onSubmit={(e) => {
                 e.preventDefault()
-                void run(async () => {
+                void run(c.reportFailed, async () => {
                   await report({
                     id: row.id,
                     details: {
@@ -424,7 +437,7 @@ function ActivityInvitation({ row }: { row: Participation }) {
       )}
       {error && (
         <p role="alert" className="text-sm text-destructive">
-          {c.failed}
+          {`${error.what} ${describe(error.error)}`}
         </p>
       )}
     </section>

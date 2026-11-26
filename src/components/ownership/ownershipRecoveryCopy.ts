@@ -31,6 +31,9 @@ const en = {
   declining: 'Declining invitation…',
   retryAccept: 'Try accepting again',
   retryDecline: 'Try declining again',
+  acceptFailed: 'Couldn’t accept the invitation.',
+  declineFailed: 'Couldn’t decline the invitation.',
+  contactSaveFailed: 'Couldn’t save the contact. Your entries are still here.',
   acceptedHelp:
     'Your invitation has been accepted. Open the horse to see the records available to you.',
   newContact: 'Add a care contact',
@@ -43,7 +46,7 @@ const en = {
   delete: 'Delete contact',
   deleteTitle: (name: string) => `Delete ${name}?`,
   deleteHelp:
-    'This removes the saved contact from your contacts. Existing horse and appointment records keep their recorded details. This cannot be undone.',
+    'This removes the contact from your list. Horse and appointment records keep their details. You can’t undo this.',
   saved: 'Contact saved.',
   updated: 'Contact updated.',
   deleted: 'Contact deleted.',
@@ -94,6 +97,10 @@ const pl: typeof en = {
   declining: 'Odrzucanie zaproszenia…',
   retryAccept: 'Spróbuj przyjąć ponownie',
   retryDecline: 'Spróbuj odrzucić ponownie',
+  acceptFailed: 'Nie udało się przyjąć zaproszenia.',
+  declineFailed: 'Nie udało się odrzucić zaproszenia.',
+  contactSaveFailed:
+    'Nie udało się zapisać kontaktu. Twoje dane nadal tu są.',
   acceptedHelp:
     'Zaproszenie zostało przyjęte. Otwórz konia, aby zobaczyć dostępne wpisy.',
   newContact: 'Dodaj kontakt',
@@ -107,7 +114,7 @@ const pl: typeof en = {
   delete: 'Usuń kontakt',
   deleteTitle: (name: string) => `Usunąć kontakt: ${name}?`,
   deleteHelp:
-    'Kontakt zostanie usunięty z Twojej listy. Dotychczasowe wpisy i wizyty zachowają zapisane dane. Tej operacji nie można cofnąć.',
+    'Usuniesz kontakt ze swojej listy. Wpisy i wizyty zachowają jego dane. Nie da się tego cofnąć.',
   saved: 'Kontakt zapisano.',
   updated: 'Kontakt zaktualizowano.',
   deleted: 'Kontakt usunięto.',

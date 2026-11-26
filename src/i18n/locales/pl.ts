@@ -1,6 +1,7 @@
 import { stableUpdates } from './stableUpdates.pl'
 import { horseComparison } from './horseComparison.pl'
 import { serverErrors } from './serverErrors.pl'
+import { actionErrors } from './actionErrors.pl'
 import { uiRemainder } from './uiRemainder.pl'
 import { analysisViews } from './analysisViews.pl'
 import { trainingViews } from './trainingViews.pl'
@@ -42,6 +43,7 @@ export const pl = {
   stableUpdates,
   horseComparison,
   serverErrors,
+  actionErrors,
   uiRemainder,
   analysisViews,
   trainingViews,
@@ -106,22 +108,22 @@ export const pl = {
   audit: {
     recent: 'Ostatnie zmiany',
     recentHelp:
-      'Ważne zmiany dotyczące stajni, członkostwa i wydarzeń — od najnowszych.',
-    empty: 'Nie zarejestrowano jeszcze żadnych zmian.',
+      'Ważne zmiany w stajni, osobach i wydarzeniach — od najnowszych.',
+    empty: 'Nie ma jeszcze zmian.',
     list: 'Ostatnie zmiany w stajni',
     stableCreated: 'Utworzono stajnię',
-    stableUpdated: 'Zaktualizowano dane stajni',
+    stableUpdated: 'Zmieniono dane stajni',
     stableArchived: 'Zarchiwizowano stajnię',
     memberInvited: 'Zaproszono osobę',
     invitationResent: 'Ponownie wysłano zaproszenie',
     invitationRevoked: 'Cofnięto zaproszenie',
     invitationAccepted: 'Przyjęto zaproszenie',
     invitationDeclined: 'Odrzucono zaproszenie',
-    accessActivated: 'Aktywowano dostęp do stajni',
-    invitationPendingPlan: 'Przyjęto zaproszenie, oczekiwanie na plan',
+    accessActivated: 'Włączono dostęp do stajni',
+    invitationPendingPlan: 'Przyjęto zaproszenie, czeka na plan',
     memberRemoved: 'Usunięto osobę ze stajni',
     eventCreated: 'Utworzono wydarzenie',
-    eventUpdated: 'Zaktualizowano wydarzenie',
+    eventUpdated: 'Zmieniono wydarzenie',
     horseApproved: 'Zaakceptowano zaproszenie dla konia',
     horseDeclined: 'Odrzucono zaproszenie dla konia',
     horseWithdrawn: 'Wycofano konia z wydarzenia',
@@ -132,32 +134,31 @@ export const pl = {
   onboarding,
   stableValidation: {
     nameMin: 'Nazwa musi mieć co najmniej 3 znaki.',
-    nameMax: 'Nazwa nie może mieć więcej niż 50 znaków.',
+    nameMax: 'Skróć nazwę (maks. 50 znaków).',
     nameCharacters: 'Nazwa zawiera niedozwolone znaki.',
     locationMin: 'Lokalizacja musi mieć co najmniej 3 znaki.',
-    locationMax: 'Lokalizacja nie może mieć więcej niż 50 znaków.',
+    locationMax: 'Skróć lokalizację (maks. 50 znaków).',
     locationCharacters: 'Lokalizacja zawiera niedozwolone znaki.',
     descriptionMax: 'Skróć opis do 256 znaków.',
     shortTextMax: 'Skróć tekst do 100 znaków.',
     phoneMax: 'Skróć numer telefonu do 50 znaków.',
     noteMax: 'Skróć notatkę do 1000 znaków.',
-    emergencyContactMax: 'Skróć dane kontaktu alarmowego do 500 znaków.',
+    emergencyContactMax: 'Skróć kontakt alarmowy do 500 znaków.',
   },
   invitations: {
     linkCopied: 'Skopiowano link do zaproszenia',
     copyFailed: 'Nie udało się skopiować linku do zaproszenia',
     created: 'Utworzono zaproszenie',
-    queued: 'Wiadomość do {{email}} oczekuje na wysłanie.',
+    queued: 'Wyślemy wiadomość do {{email}}.',
     copy: 'Kopiuj link',
     email: 'Adres e-mail',
     invite: 'Zaproś',
     inviting: 'Wysyłanie zaproszenia…',
-    failed:
-      'Nie udało się utworzyć zaproszenia. Sprawdź adres e-mail i spróbuj ponownie.',
-    invalidEmail: 'Podaj prawidłowy adres e-mail.',
+    failed: 'Nie udało się wysłać zaproszenia.',
+    invalidEmail: 'Wpisz poprawny e-mail.',
     language: 'Język zaproszenia',
     languageHelp:
-      'Dla nowych odbiorców. Osoby z kontem otrzymują wiadomości w zapisanym języku.',
+      'Dla nowych osób. Kto ma już konto, dostanie e-maile w swoim języku.',
   },
   landing: {
     hero1: 'Mniej formalności.',
@@ -175,7 +176,7 @@ export const pl = {
     completed: 'Zakończona',
     farrier: 'Wizyta kowala',
     visitTime: 'Czwartek · 10:30',
-    trimDone: 'Werkowanie zakończone. Termin kolejnej wizyty do ustalenia.',
+    trimDone: 'Werkowanie zrobione. Kolejną wizytę trzeba umówić.',
     farrierName: 'Sam Taylor, kowal.',
     sharedTitle1: 'Dobra opieka to',
     sharedTitle2: 'wspólny wysiłek.',
@@ -194,53 +195,50 @@ export const pl = {
   pricing: {
     options: 'Dostępne plany',
     errorTitle: 'Nie udało się wczytać planów',
-    errorDescription:
-      'Nie udało się wczytać dostępnych planów. Spróbuj ponownie za chwilę.',
+    errorDescription: 'Spróbuj ponownie za chwilę.',
     retry: 'Wczytaj plany ponownie',
-    description: 'Sprawdź dostępne plany i opcje płatności.',
+    description: 'Plany i opcje płatności.',
     testingDescription:
-      'Podczas testów każda osoba w stajni ma dostęp do funkcji aplikacji. Po uruchomieniu płatności plan premium zapewni dostęp do Centrum analiz. Wszystkie pozostałe obecne funkcje pozostaną częścią wersji podstawowej.',
+      'Na czas testów każdy w stajni ma dostęp do wszystkiego. Gdy ruszą płatności, plan premium doda Centrum analiz. Reszta zostanie w wersji podstawowej.',
     return: 'Wróć do zaproszenia',
     testingTitle: 'Dostęp testowy',
     testingAccess:
-      'Płatności nie są włączone w tym środowisku. Osoby testujące mogą korzystać ze wszystkich obecnych funkcji Paddock Pilot bez wybierania planu i podawania danych do płatności.',
-    included: 'W ramach dostępu',
-    start: 'Rozpocznij konfigurację',
+      'Płatności są tu wyłączone. Testerzy mogą korzystać ze wszystkich funkcji bez wybierania planu i podawania danych do płatności.',
+    included: 'W pakiecie',
+    start: 'Zacznij konfigurację',
     care: 'Dokumentacja opieki',
     careDescription: 'Zapisuj przypomnienia, wizyty, notatki i wyniki.',
     team: 'Zespół stajni',
     teamDescription:
-      'Organizuj współpracę właścicieli, specjalistów i pozostałych osób w stajni.',
+      'Właściciele, specjaliści i reszta stajni w jednym miejscu.',
     analysis: 'Centrum analiz',
     analysisDescription:
       'Sprawdzaj kompletność i regularność wpisów oraz drukuj podsumowania.',
   },
   profileForm: {
-    saveFailedTitle: 'Nie udało się zapisać profilu',
     continue: 'Zapisz i kontynuuj',
-    retryContinue: 'Spróbuj kontynuować ponownie',
+    retryContinue: 'Spróbuj ponownie',
     saving: 'Zapisywanie…',
     saveFailed:
-      'Nie udało się zapisać profilu. Wpisane dane i wybrane zdjęcie zostały zachowane. Spróbuj ponownie.',
+      'Nie udało się zapisać profilu. Wpisane dane i zdjęcie nadal tu są.',
     continueFailed:
-      'Profil został zapisany, ale nie udało się przejść dalej. Spróbuj kontynuować ponownie — profil i zdjęcie nie zostaną zapisane drugi raz.',
-    shared:
-      'Profil jest wspólny dla wszystkich stajni, które prowadzisz lub do których należysz.',
+      'Profil zapisany, ale nie udało się przejść dalej. Spróbuj ponownie — nie zapiszemy profilu ani zdjęcia drugi raz.',
+    shared: 'Ten sam profil we wszystkich Twoich stajniach.',
     preferredName: 'Jak się do Ciebie zwracać',
     phone: 'Numer telefonu',
     imageLabel: 'Zdjęcie profilowe',
     imageUpload: 'Dodaj zdjęcie profilowe',
     imageDescription:
-      'Zdjęcie ułatwi innym osobom w stajni rozpoznanie Cię. Wybierz plik graficzny o rozmiarze do 5 MB.',
+      'Dzięki zdjęciu inni w stajni łatwiej Cię rozpoznają. Plik do 5 MB.',
     nameRequired: 'Wpisz, jak inni mają się do Ciebie zwracać.',
-    imageRequired: 'Wybierz plik graficzny.',
-    imageTooLarge: 'Wybierz zdjęcie o rozmiarze nie większym niż 5 MB.',
+    imageRequired: 'Wybierz zdjęcie.',
+    imageTooLarge: 'Wybierz zdjęcie do 5 MB.',
     imageHint: 'JPG, PNG lub WEBP, do 5 MB',
   },
   upload: {
     selected: 'Wybrano · jeszcze nie zapisano',
-    selectedNamed: 'Wybrano plik {{name}}. Zapisz formularz, aby go dołączyć.',
-    releaseToSelect: 'Upuść, aby wybrać plik',
+    selectedNamed: 'Wybrano {{name}}. Zapisz, żeby go dołączyć.',
+    releaseToSelect: 'Upuść plik tutaj',
     chooseImage: 'Wybierz zdjęcie',
     chooseFileLabel: 'Wybierz plik',
     about: 'Pomoc: {{label}}',
@@ -253,7 +251,7 @@ export const pl = {
     addPhoto: 'Dodaj zdjęcie',
     changePhoto: 'Zmień zdjęcie',
     currentImage:
-      'Obecne zdjęcie. Wybierz lub przeciągnij nowe, aby je zastąpić.',
+      'Obecne zdjęcie. Wybierz lub przeciągnij nowe, żeby je zmienić.',
     chooseFile: 'Wybierz plik z urządzenia',
     image: 'Zdjęcie',
     file: 'Plik',
@@ -261,7 +259,7 @@ export const pl = {
   recovery: {
     title: 'Nie udało się przygotować konta',
     description:
-      'Nie udało się odświeżyć danych konta. Spróbuj ponownie, aby kontynuować. Jeśli problem się powtarza, odśwież stronę lub wyloguj się i zaloguj ponownie.',
+      'Nie udało się odświeżyć danych konta. Spróbuj ponownie. Jeśli to się powtarza, odśwież stronę albo wyloguj się i zaloguj jeszcze raz.',
     refreshing: 'Odświeżanie danych konta…',
     failed:
       'Nadal nie udało się odświeżyć danych konta. Spróbuj odświeżyć stronę lub zalogować się ponownie.',
@@ -271,14 +269,13 @@ export const pl = {
     reload: 'Odśwież stronę',
     signOut: 'Wyloguj się',
     signingOut: 'Wylogowywanie…',
-    retryFailed: 'Nie udało się ponowić operacji. Spróbuj jeszcze raz.',
+    retryFailed: 'Nie udało się ponownie wczytać strony.',
     loadingPage: 'Wczytywanie strony…',
     stableTitle: 'Nie znaleziono stajni',
     horseTitle: 'Nie znaleziono konia',
     eventTitle: 'Nie znaleziono wydarzenia',
     stableDescription: 'Ta stajnia nie istnieje lub nie jest już dostępna.',
-    horseDescription:
-      'Ten koń nie istnieje w aplikacji lub nie jest już dostępny.',
+    horseDescription: 'Ten koń nie istnieje lub nie jest już dostępny.',
     eventDescription: 'To wydarzenie nie istnieje lub nie jest już dostępne.',
   },
   language: {
@@ -294,7 +291,7 @@ export const pl = {
     label: 'Waluta',
     description:
       'Używana przy kosztach. Odpowiada Twojemu krajowi, dopóki nie wybierzesz jej tutaj.',
-    saveFailed: 'Nie udało się zapisać waluty. Spróbuj ponownie.',
+    saveFailed: 'Nie udało się zapisać waluty',
   },
   navigation: {
     accountPreferences: 'Preferencje',
@@ -331,14 +328,13 @@ export const pl = {
     settings: 'Ustawienia stajni',
   },
   footer: {
-    description:
-      'Przejrzysta dokumentacja koni i wspólna organizacja opieki w stajni.',
+    description: 'Przejrzyste karty koni i wspólna opieka w stajni.',
     copyright: '© {{year}} Paddock Pilot. Wszelkie prawa zastrzeżone.',
   },
   theme: {
-    auto: 'Motyw: automatyczny (systemowy). Kliknij, aby włączyć jasny motyw.',
-    light: 'Motyw: jasny. Kliknij, aby zmienić motyw.',
-    dark: 'Motyw: ciemny. Kliknij, aby zmienić motyw.',
+    auto: 'Motyw: systemowy. Kliknij, żeby włączyć jasny.',
+    light: 'Motyw: jasny. Kliknij, żeby zmienić.',
+    dark: 'Motyw: ciemny. Kliknij, żeby zmienić.',
   },
   profile: {
     notifications: 'Przypomnienia e-mail',
@@ -346,29 +342,29 @@ export const pl = {
       'Wybierz, jakie wiadomości e-mail wysyła Ci Paddock Pilot.',
     digestLabel: 'Codzienne podsumowanie opieki',
     digestDescription:
-      'Jeden e-mail około 09:00 ({{timezone}}), gdy w którejś z Twoich stajni jest opieka do wykonania lub zaległa. Domyślnie wyłączone; przypomnienia są zawsze dostępne w Opiece.',
+      'Jeden e-mail około 09:00 ({{timezone}}), gdy w którejś z Twoich stajni jest opieka do wykonania lub zaległa. Domyślnie wyłączone; przypomnienia zawsze znajdziesz w Opiece.',
     digestSaved: 'Zapisano ustawienie e-mail',
-    digestError: 'Nie udało się zapisać ustawienia e-mail. Spróbuj ponownie.',
-    signInTitle: 'Zaloguj się, aby edytować swój profil',
+    digestError: 'Nie udało się zapisać ustawienia e-mail',
+    signInTitle: 'Zaloguj się, żeby edytować profil',
     signInDescription:
-      'Twój profil jest wspólny dla wszystkich stajni, które prowadzisz lub do których należysz.',
+      'Twój profil jest ten sam we wszystkich Twoich stajniach.',
     title: 'Twój profil',
     detailsDescription:
-      'Tak widzą Cię i kontaktują się z Tobą inni członkowie Twoich stajni.',
+      'Tak widzą Cię i kontaktują się z Tobą inni w Twoich stajniach.',
     save: 'Zapisz profil',
-    saved: 'Zaktualizowano profil',
+    saved: 'Profil zapisany',
     errorTitle: 'Nie udało się wczytać profilu',
     errorDescription:
-      'Sprawdź połączenie i spróbuj ponownie. Twój profil nie został zmieniony.',
+      'Sprawdź połączenie i spróbuj ponownie. Twój profil się nie zmienił.',
   },
   common: {
     aboutField: 'Pomoc: {{label}}',
     unsavedTitle: 'Wyjść bez zapisywania?',
     unsavedHelp:
-      'Zmiany nie zostały zapisane. Zostań, aby je dokończyć, lub wyjdź i je odrzuć.',
+      'Zmiany nie są zapisane. Zostań i dokończ albo wyjdź i je odrzuć.',
     leaveWithoutSaving: 'Wyjdź bez zapisywania',
     close: 'Zamknij',
-    keepEditing: 'Kontynuuj edycję',
+    keepEditing: 'Edytuj dalej',
     reset: 'Wyczyść',
     discardChanges: 'Odrzuć zmiany',
     errorToast: 'Coś poszło nie tak.',
@@ -379,12 +375,16 @@ export const pl = {
 
     pageErrorTitle: 'Nie udało się wczytać strony',
     pageErrorDescription:
-      'Spróbuj ponownie. Jeśli problem się powtarza, wróć na stronę główną.',
+      'Spróbuj ponownie. Jeśli to się powtarza, wróć na stronę główną.',
     retry: 'Spróbuj ponownie',
     copied: 'Skopiowano',
     copying: 'Kopiowanie…',
     home: 'Strona główna',
     cancel: 'Anuluj',
+    edit: 'Edytuj',
+    add: 'Dodaj',
+    all: 'Wszystkie',
+    actions: 'Działania',
     save: 'Zapisz',
     saved: 'Zapisano',
     loading: 'Wczytywanie…',

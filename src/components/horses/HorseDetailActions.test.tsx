@@ -133,7 +133,7 @@ it('uses the nickname in the header and horse section labels', async () => {
 })
 
 it.each([true, false])(
-  'keeps mobile Analysis accessible under More while respecting management permission (%s)',
+  'keeps mobile Analysis in the section rail while respecting management permission (%s)',
   async (canManageHorse) => {
     const { horse } = await renderHeader({ mobile: true, canManageHorse })
     expect(Boolean(screen.queryByRole('link', { name: 'Add event' }))).toBe(
@@ -142,14 +142,9 @@ it.each([true, false])(
     expect(Boolean(screen.queryByRole('link', { name: 'Edit horse' }))).toBe(
       canManageHorse,
     )
-    expect(screen.queryByRole('link', { name: 'Analysis' })).toBeNull()
-    // The rail names the active section, even inside More.
-    const more = screen.getByRole('button', { name: 'Analysis' })
-    fireEvent.click(more)
-    const analysis = await screen.findByRole('link', { name: 'Analysis' })
+    const analysis = screen.getByRole('link', { name: 'Analysis' })
     expect(analysis.getAttribute('href')).toBe(`/horses/${horse._id}/analysis`)
     expect(analysis.getAttribute('aria-current')).toBe('page')
-    fireEvent.click(more)
     const trigger = screen.queryByRole('button', {
       name: `Actions for ${horse.name}`,
     })
@@ -173,23 +168,36 @@ it.each([true, false])(
   },
 )
 
-it('labels More on the desktop rail when no hidden section is active', async () => {
-  await renderHeader({
-    mobile: false,
-    canManageHorse: true,
-    section: 'profile',
-  })
-  expect(screen.getByRole('button', { name: 'More' })).toBeTruthy()
-})
-
-it('keeps Analysis in More on the desktop section rail', async () => {
-  const { horse } = await renderHeader({ mobile: false, canManageHorse: true })
-  fireEvent.click(screen.getByRole('button', { name: 'Analysis' }))
-  const analysis = await screen.findByRole('link', { name: 'Analysis' })
-  expect(analysis.getAttribute('href')).toBe(`/horses/${horse._id}/analysis`)
-  expect(screen.getByRole('link', { name: 'Add event' })).toBeTruthy()
-  expect(screen.getByRole('link', { name: 'Edit horse' })).toBeTruthy()
-})
+it.each([true, false])(
+  'keeps every section in one rail, with no More menu (mobile %s)',
+  async (mobile) => {
+    const { horse } = await renderHeader({
+      mobile,
+      canManageHorse: true,
+      section: 'profile',
+    })
+    const rail = screen.getByRole('navigation', {
+      name: `${horse.name} sections`,
+    })
+    expect(
+      within(rail)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual([
+      'Profile',
+      'Activity',
+      'Training',
+      'Care',
+      'Nutrition',
+      'Documents',
+      'Analysis',
+      'People & stable',
+      'Timeline',
+      'Care summary',
+    ])
+    expect(within(rail).queryByRole('button')).toBeNull()
+  },
+)
 
 it('leaves mobile editing to the form controls', async () => {
   await renderHeader({ mobile: true, canManageHorse: true, section: 'edit' })
@@ -319,7 +327,7 @@ it.each([
       screen.getByRole('button', { name: `Actions for ${horse.name}` }),
     )
     const labels: Record<string, string> = {
-      reminder: 'Add care reminder',
+      reminder: 'Add reminder',
       health: 'Add health issue',
       nutrition: 'Add nutrition log',
       weight: 'Add weight',
@@ -410,7 +418,7 @@ it.each([
     const menu = await screen.findByRole('menu')
     const items = within(menu).getAllByRole('menuitem')
     expect(items.map((item) => item.textContent)).toEqual([
-      'Add care reminder',
+      'Add reminder',
       'Add health issue',
       'Add medication',
       'Add nutrition log',

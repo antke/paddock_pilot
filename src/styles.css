@@ -433,10 +433,17 @@
   display: inline;
 }
 
+/* Trailing icons sit as far in as the combobox's: 12px, 14px on touch. */
 .app-picker-control {
   max-width: 100%;
-  padding-inline-end: 0.375rem;
+  padding-inline-end: 0.75rem;
   color-scheme: light;
+}
+
+@media (width < 48rem), (pointer: coarse) {
+  .app-picker-control {
+    padding-inline-end: 0.875rem;
+  }
 }
 
 .dark .app-picker-control {
@@ -447,7 +454,7 @@
   box-sizing: content-box;
   width: 1rem;
   height: 1rem;
-  margin-inline-end: -0.25rem;
+  margin-inline-end: -0.5rem;
   padding: 0.5rem;
   border-radius: 9999px;
   cursor: pointer;
@@ -1476,6 +1483,9 @@ body {
   }
   :is([data-slot='mobile-action-menu'], [data-slot='mobile-floating-action']) {
     position: fixed;
+    /* Never stretched by a centred page column it happens to sit in. */
+    width: auto;
+    margin: 0;
     inset-inline-end: max(1rem, env(safe-area-inset-right));
     bottom: calc(var(--mobile-navigation-height, 4.5rem) + 1rem);
     z-index: 30;
@@ -1552,8 +1562,6 @@ body {
     border-radius: 999px;
     padding-inline: 1.25rem;
     pointer-events: auto;
-    box-shadow: 0 4px 14px
-      color-mix(in oklab, var(--foreground) 18%, transparent);
   }
   /* On phones the floating X closes the form; Reset stays a desktop action. */
   [data-mobile-route-form='true']

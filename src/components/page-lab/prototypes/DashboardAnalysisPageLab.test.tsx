@@ -131,10 +131,8 @@ it('offers true empty command-center state through the shared dashboard composit
     target: { value: 'empty' },
   })
   expect(screen.getByRole('region', { name: 'Today’s training' })).toBeTruthy()
-  expect(
-    screen.getByText('No scheduled or completed training today.'),
-  ).toBeTruthy()
-  expect(await screen.findByText('No events scheduled today.')).toBeTruthy()
+  expect(screen.getByText('No training today.')).toBeTruthy()
+  expect(await screen.findByText('Nothing planned today.')).toBeTruthy()
   expect(screen.queryByText('Juniper')).toBeNull()
   expect(useMutation).not.toHaveBeenCalled()
 })

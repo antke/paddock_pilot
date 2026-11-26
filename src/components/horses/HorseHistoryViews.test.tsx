@@ -33,13 +33,13 @@ describe('Horse history views', () => {
     expect(within(care).getByText('Dusty hay')).toBeTruthy()
     expect(within(care).getByText('Recorded deworming note')).toBeTruthy()
     const contacts = screen.getByRole('region', {
-      name: 'Emergency and care contacts',
+      name: 'Contacts',
     })
     expect(within(contacts).queryByText('Recorded deworming note')).toBeNull()
     expect(
-      within(
-        screen.getByRole('region', { name: 'Identification and insurance' }),
-      ).getByText('GB1234567890'),
+      within(screen.getByRole('region', { name: 'ID & insurance' })).getByText(
+        'GB1234567890',
+      ),
     ).toBeTruthy()
     const health = screen.getByRole('region', { name: 'Active health issues' })
     const medication = screen.getByRole('region', { name: 'Active medication' })

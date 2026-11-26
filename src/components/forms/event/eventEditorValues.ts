@@ -79,7 +79,8 @@ export function editEventEditorValues(
   return {
     stableId: event.stableId,
     peopleIds: event.peopleIds ?? [],
-    horseIds: selectedHorseIds.length > 0 ? selectedHorseIds : event.horseIds,
+    // An empty roster is real (every horse withdrew or left); fall back only when no rows exist yet.
+    horseIds: eventHorses.length > 0 ? selectedHorseIds : event.horseIds,
     date: event.date,
     endDate: event.endDate ?? '',
     time: event.time,

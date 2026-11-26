@@ -86,13 +86,15 @@ it.each([false, true])(
     const links = await screen.findAllByRole('link', {
       name: 'Edit training session',
     })
-    expect(links).toHaveLength(1)
-    const link = links[0]
+    // The title-row Edit, plus the round phone pencil wherever the header shows.
+    const link = links.find(
+      (item) => !item.closest('[data-slot="mobile-floating-action"]'),
+    )!
     const destination = stable
       ? '/stables/yard/training/session/edit'
       : '/events/session/edit'
-    expect(link.getAttribute('href')).toBe(destination)
-    expect(link.closest('[data-slot="mobile-floating-action"]')).toBeNull()
+    for (const item of links)
+      expect(item.getAttribute('href')).toBe(destination)
     expect(screen.queryByRole('menu')).toBeNull()
     fireEvent.click(link)
     await screen.findByRole('heading', { name: 'Editing session' })

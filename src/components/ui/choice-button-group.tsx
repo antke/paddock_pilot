@@ -14,6 +14,7 @@ type ChoiceButtonOption<TValue extends string> = {
   value: TValue
   label: ReactNode
   description?: ReactNode
+  disabled?: boolean
 }
 
 type ChoiceButtonGroupLayout = 'compact' | 'cards' | 'segmented'
@@ -94,6 +95,7 @@ export function ChoiceButtonGroup<TValue extends string>({
         <ToggleGroupItem
           key={option.value}
           value={option.value}
+          disabled={option.disabled}
           className={cn(
             layout !== 'cards' && 'h-auto min-h-10 px-4 py-2 text-sm',
             layout === 'compact' && 'w-full min-w-0 whitespace-normal',

@@ -3,6 +3,7 @@ import { useMutation, useQuery } from 'convex/react'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { useLocale } from '#/i18n/LocaleProvider'
+import { useActionErrorText } from '#/lib/actionError'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { FieldLabel } from '#/components/ui/field'
@@ -49,7 +50,8 @@ export function HorseSharingManager({ horseId }: { horseId: Id<'horses'> }) {
   const set = useMutation(api.recordSharing.set)
   const [pending, setPending] = useState<string>()
   const [confirmation, setConfirmation] = useState<string>()
-  const [failed, setFailed] = useState(false)
+  const [failure, setFailure] = useState<unknown>(null)
+  const describeError = useActionErrorText()
   const [saved, setSaved] = useState<{ recordId: string; date: string }>()
   const [dates, setDates] = useState<Record<string, string>>({})
   if (!data?.stable) return null
@@ -60,14 +62,14 @@ export function HorseSharingManager({ horseId }: { horseId: Id<'horses'> }) {
   ) => {
     if (pending) return
     setPending(recordId)
-    setFailed(false)
+    setFailure(null)
     setSaved(undefined)
     try {
       await set({ horseId, recordId, enabled, occurrenceDate })
       setConfirmation(undefined)
       if (occurrenceDate) setSaved({ recordId, date: occurrenceDate })
-    } catch {
-      setFailed(true)
+    } catch (error) {
+      setFailure(error ?? new Error('Sharing change failed'))
     } finally {
       setPending(undefined)
     }
@@ -217,10 +219,8 @@ export function HorseSharingManager({ horseId }: { horseId: Id<'horses'> }) {
       </div>
       <FormSubmissionError
         message={
-          failed
-            ? pl
-              ? 'Nie udało się zmienić dostępu. Spróbuj ponownie.'
-              : 'Could not change access. Please retry.'
+          failure != null
+            ? `${pl ? 'Nie udało się zmienić dostępu.' : 'Couldn’t change access.'} ${describeError(failure)}`
             : undefined
         }
       />

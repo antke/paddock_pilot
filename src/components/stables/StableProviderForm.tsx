@@ -2,6 +2,7 @@ import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { useT } from '#/i18n/LocaleProvider'
 import { useId, useRef, useState } from 'react'
 import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
+import { useActionErrorText } from '#/lib/actionError'
 import { InlineForm } from '#/components/forms/FormLayout'
 import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
 import { ChoiceButtonGroup } from '#/components/ui/choice-button-group'
@@ -42,7 +43,8 @@ export function StableProviderForm({
   const formId = useId()
   const submitting = useRef(false)
   const [saving, setSaving] = useState(false)
-  const [failed, setFailed] = useState(false)
+  const [saveError, setSaveError] = useState<unknown>(null)
+  const describeError = useActionErrorText()
   const form = useForm<StableProviderFormSchema>({
     resolver: zodResolver(
       createStableProviderSchemas((key) =>
@@ -65,12 +67,12 @@ export function StableProviderForm({
     if (submitting.current) return
     submitting.current = true
     setSaving(true)
-    setFailed(false)
+    setSaveError(null)
     try {
       await onSubmit(values)
       if (!provider) form.reset()
-    } catch {
-      setFailed(true)
+    } catch (error) {
+      setSaveError(error ?? new Error('Provider save failed'))
     } finally {
       submitting.current = false
       setSaving(false)
@@ -79,11 +81,11 @@ export function StableProviderForm({
 
   return (
     <InlineForm noValidate onSubmit={form.handleSubmit(submit)}>
-      {failed && (
+      {saveError != null && (
         <RouteStatusAlert
           tone="danger"
           title={t('stables.providerSaveFailed')}
-          description={t('stables.providerSaveFailedHelp')}
+          description={`${t('stables.providerSaveFailedHelp')} ${describeError(saveError)}`}
         />
       )}
       <Controller

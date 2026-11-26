@@ -97,7 +97,7 @@ describe('dashboard attention access and counts', () => {
     expect(
       health.compareDocumentPosition(today) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
-    expect(screen.getByText('No events scheduled today.')).toBeTruthy()
+    expect(screen.getByText('Nothing planned today.')).toBeTruthy()
     expect(
       screen.getByRole('heading', { name: 'Today’s training' }),
     ).toBeTruthy()
@@ -123,9 +123,7 @@ describe('dashboard attention access and counts', () => {
     expect(first.getAttribute('href')).toBe(
       `/horses/attention-0/care?careView=health`,
     )
-    expect(
-      screen.getByText('No reminders are due within 14 days.'),
-    ).toBeTruthy()
+    expect(screen.getByText('Nothing due in the next 14 days.')).toBeTruthy()
     expect(screen.queryByRole('link', { name: /Health horse 7/ })).toBeNull()
     const expand = screen.getByRole('button', {
       name: 'Show all 7 horses with health issues',
@@ -166,9 +164,7 @@ describe('dashboard attention access and counts', () => {
       missingHealthIssueCount: 2,
     })
     await openView(<PriorityQueueCard data={data} />)
-    expect(
-      await screen.findByText(/2 additional high-severity issues/),
-    ).toBeTruthy()
+    expect(await screen.findByText(/2 more high-severity issues/)).toBeTruthy()
     expect(
       screen.getByText(/11 more reminders due within 14 days/),
     ).toBeTruthy()
@@ -231,7 +227,7 @@ describe('separate dashboard attention sections', () => {
       screen.queryByRole('heading', { name: 'Needs attention' }),
     ).toBeNull()
     expect(
-      within(health).queryByText('No reminders are due within 14 days.'),
+      within(health).queryByText('Nothing due in the next 14 days.'),
     ).toBeNull()
     expect(
       within(care).queryByRole('link', { name: /Health horse/ }),
@@ -256,8 +252,6 @@ describe('separate dashboard attention sections', () => {
     expect(
       await screen.findByText('No high-severity health issues.'),
     ).toBeTruthy()
-    expect(
-      screen.queryByText('No reminders are due within 14 days.'),
-    ).toBeNull()
+    expect(screen.queryByText('Nothing due in the next 14 days.')).toBeNull()
   })
 })

@@ -4,6 +4,7 @@ import type { Id } from 'convex/_generated/dataModel'
 import { useTransientConfirmation } from '#/lib/useTransientConfirmation'
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { useT } from '#/i18n/LocaleProvider'
+import { useActionErrorText } from '#/lib/actionError'
 import { useId, useRef, useState } from 'react'
 import { FormGroup, InlineForm } from '#/components/forms/FormLayout'
 import { FormSubmissionError } from '#/components/forms/FormSubmissionError'
@@ -44,6 +45,7 @@ export function MedicationRecordForm({
 }: MedicationRecordFormProps) {
   const audience = useRecordCreationAudience(audienceHorseId)
   const t = useT()
+  const describe = useActionErrorText()
 
   const { medicationRecordFormSchema } = createMedicationRecordSchemas((key) =>
     t(`careValidation.${key}`),
@@ -56,7 +58,7 @@ export function MedicationRecordForm({
   const confirmation = useTransientConfirmation(formId)
 
   const submitting = useRef(false)
-  const [failed, setFailed] = useState(false)
+  const [failure, setFailure] = useState<unknown>(null)
   const form = useForm<
     MedicationRecordFormInput,
     unknown,
@@ -81,7 +83,7 @@ export function MedicationRecordForm({
   const submitMedicationRecord = async (data: MedicationRecordFormSchema) => {
     if (submitting.current) return
     submitting.current = true
-    setFailed(false)
+    setFailure(null)
     confirmation.clear()
     onPendingChange?.(true)
     try {
@@ -98,8 +100,8 @@ export function MedicationRecordForm({
         status: 'active',
       })
       confirmation.confirm()
-    } catch {
-      setFailed(true)
+    } catch (error) {
+      setFailure(error ?? new Error('Save failed'))
     } finally {
       submitting.current = false
       onPendingChange?.(false)
@@ -443,11 +445,15 @@ export function MedicationRecordForm({
       </FormGroup>
 
       <FormSubmissionError
-        message={failed ? t('careRecords.saveFailed') : undefined}
+        message={
+          failure != null
+            ? `${t('careRecords.saveFailed')} ${describe(failure)}`
+            : undefined
+        }
       />
 
       <FormSubmitActions
-        failed={failed}
+        failed={failure != null}
         confirmed={confirmation.confirmed}
         confirmedLabel={t('common.saved')}
         isSubmitting={form.formState.isSubmitting}

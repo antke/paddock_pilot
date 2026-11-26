@@ -8,13 +8,11 @@ export const horseComparison = {
     trainingCare: 'Training around health and care',
   },
   customize: 'Customize comparison',
-  scope:
-    'History: {{start}} – {{end}}. This period applies to the comparison and its source records.',
+  scope: 'History: {{start}} – {{end}}. Applies to the chart and its records.',
   returnRange: 'Return to previous range',
-  fit: 'Fit recorded period',
+  fit: 'Fit to records',
   recordingCoverage: '{{count}} shown records · recorded {{start}} – {{end}}',
-  nearbyRecords:
-    '{{count}} nearby marks · {{start}} – {{end}} · inspect records',
+  nearbyRecords: '{{count}} nearby marks · {{start}} – {{end}} · see records',
   aggregation: {
     daily: 'Daily totals',
     weekly: 'Weekly totals',
@@ -22,9 +20,9 @@ export const horseComparison = {
   },
 
   title: 'Compare over time',
-  help: 'Explore measurements, training and care on the same calendar. Select a record to see its details.',
+  help: 'See measurements, training and care on one calendar. Pick a record for details.',
   conditionHelp:
-    'Body condition is a recorded assessment of body fat on a 1–9 scale. Higher scores mean more body fat.',
+    'Body condition scores body fat from 1 to 9. Higher means more fat.',
   preset: 'Suggested comparison',
   presets: {
     trainingHealth: 'Sessions & health',
@@ -36,7 +34,7 @@ export const horseComparison = {
   },
   measure: 'Measure',
   context: 'Compare with',
-  extra: 'Another dataset',
+  extra: 'Also show',
   none: 'None',
   measures: {
     weight: 'Weight',
@@ -61,8 +59,7 @@ export const horseComparison = {
   days: 'Last {{count}} days',
   year: 'Last year',
   custom: 'Custom dates',
-  rangeError:
-    'Choose valid dates, with the end on or after the start, within a ten-year range.',
+  rangeError: 'Pick an end date on or after the start, up to ten years apart.',
   calendarDate: 'Calendar date',
   kg: 'kg',
   score: '1–9',
@@ -71,13 +68,13 @@ export const horseComparison = {
   emptyHelp:
     'Try another period or comparison, or open the horse to add a dated record.',
   noRecords: 'No records in this period.',
-  noTraining: 'No completed training recorded in this period.',
+  noTraining: 'No completed training in this period.',
   loading: 'Loading horse records…',
-  error: 'Horse records could not be loaded.',
+  error: 'Couldn’t load horse records.',
   retry: 'Try again',
-  locked: 'Horse comparisons require Premium analysis access.',
+  locked: 'Horse comparisons need Premium.',
   evidence:
-    'Points are recorded measurements; connecting lines are guides. Changes alongside one another do not establish a cause.',
+    'Points are measurements; lines just guide the eye. Changes at the same time don’t prove a cause.',
   coverage:
     'Minutes recorded for {{recorded}} of {{total}} completed sessions.',
   totalsUnknown: '{{count}} completed sessions · duration not recorded',
@@ -92,11 +89,11 @@ export const horseComparison = {
   missingDuration: 'Completed sessions without a recorded duration',
   unknownDuration: 'Duration not recorded',
   recordCount: '{{count}} records',
-  inspectSelection: 'Inspect selected records ({{count}})',
+  inspectSelection: 'See selected records ({{count}})',
   backToChart: 'Back to chart',
   selected: 'Selected records',
-  chooseRecord: 'Select a point, bar or event to inspect its source records.',
-  openSource: 'Open source records',
+  chooseRecord: 'Pick a point, bar or event to see its records.',
+  openSource: 'Open records',
   around: 'Show 4 weeks before and after',
   openEnd: 'End date not recorded',
   continuesBefore: 'Starts before this period',
@@ -106,7 +103,7 @@ export const horseComparison = {
   recordedCourse:
     'Medication bands show recorded courses, not confirmed doses.',
   completedVisits:
-    'Care markers show completed one-off visits. Recurring plans do not confirm individual visits.',
+    'Care markers show completed one-off visits. Repeating plans don’t confirm each visit.',
   table: 'View records as a table',
   date: 'Date',
   type: 'Record type',
@@ -134,5 +131,5 @@ export const horseComparison = {
     outcome: 'Outcome',
     nextFocus: 'Next focus',
   },
-  sample: 'Illustrative comparison records',
+  sample: 'Sample records',
 } as const

@@ -289,7 +289,8 @@ export function FormSection({
         {/* One line in every state: a closed section's summary trails its title instead of
             adding a second line, so opening a section never resizes its header. */}
         <span className="flex min-w-0 flex-1 items-baseline gap-x-3">
-          <span className="flex max-w-full shrink-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+          {/* The summary gives way first; only then does the title wrap. */}
+          <span className="flex max-w-full min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
             <span
               role={collapsible ? undefined : 'heading'}
               aria-level={collapsible ? undefined : 3}
@@ -306,8 +307,11 @@ export function FormSection({
           </span>{' '}
           {/* Open sections let their fields speak; closed ones say what is inside. */}
           {!open && (summary || description) && (
-            <span className="min-w-0 flex-1 basis-16 truncate text-sm text-muted-foreground">
-              {summary || description}
+            // Takes only the room left; a sliver too small to read shows nothing.
+            <span className="@container min-w-0 flex-1 basis-0">
+              <span className="block truncate text-sm text-muted-foreground @max-[3rem]:hidden">
+                {summary || description}
+              </span>
             </span>
           )}
         </span>

@@ -4,8 +4,6 @@ import {
   createCareReminderListFilterConfig,
   getCareReminderListQueryArgs,
 } from './careReminderListFilters'
-import { Link } from '@tanstack/react-router'
-import { Trans } from 'react-i18next'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import type { DashboardChrome } from '#/components/dashboard/dashboardChrome'
 import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
@@ -18,7 +16,7 @@ import { useListQueryState } from '#/components/list-filtering/useListQueryState
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { DashboardPageHeader } from '#/components/dashboard/DashboardPageHeader'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
-import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
+import { showAppSuccessToast } from '#/components/ui/sonner'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { api } from 'convex/_generated/api'
@@ -31,7 +29,11 @@ import { useCareReminderActions } from './useCareReminderActions'
 import { Button } from '#/components/ui/button'
 import { CareRemindersCard } from './CareRemindersCard'
 import type { CareReminderSubmitData } from './CareReminderForm'
-import type { CareReminderListFilterFacetId } from './careReminderListFilters'
+import type {
+  CareReminderListFilterFacetId,
+  CareReminderStatusView,
+} from './careReminderListFilters'
+import { CareReminderStatusToggle } from './CareReminderStatusToggle'
 
 type StableRemindersPageProps = {
   stableId: string
@@ -66,9 +68,6 @@ export function StableRemindersPage({
   const addReminder = useMutation(api.careReminders.add)
   const addReminderForHorses = useMutation(api.careReminders.addForHorses)
   const actions = useCareReminderActions()
-  const assigneeOptions = useQuery(api.careReminders.assigneeOptions, {
-    stableId: stableId as Id<'stables'>,
-  })
   const selectedReminder = useQuery(
     api.careReminders.get,
     reminderId
@@ -87,16 +86,15 @@ export function StableRemindersPage({
     () => createCareReminderListFilterConfig(horseOptions, locale),
     [horseOptions, locale],
   )
-  const filtering = useListQueryState<CareReminderListFilterFacetId>({
-    initialFacets: { state: 'pending' },
-  })
+  const filtering = useListQueryState<CareReminderListFilterFacetId>()
+  const [view, setView] = useState<CareReminderStatusView>('pending')
   const reminderQueryArgs = useMemo(
     () => ({
       stableId: stableId as Id<'stables'>,
       today,
-      ...getCareReminderListQueryArgs(filtering.queryState),
+      ...getCareReminderListQueryArgs(filtering.queryState, view),
     }),
-    [filtering.queryState, stableId, today],
+    [filtering.queryState, stableId, today, view],
   )
   const paginatedReminders = usePaginatedQuery(
     api.careReminders.listForStablePaginated,
@@ -108,60 +106,54 @@ export function StableRemindersPage({
     async (values: CareReminderSubmitData) => {
       if (!stable) return
 
-      try {
-        const reminder = {
-          stableId: stable._id,
-          title: values.title,
-          description: values.description,
-          category: values.category,
-          dueDate: values.dueDate,
-          priority: values.priority,
-          assignedTo: (values.assignedTo || undefined) as
-            Id<'users'> | undefined,
-          status: 'pending',
-        } as const
+      const reminder = {
+        stableId: stable._id,
+        title: values.title,
+        description: values.description,
+        category: values.category,
+        dueDate: values.dueDate,
+        priority: values.priority,
+        assignedTo: (values.assignedTo || undefined) as Id<'users'> | undefined,
+        status: 'pending',
+      } as const
 
-        if (values.targetType === 'horses') {
-          await addReminderForHorses({
-            requestId: values.requestId,
-            sharing: values.sharing,
-            ...reminder,
-            horseIds: values.horseIds as Array<Id<'horses'>>,
-          })
-
-          showAppSuccessToast({
-            title: t('reminders.addedMany'),
-            description: (
-              <p>
-                {t('reminders.addedFor', {
-                  title: values.title,
-                  count: values.horseIds.length,
-                })}
-              </p>
-            ),
-          })
-
-          return
-        }
-
-        await addReminder({
+      if (values.targetType === 'horses') {
+        await addReminderForHorses({
           requestId: values.requestId,
-          shareWithStable: values.shareWithStable,
+          sharing: values.sharing,
           ...reminder,
-          horseId:
-            values.targetType === 'horse'
-              ? (values.horseId as Id<'horses'>)
-              : undefined,
+          horseIds: values.horseIds as Array<Id<'horses'>>,
         })
 
         showAppSuccessToast({
-          title: t('reminders.added'),
-          description: <p>{t('reminders.onList', { name: values.title })}</p>,
+          title: t('reminders.addedMany'),
+          description: (
+            <p>
+              {t('reminders.addedFor', {
+                title: values.title,
+                count: values.horseIds.length,
+              })}
+            </p>
+          ),
         })
-      } catch (err) {
-        showAppErrorToast()
-        throw err
+
+        return
       }
+
+      await addReminder({
+        requestId: values.requestId,
+        shareWithStable: values.shareWithStable,
+        ...reminder,
+        horseId:
+          values.targetType === 'horse'
+            ? (values.horseId as Id<'horses'>)
+            : undefined,
+      })
+
+      showAppSuccessToast({
+        title: t('reminders.added'),
+        description: <p>{t('reminders.onList', { name: values.title })}</p>,
+      })
     },
     [addReminder, addReminderForHorses, stable, t],
   )
@@ -182,13 +174,13 @@ export function StableRemindersPage({
             ]
           : paginatedReminders.results
       }
-      assigneeOptions={assigneeOptions}
+      assigneeOptions="live"
       canAddReminder={permissions.canManageStableReminders}
       horseOptions={horseOptions}
       chrome={chrome}
       showHeader={false}
       emptyMessage={
-        isOnlyOutstandingFilter({
+        isOnlyOutstandingFilter(view, {
           query: filtering.query,
           facets: filtering.selectedFacets,
         })
@@ -225,6 +217,7 @@ export function StableRemindersPage({
             filtering={filtering}
             sticky
           />
+          <CareReminderStatusToggle value={view} onChange={setView} />
         </>
       }
       listFooter={
@@ -252,17 +245,6 @@ export function StableRemindersPageView(
     <DashboardPage>
       <DashboardPageHeader
         title={t('reminders.careReminders')}
-        description={
-          <Trans
-            t={t}
-            i18nKey="reminders.emailSettings"
-            components={{
-              profile: (
-                <Link to="/profile" className="underline underline-offset-4" />
-              ),
-            }}
-          />
-        }
         actions={createAction}
       />
       <DashboardSectionCard surface="canvas" contentGap="loose">

@@ -104,6 +104,25 @@ describe('member and invitation interaction ownership', () => {
     },
   )
 
+  it('says why a resend failed when the server knows the rule', async () => {
+    render(
+      <StableInvitationsListView
+        invitations={[invitation('one')]}
+        onResend={async () => {
+          throw Object.assign(new Error('Server error'), {
+            data: 'Wait a minute before resending this invitation',
+          })
+        }}
+        onRevoke={async () => true}
+        onCopy={async () => {}}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Resend' }))
+    expect((await screen.findByRole('alert')).textContent).toBe(
+      'Couldn’t resend the invite. You just sent this invite. Wait a minute, then resend it.',
+    )
+  })
+
   it('keeps revoke confirmation open through Escape and failure, then closes after successful retry', async () => {
     const pending = deferred<boolean>()
     const onRevoke = vi
@@ -142,8 +161,8 @@ describe('member and invitation interaction ownership', () => {
     ).toBe(true)
     await act(async () => pending.resolve(false))
     expect(screen.getByRole('alertdialog')).toBeTruthy()
-    expect(screen.getByRole('alert').textContent).toContain(
-      'Could not revoke this invitation',
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Couldn’t revoke the invite. Something went wrong on our side and nothing changed. Try again in a moment.',
     )
     fireEvent.click(screen.getByRole('button', { name: 'Revoke invitation' }))
     await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
@@ -189,7 +208,7 @@ describe('member and invitation interaction ownership', () => {
       <StableMemberDetailsFormView member={member} {...props} />,
     )
     for (const [label, length] of [
-      ['Yard display name', 101],
+      ['Name at the yard', 101],
       ['Phone', 51],
       ['Emergency contact', 501],
     ] as const) {
@@ -199,13 +218,13 @@ describe('member and invitation interaction ownership', () => {
     }
     fireEvent.submit(screen.getByLabelText('Phone').closest('form')!)
     await waitFor(() => expect(screen.getAllByRole('alert')).toHaveLength(3))
-    for (const label of ['Yard display name', 'Phone', 'Emergency contact']) {
+    for (const label of ['Name at the yard', 'Phone', 'Emergency contact']) {
       const field = screen.getByLabelText(label)
       const error = document.getElementById(
         field.getAttribute('aria-describedby')!,
       )
       expect(field.getAttribute('aria-invalid')).toBe('true')
-      expect(error?.textContent).toContain('Please use a shorter')
+      expect(error?.textContent).toContain('Use a shorter')
     }
     expect(props.onSave).not.toHaveBeenCalled()
     rerender(
@@ -219,7 +238,7 @@ describe('member and invitation interaction ownership', () => {
       />,
     )
     expect(
-      screen.getByLabelText<HTMLInputElement>('Yard display name').value,
+      screen.getByLabelText<HTMLInputElement>('Name at the yard').value,
     ).toBe('Sample Alex')
     expect(screen.queryByRole('alert')).toBeNull()
   })
@@ -252,6 +271,9 @@ describe('member and invitation interaction ownership', () => {
     expect(onSaved).not.toHaveBeenCalled()
     await act(async () => pending.resolve(false))
     expect(input.value).toBe('555-0100')
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Couldn’t save your details. Your changes are still here. Something went wrong on our side and nothing changed. Try again in a moment.',
+    )
     expect(onSaved).not.toHaveBeenCalled()
     fireEvent.submit(input.closest('form')!)
     await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1))
@@ -278,7 +300,7 @@ describe('member and invitation interaction ownership', () => {
     expect(
       document.getElementById(input.getAttribute('aria-describedby')!)
         ?.textContent,
-    ).toContain('Use a valid email address.')
+    ).toContain('Enter a valid email.')
     fireEvent.change(input, { target: { value: 'sample@example.test' } })
     fireEvent.submit(input.closest('form')!)
     await waitFor(() => expect(onInvite).toHaveBeenCalledTimes(1))

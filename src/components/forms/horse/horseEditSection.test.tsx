@@ -39,7 +39,7 @@ describe('focused horse editor entry', () => {
 
   it('keeps optional sections collapsed for the general editor', () => {
     renderEditor()
-    for (const name of ['Breed', 'Identification', 'Care', 'Nutrition'])
+    for (const name of ['Breed', 'ID', 'Care', 'Nutrition'])
       expect(sectionToggle(name).getAttribute('aria-expanded')).toBe('false')
     // Profile & health was folded into Horse details and the optional sections.
     expect(screen.queryByRole('button', { name: /^Profile/ })).toBeNull()
@@ -48,16 +48,16 @@ describe('focused horse editor entry', () => {
   it.each([
     {
       section: 'identification',
-      expanded: 'Identification',
+      expanded: 'ID',
       focused: 'Passport number',
     },
-    { section: 'care', expanded: 'Care', focused: 'Vet name' },
+    { section: 'care', expanded: 'Care', focused: 'Vet' },
     { section: 'feeding', expanded: 'Nutrition', focused: 'Feeding routine' },
   ] as const)(
     'opens $expanded and focuses $focused for $section',
     async ({ section, expanded, focused }) => {
       renderEditor(section)
-      for (const name of ['Identification', 'Care', 'Nutrition'])
+      for (const name of ['ID', 'Care', 'Nutrition'])
         expect(sectionToggle(name).getAttribute('aria-expanded')).toBe(
           String(name === expanded),
         )
@@ -81,7 +81,7 @@ describe('focused horse editor entry', () => {
   it('focuses the first Horse details control for Edit profile', async () => {
     renderEditor('profile')
     await waitFor(() =>
-      expect(document.activeElement).toBe(screen.getByLabelText('Horse name')),
+      expect(document.activeElement).toBe(screen.getByLabelText('Name')),
     )
   })
 })

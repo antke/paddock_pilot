@@ -148,7 +148,7 @@ describe('email templates', () => {
     const email = createAccountDeletedEmail({ displayName: 'Alex' })
 
     expect(email.category).toBe('account_deleted')
-    expect(email.text).toContain('has been deleted')
+    expect(email.text).toContain('we’ve deleted your Paddock Pilot account')
     expect(email.html).not.toContain('href=')
   })
 })

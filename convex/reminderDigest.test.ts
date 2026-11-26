@@ -230,7 +230,7 @@ describe('daily care reminder digest', () => {
       'https://paddock.example',
       'pl',
     )
-    expect(content.subject).toBe('Przypomnienia o opiece do wykonania')
+    expect(content.subject).toBe('Przypomnienia o opiece')
     expect(content.html).toContain(`/stables/${stableId}/reminders`)
     expect(content.text).toContain('https://paddock.example/profile')
   })

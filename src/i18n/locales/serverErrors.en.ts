@@ -1,26 +1,25 @@
 export const serverErrors = {
-  futureTraining: 'Future sessions cannot be completed',
+  futureTraining: 'You can’t complete a future session',
   chooseTrainingActivities: 'Choose training activities',
   trainingRequiresPermission:
-    'Completed training requires recording permission for every horse. Remove the other horses or plan a session instead.',
-  eventNeedsOwnHorse:
-    'A member-created event must include at least one of their horses',
-  eventRetainsOwnHorse:
-    'A member-managed event must retain at least one of their horses',
-  eventTypeLocked:
-    'Events and training sessions cannot be converted through this form',
+    'To log completed training, you need permission for every horse. Remove the other horses or plan a session instead.',
+  eventNeedsOwnHorse: 'Include at least one of your horses',
+  eventRetainsOwnHorse: 'Keep at least one of your horses in this event',
+  eventTypeLocked: 'This form can’t turn an event into training or back',
   trainingScheduleLocked:
-    'This session has training history. Keep its schedule and create a new session for a different schedule.',
+    'This session already has history. Keep its schedule, or create a new session for other times.',
   trainingHorseLocked:
-    'A horse with recorded training cannot be removed from this session',
+    'This horse has training logged here, so it can’t be removed',
   trainingHorseConflict:
-    'The selected horse already has training recorded for this session',
+    'This horse already has training logged for this session',
   trainingNotFound: 'Training session not found',
   trainingHorseUnconfirmed: 'This horse is not confirmed for this session',
   trainingPermission:
-    'Only the horse owner or stable admin can record its training',
-  trainingOccurrence: 'Choose a scheduled occurrence of this session',
+    'Only the horse’s owner, an editing carer or a stable admin can record its training',
+  trainingOccurrence: 'Choose a date from this session’s schedule',
   eventDeleteBlocked:
-    'Another owner’s horse takes part in this event or has recorded history in it. Cancel it instead.',
+    'Some horses already have this in their history, or another owner’s horse takes part, so it can’t be deleted. Cancel it instead.',
   eventClosed: 'This event has already happened or was cancelled',
+  stableHasUnclaimedHorses:
+    'Some horses here still don’t have an owner. Once their owners accept your invites, or you delete those horses, you can archive the stable.',
 } as const

@@ -52,6 +52,12 @@ const config = defineConfig(({ mode }) => ({
   optimizeDeps: {
     include: echartsOptimizedDependencies,
   },
+  // Playwright writes traces and reports while the e2e dev server runs.
+  server: {
+    watch: {
+      ignored: ['**/e2e/.results/**', '**/e2e/.report/**', '**/e2e/.auth/**'],
+    },
+  },
 }))
 
 export default config

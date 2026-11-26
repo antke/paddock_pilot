@@ -94,7 +94,7 @@ function setup(initial: People | Error | undefined) {
 
 const suggestions = [{ name: 'Alex Rider', isCurrentUser: true }]
 const owner = () =>
-  screen.getByRole<HTMLInputElement>('combobox', { name: 'Owner name' })
+  screen.getByRole<HTMLInputElement>('combobox', { name: 'Owner' })
 const open = () =>
   fireEvent.click(
     screen.getByRole('button', { name: 'Show owner name suggestions' }),
@@ -109,7 +109,7 @@ it('opens and saves the horse edit form with a real live-query subscription', as
   fireEvent.click(
     await screen.findByRole('option', { name: 'Alex Rider (me)' }),
   )
-  fireEvent.change(screen.getByLabelText('Horse name'), {
+  fireEvent.change(screen.getByLabelText('Name'), {
     target: { value: 'Juniper II' },
   })
   fireEvent.submit(owner().closest('form')!)
@@ -133,9 +133,7 @@ it('keeps the edit form and owner draft usable through loading, query failure an
   await screen.findByText('Loading people. You can also enter a name.')
   fireEvent.change(owner(), { target: { value: 'Independent owner' } })
   await view.publish(new Error('Suggestion service unavailable'))
-  await screen.findByText(
-    'People could not be loaded. You can still enter a name.',
-  )
+  await screen.findByText('Couldn’t load people. You can still enter a name.')
   expect(owner().value).toBe('Independent owner')
   await view.publish(suggestions)
   expect(owner().value).toBe('Independent owner')

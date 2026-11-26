@@ -241,7 +241,7 @@ function ReminderSample({
         assigneeOptions={[{ id: data.stable.ownerId, name: 'Alex (sample)' }]}
         chrome="flat"
         isLoading={scenario === 'loading'}
-        emptyMessage="No care reminders have been added for this stable yet."
+        emptyMessage="No care reminders yet."
         onAdd={(values) =>
           apply('Sample addition', () => {
             const horseIds =

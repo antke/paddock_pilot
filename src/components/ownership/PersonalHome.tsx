@@ -19,7 +19,7 @@ import {
 } from '#/components/dashboard/command-center/PriorityQueueCard'
 import { MobileHealthSummary } from '#/components/dashboard/command-center/MobileHealthSummary'
 import { RoutePending } from '#/components/layout/RoutePending'
-import { ButtonLink } from '#/components/ui/button'
+import { ButtonLink, PhoneShortLabel } from '#/components/ui/button'
 import { useLocale, useT } from '#/i18n/LocaleProvider'
 import { useSmallScreen } from '#/lib/useSmallScreen'
 import { useLocalDateContext } from '#/lib/useLocalDateContext'
@@ -168,7 +168,7 @@ export function PersonalHome() {
                     size="sm"
                     className="min-h-11"
                   >
-                    {c.add}
+                    <PhoneShortLabel>{c.add}</PhoneShortLabel>
                   </ButtonLink>
                 </>
               )

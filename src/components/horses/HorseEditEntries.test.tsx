@@ -81,9 +81,7 @@ describe('contextual horse edit entries', () => {
       expect(screen.getByRole('link', { name }).getAttribute('href')).toBe(
         `/horses/${horse._id}/edit?section=${section}`,
       )
-    expect(
-      screen.getByRole('heading', { name: 'Identification and insurance' }),
-    ).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'ID & insurance' })).toBeTruthy()
   })
 
   it('puts a pencil on recorded emergency notes for editors', async () => {
@@ -114,9 +112,7 @@ describe('contextual horse edit entries', () => {
   it('shows no edit entries or empty placeholders to readers', async () => {
     await renderInRouter(sections(false))
     expect(screen.queryByRole('link', { name: /^Edit / })).toBeNull()
-    expect(
-      screen.queryByRole('heading', { name: 'Identification and insurance' }),
-    ).toBeNull()
+    expect(screen.queryByRole('heading', { name: 'ID & insurance' })).toBeNull()
     expect(screen.queryByRole('region', { name: 'Care contacts' })).toBeNull()
   })
 

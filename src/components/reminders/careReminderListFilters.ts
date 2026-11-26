@@ -8,10 +8,7 @@ import type {
   ListFilterState,
 } from '#/components/list-filtering/listFiltering'
 import type { Id } from 'convex/_generated/dataModel'
-import {
-  careReminderCategories,
-  careReminderStatuses,
-} from 'shared/reminders/careReminderSchema'
+import { careReminderCategories } from 'shared/reminders/careReminderSchema'
 import type {
   CareReminderCategory,
   CareReminderStatus,
@@ -26,7 +23,9 @@ type CareReminderFilterHorseOption = {
   name: string
 }
 
-export type CareReminderListFilterFacetId = 'horse' | 'state' | 'category'
+export type CareReminderListFilterFacetId = 'horse' | 'category'
+/** To do, Done or All: a quiet toggle beside the list, outside Filters. */
+export type CareReminderStatusView = 'pending' | 'completed' | 'all'
 export type HorseCareReminderListFilterFacetId = Exclude<
   CareReminderListFilterFacetId,
   'horse'
@@ -46,9 +45,9 @@ const horseFilterValuePrefix = 'horse:'
 
 export function getCareReminderListQueryArgs(
   state: ListFilterState<CareReminderListFilterFacetId>,
+  view: CareReminderStatusView = 'all',
 ): CareReminderListQueryArgs {
   const selectedHorse = state.facets.horse
-  const selectedState = state.facets.state
   const selectedCategory = state.facets.category
   const searchQuery = state.query.trim() || undefined
 
@@ -56,7 +55,7 @@ export function getCareReminderListQueryArgs(
     searchQuery,
     horseId: getHorseIdFilterArg(selectedHorse),
     stableWideOnly: selectedHorse === stableWideHorseFilterValue || undefined,
-    state: getStateFilterArg(selectedState),
+    state: view === 'all' ? undefined : view,
     category: getCategoryFilterArg(selectedCategory),
   }
 }
@@ -66,17 +65,6 @@ export function createCareReminderListFilterConfig(
   locale: Locale = 'en',
 ): ListFilterConfig<CareReminderListItem, CareReminderListFilterFacetId> {
   const t = localeInstances[locale].t
-  const reminderStateFilterOptions = [
-    { value: 'overdue', label: t('careLabels.overdue') },
-    ...careReminderStatuses.map((status) => ({
-      value: status,
-      label:
-        status === 'pending'
-          ? t('reminders.outstanding')
-          : t(`careLabels.reminderStatus.${status}`),
-    })),
-  ] satisfies ReadonlyArray<ListFilterOption>
-
   const reminderCategoryFilterOptions = careReminderCategories.map(
     (category) => ({
       value: category,
@@ -125,13 +113,6 @@ export function createCareReminderListFilterConfig(
         allLabel: t('reminders.allHorses'),
         options: getHorseFilterOptions(horseOptions, locale),
         matches: matchesHorseFilter,
-      },
-      {
-        id: 'state',
-        label: t('reminders.state'),
-        allLabel: t('reminders.allStates'),
-        options: reminderStateFilterOptions,
-        matches: matchesStateFilter,
       },
       {
         id: 'category',
@@ -201,31 +182,6 @@ function matchesHorseFilter(item: CareReminderListItem, selectedValue: string) {
   )
 }
 
-function matchesStateFilter(item: CareReminderListItem, selectedValue: string) {
-  if (selectedValue === 'overdue') {
-    return isCareReminderOverdue(item.reminder)
-  }
-
-  if (isCareReminderStatus(selectedValue)) {
-    return item.reminder.status === selectedValue
-  }
-
-  return false
-}
-
-function isCareReminderStatus(value: string): value is CareReminderStatus {
-  return careReminderStatuses.some((status) => status === value)
-}
-
-function getStateFilterArg(
-  value: string | undefined,
-): CareReminderListStateFilter | undefined {
-  if (value === 'overdue') return value
-  if (value && isCareReminderStatus(value)) return value
-
-  return undefined
-}
-
 function matchesCategoryFilter(
   item: CareReminderListItem,
   selectedValue: string,
@@ -247,15 +203,21 @@ function getCategoryFilterArg(value: string | undefined) {
   return undefined
 }
 
+export function matchesStatusView(
+  item: CareReminderListItem,
+  view: CareReminderStatusView,
+) {
+  return view === 'all' || item.reminder.status === view
+}
+
 /** The default work view is not a user search with zero matches. */
 export function isOnlyOutstandingFilter(
+  view: CareReminderStatusView,
   state: ListFilterState<CareReminderListFilterFacetId>,
 ) {
   return (
+    view === 'pending' &&
     !state.query.trim() &&
-    state.facets.state === 'pending' &&
-    Object.entries(state.facets).every(
-      ([key, value]) => key === 'state' || !value,
-    )
+    Object.values(state.facets).every((value) => !value)
   )
 }

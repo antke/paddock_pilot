@@ -33,8 +33,9 @@ import { formatMediumTimestampDate } from '#/lib/dateDisplay'
 import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
+  INVITATION_RESEND_COOLDOWN_MS,
   getEffectiveInvitationStatus,
   getInvitationUrl,
 } from 'shared/stableInvitations/invitationState'
@@ -44,6 +45,7 @@ import {
   PaperPlaneTiltIcon,
 } from '@phosphor-icons/react'
 import { StableInvitationStatusBadge } from './StableInvitationBadges'
+import { useInvitationErrorText } from '#/components/invitations/invitationErrors'
 
 type StableInvitationsListProps = {
   invitations: Array<Doc<'stableInvitations'>>
@@ -60,49 +62,43 @@ export function StableInvitationsList({
     try {
       await copyTextToClipboard(getInvitationUrl(window.location.origin, token))
       showAppSuccessToast({ title: t('invitationFlow.linkCopied') })
-    } catch {
-      showAppErrorToast({ title: t('invitationFlow.copyFailed') })
-      throw new Error(t('invitationFlow.copyFailed'))
+    } catch (error) {
+      showAppErrorToast({
+        title: t('invitationFlow.copyFailed'),
+        description: <p>{t('invitationFlow.copyBlocked')}</p>,
+      })
+      throw error
     }
   }
 
+  // Resend and revoke throw on failure so the row can show why.
   const onResend = async (invitation: Doc<'stableInvitations'>) => {
-    try {
-      const result = await resendInvitation({ id: invitation._id })
-      showAppSuccessToast({
-        title: t('invitationFlow.queuedAgain'),
-        description: (
-          <p>{t('invitationFlow.freshLink', { email: invitation.email })}</p>
-        ),
-        action: {
-          label: t('invitationFlow.copy'),
-          onClick: () => {
-            // Copy reports its own toast; this action has no row error surface.
-            void copyInvitation(result.token).catch(() => {})
-          },
+    const result = await resendInvitation({ id: invitation._id })
+    showAppSuccessToast({
+      title: t('invitationFlow.queuedAgain'),
+      description: (
+        <p>{t('invitationFlow.freshLink', { email: invitation.email })}</p>
+      ),
+      action: {
+        label: t('invitationFlow.copy'),
+        onClick: () => {
+          // Copy reports its own toast; this action has no row error surface.
+          void copyInvitation(result.token).catch(() => {})
         },
-      })
-      return true
-    } catch {
-      showAppErrorToast({ title: t('invitationFlow.resendFailed') })
-      return false
-    }
+      },
+    })
+    return true
   }
 
   const onRevoke = async (invitation: Doc<'stableInvitations'>) => {
-    try {
-      await revokeInvitation({ id: invitation._id })
-      showAppSuccessToast({
-        title: t('invitationFlow.revoked'),
-        description: (
-          <p>{t('invitationFlow.revokedFor', { email: invitation.email })}</p>
-        ),
-      })
-      return true
-    } catch {
-      showAppErrorToast({ title: t('invitationFlow.revokeFailedHelp') })
-      return false
-    }
+    await revokeInvitation({ id: invitation._id })
+    showAppSuccessToast({
+      title: t('invitationFlow.revoked'),
+      description: (
+        <p>{t('invitationFlow.revokedFor', { email: invitation.email })}</p>
+      ),
+    })
+    return true
   }
 
   return (
@@ -160,24 +156,27 @@ function StableInvitationRow({
   const copyConfirmation = useTransientConfirmation(invitation.token)
   const resendConfirmation = useTransientConfirmation(invitation._id)
   const [isRevokeOpen, setIsRevokeOpen] = useState(false)
-  const [failedAction, setFailedAction] = useState<
-    'resend' | 'revoke' | 'copy'
-  >()
-  const actionError = failedAction
-    ? t(
-        failedAction === 'copy'
-          ? 'invitationFlow.copyFailedHelp'
-          : failedAction === 'resend'
-            ? 'invitationFlow.resendFailedHelp'
-            : 'invitationFlow.revokeFailedHelp',
-      )
+  const [failure, setFailure] = useState<{
+    action: 'resend' | 'revoke' | 'copy'
+    error: unknown
+  }>()
+  const failedAction = failure?.action
+  const describeError = useInvitationErrorText()
+  const actionError = failure
+    ? failure.action === 'copy'
+      ? `${t('invitationFlow.copyFailed')} ${t('invitationFlow.copyBlocked')}`
+      : `${t(
+          failure.action === 'resend'
+            ? 'invitationFlow.resendFailed'
+            : 'invitationFlow.revokeFailed',
+        )} ${describeError(failure.error)}`
     : undefined
   const { locale } = useLocale()
   const runAction = async (action: 'resend' | 'revoke' | 'copy') => {
     if (pendingRef.current) return
     pendingRef.current = true
     setPendingAction(action)
-    setFailedAction(undefined)
+    setFailure(undefined)
     try {
       if (action === 'copy') {
         copyConfirmation.clear()
@@ -186,11 +185,11 @@ function StableInvitationRow({
       } else if (action === 'resend') {
         resendConfirmation.clear()
         if (await onResend(invitation)) resendConfirmation.confirm()
-        else setFailedAction('resend')
+        else setFailure({ action, error: new Error('Resend failed') })
       } else if (await onRevoke(invitation)) setIsRevokeOpen(false)
-      else setFailedAction('revoke')
-    } catch {
-      setFailedAction(action)
+      else setFailure({ action, error: new Error('Revoke failed') })
+    } catch (error) {
+      setFailure({ action, error })
     } finally {
       pendingRef.current = false
       setPendingAction(undefined)
@@ -201,6 +200,20 @@ function StableInvitationRow({
     expiresAt: invitation.expiresAt,
   })
   const canResend = status === 'pending' || status === 'expired'
+  // Matches the server's resend cooldown, so Resend is never offered and then refused.
+  const resendReadyAt =
+    (invitation.lastDeliveryQueuedAt ?? invitation.createdAt) +
+    INVITATION_RESEND_COOLDOWN_MS
+  const [now, setNow] = useState(Date.now)
+  const justSent = canResend && now < resendReadyAt
+  useEffect(() => {
+    if (!justSent) return
+    const timer = setTimeout(
+      () => setNow(Date.now()),
+      resendReadyAt - Date.now(),
+    )
+    return () => clearTimeout(timer)
+  }, [justSent, resendReadyAt])
   const canCopy = status === 'pending'
   const canRevoke = invitation.status === 'pending'
   const isPending = pendingAction !== undefined
@@ -224,14 +237,14 @@ function StableInvitationRow({
                   size="sm"
                   // The wider queued/resending states reserve space on the outer side, so the group stays tight.
                   className="[&_[data-slot=action-feedback]>span]:justify-start sm:[&_[data-slot=action-feedback]>span]:justify-end"
-                  disabled={isPending}
+                  disabled={isPending || justSent}
                   aria-busy={isPending || undefined}
                   onClick={() => void runAction('resend')}
                 >
                   <ActionFeedback
                     icon={<PaperPlaneTiltIcon aria-hidden="true" />}
                     pending={pendingAction === 'resend'}
-                    confirmed={resendConfirmation.confirmed}
+                    confirmed={resendConfirmation.confirmed || justSent}
                     confirmedLabel={t('invitationFlow.queuedShort')}
                     failed={failedAction === 'resend'}
                     failedLabel={t('invitationFlow.resend')}

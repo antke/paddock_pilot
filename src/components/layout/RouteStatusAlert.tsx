@@ -9,6 +9,7 @@ import { Button } from '#/components/ui/button'
 import { cn } from '#/lib/utils'
 import { useQueryErrorResetBoundary } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
+import { useActionErrorText } from '#/lib/actionError'
 
 type RouteStatusAlertProps = Omit<
   ComponentProps<typeof Alert>,
@@ -122,7 +123,8 @@ export function RouteQueryErrorAlert({
   const pending = useRef(false)
   const epoch = useRef(0)
   const [isPending, setIsPending] = useState(false)
-  const [retryFailed, setRetryFailed] = useState(false)
+  const describe = useActionErrorText()
+  const [retryFailure, setRetryFailure] = useState<unknown>(null)
   useEffect(() => {
     const current = ++epoch.current
     return () => {
@@ -140,14 +142,14 @@ export function RouteQueryErrorAlert({
       router.state.location.href === location.href &&
       router.state.location.state.__TSR_key === location.state.__TSR_key
     setIsPending(true)
-    setRetryFailed(false)
+    setRetryFailure(null)
     queryErrorResetBoundary.reset()
     try {
       // CatchBoundary.reset alone does not clear an errored loader match.
       await router.invalidate({ sync: true })
       if (isCurrent()) reset()
-    } catch {
-      if (isCurrent()) setRetryFailed(true)
+    } catch (error) {
+      if (isCurrent()) setRetryFailure(error ?? new Error('Retry failed'))
     } finally {
       pending.current = false
       if (isCurrent()) setIsPending(false)
@@ -160,7 +162,9 @@ export function RouteQueryErrorAlert({
       description={
         <>
           {description}
-          {retryFailed ? <p>{t('recovery.retryFailed')}</p> : null}
+          {retryFailure != null ? (
+            <p>{`${t('recovery.retryFailed')} ${describe(retryFailure)}`}</p>
+          ) : null}
         </>
       }
       tone="danger"
@@ -177,7 +181,7 @@ export function RouteQueryErrorAlert({
               label={t('common.retry')}
               pendingLabel={t('recovery.retrying')}
               pending={isPending}
-              failed={retryFailed}
+              failed={retryFailure != null}
               failedLabel={t('common.retry')}
             />
           </Button>

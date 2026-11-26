@@ -38,7 +38,7 @@ describe('DocumentUploadForm', () => {
     const error = document.getElementById(
       names[0].getAttribute('aria-describedby')!,
     )
-    expect(error?.textContent).toContain('Document name is required')
+    expect(error?.textContent).toContain('Enter a name.')
     const browse = screen.getAllByRole('button', {
       name: /Drop a file here or browse/,
     })[0]

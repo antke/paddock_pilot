@@ -65,9 +65,7 @@ it('keeps a dirty recurring event and retranslates errors without repeating an a
   await screen.findByText('Wpisz tytuł.')
   fireEvent.change(title, { target: { value: 'Wizyta kontrolna' } })
   fireEvent.submit(title.closest('form')!)
-  await screen.findByText(
-    /Wydarzenie zostało zapisane, ale nie udało się otworzyć/,
-  )
+  await screen.findByText(/Wydarzenie zapisane, ale nie udało się otworzyć/)
   expect(title.value).toBe('Wizyta kontrolna')
   expect(title.disabled).toBe(true)
   expect(save).toHaveBeenCalledTimes(1)
@@ -80,9 +78,7 @@ it('keeps a dirty recurring event and retranslates errors without repeating an a
   fireEvent.change(screen.getByRole('combobox', { name: 'Język' }), {
     target: { value: 'en' },
   })
-  expect(
-    screen.getByText(/Event saved, but its page could not be opened/),
-  ).toBeTruthy()
+  expect(screen.getByText(/Event saved, but its page didn’t open/)).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: 'Open event' }))
   await waitFor(() => expect(open).toHaveBeenCalledTimes(2))
   expect(save).toHaveBeenCalledTimes(1)
@@ -121,7 +117,7 @@ it('retranslates a known server failure without resubmitting', async () => {
     exact: true,
   })
   fireEvent.submit(title.closest('form')!)
-  await screen.findByText(/This session has training history/)
+  await screen.findByText(/This session already has history/)
   fireEvent.change(screen.getByRole('combobox', { name: 'Language' }), {
     target: { value: 'pl' },
   })

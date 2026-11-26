@@ -1,5 +1,5 @@
 import { useT } from '#/i18n/LocaleProvider'
-import { useState } from 'react'
+import { useDeferredValue, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { HorseDetailSectionProps } from './HorseDetail'
 import { HorseNutritionCard } from './HorseNutritionCard'
@@ -48,6 +48,8 @@ export function HorseNutritionSection({
 
   const [localTab, setLocalTab] = useState<NutritionTab>('nutrition')
   const activeTab = controlledTab ?? localTab
+  // The old tab stays until the new one's data arrives, instead of suspending the page.
+  const shownTab = useDeferredValue(activeTab)
   const [headerAction, setHeaderAction] = useState<ReactNode>(null)
 
   return (
@@ -62,7 +64,7 @@ export function HorseNutritionSection({
       }}
       actions={headerAction}
     >
-      {activeTab === 'nutrition' && (
+      {shownTab === 'nutrition' && (
         <>
           <HorseNutritionCard
             horse={horse}
@@ -92,7 +94,7 @@ export function HorseNutritionSection({
         </>
       )}
 
-      {activeTab === 'weight' &&
+      {shownTab === 'weight' &&
         (renderWeight ? (
           renderWeight(setHeaderAction)
         ) : (

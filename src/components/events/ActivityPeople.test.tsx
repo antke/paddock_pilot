@@ -114,7 +114,9 @@ it('keeps failed invitations actionable and does not expose a reporting form bef
   render(<MyActivityInvitations invitationsOnly />)
   expect(screen.queryByRole('button', { name: 'Record my ride' })).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Accept' }))
-  expect(await screen.findByRole('alert')).toBeTruthy()
+  expect((await screen.findByRole('alert')).textContent).toBe(
+    'Couldn’t accept the invitation. Something went wrong on our side and nothing changed. Try again in a moment.',
+  )
   expect(
     screen.getByRole('button', { name: 'Accept' }).hasAttribute('disabled'),
   ).toBe(false)

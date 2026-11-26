@@ -15,6 +15,7 @@ import {
 import { StableInvitationContextBadge } from '#/components/stables/StableInvitationBadges'
 import { Button, ButtonLink } from '#/components/ui/button'
 import { formatMediumTimestampDate } from '#/lib/dateDisplay'
+import { useInvitationErrorText } from './invitationErrors'
 
 export type InvitationPreview = FunctionReturnType<
   typeof api.stableInvitations.preview
@@ -71,7 +72,12 @@ export function InvitationPageView({
   const t = useT()
 
   const [pending, setPending] = useState<Decision>()
-  const [failed, setFailed] = useState<Decision>()
+  const [failure, setFailure] = useState<{
+    decision: Decision
+    error: unknown
+  }>()
+  const failed = failure?.decision
+  const describeError = useInvitationErrorText()
   const [acknowledged, setAcknowledged] = useState<Decision>()
   const guard = useRef(false)
   const region = useRef<HTMLDivElement>(null)
@@ -95,11 +101,11 @@ export function InvitationPageView({
     if (!callback) return
     guard.current = true
     setPending(decision)
-    setFailed(undefined)
+    setFailure(undefined)
     try {
       await callback()
       setAcknowledged(decision)
-    } catch {
+    } catch (error) {
       // An authoritative query may already have removed the pending action.
       const current = latestPreview.current
       if (
@@ -107,7 +113,7 @@ export function InvitationPageView({
         (current.status === 'pending' ||
           current.status === 'accepted_pending_subscription')
       )
-        setFailed(decision)
+        setFailure({ decision, error })
     } finally {
       guard.current = false
       setPending(undefined)
@@ -290,6 +296,17 @@ export function InvitationPageView({
         {authActions.switchAccount}
       </InvitationNotice>
     )
+  } else if (effective.viewer.hasLeftStable) {
+    content = (
+      <InvitationNotice
+        title={t('invitationFlow.leftTitle', { name: effective.stableName })}
+        description={t('invitationFlow.leftHelp')}
+      >
+        <ButtonLink to="/stables/create" variant="outline">
+          {t('invitationFlow.createOwn')}
+        </ButtonLink>
+      </InvitationNotice>
+    )
   } else if (effective.status === 'accepted_pending_subscription') {
     content = (
       <InvitationNotice
@@ -354,15 +371,15 @@ export function InvitationPageView({
                 : t('invitationFlow.declinedAnnouncement')
             : ''}
         </div>
-        {failed &&
+        {failure &&
           (effective.status === 'pending' ||
             effective.status === 'accepted_pending_subscription') && (
             <p id={errorId} role="alert" className="text-sm text-destructive">
-              {t(
-                failed === 'accept'
+              {`${t(
+                failure.decision === 'accept'
                   ? 'invitationFlow.acceptFailed'
                   : 'invitationFlow.declineFailed',
-              )}
+              )} ${describeError(failure.error)}`}
             </p>
           )}
         {content}

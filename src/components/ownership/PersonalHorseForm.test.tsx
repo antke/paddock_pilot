@@ -80,7 +80,7 @@ it.each(['/horses/$horseId/edit', '/stables/$stableId/horses/$horseId/edit'])(
     })
     await router.load()
     render(<RouterProvider router={router} />)
-    fireEvent.change(await screen.findByLabelText('Horse name'), {
+    fireEvent.change(await screen.findByLabelText('Name'), {
       target: { value: 'Maple revised' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))

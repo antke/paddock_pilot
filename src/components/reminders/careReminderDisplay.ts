@@ -31,25 +31,28 @@ export function getCareReminderDueLabel(
   locale: Locale = 'en',
 ) {
   const t = localeInstances[locale].t
+  const relative = getCareReminderRelativeDueLabel(reminder, today, locale)
+  const date = formatMediumDateKey(reminder.dueDate, locale)
+
+  if (getCareReminderDueState(reminder, today) === 'today') return relative
+  return relative ? `${relative} · ${date}` : t('careLabels.dueDate', { date })
+}
+
+/** Only the relative part (Overdue, Due today, Due in 4 days), for rows whose date tile shows the date. */
+export function getCareReminderRelativeDueLabel(
+  reminder: Pick<Doc<'careReminders'>, 'dueDate' | 'status'>,
+  today?: string,
+  locale: Locale = 'en',
+) {
+  const t = localeInstances[locale].t
   const dueState = getCareReminderDueState(reminder, today)
 
-  if (dueState === 'overdue') {
-    return `${t('careLabels.overdue')} · ${formatMediumDateKey(reminder.dueDate, locale)}`
-  }
-
+  if (dueState === 'overdue') return t('careLabels.overdue')
   if (dueState === 'today') return t('careLabels.dueToday')
+  if (dueState !== 'soon') return null
 
-  if (dueState === 'soon') {
-    const daysUntilDue = getCareReminderDaysUntilDue(reminder, today)
-    const relativeLabel =
-      daysUntilDue === 1
-        ? t('careLabels.dueTomorrow')
-        : t('careLabels.dueDays', { count: daysUntilDue })
-
-    return `${relativeLabel} · ${formatMediumDateKey(reminder.dueDate, locale)}`
-  }
-
-  return t('careLabels.dueDate', {
-    date: formatMediumDateKey(reminder.dueDate, locale),
-  })
+  const daysUntilDue = getCareReminderDaysUntilDue(reminder, today)
+  return daysUntilDue === 1
+    ? t('careLabels.dueTomorrow')
+    : t('careLabels.dueDays', { count: daysUntilDue })
 }

@@ -300,7 +300,7 @@ describe('mobile training controls', () => {
         name: '6 January 2026, 0 training sessions',
       }),
     )
-    expect(screen.getByText('No training matches this date.')).toBeTruthy()
+    expect(screen.getByText('No training on this day.')).toBeTruthy()
     expect(
       screen.queryByRole('link', { name: /Atlas · Flatwork school/ }),
     ).toBeNull()
@@ -364,7 +364,7 @@ describe('mobile training controls', () => {
         .getByRole('button', { name: '13 January 2026, 0 training sessions' })
         .getAttribute('aria-pressed'),
     ).toBe('true')
-    expect(screen.getByText('No training matches this date.')).toBeTruthy()
+    expect(screen.getByText('No training on this day.')).toBeTruthy()
     expect(
       screen.queryByRole('link', { name: /Atlas · Flatwork school/ }),
     ).toBeNull()

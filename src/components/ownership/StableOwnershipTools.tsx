@@ -92,7 +92,7 @@ export function UnclaimedHorseForm({ stableId }: { stableId: Id<'stables'> }) {
                 params: { horseId },
               })
             } catch (cause) {
-              setError(errorMessage(cause))
+              setError(errorMessage(c.addFailed, cause))
             } finally {
               submitting.current = false
               setPending(false)

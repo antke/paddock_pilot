@@ -146,6 +146,7 @@ function OriginalDetail() {
                 eventId={eventId as Id<'events'>}
                 title={data.event.title}
                 cancelled={data.event.status === 'cancelled'}
+                canDelete={permissions?.canDeleteEvent}
                 training
                 stableId={stableId}
               />
@@ -171,6 +172,7 @@ function OriginalDetail() {
             eventId={eventId as Id<'events'>}
             title={data.event.title}
             cancelled={data.event.status === 'cancelled'}
+            canDelete={permissions?.canDeleteEvent}
             training
             stableId={stableId}
           />

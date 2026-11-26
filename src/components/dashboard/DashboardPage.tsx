@@ -35,7 +35,8 @@ export function dashboardPageClassName(
   className?: string,
 ) {
   return cn(
-    'min-w-0',
+    // A minmax column, so one wide child can never widen the page past the screen.
+    'min-w-0 grid-cols-[minmax(0,1fr)]',
     dashboardPageGapClassNames[gap],
     dashboardPageWidthClassNames[width],
     dashboardPageVerticalAlignClassNames[verticalAlign],

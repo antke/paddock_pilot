@@ -64,7 +64,7 @@ async function setup(initialStableId?: string) {
   })
   await router.load()
   render(<RouterProvider router={router} />)
-  fireEvent.change(await screen.findByLabelText('Horse name'), {
+  fireEvent.change(await screen.findByLabelText('Name'), {
     target: { value: 'Maple' },
   })
   fireEvent.change(screen.getByLabelText('Current age'), {
@@ -86,9 +86,7 @@ it('adds a personal horse when the stable is cleared', async () => {
   await setup('oak')
   fireEvent.change(screen.getByLabelText('Stable'), { target: { value: '' } })
   expect(screen.queryByText(/Stable members will see this horse/)).toBeNull()
-  expect(screen.getByLabelText<HTMLInputElement>('Horse name').value).toBe(
-    'Maple',
-  )
+  expect(screen.getByLabelText<HTMLInputElement>('Name').value).toBe('Maple')
   fireEvent.click(screen.getByRole('button', { name: 'Add horse' }))
   await screen.findByRole('heading', { name: 'Personal horse' })
   expect(add).toHaveBeenCalledWith(

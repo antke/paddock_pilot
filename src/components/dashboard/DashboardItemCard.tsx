@@ -88,6 +88,8 @@ type DashboardItemRecordCardProps = ComponentProps<'div'> & {
   actions?: ReactNode
   actionsClassName?: string
   actionsPlacement?: 'side' | 'footer'
+  /** `center`: side actions stay beside the content at every width, vertically centred. */
+  actionsAlign?: 'end' | 'center'
   chrome?: DashboardChrome
   density?: DashboardItemCardDensity
   footer?: ReactNode
@@ -416,6 +418,7 @@ export function DashboardItemRecordCard({
   actions,
   actionsClassName,
   actionsPlacement = 'side',
+  actionsAlign = 'end',
   children,
   chrome = 'flat',
   className,
@@ -425,6 +428,7 @@ export function DashboardItemRecordCard({
   selected,
   ...props
 }: DashboardItemRecordCardProps) {
+  const centred = actionsAlign === 'center' && actionsPlacement === 'side'
   const hasActionColumn = Boolean(
     actionBadges ?? (actionsPlacement === 'side' ? actions : undefined),
   )
@@ -440,7 +444,11 @@ export function DashboardItemRecordCard({
         density,
         interactive,
         selected,
-        className: cn(dashboardItemActionGridClassName, className),
+        className: cn(
+          dashboardItemActionGridClassName,
+          centred && 'grid-cols-[minmax(0,1fr)_auto] items-center',
+          className,
+        ),
       })}
       {...props}
     >
@@ -454,6 +462,8 @@ export function DashboardItemRecordCard({
             actionsPlacement === 'footer' &&
               actionBadges &&
               '-order-1 justify-items-end sm:order-none',
+            centred &&
+              'justify-self-end sm:self-center sm:content-center sm:[&>[data-dashboard-item-actions]]:mt-0',
             actionColumnClassName,
           )}
         >

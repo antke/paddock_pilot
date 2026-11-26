@@ -5,7 +5,6 @@ import {
   render,
   screen,
   waitFor,
-  within,
 } from '@testing-library/react'
 import {
   createMemoryHistory,
@@ -56,46 +55,33 @@ describe('care reminder production-view sample', () => {
     fireEvent.change(screen.getByLabelText('Next sample result'), {
       target: { value: 'failure' },
     })
-    const complete = screen.getByRole<HTMLButtonElement>('button', {
-      name: `Complete ${title}`,
+    const choose = async (action: string) => {
+      fireEvent.click(
+        screen.getByRole('button', { name: `Actions for ${title}` }),
+      )
+      fireEvent.click(await screen.findByRole('menuitem', { name: action }))
+    }
+    const trigger = screen.getByRole<HTMLButtonElement>('button', {
+      name: `Actions for ${title}`,
     })
-    fireEvent.click(complete)
-    expect(complete.disabled).toBe(true)
-    fireEvent.click(complete)
-    expect(
-      screen.getByRole<HTMLButtonElement>('button', {
-        name: `Actions for ${title}`,
-      }).disabled,
-    ).toBe(true)
-    await screen.findByText('The reminder was not updated. Please try again.')
-    expect(complete.disabled).toBe(false)
-    fireEvent.click(complete)
+    await choose('Complete')
+    expect(trigger.disabled).toBe(true)
+    await screen.findByText(/^Couldn’t update the reminder\. /)
+    expect(trigger.disabled).toBe(false)
+    await choose('Complete')
     await screen.findByText(
       'Sample completion applied locally. No live reminder was saved or removed.',
     )
-    expect(
-      screen.queryByRole('button', { name: `Complete ${title}` }),
-    ).toBeNull()
-    expect(screen.queryByText(title)).toBeNull()
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Toggle filters, 1 active' }),
-    )
-    fireEvent.change(await screen.findByRole('combobox', { name: 'State' }), {
-      target: { value: 'completed' },
-    })
-    const row = screen.getByText(title).closest('[role="listitem"]')!
-    expect(within(row as HTMLElement).getByText('Completed')).toBeTruthy()
-    fireEvent.click(
-      within(row as HTMLElement).getByRole('button', { name: 'Reopen' }),
-    )
+    expect(screen.queryByRole('heading', { name: title })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }))
+    await screen.findByRole('heading', { name: title })
+    await choose('Reopen')
     await screen.findByText(
       'Sample reopening applied locally. No live reminder was saved or removed.',
     )
-    expect(screen.queryByText(title)).toBeNull()
-    fireEvent.change(screen.getByRole('combobox', { name: 'State' }), {
-      target: { value: 'pending' },
-    })
-    await screen.findByRole('button', { name: `Complete ${title}` })
+    expect(screen.queryByRole('heading', { name: title })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'To do' }))
+    await screen.findByRole('heading', { name: title })
     expect(useMutation).not.toHaveBeenCalled()
   })
 
@@ -114,30 +100,29 @@ describe('care reminder production-view sample', () => {
     fireEvent.change(search, { target: { value: 'not-a-real-reminder' } })
     await screen.findByText('No reminders match these filters.')
     fireEvent.change(search, { target: { value: '' } })
-    await screen.findByText(title)
+    await screen.findByRole('heading', { name: title })
   })
 
   it('does not invent a horse when the stable is empty and discards interrupted local actions', async () => {
     await openSample(true)
     expect(screen.queryByText('Juniper')).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: `Complete ${title}` }))
+    fireEvent.click(
+      screen.getByRole('button', { name: `Actions for ${title}` }),
+    )
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Complete' }))
     fireEvent.change(screen.getByLabelText('Sample reminders'), {
       target: { value: 'empty' },
     })
     await screen.findByText('No outstanding reminders.')
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Remove State: Outstanding filter' }),
-    )
-    await screen.findByText(
-      'No care reminders have been added for this stable yet.',
-    )
+    fireEvent.click(screen.getByRole('button', { name: 'All' }))
+    await screen.findByText('No care reminders yet.')
     await new Promise((resolve) => setTimeout(resolve, 200))
     expect(
       screen.queryByText(
         'Sample completion applied locally. No live reminder was saved or removed.',
       ),
     ).toBeNull()
-    expect(screen.queryByText(title)).toBeNull()
+    expect(screen.queryByRole('heading', { name: title })).toBeNull()
     await waitFor(() => expect(useMutation).not.toHaveBeenCalled())
   })
 })

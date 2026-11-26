@@ -51,7 +51,7 @@ import {
   invitationCutoffDateKey,
   resolveTodayDateKey,
 } from './libs/dateKeys'
-import { isEventOpen } from '../shared/events/eventOpen'
+import { canWithdrawFromEvent, isEventOpen } from '../shared/events/eventOpen'
 import { createEventOccurrences } from '../shared/events/eventOccurrences'
 import {
   eventFollowers,
@@ -169,6 +169,36 @@ const getStableHorses = async (
   }
 
   return stableHorses
+}
+
+/**
+ * A horse whose participation ended when it left the stable stays on the event
+ * as history. The form may still send it back, but it isn't part of the roster
+ * being edited, so it is neither revalidated nor withdrawn.
+ */
+const withoutDepartedHorses = async (
+  ctx: MutationCtx,
+  event: Doc<'events'>,
+  horseIds: Array<Id<'horses'>>,
+) => {
+  const rows = await ctx.db
+    .query('eventsHorses')
+    .withIndex('by_event_id', (q) => q.eq('eventId', event._id))
+    .collect()
+  const kept: Array<Id<'horses'>> = []
+  for (const horseId of horseIds) {
+    const horseRows = rows.filter((row) => row.horseId === horseId)
+    const departed =
+      horseRows.length > 0 && horseRows.every((row) => row.participationEndsAt)
+    const horse = departed ? await ctx.db.get(horseId) : null
+    if (
+      departed &&
+      (!horse || horse.transitionId || horse.stableId !== event.stableId)
+    )
+      continue
+    kept.push(horseId)
+  }
+  return kept
 }
 
 const sendEventInvitationEmails = async (
@@ -448,8 +478,12 @@ export const getPermissions = query({
     const access = await eventReadAccess(ctx, event).catch(() => null)
     if (!access) return null
 
+    const canManageEvent = await canEditEvent(ctx, event)
+    const user = canManageEvent ? await getCurrentUser(ctx) : null
     return {
-      canManageEvent: await canEditEvent(ctx, event),
+      canManageEvent,
+      canDeleteEvent:
+        !!user && !(await eventDeletion(ctx, event._id, user._id)).blocked,
       canConfirmAnyHorse: access.role === 'owner',
       role: access.role,
     }
@@ -768,7 +802,9 @@ export const add = mutation({
       time: eventInput.time,
       type: eventInput.type,
       listedInEvents:
-        eventInput.type === 'training' && args.listedInEvents ? true : undefined,
+        eventInput.type === 'training' && args.listedInEvents
+          ? true
+          : undefined,
       title: eventInput.title,
       description: eventInput.description,
       location: eventInput.location,
@@ -918,12 +954,13 @@ export const update = mutation({
     if (event.stableId !== args.stableId) {
       throw new ConvexError('Event stable cannot be changed')
     }
+    const horseIds = await withoutDepartedHorses(ctx, event, args.horseIds)
 
     if (!(await canEditEvent(ctx, event)))
       throw new ConvexError('Not authorized to update this event')
     // Existing participants are authorized by the canonical sharing capability.
     // Creation rules apply only to additions, not to edits of shared personal events.
-    const newParticipantIds = args.horseIds.filter(
+    const newParticipantIds = horseIds.filter(
       (horseId) => !event.horseIds.includes(horseId),
     )
     if (newParticipantIds.length)
@@ -999,9 +1036,9 @@ export const update = mutation({
         selectedRecord?.date ??
         (!event.recurrence ? event.date : undefined)
       const removedHorseIds = event.horseIds.filter(
-        (horseId) => !args.horseIds.includes(horseId),
+        (horseId) => !horseIds.includes(horseId),
       )
-      const addedHorseIds = args.horseIds.filter(
+      const addedHorseIds = horseIds.filter(
         (horseId) => !event.horseIds.includes(horseId),
       )
       const recordsToMove = records.filter(
@@ -1097,9 +1134,9 @@ export const update = mutation({
       }
     }
 
-    const horses = await getStableHorses(ctx, args.stableId, args.horseIds)
+    const horses = await getStableHorses(ctx, args.stableId, horseIds)
 
-    const nextHorseIds = new Set(args.horseIds)
+    const nextHorseIds = new Set(horseIds)
     const existingEventHorses = await ctx.db
       .query('eventsHorses')
       .withIndex('by_event_id', (q) => q.eq('eventId', id))
@@ -1524,10 +1561,8 @@ export const withdrawHorseFromEvent = mutation({
 
     // Withdrawal applies from today on; sessions that already happened stay in history.
     const today = resolveTodayDateKey(args.today)
-    if (event.date < today && !event.recurrence)
-      throw new ConvexError('This event has already started')
-    if (event.status === 'completed')
-      throw new ConvexError('This event is already completed')
+    if (!canWithdrawFromEvent(event, today))
+      throw userFacingError('eventClosed', 'structured')
     const now = Date.now()
     await ctx.db.patch(
       eventHorse._id,
@@ -1686,6 +1721,41 @@ export const setCompleted = mutation({
 })
 
 /** Only an event nobody else depends on can disappear; anything else is cancelled. */
+async function eventDeletion(
+  ctx: QueryCtx,
+  eventId: Id<'events'>,
+  userId: Id<'users'>,
+) {
+  const rows = await ctx.db
+    .query('eventsHorses')
+    .withIndex('by_event_id', (q) => q.eq('eventId', eventId))
+    .collect()
+  const records = await ctx.db
+    .query('trainingRecords')
+    .withIndex('by_event_id', (q) => q.eq('eventId', eventId))
+    .collect()
+  const othersHorse = async (horseId: Id<'horses'>) => {
+    const horse = await ctx.db.get(horseId)
+    return (
+      !!horse &&
+      !(await getHorseAccess(ctx, horse, userId)).canEditPersonalRecords
+    )
+  }
+  let blocked = false
+  for (const row of rows)
+    if (
+      row.participationEndsAt ||
+      row.history ||
+      (isConfirmedEventHorse(row) && (await othersHorse(row.horseId)))
+    )
+      blocked = true
+  // A session's records go with it when they are the deleter's to edit; another
+  // owner's recorded history keeps the session, which is cancelled instead.
+  for (const record of records)
+    if (!blocked && (await othersHorse(record.horseId))) blocked = true
+  return { rows, records, blocked }
+}
+
 export const remove = mutation({
   args: { id: v.id('events') },
   handler: async (ctx, { id }) => {
@@ -1694,33 +1764,8 @@ export const remove = mutation({
     if (!event) throw new ConvexError('Event not found')
     if (!(await canEditEvent(ctx, event)))
       throw new ConvexError('Not authorized to update this event')
-    const rows = await ctx.db
-      .query('eventsHorses')
-      .withIndex('by_event_id', (q) => q.eq('eventId', id))
-      .collect()
-    const records = await ctx.db
-      .query('trainingRecords')
-      .withIndex('by_event_id', (q) => q.eq('eventId', id))
-      .collect()
-    for (const row of rows) {
-      const horse = await ctx.db.get(row.horseId)
-      const othersHorse =
-        horse &&
-        isConfirmedEventHorse(row) &&
-        !(await getHorseAccess(ctx, horse, user._id)).canEditPersonalRecords
-      if (row.participationEndsAt || row.history || othersHorse)
-        throw userFacingError('eventDeleteBlocked', 'structured')
-    }
-    // A session's records go with it when they are the deleter's to edit; another
-    // owner's recorded history keeps the session, which is cancelled instead.
-    for (const record of records) {
-      const horse = await ctx.db.get(record.horseId)
-      if (
-        horse &&
-        !(await getHorseAccess(ctx, horse, user._id)).canEditPersonalRecords
-      )
-        throw userFacingError('eventDeleteBlocked', 'structured')
-    }
+    const { rows, records, blocked } = await eventDeletion(ctx, id, user._id)
+    if (blocked) throw userFacingError('eventDeleteBlocked', 'structured')
     const recipients = [
       ...(await eventHorseKeepers(ctx, event)),
       ...(await eventFollowers(ctx, event)),
@@ -2236,7 +2281,14 @@ export const participationSummary = query({
         continue
       result.push({
         id: row._id,
+        horseId: horse._id,
         name: getHorseDisplayName(horse),
+        // The photo and owner follow horse access; the name is scheduling information.
+        ownerName: access.canRead ? horse.ownerName : undefined,
+        profileImageUrl:
+          access.canRead && horse.profileImageId
+            ? ((await ctx.storage.getUrl(horse.profileImageId)) ?? undefined)
+            : undefined,
         status: endedByWithdrawal ? 'withdrawn' : (row.status ?? 'confirmed'),
         canRejoin: Boolean(
           await rejoinableHorse(ctx, row, event, rows, user._id),

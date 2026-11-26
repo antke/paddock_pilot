@@ -90,7 +90,7 @@ it('uses the shared people picker scoped to the current stable with the signed-i
     },
   })
   fireEvent.click(screen.getByRole('option', { name: 'Stable nickname' }))
-  expect(screen.getByLabelText<HTMLInputElement>('Owner name').value).toBe(
+  expect(screen.getByLabelText<HTMLInputElement>('Owner').value).toBe(
     'Stable nickname',
   )
 })

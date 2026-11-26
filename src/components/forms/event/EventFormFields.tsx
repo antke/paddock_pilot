@@ -49,6 +49,7 @@ import { TextLabel } from '#/components/ui/text-label'
 import type { Id } from 'convex/_generated/dataModel'
 import { useEffect, useRef, useState } from 'react'
 import { Controller, useFormState, useWatch } from 'react-hook-form'
+import { useLocalDateContext } from '#/lib/useLocalDateContext'
 import type { Control, UseFormSetValue } from 'react-hook-form'
 import {
   eventStatuses,
@@ -602,6 +603,14 @@ export function EventFormFields({
     shortDayLabels,
   } = getEventFormOptions(locale)
   const eventDate = useWatch({ control, name: 'date' })
+  const eventStatus = useWatch({ control, name: 'status' })
+  const { today } = useLocalDateContext()
+  // The server refuses to complete a session that hasn't happened yet.
+  const futureTraining = trainingMode === 'create' && eventDate > today
+  useEffect(() => {
+    if (futureTraining && eventStatus === 'completed')
+      setValue('status', 'planned', { shouldDirty: true })
+  }, [futureTraining, eventStatus, setValue])
   const endDate = useWatch({ control, name: 'endDate' })
   const eventTitle = useWatch({ control, name: 'title' })
   const eventType = useWatch({ control, name: 'type' })
@@ -1195,6 +1204,8 @@ export function EventFormFields({
                       ? eventStatusOptions.map((option) => ({
                           ...option,
                           label: t(`training.status.${option.value}`),
+                          disabled:
+                            futureTraining && option.value === 'completed',
                         }))
                       : eventStatusOptions
                   }
@@ -1222,7 +1233,9 @@ export function EventFormFields({
           <FieldDescription>
             {trainingMode === 'edit'
               ? t('eventForm.trainingEditCompletionHelp')
-              : t('eventForm.trainingCreateCompletionHelp')}
+              : futureTraining
+                ? t('eventForm.trainingFutureCompletionHelp')
+                : t('eventForm.trainingCreateCompletionHelp')}
           </FieldDescription>
         )}
       </FormSection>

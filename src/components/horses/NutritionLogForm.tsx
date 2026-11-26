@@ -4,6 +4,7 @@ import type { Id, Doc } from 'convex/_generated/dataModel'
 import { useTransientConfirmation } from '#/lib/useTransientConfirmation'
 import { useLocalizedValidation } from '#/i18n/useLocalizedValidation'
 import { useT } from '#/i18n/LocaleProvider'
+import { useActionErrorText } from '#/lib/actionError'
 import { FormGroup, InlineForm } from '#/components/forms/FormLayout'
 import { FormSubmitActions } from '#/components/forms/FormSubmitActions'
 import { Field, FieldError, FieldGrid, FieldLabel } from '#/components/ui/field'
@@ -78,6 +79,7 @@ export function NutritionLogForm({
 }: NutritionLogFormProps) {
   const audience = useRecordCreationAudience(audienceHorseId)
   const t = useT()
+  const describe = useActionErrorText()
 
   const { nutritionLogFormSchema } = createNutritionLogSchemas((key) =>
     t(`careValidation.${key}`),
@@ -89,7 +91,7 @@ export function NutritionLogForm({
   const confirmation = useTransientConfirmation(formId)
   const pending = useRef(false)
   const [isPending, setIsPending] = useState(false)
-  const [failed, setFailed] = useState(false)
+  const [failure, setFailure] = useState<unknown>(null)
   const form = useForm<NutritionLogDraft, unknown, NutritionLogFormSchema>({
     resolver: zodResolver(nutritionLogDraftSchema),
     mode: 'onTouched',
@@ -102,7 +104,7 @@ export function NutritionLogForm({
     if (pending.current || disabled) return
     pending.current = true
     setIsPending(true)
-    setFailed(false)
+    setFailure(null)
     confirmation.clear()
     onPendingChange?.(true)
     try {
@@ -110,8 +112,8 @@ export function NutritionLogForm({
       audience.reset()
       form.reset(getDefaults(horse))
       confirmation.confirm()
-    } catch {
-      setFailed(true)
+    } catch (error) {
+      setFailure(error ?? new Error('Save failed'))
     } finally {
       pending.current = false
       setIsPending(false)
@@ -341,11 +343,15 @@ export function NutritionLogForm({
       </FormGroup>
 
       <FormSubmissionError
-        message={failed ? t('careRecords.nutritionSaveFailed') : undefined}
+        message={
+          failure != null
+            ? `${t('careRecords.nutritionSaveFailed')} ${describe(failure)}`
+            : undefined
+        }
       />
 
       <FormSubmitActions
-        failed={failed}
+        failed={failure != null}
         confirmed={confirmation.confirmed}
         confirmedLabel={t('common.saved')}
         isSubmitting={form.formState.isSubmitting || isPending}

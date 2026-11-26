@@ -5,7 +5,6 @@ import {
   ActivityPeople,
   MyActivityInvitations,
 } from '#/components/events/ActivityPeople'
-import { EventParticipation } from '#/components/events/EventParticipation'
 import { DashboardPage } from '#/components/dashboard/DashboardPage'
 import { EventDetail } from '#/components/events/EventDetail'
 import { RouteEntityNotFoundAlert } from '#/components/layout/RouteStatusAlert'
@@ -66,8 +65,8 @@ function OriginalDetail() {
         createdByName={data.createdByName}
         horses={data.horses}
         canManageEvent={permissions?.canManageEvent ?? false}
+        canDeleteEvent={permissions?.canDeleteEvent}
       />
-      <EventParticipation eventId={eventId as Id<'events'>} />
       <ActivitySharing eventId={eventId as Id<'events'>} />
       <ActivityPeople
         eventId={eventId as Id<'events'>}

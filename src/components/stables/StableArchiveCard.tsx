@@ -1,5 +1,5 @@
 import { useT } from '#/i18n/LocaleProvider'
-import { RouteStatusAlert } from '#/components/layout/RouteStatusAlert'
+import { ActionErrorAlert } from '#/components/layout/ActionErrorAlert'
 import { ArchiveBoxIcon } from '@phosphor-icons/react'
 import { useRef, useState } from 'react'
 
@@ -32,20 +32,20 @@ export function StableArchiveCard({
 
   const [open, setOpen] = useState(false)
   const [isArchiving, setIsArchiving] = useState(false)
-  const [archiveFailed, setArchiveFailed] = useState(false)
+  const [archiveError, setArchiveError] = useState<unknown>(null)
   const pending = useRef(false)
 
   const handleArchive = async () => {
     if (pending.current) return
     pending.current = true
-    setArchiveFailed(false)
+    setArchiveError(null)
     try {
       setIsArchiving(true)
       const archived = await onArchive()
       if (archived) setOpen(false)
-      else setArchiveFailed(true)
-    } catch {
-      setArchiveFailed(true)
+      else setArchiveError(new Error('Archive failed'))
+    } catch (error) {
+      setArchiveError(error ?? new Error('Archive failed'))
     } finally {
       pending.current = false
       setIsArchiving(false)
@@ -67,7 +67,7 @@ export function StableArchiveCard({
           onOpenChange={(nextOpen) => {
             if (pending.current) return
             setOpen(nextOpen)
-            if (nextOpen) setArchiveFailed(false)
+            if (nextOpen) setArchiveError(null)
           }}
         >
           <AlertDialogTrigger
@@ -88,11 +88,10 @@ export function StableArchiveCard({
                 {t('stables.archiveConsequences')}
               </AlertDialogDescription>
             </AlertDialogHeader>
-            {archiveFailed && (
-              <RouteStatusAlert
-                tone="danger"
+            {archiveError != null && (
+              <ActionErrorAlert
                 title={t('stables.archiveFailed')}
-                description={t('stables.archiveFailedHelp')}
+                error={archiveError}
               />
             )}
             <AlertDialogFooter>

@@ -3,7 +3,10 @@ import { getHorseDisplayName } from 'shared/horses/horseDisplayName'
 import {
   isOnlyOutstandingFilter,
   createHorseCareReminderListFilterConfig,
+  matchesStatusView,
 } from './careReminderListFilters'
+import type { CareReminderStatusView } from './careReminderListFilters'
+import { CareReminderStatusToggle } from './CareReminderStatusToggle'
 import { useT, useLocale } from '#/i18n/LocaleProvider'
 import {
   getListFilterEmptyMessage,
@@ -12,16 +15,19 @@ import {
 import { useListFiltering } from '#/components/list-filtering/useListFiltering'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { showAppErrorToast, showAppSuccessToast } from '#/components/ui/sonner'
+import { showAppSuccessToast } from '#/components/ui/sonner'
 import { api } from 'convex/_generated/api'
 import type { Doc, Id } from 'convex/_generated/dataModel'
-import { useMutation, useQuery } from 'convex/react'
-import { useCallback, useMemo } from 'react'
+import { useMutation } from 'convex/react'
+import { useCallback, useMemo, useState } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 import { useCareReminderActions } from './useCareReminderActions'
 import { CareRemindersCard } from './CareRemindersCard'
 import type { CareReminderListItem } from './CareRemindersCard'
-import type { CareReminderSubmitData } from './CareReminderForm'
+import type {
+  AssigneeOptions,
+  CareReminderSubmitData,
+} from './CareReminderForm'
 
 type HorseCareRemindersCardProps = {
   enableSharing?: boolean
@@ -44,43 +50,33 @@ export function HorseCareRemindersCard({
   )
   const addReminder = useMutation(api.careReminders.add)
   const actions = useCareReminderActions()
-  const assigneeOptions = useQuery(api.careReminders.assigneeOptions, {
-    stableId: horse.stableId,
-    horseId: horse._id,
-  })
   const onAdd = useCallback(
     async (values: CareReminderSubmitData) => {
-      try {
-        await addReminder({
-          requestId: values.requestId,
-          shareWithStable: values.shareWithStable,
-          stableId: horse.stableId,
-          horseId: horse._id,
-          title: values.title,
-          description: values.description,
-          category: values.category,
-          dueDate: values.dueDate,
-          priority: values.priority,
-          assignedTo: (values.assignedTo || undefined) as
-            Id<'users'> | undefined,
-          status: 'pending',
-        })
+      await addReminder({
+        requestId: values.requestId,
+        shareWithStable: values.shareWithStable,
+        stableId: horse.stableId,
+        horseId: horse._id,
+        title: values.title,
+        description: values.description,
+        category: values.category,
+        dueDate: values.dueDate,
+        priority: values.priority,
+        assignedTo: (values.assignedTo || undefined) as Id<'users'> | undefined,
+        status: 'pending',
+      })
 
-        showAppSuccessToast({
-          title: t('reminders.added'),
-          description: (
-            <p>
-              {t('reminders.linked', {
-                title: values.title,
-                name: horseDisplayName,
-              })}
-            </p>
-          ),
-        })
-      } catch (err) {
-        showAppErrorToast()
-        throw err
-      }
+      showAppSuccessToast({
+        title: t('reminders.added'),
+        description: (
+          <p>
+            {t('reminders.linked', {
+              title: values.title,
+              name: horseDisplayName,
+            })}
+          </p>
+        ),
+      })
     },
     [addReminder, horse._id, horseDisplayName, horse.stableId, t],
   )
@@ -94,7 +90,7 @@ export function HorseCareRemindersCard({
       onAdd={onAdd}
       {...actions}
       items={data.items}
-      assigneeOptions={assigneeOptions}
+      assigneeOptions="live"
       onCreateActionChange={onCreateActionChange}
     />
   )
@@ -102,7 +98,7 @@ export function HorseCareRemindersCard({
 
 type HorseCareRemindersViewProps = HorseCareRemindersCardProps & {
   items?: Array<CareReminderListItem>
-  assigneeOptions?: Array<{ id: string; name: string }>
+  assigneeOptions?: AssigneeOptions
   records: Array<Doc<'careReminders'>>
   canManage: boolean
   onAdd: (values: CareReminderSubmitData) => Promise<void>
@@ -141,10 +137,10 @@ export function HorseCareRemindersView({
     () => createHorseCareReminderListFilterConfig(locale),
     [locale],
   )
+  const [view, setView] = useState<CareReminderStatusView>('pending')
   const filtering = useListFiltering({
-    items: reminders,
+    items: reminders.filter((item) => matchesStatusView(item, view)),
     config: filterConfig,
-    initialFacets: { state: 'pending' },
   })
 
   return (
@@ -159,7 +155,7 @@ export function HorseCareRemindersView({
       canAddReminder={canManage}
       fixedHorseId={horse._id}
       emptyMessage={
-        isOnlyOutstandingFilter({
+        isOnlyOutstandingFilter(view, {
           query: filtering.query,
           facets: filtering.selectedFacets,
         })
@@ -171,11 +167,16 @@ export function HorseCareRemindersView({
             })
       }
       listToolbar={
-        <ListFilterControls
-          config={filterConfig}
-          filtering={filtering}
-          hideWhenEmpty
-        />
+        <>
+          <ListFilterControls
+            config={filterConfig}
+            filtering={filtering}
+            hideWhenEmpty
+          />
+          {reminders.length > 0 && (
+            <CareReminderStatusToggle value={view} onChange={setView} />
+          )}
+        </>
       }
       onAdd={onAdd}
       assigneeOptions={assigneeOptions}

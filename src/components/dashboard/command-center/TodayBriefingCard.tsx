@@ -11,7 +11,7 @@ import type {
 import { DashboardSection } from '#/components/dashboard/DashboardSection'
 import { DashboardInlineHeader } from '#/components/dashboard/DashboardInlineHeader'
 import { EventLinkCard } from './EventLinkCard'
-import { ButtonLink } from '#/components/ui/button'
+import { ButtonLink, PhoneShortLabel } from '#/components/ui/button'
 import { DisclosureChevron } from '#/components/ui/disclosure-chevron'
 import { SeeAllLink } from './SeeAllLink'
 
@@ -73,7 +73,7 @@ export function TodayBriefingCard({
               size="sm"
               className="min-h-11"
             >
-              {t('dashboard.addEvent')}
+              <PhoneShortLabel>{t('dashboard.addEvent')}</PhoneShortLabel>
             </ButtonLink>
           )}
         </>

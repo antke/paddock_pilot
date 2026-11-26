@@ -55,6 +55,14 @@ function SectionSample() {
 describe('shared dashboard navigation contracts', () => {
   it('reveals the active destination on entry, navigation and resize without moving focus or the page', async () => {
     const pageScroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    // jsdom has no element scrolling; the rail only sets its own scrollLeft.
+    HTMLElement.prototype.scrollTo = function (
+      this: HTMLElement,
+      options?: ScrollToOptions | number,
+    ) {
+      if (typeof options === 'object' && options.left !== undefined)
+        this.scrollLeft = options.left
+    } as HTMLElement['scrollTo']
     const rect = (left: number, width: number) => ({
       left,
       right: left + width,

@@ -83,7 +83,7 @@ export async function initializeRecordSharing(
 ) {
   const access = await getHorseAccess(ctx, horse)
   if (!access.canAddRecords)
-    throw new Error('Not authorized to add horse records')
+    throw new ConvexError('Not authorized to add horse records')
   if (!horse.stableId) return
   // Upgrade legacy placement metadata on a new write, without publishing old records.
   if (!horse.currentPlacementId) {

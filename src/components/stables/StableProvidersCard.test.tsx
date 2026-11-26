@@ -108,8 +108,10 @@ describe('Provider directory interactions', () => {
     expect(screen.getByRole('dialog')).toBeTruthy()
     await act(async () => request.reject(new Error('Offline')))
     expect(name.value).toBe('Dr. Nova')
-    expect(within(dialog).getByRole('alert').textContent).toContain(
-      'Could not save provider',
+    const alert = within(dialog).getByRole('alert').textContent
+    expect(alert).toContain('Couldn’t save the provider')
+    expect(alert).toContain(
+      'Your entries are still here. You’re offline, so nothing changed.',
     )
     fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
@@ -152,21 +154,22 @@ describe('Provider directory interactions', () => {
     expect(remove).toHaveBeenCalledTimes(1)
     expect(screen.getByRole('alertdialog')).toBeTruthy()
     await act(async () => first.reject(new Error('Offline')))
-    expect(within(dialog).getByRole('alert').textContent).toContain(
-      'Could not remove provider',
-    )
+    const alert = within(dialog).getByRole('alert').textContent
+    expect(alert).toContain('Couldn’t remove the provider')
+    expect(alert).toContain('You’re offline, so nothing changed.')
     fireEvent.click(
       within(dialog).getByRole('button', { name: 'Remove provider' }),
     )
     await waitFor(() => expect(remove).toHaveBeenCalledTimes(2))
     await act(async () => second.resolve())
     await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
-    expect(screen.getByText('No providers saved yet.')).toBeTruthy()
+    expect(screen.getByText('No providers yet.')).toBeTruthy()
     await waitFor(() =>
       expect(document.activeElement).toBe(
-        within(
-          screen.getByRole('group', { name: 'Provider directory' }),
-        ).getAllByRole('button', { name: 'Add provider' })[0],
+        within(screen.getByRole('group', { name: 'Providers' })).getAllByRole(
+          'button',
+          { name: 'Add provider' },
+        )[0],
       ),
     )
   })
@@ -192,6 +195,6 @@ describe('Provider directory interactions', () => {
     expect(
       document.getElementById(names[0].getAttribute('aria-describedby')!)
         ?.textContent,
-    ).toContain('Provider name is required')
+    ).toContain('Enter a name.')
   })
 })

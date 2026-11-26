@@ -1,11 +1,11 @@
 import type { Locale } from './locale'
 
 export const eventChangeMessages = {
-  title: { en: 'Event title changed', pl: 'Zmieniono nazwę wydarzenia' },
-  date: { en: 'Event date changed', pl: 'Zmieniono datę wydarzenia' },
-  time: { en: 'Event time changed', pl: 'Zmieniono godzinę wydarzenia' },
+  title: { en: 'Event title changed', pl: 'Zmieniono nazwę' },
+  date: { en: 'Event date changed', pl: 'Zmieniono datę' },
+  time: { en: 'Event time changed', pl: 'Zmieniono godzinę' },
   location: { en: 'Location changed', pl: 'Zmieniono miejsce' },
-  status: { en: 'Event status changed', pl: 'Zmieniono status wydarzenia' },
+  status: { en: 'Event status changed', pl: 'Zmieniono status' },
   provider: { en: 'Provider changed', pl: 'Zmieniono specjalistę' },
   horses: { en: 'Horse participation changed', pl: 'Zmieniono udział koni' },
 } as const

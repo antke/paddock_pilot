@@ -101,14 +101,14 @@ describe.each(['horses', 'events'] as const)(
   '%s source transitions',
   (kind) => {
     const emptyTitle =
-      kind === 'horses' ? 'No horses added yet.' : 'No stable appointments.'
+      kind === 'horses' ? 'No horses yet.' : 'No stable appointments.'
     it('retains the genuine initial empty prompt without redundant filter controls', async () => {
       await openList(kind, true)
       expect(screen.getByText(emptyTitle)).toBeTruthy()
       expect(
         screen.getByText(
           kind === 'horses'
-            ? 'Add a horse to start building this stable roster.'
+            ? 'Add your first horse to get started.'
             : 'Plan the first visit.',
         ),
       ).toBeTruthy()

@@ -15,6 +15,7 @@ import {
   DialogDescription,
 } from '#/components/ui/dialog'
 import { useLocale } from '#/i18n/LocaleProvider'
+import { useActionErrorText } from '#/lib/actionError'
 import { useNotificationCopy } from './notificationCopy'
 
 type Item = FunctionReturnType<typeof api.notifications.list>[number]
@@ -66,23 +67,24 @@ export function NotificationCenterView({
   ) => Promise<void>
 }) {
   const c = useNotificationCopy()
+  const describe = useActionErrorText()
   const { locale } = useLocale()
   const [open, setOpen] = useState(false)
   const [unreadOnly, setUnreadOnly] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState(false)
-  const [actionError, setActionError] = useState(false)
+  const [error, setError] = useState<unknown>(null)
+  const [actionError, setActionError] = useState<unknown>(null)
   const [actionStatus, setActionStatus] = useState<string>()
   const unread = items?.filter((item) => !item.read) ?? []
   const visible = unreadOnly ? unread : items
   async function read(keys: string[]) {
     if (busy) return
     setBusy(true)
-    setError(false)
+    setError(null)
     try {
       await onRead(keys)
-    } catch {
-      setError(true)
+    } catch (failure) {
+      setError(failure ?? new Error('Read failed'))
     } finally {
       setBusy(false)
     }
@@ -93,13 +95,13 @@ export function NotificationCenterView({
   ) {
     if (busy || !onRespond) return
     setBusy(true)
-    setActionError(false)
+    setActionError(null)
     setActionStatus(undefined)
     try {
       await onRespond(id, accept)
       setActionStatus(accept ? c.accepted : c.declined)
-    } catch {
-      setActionError(true)
+    } catch (failure) {
+      setActionError(failure ?? new Error('Response failed'))
     } finally {
       setBusy(false)
     }
@@ -154,14 +156,14 @@ export function NotificationCenterView({
             )}
           </div>
           {actionStatus && <p role="status">{actionStatus}</p>}
-          {actionError && (
+          {actionError != null && (
             <p role="alert" className="text-destructive">
-              {c.actionFailed}
+              {`${c.actionFailed} ${describe(actionError)}`}
             </p>
           )}
-          {error && (
+          {error != null && (
             <p role="alert" className="text-destructive">
-              {c.failed}
+              {`${c.failed} ${describe(error)}`}
             </p>
           )}
           {loadError ? (

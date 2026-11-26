@@ -1,4 +1,5 @@
 import { useT } from '#/i18n/LocaleProvider'
+import { useActionErrorText } from '#/lib/actionError'
 import { DownloadSimpleIcon } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 
@@ -25,6 +26,7 @@ export function DocumentDownloadAction({
   fileUrl,
 }: DocumentDownloadActionProps) {
   const t = useT()
+  const describe = useActionErrorText()
 
   const [isDownloading, setIsDownloading] = useState(false)
   const confirmation = useTransientConfirmation(`${fileUrl}:${fileName}`)
@@ -72,7 +74,7 @@ export function DocumentDownloadAction({
 
       showAppErrorToast({
         title: t('documents.downloadFailed'),
-        description: <p>{t('documents.downloadRetry')}</p>,
+        description: <p>{describe(error)}</p>,
       })
     } finally {
       if (activeRequest.current === controller) {

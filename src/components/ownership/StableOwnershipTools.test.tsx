@@ -75,7 +75,7 @@ it('explains that former horse records are unavailable without loading any horse
   await renderWithRouter(<StableHorseHistoryUnavailable stableId={stableId} />)
   expect(
     await screen.findByRole('heading', {
-      name: 'Former horse records are not available',
+      name: 'No records for past horses',
     }),
   ).toBeTruthy()
   expect(convex.usePaginatedQuery).not.toHaveBeenCalled()

@@ -9,9 +9,9 @@ export const horseComparison = {
   },
   customize: 'Dostosuj porównanie',
   scope:
-    'Historia: {{start}} – {{end}}. Okres obejmuje porównanie i jego wpisy źródłowe.',
+    'Historia: {{start}} – {{end}}. Ten okres obejmuje wykres i jego wpisy.',
   returnRange: 'Wróć do poprzedniego okresu',
-  fit: 'Dopasuj do okresu wpisów',
+  fit: 'Dopasuj do wpisów',
   recordingCoverage:
     '{{count}} widocznych wpisów · zapisano {{start}} – {{end}}',
   nearbyRecords:
@@ -23,9 +23,9 @@ export const horseComparison = {
   },
 
   title: 'Porównaj w czasie',
-  help: 'Sprawdź pomiary, treningi i opiekę na wspólnej osi czasu. Wybierz wpis, aby zobaczyć szczegóły.',
+  help: 'Sprawdź pomiary, treningi i opiekę na jednej osi czasu. Wybierz wpis, żeby zobaczyć szczegóły.',
   conditionHelp:
-    'Kondycja ciała to zapisana ocena otłuszczenia w skali 1–9. Wyższy wynik oznacza więcej tkanki tłuszczowej.',
+    'Kondycja ciała to ocena otłuszczenia w skali 1–9. Im wyższa, tym więcej tłuszczu.',
   preset: 'Proponowane porównanie',
   presets: {
     trainingHealth: 'Treningi i zdrowie',
@@ -37,7 +37,7 @@ export const horseComparison = {
   },
   measure: 'Dane',
   context: 'Porównaj z',
-  extra: 'Dodatkowy kontekst',
+  extra: 'Pokaż też',
   none: 'Brak',
   measures: {
     weight: 'Waga',
@@ -63,22 +63,22 @@ export const horseComparison = {
   year: 'Ostatni rok',
   custom: 'Własne daty',
   rangeError:
-    'Wybierz poprawne daty. Koniec nie może poprzedzać początku, a okres nie może przekraczać dziesięciu lat.',
+    'Wybierz poprawne daty: koniec nie wcześniej niż początek, najwyżej dziesięć lat.',
   calendarDate: 'Data',
   kg: 'kg',
   score: '1–9',
   minutes: 'min',
   sessions: 'treningi',
   emptyHelp:
-    'Wybierz inny okres lub porównanie albo otwórz kartę konia, aby dodać zapis z datą.',
+    'Wybierz inny okres lub porównanie albo otwórz konia, żeby dodać wpis z datą.',
   noRecords: 'Brak wpisów w tym okresie.',
-  noTraining: 'Brak zapisanych ukończonych treningów w tym okresie.',
+  noTraining: 'Brak ukończonych treningów w tym okresie.',
   loading: 'Wczytywanie wpisów konia…',
   error: 'Nie udało się wczytać wpisów konia.',
   retry: 'Spróbuj ponownie',
-  locked: 'Porównania konia wymagają dostępu do analiz Premium.',
+  locked: 'Porównania koni są w planie Premium.',
   evidence:
-    'Punkty oznaczają zapisane pomiary; linie ułatwiają odczyt. Zbieżność zmian w czasie nie dowodzi związku przyczynowego.',
+    'Punkty to pomiary, linie tylko ułatwiają odczyt. Zmiany w tym samym czasie nie dowodzą przyczyny.',
   coverage: 'Czas zapisano dla {{recorded}} z {{total}} ukończonych treningów.',
   totalsUnknown: '{{count}} ukończonych treningów · nie zapisano czasu',
   singleWeight: '1 pomiar · {{last}} kg ({{end}})',
@@ -92,22 +92,22 @@ export const horseComparison = {
   missingDuration: 'Ukończone treningi bez zapisanego czasu',
   unknownDuration: 'Nie zapisano czasu trwania',
   recordCount: 'Liczba wpisów: {{count}}',
-  inspectSelection: 'Sprawdź wybrane zapisy ({{count}})',
+  inspectSelection: 'Zobacz wybrane wpisy ({{count}})',
   backToChart: 'Wróć do wykresu',
   selected: 'Wybrane wpisy',
   chooseRecord:
-    'Wybierz punkt, słupek lub wydarzenie, aby zobaczyć wpisy źródłowe.',
-  openSource: 'Otwórz wpisy źródłowe',
+    'Wybierz punkt, słupek lub wydarzenie, żeby zobaczyć jego wpisy.',
+  openSource: 'Otwórz wpisy',
   around: 'Pokaż 4 tygodnie przed i po',
   openEnd: 'Nie zapisano daty zakończenia',
   continuesBefore: 'Początek przed tym okresem',
   continuesAfter: 'Trwa poza wybranym okresem',
   recordedResolution:
-    'Przedziały zdrowotne pokazują datę zapisu problemu i oznaczenia go jako rozwiązany.',
+    'Paski zdrowia pokazują, kiedy problem zapisano i kiedy go rozwiązano.',
   recordedCourse:
-    'Przedziały leczenia pokazują zapisane kuracje, nie potwierdzają podania dawek.',
+    'Paski leków pokazują zapisane kuracje, nie potwierdzone dawki.',
   completedVisits:
-    'Znaczniki opieki pokazują zakończone wizyty jednorazowe. Plan cykliczny nie potwierdza poszczególnych wizyt.',
+    'Znaczniki opieki to zakończone wizyty jednorazowe. Plan cykliczny nie potwierdza pojedynczych wizyt.',
   table: 'Pokaż wpisy w tabeli',
   date: 'Data',
   type: 'Rodzaj wpisu',
@@ -119,7 +119,7 @@ export const horseComparison = {
     completed: 'Ukończony',
     cancelled: 'Odwołany',
     skipped: 'Pominięty',
-    unconfirmed: 'Wymaga potwierdzenia',
+    unconfirmed: 'Do potwierdzenia',
     active: 'Aktywny',
     resolved: 'Rozwiązany',
   },
@@ -135,5 +135,5 @@ export const horseComparison = {
     outcome: 'Podsumowanie',
     nextFocus: 'Kolejny cel',
   },
-  sample: 'Przykładowe dane porównawcze',
+  sample: 'Przykładowe dane',
 } as const

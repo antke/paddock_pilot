@@ -4,6 +4,7 @@ import type { Id } from 'convex/_generated/dataModel'
 import { useState } from 'react'
 import { CalendarSourceChoices } from './CalendarSourceChoices'
 import { useLocale } from '#/i18n/LocaleProvider'
+import { useActionErrorText } from '#/lib/actionError'
 import { DashboardSectionCard } from '#/components/dashboard/DashboardSectionCard'
 
 export function ActivitySharing({ eventId }: { eventId: Id<'events'> }) {
@@ -13,7 +14,8 @@ export function ActivitySharing({ eventId }: { eventId: Id<'events'> }) {
   const { locale } = useLocale()
   const pl = locale === 'pl'
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState(false)
+  const describe = useActionErrorText()
+  const [error, setError] = useState<unknown>(null)
   if (!settings || !stables || (!stables.length && !settings.originStableId))
     return null
   return (
@@ -42,7 +44,7 @@ export function ActivitySharing({ eventId }: { eventId: Id<'events'> }) {
         disabled={busy}
         onChange={async (ids) => {
           setBusy(true)
-          setError(false)
+          setError(null)
           try {
             await save({
               eventId,
@@ -53,8 +55,8 @@ export function ActivitySharing({ eventId }: { eventId: Id<'events'> }) {
                   stables.some((stable) => stable._id === id),
               ) as Id<'stables'>[],
             })
-          } catch {
-            setError(true)
+          } catch (caught) {
+            setError(caught ?? new Error('Sharing failed'))
           } finally {
             setBusy(false)
           }
@@ -72,11 +74,9 @@ export function ActivitySharing({ eventId }: { eventId: Id<'events'> }) {
             : 'Sharing with the original stable is managed separately for each horse.'}
         </p>
       )}
-      {error && (
+      {error != null && (
         <p role="alert" className="text-sm text-destructive">
-          {pl
-            ? 'Nie udało się zmienić udostępniania.'
-            : 'Could not update sharing.'}
+          {`${pl ? 'Nie udało się zmienić udostępniania.' : 'Couldn’t change sharing.'} ${describe(error)}`}
         </p>
       )}
     </DashboardSectionCard>

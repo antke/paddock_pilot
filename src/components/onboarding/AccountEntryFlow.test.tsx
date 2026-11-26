@@ -320,7 +320,7 @@ it.each([false, true])(
     cleanup()
     router = await setup('/horses/create')
     await screen.findByRole('heading', { name: 'Add horse' })
-    const horseName = screen.getByLabelText('Horse name')
+    const horseName = screen.getByLabelText('Name')
     fireEvent.change(horseName, { target: { value: 'Maple' } })
     fireEvent.click(
       screen.getByRole('button', { name: 'Optional horse details' }),
@@ -354,7 +354,7 @@ it('stays on the profile after a rejected save and advances only after retry suc
     await screen.findByRole('button', { name: 'Manage my horses' }),
   )
   fireEvent.click(screen.getByRole('button', { name: 'Continue to horse' }))
-  await screen.findByText(/Could not save your profile/)
+  await screen.findByText(/Couldn’t save your profile/)
   expect(router.state.location.pathname).toBe('/onboarding')
   fireEvent.click(screen.getByRole('button', { name: 'Continue to horse' }))
   await screen.findByRole('heading', { name: 'Add horse' })
@@ -382,7 +382,7 @@ it('reaches stable creation after saving the profile, then resumes the created s
     target: { value: 'Warsaw' },
   })
   fireEvent.submit(name.closest('form')!)
-  await screen.findByLabelText('Primary contact')
+  await screen.findByLabelText('Main contact')
   expect(router.state.location.search).toMatchObject({ stableId: 'yard' })
   expect(state.createStable).toHaveBeenCalledTimes(1)
 })

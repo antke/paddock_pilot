@@ -119,7 +119,7 @@ export function DepartureReviewView({
               acknowledged.current = true
               onDone()
             } catch (cause) {
-              setError(errorMessage(cause))
+              setError(errorMessage(m.moveFailed, cause))
             } finally {
               busy.current = false
               setPending(false)

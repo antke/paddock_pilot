@@ -8,8 +8,7 @@ const en = {
   declined: 'Participation declined.',
   approve: 'Accept participation',
   decline: 'Decline',
-  actionFailed:
-    'Could not respond. The invitation may have changed. Please try again.',
+  actionFailed: 'Couldn’t respond to the invitation.',
   title: 'Notifications',
   description: 'Invitations and updates across Personal and all your stables.',
   unread: 'Unread',
@@ -23,7 +22,7 @@ const en = {
   empty: 'You’re all caught up.',
   emptyHint: 'New invitations and updates will appear here.',
   loading: 'Loading notifications…',
-  failed: 'Could not update read status. Please try again.',
+  failed: 'Couldn’t mark notifications as read.',
   seen: 'Read',
   new: 'Unread',
   viewer: 'Can view records',
@@ -75,8 +74,7 @@ const pl: typeof en = {
   declined: 'Odrzucono udział.',
   approve: 'Zaakceptuj udział',
   decline: 'Odrzuć',
-  actionFailed:
-    'Nie udało się odpowiedzieć. Zaproszenie mogło się zmienić. Spróbuj ponownie.',
+  actionFailed: 'Nie udało się odpowiedzieć na zaproszenie.',
   title: 'Powiadomienia',
   description:
     'Zaproszenia i aktualizacje z przestrzeni prywatnej i wszystkich Twoich stajni.',
@@ -91,7 +89,7 @@ const pl: typeof en = {
   empty: 'Jesteś na bieżąco.',
   emptyHint: 'Tutaj pojawią się nowe zaproszenia i aktualizacje.',
   loading: 'Ładowanie powiadomień…',
-  failed: 'Nie udało się zmienić statusu. Spróbuj ponownie.',
+  failed: 'Nie udało się oznaczyć powiadomień jako przeczytanych.',
   seen: 'Przeczytane',
   new: 'Nieprzeczytane',
   viewer: 'Może przeglądać wpisy',

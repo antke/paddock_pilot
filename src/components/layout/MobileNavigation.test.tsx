@@ -82,7 +82,7 @@ it('has stable destinations, selected page semantics and a focus-restoring menu 
   expect(
     screen.getByRole('link', { name: 'Training' }).getAttribute('href'),
   ).toBe('/training')
-  const more = screen.getByRole('button', { name: 'Open navigation menu' })
+  const more = screen.getByRole('button', { name: 'Open menu' })
   act(() => more.focus())
   fireEvent.click(more)
   expect(await screen.findByRole('dialog', { name: 'Menu' })).toBeTruthy()
@@ -133,7 +133,7 @@ it.each([
     expect(document.querySelectorAll('[aria-current="page"]')).toHaveLength(1)
     expect(
       screen
-        .getByRole('button', { name: 'Open navigation menu' })
+        .getByRole('button', { name: 'Open menu' })
         .classList.contains('bg-selection-surface'),
     ).toBe(false)
   },
